@@ -1,0 +1,4 @@
+requests>=2.28
+
+# Giao diện đồ hoạ (tuỳ chọn — CLI không cần):
+# pip install PySide6-Essentials

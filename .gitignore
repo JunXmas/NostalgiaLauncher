@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+vendor/
+
+# Kết quả đóng gói — sinh lại được bằng packaging/, không đưa vào kho.
+build/
+dist/
+*.spec.bak
+packaging/assets/
