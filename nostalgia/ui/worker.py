@@ -1,0 +1,116 @@
+"""Chạy cài đặt + khởi động game ở luồng nền.
+
+Tải assets mất vài phút; làm trên luồng UI thì cửa sổ đứng hình. Qt bắt buộc chỉ
+luồng UI được đụng vào widget, nên worker chỉ phát signal, không tự vẽ gì.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from PySide6.QtCore import QThread, Signal
+
+from .. import auth, google_auth
+from ..accounts import AccountStore, StoredAccount
+from ..install import Installer
+from ..launch import build_command, ensure_offline_libraries, run
+
+
+class FnWorker(QThread):
+    """Chạy một hàm chặn ở luồng nền rồi trả kết quả về luồng UI."""
+
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, fn, parent=None):
+        super().__init__(parent)
+        self.fn = fn
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            self.done.emit(self.fn())
+        except Exception as e:  # noqa: BLE001 - lỗi mạng nào cũng chỉ là "không tải được"
+            self.failed.emit(str(e))
+
+
+class LoginWorker(QThread):
+    """Device code flow: phát mã ra UI trước, rồi chờ người dùng xác nhận trên web."""
+
+    code_ready = Signal(str, str)   # verification_uri, user_code
+    logged_in = Signal(object)      # auth.MinecraftSession
+    failed = Signal(str)
+
+    def __init__(self, client_id: str, parent=None):
+        super().__init__(parent)
+        self.client_id = client_id
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            flow = auth.request_device_code(self.client_id)
+            self.code_ready.emit(flow["verification_uri"], flow["user_code"])
+            tokens = auth.poll_for_token(
+                self.client_id, flow["device_code"], flow["interval"], flow["expires_in"]
+            )
+            self.logged_in.emit(auth.complete_login(tokens))
+        except Exception as e:  # noqa: BLE001
+            self.failed.emit(str(e))
+
+
+class GoogleLinkWorker(QThread):
+    """Mở trình duyệt rồi chờ Google trả mã về cổng loopback."""
+
+    url_ready = Signal(str)
+    linked = Signal(object)   # {"sub", "email", "name"}
+    failed = Signal(str)
+
+    def __init__(self, client_id: str, client_secret: str = "", parent=None):
+        super().__init__(parent)
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            self.linked.emit(google_auth.login(
+                self.client_id, self.client_secret, on_url=self.url_ready.emit
+            ))
+        except Exception as e:  # noqa: BLE001
+            self.failed.emit(str(e))
+
+
+class LaunchWorker(QThread):
+    progress = Signal(str, int, int)  # giai đoạn, đã xong, tổng
+    status = Signal(str)
+    failed = Signal(str)
+    finished_ok = Signal()
+
+    def __init__(self, store: AccountStore, account: StoredAccount, version: str,
+                 game_dir: Path, memory_mb: int = 2048, java_path: str = "", parent=None):
+        super().__init__(parent)
+        self.store = store
+        self.account = account
+        self.version = version
+        self.game_dir = game_dir
+        self.memory_mb = memory_mb
+        self.java_path = java_path
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            identity = self.store.resolve_identity(self.account)
+            self.status.emit(f"Chuẩn bị {self.version}…")
+
+            installer = Installer(self.game_dir, on_progress=self.progress.emit)
+            meta = installer.install(self.version)
+
+            if identity.user_type == "offline":
+                ensure_offline_libraries(meta, installer)
+
+            cmd = build_command(meta, installer, identity,
+                                java=self.java_path or None, max_memory_mb=self.memory_mb)
+            self.status.emit(f"Đang chạy {self.version}" + (" (demo)" if identity.demo else ""))
+            code = run(cmd, self.game_dir)
+            if code != 0:
+                self.failed.emit(f"Game thoát với mã {code}")
+                return
+            self.finished_ok.emit()
+        except Exception as e:  # noqa: BLE001 - lỗi nào cũng phải hiện lên UI
+            self.failed.emit(str(e))
