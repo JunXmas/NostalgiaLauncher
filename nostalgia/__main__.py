@@ -2,6 +2,7 @@
 
 Tài khoản đã mua game -> chạy full game.
 Tài khoản Microsoft chưa mua -> tự động chạy demo mode chính thức.
+Tài khoản Offline -> chạy full game (Local mode).
 """
 
 from __future__ import annotations
@@ -11,9 +12,17 @@ import os
 import sys
 from pathlib import Path
 
+import requests
+
 from . import accounts, auth
 from .install import Installer
-from .launch import build_command, ensure_offline_libraries, run
+from .launch import (
+    OfflineLaunchError,
+    build_command,
+    ensure_offline_libraries,
+    launch_game_offline,
+    run,
+)
 
 from .paths import APP_NAME, DEFAULT_GAME_DIR, migrate_legacy
 
@@ -60,18 +69,15 @@ def cmd_account_add(args) -> None:
 
 
 def cmd_account_add_offline(args) -> None:
-    """Add an offline profile. Only available once a game-owning account exists."""
+    """Add an offline profile."""
     store = accounts.AccountStore()
-    try:
-        account = store.add_offline(args.name, args.label)
-    except accounts.OwnershipRequired as e:
-        sys.exit(f"{e}\nAdd one with: python -m nostalgia account add")
+    account = store.add_offline(args.name, args.label)
     print(f"Added offline profile '{account.label}' (in-game name: {account.username}).")
 
 
 def _mode_of(store: accounts.AccountStore, a: accounts.StoredAccount) -> str:
     if a.kind == accounts.OFFLINE:
-        return "offline" if store.any_owns_game() else "offline->demo"
+        return "offline"
     return "full game" if a.owns_game else "demo"
 
 
@@ -86,8 +92,6 @@ def cmd_account_list(args) -> None:
         name = a.username if (a.owns_game or a.kind == accounts.OFFLINE) else a.demo_name
         print(f"  {marker:2s} {a.label:20s} {a.kind:9s} {_mode_of(store, a):14s} {name}")
     print("\n  * = default when running `play` without --account")
-    if not store.any_owns_game():
-        print("  No game-owning account: offline profiles will run in demo mode.")
 
 
 def cmd_account_remove(args) -> None:
@@ -162,6 +166,18 @@ def cmd_install(args) -> None:
     Installer(args.game_dir).install(args.version)
 
 
+def _play_offline(args, installer: Installer, identity: accounts.LaunchIdentity) -> int:
+    """Đường chạy không chạm mạng. Trả về mã thoát của game."""
+    try:
+        return launch_game_offline(
+            args.version, installer, identity,
+            max_memory_mb=args.memory,
+            on_status=lambda m: print(f"  {m}"),
+        )
+    except (OfflineLaunchError, FileNotFoundError) as e:
+        sys.exit(str(e))
+
+
 def cmd_play(args) -> None:
     store = accounts.AccountStore()
     if not store.accounts:
@@ -170,20 +186,35 @@ def cmd_play(args) -> None:
     if account is None:
         sys.exit(f"No account named '{args.account}'. See: account list")
 
-    if account.kind == accounts.MSA:
+    # Nhánh 1 — làm mới phiên. Chỉ tài khoản Microsoft mới có refresh token, và
+    # --offline thì bỏ qua hẳn để không nằm chờ timeout của một request chắc chắn hỏng.
+    if account.kind == accounts.MSA and not args.offline:
         account = accounts.refresh_if_online(store, account, client_id())
     identity = store.resolve_identity(account, override_name=args.name)
 
-    if account.kind == accounts.OFFLINE and identity.demo:
-        print("  [warning] No game-owning account left -> dropping to demo mode.")
-
     installer = Installer(args.game_dir)
-    meta = installer.install(args.version)
+    mode = "DEMO" if identity.demo else "full"
+
+    # Nhánh 2 — người dùng ép chạy offline.
+    if args.offline:
+        print(f"\nLaunching {args.version} [{mode}, offline] with account '{account.label}'...\n")
+        sys.exit(_play_offline(args, installer, identity))
+
+    # Nhánh 3 — đường bình thường, nhưng mất mạng giữa chừng thì thử lại offline
+    # thay vì đổ một stack trace của requests lên đầu người dùng. Dữ liệu đã tải
+    # trước đó vẫn đủ để chơi singleplayer và LAN.
+    try:
+        meta = installer.install(args.version)
+    except requests.exceptions.RequestException as e:
+        print(f"  [offline] No connection ({type(e).__name__}); trying what is already on disk.")
+        print(f"\nLaunching {args.version} [{mode}, offline] with account '{account.label}'...\n")
+        sys.exit(_play_offline(args, installer, identity))
+
     if identity.user_type == accounts.OFFLINE:
-        ensure_offline_libraries(meta, installer)
+        for warning in ensure_offline_libraries(meta, installer):
+            print(f"  [warning] {warning}")
     cmd = build_command(meta, installer, identity, max_memory_mb=args.memory)
 
-    mode = "DEMO" if identity.demo else "full"
     print(f"\nLaunching {args.version} [{mode}] with account '{account.label}'...\n")
     sys.exit(run(cmd, args.game_dir))
 
@@ -203,7 +234,7 @@ def main() -> None:
     p.add_argument("--name", help="in-game display name (demo accounts only)")
     p.set_defaults(func=cmd_account_add)
 
-    p = acc.add_parser("add-offline", help="add an offline profile (needs a game-owning account)")
+    p = acc.add_parser("add-offline", help="add an offline profile")
     p.add_argument("name", help="in-game name")
     p.add_argument("--label", help="friendly label; defaults to name")
     p.set_defaults(func=cmd_account_add_offline)
@@ -255,6 +286,8 @@ def main() -> None:
     p.add_argument("--account", help="account label; defaults to the first one")
     p.add_argument("--name", help="override the demo display name for this run")
     p.add_argument("--memory", type=int, default=2048, help="max RAM (MB)")
+    p.add_argument("--offline", action="store_true",
+                   help="never touch the network: play what is already downloaded")
     p.set_defaults(func=cmd_play)
 
     args = parser.parse_args()

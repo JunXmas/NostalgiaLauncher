@@ -113,6 +113,24 @@ class Installer:
         """JSON đã trộn kế thừa — dùng cho mọi việc cài đặt và khởi động."""
         return merge_inherited(self._raw_version_json(version_id), self._raw_version_json)
 
+    def offline_version_json(self, version_id: str) -> dict:
+        """Như version_json nhưng tuyệt đối không chạm mạng.
+
+        version_json() sẽ lặng lẽ gọi manifest của Mojang khi thiếu JSON dưới đĩa;
+        lúc mất mạng điều đó biến thành ConnectionError vô nghĩa với người dùng.
+        Ở đường chạy offline ta muốn hỏng sớm và nói rõ thiếu đúng file nào.
+        """
+        def strict(vid: str) -> dict:
+            local = self.versions_dir / vid / f"{vid}.json"
+            if not local.exists():
+                raise FileNotFoundError(
+                    f"Version metadata is missing: {local}\n"
+                    f"Run once with an Internet connection to download {vid}."
+                )
+            return json.loads(local.read_text())
+
+        return merge_inherited(strict(version_id), strict)
+
     def _raw_version_json(self, version_id: str) -> dict:
         local = self.versions_dir / version_id / f"{version_id}.json"
         if local.exists():
