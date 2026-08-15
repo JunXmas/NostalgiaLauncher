@@ -1,0 +1,100 @@
+name: Build installers
+
+# Máy phát triển chạy Linux, mà không có cách nào build ra .exe hay .app từ đó:
+# PyInstaller gói lại đúng trình thông dịch Python và đúng thư viện Qt của hệ
+# điều hành đang chạy, nên bắt buộc phải build trên chính nền tảng đích. Runner
+# của GitHub đóng vai chiếc máy Windows và máy Mac mà ta không có.
+
+on:
+  push:
+    tags: ["v*"]        # gắn tag v0.2.0 là ra một bản phát hành
+  workflow_dispatch: {}  # hoặc bấm tay trong tab Actions
+
+permissions:
+  contents: write        # cần quyền ghi để đính file vào Release
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false   # Windows hỏng thì vẫn muốn xem bản Mac có ra không
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows (x64)
+          # Hai runner macOS cho hai kiến trúc: macos-14 là Apple Silicon, còn
+          # macos-13 vẫn là Intel. Bản build trên máy này không chạy trên máy kia,
+          # nên phải có cả hai thì mới phủ hết người dùng Mac.
+          - os: macos-14
+            label: macOS (Apple Silicon)
+          - os: macos-13
+            label: macOS (Intel)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install PySide6-Essentials pyinstaller
+
+      - name: Generate icons
+        # Runner không có màn hình; offscreen cho phép Qt vẽ thẳng vào bộ nhớ.
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python packaging/make_icon.py
+
+      - name: Build app bundle
+        run: pyinstaller packaging/nostalgia.spec --noconfirm
+
+      # ---------- Windows ----------
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: |
+          choco install innosetup --no-progress -y
+          # Dấu ngoặc trong tên biến bắt buộc phải bọc bằng ${...}: viết
+          # $env:ProgramFiles(x86) thì PowerShell hiểu là lời gọi hàm và báo lỗi cú pháp.
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" packaging\windows\nostalgia.iss
+        shell: pwsh
+
+      # ---------- macOS ----------
+      - name: Build macOS disk image
+        if: runner.os == 'macOS'
+        run: bash packaging/macos/build-dmg.sh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: dist/installer/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Attach installers to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: true      # để nháp, xem lại rồi mới bấm công bố
+          body: |
+            Bản cài chưa được ký số, nên hệ điều hành sẽ cảnh báo ở lần mở đầu tiên:
+
+            - **Windows** — SmartScreen hiện "Windows protected your PC".
+              Bấm *More info* → *Run anyway*.
+            - **macOS** — báo "cannot be opened because the developer cannot be verified".
+              Bấm chuột phải vào app → *Open* → *Open*, hoặc vào
+              System Settings → Privacy & Security → *Open Anyway*.

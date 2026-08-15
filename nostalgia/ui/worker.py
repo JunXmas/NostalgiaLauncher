@@ -8,12 +8,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import requests
 from PySide6.QtCore import QThread, Signal
 
 from .. import auth, google_auth
-from ..accounts import AccountStore, StoredAccount
+from ..accounts import OFFLINE, AccountStore, StoredAccount
 from ..install import Installer
-from ..launch import build_command, ensure_offline_libraries, run
+from ..launch import build_command, ensure_offline_libraries, launch_game_offline, run
 
 
 class FnWorker(QThread):
@@ -84,7 +85,8 @@ class LaunchWorker(QThread):
     finished_ok = Signal()
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
-                 game_dir: Path, memory_mb: int = 2048, java_path: str = "", parent=None):
+                 game_dir: Path, memory_mb: int = 2048, java_path: str = "",
+                 offline: bool = False, parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
@@ -92,29 +94,51 @@ class LaunchWorker(QThread):
         self.game_dir = game_dir
         self.memory_mb = memory_mb
         self.java_path = java_path
+        self.offline = offline
+
+    def _launch_offline(self, installer: Installer, identity) -> int:
+        return launch_game_offline(
+            self.version, installer, identity,
+            java=self.java_path or None,
+            max_memory_mb=self.memory_mb,
+            on_status=self.status.emit,
+        )
+
+    def _launch_online(self, installer: Installer, identity) -> int:
+        self.status.emit(f"Preparing {self.version}…")
+        meta = installer.install(self.version)
+
+        # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
+        if not self.java_path:
+            from .. import jre
+            if not jre.is_installed(self.game_dir, jre.component_of(meta)):
+                self.status.emit("Downloading Java runtime…")
+                jre.ensure(self.game_dir, meta, on_progress=self.progress.emit)
+
+        if identity.user_type == OFFLINE:
+            for warning in ensure_offline_libraries(meta, installer):
+                self.status.emit(warning)
+
+        cmd = build_command(meta, installer, identity,
+                            java=self.java_path or None, max_memory_mb=self.memory_mb)
+        self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
+        return run(cmd, self.game_dir)
 
     def run(self) -> None:  # noqa: D102
         try:
             identity = self.store.resolve_identity(self.account)
-            self.status.emit(f"Preparing {self.version}…")
-
             installer = Installer(self.game_dir, on_progress=self.progress.emit)
-            meta = installer.install(self.version)
 
-            # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
-            if not self.java_path:
-                from .. import jre
-                if not jre.is_installed(self.game_dir, jre.component_of(meta)):
-                    self.status.emit("Downloading Java runtime…")
-                    jre.ensure(self.game_dir, meta, on_progress=self.progress.emit)
+            if self.offline:
+                code = self._launch_offline(installer, identity)
+            else:
+                try:
+                    code = self._launch_online(installer, identity)
+                except requests.exceptions.RequestException:
+                    # Mất mạng giữa chừng: những gì đã tải vẫn đủ chơi đơn và LAN.
+                    self.status.emit("No connection — using what is already downloaded…")
+                    code = self._launch_offline(installer, identity)
 
-            if identity.user_type == "offline":
-                ensure_offline_libraries(meta, installer)
-
-            cmd = build_command(meta, installer, identity,
-                                java=self.java_path or None, max_memory_mb=self.memory_mb)
-            self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
-            code = run(cmd, self.game_dir)
             if code != 0:
                 self.failed.emit(f"Game exited with code {code}")
                 return

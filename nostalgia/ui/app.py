@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -28,7 +27,7 @@ def describe(store: accounts.AccountStore, account) -> tuple[str, str]:
     if account is None:
         return "Not signed in", "off"
     if account.kind == accounts.OFFLINE:
-        return ("Offline", "ok") if store.any_owns_game() else ("Offline → demo", "warn")
+        return "Offline", "ok"
     return ("Connected", "ok") if account.owns_game else ("Demo mode", "warn")
 
 
@@ -266,8 +265,7 @@ class Controller:
         items += [
             MenuItem(kind="separator"),
             MenuItem(label="Add Microsoft account…", data=("add", None)),
-            MenuItem(label="Add offline profile…", data=("offline", None),
-                     enabled=self.store.any_owns_game()),
+            MenuItem(label="Add offline profile…", data=("offline", None)),
         ]
         if self.store.accounts:
             items += [MenuItem(kind="separator"),
@@ -334,19 +332,13 @@ class Controller:
         dlg = TextPrompt(
             self.window, "Add offline profile", "In-game display name:",
             placeholder="ví dụ: Lan",
-            hint="Offline profiles unlock only once the launcher has a Microsoft "
-                 "account that owns Minecraft. Remove that account and offline "
-                 "offline tự hạ xuống demo mode.",
+            hint="Tạo profile offline không giới hạn để chơi local hoặc test server.",
         )
         dlg.accepted.connect(self._add_offline)
         dlg.show()
 
     def _add_offline(self, name: str) -> None:
-        try:
-            account = self.store.add_offline(name)
-        except accounts.OwnershipRequired as e:
-            self.window.set_status(str(e))
-            return
+        account = self.store.add_offline(name)
         self._adopt_account(account.label)
         self.refresh()
 
@@ -513,8 +505,10 @@ class Controller:
             QDesktopServices.openUrl(QUrl(url))
 
     def open_path(self, path: Path) -> None:
+        # Qt tự biết gọi Explorer, Finder hay xdg-open tuỳ hệ điều hành, nên khỏi
+        # phải tự phân nhánh — `xdg-open` vốn chỉ có trên Linux.
         path.mkdir(parents=True, exist_ok=True)
-        subprocess.Popen(["xdg-open", str(path)])
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
     # ---------- chạy game ----------
 

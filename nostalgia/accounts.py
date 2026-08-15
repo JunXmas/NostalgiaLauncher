@@ -14,7 +14,6 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 from . import auth
-
 from .paths import CONFIG_DIR
 
 STORE_PATH = CONFIG_DIR / "accounts.json"
@@ -24,6 +23,12 @@ def offline_uuid(name: str) -> str:
     """UUID offline mà server vanilla tự sinh: UUID v3 của 'OfflinePlayer:<tên>'.
 
     Chỉ dùng cho singleplayer/demo và server LAN đặt online-mode=false.
+
+    KHÔNG thay bằng uuid4(). Đây là bản sao của UUID.nameUUIDFromBytes() phía Java,
+    tức là cùng một cái tên phải luôn ra cùng một UUID. Server offline-mode tự tính
+    lại giá trị này từ tên người chơi, và world lưu inventory theo UUID. Một UUID
+    ngẫu nhiên sẽ khác giá trị server tính ra, và đổi sau mỗi lần khởi động: mỗi ván
+    chơi là một người mới, mất sạch đồ và toạ độ.
     """
     digest = bytearray(hashlib.md5(f"OfflinePlayer:{name}".encode()).digest())
     digest[6] = (digest[6] & 0x0F) | 0x30  # version 3
@@ -43,11 +48,11 @@ class LaunchIdentity:
 
 
 MSA = "msa"          # tài khoản Microsoft thật (đã mua hoặc chưa mua game)
-OFFLINE = "offline"  # hồ sơ cục bộ, không có token; chỉ mở khi đã có chủ sở hữu
+OFFLINE = "offline"  # hồ sơ cục bộ, không có token; chỉ mở khi đã có chủ sở hữu game
 
 
-class OwnershipRequired(Exception):
-    """Chưa có tài khoản nào sở hữu game thì không mở được hồ sơ offline."""
+class OwnershipRequired(RuntimeError):
+    """Tạo hồ sơ offline khi chưa có tài khoản Microsoft nào sở hữu game."""
 
 
 @dataclass
@@ -79,7 +84,7 @@ class StoredAccount:
 
     @classmethod
     def offline(cls, label: str, name: str) -> StoredAccount:
-        """Hồ sơ offline: token giả "0", UUID sinh từ tên — giống PrismLauncher."""
+        """Hồ sơ offline: token giả "0", UUID sinh từ tên."""
         return cls(
             label=label,
             refresh_token="",
@@ -164,43 +169,27 @@ class AccountStore:
             return self.accounts[0] if self.accounts else None
         return next((a for a in self.accounts if a.label == wanted), None)
 
-    # ---------- cổng chứng minh quyền sở hữu ----------
-
-    def any_owns_game(self) -> bool:
-        """Có ít nhất một tài khoản Microsoft đã mua game hay không.
-
-        Tương đương AccountList::anyAccountIsValid() của PrismLauncher.
-        """
-        return any(a.kind == MSA and a.owns_game for a in self.accounts)
+    # ---------- xử lý danh tính khởi động ----------
 
     def add_offline(self, name: str, label: str | None = None) -> StoredAccount:
-        """Thêm hồ sơ offline. Chặn nếu chưa có tài khoản nào sở hữu game."""
-        if not self.any_owns_game():
-            raise OwnershipRequired(
-                "You must add a Microsoft account that owns Minecraft "
-                "before adding an offline profile."
-            )
+        """Thêm hồ sơ offline thoải mái, không cần check bản quyền."""
         account = StoredAccount.offline(self.unique_label(label or name), name)
         self.upsert(account)
         return account
 
     def resolve_identity(self, account: StoredAccount, override_name: str | None = None) -> LaunchIdentity:
-        """Quyết định danh tính khởi động, có kiểm tra lại quyền sở hữu.
-
-        Giống LaunchController của Prism: hồ sơ offline vẫn phải tìm được một tài
-        khoản có bản quyền trong danh sách, nếu không thì tụt xuống demo mode.
-        """
+        """Quyết định danh tính khởi động, phân rẽ rõ ràng Offline và MSA."""
+        
         if account.kind == OFFLINE:
             name = override_name or account.username
-            if not self.any_owns_game():
-                # Tài khoản chủ sở hữu đã bị xoá -> hạ cấp, không chạy full game.
-                return LaunchIdentity(name, offline_uuid(name), "0", OFFLINE, demo=True)
+            # MỞ KHÓA BẢN QUYỀN: Luôn cấp full game (demo=False) cho tài khoản Offline
             return LaunchIdentity(name, offline_uuid(name), "0", OFFLINE, demo=False)
 
         if account.owns_game:
+            # Tài khoản Microsoft đã mua game
             return LaunchIdentity(account.username, account.uuid, account.access_token, MSA, demo=False)
 
-        # Tài khoản Microsoft hợp lệ nhưng chưa mua game -> demo mode chính thức.
+        # Tài khoản Microsoft hợp lệ nhưng chưa mua game -> demo mode chính thức từ server Mojang.
         name = override_name or account.demo_name
         return LaunchIdentity(name, offline_uuid(name), account.access_token, MSA, demo=True)
 

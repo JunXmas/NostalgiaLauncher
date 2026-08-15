@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import platform
+import shutil
 import stat
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -48,7 +49,19 @@ def runtime_dir(game_dir: Path, component: str) -> Path:
 
 
 def java_binary(game_dir: Path, component: str) -> Path:
-    return runtime_dir(game_dir, component) / "bin" / "java"
+    """Đường dẫn tới java trong bộ runtime đã tải.
+
+    Bố cục do Mojang quy định và khác nhau theo hệ điều hành: bản macOS đóng gói
+    thành bundle nên java nằm sâu trong `jre.bundle/Contents/Home`, còn bản
+    Windows thì có đuôi `.exe`. Dùng `java.exe` chứ không phải `javaw.exe` — cả
+    hai đều chạy được game, nhưng `javaw` không có stdout nên vừa mất log game
+    vừa làm hỏng bước dò `-version`. Cửa sổ console đen thì đã bị chặn từ chỗ
+    khác (xem `launch.run`).
+    """
+    base = runtime_dir(game_dir, component)
+    if platform.system() == "Darwin":
+        base = base / "jre.bundle" / "Contents" / "Home"
+    return base / "bin" / ("java.exe" if platform.system() == "Windows" else "java")
 
 
 def is_installed(game_dir: Path, component: str) -> bool:
@@ -110,11 +123,22 @@ def install(game_dir: Path, component: str, on_progress=None) -> Path:
         list(pool.map(one, jobs))
 
     # Vòng 2: tạo symlink sau khi đích đã tồn tại.
+    #
+    # Windows chỉ cho tạo symlink khi bật Developer Mode hoặc chạy quyền quản trị,
+    # nên chỗ này phải có đường lui: chép hẳn file ra. Tốn thêm ít đĩa, nhưng thà
+    # thế còn hơn để nguyên bộ JRE hỏng vì một cái link không tạo được.
     for link_path, tgt in links:
         link_path.parent.mkdir(parents=True, exist_ok=True)
         if link_path.exists() or link_path.is_symlink():
             link_path.unlink()
-        os.symlink(tgt, link_path)
+        try:
+            os.symlink(tgt, link_path)
+        except (OSError, NotImplementedError):
+            source = (link_path.parent / tgt).resolve()
+            if source.is_dir():
+                shutil.copytree(source, link_path, dirs_exist_ok=True)
+            elif source.exists():
+                shutil.copy2(source, link_path)
 
     binary = java_binary(game_dir, component)
     if binary.exists():
