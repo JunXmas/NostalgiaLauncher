@@ -176,7 +176,7 @@ class Installer:
     def _install_client(self, meta: dict) -> Path:
         art = meta["downloads"]["client"]
         dest = self.client_jar(meta)
-        print(f"  client.jar ...")
+        print("  client.jar ...")
         return download(art["url"], dest, art["sha1"])
 
     def _artifact_of(self, lib: dict) -> tuple[str, Path, str | None] | None:
@@ -228,7 +228,7 @@ class Installer:
                     jobs.append(
                         (native_art["url"], self.libraries_dir / native_art["path"], native_art["sha1"])
                     )
-        print(f"  {len(jobs)} thư viện ...")
+        print(f"  {len(jobs)} libraries ...")
         self._run_jobs("Đang tải thư viện", jobs)
 
     def natives_dir(self, meta: dict) -> Path:
@@ -287,10 +287,10 @@ class Installer:
 
     def install(self, version_id: str) -> dict:
         meta = self.version_json(version_id)
-        print(f"Cài đặt {version_id} (cần Java {meta.get('javaVersion', {}).get('majorVersion', 8)}):")
+        print(f"Installing {version_id} (needs Java {meta.get('javaVersion', {}).get('majorVersion', 8)}):")
         self._install_client(meta)
         self._install_libraries(meta)
         self._extract_natives(meta)
         self._install_assets(meta)
-        print("Xong.")
+        print("Done.")
         return meta

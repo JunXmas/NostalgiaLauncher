@@ -29,7 +29,7 @@ def list_loaders(stable_only: bool = True) -> list[str]:
 def latest_loader() -> str:
     loaders = list_loaders()
     if not loaders:
-        raise RuntimeError("Fabric meta không trả về loader nào.")
+        raise RuntimeError("Fabric meta returned no loaders.")
     return loaders[0]
 
 
@@ -38,7 +38,7 @@ def profile_json(game_version: str, loader_version: str) -> dict:
         f"{META}/versions/loader/{game_version}/{loader_version}/profile/json", timeout=TIMEOUT
     )
     if r.status_code == 400:
-        raise RuntimeError(f"Fabric không hỗ trợ {game_version} với loader {loader_version}.")
+        raise RuntimeError(f"Fabric does not support {game_version} with loader {loader_version}.")
     r.raise_for_status()
     return r.json()
 

@@ -52,6 +52,7 @@ class Settings:
     java_path: str = ""            # rỗng = tự dò theo javaVersion của phiên bản
     selected_version: str = ""     # rỗng = lấy bản release mới nhất
     show_snapshots: bool = False
+    background_path: str = ""     # ảnh nền tuỳ chọn; rỗng = đảo voxel
     close_on_launch: bool = False
     _path: Path | None = field(default=None, repr=False, compare=False)
 

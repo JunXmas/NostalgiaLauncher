@@ -32,7 +32,7 @@ class ListView(QWidget):
 
     ROW_H = 52
 
-    def __init__(self, parent=None, *, empty_text: str = "Chưa có gì ở đây."):
+    def __init__(self, parent=None, *, empty_text: str = "Nothing here yet."):
         super().__init__(parent)
         self.rows: list[Row] = []
         self.empty_text = empty_text

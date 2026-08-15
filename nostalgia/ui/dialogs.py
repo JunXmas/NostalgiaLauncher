@@ -95,7 +95,7 @@ class TextPrompt(GlassDialog):
     accepted = Signal(str)
 
     def __init__(self, parent, title: str, prompt: str, *, placeholder: str = "",
-                 hint: str = "", ok_text: str = "THÊM"):
+                 hint: str = "", ok_text: str = "ADD"):
         super().__init__(parent, title, width=440, height=232)
         self.prompt = prompt
         self.hint = hint
@@ -106,7 +106,7 @@ class TextPrompt(GlassDialog):
         self.edit.returnPressed.connect(self._accept)
         self.ok = AeroButton(ok_text, self, height=34)
         self.ok.clicked.connect(self._accept)
-        self.cancel = AeroButton("HUỶ", self, height=34, tone="neutral")
+        self.cancel = AeroButton("CANCEL", self, height=34, tone="neutral")
         self.cancel.clicked.connect(self.dismiss)
         self.place()
         self.edit.setFocus()
@@ -141,12 +141,12 @@ class TextPrompt(GlassDialog):
 class ConfirmDialog(GlassDialog):
     confirmed = Signal()
 
-    def __init__(self, parent, title: str, message: str, *, ok_text: str = "XOÁ"):
+    def __init__(self, parent, title: str, message: str, *, ok_text: str = "DELETE"):
         super().__init__(parent, title, width=440, height=206)
         self.message = message
         self.ok = AeroButton(ok_text, self, height=34, tone="danger")
         self.ok.clicked.connect(self._go)
-        self.cancel = AeroButton("HUỶ", self, height=34, tone="neutral")
+        self.cancel = AeroButton("CANCEL", self, height=34, tone="neutral")
         self.cancel.clicked.connect(self.dismiss)
         self.place()
 
@@ -173,15 +173,15 @@ class LoginDialog(GlassDialog):
     """Hiện mã device code, tự sao chép, và chờ người dùng xác nhận trên web."""
 
     def __init__(self, parent):
-        super().__init__(parent, "Đăng nhập tài khoản Microsoft", width=500, height=272)
+        super().__init__(parent, "Sign in with Microsoft", width=500, height=272)
         self.code = ""
         self.url = ""
-        self.message = "Đang xin mã từ Microsoft…"
+        self.message = "Requesting a code from Microsoft…"
         self.state = "waiting"  # waiting | ready | error | done
-        self.copy_btn = AeroButton("SAO CHÉP MÃ", self, height=32, tone="neutral")
+        self.copy_btn = AeroButton("COPY CODE", self, height=32, tone="neutral")
         self.copy_btn.clicked.connect(self._copy)
         self.copy_btn.setVisible(False)
-        self.close_btn = AeroButton("ĐÓNG", self, height=32, tone="neutral")
+        self.close_btn = AeroButton("CLOSE", self, height=32, tone="neutral")
         self.close_btn.clicked.connect(self.dismiss)
         self.place()
 
@@ -192,12 +192,12 @@ class LoginDialog(GlassDialog):
 
     def _copy(self) -> None:
         QGuiApplication.clipboard().setText(self.code)
-        self.message = "Đã chép mã. Dán vào trang vừa mở rồi xác nhận."
+        self.message = "Code copied. Paste it on the page that opened, then confirm."
         self.update()
 
     def show_code(self, url: str, code: str) -> None:
         self.url, self.code, self.state = url, code, "ready"
-        self.message = "Mở trang bên dưới, nhập mã, rồi quay lại đây."
+        self.message = "Open the page below, enter the code, then come back here."
         self.copy_btn.setVisible(True)
         self.update()
 
@@ -266,7 +266,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: trans
 class ReportDialog(GlassDialog):
     """Thẻ kính lớn chứa một báo cáo văn bản dài."""
 
-    def __init__(self, parent, title: str, body: str = "Đang chạy…"):
+    def __init__(self, parent, title: str, body: str = "Running…"):
         super().__init__(parent, title, width=min(760, parent.width() - 80),
                          height=min(520, parent.height() - 90))
         self.view = QTextBrowser(self)
@@ -275,7 +275,7 @@ class ReportDialog(GlassDialog):
         f.setFamily("monospace")
         self.view.setFont(f)
         self.view.setPlainText(body)
-        self.close_btn = AeroButton("ĐÓNG", self, height=32, tone="neutral")
+        self.close_btn = AeroButton("CLOSE", self, height=32, tone="neutral")
         self.close_btn.clicked.connect(self.dismiss)
         self.place()
 

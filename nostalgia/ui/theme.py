@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from PySide6.QtGui import (
+    QColor, QFont, QFontDatabase, QImage, QLinearGradient, QPainter, QPixmap,
+)
 from PySide6.QtCore import Qt, QPointF
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QLinearGradient, QPixmap
 
 # ---------- màu ----------
-# Kính tối, ám xanh lạnh — Aero luôn lệch về phía lam chứ không xám trung tính.
-GLASS_TINT = QColor(20, 32, 50, 120)
-GLASS_TINT_STRONG = QColor(14, 24, 40, 158)
+# Sắc kính Aero: xanh lam lạnh, khá trong — Windows 7 để màu sau kính ánh lên rõ.
+GLASS_TINT = QColor(46, 82, 128, 62)
+GLASS_TINT_STRONG = QColor(32, 62, 104, 92)
+AERO_TINT = QColor(70, 116, 170, 90)   # dùng cho các thẻ trên dashboard
 
 # Viền vát: sáng ở cạnh trên, tối ở cạnh dưới -> tạo cảm giác tấm kính dày.
 BEVEL_LIGHT = QColor(255, 255, 255, 130)
@@ -53,14 +56,31 @@ def gloss_gradient(height: float, strength: float = 1.0) -> QLinearGradient:
     Chính điểm dừng đột ngột ở 50% tạo ra cảm giác ánh sáng phản trên mặt kính;
     nếu chuyển mượt suốt chiều cao thì mất ngay chất Vista/7.
     """
+    # Bỏ dải cắt-giữa: chỉ giữ ánh sáng dịu ở đỉnh rồi tắt dần, không còn
+    # vệt sáng kết thúc ngang giữa panel.
     g = QLinearGradient(QPointF(0, 0), QPointF(0, height))
     a = lambda v: int(v * strength)  # noqa: E731
-    g.setColorAt(0.00, QColor(255, 255, 255, a(120)))
-    g.setColorAt(0.46, QColor(255, 255, 255, a(46)))
-    g.setColorAt(0.4999, QColor(255, 255, 255, a(38)))
-    g.setColorAt(0.50, QColor(255, 255, 255, a(2)))
-    g.setColorAt(0.94, QColor(255, 255, 255, a(20)))
-    g.setColorAt(1.00, QColor(255, 255, 255, a(34)))
+    g.setColorAt(0.00, QColor(255, 255, 255, a(95)))
+    g.setColorAt(0.14, QColor(255, 255, 255, a(30)))
+    g.setColorAt(0.40, QColor(255, 255, 255, a(6)))
+    g.setColorAt(1.00, QColor(255, 255, 255, a(4)))
+    return g
+
+
+def diagonal_streak(width: float, height: float, strength: float = 1.0) -> QLinearGradient:
+    """Vệt sáng xiên giả phản chiếu, port từ bản web (linear-gradient 105°).
+
+    Một dải sáng hẹp chạy chéo qua mặt kính — thứ khiến tấm kính trông như đang
+    hắt một nguồn sáng ở xa, chứ không chỉ sáng đều. Giữ hẹp và mờ, quá tay là rẻ.
+    """
+    # Hướng ~105°: từ trên-trái xuống dưới-phải, lệch nhẹ.
+    g = QLinearGradient(QPointF(0, 0), QPointF(width, height * 1.2))
+    a = lambda v: int(max(0, min(255, v * strength)))  # noqa: E731
+    g.setColorAt(0.00, QColor(255, 255, 255, 0))
+    g.setColorAt(0.42, QColor(255, 255, 255, 0))
+    g.setColorAt(0.50, QColor(255, 255, 255, a(60)))   # đỉnh vệt sáng
+    g.setColorAt(0.58, QColor(255, 255, 255, 0))
+    g.setColorAt(1.00, QColor(255, 255, 255, 0))
     return g
 
 
@@ -78,6 +98,30 @@ def sheen_gradient(width: float, strength: float = 1.0) -> QLinearGradient:
     return g
 
 
+_NOISE: QPixmap | None = None
+
+
+def noise_tile() -> QPixmap:
+    """Ô nhiễu hạt để lát lên mặt kính — chính là 'noise layer' của material Acrylic/
+    Aero thật, thứ làm kính có hạt lấm tấm mịn thay vì phẳng lì.
+
+    Tạo một lần bằng seed cố định để mỗi lần chạy đều giống nhau.
+    """
+    global _NOISE
+    if _NOISE is None:
+        import random
+        n = 110
+        img = QImage(n, n, QImage.Format_ARGB32_Premultiplied)
+        img.fill(0)
+        rnd = random.Random(1971)  # năm... đùa thôi, chỉ cần cố định
+        for y in range(n):
+            for x in range(n):
+                v = rnd.randint(150, 255)
+                img.setPixelColor(x, y, QColor(v, v, v, 16))
+        _NOISE = QPixmap.fromImage(img)
+    return _NOISE
+
+
 def blur_pixmap(src: QPixmap, factor: int = 12, passes: int = 2) -> QPixmap:
     """Làm mờ bằng cách thu nhỏ rồi phóng to với nội suy mượt.
 
@@ -91,4 +135,18 @@ def blur_pixmap(src: QPixmap, factor: int = 12, passes: int = 2) -> QPixmap:
         small = small.scaled(
             max(1, w // 2), max(1, h // 2), Qt.IgnoreAspectRatio, Qt.SmoothTransformation
         )
-    return small.scaled(src.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    blurred = small.scaled(src.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+
+    # Lớp "Aero": chồng chính nó ở chế độ Overlay để đẩy tương phản + bão hoà,
+    # thêm chút sáng — đúng cách Windows 7 làm màu sau kính rực hơn thực tế.
+    out = QPixmap(blurred.size())
+    p = QPainter(out)
+    p.drawPixmap(0, 0, blurred)
+    p.setCompositionMode(QPainter.CompositionMode_Overlay)
+    p.setOpacity(0.5)
+    p.drawPixmap(0, 0, blurred)
+    p.setCompositionMode(QPainter.CompositionMode_SourceOver)
+    p.setOpacity(0.10)
+    p.fillRect(out.rect(), QColor(255, 255, 255))   # sáng nhẹ toàn khung
+    p.end()
+    return out

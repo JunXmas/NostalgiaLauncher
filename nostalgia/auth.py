@@ -66,18 +66,18 @@ def request_device_code(client_id: str) -> dict:
 # thuật ngữ nội bộ nên dịch sang việc cần làm.
 _AAD_HINTS = {
     "AADSTS70002": (
-        "Azure application chưa bật 'Allow public client flows'.\n\n"
-        "Vào portal.azure.com > App registrations > app của bạn > Authentication "
+        "Your Azure application has not enabled 'Allow public client flows'.\n\n"
+        "Go to portal.azure.com > App registrations > your app > Authentication "
         "> Advanced settings > Allow public client flows: Yes > Save."
     ),
     "AADSTS700016": (
-        "Không tìm thấy application với client ID này trong tenant consumers.\n\n"
-        "Kiểm tra lại Application (client) ID, và Supported account types phải là "
+        "No application found with this client ID in the consumers tenant.\n\n"
+        "Double-check the Application (client) ID, and Supported account types must be "
         "'Personal accounts only'."
     ),
     "AADSTS50194": (
-        "Application đang cấu hình single-tenant nên không dùng được endpoint "
-        "consumers. Đổi Supported account types sang 'Personal accounts only'."
+        "The application is single-tenant so it cannot use the consumers endpoint. "
+        "Change Supported account types to 'Personal accounts only'."
     ),
 }
 
@@ -86,12 +86,12 @@ def _explain_aad(response) -> str:
     try:
         data = response.json()
     except ValueError:
-        return f"Microsoft trả về HTTP {response.status_code}."
+        return f"Microsoft returned HTTP {response.status_code}."
     description = data.get("error_description", "")
     for code, hint in _AAD_HINTS.items():
         if code in description:
             return hint
-    return f"Microsoft từ chối ({data.get('error', response.status_code)}): {description[:300]}"
+    return f"Microsoft refused ({data.get('error', response.status_code)}): {description[:300]}"
 
 
 def poll_for_token(client_id: str, device_code: str, interval: int, expires_in: int) -> dict:
@@ -116,8 +116,8 @@ def poll_for_token(client_id: str, device_code: str, interval: int, expires_in: 
         if error == "slow_down":
             interval += 5
             continue
-        raise AuthError(f"Đăng nhập Microsoft thất bại: {r.json().get('error_description', error)}")
-    raise AuthError("Hết thời gian chờ nhập mã.")
+        raise AuthError(f"Microsoft sign-in failed: {r.json().get('error_description', error)}")
+    raise AuthError("Timed out waiting for the code.")
 
 
 def refresh_microsoft_token(client_id: str, refresh_token: str) -> dict:
@@ -132,7 +132,7 @@ def refresh_microsoft_token(client_id: str, refresh_token: str) -> dict:
         timeout=TIMEOUT,
     )
     if r.status_code != 200:
-        raise AuthError("Refresh token không còn hiệu lực, cần đăng nhập lại.")
+        raise AuthError("Refresh token expired — please sign in again.")
     return r.json()
 
 
@@ -170,11 +170,11 @@ def _xsts(xbl_token: str) -> str:
     if r.status_code == 401:
         xerr = str(r.json().get("XErr", ""))
         messages = {
-            "2148916233": "Tài khoản Microsoft này chưa có hồ sơ Xbox. Tạo tại xbox.com trước.",
-            "2148916235": "Xbox Live không khả dụng ở quốc gia của tài khoản này.",
-            "2148916238": "Tài khoản trẻ em: cần được thêm vào một Family group.",
+            "2148916233": "This Microsoft account has no Xbox profile. Create one at xbox.com first.",
+            "2148916235": "Xbox Live is not available in this account's country.",
+            "2148916238": "Child account: it must be added to a Family group.",
         }
-        raise AuthError(messages.get(xerr, f"XSTS từ chối (XErr={xerr})."))
+        raise AuthError(messages.get(xerr, f"XSTS refused (XErr={xerr})."))
     r.raise_for_status()
     return r.json()["Token"]
 
@@ -190,10 +190,10 @@ def _minecraft_login(xsts_token: str, uhs: str) -> str:
         # Minecraft Services. Chưa duyệt thì đúng bước này trả 403, không phải
         # lỗi mã nguồn hay sai token.
         raise AuthError(
-            "Minecraft Services từ chối (403): Azure application của bạn chưa được "
-            "cấp quyền dùng Minecraft API.\n\n"
-            "Nộp đơn duyệt tại https://aka.ms/mce-reviewappid rồi chờ Microsoft "
-            "phản hồi (sau khi duyệt còn cần tới 24 giờ để có hiệu lực)."
+            "Minecraft Services refused (403): your Azure application has not been "
+            "granted access to the Minecraft API.\n\n"
+            "Submit the review form at https://aka.ms/mce-reviewappid and wait for "
+            "Microsoft (after approval it can take up to 24 hours to take effect)."
         )
     r.raise_for_status()
     return r.json()["access_token"]

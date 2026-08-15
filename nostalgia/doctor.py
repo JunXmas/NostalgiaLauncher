@@ -45,21 +45,21 @@ class Report:
         return sum(1 for c in self.checks if c.status == WARN)
 
     def text(self, *, show_command: bool = True) -> str:
-        out = [f"Chẩn đoán {self.version_id}", ""]
+        out = [f"Diagnostics — {self.version_id}", ""]
         for c in self.checks:
             out.append(f"  {c.mark} {c.name}{': ' + c.detail if c.detail else ''}")
             out.extend(f"      {line}" for line in c.lines[:8])
             if len(c.lines) > 8:
-                out.append(f"      … và {len(c.lines) - 8} dòng nữa")
+                out.append(f"      … and {len(c.lines) - 8} more")
         out.append("")
         if self.failed:
-            out.append(f"{self.failed} lỗi, {self.warned} cảnh báo — chưa chạy được.")
+            out.append(f"{self.failed} error(s), {self.warned} warning(s) — cannot launch yet.")
         elif self.warned:
-            out.append(f"Không có lỗi, {self.warned} cảnh báo.")
+            out.append(f"No errors, {self.warned} warning(s).")
         else:
-            out.append("Mọi mắt xích đều ổn.")
+            out.append("Every link checks out.")
         if show_command and self.command:
-            out += ["", "Lệnh sẽ chạy (access token đã che):", ""]
+            out += ["", "Launch command (access token hidden):", ""]
             out += [f"  {a}" for a in self.command]
         return "\n".join(out)
 
@@ -68,7 +68,7 @@ def _redact(cmd: list[str]) -> list[str]:
     out, skip = [], False
     for arg in cmd:
         if skip:
-            out.append("<đã che>")
+            out.append("<hidden>")
             skip = False
             continue
         out.append(arg)
@@ -86,31 +86,37 @@ def diagnose(installer: Installer, version_id: str, *, memory_mb: int = 2048,
     try:
         meta = installer.version_json(version_id)
     except Exception as e:  # noqa: BLE001
-        add(Check("Metadata phiên bản", FAIL, str(e)))
+        add(Check("Version metadata", FAIL, str(e)))
         return report
     parent = meta.get("jar")
     detail = f"{meta.get('type', '?')}, mainClass {meta['mainClass'].split('.')[-1]}"
     if parent and parent != version_id:
-        detail += f", kế thừa từ {parent}"
-    add(Check("Metadata phiên bản", OK, detail))
+        detail += f", inherits from {parent}"
+    add(Check("Version metadata", OK, detail))
 
     # ---------- java ----------
+    from . import jre
     needed = meta.get("javaVersion", {}).get("majorVersion", 8)
+    component = jre.component_of(meta)
     if java_path:
-        add(Check("Java", OK, f"dùng đường dẫn tự đặt: {java_path} (cần Java {needed})"))
+        add(Check("Java", OK, f"using custom path: {java_path} (needs Java {needed})"))
         java = java_path
+    elif jre.is_installed(installer.game_dir, component):
+        java = str(jre.java_binary(installer.game_dir, component))
+        add(Check("Java", OK, f"JRE {component} (Java {needed}) already downloaded"))
     else:
         try:
             java = find_java(needed)
-            add(Check("Java", OK, f"Java {needed} tại {java}"))
-        except RuntimeError as e:
+            add(Check("Java", OK, f"system Java {needed} at {java}"))
+        except RuntimeError:
             java = "/usr/bin/java"
-            add(Check("Java", FAIL, str(e).splitlines()[0]))
+            add(Check("Java", WARN,
+                      f"no Java {needed} yet; the launcher will download JRE '{component}' when you press PLAY"))
 
     # ---------- client jar ----------
     jar = installer.client_jar(meta)
     if not jar.is_file():
-        add(Check("Client jar", FAIL, f"thiếu {jar}"))
+        add(Check("Client jar", FAIL, f"missing {jar}"))
     else:
         size = jar.stat().st_size / 1024 / 1024
         add(Check("Client jar", OK, f"{jar.name}, {size:.1f} MB"))
@@ -119,10 +125,10 @@ def diagnose(installer: Installer, version_id: str, *, memory_mb: int = 2048,
     paths = installer.library_paths(meta)
     missing = [p for p in paths if not p.is_file()]
     if missing:
-        add(Check("Thư viện", FAIL, f"thiếu {len(missing)}/{len(paths)}",
+        add(Check("Libraries", FAIL, f"missing {len(missing)}/{len(paths)}",
                   [str(p) for p in missing]))
     else:
-        add(Check("Thư viện", OK, f"đủ {len(paths)} jar trên classpath"))
+        add(Check("Libraries", OK, f"all {len(paths)} jars on the classpath"))
 
     if verify_hashes:
         bad = []
@@ -133,8 +139,8 @@ def diagnose(installer: Installer, version_id: str, *, memory_mb: int = 2048,
             _url, dest, sha = entry
             if sha and dest.is_file() and _sha1(dest) != sha:
                 bad.append(str(dest))
-        add(Check("Hash thư viện", FAIL if bad else OK,
-                  f"{len(bad)} file sai hash" if bad else "khớp hết", bad))
+        add(Check("Library hashes", FAIL if bad else OK,
+                  f"{len(bad)} file(s) with wrong hash" if bad else "all match", bad))
 
     # ---------- natives ----------
     native_libs = [l for l in meta["libraries"]
@@ -142,42 +148,42 @@ def diagnose(installer: Installer, version_id: str, *, memory_mb: int = 2048,
     natives = installer.natives_dir(meta)
     extracted = sorted(p.name for p in natives.iterdir()) if natives.is_dir() else []
     if native_libs and not extracted:
-        add(Check("Natives", FAIL, f"{len(native_libs)} gói khai báo nhưng chưa giải nén"))
+        add(Check("Natives", FAIL, f"{len(native_libs)} declared but not extracted"))
     elif native_libs:
-        add(Check("Natives", OK, f"{len(extracted)} file trong {natives.name}/", extracted))
+        add(Check("Natives", OK, f"{len(extracted)} files in {natives.name}/", extracted))
     else:
-        add(Check("Natives", OK, "phiên bản này không dùng natives rời"))
+        add(Check("Natives", OK, "this version uses no separate natives"))
 
     # ---------- assets ----------
     index_id = meta["assetIndex"]["id"]
     index_file = installer.assets_dir / "indexes" / f"{index_id}.json"
     if not index_file.is_file():
-        add(Check("Assets", FAIL, f"thiếu asset index {index_id}.json"))
+        add(Check("Assets", FAIL, f"missing asset index {index_id}.json"))
     else:
         objects = json.loads(index_file.read_text())["objects"]
         absent = [h["hash"] for h in objects.values()
                   if not (installer.assets_dir / "objects" / h["hash"][:2] / h["hash"]).is_file()]
         if absent:
             add(Check("Assets", FAIL,
-                      f"thiếu {len(absent)}/{len(objects)} file (index {index_id})"))
+                      f"missing {len(absent)}/{len(objects)} files (index {index_id})"))
         else:
-            add(Check("Assets", OK, f"đủ {len(objects)} file (index {index_id})"))
+            add(Check("Assets", OK, f"all {len(objects)} files (index {index_id})"))
 
     # ---------- dựng lệnh ----------
     probe = LaunchIdentity("DiagnosticUser", "0" * 32, "0", "msa", demo=False)
     try:
         cmd = build_command(meta, installer, probe, java=java, max_memory_mb=memory_mb)
     except Exception as e:  # noqa: BLE001
-        add(Check("Dựng lệnh", FAIL, str(e)))
+        add(Check("Build command", FAIL, str(e)))
         return report
 
     leftover = [a for a in cmd if "${" in a]
-    add(Check("Dựng lệnh", FAIL if leftover else OK,
-              f"còn {len(leftover)} placeholder chưa thay" if leftover
-              else f"{len(cmd)} tham số, không sót placeholder", leftover))
+    add(Check("Build command", FAIL if leftover else OK,
+              f"{len(leftover)} placeholder(s) left unresolved" if leftover
+              else f"{len(cmd)} args, no placeholders left", leftover))
 
     if meta["mainClass"] not in cmd:
-        add(Check("mainClass", FAIL, "không có trong lệnh"))
+        add(Check("mainClass", FAIL, "not present in the command"))
     else:
         add(Check("mainClass", OK, meta["mainClass"]))
 

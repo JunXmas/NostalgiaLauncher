@@ -50,9 +50,9 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         _CallbackHandler.result = {k: v[0] for k, v in query.items()}
         ok = "code" in _CallbackHandler.result
         page = PAGE.format(
-            title="Đã liên kết xong" if ok else "Liên kết thất bại",
-            body="Quay lại Nostalgia Launcher là được." if ok
-            else _CallbackHandler.result.get("error", "Không nhận được mã."),
+            title="Linked successfully" if ok else "Linking failed",
+            body="You can return to Nostalgia Launcher now." if ok
+            else _CallbackHandler.result.get("error", "No code received."),
         )
         body = page.encode()
         self.send_response(200)
@@ -69,8 +69,8 @@ def login(client_id: str, client_secret: str = "", on_url=None, wait_seconds: in
     """Chạy trọn luồng và trả về {sub, email, name}. Hàm này chặn — gọi ở luồng nền."""
     if not client_id:
         raise GoogleAuthError(
-            "Chưa đặt GOOGLE_CLIENT_ID.\n\nTạo OAuth client ID kiểu Desktop app tại "
-            "console.cloud.google.com rồi export GOOGLE_CLIENT_ID."
+            "GOOGLE_CLIENT_ID is not set.\n\nCreate an OAuth client ID of type Desktop app "
+            "at console.cloud.google.com, then export GOOGLE_CLIENT_ID."
         )
 
     verifier = _b64(secrets.token_bytes(48))
@@ -105,12 +105,12 @@ def login(client_id: str, client_secret: str = "", on_url=None, wait_seconds: in
 
     result = _CallbackHandler.result
     if not result:
-        raise GoogleAuthError("Hết thời gian chờ xác nhận trên trình duyệt.")
+        raise GoogleAuthError("Timed out waiting for browser confirmation.")
     if "error" in result:
-        raise GoogleAuthError(f"Google từ chối: {result['error']}")
+        raise GoogleAuthError(f"Google refused: {result['error']}")
     if result.get("state") != state:
         # State không khớp nghĩa là phản hồi không đến từ yêu cầu mình vừa gửi.
-        raise GoogleAuthError("State không khớp — huỷ để an toàn.")
+        raise GoogleAuthError("State mismatch — aborting for safety.")
 
     data = {
         "client_id": client_id,
@@ -124,7 +124,7 @@ def login(client_id: str, client_secret: str = "", on_url=None, wait_seconds: in
 
     r = requests.post(TOKEN_URL, data=data, timeout=TIMEOUT)
     if r.status_code != 200:
-        raise GoogleAuthError(f"Đổi mã lấy token thất bại: {r.text[:200]}")
+        raise GoogleAuthError(f"Token exchange failed: {r.text[:200]}")
     access_token = r.json()["access_token"]
 
     info = requests.get(USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"},

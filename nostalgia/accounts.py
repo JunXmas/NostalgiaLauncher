@@ -177,8 +177,8 @@ class AccountStore:
         """Thêm hồ sơ offline. Chặn nếu chưa có tài khoản nào sở hữu game."""
         if not self.any_owns_game():
             raise OwnershipRequired(
-                "Phải thêm một tài khoản Microsoft có bản quyền Minecraft "
-                "trước khi thêm tài khoản offline."
+                "You must add a Microsoft account that owns Minecraft "
+                "before adding an offline profile."
             )
         account = StoredAccount.offline(self.unique_label(label or name), name)
         self.upsert(account)
@@ -216,7 +216,7 @@ def refresh_if_online(store: AccountStore, account: StoredAccount, client_id: st
         ms_tokens = auth.refresh_microsoft_token(client_id, account.refresh_token)
         session = auth.complete_login(ms_tokens)
     except Exception as e:  # noqa: BLE001 - mất mạng hay token hỏng đều rơi về cache
-        print(f"  [offline] Không làm mới được phiên ({e}); dùng dữ liệu đã lưu.")
+        print(f"  [offline] Could not refresh session ({e}); using cached data.")
         return account
     refreshed = StoredAccount.from_session(session, account.label)
     # Giữ nguyên tên hiển thị demo mà người dùng đã đặt cho tài khoản này.

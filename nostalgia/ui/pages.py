@@ -80,25 +80,37 @@ class Page(QWidget):
         p.end()
 
 
-class PlayPage(Page):
-    """Không che gì — để ảnh hero hiện trọn vẹn."""
+class StubPage(Page):
+    """Trang chưa có nội dung — Mods / Resource Packs / Servers."""
 
-    scrim = False
+    def __init__(self, ctl, heading: str, note: str, parent=None):
+        super().__init__(ctl, parent)
+        self.heading = heading
+        self._note = note
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        p = QPainter(self)
+        p.setFont(ui_font(10))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(26, 70, self.width() - 52, 80),
+                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self._note)
+        p.end()
 
 
 # ---------- bản cài đặt ----------
 
 class InstallationsPage(Page):
-    heading = "Bản cài đặt"
+    heading = "Installations"
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="Chưa tải phiên bản nào. Bấm THÊM PHIÊN BẢN.")
+        self.list = ListView(self, empty_text="No versions downloaded yet. Click ADD VERSION.")
         self.list.activated.connect(self._select)
         self.list.action_clicked.connect(self.ctl.ask_delete_version)
-        self.add_btn = AeroButton("THÊM PHIÊN BẢN", self, height=32, tone="neutral")
+        self.add_btn = AeroButton("ADD VERSION", self, height=32, tone="neutral")
         self.add_btn.clicked.connect(self.ctl.open_version_menu_for_install)
-        self.fabric_btn = AeroButton("CÀI FABRIC", self, height=32, tone="neutral")
+        self.fabric_btn = AeroButton("INSTALL FABRIC", self, height=32, tone="neutral")
         self.fabric_btn.clicked.connect(self.ctl.open_fabric_menu)
 
     def _select(self, version_id) -> None:
@@ -114,8 +126,8 @@ class InstallationsPage(Page):
         current = self.ctl.settings.selected_version
         rows = []
         for v in self.ctl.installer.installed_versions():
-            state = "sẵn sàng" if v["complete"] else "mới có metadata"
-            origin = f" · nền {v['parent']}" if v.get("parent") else ""
+            state = "ready" if v["complete"] else "metadata only"
+            origin = f" · base {v['parent']}" if v.get("parent") else ""
             rows.append(Row(
                 title=v["id"],
                 subtitle=f"{v['type']}{origin} · Java {v['java']} · {state}",
@@ -141,15 +153,15 @@ class SkinsPage(Page):
         account = self.ctl.current_account()
         self.skin, self.note = None, ""
         if account is None:
-            self.note = "Chưa có tài khoản nào."
+            self.note = "No accounts yet."
         elif account.kind != "msa" or not account.owns_game:
-            self.note = ("Chỉ tài khoản Microsoft đã mua game mới có skin trên máy chủ.\n"
-                         "Hồ sơ offline và tài khoản demo dùng skin mặc định Steve/Alex.")
+            self.note = ("Only Microsoft accounts that own the game have a server-side skin.\n"
+                         "Offline profiles and demo accounts use the default Steve/Alex skin.")
         elif not account.skin_url:
-            self.note = "Tài khoản này chưa lưu skin — đăng nhập lại để lấy về."
+            self.note = "This account has no cached skin — sign in again to fetch it."
         else:
             self.ctl.load_skin(account.skin_url, self._got)
-            self.note = "Đang tải skin…"
+            self.note = "Loading skin…"
         self.update()
 
     def _got(self, data: bytes | None) -> None:
@@ -159,7 +171,7 @@ class SkinsPage(Page):
                 self.skin = img
                 self.note = ""
         else:
-            self.note = "Không tải được skin."
+            self.note = "Could not load skin."
         self.update()
 
     def _part(self, p: QPainter, sx: int, sy: int, sw: int, sh: int,
@@ -198,8 +210,8 @@ class SkinsPage(Page):
             p.setPen(TEXT_FAINT)
             p.drawText(QRect(ox + 150, oy + 34, 420, 40),
                        Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap,
-                       "Đổi skin ở minecraft.net/msaprofile — launcher chỉ hiển thị,\n"
-                       "chưa hỗ trợ tải skin mới lên.")
+                       "Change your skin at minecraft.net/msaprofile — the launcher only shows it,\n"
+                       "uploading a new skin is not supported yet.")
         elif self.note:
             p.setFont(ui_font(10))
             p.setPen(TEXT_DIM)
@@ -211,18 +223,18 @@ class SkinsPage(Page):
 # ---------- ghi chú phiên bản ----------
 
 class NotesPage(Page):
-    heading = "Ghi chú phiên bản"
+    heading = "Patch notes"
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="Đang tải…")
+        self.list = ListView(self, empty_text="Loading…")
         self.list.ROW_H = 44
         self.list.activated.connect(self._open)
         self.body = QTextBrowser(self)
         self.body.setStyleSheet(TEXT_QSS)
         self.body.setFont(ui_font(9))
         self.body.setOpenExternalLinks(True)
-        self.body.setPlainText("Chọn một phiên bản bên trái để xem ghi chú.")
+        self.body.setPlainText("Pick a version on the left to read its notes.")
         self._entries: list[dict] = []
 
     def resizeEvent(self, event) -> None:  # noqa: N802
@@ -237,7 +249,7 @@ class NotesPage(Page):
 
     def _got_list(self, entries: list[dict] | None) -> None:
         if not entries:
-            self.list.empty_text = "Không tải được ghi chú (mất mạng?)."
+            self.list.empty_text = "Could not load patch notes (offline?)."
             self.list.set_rows([])
             return
         self._entries = entries
@@ -247,7 +259,7 @@ class NotesPage(Page):
         ])
 
     def _open(self, path) -> None:
-        self.body.setPlainText("Đang tải…")
+        self.body.setPlainText("Loading…")
         self.ctl.load_patch_body(path, self.body.setPlainText)
 
 
@@ -258,7 +270,7 @@ class NewsPage(Page):
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="Đang tải…")
+        self.list = ListView(self, empty_text="Loading…")
         self.list.ROW_H = 62
         self.list.activated.connect(self.ctl.open_url)
         self._loaded = False
@@ -273,7 +285,7 @@ class NewsPage(Page):
 
     def _got(self, entries: list[dict] | None) -> None:
         if not entries:
-            self.list.empty_text = "Không tải được tin tức (mất mạng?)."
+            self.list.empty_text = "Could not load news (offline?)."
             self.list.set_rows([])
             return
         self._loaded = True
@@ -302,7 +314,7 @@ class SettingsPage(Page):
         self.game_dir.editingFinished.connect(self._set_dir)
 
         self.java = QLineEdit(s.java_path, self)
-        self.java.setPlaceholderText("để trống = tự dò theo phiên bản")
+        self.java.setPlaceholderText("leave empty = auto-detect per version")
         self.java.setStyleSheet(INPUT_QSS)
         self.java.setFont(ui_font(9))
         self.java.editingFinished.connect(self._set_java)
@@ -312,10 +324,12 @@ class SettingsPage(Page):
         self.close_on_launch = AeroToggle(s.close_on_launch, self)
         self.close_on_launch.toggled.connect(self._set_close)
 
-        self.open_dir = AeroButton("MỞ THƯ MỤC GAME", self, height=32, tone="neutral")
+        self.open_dir = AeroButton("OPEN GAME FOLDER", self, height=32, tone="neutral")
         self.open_dir.clicked.connect(lambda: self.ctl.open_path(self.ctl.settings.game_path))
-        self.doctor = AeroButton("KIỂM TRA CÀI ĐẶT", self, height=32, tone="neutral")
+        self.doctor = AeroButton("CHECK INSTALL", self, height=32, tone="neutral")
         self.doctor.clicked.connect(self.ctl.run_doctor)
+        self.bg_btn = AeroButton("CHANGE BACKGROUND", self, height=32, tone="neutral")
+        self.bg_btn.clicked.connect(self.ctl.pick_background)
 
     @staticmethod
     def _max_memory() -> int:
@@ -357,8 +371,9 @@ class SettingsPage(Page):
         self.java.setGeometry(26, 218, w, 32)
         self.snapshots.setGeometry(26, 282, 44, 22)
         self.close_on_launch.setGeometry(26, 322, 44, 22)
-        self.open_dir.setGeometry(26, self.height() - 52, 200, 32)
-        self.doctor.setGeometry(238, self.height() - 52, 200, 32)
+        self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
+        self.doctor.setGeometry(224, self.height() - 52, 170, 32)
+        self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
@@ -375,20 +390,20 @@ class SettingsPage(Page):
                 p.drawText(QRect(26, y + 17, self.width() - 52, 16),
                            Qt.AlignLeft | Qt.AlignVCenter, hint)
 
-        label(26, f"Bộ nhớ tối đa — {gb:.1f} GB", "")
-        label(114, "Thư mục game")
-        label(190, "Đường dẫn Java")
+        label(26, f"Max memory — {gb:.1f} GB", "")
+        label(114, "Game folder")
+        label(190, "Java path")
         p.setFont(ui_font(9))
         p.setPen(TEXT)
         p.drawText(QRect(84, 280, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Hiện cả bản snapshot")
+                   "Show snapshots")
         p.drawText(QRect(84, 320, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Đóng launcher khi game chạy")
+                   "Close launcher when the game starts")
 
         warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
         if warn:
             p.setFont(ui_font(8))
             p.setPen(DEGRADED)
             p.drawText(QRect(26, 90, self.width() - 52, 16), Qt.AlignLeft | Qt.AlignVCenter,
-                       "Đặt gần hết RAM máy dễ làm treo hệ thống.")
+                       "Setting near all your RAM can freeze the system.")
         p.end()

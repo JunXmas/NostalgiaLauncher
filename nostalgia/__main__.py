@@ -23,23 +23,23 @@ def client_id() -> str:
     cid = resolve("microsoft", "MC_CLIENT_ID")
     if not cid:
         sys.exit(
-            "Thiếu MC_CLIENT_ID.\n"
-            "Đăng ký app tại https://portal.azure.com > App registrations:\n"
+            "MC_CLIENT_ID is not set.\n"
+            "Register an app at https://portal.azure.com > App registrations:\n"
             "  - Supported account types: Personal Microsoft accounts only\n"
             "  - Authentication > Allow public client flows: Yes\n"
-            "Rồi: export MC_CLIENT_ID=<application-id>\n"
-            "hoặc lưu vào ~/.config/nostalgia-launcher/clients.json"
+            "Then: export MC_CLIENT_ID=<application-id>\n"
+            "or save it to ~/.config/nostalgia-launcher/clients.json"
         )
     return cid
 
 
 def cmd_account_add(args) -> None:
-    """Thêm một tài khoản Microsoft. Mỗi người chơi đăng nhập tài khoản của mình."""
+    """Add a Microsoft account. Each player signs in with their own."""
     cid = client_id()
     store = accounts.AccountStore()
 
     flow = auth.request_device_code(cid)
-    print(f"\n  Mở {flow['verification_uri']} và nhập mã: {flow['user_code']}\n")
+    print(f"\n  Open {flow['verification_uri']} and enter the code: {flow['user_code']}\n")
     tokens = auth.poll_for_token(cid, flow["device_code"], flow["interval"], flow["expires_in"])
     session = auth.complete_login(tokens)
 
@@ -50,23 +50,23 @@ def cmd_account_add(args) -> None:
     store.upsert(account)
 
     if session.owns_game:
-        print(f"Đã thêm '{label}': có bản quyền, chơi full game.")
+        print(f"Added '{label}': owns the game, full game.")
     else:
         print(
-            f"Đã thêm '{label}': tài khoản hợp lệ nhưng chưa mua game.\n"
-            f"Sẽ chạy demo mode chính thức với tên hiển thị '{account.demo_name}'."
+            f"Added '{label}': valid account but does not own the game.\n"
+            f"Will run official demo mode with display name '{account.demo_name}'."
         )
-    print(f"Tài khoản mặc định hiện tại: {store.default_label}")
+    print(f"Current default account: {store.default_label}")
 
 
 def cmd_account_add_offline(args) -> None:
-    """Thêm hồ sơ offline. Chỉ mở khi launcher đã có tài khoản sở hữu game."""
+    """Add an offline profile. Only available once a game-owning account exists."""
     store = accounts.AccountStore()
     try:
         account = store.add_offline(args.name, args.label)
     except accounts.OwnershipRequired as e:
-        sys.exit(f"{e}\nThêm bằng: python -m nostalgia account add")
-    print(f"Đã thêm hồ sơ offline '{account.label}' (tên trong game: {account.username}).")
+        sys.exit(f"{e}\nAdd one with: python -m nostalgia account add")
+    print(f"Added offline profile '{account.label}' (in-game name: {account.username}).")
 
 
 def _mode_of(store: accounts.AccountStore, a: accounts.StoredAccount) -> str:
@@ -78,42 +78,57 @@ def _mode_of(store: accounts.AccountStore, a: accounts.StoredAccount) -> str:
 def cmd_account_list(args) -> None:
     store = accounts.AccountStore()
     if not store.accounts:
-        print("Chưa có tài khoản nào. Chạy: python -m nostalgia account add")
+        print("No accounts yet. Run: python -m nostalgia account add")
         return
-    print(f"  {'':2s} {'LABEL':20s} {'LOẠI':9s} {'CHẾ ĐỘ':14s} TÊN TRONG GAME")
+    print(f"  {'':2s} {'LABEL':20s} {'TYPE':9s} {'MODE':14s} IN-GAME NAME")
     for a in store.accounts:
         marker = "*" if a.label == store.default_label else " "
         name = a.username if (a.owns_game or a.kind == accounts.OFFLINE) else a.demo_name
         print(f"  {marker:2s} {a.label:20s} {a.kind:9s} {_mode_of(store, a):14s} {name}")
-    print("\n  * = mặc định khi chạy `play` không kèm --account")
+    print("\n  * = default when running `play` without --account")
     if not store.any_owns_game():
-        print("  Chưa có tài khoản nào sở hữu game: hồ sơ offline sẽ chạy ở demo mode.")
+        print("  No game-owning account: offline profiles will run in demo mode.")
 
 
 def cmd_account_remove(args) -> None:
     store = accounts.AccountStore()
     if store.remove(args.label):
-        print(f"Đã xoá '{args.label}'. Mặc định hiện tại: {store.default_label}")
+        print(f"Removed '{args.label}'. Current default: {store.default_label}")
     else:
-        sys.exit(f"Không có tài khoản nào tên '{args.label}'.")
+        sys.exit(f"No account named '{args.label}'.")
 
 
 def cmd_account_default(args) -> None:
     store = accounts.AccountStore()
     if store.set_default(args.label):
-        print(f"Tài khoản mặc định: {args.label}")
+        print(f"Default account: {args.label}")
     else:
-        sys.exit(f"Không có tài khoản nào tên '{args.label}'.")
+        sys.exit(f"No account named '{args.label}'.")
 
 
 def cmd_gui(args) -> None:
     try:
         from .ui.app import run_gui
     except ImportError:
-        sys.exit("Cần PySide6: pip install PySide6-Essentials")
+        sys.exit("PySide6 required: pip install PySide6-Essentials")
     # Chỉ ghi đè cấu hình đã lưu khi người dùng nêu rõ trên dòng lệnh.
     override = args.game_dir if args.game_dir != DEFAULT_GAME_DIR else None
     sys.exit(run_gui(override, args.version))
+
+
+def cmd_jre(args) -> None:
+    from . import jre
+    installer = Installer(args.game_dir)
+    meta = installer.version_json(args.version)
+    comp = jre.component_of(meta)
+    if jre.is_installed(args.game_dir, comp) and not args.force:
+        print(f"JRE '{comp}' already at {jre.java_binary(args.game_dir, comp)}")
+        return
+    def on(stage, done, total):
+        if done == total or done % 40 == 0:
+            print(f"  {stage}: {done}/{total}")
+    binp = jre.install(args.game_dir, comp, on_progress=on)
+    print(f"Done. Java at: {binp}")
 
 
 def cmd_doctor(args) -> None:
@@ -135,7 +150,7 @@ def cmd_fabric(args) -> None:
             print(f"  {v}")
         return
     version_id = fabric.install(installer, args.version, args.loader)
-    print(f"Đã cài {version_id}. Chạy: python -m nostalgia play {version_id}")
+    print(f"Installed {version_id}. Run: python -m nostalgia play {version_id}")
 
 
 def cmd_versions(args) -> None:
@@ -150,17 +165,17 @@ def cmd_install(args) -> None:
 def cmd_play(args) -> None:
     store = accounts.AccountStore()
     if not store.accounts:
-        sys.exit("Chưa có tài khoản. Chạy: python -m nostalgia account add")
+        sys.exit("No accounts. Run: python -m nostalgia account add")
     account = store.get(args.account)
     if account is None:
-        sys.exit(f"Không có tài khoản nào tên '{args.account}'. Xem: account list")
+        sys.exit(f"No account named '{args.account}'. See: account list")
 
     if account.kind == accounts.MSA:
         account = accounts.refresh_if_online(store, account, client_id())
     identity = store.resolve_identity(account, override_name=args.name)
 
     if account.kind == accounts.OFFLINE and identity.demo:
-        print("  [cảnh báo] Không còn tài khoản nào sở hữu game -> hạ xuống demo mode.")
+        print("  [warning] No game-owning account left -> dropping to demo mode.")
 
     installer = Installer(args.game_dir)
     meta = installer.install(args.version)
@@ -169,7 +184,7 @@ def cmd_play(args) -> None:
     cmd = build_command(meta, installer, identity, max_memory_mb=args.memory)
 
     mode = "DEMO" if identity.demo else "full"
-    print(f"\nKhởi động {args.version} [{mode}] với tài khoản '{account.label}'...\n")
+    print(f"\nLaunching {args.version} [{mode}] with account '{account.label}'...\n")
     sys.exit(run(cmd, args.game_dir))
 
 
@@ -179,62 +194,67 @@ def main() -> None:
     parser.add_argument("--game-dir", type=Path, default=DEFAULT_GAME_DIR)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    acc = sub.add_parser("account", help="quản lý tài khoản").add_subparsers(
+    acc = sub.add_parser("account", help="manage accounts").add_subparsers(
         dest="account_cmd", required=True
     )
 
-    p = acc.add_parser("add", help="thêm một tài khoản Microsoft")
-    p.add_argument("--label", help="tên gợi nhớ; mặc định lấy tên tài khoản")
-    p.add_argument("--name", help="tên hiển thị trong game (chỉ dùng cho tài khoản demo)")
+    p = acc.add_parser("add", help="add a Microsoft account")
+    p.add_argument("--label", help="friendly label; defaults to the account name")
+    p.add_argument("--name", help="in-game display name (demo accounts only)")
     p.set_defaults(func=cmd_account_add)
 
-    p = acc.add_parser("add-offline", help="thêm hồ sơ offline (cần đã có tài khoản sở hữu game)")
-    p.add_argument("name", help="tên trong game")
-    p.add_argument("--label", help="tên gợi nhớ; mặc định lấy theo name")
+    p = acc.add_parser("add-offline", help="add an offline profile (needs a game-owning account)")
+    p.add_argument("name", help="in-game name")
+    p.add_argument("--label", help="friendly label; defaults to name")
     p.set_defaults(func=cmd_account_add_offline)
 
-    p = acc.add_parser("list", help="liệt kê tài khoản đã lưu")
+    p = acc.add_parser("list", help="list saved accounts")
     p.set_defaults(func=cmd_account_list)
 
-    p = acc.add_parser("remove", help="xoá một tài khoản")
+    p = acc.add_parser("remove", help="remove an account")
     p.add_argument("label")
     p.set_defaults(func=cmd_account_remove)
 
-    p = acc.add_parser("default", help="đặt tài khoản mặc định")
+    p = acc.add_parser("default", help="set the default account")
     p.add_argument("label")
     p.set_defaults(func=cmd_account_default)
 
-    p = sub.add_parser("gui", help="mở giao diện đồ hoạ")
-    p.add_argument("--version", default="", help="ghi đè phiên bản đang chọn")
+    p = sub.add_parser("gui", help="open the graphical interface")
+    p.add_argument("--version", default="", help="override the selected version")
     p.set_defaults(func=cmd_gui)
 
-    p = sub.add_parser("doctor", help="soi từng mắt xích của một bản cài đặt")
+    p = sub.add_parser("jre", help="pre-download the JRE for a version (no manual Java)")
     p.add_argument("version")
-    p.add_argument("--hashes", action="store_true", help="kiểm SHA1 mọi thư viện (chậm)")
-    p.add_argument("--command", action="store_true", help="in cả lệnh sẽ chạy")
+    p.add_argument("--force", action="store_true", help="re-download even if present")
+    p.set_defaults(func=cmd_jre)
+
+    p = sub.add_parser("doctor", help="inspect every link of an installation")
+    p.add_argument("version")
+    p.add_argument("--hashes", action="store_true", help="verify SHA1 of every library (slow)")
+    p.add_argument("--command", action="store_true", help="also print the launch command")
     p.set_defaults(func=cmd_doctor)
 
-    p = sub.add_parser("fabric", help="cài Fabric loader cho một phiên bản")
-    p.add_argument("version", nargs="?", default="", help="phiên bản game, ví dụ 1.21.4")
-    p.add_argument("--loader", help="phiên bản loader; mặc định lấy bản mới nhất")
-    p.add_argument("--list", action="store_true", help="liệt kê phiên bản Fabric hỗ trợ")
+    p = sub.add_parser("fabric", help="install the Fabric loader for a version")
+    p.add_argument("version", nargs="?", default="", help="game version, e.g. 1.21.4")
+    p.add_argument("--loader", help="loader version; defaults to the latest")
+    p.add_argument("--list", action="store_true", help="list Fabric-supported versions")
     p.add_argument("--limit", type=int, default=20)
     p.set_defaults(func=cmd_fabric)
 
-    p = sub.add_parser("versions", help="liệt kê phiên bản")
+    p = sub.add_parser("versions", help="list versions")
     p.add_argument("--type", default="release", choices=["release", "snapshot", "all"])
     p.add_argument("--limit", type=int, default=20)
     p.set_defaults(func=cmd_versions)
 
-    p = sub.add_parser("install", help="tải một phiên bản")
+    p = sub.add_parser("install", help="download a version")
     p.add_argument("version")
     p.set_defaults(func=cmd_install)
 
-    p = sub.add_parser("play", help="cài (nếu cần) và chạy game")
+    p = sub.add_parser("play", help="install (if needed) and launch the game")
     p.add_argument("version")
-    p.add_argument("--account", help="label tài khoản; mặc định lấy cái đầu tiên")
-    p.add_argument("--name", help="ghi đè tên hiển thị demo cho lần chạy này")
-    p.add_argument("--memory", type=int, default=2048, help="RAM tối đa (MB)")
+    p.add_argument("--account", help="account label; defaults to the first one")
+    p.add_argument("--name", help="override the demo display name for this run")
+    p.add_argument("--memory", type=int, default=2048, help="max RAM (MB)")
     p.set_defaults(func=cmd_play)
 
     args = parser.parse_args()

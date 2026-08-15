@@ -13,10 +13,10 @@ from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPixmap, QP
 
 # Mỗi khối lấy 3 sắc độ: mặt trên hứng sáng, hai mặt bên tối dần.
 BLOCKS = {
-    "grass": (QColor(126, 190, 92), QColor(94, 148, 68), QColor(74, 120, 54)),
+    "grass": (QColor(150, 214, 108), QColor(112, 176, 80), QColor(88, 144, 64)),
     "dirt": (QColor(150, 112, 78), QColor(118, 87, 60), QColor(96, 70, 48)),
     "stone": (QColor(146, 148, 152), QColor(116, 118, 122), QColor(94, 96, 100)),
-    "water": (QColor(96, 156, 214), QColor(74, 128, 184), QColor(60, 106, 156)),
+    "water": (QColor(120, 186, 236), QColor(92, 156, 210), QColor(72, 128, 184)),
     "sand": (QColor(224, 210, 160), QColor(196, 182, 136), QColor(168, 154, 112)),
 }
 
@@ -86,25 +86,47 @@ def _cube(p: QPainter, cx: float, cy: float, kind: str, haze: float = 0.0) -> No
     ]))
 
 
-def render_hero(width: int, height: int) -> QPixmap:
+def render_hero(width: int, height: int, bg_path: str = "") -> QPixmap:
+    # Có ảnh nền tuỳ chọn thì dùng nó (co giãn phủ kín), không thì dựng đảo voxel.
+    if bg_path:
+        from PySide6.QtGui import QPixmap as _P
+        src = _P(bg_path)
+        if not src.isNull():
+            pm = QPixmap(width, height)
+            p = QPainter(pm)
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            scaled = src.scaled(width, height, Qt.KeepAspectRatioByExpanding,
+                                Qt.SmoothTransformation)
+            # canh giữa phần thừa
+            x = (width - scaled.width()) // 2
+            y = (height - scaled.height()) // 2
+            p.drawPixmap(x, y, scaled)
+            p.end()
+            return pm
+
     pm = QPixmap(width, height)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
 
-    # Bầu trời hoàng hôn: ấm ở chân trời, lạnh dần lên đỉnh.
+    # Bầu trời hoàng hôn RỰC: xanh trong ở đỉnh, vàng cam sáng ở chân trời —
+    # sáng để màu ánh lên qua kính, đúng chất ảnh mockup.
     sky = QLinearGradient(QPointF(0, 0), QPointF(0, height))
-    sky.setColorAt(0.00, QColor(38, 62, 108))
-    sky.setColorAt(0.42, QColor(84, 118, 170))
-    sky.setColorAt(0.72, QColor(176, 168, 178))
-    sky.setColorAt(1.00, QColor(232, 176, 132))
+    sky.setColorAt(0.00, QColor(74, 128, 200))
+    sky.setColorAt(0.34, QColor(120, 170, 224))
+    sky.setColorAt(0.60, QColor(214, 206, 196))
+    sky.setColorAt(0.80, QColor(255, 214, 150))
+    sky.setColorAt(1.00, QColor(255, 176, 110))
     p.fillRect(0, 0, width, height, QBrush(sky))
 
-    # Quầng mặt trời thấp bên phải, cùng phía với hướng đổ bóng của khối.
-    sun = QPointF(width * 0.74, height * 0.66)
-    for r, alpha in ((height * 0.34, 10), (height * 0.20, 16), (height * 0.10, 30)):
+    # Mặt trời sáng thấp bên phải + quầng lớn rực rỡ.
+    sun = QPointF(width * 0.72, height * 0.60)
+    for r, alpha in ((height * 0.55, 22), (height * 0.34, 34), (height * 0.18, 60),
+                     (height * 0.08, 150)):
         p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(255, 228, 186, alpha)))
+        p.setBrush(QBrush(QColor(255, 240, 205, alpha)))
         p.drawEllipse(sun, r, r)
+    p.setBrush(QBrush(QColor(255, 250, 230)))
+    p.drawEllipse(sun, height * 0.05, height * 0.05)
 
     _draw_clouds(p, width, height)
 
@@ -121,10 +143,10 @@ def render_hero(width: int, height: int) -> QPixmap:
                 _cube(p, cx, cy - z * CH, _material(z, top), haze)
 
     # Phủ một lớp tối ở rìa để chữ trên kính luôn đọc được.
-    vign = QLinearGradient(QPointF(0, height * 0.45), QPointF(0, height))
+    vign = QLinearGradient(QPointF(0, height * 0.6), QPointF(0, height))
     vign.setColorAt(0.0, QColor(0, 0, 0, 0))
-    vign.setColorAt(1.0, QColor(4, 10, 20, 120))
-    p.fillRect(QRectF(0, height * 0.45, width, height * 0.55), QBrush(vign))
+    vign.setColorAt(1.0, QColor(20, 30, 44, 55))
+    p.fillRect(QRectF(0, height * 0.6, width, height * 0.4), QBrush(vign))
 
     p.end()
     return pm

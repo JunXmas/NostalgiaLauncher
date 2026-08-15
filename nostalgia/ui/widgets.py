@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import (
+    QEasingCurve, QPointF, QRect, QRectF, Qt, QVariantAnimation, Signal,
+)
 from PySide6.QtGui import (
-    QBrush, QColor, QFont, QLinearGradient, QPainter, QPen, QPolygonF, QRadialGradient,
+    QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
+    QRadialGradient,
 )
 from PySide6.QtWidgets import QAbstractButton, QWidget
 
@@ -52,6 +55,91 @@ def draw_gear_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
     p.restore()
 
 
+def draw_home_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    p.save()
+    p.setPen(QPen(color, 1.5))
+    p.setBrush(Qt.NoBrush)
+    c = rect.center()
+    w = rect.width() * 0.36
+    # mái nhà
+    p.drawPolygon(QPolygonF([QPointF(c.x() - w, c.y() - 1), QPointF(c.x(), c.y() - w - 2),
+                             QPointF(c.x() + w, c.y() - 1)]))
+    # thân nhà
+    p.drawRect(QRectF(c.x() - w * 0.72, c.y() - 1, w * 1.44, w + 2))
+    p.restore()
+
+
+def draw_mods_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    # cờ-lê đơn giản
+    p.save()
+    p.setPen(QPen(color, 1.5))
+    p.setBrush(Qt.NoBrush)
+    c = rect.center()
+    r = rect.width() * 0.16
+    p.drawEllipse(QPointF(c.x() - rect.width() * 0.18, c.y() - rect.height() * 0.18), r, r)
+    p.drawLine(QPointF(c.x() - rect.width() * 0.08, c.y() - rect.height() * 0.08),
+               QPointF(c.x() + rect.width() * 0.28, c.y() + rect.height() * 0.28))
+    p.restore()
+
+
+def draw_packs_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    # chồng tài nguyên
+    p.save()
+    p.setPen(QPen(color, 1.4))
+    p.setBrush(Qt.NoBrush)
+    x = rect.left() + rect.width() * 0.2
+    w = rect.width() * 0.6
+    for i in range(3):
+        y = rect.top() + rect.height() * (0.24 + i * 0.24)
+        p.drawRect(QRectF(x, y, w, rect.height() * 0.16))
+    p.restore()
+
+
+def draw_servers_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    # quả cầu
+    p.save()
+    p.setPen(QPen(color, 1.4))
+    p.setBrush(Qt.NoBrush)
+    c = rect.center()
+    rr = rect.width() * 0.34
+    p.drawEllipse(c, rr, rr)
+    p.drawEllipse(c, rr * 0.45, rr)
+    p.drawLine(QPointF(c.x() - rr, c.y()), QPointF(c.x() + rr, c.y()))
+    p.restore()
+
+
+def draw_skin_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    # đầu + vai nhân vật
+    p.save()
+    p.setPen(QPen(color, 1.4))
+    p.setBrush(Qt.NoBrush)
+    c = rect.center()
+    hr = rect.width() * 0.2
+    p.drawEllipse(QPointF(c.x(), c.y() - rect.height() * 0.16), hr, hr)
+    p.drawArc(QRectF(c.x() - rect.width() * 0.32, c.y() + rect.height() * 0.02,
+                     rect.width() * 0.64, rect.height() * 0.5), 0, 180 * 16)
+    p.restore()
+
+
+def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
+    if kind == "cube":
+        draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
+    elif kind == "gear":
+        draw_gear_icon(p, rect, color)
+    elif kind == "news":
+        draw_news_icon(p, rect, color)
+    elif kind == "home":
+        draw_home_icon(p, rect, color)
+    elif kind == "mods":
+        draw_mods_icon(p, rect, color)
+    elif kind == "packs":
+        draw_packs_icon(p, rect, color)
+    elif kind == "servers":
+        draw_servers_icon(p, rect, color)
+    elif kind == "skin":
+        draw_skin_icon(p, rect, color)
+
+
 def draw_news_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
     p.save()
     p.setPen(QPen(color, 1.4))
@@ -80,13 +168,43 @@ TONES = {
 class AeroButton(QAbstractButton):
     """Nút thuỷ tinh Vista: nửa trên sáng, cắt phựt ở giữa, nửa dưới hắt sáng ngược."""
 
-    def __init__(self, text: str, parent=None, *, height: int = 46, tone: str = "green"):
+    def __init__(self, text: str, parent=None, *, height: int = 46, tone: str = "green",
+                 arrow: bool = False):
         super().__init__(parent)
         self.setText(text)
         self.setFixedHeight(height)
         self.setCursor(Qt.PointingHandCursor)
         self.tone = tone
+        self.arrow = arrow  # vẽ mũi tên ▶ sau chữ (nút PLAY)
         self._hover = False
+
+        # Trạng thái nhấn có "trọng lượng": _press chạy 0->1 khi bấm (nhanh, nặng),
+        # về 0 khi thả với OutBack -> nảy nhẹ lên. Đúng tinh thần cubic-bezier(.25,.8,.25,1).
+        self._press = 0.0
+        self._anim = QVariantAnimation(self)
+        self._anim.valueChanged.connect(self._on_anim)
+        self.pressed.connect(self._press_down)
+        self.released.connect(self._press_up)
+
+    def _on_anim(self, v):
+        self._press = float(v)
+        self.update()
+
+    def _press_down(self):
+        self._anim.stop()
+        self._anim.setDuration(90)
+        self._anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._anim.setStartValue(self._press)
+        self._anim.setEndValue(1.0)
+        self._anim.start()
+
+    def _press_up(self):
+        self._anim.stop()
+        self._anim.setDuration(190)
+        self._anim.setEasingCurve(QEasingCurve.OutBack)  # nảy nhẹ vượt 0 rồi về
+        self._anim.setStartValue(self._press)
+        self._anim.setEndValue(0.0)
+        self._anim.start()
 
     def enterEvent(self, e):  # noqa: N802
         self._hover = True
@@ -99,15 +217,20 @@ class AeroButton(QAbstractButton):
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        r = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
+        press = self._press
+        # Lún: thu nhỏ khung theo mức nhấn (press>0 co lại; OutBack cho press<0 -> phồng nhẹ).
+        inset = press * min(self.width(), self.height()) * 0.02
+        r = QRectF(self.rect()).adjusted(0.5 + inset, 0.5 + inset, -0.5 - inset, -0.5 - inset)
         top, mid, low, bot, edge, glow_c = TONES.get(self.tone, TONES["green"])
         enabled = self.isEnabled()
-        lift = 16 if (self._hover and enabled) else 0
+        # Đặc lại khi nhấn: tối đi (density) — trừ vào lift.
+        lift = (16 if (self._hover and enabled) else 0) - int(max(0.0, press) * 16)
         if not enabled:
             top, mid, low, bot = (c.darker(135) for c in (top, mid, low, bot))
 
         # Quầng sáng toả ra ngoài khi rê chuột — Win7 gọi là hot-tracking glow.
-        if self._hover and enabled:
+        # Xẹp dần khi nhấn (bóng ngoài thu vào).
+        if self._hover and enabled and press < 0.5:
             glow = QRadialGradient(r.center(), r.width() * 0.6)
             glow.setColorAt(0.0, QColor(glow_c.red(), glow_c.green(), glow_c.blue(), 70))
             glow.setColorAt(1.0, QColor(glow_c.red(), glow_c.green(), glow_c.blue(), 0))
@@ -132,13 +255,44 @@ class AeroButton(QAbstractButton):
         p.setPen(QPen(edge, 1))
         p.drawRoundedRect(r, 3, 3)
 
-        f = ui_font(13 if self.height() >= 44 else 9, bold=True)
-        f.setLetterSpacing(QFont.AbsoluteSpacing, 1.6 if self.height() >= 44 else 1.0)
+        # Bóng đổ nội viền khi nhấn: bề mặt kính lún vào trong (dark inset ở đỉnh).
+        if press > 0.01:
+            p.save()
+            clip = QPainterPath()
+            clip.addRoundedRect(r, 3, 3)
+            p.setClipPath(clip)
+            sh = QLinearGradient(r.topLeft(), QPointF(r.left(), r.top() + r.height() * 0.5))
+            a = int(press * 90)
+            sh.setColorAt(0.0, QColor(0, 20, 8, a))
+            sh.setColorAt(1.0, QColor(0, 20, 8, 0))
+            p.fillRect(r, sh)
+            p.restore()
+
+        big = self.height() >= 44
+        sink = press * 1.5  # chữ lún xuống theo
+        f = ui_font(13 if big else 9, bold=True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 1.6 if big else 1.0)
         p.setFont(f)
+        # Có mũi tên thì dịch chữ sang trái chút để chừa chỗ.
+        shift = -14 if self.arrow else 0
+        text_rect = self.rect().translated(shift, int(sink))
         p.setPen(QColor(0, 20, 8, 120))
-        p.drawText(self.rect().adjusted(0, 2, 0, 2), Qt.AlignCenter, self.text())
+        p.drawText(text_rect.translated(0, 2), Qt.AlignCenter, self.text())
         p.setPen(QColor(255, 255, 255, 255 if enabled else 150))
-        p.drawText(self.rect(), Qt.AlignCenter, self.text())
+        p.drawText(text_rect, Qt.AlignCenter, self.text())
+
+        if self.arrow:
+            tw = p.fontMetrics().horizontalAdvance(self.text())
+            ax = self.width() / 2 + shift + tw / 2 + 16
+            ay = self.height() / 2
+            s = 7 if big else 5
+            tri = QPolygonF([QPointF(ax - s, ay - s), QPointF(ax + s, ay),
+                             QPointF(ax - s, ay + s)])
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(0, 30, 12, 120))
+            p.drawPolygon(tri.translated(0, 2))
+            p.setBrush(QColor(255, 255, 255, 240))
+            p.drawPolygon(tri)
         p.end()
 
 
@@ -219,12 +373,7 @@ class SidebarItem(QAbstractButton):
 
         icon_rect = QRectF(r.left() + 16, r.center().y() - 9, 18, 18)
         color = TEXT if (self.isChecked() or self._hover) else TEXT_DIM
-        if self.icon_kind == "cube":
-            draw_cube_icon(p, icon_rect, QColor(126, 190, 92), QColor(150, 112, 78))
-        elif self.icon_kind == "gear":
-            draw_gear_icon(p, icon_rect, color)
-        elif self.icon_kind == "news":
-            draw_news_icon(p, icon_rect, color)
+        _draw_nav_icon(p, self.icon_kind, icon_rect, color)
 
         text_left = int(r.left() + 44)
         if self.subtitle:

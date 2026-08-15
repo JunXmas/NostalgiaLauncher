@@ -45,9 +45,23 @@ def find_java(major: int) -> str:
                 return str(candidate)
 
     raise RuntimeError(
-        f"Không tìm thấy Java {major}. Cài đặt rồi đặt JAVA_HOME, "
-        f"ví dụ: sudo apt install openjdk-{major}-jre"
+        f"Java {major} not found. Install it and set JAVA_HOME, "
+        f"e.g. sudo apt install openjdk-{major}-jre"
     )
+
+
+def resolve_java(meta: dict, game_dir: Path) -> str:
+    """Chọn java: ưu tiên JRE do launcher tải sẵn, rồi mới tới Java hệ thống.
+
+    JRE tải sẵn (Mojang cấp) khớp chính xác phiên bản game cần, nên đáng tin hơn
+    Java lung tung trên máy. Không có JRE tải sẵn thì mới dò hệ thống.
+    """
+    from . import jre  # tránh vòng import lúc nạp module
+
+    component = jre.component_of(meta)
+    if jre.is_installed(game_dir, component):
+        return str(jre.java_binary(game_dir, component))
+    return find_java(meta.get("javaVersion", {}).get("majorVersion", 8))
 
 
 def _substitute(args: list, values: dict[str, str], features: dict[str, bool]) -> list[str]:
@@ -101,8 +115,7 @@ def build_command(
     # Rule `is_demo_user` trong version JSON tự sinh ra cờ --demo cho ta.
     features = {"is_demo_user": identity.demo, "has_custom_resolution": False}
 
-    java_major = meta.get("javaVersion", {}).get("majorVersion", 8)
-    cmd = [java or find_java(java_major)]
+    cmd = [java or resolve_java(meta, installer.game_dir)]
 
     if "arguments" in meta:  # 1.13 trở lên
         cmd += _substitute(meta["arguments"]["jvm"], values, features)
@@ -132,10 +145,10 @@ def ensure_offline_libraries(meta: dict, installer: Installer) -> None:
     missing = [p for p in needed if not p.exists()]
     if missing:
         listing = "\n".join(f"  {p}" for p in missing[:10])
-        more = f"\n  ... và {len(missing) - 10} file nữa" if len(missing) > 10 else ""
+        more = f"\n  ... and {len(missing) - 10} more" if len(missing) > 10 else ""
         raise RuntimeError(
-            f"Thiếu {len(missing)} file, không chạy offline được:\n{listing}{more}\n"
-            "Hãy chạy lại khi có mạng để tải nốt."
+            f"{len(missing)} file(s) missing, cannot run offline:\n{listing}{more}\n"
+            "Run again online to finish downloading."
         )
 
 

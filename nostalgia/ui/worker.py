@@ -96,20 +96,27 @@ class LaunchWorker(QThread):
     def run(self) -> None:  # noqa: D102
         try:
             identity = self.store.resolve_identity(self.account)
-            self.status.emit(f"Chuẩn bị {self.version}…")
+            self.status.emit(f"Preparing {self.version}…")
 
             installer = Installer(self.game_dir, on_progress=self.progress.emit)
             meta = installer.install(self.version)
+
+            # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
+            if not self.java_path:
+                from .. import jre
+                if not jre.is_installed(self.game_dir, jre.component_of(meta)):
+                    self.status.emit("Downloading Java runtime…")
+                    jre.ensure(self.game_dir, meta, on_progress=self.progress.emit)
 
             if identity.user_type == "offline":
                 ensure_offline_libraries(meta, installer)
 
             cmd = build_command(meta, installer, identity,
                                 java=self.java_path or None, max_memory_mb=self.memory_mb)
-            self.status.emit(f"Đang chạy {self.version}" + (" (demo)" if identity.demo else ""))
+            self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
             code = run(cmd, self.game_dir)
             if code != 0:
-                self.failed.emit(f"Game thoát với mã {code}")
+                self.failed.emit(f"Game exited with code {code}")
                 return
             self.finished_ok.emit()
         except Exception as e:  # noqa: BLE001 - lỗi nào cũng phải hiện lên UI
