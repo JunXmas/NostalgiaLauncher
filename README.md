@@ -2,142 +2,94 @@
 
 # 🪟 Nostalgia Launcher
 
-**A Minecraft: Java Edition launcher written in Python, styled after the Windows Vista/7 Aero glass look.**
+### A Minecraft launcher that feels like Windows 7 again.
+
+Frosted Aero glass, a warm little dashboard, and everything that should just work — built from scratch in Python.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52?logo=qt&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Platform](https://img.shields.io/badge/Linux-tested-informational?logo=linux&logoColor=white)
 ![Status](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
-![Nostalgia Launcher screenshot](docs/screenshot.png)
-
-*My very first project — still unfinished, so expect some bugs. Thanks for stopping by 💙*
+![Nostalgia Launcher](docs/screenshot.png)
 
 </div>
 
 ---
 
-## ✨ Features
+## Hey 👋
 
-- 🎮 **Vanilla and Fabric** — download any version from Mojang's servers, install the Fabric loader in one click
-- 👤 **Multiple accounts** — sign in with Microsoft right inside the app, switch without re-logging in
-- ☕ **Automatic Java** — downloads the right JRE for each version, no manual Java install
-- 📰 **News & patch notes** — pulled straight from the official launcher's sources
-- 🧪 **Diagnostics tool** — inspects every link in the install so you know exactly what's broken
-- 🪟 **Real Aero glass** — frosted blur, specular border, top highlight, double drop shadow, hand-drawn with QPainter
+This is my **very first real project**. I grew up with the glossy, glassy look of Windows 7 —
+and I missed it. So I tried to bring that feeling back to something I use every day: a Minecraft
+launcher. Every panel here is real frosted glass, hand-drawn pixel by pixel, sitting over a
+background you can swap for anything you like.
 
-## 🖼️ Screenshots
+It's still a work in progress, so you might hit a rough edge here and there. But it already does
+the important things well, and I'd love for you to try it. Thanks for stopping by 💙
 
-| Installations | Settings |
-|:---:|:---:|
-| ![Installations](docs/screenshot-installations.png) | ![Settings](docs/screenshot-settings.png) |
+## Why you might like it
 
-## 🚀 Getting started
+- 🪟 **It actually looks like Aero.** Not a flat "glassmorphism" rectangle — the real recipe:
+  a blurred backdrop, an exclusion-blend for depth, a blue tint, fine acrylic noise, and a glossy
+  top sheen. Buttons even *sink* with a little weight when you press them.
+- 🎮 **Vanilla and Fabric, one click each.** Pick any version, or drop on a Fabric loader without
+  hunting through files.
+- ☕ **You never install Java.** It quietly downloads the exact Java each version needs and keeps it
+  tidy in its own folder.
+- 👤 **Sign in once, switch freely.** Add your Microsoft account (or several), and jump between them
+  without logging in again. Don't own the game yet? It runs the official Demo automatically.
+- 📰 **Real news & patch notes**, straight from Mojang, right on the home screen.
+- 🖼️ **Make it yours.** Any image can be your background — there's a button for it in Settings.
+- 🧪 **A little doctor.** One click tells you exactly what's missing before you ever launch —
+  no cryptic Java stack traces.
+
+## A look inside
+
+| Home | Instances | Settings |
+|:---:|:---:|:---:|
+| ![Home](docs/screenshot.png) | ![Instances](docs/screenshot-installations.png) | ![Settings](docs/screenshot-settings.png) |
+
+## Try it
 
 ```bash
-# 1. Install dependencies
-pip install -r requirements.txt      # needs PySide6-Essentials and requests
-
-# 2. Open the GUI
+pip install -r requirements.txt      # PySide6 + requests
 python -m nostalgia gui
-
-# or use the command line
-python -m nostalgia versions --limit 10
-python -m nostalgia fabric 1.21.4          # install Fabric
-python -m nostalgia jre 1.21.4             # pre-download Java
-python -m nostalgia doctor 1.21.4 --hashes # check an installation
 ```
 
-Microsoft sign-in needs a free Azure application (Personal accounts, with *Allow
-public client flows* enabled), then `export MC_CLIENT_ID=<client-id>`. See
-[Microsoft sign-in](#-microsoft-sign-in) below.
+Command line works too, if that's your thing:
 
-## 👥 Account types
+```bash
+python -m nostalgia fabric 1.21.4     # install Fabric
+python -m nostalgia jre 1.21.4        # pre-fetch Java
+python -m nostalgia doctor 1.21.4     # health-check an install
+```
 
-| Account type | How it runs |
-|---|---|
-| Microsoft, owns the game | Full game, can join online servers |
-| Microsoft, doesn't own the game | Official demo mode (fixed world, ~100 minutes) |
-| Owns it but currently offline | Full game from the cached session (singleplayer/LAN) |
-| Offline profile | Full game offline — only unlocked once the launcher has a game-owning account |
+To sign in with Microsoft you'll need a free Azure app (Personal accounts, *Allow public client
+flows* on) and `export MC_CLIENT_ID=<id>`. New apps also need Minecraft API approval at
+<https://aka.ms/mce-reviewappid> — until then, sign-in runs all the way to the last step and stops
+with a clear message.
 
-Offline profiles follow [PrismLauncher](https://github.com/PrismLauncher/PrismLauncher)'s
-model: gated on two levels — you can't add one until a game-owning account
-exists, and they drop to demo mode if that account is removed.
+## How it's built
 
-## 🔑 Microsoft sign-in
+Pure Python + PySide6 (Qt), no game code borrowed. A few pieces I'm quietly proud of:
 
-1. https://portal.azure.com → **App registrations** → *New registration*
-2. Supported account types: **Personal Microsoft accounts only**, leave Redirect URI empty
-3. **Authentication** → *Advanced settings* → **Allow public client flows: Yes**
-4. Copy the *Application (client) ID* → `export MC_CLIENT_ID=<id>`
-5. New apps must request Minecraft API access at https://aka.ms/mce-reviewappid —
-   until approved, sign-in runs all the way to the last step and then returns 403.
+- **The glass** (`ui/`) samples a blurred copy of the window's own background, so it looks like real
+  frosted glass on *any* machine — even Linux desktops whose compositor can't blur.
+- **`jre.py`** pulls Mojang's own Java runtimes, matched per version — no manual setup, ever.
+- **`identity.py`** gives each player a stable ID that survives switching from an offline profile to
+  a premium account (their Minecraft UUIDs differ; this one doesn't), and can link to a Google
+  account so it follows you.
+- **`doctor.py`** inspects every link in the chain — jars, libraries, natives, assets, Java, the
+  final command — so problems are obvious, not mysterious.
 
-## 🧩 Structure
+## Credits & license
 
-| File | Role |
-|---|---|
-| `auth.py` | Microsoft device code → Xbox Live → XSTS → Minecraft Services |
-| `accounts.py` | `AccountStore`, ownership gate, offline UUID v3 |
-| `identity.py` | Stable `player_id`, groups multiple accounts, Google linking |
-| `install.py` | Version manifest, client.jar, libraries, natives, assets; SHA1 checks |
-| `fabric.py` | Fabric meta, maven path building, `inheritsFrom` merging |
-| `jre.py` | Auto-downloads Mojang's JRE per `javaVersion.component` |
-| `launch.py` | Rule evaluation, `${...}` substitution, Java selection, process launch |
-| `doctor.py` | Diagnoses each install link (no account needed) |
-| `content.py` | News and patch notes from Mojang, cached |
-| `ui/` | Aero interface: `theme` · `glass` · `hero` · `widgets` · `controls` · `menus` · `dialogs` · `pages` · `window` · `worker` · `app` |
+Released under **GPL-3.0** — use it, learn from it, build on it; just keep it open and credit back.
 
-## 📝 Technical notes
-
-<details>
-<summary><b>Hand-drawn Aero glass</b></summary>
-
-Instead of asking the compositor to blur the desktop behind the window (KWin can,
-Cinnamon/Mint can't), each glass panel samples a pre-blurred copy of the window's
-own hero image — visually identical, and it behaves the same on every machine.
-Four layers: blurred backdrop, cool blue tint, top highlight, two-step bevel;
-plus a focus halo and double drop shadow on the outer frame.
-</details>
-
-<details>
-<summary><b>Fabric: merging <code>inheritsFrom</code></b></summary>
-
-Fabric meta only returns the delta from vanilla. Three easy mistakes when merging:
-loader libraries must come <b>before</b> vanilla on the classpath; Fabric only
-gives maven coordinates so the path has to be built by hand; the Fabric profile
-reuses the vanilla jar, so it must not be duplicated.
-</details>
-
-<details>
-<summary><b>Automatic Java</b></summary>
-
-Each version declares a <code>javaVersion.component</code> (jre-legacy = Java 8,
-gamma = 17, delta = 21). Mojang hosts the matching runtime per OS; the launcher
-downloads it into <code>~/.nostalgia-launcher/runtime/</code> on demand. Java
-selection order: custom path → downloaded JRE → system Java.
-</details>
-
-<details>
-<summary><b>Identity that survives going premium</b></summary>
-
-Offline UUIDs are derived from the username; premium UUIDs are assigned by Mojang —
-two different values. <code>identity.py</code> mints a separate
-<code>player_id</code> (uuid4, not derived from any UUID) so player data survives
-the offline → premium switch. Google linking is an external key attached to that
-identity.
-</details>
-
-## 📜 License & credits
-
-Released under **GPL-3.0** — free to use, modify and share, as long as derivatives
-stay open-source and keep attribution.
-
-Thanks to [PrismLauncher](https://github.com/PrismLauncher/PrismLauncher) (GPL-3.0):
-the ownership-gate model and offline UUID scheme were referenced from Prism's
-*behaviour* — all code here is independently written in Python, not copied from
-their source. The authentication chain is based on public protocol docs at
+Huge thanks to [PrismLauncher](https://github.com/PrismLauncher/PrismLauncher) — I studied how it
+handles offline profiles and ownership, then wrote my own version in Python (no code copied). The
+Microsoft sign-in flow follows the public docs at
 [minecraft.wiki](https://minecraft.wiki/w/Microsoft_authentication).
 
-*Not affiliated with or endorsed by Mojang / Microsoft.*
+*Not affiliated with or endorsed by Mojang or Microsoft. Made with love, and a lot of late nights.*
