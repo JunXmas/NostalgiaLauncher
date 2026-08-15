@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import os
+
 from PySide6.QtCore import QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
+from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
@@ -319,6 +322,16 @@ class SettingsPage(Page):
         self.java.setFont(ui_font(9))
         self.java.editingFinished.connect(self._set_java)
 
+        # Đăng nhập Microsoft đòi một Azure client ID, mà cho tới giờ chỉ đặt được
+        # bằng biến môi trường hoặc sửa tay clients.json. Cách đó vô dụng với bản
+        # cài đặt: người bấm vào installer không có terminal để export biến, và
+        # càng không đi mò file JSON trong %APPDATA%. Nên nó phải nằm ở đây.
+        self.client_id = QLineEdit(resolve_client_id("microsoft", "MC_CLIENT_ID"), self)
+        self.client_id.setPlaceholderText("paste the Application (client) ID from Azure")
+        self.client_id.setStyleSheet(INPUT_QSS)
+        self.client_id.setFont(ui_font(9))
+        self.client_id.editingFinished.connect(self._set_client_id)
+
         self.snapshots = AeroToggle(s.show_snapshots, self)
         self.snapshots.toggled.connect(self._set_snapshots)
         self.close_on_launch = AeroToggle(s.close_on_launch, self)
@@ -332,17 +345,48 @@ class SettingsPage(Page):
         self.bg_btn.clicked.connect(self.ctl.pick_background)
 
     @staticmethod
-    def _max_memory() -> int:
-        """Trần RAM = nửa RAM máy, làm tròn xuống bội 512, tối thiểu 4 GB."""
+    def _total_memory_mb() -> int:
+        """RAM thật của máy, tính bằng MB. Trả 0 nếu không hỏi được.
+
+        Ba hệ điều hành ba cách hỏi. os.sysconf lo được cả Linux lẫn macOS, còn
+        Windows không có sysconf nên phải gọi thẳng GlobalMemoryStatusEx qua
+        ctypes. Trước đây chỗ này chỉ đọc /proc/meminfo, nên ngoài Linux thanh
+        trượt luôn bị chốt ở mặc định 8 GB dù máy có bao nhiêu RAM đi nữa.
+        """
+        if os.name == "nt":
+            import ctypes
+
+            class MemoryStatus(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+
+            status = MemoryStatus()
+            status.dwLength = ctypes.sizeof(MemoryStatus)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+                return int(status.ullTotalPhys) // (1024 * 1024)
+            return 0
+
         try:
-            total = 0
-            for line in open("/proc/meminfo"):
-                if line.startswith("MemTotal:"):
-                    total = int(line.split()[1]) // 1024
-                    break
-            return max(4096, (total // 2) // 512 * 512)
-        except OSError:
+            return (os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")) // (1024 * 1024)
+        except (OSError, ValueError, AttributeError):
+            return 0
+
+    @classmethod
+    def _max_memory(cls) -> int:
+        """Trần RAM = nửa RAM máy, làm tròn xuống bội 512, tối thiểu 4 GB."""
+        total = cls._total_memory_mb()
+        if not total:
             return 8192
+        return max(4096, (total // 2) // 512 * 512)
 
     def _set_memory(self, value: int) -> None:
         self.ctl.settings.memory_mb = value
@@ -355,6 +399,12 @@ class SettingsPage(Page):
     def _set_java(self) -> None:
         self.ctl.settings.java_path = self.java.text().strip()
         self.ctl.settings.save()
+
+    def _set_client_id(self) -> None:
+        # Client ID không phải bí mật (mọi launcher mã nguồn mở đều công khai của
+        # mình), nhưng save_client_id vẫn ghi file với quyền 0600 cho đồng nhất
+        # với chỗ đang giữ client secret của Google.
+        save_client_id("microsoft", self.client_id.text().strip())
 
     def _set_snapshots(self, on: bool) -> None:
         self.ctl.settings.show_snapshots = on
@@ -369,8 +419,11 @@ class SettingsPage(Page):
         self.mem.setGeometry(26, 60, w, 26)
         self.game_dir.setGeometry(26, 142, w, 32)
         self.java.setGeometry(26, 218, w, 32)
-        self.snapshots.setGeometry(26, 282, 44, 22)
-        self.close_on_launch.setGeometry(26, 322, 44, 22)
+        # Ô này có thêm một dòng gợi ý dưới nhãn nên tụt xuống 38px thay vì 28px
+        # như các ô khác.
+        self.client_id.setGeometry(26, 304, w, 32)
+        self.snapshots.setGeometry(26, 368, 44, 22)
+        self.close_on_launch.setGeometry(26, 408, 44, 22)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -393,11 +446,13 @@ class SettingsPage(Page):
         label(26, f"Max memory — {gb:.1f} GB", "")
         label(114, "Game folder")
         label(190, "Java path")
+        label(266, "Microsoft Client ID",
+              "Needed to sign in — portal.azure.com › App registrations › your app")
         p.setFont(ui_font(9))
         p.setPen(TEXT)
-        p.drawText(QRect(84, 280, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+        p.drawText(QRect(84, 366, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Show snapshots")
-        p.drawText(QRect(84, 320, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+        p.drawText(QRect(84, 406, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Close launcher when the game starts")
 
         warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
