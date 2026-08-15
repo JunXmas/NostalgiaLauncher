@@ -2,30 +2,88 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from .accounts import LaunchIdentity
 from .install import Installer, rules_allow
 
 CLASSPATH_SEP = ";" if os.name == "nt" else ":"
+
+# Trên Windows, một tiến trình con luôn kèm cửa sổ console đen. Với bản GUI đã
+# đóng gói thì cửa sổ đó vừa xấu vừa vô dụng — và người dùng đóng nhầm nó là
+# game tắt theo. CREATE_NO_WINDOW dẹp nó mà vẫn giữ nguyên đường ống stdout, nên
+# log game vẫn chảy về launcher như thường.
+NO_WINDOW = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
 from .paths import APP_SLUG, APP_VERSION
 
 LAUNCHER_NAME = APP_SLUG
 LAUNCHER_VERSION = APP_VERSION
 
 
+JAVA_EXE = "java.exe" if os.name == "nt" else "java"
+
+
+def _system_java_candidates(major: int) -> list[Path]:
+    """Những chỗ Java hay được cài, theo quy ước từng hệ điều hành."""
+    found: list[Path] = []
+    if os.name == "nt":
+        # Bản cài Windows luôn đặt dưới Program Files, mỗi nhà phát hành một thư mục.
+        roots = [
+            Path(p)
+            for p in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"))
+            if p
+        ]
+        vendors = ("Java", "Eclipse Adoptium", "Microsoft", "Zulu", "Amazon Corretto", "BellSoft")
+        for root in roots:
+            for vendor in vendors:
+                if not (root / vendor).is_dir():
+                    continue
+                found.extend((root / vendor).glob(f"*{major}*/bin/{JAVA_EXE}"))
+        return found
+
+    if sys.platform == "darwin":
+        # java_home là cách chính chủ của macOS để hỏi "JDK bản X nằm đâu"; nó biết
+        # cả những bộ cài mà việc quét thư mục thuần tuý bỏ sót.
+        try:
+            out = subprocess.run(
+                ["/usr/libexec/java_home", "-v", str(major)],
+                capture_output=True, text=True, timeout=10,
+            )
+            if out.returncode == 0 and out.stdout.strip():
+                found.append(Path(out.stdout.strip()) / "bin" / "java")
+        except (OSError, subprocess.SubprocessError):
+            pass
+        found.extend(
+            Path("/Library/Java/JavaVirtualMachines").glob(f"*{major}*/Contents/Home/bin/java")
+        )
+        return found
+
+    # Linux và Unix khác.
+    for pattern in (f"java-{major}-openjdk*", f"*-{major}-*"):
+        found.extend(p / "bin" / "java" for p in Path("/usr/lib/jvm").glob(pattern))
+    return found
+
+
+def _install_hint(major: int) -> str:
+    if os.name == "nt":
+        return f"Download Java {major} from adoptium.net, then restart the launcher."
+    if sys.platform == "darwin":
+        return f"Install it with `brew install openjdk@{major}`, or from adoptium.net."
+    return f"Install it, e.g. `sudo apt install openjdk-{major}-jre`."
+
+
 def find_java(major: int) -> str:
     """Tìm java phù hợp. MC 1.16- cần Java 8, 1.17-1.20.4 cần 17, 1.20.5+ cần 21."""
     candidates = []
     if java_home := os.environ.get("JAVA_HOME"):
-        candidates.append(Path(java_home) / "bin" / "java")
-    # Bố cục thư mục phổ biến trên Linux.
-    for pattern in (f"/usr/lib/jvm/java-{major}-openjdk*", f"/usr/lib/jvm/*-{major}-*"):
-        candidates.extend(p / "bin" / "java" for p in Path("/").glob(pattern.lstrip("/")))
+        candidates.append(Path(java_home) / "bin" / JAVA_EXE)
+    candidates.extend(_system_java_candidates(major))
     if system_java := shutil.which("java"):
         candidates.append(Path(system_java))
 
@@ -34,7 +92,8 @@ def find_java(major: int) -> str:
             continue
         try:
             out = subprocess.run(
-                [str(candidate), "-version"], capture_output=True, text=True, timeout=10
+                [str(candidate), "-version"],
+                capture_output=True, text=True, timeout=10, **NO_WINDOW,
             ).stderr
         except (OSError, subprocess.SubprocessError):
             continue
@@ -44,10 +103,7 @@ def find_java(major: int) -> str:
             if found == major:
                 return str(candidate)
 
-    raise RuntimeError(
-        f"Java {major} not found. Install it and set JAVA_HOME, "
-        f"e.g. sudo apt install openjdk-{major}-jre"
-    )
+    raise RuntimeError(f"Java {major} not found. {_install_hint(major)}")
 
 
 def resolve_java(meta: dict, game_dir: Path) -> str:
@@ -135,27 +191,124 @@ def build_command(
     return cmd
 
 
-def ensure_offline_libraries(meta: dict, installer: Installer) -> None:
+class OfflineLaunchError(RuntimeError):
+    """Không đủ dữ liệu dưới đĩa để chạy khi mất mạng.
+
+    Kế thừa RuntimeError để chỗ nào đang bắt RuntimeError vẫn bắt được như cũ.
+    """
+
+
+def ensure_offline_libraries(meta: dict, installer: Installer) -> list[str]:
     """Chạy offline thì không tải bù được, nên kiểm tra đủ file trước khi khởi động.
 
     Tương ứng bước EnsureOfflineLibraries của PrismLauncher.
+
+    Phân biệt hai mức: thiếu jar hay natives thì JVM chết ngay -> ném lỗi; thiếu
+    assets thì game vẫn chạy, chỉ mất âm thanh và bản dịch -> trả về cảnh báo để
+    bên gọi hiển thị. Chỉ kiểm tra sự tồn tại, không băm SHA1: băm vài nghìn file
+    mất hàng chục giây, mà thứ ta cần biết ở đây chỉ là "có hay không".
     """
-    version_id = meta["id"]
     needed = installer.library_paths(meta) + [installer.client_jar(meta)]
     missing = [p for p in needed if not p.exists()]
     if missing:
         listing = "\n".join(f"  {p}" for p in missing[:10])
         more = f"\n  ... and {len(missing) - 10} more" if len(missing) > 10 else ""
-        raise RuntimeError(
+        raise OfflineLaunchError(
             f"{len(missing)} file(s) missing, cannot run offline:\n{listing}{more}\n"
             "Run again online to finish downloading."
         )
+
+    # Natives được giải nén ra thư mục riêng; xoá nhầm thư mục đó thì lỗi hiện ra
+    # dưới dạng UnsatisfiedLinkError giữa lúc game đang mở, rất khó đoán.
+    wants_natives = any("natives" in lib for lib in meta.get("libraries", []))
+    natives = installer.natives_dir(meta)
+    if wants_natives and not (natives.is_dir() and any(natives.iterdir())):
+        raise OfflineLaunchError(
+            f"Native libraries have not been extracted: {natives}\n"
+            "Run again online to finish installing."
+        )
+
+    warnings: list[str] = []
+    index_id = meta.get("assetIndex", {}).get("id")
+    if index_id:
+        index_path = installer.assets_dir / "indexes" / f"{index_id}.json"
+        if not index_path.exists():
+            warnings.append(
+                f"Asset index {index_id} is missing — the game will start without "
+                "sounds or translations."
+            )
+        else:
+            try:
+                objects = json.loads(index_path.read_text())["objects"]
+            except (OSError, ValueError, KeyError):
+                warnings.append(f"Asset index {index_id} is unreadable.")
+            else:
+                absent = sum(
+                    1
+                    for obj in objects.values()
+                    if not (installer.assets_dir / "objects"
+                            / obj["hash"][:2] / obj["hash"]).exists()
+                )
+                if absent:
+                    warnings.append(
+                        f"{absent}/{len(objects)} asset files are missing — expect "
+                        "silent audio or missing translations."
+                    )
+    return warnings
+
+
+def launch_game_offline(
+    version_id: str,
+    installer: Installer,
+    identity: LaunchIdentity,
+    *,
+    java: str | None = None,
+    max_memory_mb: int = 2048,
+    on_status=None,
+) -> int:
+    """Khởi chạy game mà không phát một request mạng nào.
+
+    Khác với đường chạy thường ở đúng ba chỗ, và cả ba đều cần thiết:
+
+    1. Đọc version JSON bằng offline_version_json() — bản thường sẽ gọi manifest
+       của Mojang khi thiếu file.
+    2. Kiểm tra đủ dữ liệu TRƯỚC, thay vì gọi installer.install(). install() coi
+       "file đã có và đúng hash" là không cần tải, nên phần lớn trường hợp nó chạy
+       lọt khi offline — nhưng chỉ cần một file lẻ bị thiếu là nó ném
+       ConnectionError sau khi đã băm hết vài trăm MB. Kiểm tra trước thì hỏng
+       trong một phần giây và nói rõ thiếu gì.
+    3. Chọn Java chỉ từ những gì đã có trên máy: resolve_java() không tải JRE,
+       nhưng thông báo lỗi mặc định của nó không nhắc rằng ta đang offline.
+
+    Trả về mã thoát của tiến trình game.
+    """
+    def say(message: str) -> None:
+        if on_status:
+            on_status(message)
+
+    meta = installer.offline_version_json(version_id)
+    for warning in ensure_offline_libraries(meta, installer):
+        say(f"[warning] {warning}")
+
+    try:
+        java_bin = java or resolve_java(meta, installer.game_dir)
+    except RuntimeError as e:
+        raise OfflineLaunchError(
+            f"{e}\n(Offline mode cannot download the Java runtime for you.)"
+        ) from e
+
+    cmd = build_command(meta, installer, identity, java=java_bin,
+                        max_memory_mb=max_memory_mb)
+    say(f"Launching {version_id} offline as '{identity.username}'"
+        + (" (demo)" if identity.demo else ""))
+    return run(cmd, installer.game_dir)
 
 
 def run(cmd: list[str], game_dir: Path) -> int:
     game_dir.mkdir(parents=True, exist_ok=True)
     process = subprocess.Popen(
-        cmd, cwd=game_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        cmd, cwd=game_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, errors="replace", **NO_WINDOW,
     )
     for line in process.stdout:
         print(line, end="")

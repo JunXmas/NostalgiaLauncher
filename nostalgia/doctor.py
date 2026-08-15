@@ -109,7 +109,10 @@ def diagnose(installer: Installer, version_id: str, *, memory_mb: int = 2048,
             java = find_java(needed)
             add(Check("Java", OK, f"system Java {needed} at {java}"))
         except RuntimeError:
-            java = "/usr/bin/java"
+            # Chưa có java nào, nhưng dòng lệnh mẫu bên dưới vẫn cần một đường dẫn.
+            # Lấy luôn chỗ mà JRE sẽ nằm sau khi tải — vừa đúng nền tảng đang chạy,
+            # vừa cho người đọc thấy trước file sẽ xuất hiện ở đâu.
+            java = str(jre.java_binary(installer.game_dir, component))
             add(Check("Java", WARN,
                       f"no Java {needed} yet; the launcher will download JRE '{component}' when you press PLAY"))
 

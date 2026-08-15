@@ -36,9 +36,15 @@ DISCONNECTED = QColor(150, 158, 168)
 
 
 def ui_font(size: int = 10, bold: bool = False) -> QFont:
-    """Segoe UI là font của Aero; trên Linux lấy bản thay thế gần nhất."""
+    """Segoe UI là font của Aero; nơi nào không có thì lấy bản thay thế gần nhất.
+
+    Windows có sẵn Segoe UI nên trúng ngay từ đầu danh sách. macOS không có font
+    nào trong nhóm Linux, nên phải chốt hậu bằng Helvetica Neue và Lucida Grande —
+    chính là hai font hệ thống của thời Mac cùng thế hệ với Aero.
+    """
     available = set(QFontDatabase.families())
-    for name in ("Segoe UI", "Selawik", "Noto Sans", "Open Sans", "DejaVu Sans"):
+    for name in ("Segoe UI", "Selawik", "Noto Sans", "Open Sans", "DejaVu Sans",
+                 "Helvetica Neue", "Lucida Grande"):
         if name in available:
             f = QFont(name, size)
             break
