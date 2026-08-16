@@ -205,9 +205,28 @@ class AeroButton(QAbstractButton):
         self.pressed.connect(self._press_down)
         self.released.connect(self._press_up)
 
+        # Trạng thái hover chạy mượt 0<->1 để nút "nhấc lên" chứ không bật tắt phựt:
+        # đây là thứ tạo cảm giác nút nổi về phía người dùng khi lia chuột qua.
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
+
     def _on_anim(self, v):
         self._press = float(v)
         self.update()
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _animate_hover(self, target: float, ms: int):
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(ms)
+        # OutCubic: bung nhanh lúc đầu rồi giảm tốc -> phản hồi tức thì mà vẫn mượt.
+        self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(target)
+        self._hover_anim.start()
 
     def _press_down(self):
         self._anim.stop()
@@ -227,31 +246,51 @@ class AeroButton(QAbstractButton):
 
     def enterEvent(self, e):  # noqa: N802
         self._hover = True
+        self._animate_hover(1.0, 120)   # nổi lên nhanh
         self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover = False
+        self._animate_hover(0.0, 170)   # hạ xuống hơi chậm hơn -> tự nhiên
         self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         press = self._press
-        # Lún: thu nhỏ khung theo mức nhấn (press>0 co lại; OutBack cho press<0 -> phồng nhẹ).
-        inset = press * min(self.width(), self.height()) * 0.02
-        r = QRectF(self.rect()).adjusted(0.5 + inset, 0.5 + inset, -0.5 - inset, -0.5 - inset)
-        top, mid, low, bot, edge, glow_c = TONES.get(self.tone, TONES["green"])
+        pressPos = max(0.0, press)
         enabled = self.isEnabled()
-        # Đặc lại khi nhấn: tối đi (density) — trừ vào lift.
-        lift = (16 if (self._hover and enabled) else 0) - int(max(0.0, press) * 16)
+        hov = self._hover_amt if enabled else 0.0
+        top, mid, low, bot, edge, glow_c = TONES.get(self.tone, TONES["green"])
         if not enabled:
             top, mid, low, bot = (c.darker(135) for c in (top, mid, low, bot))
 
+        # Chừa lề cố định để mặt nút có chỗ "nhấc lên" và đổ bóng mà không bị cắt.
+        M = 4.0
+        # Hover -> phồng nhẹ (grow) và nhấc lên (rise). Nhấn -> xẹp hai thứ đó lại.
+        grow = hov * 1.7 * (1.0 - pressPos)
+        rise = hov * 3.2 * (1.0 - pressPos)
+        # Lún: thu nhỏ khung theo mức nhấn (OutBack cho press<0 -> phồng nhẹ).
+        inset = press * min(self.width(), self.height()) * 0.02
+        r = QRectF(self.rect()).adjusted(M, M, -M, -M)
+        r = r.adjusted(-grow + inset, -grow + inset - rise, grow - inset, grow - inset - rise)
+
+        # Bóng đổ phía dưới: nghỉ thì mờ, hover thì sâu & tối hơn -> tách khỏi nền kính.
+        shadow_a = int(30 + 60 * hov - 45 * pressPos)
+        if shadow_a > 0 and enabled:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(0, 0, 0, shadow_a))
+            p.drawRoundedRect(r.translated(0, 2.0 + rise * 0.8), 4, 4)
+
+        # Đặc lại khi nhấn: tối đi (density) — trừ vào lift. Lift chạy mượt theo hover.
+        lift = int(16 * hov) - int(pressPos * 16)
+
         # Quầng sáng toả ra ngoài khi rê chuột — Win7 gọi là hot-tracking glow.
-        # Xẹp dần khi nhấn (bóng ngoài thu vào).
-        if self._hover and enabled and press < 0.5:
+        # Tăng dần theo hover, xẹp dần khi nhấn.
+        glow_a = int(70 * hov * (1.0 - pressPos))
+        if glow_a > 0 and enabled:
             glow = QRadialGradient(r.center(), r.width() * 0.6)
-            glow.setColorAt(0.0, QColor(glow_c.red(), glow_c.green(), glow_c.blue(), 70))
+            glow.setColorAt(0.0, QColor(glow_c.red(), glow_c.green(), glow_c.blue(), glow_a))
             glow.setColorAt(1.0, QColor(glow_c.red(), glow_c.green(), glow_c.blue(), 0))
             p.setPen(Qt.NoPen)
             p.setBrush(glow)
@@ -288,13 +327,14 @@ class AeroButton(QAbstractButton):
             p.restore()
 
         big = self.height() >= 44
-        sink = press * 1.5  # chữ lún xuống theo
+        # Chữ theo mặt nút: lún xuống khi nhấn, nhấc lên khi hover.
+        sink = press * 1.5 - rise
         f = ui_font(13 if big else 9, bold=True)
         f.setLetterSpacing(QFont.AbsoluteSpacing, 1.6 if big else 1.0)
         p.setFont(f)
         # Có mũi tên thì dịch chữ sang trái chút để chừa chỗ.
         shift = -14 if self.arrow else 0
-        text_rect = self.rect().translated(shift, int(sink))
+        text_rect = self.rect().translated(shift, int(round(sink)))
         p.setPen(QColor(0, 20, 8, 120))
         p.drawText(text_rect.translated(0, 2), Qt.AlignCenter, self.text())
         p.setPen(QColor(255, 255, 255, 255 if enabled else 150))
@@ -303,7 +343,7 @@ class AeroButton(QAbstractButton):
         if self.arrow:
             tw = p.fontMetrics().horizontalAdvance(self.text())
             ax = self.width() / 2 + shift + tw / 2 + 16
-            ay = self.height() / 2
+            ay = self.height() / 2 + sink  # mũi tên đi theo mặt nút
             s = 7 if big else 5
             tri = QPolygonF([QPointF(ax - s, ay - s), QPointF(ax + s, ay),
                              QPointF(ax - s, ay + s)])
