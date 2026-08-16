@@ -2,6 +2,26 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.4.0
+- **The whole UI feels alive now.** Every button lifts, glows and casts a
+  softer shadow as you hover — as if floating up to be pressed — and sinks
+  when you click. Sidebar items slide and brighten, the tab underline glides
+  between tabs, and list rows fade in instead of snapping.
+- **Learn by doing, not by reading.** The home screen drops the text hints:
+  a clear **＋** card is the obvious way to make an instance, and resting on
+  an instance dims it and shows a ▶ so it plainly says "click to play". The
+  instance you'll launch shows first.
+- **A cleaner way to pick a loader.** Making an instance now opens a tidy
+  centred *Choose a loader* card — Vanilla, Fabric, Forge, NeoForge — each
+  with a colour and a one-line description, instead of a stray menu.
+- **Browse modpacks like on Modrinth.** GET MODPACK opens a full page with a
+  category filter, a game-version box, sort options, and rich cards showing
+  the icon, author, description, downloads, followers and tags. Click a card
+  to install it as a new instance.
+- **Fixed: Back / Edit / Play did nothing on an instance page** — the window
+  drag strip was swallowing the clicks. The header moved down so the buttons
+  work and no longer crowd the window controls.
+
 ## 0.3.0
 - **Cleaner, Modrinth-style layout.** Clicking an instance now opens its own
   page with a header (Play/Stop, Edit, play time) and tabs for **Mods,
