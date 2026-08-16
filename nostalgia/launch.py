@@ -269,6 +269,7 @@ def launch_game_offline(
     java: str | None = None,
     max_memory_mb: int = 2048,
     on_status=None,
+    on_start=None,
 ) -> int:
     """Khởi chạy game mà không phát một request mạng nào.
 
@@ -305,15 +306,17 @@ def launch_game_offline(
                         max_memory_mb=max_memory_mb)
     say(f"Launching {version_id} offline as '{identity.username}'"
         + (" (demo)" if identity.demo else ""))
-    return run(cmd, installer.game_dir)
+    return run(cmd, installer.game_dir, on_start=on_start)
 
 
-def run(cmd: list[str], game_dir: Path) -> int:
+def run(cmd: list[str], game_dir: Path, on_start=None) -> int:
     game_dir.mkdir(parents=True, exist_ok=True)
     process = subprocess.Popen(
         cmd, cwd=game_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, errors="replace", **NO_WINDOW,
     )
+    if on_start:
+        on_start(process)          # để phía gọi giữ handle mà dừng game khi cần
     for line in process.stdout:
         print(line, end="")
     return process.wait()

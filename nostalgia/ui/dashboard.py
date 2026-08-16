@@ -47,7 +47,7 @@ class HomeDashboard(QWidget):
         self.setMouseTracking(True)
 
         self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
-        self.play_btn.clicked.connect(self.ctl.start_launch)
+        self.play_btn.clicked.connect(self.ctl.toggle_play)
         self.new_btn = AeroButton("NEW INSTANCE", self, height=30, tone="neutral")
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")

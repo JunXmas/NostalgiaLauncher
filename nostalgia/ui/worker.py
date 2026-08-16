@@ -83,6 +83,7 @@ class LaunchWorker(QThread):
     status = Signal(str)
     failed = Signal(str)
     finished_ok = Signal()
+    game_started = Signal()           # tiến trình game đã chạy -> đổi PLAY thành STOP
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
@@ -96,6 +97,17 @@ class LaunchWorker(QThread):
         self.memory_mb = memory_mb
         self.java_path = java_path
         self.offline = offline
+        self._proc = None            # tiến trình game, để dừng khi bấm STOP
+
+    def _capture(self, proc) -> None:
+        self._proc = proc
+        self.game_started.emit()
+
+    def stop(self) -> None:
+        """Dừng game đang chạy (bấm STOP)."""
+        proc = self._proc
+        if proc and proc.poll() is None:
+            proc.terminate()
 
     def _launch_offline(self, installer: Installer, identity) -> int:
         return launch_game_offline(
@@ -103,6 +115,7 @@ class LaunchWorker(QThread):
             java=self.java_path or None,
             max_memory_mb=self.memory_mb,
             on_status=self.status.emit,
+            on_start=self._capture,
         )
 
     def _launch_online(self, installer: Installer, identity) -> int:
@@ -123,7 +136,7 @@ class LaunchWorker(QThread):
         cmd = build_command(meta, installer, identity,
                             java=self.java_path or None, max_memory_mb=self.memory_mb)
         self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
-        return run(cmd, self.game_dir)
+        return run(cmd, self.game_dir, on_start=self._capture)
 
     def run(self) -> None:  # noqa: D102
         try:

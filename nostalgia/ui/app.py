@@ -785,6 +785,30 @@ class Controller:
     def running_count(self) -> int:
         return sum(1 for w in self._launches if w.isRunning())
 
+    def _any_game_running(self) -> bool:
+        return any(w._proc is not None and w._proc.poll() is None for w in self._launches)
+
+    def _update_play_button(self) -> None:
+        btn = getattr(self.pages.get("home"), "play_btn", None)
+        if btn is None:
+            return
+        running = self._any_game_running()
+        btn.setText("STOP" if running else "PLAY")
+        btn.arrow = not running
+        btn.tone = "danger" if running else "green"
+        btn.update()
+
+    def toggle_play(self) -> None:
+        if self._any_game_running():
+            self.stop_launch()
+        else:
+            self.start_launch()
+
+    def stop_launch(self) -> None:
+        for w in list(self._launches):
+            w.stop()
+        self.window.set_status("Stopping game…")
+
     def start_launch(self) -> None:
         account = self.current_account()
         if account is None:
@@ -818,6 +842,7 @@ class Controller:
         worker.status.connect(self.window.set_status)
         worker.failed.connect(lambda m: self.window.set_status(f"Error: {m}"))
         worker.finished_ok.connect(self._launch_done)
+        worker.game_started.connect(self._update_play_button)
         worker.finished.connect(lambda: self._launch_finished(worker))
         self._launches.append(worker)
         worker.start()
@@ -829,6 +854,7 @@ class Controller:
         if worker in self._launches:
             self._launches.remove(worker)
         self.pages["installations"].refresh()
+        self._update_play_button()
         left = self.running_count
         self.window.set_status(f"{left} instance(s) running" if left else "Ready")
 
