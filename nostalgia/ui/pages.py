@@ -125,8 +125,8 @@ class InstallationsPage(Page):
         self.list.action_clicked.connect(self._delete)
         self.add_btn = AeroButton("NEW INSTANCE", self, height=32, tone="neutral")
         self.add_btn.clicked.connect(self.ctl.begin_create_instance)
-        self.fabric_btn = AeroButton("INSTALL FABRIC", self, height=32, tone="neutral")
-        self.fabric_btn.clicked.connect(self.ctl.open_fabric_menu)
+        self.fabric_btn = AeroButton("GET MODPACK", self, height=32, tone="neutral")
+        self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
 
     def _select(self, name) -> None:
         self.ctl.set_active_instance(name)

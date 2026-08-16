@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
+from .. import modrinth
+from .controls import ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
 
@@ -294,3 +296,94 @@ class ReportDialog(GlassDialog):
         c = self.card
         self.view.setGeometry(c.left() + 20, c.top() + 52, c.width() - 40, c.height() - 116)
         self.close_btn.setGeometry(c.right() - 122, c.bottom() - 48, 100, 32)
+
+
+# ---------- duyệt & cài modpack Modrinth ----------
+
+def _compact(n: int) -> str:
+    for div, suf in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
+        if n >= div:
+            return f"{n / div:.1f}{suf}"
+    return str(n)
+
+
+class ModpackDialog(GlassDialog):
+    """Tìm modpack trên Modrinth và cài thẳng thành một instance mới."""
+
+    def __init__(self, parent, ctl):
+        super().__init__(parent, "Add a modpack from Modrinth",
+                         width=min(660, parent.width() - 60),
+                         height=min(480, parent.height() - 80))
+        self.ctl = ctl
+        self._hits: list = []
+        self._icons: dict = {}
+        self._icon_wanted: set = set()
+
+        self.search = QLineEdit(self)
+        self.search.setPlaceholderText("Search modpacks…")
+        self.search.setStyleSheet(INPUT_QSS)
+        self.search.setFont(ui_font(10))
+        self.search.returnPressed.connect(self._load)
+        self.search_btn = AeroButton("SEARCH", self, height=30)
+        self.search_btn.clicked.connect(self._load)
+        self.results = ListView(self, empty_text="Loading popular modpacks…")
+        self.results.activated.connect(self._install)
+        self.results.badge_clicked.connect(self._install)
+        self.close_btn = AeroButton("CLOSE", self, height=30, tone="neutral")
+        self.close_btn.clicked.connect(self.dismiss)
+        self.place()
+        self.search.setFocus()
+        self._load()
+
+    def place(self) -> None:
+        c = self.card
+        self.search.setGeometry(c.left() + 20, c.top() + 50, c.width() - 150, 30)
+        self.search_btn.setGeometry(c.right() - 118, c.top() + 50, 98, 30)
+        self.results.setGeometry(c.left() + 20, c.top() + 92, c.width() - 40, c.height() - 156)
+        self.close_btn.setGeometry(c.right() - 118, c.bottom() - 46, 98, 30)
+
+    def _load(self) -> None:
+        q = self.search.text().strip()
+        self.results.empty_text = "Loading from Modrinth…"
+        self.results.set_rows([])
+        self.ctl._run(
+            lambda: modrinth.search(q, "modpack", index="downloads", limit=30),
+            self._show, lambda m: self._fail(m))
+
+    def _fail(self, msg: str) -> None:
+        self.results.empty_text = f"Couldn't reach Modrinth: {msg}"
+        self.results.set_rows([])
+
+    def _show(self, hits) -> None:
+        self._hits = hits
+        self.results.empty_text = "No modpacks matched."
+        self._render()
+        for h in hits:
+            url = h.get("icon_url")
+            if url and url not in self._icons and url not in self._icon_wanted:
+                self._icon_wanted.add(url)
+                self.ctl._run(lambda u=url: modrinth.fetch_icon(u),
+                              lambda data, u=url: self._icon(u, data),
+                              lambda _m, u=url: self._icon_wanted.discard(u))
+
+    def _icon(self, url, data) -> None:
+        self._icon_wanted.discard(url)
+        pm = QPixmap()
+        if pm.loadFromData(data):
+            self._icons[url] = pm
+            self._render()
+
+    def _render(self) -> None:
+        rows = []
+        for h in self._hits:
+            rows.append(Row(
+                title=h.get("title", "?"),
+                subtitle=f"{h.get('author', '?')} · {_compact(h.get('downloads', 0))} downloads",
+                badge="ADD", badge_on=True,
+                icon=self._icons.get(h.get("icon_url") or ""),
+                data=h))
+        self.results.set_rows(rows)
+
+    def _install(self, hit) -> None:
+        self.ctl.install_modpack(hit)
+        self.dismiss()

@@ -13,7 +13,8 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 
 from .. import (
     __version__, accounts, content, fabric, identity as identity_mod,
-    instances as instances_mod, loaders as loaders_mod, updater,
+    instances as instances_mod, loaders as loaders_mod, modpack as modpack_mod,
+    modrinth as modrinth_mod, updater,
 )
 from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id, save_client_id
@@ -273,6 +274,48 @@ class Controller:
         dlg.confirmed.connect(lambda: (self.delete_instance(name),
                                        self.pages["installations"].refresh()))
         dlg.show()
+
+    def begin_browse_modpacks(self) -> None:
+        from .dialogs import ModpackDialog
+        ModpackDialog(self.window, self).show()
+
+    def install_modpack(self, hit) -> None:
+        slug = hit.get("slug") or hit.get("project_id")
+        title = hit.get("title") or slug
+        name = self.instances.unique_name(title)
+        inst_dir = self.store_root / "instances" / instances_mod.slug(name)
+        self.window.set_status(f"Installing modpack '{title}' — this can take a while…")
+
+        def work():
+            import tempfile
+            from .. import jre
+            from ..install import download
+            f = modrinth_mod.best_file(slug)
+            if not f:
+                raise RuntimeError("no downloadable modpack file")
+            mrpack = Path(tempfile.mkdtemp()) / f["filename"]
+            download(f["url"], mrpack, f.get("sha1"))
+            index = modpack_mod.install_contents(mrpack, inst_dir)
+            loader, mc = modpack_mod.loader_and_mc(index)
+            if loader == "quilt":
+                raise RuntimeError("Quilt modpacks aren't supported yet")
+            java = None
+            if loader in ("forge", "neoforge"):
+                meta = self.installer.install(mc)
+                jre.ensure(self.store_root, meta)
+                java = str(jre.java_binary(self.store_root, jre.component_of(meta)))
+            vid = loaders_mod.install(self.installer, loader, mc, java_binary=java)
+            return name, vid
+
+        self._run(work,
+                  lambda r: self._modpack_installed(*r),
+                  lambda m: self.window.set_status(f"Modpack install failed: {m}"))
+
+    def _modpack_installed(self, name: str, version: str) -> None:
+        self.instances.add(name, version)
+        self.set_active_instance(name)
+        self.window.set_status(f"Modpack '{name}' installed — press PLAY.")
+        self.go("home")
 
     def _bootstrap_instances(self) -> None:
         """Lần đầu chạy bản có instance: dựng instance từ các version đã cài và
