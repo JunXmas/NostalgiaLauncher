@@ -688,13 +688,15 @@ class InstancePage(Page):
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
-        self.back_btn.setGeometry(24, 16, 92, 28)
-        # PLAY/EDIT dời xuống để không đè nút điều khiển cửa sổ (góc trên phải).
-        self.edit_btn.setGeometry(w - 288, 34, 84, 28)
-        self.play_btn.setGeometry(w - 190, 30, 170, 36)
-        self.tabs.setGeometry(24, 74, w - 48, 30)
-        self.content.setGeometry(0, 108, w, h - 108)
-        self.logs.setGeometry(24, 112, w - 48, h - 136)
+        # Cả header nằm DƯỚI dải kéo cửa sổ (cao 46px) — nếu không, dải kéo sẽ
+        # nuốt click và các nút không hoạt động; cũng để cách xa nút caption.
+        top = 54
+        self.back_btn.setGeometry(24, top, 94, 32)
+        self.play_btn.setGeometry(w - 178, top - 4, 150, 40)
+        self.edit_btn.setGeometry(w - 288, top, 96, 32)
+        self.tabs.setGeometry(24, 102, w - 48, 30)
+        self.content.setGeometry(0, 138, w, h - 138)
+        self.logs.setGeometry(24, 142, w - 48, h - 166)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
@@ -702,17 +704,17 @@ class InstancePage(Page):
         if self.instance:
             p.setFont(ui_font(13, bold=True))
             p.setPen(TEXT)
-            p.drawText(QRect(128, 14, self.width() - 460, 24),
+            p.drawText(QRect(130, 50, self.width() - 460, 24),
                        Qt.AlignLeft | Qt.AlignVCenter, self.instance.name)
             p.setFont(ui_font(8))
             p.setPen(TEXT_DIM)
             pt = self.instance.playtime_sec
             extra = f"  ·  played {pt // 3600}h {(pt % 3600) // 60}m" if pt else ""
-            p.drawText(QRect(128, 36, self.width() - 460, 16),
+            p.drawText(QRect(130, 74, self.width() - 460, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, self.instance.version + extra)
         # đường kẻ dưới header
         p.setPen(QPen(QColor(255, 255, 255, 24), 1))
-        p.drawLine(24, 106, self.width() - 24, 106)
+        p.drawLine(24, 136, self.width() - 24, 136)
         p.end()
 
 
