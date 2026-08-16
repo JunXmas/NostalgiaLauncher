@@ -468,6 +468,8 @@ class InstanceSettingsDialog(GlassDialog):
     """Đổi tên instance và ghi đè RAM / đường dẫn Java cho riêng nó."""
 
     saved = Signal(str, int, str)   # tên mới, RAM (MB), java path
+    duplicate = Signal()
+    repair = Signal()
 
     def __init__(self, parent, inst, *, default_memory: int, max_memory: int):
         super().__init__(parent, f"Instance settings", width=480, height=336)
@@ -485,6 +487,10 @@ class InstanceSettingsDialog(GlassDialog):
         self.ok.clicked.connect(self._save)
         self.cancel = AeroButton("CANCEL", self, height=32, tone="neutral")
         self.cancel.clicked.connect(self.dismiss)
+        self.dup = AeroButton("DUPLICATE", self, height=32, tone="neutral")
+        self.dup.clicked.connect(lambda: (self.duplicate.emit(), self.dismiss()))
+        self.rep = AeroButton("REPAIR", self, height=32, tone="neutral")
+        self.rep.clicked.connect(lambda: (self.repair.emit(), self.dismiss()))
         self.place()
 
     def _save(self) -> None:
@@ -497,6 +503,8 @@ class InstanceSettingsDialog(GlassDialog):
         self.name.setGeometry(c.left() + 22, c.top() + 76, c.width() - 44, 32)
         self.mem.setGeometry(c.left() + 22, c.top() + 150, c.width() - 44, 26)
         self.java.setGeometry(c.left() + 22, c.top() + 222, c.width() - 44, 32)
+        self.dup.setGeometry(c.left() + 22, c.bottom() - 48, 108, 32)
+        self.rep.setGeometry(c.left() + 138, c.bottom() - 48, 92, 32)
         self.ok.setGeometry(c.right() - 128, c.bottom() - 48, 106, 32)
         self.cancel.setGeometry(c.right() - 244, c.bottom() - 48, 104, 32)
 

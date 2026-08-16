@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -288,6 +289,8 @@ class Controller:
                                      default_memory=self.settings.memory_mb,
                                      max_memory=SettingsPage._max_memory())
         dlg.saved.connect(lambda nm, mem, jv: self._apply_instance_settings(name, nm, mem, jv))
+        dlg.duplicate.connect(lambda: self.duplicate_instance(name))
+        dlg.repair.connect(lambda: self.repair_instance(name))
         dlg.show()
 
     def _apply_instance_settings(self, old_name, new_name, memory, java) -> None:
@@ -306,6 +309,32 @@ class Controller:
         self.pages["installations"].refresh()
         self.pages["home"].refresh()
         self.window.set_status(f"Saved settings for '{final}'.")
+
+    def duplicate_instance(self, name: str) -> None:
+        import shutil
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        new = self.instances.add(f"{inst.name} copy", inst.version)
+        self.instances.set_settings(new.name, memory_mb=inst.memory_mb,
+                                    java_path=inst.java_path)
+        src, dst = self.instance_dir(inst), self.instance_dir(new)
+        if src.exists():
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+        self.set_active_instance(new.name)
+        self.pages["installations"].refresh()
+        self.pages["home"].refresh()
+        self.window.set_status(f"Duplicated to '{new.name}'.")
+
+    def repair_instance(self, name: str) -> None:
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        self.window.set_status(f"Repairing '{name}' — re-downloading files…")
+        self._run(lambda: self.installer.install(inst.version),
+                  lambda _m: (self.pages["installations"].refresh(),
+                              self.window.set_status(f"Repaired '{name}'.")),
+                  lambda m: self.window.set_status(f"Repair failed: {m}"))
 
     def begin_browse_modpacks(self) -> None:
         from .dialogs import ModpackDialog
@@ -926,6 +955,9 @@ class Controller:
             self.store, account, version, game_dir,
             memory_mb=memory, java_path=java, store_root=self.store_root,
         )
+        worker.instance_name = inst.name if inst else ""
+        worker.started_ts = 0.0
+        worker.game_started.connect(lambda w=worker: setattr(w, "started_ts", time.time()))
         worker.progress.connect(self._on_progress)
         worker.status.connect(self.window.set_status)
         worker.failed.connect(lambda m: self.window.set_status(f"Error: {m}"))
@@ -955,6 +987,11 @@ class Controller:
         self.window.set_status("Everything is up to date!")
 
     def _launch_finished(self, worker) -> None:
+        # Ghi nhận thời gian chơi cho instance vừa thoát.
+        started = getattr(worker, "started_ts", 0.0)
+        name = getattr(worker, "instance_name", "")
+        if started and name:
+            self.instances.add_playtime(name, time.time() - started)
         if worker in self._launches:
             self._launches.remove(worker)
         self.pages["installations"].refresh()

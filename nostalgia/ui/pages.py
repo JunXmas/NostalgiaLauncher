@@ -151,6 +151,9 @@ class InstallationsPage(Page):
         for inst in self.ctl.instances.all():
             state = "ready" if inst.version in ready else "will download on play"
             extra = f" · {inst.memory_mb // 1024} GB" if inst.memory_mb else ""
+            if inst.playtime_sec:
+                h, m = inst.playtime_sec // 3600, (inst.playtime_sec % 3600) // 60
+                extra += f" · played {h}h {m}m" if h else f" · played {m}m"
             rows.append(Row(
                 title=inst.name,
                 subtitle=f"{inst.version} · {state}{extra}",
@@ -526,24 +529,45 @@ class ContentLibraryPage(Page):
         self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
         loaders, gvs = self._target()
         game_dir = self._game_dir()          # cố định instance đích trước khi chạy nền
+        kind = self.kind
+        title = hit.get("title", slug)
 
         def work():
-            f = modrinth.best_file(slug, loaders=loaders, game_versions=gvs)
-            if not f:
-                raise RuntimeError("no compatible version for your Minecraft/loader")
-            mods_mgr.install_file(game_dir, self.kind,
-                                  url=f["url"], filename=f["filename"], sha1=f["sha1"])
-            return hit.get("title", slug)
+            # Cài mod + toàn bộ dependency BẮT BUỘC (đệ quy có giới hạn).
+            seen: set = set()
+            count = 0
+            stack = [(slug, 0)]
+            while stack:
+                sl, depth = stack.pop()
+                if not sl or sl in seen or depth > 4:
+                    continue
+                seen.add(sl)
+                ver = modrinth.best_version(sl, loaders=loaders, game_versions=gvs)
+                if not ver:
+                    if depth == 0:
+                        raise RuntimeError("no compatible version for your Minecraft/loader")
+                    continue
+                f = modrinth.pick_file(ver)
+                if f:
+                    mods_mgr.install_file(game_dir, kind, url=f["url"],
+                                          filename=f["filename"],
+                                          sha1=f.get("hashes", {}).get("sha1"))
+                    count += 1
+                for dep in ver.get("dependencies", []):
+                    if dep.get("dependency_type") == "required" and dep.get("project_id"):
+                        stack.append((dep["project_id"], depth + 1))
+            return count
 
         self.ctl._run(work,
-                      lambda title: self._installed(slug, title),
+                      lambda n: self._installed(slug, title, n),
                       lambda msg: self._install_failed(slug, hit, msg))
 
-    def _installed(self, slug: str, title: str) -> None:
+    def _installed(self, slug: str, title: str, count: int = 1) -> None:
         self._busy.discard(slug)
         self._done.add(slug)
         self._render_results()
-        self.ctl.window.set_status(f"Added {title} — see the Installed tab.")
+        extra = f" + {count - 1} dependency(ies)" if count > 1 else ""
+        self.ctl.window.set_status(f"Added {title}{extra} — see the Installed tab.")
 
     def _install_failed(self, slug: str, hit, msg: str) -> None:
         self._busy.discard(slug)

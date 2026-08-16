@@ -29,8 +29,10 @@ def slug(name: str) -> str:
 class Instance:
     name: str            # tên hiển thị (duy nhất)
     version: str         # id phiên bản để chạy (vanilla hoặc fabric-loader-...)
-    memory_mb: int = 0   # RAM riêng; 0 = dùng mặc định chung
-    java_path: str = ""  # Java riêng; rỗng = dùng mặc định chung
+    memory_mb: int = 0     # RAM riêng; 0 = dùng mặc định chung
+    java_path: str = ""    # Java riêng; rỗng = dùng mặc định chung
+    playtime_sec: int = 0  # tổng thời gian chơi (giây)
+    last_played: str = ""  # ngày chơi gần nhất (YYYY-MM-DD)
 
     def dir(self, game_root: Path) -> Path:
         return game_root / "instances" / slug(self.name)
@@ -102,6 +104,14 @@ class InstanceStore:
         if inst:
             inst.memory_mb = memory_mb
             inst.java_path = java_path
+            self._save()
+
+    def add_playtime(self, name: str, seconds: float) -> None:
+        import datetime
+        inst = self.get(name)
+        if inst and seconds > 0:
+            inst.playtime_sec += int(seconds)
+            inst.last_played = datetime.date.today().isoformat()
             self._save()
 
     def rename(self, old: str, new: str) -> str:

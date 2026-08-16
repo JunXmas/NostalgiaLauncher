@@ -100,6 +100,16 @@ def pick_file(version: dict) -> dict | None:
     return next((f for f in files if f.get("primary")), files[0])
 
 
+def best_version(id_or_slug: str, *,
+                 loaders: list[str] | None = None,
+                 game_versions: list[str] | None = None) -> dict | None:
+    """Phiên bản mới nhất có file, khớp loader + bản game (kèm dependencies)."""
+    for v in versions(id_or_slug, loaders=loaders, game_versions=game_versions):
+        if pick_file(v):
+            return v
+    return None
+
+
 def best_file(id_or_slug: str, *,
               loaders: list[str] | None = None,
               game_versions: list[str] | None = None) -> dict | None:
@@ -107,13 +117,13 @@ def best_file(id_or_slug: str, *,
 
     Trả về dict {url, filename, sha1, size} hoặc None nếu không có bản nào khớp.
     """
-    for v in versions(id_or_slug, loaders=loaders, game_versions=game_versions):
-        f = pick_file(v)
-        if f:
-            return {
-                "url": f["url"],
-                "filename": f["filename"],
-                "sha1": f.get("hashes", {}).get("sha1"),
-                "size": f.get("size", 0),
-            }
+    v = best_version(id_or_slug, loaders=loaders, game_versions=game_versions)
+    f = pick_file(v) if v else None
+    if f:
+        return {
+            "url": f["url"],
+            "filename": f["filename"],
+            "sha1": f.get("hashes", {}).get("sha1"),
+            "size": f.get("size", 0),
+        }
     return None
