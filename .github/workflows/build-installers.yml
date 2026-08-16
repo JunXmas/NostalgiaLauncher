@@ -45,6 +45,17 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install PySide6-Essentials pyinstaller
 
+      - name: Install Qt system libraries (Linux)
+        # Runner Linux trần thiếu lib hệ thống Qt cần để chỉ import QtGui (libEGL…),
+        # nên cả make_icon lẫn pyinstaller đều đổ. Cài trước là qua.
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libxcb-cursor0 \
+            libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libdbus-1-3
+
       - name: Generate icons
         # Runner không có màn hình; offscreen cho phép Qt vẽ thẳng vào bộ nhớ.
         env:
