@@ -138,6 +138,15 @@ def draw_shaders_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
     p.restore()
 
 
+def _mix(a: QColor, b: QColor, t: float) -> QColor:
+    """Nội suy tuyến tính giữa hai màu — dùng cho chuyển màu mượt khi hover."""
+    t = max(0.0, min(1.0, t))
+    return QColor(int(a.red() + (b.red() - a.red()) * t),
+                  int(a.green() + (b.green() - a.green()) * t),
+                  int(a.blue() + (b.blue() - a.blue()) * t),
+                  int(a.alpha() + (b.alpha() - a.alpha()) * t))
+
+
 def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
     if kind == "cube":
         draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
@@ -409,37 +418,64 @@ class SidebarItem(QAbstractButton):
         self.setCursor(Qt.PointingHandCursor)
         self._hover = False
 
+        # Hover chạy mượt 0<->1: highlight sáng dần và nội dung trượt nhẹ sang phải,
+        # thay vì bật tắt phựt — hợp idiom của thanh điều hướng.
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _animate_hover(self, target: float, ms: int):
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(ms)
+        self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(target)
+        self._hover_anim.start()
+
     def enterEvent(self, e):  # noqa: N802
         self._hover = True
+        self._animate_hover(1.0, 110)
         self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover = False
+        self._animate_hover(0.0, 150)
         self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect())
+        hov = self._hover_amt
+        checked = self.isChecked()
 
-        if self.isChecked():
+        if checked:
             draw_glass_rect(p, r.adjusted(4, 2, -4, -2), tint=QColor(255, 255, 255, 34), gloss=0.9)
             p.setPen(Qt.NoPen)
             p.setBrush(ACCENT)
             p.drawRoundedRect(QRectF(r.left() + 4, r.top() + 6, 3, r.height() - 12), 1.5, 1.5)
-        elif self._hover:
-            draw_glass_rect(p, r.adjusted(4, 2, -4, -2), tint=QColor(255, 255, 255, 16), gloss=0.5)
+        elif hov > 0.01:
+            draw_glass_rect(p, r.adjusted(4, 2, -4, -2),
+                            tint=QColor(255, 255, 255, int(22 * hov)), gloss=0.5 * hov)
 
-        icon_rect = QRectF(r.left() + 16, r.center().y() - 9, 18, 18)
-        color = TEXT if (self.isChecked() or self._hover) else TEXT_DIM
+        # Trượt nội dung sang phải theo hover (mục đang chọn thì đứng yên).
+        dx = 0.0 if checked else hov * 4.0
+        # Màu icon/chữ chuyển mượt từ mờ -> rõ theo hover.
+        base = TEXT if checked else _mix(TEXT_DIM, TEXT, hov)
+        icon_rect = QRectF(r.left() + 16 + dx, r.center().y() - 9, 18, 18)
+        color = base
         _draw_nav_icon(p, self.icon_kind, icon_rect, color)
 
-        text_left = int(r.left() + 44)
+        text_left = int(r.left() + 44 + dx)
         if self.subtitle:
             f = ui_font(7)
             f.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
             p.setFont(f)
-            p.setPen(TEXT_DIM if (self.isChecked() or self._hover) else TEXT_FAINT)
+            p.setPen(TEXT_DIM if checked else _mix(TEXT_FAINT, TEXT_DIM, hov))
             p.drawText(QRect(text_left, int(r.top() + 8), self.width() - 50, 11),
                        Qt.AlignLeft | Qt.AlignTop, self.text())
             p.setFont(ui_font(10, bold=True))
