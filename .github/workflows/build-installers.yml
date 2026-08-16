@@ -23,13 +23,12 @@ jobs:
         include:
           - os: windows-latest
             label: Windows (x64)
-          # Hai runner macOS cho hai kiến trúc: macos-14 là Apple Silicon, còn
-          # macos-13 vẫn là Intel. Bản build trên máy này không chạy trên máy kia,
-          # nên phải có cả hai thì mới phủ hết người dùng Mac.
           - os: macos-14
             label: macOS (Apple Silicon)
-          - os: macos-13
-            label: macOS (Intel)
+          # macOS Intel (macos-13) tạm bỏ: runner Intel của GitHub xếp hàng quá
+          # lâu, chặn cả bản phát hành. Thêm lại khi cần phủ máy Mac Intel:
+          #   - os: macos-13
+          #     label: macOS (Intel)
 
     steps:
       - uses: actions/checkout@v4
