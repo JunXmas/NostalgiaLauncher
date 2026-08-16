@@ -2,6 +2,19 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.2.9
+- **One-click mod updates.** The Installed tab flags mods with a newer Modrinth
+  build (matching your instance) and adds an *Update all* button.
+- **Dependency resolution.** Installing a mod now pulls in its required
+  dependencies automatically, so things like Fabric API just come along.
+- **Shaders** are now a first-class content type — browse and install shader
+  packs from Modrinth like mods and resource packs.
+- **Per-instance settings**: rename an instance and override its memory (RAM)
+  and Java path; **Duplicate** and **Repair** buttons too.
+- **In-app log viewer** — a LOGS button opens the live game log without leaving
+  the launcher.
+- Instances now track **play time and last-played**.
+
 ## 0.2.8
 - **Pick a loader when you make an instance** — Vanilla, Fabric, Forge or
   NeoForge. Forge/NeoForge run their official installer for you.
