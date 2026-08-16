@@ -56,6 +56,27 @@ def fetch_icon(url: str) -> bytes:
     return r.content
 
 
+def updates(hashes: list[str], *, loaders: list[str] | None = None,
+            game_versions: list[str] | None = None) -> dict:
+    """Bản mới nhất cho từng file mod (theo sha1), lọc loader + bản game.
+
+    Gửi /version_files/update: trả về map {sha1_cũ: version_object_mới_nhất}.
+    version_object có 'files' (kèm sha1) để so với bản đang cài mà biết có nên
+    cập nhật không.
+    """
+    if not hashes:
+        return {}
+    body: dict = {"hashes": hashes, "algorithm": "sha1"}
+    if loaders:
+        body["loaders"] = loaders
+    if game_versions:
+        body["game_versions"] = game_versions
+    r = requests.post(f"{BASE}/version_files/update", json=body,
+                      headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
 def versions(id_or_slug: str, *,
              loaders: list[str] | None = None,
              game_versions: list[str] | None = None) -> list[dict]:

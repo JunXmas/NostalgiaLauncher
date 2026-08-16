@@ -84,3 +84,19 @@ def install_file(game_dir: Path, kind: str, *, url: str, filename: str,
     """Tải một file về thư mục tương ứng và trả về đường dẫn."""
     dest = folder(game_dir, kind) / filename
     return install.download(url, dest, sha1)
+
+
+def file_sha1(path: Path) -> str:
+    return install._sha1(path)
+
+
+def update_item(game_dir: Path, kind: str, item: "Item", new_file: dict) -> Path:
+    """Cập nhật một mod: tải bản mới, giữ nguyên trạng thái bật/tắt, bỏ file cũ."""
+    base = folder(game_dir, kind)
+    new_path = install.download(new_file["url"], base / new_file["filename"],
+                                new_file.get("sha1"))
+    if not item.enabled:
+        new_path = set_enabled(new_path, False)   # bản cũ đang tắt -> giữ tắt
+    if item.path != new_path and item.path.exists():
+        delete(item.path)                          # xoá file cũ (tên khác)
+    return new_path

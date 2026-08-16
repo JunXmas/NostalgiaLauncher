@@ -189,14 +189,20 @@ class ContentLibraryPage(Page):
         self.tabs.changed.connect(self._show_tab)
 
         # --- Installed ---
+        self._items: list = []
+        self._updates: dict = {}          # tên hiển thị -> file bản mới (Modrinth)
         self.installed = ListView(self, empty_text=self._empty_installed)
         self.installed.badge_clicked.connect(self._toggle)
         self.installed.action_clicked.connect(self._ask_delete)
+        self.installed.activated.connect(self._on_installed_click)
         self.open_btn = AeroButton("OPEN FOLDER", self, height=32, tone="neutral")
         self.open_btn.clicked.connect(
             lambda: self.ctl.open_path(mods_mgr.folder(self._game_dir(), self.kind)))
         self.reload_btn = AeroButton("REFRESH", self, height=32, tone="neutral")
         self.reload_btn.clicked.connect(self.refresh)
+        self.update_btn = AeroButton("UPDATE ALL", self, height=32)   # xanh
+        self.update_btn.clicked.connect(self._update_all)
+        self.update_btn.setVisible(False)
 
         # --- Browse ---
         self.search = QLineEdit(self)
@@ -269,6 +275,7 @@ class ContentLibraryPage(Page):
         browse = i == 1
         for w in (self.installed, self.open_btn, self.reload_btn):
             w.setVisible(not browse)
+        self.update_btn.setVisible((not browse) and bool(self._updates))
         for w in (self.search, self.search_btn, self.results, self.sort_tabs):
             w.setVisible(browse)
         self.loader_tabs.setVisible(browse and self.is_mod)   # resource pack không có loader
@@ -297,6 +304,7 @@ class ContentLibraryPage(Page):
         self.installed.setGeometry(16, 98, w - 32, h - 156)
         self.reload_btn.setGeometry(w - 176, h - 46, 160, 32)
         self.open_btn.setGeometry(w - 348, h - 46, 168, 32)
+        self.update_btn.setGeometry(w - 512, h - 46, 156, 32)
         # Browse
         self.search.setGeometry(16, 98, w - 140, 32)
         self.search_btn.setGeometry(w - 116, 98, 100, 32)
@@ -308,28 +316,114 @@ class ContentLibraryPage(Page):
 
     def refresh(self) -> None:
         self._sync_instance()
+        self._render_installed()
+        self._check_updates()
+
+    def _render_installed(self) -> None:
+        self._items = mods_mgr.list_installed(self._game_dir(), self.kind)
         rows = []
-        for it in mods_mgr.list_installed(self._game_dir(), self.kind):
+        for it in self._items:
             note = human_size(it.size) + ("" if it.enabled else " · disabled")
             rows.append(Row(
                 title=it.name,
                 subtitle=note,
+                right="↑ UPDATE" if it.name in self._updates else "",
                 badge="ON" if it.enabled else "OFF",
                 badge_on=it.enabled,
                 action="delete",
                 data=it,
             ))
         self.installed.set_rows(rows)
+        has = bool(self._updates) and self.tabs.current == 0
+        self.update_btn.setVisible(has)
+        if self._updates:
+            self.update_btn.setText(f"UPDATE ALL ({len(self._updates)})")
+
+    def _check_updates(self) -> None:
+        """Hỏi Modrinth theo hash xem mod nào có bản mới hợp phiên bản instance."""
+        items = list(self._items)
+        if not items:
+            self._updates = {}
+            self.update_btn.setVisible(False)
+            return
+        loaders, gvs = self._target()
+
+        def work():
+            by_hash = {}
+            for it in items:
+                try:
+                    by_hash[mods_mgr.file_sha1(it.path)] = it
+                except OSError:
+                    pass
+            res = modrinth.updates(list(by_hash), loaders=loaders, game_versions=gvs)
+            found = {}
+            for h, ver in res.items():
+                it = by_hash.get(h)
+                nf = modrinth.pick_file(ver)
+                new_sha = (nf or {}).get("hashes", {}).get("sha1")
+                if it and nf and new_sha and new_sha != h:
+                    found[it.name] = {"url": nf["url"], "filename": nf["filename"],
+                                      "sha1": new_sha}
+            return found
+
+        self.ctl._run(work, self._apply_updates, lambda _m: None)
+
+    def _apply_updates(self, found: dict) -> None:
+        self._updates = found
+        self._render_installed()
 
     def _toggle(self, item) -> None:
         mods_mgr.set_enabled(item.path, not item.enabled)
-        self.refresh()
+        self._render_installed()
 
     def _ask_delete(self, item) -> None:
         dlg = ConfirmDialog(self.window(), f"Remove {self.kind[:-1]}",
                             f"Delete '{item.name}' from disk? This cannot be undone.")
-        dlg.confirmed.connect(lambda: (mods_mgr.delete(item.path), self.refresh()))
+        dlg.confirmed.connect(lambda: (mods_mgr.delete(item.path),
+                                       self._updates.pop(item.name, None),
+                                       self._render_installed()))
         dlg.show()
+
+    def _on_installed_click(self, item) -> None:
+        # Bấm vào hàng có bản mới -> cập nhật ngay mod đó.
+        if item.name in self._updates:
+            self._update_one(item)
+
+    def _update_one(self, item) -> None:
+        nf = self._updates.get(item.name)
+        if not nf:
+            return
+        self.ctl.window.set_status(f"Updating {item.name}…")
+        gd = self._game_dir()
+        self.ctl._run(lambda: mods_mgr.update_item(gd, self.kind, item, nf),
+                      lambda _p: self._updated(item.name),
+                      lambda m: self.ctl.window.set_status(f"Update failed: {m}"))
+
+    def _updated(self, name: str) -> None:
+        self._updates.pop(name, None)
+        self.ctl.window.set_status(f"Updated {name}.")
+        self._render_installed()
+
+    def _update_all(self) -> None:
+        if not self._updates:
+            return
+        self.ctl.window.set_status("Updating all…")
+        gd = self._game_dir()
+        by_name = {it.name: it for it in self._items}
+        jobs = [(by_name[n], nf) for n, nf in self._updates.items() if n in by_name]
+
+        def work():
+            for it, nf in jobs:
+                mods_mgr.update_item(gd, self.kind, it, nf)
+            return len(jobs)
+
+        self.ctl._run(work, self._all_updated,
+                      lambda m: self.ctl.window.set_status(f"Update failed: {m}"))
+
+    def _all_updated(self, n: int) -> None:
+        self._updates = {}
+        self.ctl.window.set_status(f"Updated {n} item(s).")
+        self.refresh()
 
     # ---- Browse ----
 
