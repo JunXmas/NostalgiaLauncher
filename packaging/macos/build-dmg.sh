@@ -37,10 +37,22 @@ cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
 
 echo "==> Tạo $DMG"
-hdiutil create \
-    -volname "$APP_NAME" \
-    -srcfolder "$STAGE" \
-    -ov -format UDZO \
-    "$DMG"
+# hdiutil hay báo "Resource busy" chập chờn trên runner CI (Spotlight index thư
+# mục tạm, hoặc ảnh đĩa trước chưa nhả xong). Thử lại vài lần thay vì rớt cả bản.
+for attempt in 1 2 3 4; do
+    if hdiutil create \
+        -volname "$APP_NAME" \
+        -srcfolder "$STAGE" \
+        -ov -format UDZO \
+        "$DMG"; then
+        break
+    fi
+    if [ "$attempt" -eq 4 ]; then
+        echo "hdiutil create thất bại sau 4 lần thử." >&2
+        exit 1
+    fi
+    echo "hdiutil bận, thử lại lần $((attempt + 1)) sau 5s…" >&2
+    sleep 5
+done
 
 echo "==> Xong: $DMG"
