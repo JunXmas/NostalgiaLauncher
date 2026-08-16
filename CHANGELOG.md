@@ -2,6 +2,18 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.2.8
+- **Pick a loader when you make an instance** — Vanilla, Fabric, Forge or
+  NeoForge. Forge/NeoForge run their official installer for you.
+- **Install modpacks straight from Modrinth.** GET MODPACK on the Instances
+  page downloads a pack and sets it up as a ready-to-play instance.
+- **PLAY becomes STOP while the game is running** — one click closes the game,
+  and it flips back to PLAY when the game exits.
+- **A nicer version picker**: a centered dialog with a live filter box, an
+  *Include snapshots* toggle, and a "downloaded" marker.
+- Updates now install and **restart on their own** — no more "restart?" prompt.
+- Mods you install match the exact instance you're installing into.
+
 ## 0.2.7
 - **Instances are real now.** Each instance is its own modpack with a separate
   mods / saves / config / resourcepacks folder, so mods in one instance never
