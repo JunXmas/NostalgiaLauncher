@@ -12,9 +12,19 @@ from .paths import CONFIG_DIR, DEFAULT_GAME_DIR, LEGACY_GAME_DIR
 CONFIG_PATH = CONFIG_DIR / "settings.json"
 CLIENTS_PATH = CONFIG_DIR / "clients.json"
 
+# Client ID mặc định dùng khi chưa có biến môi trường hay file clients.json.
+# Client ID của public client không phải bí mật, nên nhúng sẵn ở đây để chạy
+# được ngay. Đổi sang ID chính thức thì chỉ cần sửa đúng một chỗ này.
+#   - microsoft: 4765445b-... là client ID công khai của Prism Launcher, dùng
+#     cho kiểm thử nội bộ luồng Microsoft OAuth device code.
+DEFAULT_CLIENT_IDS = {
+    "microsoft": "4765445b-32ee-4b92-b7e2-aebd308c57d2",
+}
+
 
 def client_id(name: str, env_var: str) -> str:
-    """Lấy OAuth client ID: ưu tiên biến môi trường, rồi tới file cấu hình cục bộ.
+    """Lấy OAuth client ID: ưu tiên biến môi trường, rồi tới file cấu hình cục
+    bộ, cuối cùng là giá trị mặc định nhúng sẵn trong DEFAULT_CLIENT_IDS.
 
     Client ID của public client không phải bí mật (mọi launcher mã nguồn mở đều
     công khai của mình), nhưng để ngoài repo thì mỗi người tự dùng ID riêng và
@@ -25,10 +35,12 @@ def client_id(name: str, env_var: str) -> str:
         return value
     if CLIENTS_PATH.exists():
         try:
-            return json.loads(CLIENTS_PATH.read_text()).get(name, "").strip()
+            saved = json.loads(CLIENTS_PATH.read_text()).get(name, "").strip()
         except (json.JSONDecodeError, OSError):
-            return ""
-    return ""
+            saved = ""
+        if saved:
+            return saved
+    return DEFAULT_CLIENT_IDS.get(name, "")
 
 
 def save_client_id(name: str, value: str) -> None:
