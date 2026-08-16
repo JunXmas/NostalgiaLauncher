@@ -112,8 +112,10 @@ def install(game_dir: Path, component: str, on_progress=None) -> Path:
         url_, dest, sha = job
         dest.parent.mkdir(parents=True, exist_ok=True)
         download(url_, dest, sha)
-        # Giữ cờ thực thi cho bin/java và các script.
-        if files[str(dest.relative_to(base))].get("executable"):
+        # Giữ cờ thực thi cho bin/java và các script. Key trong manifest luôn
+        # dùng dấu '/', nên phải as_posix() — trên Windows str() ra dấu '\' và
+        # gây KeyError, làm hỏng cả bộ JRE (Minecraft không có Java để chạy).
+        if files[dest.relative_to(base).as_posix()].get("executable"):
             dest.chmod(dest.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
         if on_progress:
             done += 1
