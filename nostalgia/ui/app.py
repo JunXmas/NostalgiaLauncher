@@ -21,6 +21,7 @@ from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id, save_client_id
 from . import pages as page_mod
 from .dashboard import HomeDashboard
+from .modpack_page import ModpackBrowsePage
 from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
@@ -73,6 +74,7 @@ class Controller:
             "mods": page_mod.ModsPage(self),
             "resourcepacks": page_mod.ResourcePacksPage(self),
             "shaders": page_mod.ShaderPacksPage(self),
+            "modpacks": ModpackBrowsePage(self),
             "servers": page_mod.StubPage(self, "Servers",
                 "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),
@@ -347,8 +349,7 @@ class Controller:
                   lambda m: self.window.set_status(f"Repair failed: {m}"))
 
     def begin_browse_modpacks(self) -> None:
-        from .dialogs import ModpackDialog
-        ModpackDialog(self.window, self).show()
+        self.go("modpacks")
 
     def install_modpack(self, hit) -> None:
         slug = hit.get("slug") or hit.get("project_id")
