@@ -17,7 +17,7 @@ ROOT = Path(SPECPATH).parent
 ASSETS = ROOT / "packaging" / "assets"
 
 APP_NAME = "Nostalgia Launcher"
-APP_VERSION = "0.2.3"
+APP_VERSION = "0.2.4"
 BUNDLE_ID = "com.nostalgia.launcher"
 
 WINDOWS = sys.platform == "win32"
