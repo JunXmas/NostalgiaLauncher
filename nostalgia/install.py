@@ -154,7 +154,12 @@ class Installer:
     def _raw_version_json(self, version_id: str) -> dict:
         local = self.versions_dir / version_id / f"{version_id}.json"
         if local.exists():
-            return json.loads(local.read_text())
+            data = json.loads(local.read_text())
+            # JSON hợp lệ phải có 'downloads' (bản gốc Mojang) hoặc 'inheritsFrom'
+            # (Fabric/Forge). Thiếu cả hai -> file cụt/hỏng, tải lại cho lành thay
+            # vì để KeyError('downloads') làm chết cả lần cài.
+            if "downloads" in data or "inheritsFrom" in data:
+                return data
         manifest = requests.get(VERSION_MANIFEST, timeout=TIMEOUT).json()
         entry = next((v for v in manifest["versions"] if v["id"] == version_id), None)
         if entry is None:
