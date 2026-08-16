@@ -44,6 +44,7 @@ class HomeDashboard(QWidget):
         self._card_rects: list[tuple[QRect, str]] = []
         self._news_rects: list[tuple[QRect, str]] = []
         self._hot_hero_links: list[tuple[QRect, str]] = []
+        self._hover_card: str | None = None
         self.setMouseTracking(True)
 
         self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
@@ -90,7 +91,10 @@ class HomeDashboard(QWidget):
         pos = e.position().toPoint()
         for rect, name in self._card_rects:
             if rect.contains(pos):
-                self.ctl.open_instance(name)
+                if name == "\x00new":
+                    self.ctl.begin_create_instance()
+                else:
+                    self.ctl.open_instance(name)
                 return
         for rect, url in self._news_rects:
             if rect.contains(pos):
@@ -113,8 +117,17 @@ class HomeDashboard(QWidget):
                 or any(r.contains(pos) for r, _ in self._hot_hero_links))
 
     def mouseMoveEvent(self, e):  # noqa: N802
-        self.setCursor(Qt.PointingHandCursor if self._hot(e.position().toPoint())
-                       else Qt.ArrowCursor)
+        pos = e.position().toPoint()
+        self.setCursor(Qt.PointingHandCursor if self._hot(pos) else Qt.ArrowCursor)
+        hovered = next((name for rect, name in self._card_rects if rect.contains(pos)), None)
+        if hovered != self._hover_card:
+            self._hover_card = hovered
+            self.update()
+
+    def leaveEvent(self, e):  # noqa: N802
+        if self._hover_card is not None:
+            self._hover_card = None
+            self.update()
 
     # ---------- vẽ ----------
 
@@ -216,33 +229,45 @@ class HomeDashboard(QWidget):
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
                    Qt.AlignLeft | Qt.AlignVCenter, "My Instances")
-        # Gợi ý: mod/shader/resource pack nằm trong trang của từng instance.
-        p.setFont(ui_font(8))
-        p.setPen(TEXT_FAINT)
-        p.drawText(QRect(area.left() + 130, area.top(), area.width() - 300, 24),
-                   Qt.AlignLeft | Qt.AlignVCenter, "— click one to add mods & manage it")
         row_top = area.top() + 34
         current = self.ctl.instances.active
-
-        if not self._instances:
-            p.setFont(ui_font(9))
-            p.setPen(TEXT_FAINT)
-            p.drawText(QRect(area.left() + 2, row_top, area.width() - 4, 40),
-                       Qt.AlignLeft | Qt.AlignTop,
-                       "No instances yet. Click NEW INSTANCE to make one (name + version).")
-            return
 
         ready = {v["id"] for v in self.ctl.installer.installed_versions() if v["complete"]}
         x = area.left()
         per_row = max(1, (area.width() + GAP) // (CARD_W + GAP))
-        for inst in self._instances[:per_row]:
+        # Instance đang chọn (thứ PLAY sẽ chạy) hiện đầu tiên, khớp với ô version.
+        shown = sorted(self._instances, key=lambda i: i.name != current)
+        # Chừa chỗ cho thẻ "+" -> luôn hiện, là thứ hiển nhiên để bấm mà mày mò.
+        for inst in shown[:max(0, per_row - 1)]:
             rect = QRect(x, row_top, CARD_W, CARD_H)
             self._paint_instance_card(p, rect, inst, inst.name == current,
-                                      inst.version in ready)
+                                      inst.version in ready,
+                                      hover=inst.name == self._hover_card)
             self._card_rects.append((rect, inst.name))
             x += CARD_W + GAP
+        add_rect = QRect(x, row_top, CARD_W, CARD_H)
+        self._paint_add_card(p, add_rect, empty=not self._instances,
+                             hover=self._hover_card == "\x00new")
+        self._card_rects.append((add_rect, "\x00new"))
 
-    def _paint_instance_card(self, p, rect, inst, selected, ready):
+    def _paint_add_card(self, p, rect, empty=False, hover=False):
+        # Thẻ tạo instance: viền đứt + dấu cộng lớn. Rê chuột thì sáng lên.
+        edge = 150 if hover else (90 if empty else 55)
+        fill = 34 if hover else (20 if empty else 12)
+        p.setPen(QPen(QColor(255, 255, 255, edge), 1.6, Qt.DashLine))
+        p.setBrush(QColor(255, 255, 255, fill))
+        p.drawRoundedRect(QRectF(rect).adjusted(1, 1, -1, -1), 7, 7)
+        cx, cy = rect.center().x(), rect.top() + 48
+        r = 20
+        p.setPen(QPen(ACCENT.lighter(120) if hover else ACCENT, 4))
+        p.drawLine(cx - r, cy, cx + r, cy)
+        p.drawLine(cx, cy - r, cx, cy + r)
+        p.setFont(ui_font(10, bold=True))
+        p.setPen(TEXT)
+        p.drawText(QRect(rect.left(), rect.top() + 96, rect.width(), 20),
+                   Qt.AlignHCenter | Qt.AlignVCenter, "New Instance")
+
+    def _paint_instance_card(self, p, rect, inst, selected, ready, hover=False):
         self._card(p, rect, radius=7, strong=True)
         # thumbnail
         thumb = QRect(rect.left() + 8, rect.top() + 8, rect.width() - 16, 78)
@@ -257,8 +282,21 @@ class HomeDashboard(QWidget):
         p.drawRoundedRect(QRectF(thumb), 4, 4)
         draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
                        QColor(230, 240, 250), col.darker(150))
-        if selected:
-            p.setPen(QPen(ACCENT, 2))
+        if hover:
+            # Rê chuột -> phủ nền tối + hiện ▶: dạy người dùng "bấm để mở/chơi".
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(0, 0, 0, 95))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            c = thumb.center()
+            tri = QPainterPath()
+            tri.moveTo(c.x() - 9, c.y() - 12)
+            tri.lineTo(c.x() + 13, c.y())
+            tri.lineTo(c.x() - 9, c.y() + 12)
+            tri.closeSubpath()
+            p.setBrush(QColor(255, 255, 255, 235))
+            p.drawPath(tri)
+        if selected or hover:
+            p.setPen(QPen(ACCENT if selected else ACCENT.lighter(135), 2))
             p.setBrush(Qt.NoBrush)
             p.drawRoundedRect(QRectF(rect).adjusted(1, 1, -1, -1), 7, 7)
 
