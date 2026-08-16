@@ -6,7 +6,9 @@ Trang Home tự dựng cột giữa + cột phải bên trong nó (xem dashboard
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import (
+    QEasingCurve, QPoint, QRect, QRectF, Qt, QVariantAnimation, Signal,
+)
 from PySide6.QtGui import (
     QColor, QCursor, QFont, QGuiApplication, QPainter, QPainterPath, QPen,
 )
@@ -72,23 +74,47 @@ class CaptionButton(QAbstractButton):
         self.setFixedSize(30, 22)
         self.setCursor(Qt.PointingHandCursor)
         self._hover = False
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _animate_hover(self, target: float, ms: int):
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(ms)
+        self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(target)
+        self._hover_anim.start()
 
     def enterEvent(self, e):  # noqa: N802
         self._hover = True
+        self._animate_hover(1.0, 110)
         self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover = False
+        self._animate_hover(0.0, 150)
         self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
-        base = (QColor(214, 96, 96, 150 if self._hover else 70) if self.kind == "close"
-                else QColor(255, 255, 255, 60 if self._hover else 26))
+        h = self._hover_amt
+        if self.kind == "close":
+            base = QColor(214, 96, 96, int(70 + (150 - 70) * h))
+        else:
+            base = QColor(255, 255, 255, int(26 + (60 - 26) * h))
         draw_glass_rect(p, r, radius=3, tint=base, gloss=1.0)
-        p.setPen(QPen(QColor(255, 255, 255) if (self.kind == "close" and self._hover) else TEXT, 1.3))
+        glyph = TEXT if self.kind != "close" else QColor(
+            int(TEXT.red() + (255 - TEXT.red()) * h),
+            int(TEXT.green() + (255 - TEXT.green()) * h),
+            int(TEXT.blue() + (255 - TEXT.blue()) * h))
+        p.setPen(QPen(glyph, 1.3))
         c = r.center()
         if self.kind == "close":
             p.drawLine(c.x() - 4, c.y() - 4, c.x() + 4, c.y() + 4)

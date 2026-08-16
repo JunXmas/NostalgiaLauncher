@@ -6,8 +6,8 @@ from PySide6.QtCore import (
     QEasingCurve, QPointF, QRect, QRectF, Qt, QVariantAnimation, Signal,
 )
 from PySide6.QtGui import (
-    QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPen, QPolygonF,
-    QRadialGradient,
+    QBrush, QColor, QFont, QFontMetrics, QLinearGradient, QPainter, QPainterPath, QPen,
+    QPolygonF, QRadialGradient,
 )
 from PySide6.QtWidgets import QAbstractButton, QWidget
 
@@ -504,10 +504,23 @@ class TabBar(QWidget):
         self.setMouseTracking(True)
         self.setCursor(Qt.PointingHandCursor)
         self._widths: list[int] = []
+        self._compute_widths()
 
-    def _layout(self, p: QPainter) -> None:
-        p.setFont(ui_font(9))
-        fm = p.fontMetrics()
+        # Gạch chân accent trượt mượt từ tab cũ sang tab mới khi đổi.
+        self._ul_current = -1
+        self._ul_x = 0.0
+        self._ul_w = 0.0
+        self._ul_from = (0.0, 0.0)
+        self._ul_to = (0.0, 0.0)
+        self._ul_anim = QVariantAnimation(self)
+        self._ul_anim.valueChanged.connect(self._on_ul)
+        # Fade màu chữ của tab đang rê chuột.
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
+
+    def _compute_widths(self) -> None:
+        fm = QFontMetrics(ui_font(9))
         self._widths = [fm.horizontalAdvance(t) + 28 for t in self.labels]
 
     def _index_at(self, x: int) -> int:
@@ -518,14 +531,60 @@ class TabBar(QWidget):
             acc += w
         return -1
 
+    def _underline_target(self, i: int) -> tuple[float, float]:
+        x = sum(self._widths[:i])
+        return x + 10, self._widths[i] - 20
+
+    def _on_ul(self, t):
+        t = float(t)
+        fx, fw = self._ul_from
+        tx, tw = self._ul_to
+        self._ul_x = fx + (tx - fx) * t
+        self._ul_w = fw + (tw - fw) * t
+        self.update()
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _sync_underline(self) -> None:
+        """Bắt kịp mọi thay đổi current (kể cả gán từ bên ngoài) để trượt gạch chân."""
+        if self.current == self._ul_current or not self.labels:
+            return
+        first = self._ul_current < 0
+        self._ul_current = self.current
+        tx, tw = self._underline_target(self.current)
+        if first:  # lần đầu: đặt thẳng, không trượt
+            self._ul_x, self._ul_w = tx, tw
+            return
+        self._ul_from = (self._ul_x, self._ul_w)
+        self._ul_to = (tx, tw)
+        self._ul_anim.stop()
+        self._ul_anim.setDuration(240)
+        self._ul_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._ul_anim.setStartValue(0.0)
+        self._ul_anim.setEndValue(1.0)
+        self._ul_anim.start()
+
     def mouseMoveEvent(self, e):  # noqa: N802
         idx = self._index_at(e.position().x())
         if idx != self._hover:
             self._hover = idx
+            self._hover_anim.stop()
+            self._hover_anim.setDuration(120)
+            self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+            self._hover_anim.setStartValue(0.0 if idx >= 0 else self._hover_amt)
+            self._hover_anim.setEndValue(1.0 if idx >= 0 else 0.0)
+            self._hover_anim.start()
             self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover = -1
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(140)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(0.0)
+        self._hover_anim.start()
         self.update()
 
     def mousePressEvent(self, e):  # noqa: N802
@@ -538,17 +597,25 @@ class TabBar(QWidget):
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        self._layout(p)
+        self._compute_widths()
+        self._sync_underline()
         x = 0
         for i, label in enumerate(self.labels):
             w = self._widths[i]
             active = i == self.current
             p.setFont(ui_font(9, bold=active))
-            p.setPen(TEXT if active else (TEXT_DIM if i == self._hover else TEXT_FAINT))
-            p.drawText(QRect(x, 0, w, self.height() - 4), Qt.AlignCenter, label)
             if active:
-                p.setPen(Qt.NoPen)
-                p.setBrush(ACCENT)
-                p.drawRoundedRect(QRectF(x + 10, self.height() - 3, w - 20, 3), 1.5, 1.5)
+                col = TEXT
+            elif i == self._hover:
+                col = _mix(TEXT_FAINT, TEXT_DIM, self._hover_amt)
+            else:
+                col = TEXT_FAINT
+            p.setPen(col)
+            p.drawText(QRect(x, 0, w, self.height() - 4), Qt.AlignCenter, label)
             x += w
+        # gạch chân trượt (một dải duy nhất, vị trí do animation quyết định)
+        if self._ul_w > 0:
+            p.setPen(Qt.NoPen)
+            p.setBrush(ACCENT)
+            p.drawRoundedRect(QRectF(self._ul_x, self.height() - 3, self._ul_w, 3), 1.5, 1.5)
         p.end()

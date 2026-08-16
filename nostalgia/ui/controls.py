@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from PySide6.QtCore import QPointF, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import (
+    QEasingCurve, QPointF, QRect, QRectF, Qt, QVariantAnimation, Signal,
+)
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
@@ -45,7 +47,24 @@ class ListView(QWidget):
         self._hover = -1
         self._hover_action = False
         self._hover_badge = False
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
         self.setMouseTracking(True)
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _fade_hover(self, target: float) -> None:
+        if self._hover_anim.endValue() == target and self._hover_anim.state():
+            return
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(120 if target else 150)
+        self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(target)
+        self._hover_anim.start()
 
     def set_rows(self, rows: list[Row]) -> None:
         self.rows = rows
@@ -79,10 +98,12 @@ class ListView(QWidget):
             badge = bool(self.rows[i].badge) and self._badge_rect(self.rows[i], r).contains(pos)
         if (i, act, badge) != (self._hover, self._hover_action, self._hover_badge):
             self._hover, self._hover_action, self._hover_badge = i, act, badge
+            self._fade_hover(1.0 if i >= 0 else 0.0)
             self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover, self._hover_action, self._hover_badge = -1, False, False
+        self._fade_hover(0.0)
         self.update()
 
     def mousePressEvent(self, e):  # noqa: N802
@@ -141,9 +162,9 @@ class ListView(QWidget):
             p.drawRoundedRect(body, 3, 3)
             p.setBrush(ACCENT)
             p.drawRoundedRect(QRectF(body.left(), body.top() + 8, 3, body.height() - 16), 1.5, 1.5)
-        elif hovered:
+        elif hovered and self._hover_amt > 0.01:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(255, 255, 255, 16))
+            p.setBrush(QColor(255, 255, 255, int(20 * self._hover_amt)))
             p.drawRoundedRect(body, 3, 3)
 
         # Ảnh preview bên trái (bo góc) nếu có; đẩy phần chữ sang phải.
