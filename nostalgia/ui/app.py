@@ -306,6 +306,7 @@ class Controller:
         items += [
             MenuItem(kind="separator"),
             MenuItem(label="Add Microsoft account…", data=("add", None)),
+            MenuItem(label="Change Client ID…", data=("client_id", None)),
             MenuItem(label="Add offline profile…", data=("offline", None)),
         ]
         if self.store.accounts:
@@ -350,6 +351,8 @@ class Controller:
             self.pages["skins"].refresh()
         elif action == "add":
             self.begin_login()
+        elif action == "client_id":
+            self.change_client_id()
         elif action == "offline":
             self.begin_add_offline()
         elif action == "link_google":
@@ -392,23 +395,33 @@ class Controller:
             return
         self._start_login(client_id)
 
-    def _prompt_client_id(self) -> None:
+    def _prompt_client_id(self, *, prefill: str = "", then_login: bool = True) -> None:
         dlg = TextPrompt(
             self.window, "Microsoft Client ID",
             "Application (client) ID:",
             placeholder="dán Application (client) ID từ Azure",
             hint="Tạo app tại portal.azure.com (Personal accounts, bật Allow "
                  "public client flows), dán ID vào đây — sẽ được lưu lại.",
-            ok_text="CONTINUE",
+            ok_text="CONTINUE" if then_login else "SAVE",
         )
-        dlg.accepted.connect(self._client_id_entered)
+        if prefill:
+            dlg.edit.setText(prefill)
+        dlg.accepted.connect(lambda v: self._client_id_entered(v, then_login))
         dlg.show()
 
-    def _client_id_entered(self, value: str) -> None:
+    def change_client_id(self) -> None:
+        """Mở prompt điền sẵn Client ID hiện tại để sửa mà không cần đăng nhập lại."""
+        current = resolve_client_id("microsoft", "MC_CLIENT_ID")
+        self._prompt_client_id(prefill=current, then_login=False)
+
+    def _client_id_entered(self, value: str, then_login: bool = True) -> None:
         client_id = value.strip()
         if not client_id:
             return
         save_client_id("microsoft", client_id)
+        if not then_login:
+            self.window.set_status("Microsoft Client ID saved.")
+            return
         self._start_login(client_id)
 
     def _start_login(self, client_id: str) -> None:
