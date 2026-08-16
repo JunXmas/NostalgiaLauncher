@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 
 from .. import (
     __version__, accounts, content, fabric, identity as identity_mod,
-    instances as instances_mod, updater,
+    instances as instances_mod, loaders as loaders_mod, updater,
 )
 from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id, save_client_id
@@ -638,15 +638,59 @@ class Controller:
 
     def _instance_name_chosen(self, name: str) -> None:
         self._new_instance_name = name.strip() or "Instance"
-        self.window.set_status("Now pick a Minecraft version for the instance…")
+        # Bước 2: chọn loader (Vanilla / Fabric / Forge / NeoForge).
+        items = [MenuItem(kind="header", label="Loader")]
+        for label, key in loaders_mod.UI_LOADERS:
+            items.append(MenuItem(label=label, data=key))
         anchor = QRect(self.window.width() // 2 - 125, 150, 250, 34)
-        self._show_version_menu(anchor, above=False, on_pick=self._create_with_version)
+        popup(self.window, items, anchor, self._instance_loader_chosen, width=250)
 
-    def _create_with_version(self, version_id) -> None:
-        if not version_id:
+    def _instance_loader_chosen(self, loader) -> None:
+        if loader is None:
             return
-        self.create_instance(self._new_instance_name, version_id)
-        self.go("home")
+        self._new_instance_loader = loader
+        anchor = QRect(self.window.width() // 2 - 125, 150, 250, 34)
+        if loader in ("", "vanilla"):
+            self._show_version_menu(anchor, above=False, on_pick=self._create_with_loader)
+            return
+        # Loader có danh sách phiên bản riêng.
+        self.window.set_status(f"Fetching {loader} versions…")
+        self._run(
+            lambda: loaders_mod.game_versions(loader),
+            lambda vs: self._pick_loader_version(anchor, vs),
+            lambda m: self.window.set_status(f"Couldn't list {loader} versions: {m}"),
+        )
+
+    def _pick_loader_version(self, anchor, versions) -> None:
+        items = [MenuItem(kind="header", label="Minecraft version")]
+        for v in (versions or [])[:80]:
+            items.append(MenuItem(label=v, data=v))
+        popup(self.window, items, anchor, self._create_with_loader, width=250)
+
+    def _create_with_loader(self, mc) -> None:
+        if not mc:
+            return
+        name, loader = self._new_instance_name, self._new_instance_loader
+        if loader in ("", "vanilla"):
+            self.create_instance(name, mc)
+            self.go("home")
+            return
+        self.window.set_status(f"Installing {loader} for {mc} — this can take a minute…")
+
+        def work():
+            java = None
+            if loader in ("forge", "neoforge"):
+                from .. import jre
+                meta = self.installer.install(mc)         # tải vanilla + có meta để lấy Java
+                jre.ensure(self.store_root, meta)
+                java = str(jre.java_binary(self.store_root, jre.component_of(meta)))
+            return loaders_mod.install(self.installer, loader, mc, java_binary=java)
+
+        self._run(
+            work,
+            lambda vid: (self.create_instance(name, vid), self.go("home")),
+            lambda m: self.window.set_status(f"Couldn't install {loader}: {m}"),
+        )
 
     # ---------- Fabric ----------
 
