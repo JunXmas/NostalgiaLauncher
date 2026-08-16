@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen, QPixma
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import modrinth
-from .controls import ListView, Row
+from .controls import AeroToggle, ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
 
@@ -387,3 +387,69 @@ class ModpackDialog(GlassDialog):
     def _install(self, hit) -> None:
         self.ctl.install_modpack(hit)
         self.dismiss()
+
+
+# ---------- chọn phiên bản Minecraft ----------
+
+class VersionPickerDialog(GlassDialog):
+    """Danh sách phiên bản có ô lọc, đánh dấu bản đã tải, tuỳ chọn snapshot."""
+
+    picked = Signal(str)
+
+    def __init__(self, parent, versions, *, installed=None,
+                 title="Choose a Minecraft version", on_snapshots=None):
+        super().__init__(parent, title, width=460, height=456)
+        self._installed = set(installed or [])
+        self._all: list = []
+
+        self.filter = QLineEdit(self)
+        self.filter.setPlaceholderText("Type to filter — e.g. 1.20")
+        self.filter.setStyleSheet(INPUT_QSS)
+        self.filter.setFont(ui_font(10))
+        self.filter.textChanged.connect(self._apply)
+
+        self.snapshots = None
+        if on_snapshots is not None:
+            self.snapshots = AeroToggle(False, self)
+            self.snapshots.toggled.connect(on_snapshots)
+
+        self.list = ListView(self, empty_text="No matching versions.")
+        self.list.activated.connect(self._choose)
+        self.cancel = AeroButton("CANCEL", self, height=32, tone="neutral")
+        self.cancel.clicked.connect(self.dismiss)
+
+        self.set_versions(versions)
+        self.place()
+        self.filter.setFocus()
+
+    def set_versions(self, versions) -> None:
+        self._all = list(versions or [])
+        self._apply()
+
+    def _apply(self) -> None:
+        q = self.filter.text().strip().lower()
+        rows = [Row(title=v, right="✓ downloaded" if v in self._installed else "", data=v)
+                for v in self._all if q in v.lower()]
+        self.list.set_rows(rows)
+
+    def _choose(self, v) -> None:
+        if v:
+            self.picked.emit(v)
+            self.dismiss()
+
+    def place(self) -> None:
+        c = self.card
+        self.filter.setGeometry(c.left() + 22, c.top() + 50, c.width() - 44, 32)
+        top = c.top() + 94
+        if self.snapshots:
+            self.snapshots.setGeometry(c.left() + 22, c.top() + 94, 44, 22)
+            top = c.top() + 126
+        self.list.setGeometry(c.left() + 18, top, c.width() - 36, c.bottom() - top - 56)
+        self.cancel.setGeometry(c.right() - 120, c.bottom() - 46, 98, 32)
+
+    def paint_body(self, p: QPainter) -> None:
+        if self.snapshots:
+            p.setFont(ui_font(9))
+            p.setPen(TEXT_DIM)
+            p.drawText(QRect(self.card.left() + 74, self.card.top() + 94, 300, 22),
+                       Qt.AlignLeft | Qt.AlignVCenter, "Include snapshots")

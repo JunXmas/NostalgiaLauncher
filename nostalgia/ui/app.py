@@ -692,23 +692,34 @@ class Controller:
         if loader is None:
             return
         self._new_instance_loader = loader
-        anchor = QRect(self.window.width() // 2 - 125, 150, 250, 34)
+        self.window.set_status("Fetching versions…")
         if loader in ("", "vanilla"):
-            self._show_version_menu(anchor, above=False, on_pick=self._create_with_loader)
-            return
-        # Loader có danh sách phiên bản riêng.
-        self.window.set_status(f"Fetching {loader} versions…")
-        self._run(
-            lambda: loaders_mod.game_versions(loader),
-            lambda vs: self._pick_loader_version(anchor, vs),
-            lambda m: self.window.set_status(f"Couldn't list {loader} versions: {m}"),
-        )
+            self._run(lambda: self.installer.list_versions("release"),
+                      lambda vs: self._open_version_picker(vs, vanilla=True),
+                      lambda m: self.window.set_status(f"Couldn't list versions: {m}"))
+        else:
+            self._run(lambda: loaders_mod.game_versions(loader) or [],
+                      lambda vs: self._open_version_picker(vs, vanilla=False),
+                      lambda m: self.window.set_status(f"Couldn't list {loader} versions: {m}"))
 
-    def _pick_loader_version(self, anchor, versions) -> None:
-        items = [MenuItem(kind="header", label="Minecraft version")]
-        for v in (versions or [])[:80]:
-            items.append(MenuItem(label=v, data=v))
-        popup(self.window, items, anchor, self._create_with_loader, width=250)
+    def _open_version_picker(self, versions, *, vanilla: bool) -> None:
+        from .dialogs import VersionPickerDialog
+        self.window.set_status("Ready")
+        installed = {v["id"] for v in self.installer.installed_versions() if v["complete"]}
+        dlg = VersionPickerDialog(
+            self.window, versions, installed=installed,
+            on_snapshots=self._toggle_snapshots if vanilla else None,
+        )
+        self._version_dlg = dlg
+        dlg.picked.connect(self._create_with_loader)
+        dlg.show()
+
+    def _toggle_snapshots(self, on: bool) -> None:
+        dlg = getattr(self, "_version_dlg", None)
+        if dlg is None:
+            return
+        kind = "all" if on else "release"
+        self._run(lambda: self.installer.list_versions(kind), dlg.set_versions)
 
     def _create_with_loader(self, mc) -> None:
         if not mc:
