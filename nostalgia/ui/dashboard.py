@@ -216,6 +216,11 @@ class HomeDashboard(QWidget):
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
                    Qt.AlignLeft | Qt.AlignVCenter, "My Instances")
+        # Gợi ý: mod/shader/resource pack nằm trong trang của từng instance.
+        p.setFont(ui_font(8))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(area.left() + 130, area.top(), area.width() - 300, 24),
+                   Qt.AlignLeft | Qt.AlignVCenter, "— click one to add mods & manage it")
         row_top = area.top() + 34
         current = self.ctl.instances.active
 
