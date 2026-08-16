@@ -72,10 +72,15 @@ python -m nostalgia jre 1.21.4        # pre-fetch Java
 python -m nostalgia doctor 1.21.4     # health-check an install
 ```
 
-To sign in with Microsoft you'll need a free Azure app (Personal accounts, *Allow public client
-flows* on) and `export MC_CLIENT_ID=<id>`. New apps also need Minecraft API approval at
-<https://aka.ms/mce-reviewappid> — until then, sign-in runs all the way to the last step and stops
-with a clear message.
+Signing in with Microsoft is friendlier than it used to be: the app simply **asks for your Azure
+Application (client) ID the first time** — paste it once, it's saved, and you're in. Making one is
+free and takes a minute: register an app for *Personal Microsoft accounts* with *Allow public client
+flows* switched on. Fresh apps also need a quick Minecraft API approval at
+<https://aka.ms/mce-reviewappid>; until it clears, sign-in walks all the way to the final step and
+stops with a friendly note — so you always know where you stand, never staring at a silent failure.
+
+> Why ask instead of shipping one? A client ID ties sign-ins to *someone's* Azure app, and I'd rather
+> the code stay clean and yours — you bring your own, nobody's ID is baked in.
 
 ## How it's built
 
