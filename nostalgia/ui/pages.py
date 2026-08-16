@@ -333,15 +333,24 @@ class ContentLibraryPage(Page):
 
     # ---- Browse ----
 
+    def _mc_version(self, version_id: str) -> str:
+        """Phiên bản Minecraft gốc từ id (bản Fabric -> lấy mc, vd
+        'fabric-loader-0.16-1.20.1' -> '1.20.1')."""
+        match = next((v for v in self.ctl.installer.installed_versions()
+                      if v["id"] == version_id), None)
+        if match and match.get("parent"):
+            return match["parent"]
+        if version_id.startswith("fabric-loader-"):
+            parts = version_id[len("fabric-loader-"):].split("-", 1)
+            if len(parts) == 2:
+                return parts[1]
+        return version_id
+
     def _target(self):
-        """(loaders, game_versions) để lọc Modrinth theo bản đang chọn."""
-        versions = self.ctl.installer.installed_versions()
-        sel = self.ctl.settings.selected_version
-        chosen = next((v for v in versions if v["id"] == sel),
-                      versions[0] if versions else None)
-        game_versions = None
-        if chosen:
-            game_versions = [chosen.get("parent") or chosen["id"]]
+        """(loaders, game_versions) để lọc Modrinth theo ĐÚNG instance đang chọn
+        trên trang này — mod tải về hợp phiên bản của modpack đó."""
+        inst = self._instance or self.ctl.active_instance()
+        game_versions = [self._mc_version(inst.version)] if inst else None
         loaders = [self._loader] if self.is_mod else None
         return loaders, game_versions
 
