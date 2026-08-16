@@ -34,6 +34,25 @@ class FnWorker(QThread):
             self.failed.emit(str(e))
 
 
+class ProgressWorker(QThread):
+    """Như FnWorker nhưng hàm nhận (on_progress, on_status) để báo tiến độ."""
+
+    progress = Signal(int, int)   # đã xong, tổng
+    status = Signal(str)
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, fn, parent=None):
+        super().__init__(parent)
+        self.fn = fn
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            self.done.emit(self.fn(self.progress.emit, self.status.emit))
+        except Exception as e:  # noqa: BLE001
+            self.failed.emit(str(e))
+
+
 class LoginWorker(QThread):
     """Device code flow: phát mã ra UI trước, rồi chờ người dùng xác nhận trên web."""
 

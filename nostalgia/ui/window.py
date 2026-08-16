@@ -143,6 +143,14 @@ class StatusBar(GlassPanel):
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(self.width() - 320, 0, 300, self.height()),
                    Qt.AlignRight | Qt.AlignVCenter, win.status_right)
+
+        # Thanh tiến độ download (mảnh, chạy dọc mép trên của status bar).
+        if win.progress is not None:
+            frac = max(0.0, min(1.0, float(win.progress)))
+            p.setBrush(QColor(255, 255, 255, 26))
+            p.drawRect(QRectF(0, 0, self.width(), 3))
+            p.setBrush(ACCENT)
+            p.drawRect(QRectF(0, 0, self.width() * frac, 3))
         p.end()
 
 
@@ -169,6 +177,7 @@ class LauncherWindow(QWidget):
         self.account_state = "off"
         self.status_left = "Ready"
         self.status_right = ""
+        self.progress = None      # None = ẩn; 0..1 = tiến độ thanh download
 
         self.pages: dict[str, QWidget] = {}
         self.current_page: QWidget | None = None
@@ -260,6 +269,11 @@ class LauncherWindow(QWidget):
 
     def set_java(self, text: str) -> None:
         self.status_right = text
+        self.statusbar.update()
+
+    def set_progress(self, frac) -> None:
+        """frac 0..1 để hiện thanh tiến độ; None để ẩn."""
+        self.progress = frac
         self.statusbar.update()
 
     def update_all(self) -> None:

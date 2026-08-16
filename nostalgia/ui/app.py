@@ -24,7 +24,7 @@ from .dashboard import HomeDashboard
 from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
-from .worker import FnWorker, GoogleLinkWorker, LaunchWorker, LoginWorker
+from .worker import FnWorker, GoogleLinkWorker, LaunchWorker, LoginWorker, ProgressWorker
 
 
 def describe(store: accounts.AccountStore, account) -> tuple[str, str]:
@@ -345,21 +345,24 @@ class Controller:
         title = hit.get("title") or slug
         name = self.instances.unique_name(title)
         inst_dir = self.store_root / "instances" / instances_mod.slug(name)
-        self.window.set_status(f"Installing modpack '{title}' — this can take a while…")
+        self.window.set_status(f"Installing modpack '{title}'…")
 
-        def work():
+        def work(on_progress, on_status):
             import tempfile
             from .. import jre
             from ..install import download
             f = modrinth_mod.best_file(slug)
             if not f:
                 raise RuntimeError("no downloadable modpack file")
+            on_status("Downloading modpack…")
             mrpack = Path(tempfile.mkdtemp()) / f["filename"]
             download(f["url"], mrpack, f.get("sha1"))
-            index = modpack_mod.install_contents(mrpack, inst_dir)
+            index = modpack_mod.install_contents(mrpack, inst_dir,
+                                                 on_status=on_status, on_progress=on_progress)
             loader, mc = modpack_mod.loader_and_mc(index)
             if loader == "quilt":
                 raise RuntimeError("Quilt modpacks aren't supported yet")
+            on_status(f"Installing {loader} {mc}…")
             java = None
             if loader in ("forge", "neoforge"):
                 meta = self.installer.install(mc)
@@ -368,11 +371,21 @@ class Controller:
             vid = loaders_mod.install(self.installer, loader, mc, java_binary=java)
             return name, vid
 
-        self._run(work,
-                  lambda r: self._modpack_installed(*r),
-                  lambda m: self.window.set_status(f"Modpack install failed: {m}"))
+        w = ProgressWorker(work)
+        w.progress.connect(self._set_progress)
+        w.status.connect(self.window.set_status)
+        w.done.connect(lambda r: self._modpack_installed(*r))
+        w.failed.connect(lambda m: (self.window.set_progress(None),
+                                    self.window.set_status(f"Modpack install failed: {m}")))
+        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
+        self._workers.append(w)
+        w.start()
+
+    def _set_progress(self, done: int, total: int) -> None:
+        self.window.set_progress(done / total if total else None)
 
     def _modpack_installed(self, name: str, version: str) -> None:
+        self.window.set_progress(None)
         self.instances.add(name, version)
         self.set_active_instance(name)
         self.window.set_status(f"Modpack '{name}' installed — press PLAY.")
@@ -996,12 +1009,14 @@ class Controller:
             self._launches.remove(worker)
         self.pages["installations"].refresh()
         self._update_play_button()
+        self.window.set_progress(None)
         left = self.running_count
         self.window.set_status(f"{left} instance(s) running" if left else "Ready")
 
     def _on_progress(self, stage: str, done: int, total: int) -> None:
         pct = int(done / total * 100) if total else 0
         self.window.set_status(f"{stage} · {done:,} / {total:,} files ({pct}%)".replace(",", " "))
+        self.window.set_progress(done / total if total else None)
 
 
 def run_gui(game_dir: Path | None = None, version: str = "") -> int:

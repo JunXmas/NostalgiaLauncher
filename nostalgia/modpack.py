@@ -8,7 +8,9 @@ chép thẳng vào thư mục game). Cài xong ta biết loader + bản game đ�
 from __future__ import annotations
 
 import json
+import threading
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import install
@@ -37,8 +39,9 @@ def loader_and_mc(index: dict) -> tuple[str, str]:
     return "vanilla", mc
 
 
-def install_contents(mrpack_path: Path, game_dir: Path, on_status=None) -> dict:
-    """Bung overrides và tải toàn bộ file mod của pack vào game_dir. Trả về index."""
+def install_contents(mrpack_path: Path, game_dir: Path,
+                     on_status=None, on_progress=None) -> dict:
+    """Bung overrides và tải toàn bộ file mod của pack (song song) vào game_dir."""
     game_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(mrpack_path) as z:
         index = json.loads(z.read("modrinth.index.json"))
@@ -50,17 +53,30 @@ def install_contents(mrpack_path: Path, game_dir: Path, on_status=None) -> dict:
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.write_bytes(z.read(name))
 
-    files = index.get("files", [])
-    total = len(files)
-    for i, f in enumerate(files, 1):
-        env = f.get("env", {})
-        if env.get("client") == "unsupported":
+    jobs = []
+    for f in index.get("files", []):
+        if f.get("env", {}).get("client") == "unsupported":
             continue                        # mod chỉ dành cho server -> bỏ
-        downloads = f.get("downloads") or []
-        if not downloads:
-            continue
-        dest = game_dir / f["path"]
-        if on_status:
-            on_status(f"Downloading pack files… {i}/{total}")
-        install.download(downloads[0], dest, f.get("hashes", {}).get("sha1"))
+        dl = f.get("downloads") or []
+        if dl:
+            jobs.append((dl[0], game_dir / f["path"], f.get("hashes", {}).get("sha1")))
+
+    total = len(jobs)
+    if on_status:
+        on_status(f"Downloading {total} pack files…")
+    if on_progress:
+        on_progress(0, total)
+    done = [0]
+    lock = threading.Lock()
+
+    def one(job):
+        url, dest, sha = job
+        install.download(url, dest, sha)
+        with lock:
+            done[0] += 1
+            if on_progress:
+                on_progress(done[0], total)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(one, jobs))
     return index
