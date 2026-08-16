@@ -8,7 +8,7 @@
 set -euo pipefail
 
 APP_NAME="Nostalgia Launcher"
-VERSION="0.2.5"
+VERSION="0.2.6"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP="$ROOT/dist/$APP_NAME.app"
 OUT_DIR="$ROOT/dist/installer"
