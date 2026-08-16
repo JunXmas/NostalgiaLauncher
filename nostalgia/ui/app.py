@@ -379,21 +379,17 @@ class Controller:
 
     def _update_done(self, mode: str) -> None:
         if mode == "quit":
-            # Windows: installer đang chạy nền, app phải thoát để nó thay file .exe.
-            self.window.set_status("Installing update — the launcher will close and reopen…")
+            # Windows: installer đang chạy nền, app phải thoát để nó thay file .exe
+            # rồi tự mở lại (xem [Run] trong file .iss).
+            self.window.set_status("Update installed — restarting…")
             QApplication.quit()
         elif mode == "installed":
-            dlg = ConfirmDialog(self.window, "Update installed",
-                                "The new version is installed. Restart the launcher now?",
-                                ok_text="RESTART", tone="green")
-            dlg.confirmed.connect(self._restart_after_update)
-            dlg.show()
+            # Linux: đã cài xong -> tự mở lại bản mới rồi tắt bản cũ, không hỏi gì.
+            self.window.set_status("Update installed — restarting…")
+            updater.relaunch()
+            QApplication.quit()
         else:  # opened
             self.window.set_status("Opened the installer — follow its steps to finish updating.")
-
-    def _restart_after_update(self) -> None:
-        updater.relaunch()
-        QApplication.quit()
 
     def _update_failed(self, msg: str) -> None:
         # Lùi an toàn: mở trang release để người dùng tự tải/cài.

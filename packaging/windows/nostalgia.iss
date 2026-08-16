@@ -58,7 +58,8 @@ Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+; Bỏ 'skipifsilent' để bản cài im lặng (auto-update) tự mở lại app sau khi cài.
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall
 
 [UninstallDelete]
 ; Chỉ dọn thứ do chính bản cài sinh ra. Tài khoản đã đăng nhập, cấu hình và toàn
