@@ -121,6 +121,23 @@ def draw_skin_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
     p.restore()
 
 
+def draw_shaders_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    # mặt trời: lõi tròn + tia sáng
+    import math
+    p.save()
+    p.setPen(QPen(color, 1.4))
+    p.setBrush(Qt.NoBrush)
+    c = rect.center()
+    rr = rect.width() * 0.18
+    p.drawEllipse(c, rr, rr)
+    for i in range(8):
+        a = math.pi / 4 * i
+        d1, d2 = rr * 1.5, rr * 2.15
+        p.drawLine(QPointF(c.x() + math.cos(a) * d1, c.y() + math.sin(a) * d1),
+                   QPointF(c.x() + math.cos(a) * d2, c.y() + math.sin(a) * d2))
+    p.restore()
+
+
 def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
     if kind == "cube":
         draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
@@ -138,6 +155,8 @@ def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
         draw_servers_icon(p, rect, color)
     elif kind == "skin":
         draw_skin_icon(p, rect, color)
+    elif kind == "shaders":
+        draw_shaders_icon(p, rect, color)
 
 
 def draw_news_icon(p: QPainter, rect: QRectF, color: QColor) -> None:

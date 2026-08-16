@@ -18,6 +18,7 @@ DISABLED = ".disabled"
 KINDS = {
     "mods": (".jar",),
     "resourcepacks": (".zip",),
+    "shaderpacks": (".zip",),
 }
 
 

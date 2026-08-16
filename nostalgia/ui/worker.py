@@ -84,6 +84,7 @@ class LaunchWorker(QThread):
     failed = Signal(str)
     finished_ok = Signal()
     game_started = Signal()           # tiến trình game đã chạy -> đổi PLAY thành STOP
+    log_line = Signal(str)            # từng dòng log game -> hiện trong app
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
@@ -116,6 +117,7 @@ class LaunchWorker(QThread):
             max_memory_mb=self.memory_mb,
             on_status=self.status.emit,
             on_start=self._capture,
+            on_line=self.log_line.emit,
         )
 
     def _launch_online(self, installer: Installer, identity) -> int:
@@ -136,7 +138,7 @@ class LaunchWorker(QThread):
         cmd = build_command(meta, installer, identity,
                             java=self.java_path or None, max_memory_mb=self.memory_mb)
         self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
-        return run(cmd, self.game_dir, on_start=self._capture)
+        return run(cmd, self.game_dir, on_start=self._capture, on_line=self.log_line.emit)
 
     def run(self) -> None:  # noqa: D102
         try:

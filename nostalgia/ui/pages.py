@@ -123,10 +123,13 @@ class InstallationsPage(Page):
         self.list = ListView(self, empty_text="No instances yet. Click NEW INSTANCE (name + version).")
         self.list.activated.connect(self._select)
         self.list.action_clicked.connect(self._delete)
+        self.list.badge_clicked.connect(self.ctl.edit_instance)
         self.add_btn = AeroButton("NEW INSTANCE", self, height=32, tone="neutral")
         self.add_btn.clicked.connect(self.ctl.begin_create_instance)
         self.fabric_btn = AeroButton("GET MODPACK", self, height=32, tone="neutral")
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
+        self.logs_btn = AeroButton("LOGS", self, height=32, tone="neutral")
+        self.logs_btn.clicked.connect(self.ctl.show_logs)
 
     def _select(self, name) -> None:
         self.ctl.set_active_instance(name)
@@ -139,6 +142,7 @@ class InstallationsPage(Page):
         self.list.setGeometry(16, 58, self.width() - 32, self.height() - 116)
         self.add_btn.setGeometry(self.width() - 196, self.height() - 46, 180, 32)
         self.fabric_btn.setGeometry(self.width() - 356, self.height() - 46, 150, 32)
+        self.logs_btn.setGeometry(self.width() - 458, self.height() - 46, 92, 32)
 
     def refresh(self) -> None:
         current = self.ctl.instances.active
@@ -146,10 +150,12 @@ class InstallationsPage(Page):
         rows = []
         for inst in self.ctl.instances.all():
             state = "ready" if inst.version in ready else "will download on play"
+            extra = f" · {inst.memory_mb // 1024} GB" if inst.memory_mb else ""
             rows.append(Row(
                 title=inst.name,
-                subtitle=f"{inst.version} · {state}",
+                subtitle=f"{inst.version} · {state}{extra}",
                 checked=inst.name == current,
+                badge="EDIT",
                 action="delete",
                 data=inst.name,
             ))
@@ -557,6 +563,13 @@ class ResourcePacksPage(ContentLibraryPage):
     kind = "resourcepacks"
     is_mod = False
     project_type = "resourcepack"
+
+
+class ShaderPacksPage(ContentLibraryPage):
+    heading = "Shaders"
+    kind = "shaderpacks"
+    is_mod = False
+    project_type = "shader"
 
 
 # ---------- skin ----------

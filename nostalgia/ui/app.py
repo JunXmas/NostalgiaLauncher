@@ -49,6 +49,8 @@ class Controller:
         self._launches: list[LaunchWorker] = []   # cho phép nhiều instance cùng lúc
         self._versions: list[dict] = []
         self._fabric_games: list[str] = []
+        self._log_lines: list[str] = []           # log game gần nhất
+        self._log_dialog = None
 
         self._build_pages()
         window.nav_clicked.connect(self.go)
@@ -68,6 +70,7 @@ class Controller:
             "installations": page_mod.InstallationsPage(self),
             "mods": page_mod.ModsPage(self),
             "resourcepacks": page_mod.ResourcePacksPage(self),
+            "shaders": page_mod.ShaderPacksPage(self),
             "servers": page_mod.StubPage(self, "Servers",
                 "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),
@@ -274,6 +277,35 @@ class Controller:
         dlg.confirmed.connect(lambda: (self.delete_instance(name),
                                        self.pages["installations"].refresh()))
         dlg.show()
+
+    def edit_instance(self, name: str) -> None:
+        from .dialogs import InstanceSettingsDialog
+        from .pages import SettingsPage
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        dlg = InstanceSettingsDialog(self.window, inst,
+                                     default_memory=self.settings.memory_mb,
+                                     max_memory=SettingsPage._max_memory())
+        dlg.saved.connect(lambda nm, mem, jv: self._apply_instance_settings(name, nm, mem, jv))
+        dlg.show()
+
+    def _apply_instance_settings(self, old_name, new_name, memory, java) -> None:
+        import shutil
+        final = old_name
+        if new_name and new_name != old_name:
+            old_inst = self.instances.get(old_name)
+            old_dir = self.instance_dir(old_inst) if old_inst else None
+            renamed = self.instances.rename(old_name, new_name)
+            if renamed:
+                final = renamed
+                new_dir = self.instance_dir(self.instances.get(renamed))
+                if old_dir and old_dir.exists() and old_dir != new_dir:
+                    shutil.move(str(old_dir), str(new_dir))
+        self.instances.set_settings(final, memory_mb=memory, java_path=java)
+        self.pages["installations"].refresh()
+        self.pages["home"].refresh()
+        self.window.set_status(f"Saved settings for '{final}'.")
 
     def begin_browse_modpacks(self) -> None:
         from .dialogs import ModpackDialog
@@ -887,19 +919,37 @@ class Controller:
         if self.running_count:
             self.window.set_status(f"Launching another game (#{self.running_count + 1})…")
 
+        # Cấu hình riêng của instance đè lên mặc định chung (0/rỗng = dùng chung).
+        memory = (inst.memory_mb if inst and inst.memory_mb else self.settings.memory_mb)
+        java = (inst.java_path if inst and inst.java_path else self.settings.java_path)
         worker = LaunchWorker(
             self.store, account, version, game_dir,
-            memory_mb=self.settings.memory_mb, java_path=self.settings.java_path,
-            store_root=self.store_root,
+            memory_mb=memory, java_path=java, store_root=self.store_root,
         )
         worker.progress.connect(self._on_progress)
         worker.status.connect(self.window.set_status)
         worker.failed.connect(lambda m: self.window.set_status(f"Error: {m}"))
         worker.finished_ok.connect(self._launch_done)
         worker.game_started.connect(self._update_play_button)
+        worker.log_line.connect(self._append_log)
         worker.finished.connect(lambda: self._launch_finished(worker))
         self._launches.append(worker)
         worker.start()
+
+    def _append_log(self, line: str) -> None:
+        self._log_lines.append(line)
+        if len(self._log_lines) > 3000:
+            del self._log_lines[:len(self._log_lines) - 3000]
+        if self._log_dialog is not None:
+            self._log_dialog.append_line(line)
+
+    def show_logs(self) -> None:
+        dlg = ReportDialog(self.window, "Game log",
+                           "".join(self._log_lines)
+                           or "No log yet — press PLAY to start a game.")
+        self._log_dialog = dlg
+        dlg.closed.connect(lambda: setattr(self, "_log_dialog", None))
+        dlg.show()
 
     def _launch_done(self) -> None:
         self.window.set_status("Everything is up to date!")

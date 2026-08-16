@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen, QPixmap
+from PySide6.QtGui import (
+    QColor, QFont, QGuiApplication, QPainter, QPen, QPixmap, QTextCursor,
+)
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import modrinth
-from .controls import AeroToggle, ListView, Row
+from .controls import AeroSlider, AeroToggle, ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
 
@@ -292,6 +294,11 @@ class ReportDialog(GlassDialog):
     def set_body(self, text: str) -> None:
         self.view.setPlainText(text)
 
+    def append_line(self, line: str) -> None:
+        self.view.moveCursor(QTextCursor.End)
+        self.view.insertPlainText(line)
+        self.view.moveCursor(QTextCursor.End)
+
     def place(self) -> None:
         c = self.card
         self.view.setGeometry(c.left() + 20, c.top() + 52, c.width() - 40, c.height() - 116)
@@ -453,3 +460,55 @@ class VersionPickerDialog(GlassDialog):
             p.setPen(TEXT_DIM)
             p.drawText(QRect(self.card.left() + 74, self.card.top() + 94, 300, 22),
                        Qt.AlignLeft | Qt.AlignVCenter, "Include snapshots")
+
+
+# ---------- cấu hình riêng của một instance ----------
+
+class InstanceSettingsDialog(GlassDialog):
+    """Đổi tên instance và ghi đè RAM / đường dẫn Java cho riêng nó."""
+
+    saved = Signal(str, int, str)   # tên mới, RAM (MB), java path
+
+    def __init__(self, parent, inst, *, default_memory: int, max_memory: int):
+        super().__init__(parent, f"Instance settings", width=480, height=336)
+        self.old_name = inst.name
+        self.name = QLineEdit(inst.name, self)
+        self.name.setStyleSheet(INPUT_QSS)
+        self.name.setFont(ui_font(10))
+        self.mem = AeroSlider(1024, max_memory, inst.memory_mb or default_memory, 512, self)
+        self.mem.changed.connect(lambda _v: self.update())
+        self.java = QLineEdit(inst.java_path, self)
+        self.java.setPlaceholderText("leave empty = auto / global default")
+        self.java.setStyleSheet(INPUT_QSS)
+        self.java.setFont(ui_font(9))
+        self.ok = AeroButton("SAVE", self, height=32, tone="green")
+        self.ok.clicked.connect(self._save)
+        self.cancel = AeroButton("CANCEL", self, height=32, tone="neutral")
+        self.cancel.clicked.connect(self.dismiss)
+        self.place()
+
+    def _save(self) -> None:
+        self.saved.emit(self.name.text().strip() or self.old_name,
+                        self.mem.value, self.java.text().strip())
+        self.dismiss()
+
+    def place(self) -> None:
+        c = self.card
+        self.name.setGeometry(c.left() + 22, c.top() + 76, c.width() - 44, 32)
+        self.mem.setGeometry(c.left() + 22, c.top() + 150, c.width() - 44, 26)
+        self.java.setGeometry(c.left() + 22, c.top() + 222, c.width() - 44, 32)
+        self.ok.setGeometry(c.right() - 128, c.bottom() - 48, 106, 32)
+        self.cancel.setGeometry(c.right() - 244, c.bottom() - 48, 104, 32)
+
+    def paint_body(self, p: QPainter) -> None:
+        c = self.card
+
+        def label(y, text):
+            p.setFont(ui_font(9, bold=True))
+            p.setPen(TEXT)
+            p.drawText(QRect(c.left() + 22, y, c.width() - 44, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, text)
+
+        label(c.top() + 52, "Name")
+        label(c.top() + 122, f"Max memory — {self.mem.value / 1024:.1f} GB")
+        label(c.top() + 198, "Java path (this instance)")
