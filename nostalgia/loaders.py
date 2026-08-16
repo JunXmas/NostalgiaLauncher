@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -96,19 +97,42 @@ def _run_installer(url: str, installer, java_binary: str, on_status=None) -> str
 
     before = {p.name for p in installer.versions_dir.glob("*") if p.is_dir()} \
         if installer.versions_dir.exists() else set()
-    if on_status:
-        on_status("Running loader installer…")
-    proc = subprocess.run([java_binary, "-jar", str(jar), "--installClient", str(store)],
-                          capture_output=True, text=True)
-    jar.unlink(missing_ok=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"Loader installer failed:\n{proc.stdout[-400:]}\n{proc.stderr[-400:]}")
 
-    after = {p.name for p in installer.versions_dir.glob("*") if p.is_dir()}
-    new = sorted(after - before)
-    if not new:
-        raise RuntimeError("Loader installer ran but created no version.")
-    return new[-1]
+    # Installer đời cũ (vd Forge 1.12.2) tải hàng chục thư viện; chỉ cần một cú
+    # rớt kết nối là nó bỏ cuộc ("These libraries failed to download. Try again.").
+    # Chạy lại vài lần — lần sau installer bỏ qua lib đã validate nên hội tụ nhanh.
+    attempts = 3
+    last = ""
+    for attempt in range(attempts):
+        if on_status:
+            on_status("Running loader installer…"
+                      + (f" (retry {attempt})" if attempt else ""))
+        proc = subprocess.run([java_binary, "-jar", str(jar), "--installClient", str(store)],
+                              capture_output=True, text=True)
+        after = {p.name for p in installer.versions_dir.glob("*") if p.is_dir()}
+        new = sorted(after - before)
+        # Thành công theo dòng chốt của installer (đáng tin hơn returncode ở các bản
+        # Forge đời cũ). Ưu tiên dir mới xuất hiện; nếu không (vd cài lại), dò dir
+        # forge khớp phiên bản này.
+        ok = "Successfully installed" in proc.stdout or (proc.returncode == 0 and new)
+        if ok:
+            vid = new[-1] if new else _loader_dir(after)
+            if vid:
+                jar.unlink(missing_ok=True)
+                return vid
+        last = f"{proc.stdout[-500:]}\n{proc.stderr[-300:]}"
+        if attempt < attempts - 1:
+            time.sleep(2.0 * (attempt + 1))
+
+    jar.unlink(missing_ok=True)
+    raise RuntimeError(f"Loader installer failed after {attempts} tries:\n{last}")
+
+
+def _loader_dir(dirs: set[str]) -> str:
+    """Chọn thư mục version do Forge/NeoForge sinh ra (khi cài lại, dir đã tồn tại
+    từ trước nên không nằm trong tập 'mới')."""
+    cands = [d for d in dirs if "forge" in d.lower()]
+    return sorted(cands)[-1] if cands else ""
 
 
 def install(installer, loader: str, game_version: str,
