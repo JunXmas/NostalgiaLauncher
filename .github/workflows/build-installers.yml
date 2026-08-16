@@ -53,6 +53,16 @@ jobs:
         run: pyinstaller packaging/nostalgia.spec --noconfirm
 
       # ---------- Windows ----------
+      # Ký app trước khi Inno gói lại, để bản đã cài cũng có chữ ký. Không có
+      # secret chứng chỉ thì sign.ps1 tự bỏ qua.
+      - name: Sign the app executable
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: pwsh packaging\windows\sign.ps1 -Paths "dist\Nostalgia Launcher\Nostalgia Launcher.exe"
+        shell: pwsh
+
       - name: Build Windows installer
         if: runner.os == 'Windows'
         run: |
@@ -60,6 +70,14 @@ jobs:
           # Dấu ngoặc trong tên biến bắt buộc phải bọc bằng ${...}: viết
           # $env:ProgramFiles(x86) thì PowerShell hiểu là lời gọi hàm và báo lỗi cú pháp.
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" packaging\windows\nostalgia.iss
+        shell: pwsh
+
+      - name: Sign the Windows installer
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: pwsh packaging\windows\sign.ps1 -Paths "dist\installer\*.exe"
         shell: pwsh
 
       # ---------- macOS ----------
