@@ -69,9 +69,7 @@ class Controller:
         self.pages = {
             "home": HomeDashboard(self),
             "installations": page_mod.InstallationsPage(self),
-            "mods": page_mod.ModsPage(self),
-            "resourcepacks": page_mod.ResourcePacksPage(self),
-            "shaders": page_mod.ShaderPacksPage(self),
+            "instance": page_mod.InstancePage(self),
             "servers": page_mod.StubPage(self, "Servers",
                 "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),
@@ -253,6 +251,15 @@ class Controller:
         self.window.set_java(self._java_status())
         self.pages["home"].refresh()
         self.pages["installations"].refresh()
+
+    def open_instance(self, name: str) -> None:
+        """Mở trang chi tiết của một instance (đặt nó làm active)."""
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        self.set_active_instance(name)
+        self.pages["instance"].open(inst)
+        self.go("instance")
 
     def create_instance(self, name: str, version: str):
         inst = self.instances.add(name, version)
@@ -917,14 +924,14 @@ class Controller:
         return any(w._proc is not None and w._proc.poll() is None for w in self._launches)
 
     def _update_play_button(self) -> None:
-        btn = getattr(self.pages.get("home"), "play_btn", None)
-        if btn is None:
-            return
         running = self._any_game_running()
-        btn.setText("STOP" if running else "PLAY")
-        btn.arrow = not running
-        btn.tone = "danger" if running else "green"
-        btn.update()
+        for key in ("home", "instance"):
+            btn = getattr(self.pages.get(key), "play_btn", None)
+            if btn is not None:
+                btn.setText("STOP" if running else "PLAY")
+                btn.arrow = not running
+                btn.tone = "danger" if running else "green"
+                btn.update()
 
     def toggle_play(self) -> None:
         if self._any_game_running():

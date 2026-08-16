@@ -132,8 +132,7 @@ class InstallationsPage(Page):
         self.logs_btn.clicked.connect(self.ctl.show_logs)
 
     def _select(self, name) -> None:
-        self.ctl.set_active_instance(name)
-        self.refresh()
+        self.ctl.open_instance(name)
 
     def _delete(self, name) -> None:
         self.ctl.ask_delete_instance(name)
@@ -180,6 +179,9 @@ class ContentLibraryPage(Page):
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
+        self.embedded = False             # True = nhúng trong trang instance
+        self._fixed_instance = None       # instance cố định khi nhúng
+        self._top = 58                    # mốc y đầu nội dung (nhúng thì kéo lên)
         self._hits: list[dict] = []
         self._done: set[str] = set()      # slug đã cài trong phiên này
         self._busy: set[str] = set()      # slug đang tải
@@ -242,13 +244,46 @@ class ContentLibraryPage(Page):
     def _search_hint(self) -> str:
         return "Search mods on Modrinth…" if self.is_mod else "Search resource packs on Modrinth…"
 
+    # ---- chế độ nhúng trong trang instance ----
+
+    def enter_embedded(self, instance) -> None:
+        """Nhúng vào trang instance: khoá vào 1 instance, ẩn bộ chọn, kéo layout lên."""
+        self.embedded = True
+        self.scrim = False           # trang instance tự vẽ nền/tiêu đề
+        self._top = 6
+        self._fixed_instance = instance
+        self.inst_btn.hide()
+
+    def set_instance(self, instance) -> None:
+        self._fixed_instance = instance
+        self._discovered = False
+        self._updates = {}
+        self.refresh()
+
+    def configure(self, kind: str, project_type: str, is_mod: bool) -> None:
+        """Đổi loại nội dung (mods/resourcepacks/shaderpacks) mà không đổi instance."""
+        self.kind, self.project_type, self.is_mod = kind, project_type, is_mod
+        self.search.setPlaceholderText(self._search_hint)
+        self.installed.empty_text = self._empty_installed
+        self._discovered = False
+        self._updates = {}
+        self._hits = []
+        self.results.set_rows([])
+        self._show_tab(0)
+
     # ---- instance đang thao tác ----
 
     def _game_dir(self):
-        inst = self._instance or self.ctl.active_instance()
+        if self.embedded:
+            inst = self._fixed_instance
+        else:
+            inst = self._instance or self.ctl.active_instance()
         return self.ctl.instance_dir(inst) if inst else self.ctl.store_root
 
     def _sync_instance(self) -> None:
+        if self.embedded:
+            self._instance = self._fixed_instance
+            return
         # Instance có thể bị xoá/đổi ở nơi khác; đồng bộ lại và cập nhật nhãn nút.
         if not (self._instance and self.ctl.instances.get(self._instance.name)):
             self._instance = self.ctl.active_instance()
@@ -304,19 +339,23 @@ class ContentLibraryPage(Page):
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
-        # Nút chọn instance ở hàng tab (phải); thu hẹp tabs để không chồng lên.
-        self.inst_btn.setGeometry(w - 232, 56, 210, 30)
-        self.tabs.setGeometry(24, 58, w - 260, 30)
+        t = self._top
+        # Nút chọn instance ở hàng tab (phải); ẩn khi nhúng (instance đã cố định).
+        if self.embedded:
+            self.tabs.setGeometry(24, t, w - 48, 30)
+        else:
+            self.inst_btn.setGeometry(w - 232, t - 2, 210, 30)
+            self.tabs.setGeometry(24, t, w - 260, 30)
         # Installed
-        self.installed.setGeometry(16, 98, w - 32, h - 156)
+        self.installed.setGeometry(16, t + 40, w - 32, h - (t + 40) - 58)
         self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
         self.update_btn.setGeometry(w - 356, h - 46, 156, 32)
         # Browse
-        self.search.setGeometry(16, 98, w - 140, 32)
-        self.search_btn.setGeometry(w - 116, 98, 100, 32)
-        self.sort_tabs.setGeometry(16, 140, 210, 28)
-        self.loader_tabs.setGeometry(238, 140, w - 254, 28)
-        self.results.setGeometry(16, 176, w - 32, h - 192)
+        self.search.setGeometry(16, t + 40, w - 140, 32)
+        self.search_btn.setGeometry(w - 116, t + 40, 100, 32)
+        self.sort_tabs.setGeometry(16, t + 82, 210, 28)
+        self.loader_tabs.setGeometry(238, t + 82, w - 254, 28)
+        self.results.setGeometry(16, t + 118, w - 32, h - (t + 118) - 58)
 
     # ---- Installed ----
 
@@ -591,6 +630,90 @@ class ShaderPacksPage(ContentLibraryPage):
     kind = "shaderpacks"
     is_mod = False
     project_type = "shader"
+
+
+# ---------- trang chi tiết một instance (kiểu Modrinth) ----------
+
+class InstancePage(Page):
+    """Mở khi nhấn vào một instance: quản lý mọi thứ của riêng nó tại một nơi."""
+
+    heading = ""
+    CONTENT = [("Mods", "mods", "mod", True),
+               ("Resource Packs", "resourcepacks", "resourcepack", False),
+               ("Shaders", "shaderpacks", "shader", False)]
+
+    def __init__(self, ctl, parent=None):
+        super().__init__(ctl, parent)
+        self.instance = None
+        self.back_btn = AeroButton("‹  BACK", self, height=28, tone="neutral")
+        self.back_btn.clicked.connect(lambda: self.ctl.go("installations"))
+        self.play_btn = AeroButton("PLAY", self, height=42, arrow=True)
+        self.play_btn.clicked.connect(self.ctl.toggle_play)
+        self.edit_btn = AeroButton("EDIT", self, height=28, tone="neutral")
+        self.edit_btn.clicked.connect(
+            lambda: self.ctl.edit_instance(self.instance.name) if self.instance else None)
+
+        self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
+        self.tabs.changed.connect(self._tab)
+
+        self.content = ContentLibraryPage(ctl, self)
+        self.content.enter_embedded(None)
+        self.logs = QTextBrowser(self)
+        self.logs.setStyleSheet(TEXT_QSS)
+        self.logs.setFont(QFont("monospace", 8))
+        self.logs.hide()
+
+    def open(self, instance) -> None:
+        self.instance = instance
+        self.content.set_instance(instance)
+        self.tabs.current = 0
+        self._tab(0)
+
+    def refresh(self) -> None:
+        self.ctl._update_play_button()
+        if self.tabs.current < len(self.CONTENT):
+            self.content.refresh()
+
+    def _tab(self, i: int) -> None:
+        self.tabs.current = i
+        self.tabs.update()
+        is_logs = i == len(self.CONTENT)
+        self.content.setVisible(not is_logs)
+        self.logs.setVisible(is_logs)
+        if is_logs:
+            self.logs.setPlainText("".join(self.ctl._log_lines)
+                                   or "No log yet — press PLAY to start the game.")
+        else:
+            self.content.configure(*self.CONTENT[i][1:])
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        w, h = self.width(), self.height()
+        self.back_btn.setGeometry(24, 16, 92, 28)
+        # PLAY/EDIT dời xuống để không đè nút điều khiển cửa sổ (góc trên phải).
+        self.edit_btn.setGeometry(w - 288, 34, 84, 28)
+        self.play_btn.setGeometry(w - 190, 30, 170, 36)
+        self.tabs.setGeometry(24, 74, w - 48, 30)
+        self.content.setGeometry(0, 108, w, h - 108)
+        self.logs.setGeometry(24, 112, w - 48, h - 136)
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        p = QPainter(self)
+        if self.instance:
+            p.setFont(ui_font(13, bold=True))
+            p.setPen(TEXT)
+            p.drawText(QRect(128, 14, self.width() - 460, 24),
+                       Qt.AlignLeft | Qt.AlignVCenter, self.instance.name)
+            p.setFont(ui_font(8))
+            p.setPen(TEXT_DIM)
+            pt = self.instance.playtime_sec
+            extra = f"  ·  played {pt // 3600}h {(pt % 3600) // 60}m" if pt else ""
+            p.drawText(QRect(128, 36, self.width() - 460, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter, self.instance.version + extra)
+        # đường kẻ dưới header
+        p.setPen(QPen(QColor(255, 255, 255, 24), 1))
+        p.drawLine(24, 106, self.width() - 24, 106)
+        p.end()
 
 
 # ---------- skin ----------

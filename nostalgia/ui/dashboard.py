@@ -90,7 +90,7 @@ class HomeDashboard(QWidget):
         pos = e.position().toPoint()
         for rect, name in self._card_rects:
             if rect.contains(pos):
-                self.ctl.set_active_instance(name)
+                self.ctl.open_instance(name)
                 return
         for rect, url in self._news_rects:
             if rect.contains(pos):

@@ -28,9 +28,6 @@ OVERLAY_CLASSES = ("GlassMenu", "TextPrompt", "ConfirmDialog", "LoginDialog", "R
 NAV = [
     ("home", "Home", "home"),
     ("installations", "Instances", "cube"),
-    ("mods", "Mods", "mods"),
-    ("resourcepacks", "Resource Packs", "packs"),
-    ("shaders", "Shaders", "shaders"),
     ("servers", "Servers", "servers"),
     ("skins", "Skin", "skin"),
     ("settings", "Settings", "gear"),
