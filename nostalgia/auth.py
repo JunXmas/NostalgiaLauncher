@@ -12,11 +12,10 @@ from dataclasses import dataclass
 import requests
 
 # Đăng ký app tại https://portal.azure.com (Azure Active Directory > App registrations).
-# Dùng endpoint /common nên chấp nhận cả tài khoản cá nhân lẫn tổ chức — chọn
-# "Accounts in any organizational directory and personal Microsoft accounts" và
-# bật "Allow public client flows". Sau đó đặt biến môi trường MC_CLIENT_ID.
-DEVICE_CODE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode"
-TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+# Chọn "Personal Microsoft accounts only" và bật "Allow public client flows".
+# Sau đó đặt biến môi trường MC_CLIENT_ID.
+DEVICE_CODE_URL = "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode"
+TOKEN_URL = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token"
 SCOPE = "XboxLive.signin offline_access"
 
 XBL_URL = "https://user.auth.xboxlive.com/user/authenticate"
