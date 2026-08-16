@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from .accounts import LaunchIdentity
-from .install import Installer, rules_allow
+from .install import CURRENT_OS, Installer, rules_allow
 
 CLASSPATH_SEP = ";" if os.name == "nt" else ":"
 
@@ -177,6 +177,10 @@ def build_command(
         cmd += _substitute(meta["arguments"]["jvm"], values, features)
     else:  # bản cũ không khai báo JVM args
         cmd += [f"-Djava.library.path={values['natives_directory']}", "-cp", values["classpath"]]
+        # Bản ≤1.12 (LWJGL2) không tự thêm cờ này. Trên macOS, LWJGL/GLFW bắt buộc
+        # tạo cửa sổ trên luồng đầu tiên; thiếu -XstartOnFirstThread là crash ngay.
+        if CURRENT_OS == "osx":
+            cmd.append("-XstartOnFirstThread")
 
     cmd += [f"-Xmx{max_memory_mb}M", "-XX:+UseG1GC"]
     cmd.append(meta["mainClass"])
