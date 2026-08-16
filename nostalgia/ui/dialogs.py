@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
@@ -231,7 +231,14 @@ class LoginDialog(GlassDialog):
             p.drawRoundedRect(box, 4, 4)
 
             f = ui_font(17, bold=True)
-            f.setLetterSpacing(f.AbsoluteSpacing, 5)
+            # Phải là QFont.AbsoluteSpacing chứ không phải f.AbsoluteSpacing:
+            # PySide6 chỉ gắn hằng số enum lên class, không lên đối tượng. Viết
+            # qua đối tượng thì AttributeError nổ ngay giữa paintEvent — và vì
+            # nổ trước p.end(), painter bị bỏ treo, kéo theo hàng nghìn cảnh báo
+            # "paint device can only be painted by one painter at a time" ở mọi
+            # lượt vẽ sau đó. Năm chỗ dùng letter spacing khác trong dự án đều
+            # viết qua class, chỉ riêng đây lọt lưới.
+            f.setLetterSpacing(QFont.AbsoluteSpacing, 5)
             p.setFont(f)
             p.setPen(ACCENT)
             p.drawText(box, Qt.AlignCenter, self.code)
