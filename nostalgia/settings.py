@@ -13,8 +13,16 @@ CONFIG_PATH = CONFIG_DIR / "settings.json"
 CLIENTS_PATH = CONFIG_DIR / "clients.json"
 
 DEFAULT_CLIENT_IDS = {
-    "microsoft": "4765445b-32ee-4b92-b7e2-aebd308c57d2",
+    "microsoft": "",
 }
+
+# Bản đóng gói (exe/dmg) sinh nostalgia/_build_config.py lúc build để nhúng sẵn
+# client ID; bản mã nguồn không có file này nên các mặc định giữ nguyên rỗng.
+try:
+    from ._build_config import CLIENT_IDS as _BUILD_CLIENT_IDS
+except ImportError:
+    _BUILD_CLIENT_IDS = {}
+DEFAULT_CLIENT_IDS.update({k: v for k, v in _BUILD_CLIENT_IDS.items() if v})
 
 
 def client_id(name: str, env_var: str) -> str:
