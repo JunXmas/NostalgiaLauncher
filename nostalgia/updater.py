@@ -7,7 +7,11 @@ hợp về thư mục tải xuống và mở ra để người dùng bấm cài 
 
 from __future__ import annotations
 
+import os
 import platform
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import requests
@@ -86,3 +90,48 @@ def download_asset(asset: dict) -> Path:
                 f.write(chunk)
         tmp.replace(dest)
     return dest
+
+
+def _open(path: Path) -> None:
+    """Mở file bằng trình xử lý mặc định (để người dùng tự cài)."""
+    if platform.system() == "Windows":
+        os.startfile(str(path))          # type: ignore[attr-defined]
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["open", str(path)])
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
+
+
+def install(path: Path) -> str:
+    """Cài đặt bản đã tải thẳng vào máy. Trả về mode cho phía gọi xử lý tiếp:
+
+    - 'quit'      (Windows): đã chạy installer im lặng ở nền; app PHẢI thoát ngay
+                  để installer thay được file .exe đang bị khoá — Inno tự đóng &
+                  mở lại app. Bản cài per-user nên không cần quyền admin.
+    - 'installed' (Linux .deb qua pkexec): đã cài xong (một hộp thoại xin mật
+                  khẩu); phía gọi mời khởi động lại. Tự kéo cả thư viện phụ thuộc.
+    - 'opened'    (macOS .dmg hoặc thiếu công cụ): mở file cho người dùng tự cài.
+
+    Ném lỗi nếu lệnh cài thất bại — phía gọi bắt để lùi về mở file thủ công.
+    """
+    system = platform.system()
+    suffix = path.suffix.lower()
+    if system == "Windows" and suffix == ".exe":
+        subprocess.Popen([str(path), "/VERYSILENT", "/SUPPRESSMSGBOXES",
+                          "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"])
+        return "quit"
+    if system == "Linux" and suffix == ".deb" and shutil.which("pkexec"):
+        subprocess.run(["pkexec", "apt-get", "install", "-y", str(path)], check=True)
+        return "installed"
+    _open(path)
+    return "opened"
+
+
+def relaunch() -> None:
+    """Mở lại launcher bằng bản vừa cài rồi để tiến trình cũ tự thoát."""
+    if getattr(sys, "frozen", False):
+        # Bản đóng gói: chạy lại chính file thực thi (đã được thay bằng bản mới).
+        subprocess.Popen([sys.executable])
+    else:
+        # Chạy từ mã nguồn: khởi động lại module.
+        subprocess.Popen([sys.executable, "-m", "nostalgia", "gui"])

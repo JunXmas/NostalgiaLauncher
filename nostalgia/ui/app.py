@@ -255,29 +255,48 @@ class Controller:
         if snippet:
             msg += "\n\n" + snippet
         dlg = ConfirmDialog(self.window, "Update available", msg,
-                            ok_text="GET UPDATE", tone="green")
+                            ok_text="INSTALL UPDATE", tone="green")
         dlg.confirmed.connect(self._get_update)
         dlg.show()
 
     def _get_update(self) -> None:
         info = self._update_info or {}
         asset = info.get("asset")
-        page = info.get("page_url", "")
         if not asset:
-            # Không có installer khớp hệ điều hành (vd Linux) -> mở trang release.
-            self.open_url(page)
+            # Không có installer khớp hệ điều hành -> mở trang release.
+            self.open_url(info.get("page_url", ""))
             return
+        self._update_asset = asset
         self.window.set_status(f"Downloading {asset['name']}…")
-        self._run(
-            lambda: updater.download_asset(asset),
-            self._update_ready,
-            lambda m: (self.open_url(page),
-                       self.window.set_status(f"Download failed ({m}); opened the release page.")),
-        )
+        self._run(self._fetch_and_install, self._update_done, self._update_failed)
 
-    def _update_ready(self, path) -> None:
-        self.window.set_status(f"Saved {path.name} to your Downloads — opening the installer…")
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+    def _fetch_and_install(self) -> str:
+        # Chạy trong luồng nền: tải rồi cài thẳng vào máy (Linux pkexec chặn ở đây).
+        path = updater.download_asset(self._update_asset)
+        return updater.install(path)
+
+    def _update_done(self, mode: str) -> None:
+        if mode == "quit":
+            # Windows: installer đang chạy nền, app phải thoát để nó thay file .exe.
+            self.window.set_status("Installing update — the launcher will close and reopen…")
+            QApplication.quit()
+        elif mode == "installed":
+            dlg = ConfirmDialog(self.window, "Update installed",
+                                "The new version is installed. Restart the launcher now?",
+                                ok_text="RESTART", tone="green")
+            dlg.confirmed.connect(self._restart_after_update)
+            dlg.show()
+        else:  # opened
+            self.window.set_status("Opened the installer — follow its steps to finish updating.")
+
+    def _restart_after_update(self) -> None:
+        updater.relaunch()
+        QApplication.quit()
+
+    def _update_failed(self, msg: str) -> None:
+        # Lùi an toàn: mở trang release để người dùng tự tải/cài.
+        self.open_url((self._update_info or {}).get("page_url", ""))
+        self.window.set_status(f"Auto-update failed ({msg}); opened the release page.")
 
     def load_news(self, cb) -> None:
         self._run(content.fetch_news, cb, lambda _m: cb(None))
