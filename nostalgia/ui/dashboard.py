@@ -210,20 +210,6 @@ class HomeDashboard(QWidget):
         p.drawLine(pill.right() - 12, cy + 2, pill.right() - 8, cy - 2)
         self._hot_hero_links.append((pill, "version"))
 
-        # quick links
-        p.setPen(QPen(QColor(255, 255, 255, 26), 1))
-        p.drawLine(hero.left() + 24, hero.bottom() - 34, hero.right() - 24, hero.bottom() - 34)
-        links = [("Browse Mods", "mods"), ("Instances", "installations"),
-                 ("Skin", "skins"), ("Settings", "settings")]
-        lx = hero.left() + 26
-        p.setFont(ui_font(9))
-        for label, action in links:
-            wdt = p.fontMetrics().horizontalAdvance(label) + 24
-            rect = QRect(lx, hero.bottom() - 28, wdt, 20)
-            p.setPen(ACCENT)
-            p.drawText(rect, Qt.AlignLeft | Qt.AlignVCenter, label)
-            self._hot_hero_links.append((rect, "nav:" + action))
-            lx += wdt + 16
 
     def _paint_instances(self, p, area):
         p.setFont(ui_font(12, bold=True))

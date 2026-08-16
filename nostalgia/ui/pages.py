@@ -207,8 +207,6 @@ class ContentLibraryPage(Page):
         self.open_btn = AeroButton("OPEN FOLDER", self, height=32, tone="neutral")
         self.open_btn.clicked.connect(
             lambda: self.ctl.open_path(mods_mgr.folder(self._game_dir(), self.kind)))
-        self.reload_btn = AeroButton("REFRESH", self, height=32, tone="neutral")
-        self.reload_btn.clicked.connect(self.refresh)
         self.update_btn = AeroButton("UPDATE ALL", self, height=32)   # xanh
         self.update_btn.clicked.connect(self._update_all)
         self.update_btn.setVisible(False)
@@ -282,7 +280,7 @@ class ContentLibraryPage(Page):
         self.tabs.current = i
         self.tabs.update()
         browse = i == 1
-        for w in (self.installed, self.open_btn, self.reload_btn):
+        for w in (self.installed, self.open_btn):
             w.setVisible(not browse)
         self.update_btn.setVisible((not browse) and bool(self._updates))
         for w in (self.search, self.search_btn, self.results, self.sort_tabs):
@@ -311,9 +309,8 @@ class ContentLibraryPage(Page):
         self.tabs.setGeometry(24, 58, w - 260, 30)
         # Installed
         self.installed.setGeometry(16, 98, w - 32, h - 156)
-        self.reload_btn.setGeometry(w - 176, h - 46, 160, 32)
-        self.open_btn.setGeometry(w - 348, h - 46, 168, 32)
-        self.update_btn.setGeometry(w - 512, h - 46, 156, 32)
+        self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
+        self.update_btn.setGeometry(w - 356, h - 46, 156, 32)
         # Browse
         self.search.setGeometry(16, 98, w - 140, 32)
         self.search_btn.setGeometry(w - 116, 98, 100, 32)
