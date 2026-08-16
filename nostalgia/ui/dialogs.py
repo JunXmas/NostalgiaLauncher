@@ -172,6 +172,95 @@ class ConfirmDialog(GlassDialog):
                    Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.message)
 
 
+# ---------- chọn loader ----------
+
+class LoaderDialog(GlassDialog):
+    """Chọn loader trong một thẻ gọn ở giữa: mỗi loader là một hàng bấm được."""
+
+    picked = Signal(str)  # phát ra khoá loader: vanilla/fabric/forge/neoforge
+
+    ROWS = [
+        ("Vanilla", "vanilla", "Plain Minecraft, no mods", QColor(120, 170, 90)),
+        ("Fabric", "fabric", "Light and fast — most modern mods", QColor(150, 128, 104)),
+        ("Forge", "forge", "The classic loader for big mods", QColor(90, 150, 210)),
+        ("NeoForge", "neoforge", "A modern fork of Forge", QColor(170, 120, 190)),
+    ]
+    ROW_STEP = 58
+    TOP = 54
+
+    def __init__(self, parent):
+        h = self.TOP + self.ROW_STEP * len(self.ROWS) + 16
+        super().__init__(parent, "Choose a loader", width=430, height=h)
+        self._hover = -1
+        self.setMouseTracking(True)
+        self.place()
+
+    def _row_rects(self) -> list[QRect]:
+        c = self.card
+        out, y = [], c.top() + self.TOP
+        for _ in self.ROWS:
+            out.append(QRect(c.left() + 16, y, c.width() - 32, self.ROW_STEP - 8))
+            y += self.ROW_STEP
+        return out
+
+    def _index_at(self, pos) -> int:
+        for i, r in enumerate(self._row_rects()):
+            if r.contains(pos):
+                return i
+        return -1
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        i = self._index_at(e.position().toPoint())
+        if i != self._hover:
+            self._hover = i
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        i = self._index_at(e.position().toPoint())
+        if i >= 0:
+            self.picked.emit(self.ROWS[i][1])
+            self.dismiss()
+            return
+        super().mousePressEvent(e)  # bấm ngoài thẻ -> đóng
+
+    def paint_body(self, p: QPainter) -> None:
+        for i, r in enumerate(self._row_rects()):
+            name, _key, sub, col = self.ROWS[i]
+            hovered = i == self._hover
+            if hovered:
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(255, 255, 255, 30))
+                p.drawRoundedRect(QRectF(r), 6, 6)
+                p.setBrush(Qt.NoBrush)
+                p.setPen(QPen(ACCENT.lighter(130), 1.4))
+                p.drawRoundedRect(QRectF(r).adjusted(0.7, 0.7, -0.7, -0.7), 6, 6)
+            # ô màu nhận diện loader
+            sw = QRect(r.left() + 10, r.center().y() - 17, 34, 34)
+            p.setPen(Qt.NoPen)
+            p.setBrush(col)
+            p.drawRoundedRect(QRectF(sw), 7, 7)
+            p.setBrush(gloss_gradient(sw.height(), 0.5))
+            p.drawRoundedRect(QRectF(sw), 7, 7)
+            p.setFont(ui_font(13, bold=True))
+            p.setPen(QColor(255, 255, 255, 235))
+            p.drawText(sw, Qt.AlignCenter, name[0])
+            # tên + mô tả ngắn
+            tx = r.left() + 56
+            p.setFont(ui_font(11, bold=True))
+            p.setPen(TEXT)
+            p.drawText(QRect(tx, r.top() + 7, r.width() - 92, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, name)
+            p.setFont(ui_font(8))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(tx, r.top() + 26, r.width() - 92, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter, sub)
+            # mũi tên ›
+            p.setPen(QPen(TEXT_DIM if hovered else TEXT_FAINT, 2))
+            cx, cy = r.right() - 18, r.center().y()
+            p.drawLine(cx - 4, cy - 6, cx + 2, cy)
+            p.drawLine(cx + 2, cy, cx - 4, cy + 6)
+
+
 # ---------- đăng nhập Microsoft ----------
 
 class LoginDialog(GlassDialog):

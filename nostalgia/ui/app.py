@@ -765,12 +765,12 @@ class Controller:
 
     def _instance_name_chosen(self, name: str) -> None:
         self._new_instance_name = name.strip() or "Instance"
-        # Bước 2: chọn loader (Vanilla / Fabric / Forge / NeoForge).
-        items = [MenuItem(kind="header", label="Loader")]
-        for label, key in loaders_mod.UI_LOADERS:
-            items.append(MenuItem(label=label, data=key))
-        anchor = QRect(self.window.width() // 2 - 125, 150, 250, 34)
-        popup(self.window, items, anchor, self._instance_loader_chosen, width=250)
+        # Bước 2: chọn loader (Vanilla / Fabric / Forge / NeoForge) trong thẻ gọn ở giữa.
+        from .dialogs import LoaderDialog
+        dlg = LoaderDialog(self.window)
+        dlg.picked.connect(self._instance_loader_chosen)
+        dlg.show()
+        dlg.setFocus()
 
     def _instance_loader_chosen(self, loader) -> None:
         if loader is None:
