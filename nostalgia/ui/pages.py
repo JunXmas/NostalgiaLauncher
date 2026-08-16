@@ -8,10 +8,13 @@ from PySide6.QtCore import QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
+from .. import mods as mods_mgr
+from .. import modrinth
 from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
+from .dialogs import ConfirmDialog
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
-from .widgets import AeroButton
+from .widgets import AeroButton, TabBar
 
 TEXT_QSS = """
 QTextBrowser {
@@ -40,6 +43,14 @@ def human_size(n: int) -> str:
             return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
         n /= 1024
     return f"{n:.1f} GB"
+
+
+def human_count(n: int) -> str:
+    """Số lượt tải gọn: 1234 -> 1.2K, 5_600_000 -> 5.6M."""
+    for div, suffix in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
+        if n >= div:
+            return f"{n / div:.1f}{suffix}"
+    return str(n)
 
 
 class Page(QWidget):
@@ -140,6 +151,211 @@ class InstallationsPage(Page):
                 data=v["id"],
             ))
         self.list.set_rows(rows)
+
+
+# ---------- thư viện nội dung: Mods / Resource Packs ----------
+
+class ContentLibraryPage(Page):
+    """Hai tab: 'Installed' (bật/tắt/xoá/mở thư mục) và 'Browse' (tìm & cài từ Modrinth)."""
+
+    kind = "mods"                 # "mods" | "resourcepacks"
+    is_mod = True
+    project_type = "mod"
+
+    def __init__(self, ctl, parent=None):
+        super().__init__(ctl, parent)
+        self._hits: list[dict] = []
+        self._done: set[str] = set()      # slug đã cài trong phiên này
+        self._busy: set[str] = set()      # slug đang tải
+
+        self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
+        self.tabs.changed.connect(self._show_tab)
+
+        # --- Installed ---
+        self.installed = ListView(self, empty_text=self._empty_installed)
+        self.installed.badge_clicked.connect(self._toggle)
+        self.installed.action_clicked.connect(self._ask_delete)
+        self.open_btn = AeroButton("OPEN FOLDER", self, height=32, tone="neutral")
+        self.open_btn.clicked.connect(
+            lambda: self.ctl.open_path(mods_mgr.folder(self.ctl.settings, self.kind)))
+        self.reload_btn = AeroButton("REFRESH", self, height=32, tone="neutral")
+        self.reload_btn.clicked.connect(self.refresh)
+
+        # --- Browse ---
+        self.search = QLineEdit(self)
+        self.search.setPlaceholderText(self._search_hint)
+        self.search.setStyleSheet(INPUT_QSS)
+        self.search.setFont(ui_font(10))
+        self.search.returnPressed.connect(self._do_search)
+        self.search_btn = AeroButton("SEARCH", self, height=32)
+        self.search_btn.clicked.connect(self._do_search)
+        self.results = ListView(self, empty_text="Type a name above, then SEARCH to browse Modrinth.")
+        self.results.activated.connect(self._install)
+        self.results.badge_clicked.connect(self._install)
+
+        self._show_tab(0)
+
+    # tiện lấy theo lớp con
+    @property
+    def _empty_installed(self) -> str:
+        return f"No {self.kind} yet. Open the Browse tab to add some from Modrinth."
+
+    @property
+    def _search_hint(self) -> str:
+        return "Search mods on Modrinth…" if self.is_mod else "Search resource packs on Modrinth…"
+
+    def _show_tab(self, i: int) -> None:
+        self.tabs.current = i
+        self.tabs.update()
+        browse = i == 1
+        for w in (self.installed, self.open_btn, self.reload_btn):
+            w.setVisible(not browse)
+        for w in (self.search, self.search_btn, self.results):
+            w.setVisible(browse)
+        if browse:
+            self.search.setFocus()
+        else:
+            self.refresh()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        w, h = self.width(), self.height()
+        self.tabs.setGeometry(24, 58, w - 48, 30)
+        # Installed
+        self.installed.setGeometry(16, 98, w - 32, h - 156)
+        self.reload_btn.setGeometry(w - 176, h - 46, 160, 32)
+        self.open_btn.setGeometry(w - 348, h - 46, 168, 32)
+        # Browse
+        self.search.setGeometry(16, 98, w - 140, 32)
+        self.search_btn.setGeometry(w - 116, 98, 100, 32)
+        self.results.setGeometry(16, 140, w - 32, h - 156)
+
+    # ---- Installed ----
+
+    def refresh(self) -> None:
+        rows = []
+        for it in mods_mgr.list_installed(self.ctl.settings, self.kind):
+            note = human_size(it.size) + ("" if it.enabled else " · disabled")
+            rows.append(Row(
+                title=it.name,
+                subtitle=note,
+                badge="ON" if it.enabled else "OFF",
+                badge_on=it.enabled,
+                action="delete",
+                data=it,
+            ))
+        self.installed.set_rows(rows)
+
+    def _toggle(self, item) -> None:
+        mods_mgr.set_enabled(item.path, not item.enabled)
+        self.refresh()
+
+    def _ask_delete(self, item) -> None:
+        dlg = ConfirmDialog(self.window(), f"Remove {self.kind[:-1]}",
+                            f"Delete '{item.name}' from disk? This cannot be undone.")
+        dlg.confirmed.connect(lambda: (mods_mgr.delete(item.path), self.refresh()))
+        dlg.show()
+
+    # ---- Browse ----
+
+    def _target(self):
+        """(loaders, game_versions) để lọc Modrinth theo bản đang chọn."""
+        versions = self.ctl.installer.installed_versions()
+        sel = self.ctl.settings.selected_version
+        chosen = next((v for v in versions if v["id"] == sel),
+                      versions[0] if versions else None)
+        game_versions = None
+        if chosen:
+            game_versions = [chosen.get("parent") or chosen["id"]]
+        loaders = ["fabric"] if self.is_mod else None
+        return loaders, game_versions
+
+    def _do_search(self) -> None:
+        q = self.search.text().strip()
+        if not q:
+            return
+        self.results.empty_text = "Searching Modrinth…"
+        self.results.set_rows([])
+        loaders, gvs = self._target()
+        self.ctl._run(
+            lambda: modrinth.search(q, self.project_type, loaders=loaders,
+                                    game_versions=gvs, limit=30),
+            self._show_results,
+            self._search_failed,
+        )
+
+    def _search_failed(self, msg: str) -> None:
+        self.results.empty_text = f"Search failed: {msg}"
+        self.results.set_rows([])
+
+    def _show_results(self, hits: list) -> None:
+        self._hits = hits
+        self.results.empty_text = "No matches on Modrinth for that search."
+        self._render_results()
+
+    def _render_results(self) -> None:
+        rows = []
+        for h in self._hits:
+            slug = h.get("slug") or h.get("project_id")
+            if slug in self._busy:
+                badge, on = "…", False
+            elif slug in self._done:
+                badge, on = "ADDED", False
+            else:
+                badge, on = "GET", True
+            rows.append(Row(
+                title=h.get("title", slug),
+                subtitle=f"{h.get('author', '?')} · {human_count(h.get('downloads', 0))} downloads",
+                badge=badge,
+                badge_on=on,
+                data=h,
+            ))
+        self.results.set_rows(rows)
+
+    def _install(self, hit) -> None:
+        slug = hit.get("slug") or hit.get("project_id")
+        if slug in self._busy or slug in self._done:
+            return
+        self._busy.add(slug)
+        self._render_results()
+        self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
+        loaders, gvs = self._target()
+
+        def work():
+            f = modrinth.best_file(slug, loaders=loaders, game_versions=gvs)
+            if not f:
+                raise RuntimeError("no compatible version for your Minecraft/loader")
+            mods_mgr.install_file(self.ctl.settings, self.kind,
+                                  url=f["url"], filename=f["filename"], sha1=f["sha1"])
+            return hit.get("title", slug)
+
+        self.ctl._run(work,
+                      lambda title: self._installed(slug, title),
+                      lambda msg: self._install_failed(slug, hit, msg))
+
+    def _installed(self, slug: str, title: str) -> None:
+        self._busy.discard(slug)
+        self._done.add(slug)
+        self._render_results()
+        self.ctl.window.set_status(f"Added {title} — see the Installed tab.")
+
+    def _install_failed(self, slug: str, hit, msg: str) -> None:
+        self._busy.discard(slug)
+        self._render_results()
+        self.ctl.window.set_status(f"Couldn't add {hit.get('title', slug)}: {msg}")
+
+
+class ModsPage(ContentLibraryPage):
+    heading = "Mods"
+    kind = "mods"
+    is_mod = True
+    project_type = "mod"
+
+
+class ResourcePacksPage(ContentLibraryPage):
+    heading = "Resource Packs"
+    kind = "resourcepacks"
+    is_mod = False
+    project_type = "resourcepack"
 
 
 # ---------- skin ----------

@@ -59,11 +59,8 @@ class Controller:
         self.pages = {
             "home": HomeDashboard(self),
             "installations": page_mod.InstallationsPage(self),
-            "mods": page_mod.StubPage(self, "Mods",
-                "Per-instance mod management is not built yet. For now, drop mod "
-                "jars into the instance's mods/ folder (Fabric)."),
-            "resourcepacks": page_mod.StubPage(self, "Resource Packs",
-                "Resource pack management is not built yet."),
+            "mods": page_mod.ModsPage(self),
+            "resourcepacks": page_mod.ResourcePacksPage(self),
             "servers": page_mod.StubPage(self, "Servers",
                 "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),

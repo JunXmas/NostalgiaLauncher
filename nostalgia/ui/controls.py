@@ -21,16 +21,20 @@ class Row:
     right: str = ""
     checked: bool = False
     action: str = ""          # "" | "delete"
+    badge: str = ""           # nhãn pill bấm được bên phải (ON/OFF, INSTALL…)
+    badge_on: bool = False    # True = pill xanh (đang bật / kêu gọi cài)
     data: object = None
 
 
 class ListView(QWidget):
-    """Danh sách hàng có cuộn bằng con lăn, hover, và một nút hành động bên phải."""
+    """Danh sách hàng có cuộn bằng con lăn, hover, một pill và một nút bên phải."""
 
     activated = Signal(object)
     action_clicked = Signal(object)
+    badge_clicked = Signal(object)
 
     ROW_H = 52
+    BADGE_W = 62
 
     def __init__(self, parent=None, *, empty_text: str = "Nothing here yet."):
         super().__init__(parent)
@@ -39,6 +43,7 @@ class ListView(QWidget):
         self.scroll = 0
         self._hover = -1
         self._hover_action = False
+        self._hover_badge = False
         self.setMouseTracking(True)
 
     def set_rows(self, rows: list[Row]) -> None:
@@ -55,6 +60,10 @@ class ListView(QWidget):
     def _action_rect(self, row_rect: QRect) -> QRect:
         return QRect(row_rect.right() - 46, row_rect.center().y() - 14, 30, 28)
 
+    def _badge_rect(self, row: Row, row_rect: QRect) -> QRect:
+        right = row_rect.right() - (46 if row.action else 16)
+        return QRect(right - self.BADGE_W, row_rect.center().y() - 13, self.BADGE_W, 26)
+
     def _index_at(self, pos) -> int:
         i = (pos.y() + self.scroll) // self.ROW_H
         return i if 0 <= i < len(self.rows) else -1
@@ -62,13 +71,17 @@ class ListView(QWidget):
     def mouseMoveEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
         i = self._index_at(pos)
-        act = i >= 0 and bool(self.rows[i].action) and self._action_rect(self._rect_of(i)).contains(pos)
-        if (i, act) != (self._hover, self._hover_action):
-            self._hover, self._hover_action = i, act
+        act = badge = False
+        if i >= 0:
+            r = self._rect_of(i)
+            act = bool(self.rows[i].action) and self._action_rect(r).contains(pos)
+            badge = bool(self.rows[i].badge) and self._badge_rect(self.rows[i], r).contains(pos)
+        if (i, act, badge) != (self._hover, self._hover_action, self._hover_badge):
+            self._hover, self._hover_action, self._hover_badge = i, act, badge
             self.update()
 
     def leaveEvent(self, e):  # noqa: N802
-        self._hover, self._hover_action = -1, False
+        self._hover, self._hover_action, self._hover_badge = -1, False, False
         self.update()
 
     def mousePressEvent(self, e):  # noqa: N802
@@ -77,8 +90,11 @@ class ListView(QWidget):
         if i < 0:
             return
         row = self.rows[i]
-        if row.action and self._action_rect(self._rect_of(i)).contains(pos):
+        r = self._rect_of(i)
+        if row.action and self._action_rect(r).contains(pos):
             self.action_clicked.emit(row.data)
+        elif row.badge and self._badge_rect(row, r).contains(pos):
+            self.badge_clicked.emit(row.data)
         else:
             self.activated.emit(row.data)
 
@@ -135,6 +151,8 @@ class ListView(QWidget):
         reserved = 0
         if row.right:
             reserved += 120
+        if row.badge:
+            reserved += self.BADGE_W + 10
         if row.action:
             reserved += 46
         text_w = max(60, r.width() - reserved - 26)
@@ -151,10 +169,15 @@ class ListView(QWidget):
                        Qt.AlignLeft | Qt.AlignVCenter,
                        p.fontMetrics().elidedText(row.subtitle, Qt.ElideRight, text_w))
         if row.right:
+            shift = (self.BADGE_W + 10) if row.badge else 0
             p.setFont(ui_font(8))
             p.setPen(TEXT_DIM)
-            p.drawText(QRect(r.right() - 172, r.top(), 112, r.height()),
+            p.drawText(QRect(r.right() - 172 - shift, r.top(), 112, r.height()),
                        Qt.AlignRight | Qt.AlignVCenter, row.right)
+
+        if row.badge:
+            self._paint_badge(p, row, self._badge_rect(row, r),
+                              hovered and self._hover_badge)
 
         if row.action == "delete":
             a = self._action_rect(r)
@@ -166,6 +189,28 @@ class ListView(QWidget):
             c = a.center()
             p.drawLine(c.x() - 5, c.y() - 5, c.x() + 5, c.y() + 5)
             p.drawLine(c.x() + 5, c.y() - 5, c.x() - 5, c.y() + 5)
+
+    def _paint_badge(self, p: QPainter, row: Row, a: QRect, hot: bool) -> None:
+        box = QRectF(a)
+        p.setPen(Qt.NoPen)
+        if row.badge_on:
+            g = QLinearGradient(box.topLeft(), QPointF(box.left(), box.bottom()))
+            g.setColorAt(0.0, GREEN_TOP)
+            g.setColorAt(0.49, GREEN_MID)
+            g.setColorAt(0.5, GREEN_LOW)
+            g.setColorAt(1.0, GREEN_BOT)
+            p.setBrush(QBrush(g))
+            text_pen = QPen(QColor(12, 26, 16), 1)
+        else:
+            p.setBrush(QColor(255, 255, 255, 40 if hot else 24))
+            text_pen = QPen(TEXT if hot else TEXT_DIM, 1)
+        p.drawRoundedRect(box, 4, 4)
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(255, 255, 255, 90 if hot else 55), 1))
+        p.drawRoundedRect(box.adjusted(0.5, 0.5, -0.5, -0.5), 4, 4)
+        p.setFont(ui_font(8, bold=True))
+        p.setPen(text_pen)
+        p.drawText(a, Qt.AlignCenter, row.badge)
 
 
 class AeroSlider(QWidget):

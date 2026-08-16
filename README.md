@@ -35,6 +35,9 @@ the important things well, and I'd love for you to try it. Thanks for stopping b
   top sheen. Buttons even *sink* with a little weight when you press them.
 - 🎮 **Vanilla and Fabric, one click each.** Pick any version, or drop on a Fabric loader without
   hunting through files.
+- 🧩 **A mod shop that lives inside the launcher.** Search [Modrinth](https://modrinth.com) right from
+  the Mods and Resource Packs tabs — one click installs, a little switch flips any mod on or off
+  without deleting it, and there's an *Open folder* button for when you'd rather drag jars in yourself.
 - ☕ **You never install Java.** It quietly downloads the exact Java each version needs and keeps it
   tidy in its own folder.
 - 👤 **Sign in once, switch freely.** Add your Microsoft account (or several), and jump between them
