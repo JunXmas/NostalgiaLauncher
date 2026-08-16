@@ -356,9 +356,8 @@ class Controller:
             self.window, "Microsoft Client ID",
             "Application (client) ID:",
             placeholder="dán Application (client) ID từ Azure",
-            hint="Tạo app tại portal.azure.com (Personal Microsoft accounts, "
-                 "bật Allow public client flows), copy Application (client) ID rồi "
-                 "dán vào đây. ID được lưu lại nên lần sau khỏi nhập.",
+            hint="Tạo app tại portal.azure.com (Personal accounts, bật Allow "
+                 "public client flows), dán ID vào đây — sẽ được lưu lại.",
             ok_text="CONTINUE",
         )
         dlg.accepted.connect(self._client_id_entered)
