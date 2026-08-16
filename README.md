@@ -62,10 +62,11 @@ pip install -r requirements.txt      # PySide6 + requests
 python -m nostalgia gui
 ```
 
-Prefer a real installer? Windows gets a `.exe` setup, macOS a `.dmg` — both are built by
-GitHub Actions and land in the Releases page. See [docs/PACKAGING.md](docs/PACKAGING.md) to build
-them yourself. They aren't code-signed yet, so the first launch needs one click past the OS warning;
-that page explains exactly which one.
+Prefer a real installer? Windows gets a `.exe` setup, macOS a `.dmg`, and Linux (Mint/Ubuntu/Debian)
+a `.deb` — all built by GitHub Actions and posted to the Releases page. See
+[docs/PACKAGING.md](docs/PACKAGING.md) to build them yourself. On Windows and macOS the first launch
+needs one click past the OS warning unless the build is code-signed; that page explains exactly which
+one.
 
 Command line works too, if that's your thing:
 
