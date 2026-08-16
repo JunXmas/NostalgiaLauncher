@@ -49,12 +49,12 @@ class HomeDashboard(QWidget):
         self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
         self.play_btn.clicked.connect(self.ctl.start_launch)
         self.new_btn = AeroButton("NEW INSTANCE", self, height=30, tone="neutral")
-        self.new_btn.clicked.connect(lambda: self.ctl.go("installations"))
+        self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
 
     def refresh(self) -> None:
-        self._instances = self.ctl.installer.installed_versions()
+        self._instances = self.ctl.instances.all()
         if not self._news:
             self.ctl.load_news(self._got_news)
         self._relayout()
@@ -88,9 +88,9 @@ class HomeDashboard(QWidget):
 
     def mousePressEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
-        for rect, vid in self._card_rects:
+        for rect, name in self._card_rects:
             if rect.contains(pos):
-                self.ctl.select_version(vid)
+                self.ctl.set_active_instance(name)
                 return
         for rect, url in self._news_rects:
             if rect.contains(pos):
@@ -100,7 +100,7 @@ class HomeDashboard(QWidget):
             if rect.contains(pos):
                 if action == "version":
                     origin = self.mapTo(self.window(), rect.topLeft())
-                    self.ctl.open_version_menu(QRect(origin, rect.size()))
+                    self.ctl.open_instance_menu(QRect(origin, rect.size()))
                 elif action.startswith("nav:"):
                     self.ctl.go(action[4:])
                 return
@@ -231,29 +231,31 @@ class HomeDashboard(QWidget):
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
                    Qt.AlignLeft | Qt.AlignVCenter, "My Instances")
         row_top = area.top() + 34
-        current = self.ctl.settings.selected_version
+        current = self.ctl.instances.active
 
         if not self._instances:
             p.setFont(ui_font(9))
             p.setPen(TEXT_FAINT)
             p.drawText(QRect(area.left() + 2, row_top, area.width() - 4, 40),
                        Qt.AlignLeft | Qt.AlignTop,
-                       "No instances yet. Click NEW INSTANCE to download a version.")
+                       "No instances yet. Click NEW INSTANCE to make one (name + version).")
             return
 
+        ready = {v["id"] for v in self.ctl.installer.installed_versions() if v["complete"]}
         x = area.left()
         per_row = max(1, (area.width() + GAP) // (CARD_W + GAP))
-        for i, v in enumerate(self._instances[:per_row]):
+        for inst in self._instances[:per_row]:
             rect = QRect(x, row_top, CARD_W, CARD_H)
-            self._paint_instance_card(p, rect, v, v["id"] == current)
-            self._card_rects.append((rect, v["id"]))
+            self._paint_instance_card(p, rect, inst, inst.name == current,
+                                      inst.version in ready)
+            self._card_rects.append((rect, inst.name))
             x += CARD_W + GAP
 
-    def _paint_instance_card(self, p, rect, v, selected):
+    def _paint_instance_card(self, p, rect, inst, selected, ready):
         self._card(p, rect, radius=7, strong=True)
         # thumbnail
         thumb = QRect(rect.left() + 8, rect.top() + 8, rect.width() - 16, 78)
-        col = _hash_hue(v["id"])
+        col = _hash_hue(inst.name)
         g = QLinearGradient(thumb.topLeft(), thumb.bottomRight())
         g.setColorAt(0, col.lighter(120))
         g.setColorAt(1, col.darker(130))
@@ -272,16 +274,17 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(rect.left() + 10, rect.top() + 92, rect.width() - 20, 16),
-                   Qt.AlignLeft | Qt.AlignVCenter, v["id"])
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   p.fontMetrics().elidedText(inst.name, Qt.ElideRight, rect.width() - 20))
         p.setFont(ui_font(8))
         p.setPen(TEXT_DIM)
-        loader = v.get("loader") or v["type"]
         p.drawText(QRect(rect.left() + 10, rect.top() + 110, rect.width() - 20, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, f"{loader} · Java {v['java']}")
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   p.fontMetrics().elidedText(inst.version, Qt.ElideRight, rect.width() - 20))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rect.left() + 10, rect.top() + 126, rect.width() - 20, 14),
                    Qt.AlignLeft | Qt.AlignVCenter,
-                   "ready" if v["complete"] else "metadata only")
+                   "ready" if ready else "will download on play")
 
     def _paint_right(self, p, col):
         # --- Account ---

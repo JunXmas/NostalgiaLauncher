@@ -11,7 +11,10 @@ from PySide6.QtCore import QRect, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QFileDialog
 
-from .. import __version__, accounts, content, fabric, identity as identity_mod, updater
+from .. import (
+    __version__, accounts, content, fabric, identity as identity_mod,
+    instances as instances_mod, updater,
+)
 from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id, save_client_id
 from . import pages as page_mod
@@ -38,6 +41,7 @@ class Controller:
         self.store = accounts.AccountStore()
         self.identities = identity_mod.IdentityStore()
         self.installer = Installer(self.settings.game_path)
+        self.instances = instances_mod.InstanceStore()
         window.background_path = self.settings.background_path
         self._pending_bg = True
         self._workers: list = []          # giữ tham chiếu, tránh bị thu gom giữa chừng
@@ -52,6 +56,7 @@ class Controller:
         self.go("home")
         self.window.rebuild_hero()
         self._ensure_version()
+        self._bootstrap_instances()
         self._maybe_check_updates()
 
     # ---------- dựng ----------
@@ -158,7 +163,21 @@ class Controller:
             self.window.current_page.refresh()
 
     def version_display(self) -> str:
-        return self.settings.selected_version or "No version selected"
+        inst = self.active_instance()
+        if inst:
+            return f"{inst.name}  ·  {inst.version}"
+        return self.settings.selected_version or "No instance yet"
+
+    def open_instance_menu(self, anchor: QRect) -> None:
+        items = [MenuItem(kind="header", label="Instance")]
+        for inst in self.instances.all():
+            items.append(MenuItem(label=inst.name, sublabel=inst.version,
+                                  checked=inst.name == self.instances.active,
+                                  data=inst.name))
+        if not self.instances.all():
+            items.append(MenuItem(label="(none — click NEW INSTANCE)", enabled=False))
+        popup(self.window, items, anchor,
+              lambda n: self.set_active_instance(n) if n else None, width=260)
 
     def _java_status(self) -> str:
         """Java hiển thị ở status bar — chỉ đọc dữ liệu cục bộ, không gọi mạng."""
@@ -202,6 +221,89 @@ class Controller:
         self.window.set_java(self._java_status())
         self.pages["installations"].refresh()
         self.pages["home"].refresh()
+
+    # ---------- instance (modpack riêng) ----------
+
+    @property
+    def store_root(self) -> Path:
+        """Kho versions/libraries/assets/runtime dùng chung cho mọi instance."""
+        return self.settings.game_path
+
+    def active_instance(self):
+        return self.instances.active_instance()
+
+    def instance_dir(self, inst) -> Path:
+        return inst.dir(self.store_root)
+
+    def active_instance_dir(self) -> Path:
+        inst = self.active_instance()
+        return self.instance_dir(inst) if inst else self.store_root
+
+    def set_active_instance(self, name: str) -> None:
+        self.instances.set_active(name)
+        inst = self.active_instance()
+        if inst:
+            self.settings.selected_version = inst.version
+            self.settings.save()
+        self.window.set_java(self._java_status())
+        self.pages["home"].refresh()
+        self.pages["installations"].refresh()
+
+    def create_instance(self, name: str, version: str):
+        inst = self.instances.add(name, version)
+        self.set_active_instance(inst.name)
+        self.window.set_status(f"Created instance '{inst.name}' ({version}).")
+        return inst
+
+    def delete_instance(self, name: str) -> None:
+        import shutil
+        inst = self.instances.get(name)
+        if inst:
+            shutil.rmtree(self.instance_dir(inst), ignore_errors=True)
+        self.instances.remove(name)
+        self.set_active_instance(self.instances.active)
+        self.window.set_status(f"Removed instance '{name}'.")
+
+    def ask_delete_instance(self, name: str) -> None:
+        dlg = ConfirmDialog(
+            self.window, "Remove instance",
+            f"Delete instance '{name}' and its mods/saves?\n\n"
+            "Shared versions, libraries and assets are kept.",
+        )
+        dlg.confirmed.connect(lambda: (self.delete_instance(name),
+                                       self.pages["installations"].refresh()))
+        dlg.show()
+
+    def _bootstrap_instances(self) -> None:
+        """Lần đầu chạy bản có instance: dựng instance từ các version đã cài và
+        chuyển mods/resourcepacks dùng chung cũ vào instance đang chọn."""
+        if self.instances.all():
+            return
+        versions = self.installer.installed_versions()
+        if not versions:
+            return                      # chưa có version -> để người dùng tự tạo
+        for v in versions:
+            self.instances.add(v["id"], v["id"])
+        want = self.settings.selected_version
+        target = want if any(v["id"] == want for v in versions) else versions[0]["id"]
+        self.instances.set_active(target)
+        self._migrate_legacy_content(self.active_instance())
+        self.pages["home"].refresh()
+
+    def _migrate_legacy_content(self, inst) -> None:
+        if inst is None:
+            return
+        for kind in ("mods", "resourcepacks"):
+            old = self.store_root / kind
+            new = self.instance_dir(inst) / kind
+            if not old.is_dir() or new.exists():
+                continue
+            files = [p for p in old.iterdir() if p.is_file()]
+            if not files:
+                continue
+            new.mkdir(parents=True, exist_ok=True)
+            for p in files:
+                p.rename(new / p.name)
 
     def pick_background(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -483,24 +585,33 @@ class Controller:
         anchor.translate(SIDEBAR_W, 0)
         self._show_version_menu(anchor, above=True)
 
-    def _show_version_menu(self, anchor: QRect, *, above: bool) -> None:
+    def _show_version_menu(self, anchor: QRect, *, above: bool, on_pick=None) -> None:
         if self._versions:
-            self._render_version_menu(anchor, above)
+            self._render_version_menu(anchor, above, on_pick)
             return
         self.window.set_status("Fetching version list…")
         self._run(self._fetch_versions,
                   lambda vs: (self._versions.extend(vs),
                               self.window.set_status("Ready"),
-                              self._render_version_menu(anchor, above)))
+                              self._render_version_menu(anchor, above, on_pick)))
 
     def _fetch_versions(self) -> list[dict]:
         kind = "all" if self.settings.show_snapshots else "release"
         return [{"id": v} for v in self.installer.list_versions(kind)[:80]]
 
-    def _render_version_menu(self, anchor: QRect, above: bool) -> None:
-        installed = {v["id"] for v in self.installer.installed_versions() if v["complete"]}
+    def _render_version_menu(self, anchor: QRect, above: bool, on_pick=None) -> None:
+        inst_versions = self.installer.installed_versions()
+        installed = {v["id"] for v in inst_versions if v["complete"]}
         current = self.settings.selected_version
+        listed = {v["id"] for v in self._versions}
         items = [MenuItem(kind="header", label="Version")]
+        # Version đã cài không nằm trong danh sách vanilla (vd bản Fabric) đưa lên
+        # đầu, để tạo instance Fabric hay chọn nhanh bản đã tải.
+        for v in inst_versions:
+            if v["id"] not in listed:
+                items.append(MenuItem(
+                    label=v["id"], sublabel=v.get("loader") or "downloaded",
+                    checked=v["id"] == current, data=v["id"]))
         for v in self._versions:
             vid = v["id"]
             items.append(MenuItem(
@@ -509,11 +620,37 @@ class Controller:
                 checked=vid == current,
                 data=vid,
             ))
-        popup(self.window, items, anchor, self._pick_version, width=250, above=above)
+        popup(self.window, items, anchor, on_pick or self._pick_version,
+              width=250, above=above)
 
     def _pick_version(self, version_id) -> None:
         if version_id:
             self.set_version(version_id)
+
+    # ---------- tạo instance (đặt tên + chọn phiên bản) ----------
+
+    def begin_create_instance(self) -> None:
+        dlg = TextPrompt(
+            self.window, "New instance", "Instance name:",
+            placeholder="ví dụ: Fabric Fun",
+            hint="Mỗi instance là một modpack riêng — mods, save, config tách biệt. "
+                 "Chọn xong tên sẽ tới bước chọn phiên bản Minecraft.",
+            ok_text="NEXT",
+        )
+        dlg.accepted.connect(self._instance_name_chosen)
+        dlg.show()
+
+    def _instance_name_chosen(self, name: str) -> None:
+        self._new_instance_name = name.strip() or "Instance"
+        self.window.set_status("Now pick a Minecraft version for the instance…")
+        anchor = QRect(self.window.width() // 2 - 125, 150, 250, 34)
+        self._show_version_menu(anchor, above=False, on_pick=self._create_with_version)
+
+    def _create_with_version(self, version_id) -> None:
+        if not version_id:
+            return
+        self.create_instance(self._new_instance_name, version_id)
+        self.go("home")
 
     # ---------- Fabric ----------
 
@@ -570,7 +707,7 @@ class Controller:
             if self.settings.selected_version == version_id:
                 self.settings.selected_version = ""
                 self.settings.save()
-                self._update_version_label()
+                self.pages["home"].refresh()
         self.pages["installations"].refresh()
 
     def run_doctor(self) -> None:
@@ -613,9 +750,15 @@ class Controller:
         if account is None:
             self.window.set_status("No account — click the name at the top left to add one.")
             return
-        version = self.settings.selected_version
+        # Chạy instance đang chọn (thư mục game riêng); nếu chưa có instance thì
+        # lùi về kho chung với phiên bản đã chọn.
+        inst = self.active_instance()
+        if inst is not None:
+            version, game_dir = inst.version, self.instance_dir(inst)
+        else:
+            version, game_dir = self.settings.selected_version, self.store_root
         if not version:
-            self.window.set_status("No version selected — click the version box next to PLAY.")
+            self.window.set_status("No instance yet — click NEW INSTANCE to make one.")
             return
 
         if account.kind == accounts.MSA:
@@ -623,17 +766,13 @@ class Controller:
             if client_id:
                 account = accounts.refresh_if_online(self.store, account, client_id)
 
-        # Nhiều instance dùng chung một game_dir sẽ tranh nhau khoá file world;
-        # multiplayer/LAN thì không sao, singleplayer thì phải tách thư mục.
         if self.running_count:
-            self.window.set_status(
-                f"Opening instance #{self.running_count + 1} — "
-                "same game folder, so only servers/LAN work, not singleplayer worlds."
-            )
+            self.window.set_status(f"Launching another game (#{self.running_count + 1})…")
 
         worker = LaunchWorker(
-            self.store, account, version, self.settings.game_path,
+            self.store, account, version, game_dir,
             memory_mb=self.settings.memory_mb, java_path=self.settings.java_path,
+            store_root=self.store_root,
         )
         worker.progress.connect(self._on_progress)
         worker.status.connect(self.window.set_status)

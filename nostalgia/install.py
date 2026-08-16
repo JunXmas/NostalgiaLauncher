@@ -75,11 +75,16 @@ def download(url: str, dest: Path, sha1: str | None = None) -> Path:
 
 
 class Installer:
-    def __init__(self, game_dir: Path, on_progress=None):
+    def __init__(self, game_dir: Path, on_progress=None, *, store_root: Path | None = None):
+        # game_dir = thư mục game khi chạy (mods/saves/--gameDir) — riêng từng
+        # instance. store_root = kho versions/libraries/assets dùng chung; mặc
+        # định trùng game_dir để giữ tương thích với chỗ gọi cũ.
         self.game_dir = game_dir
-        self.versions_dir = game_dir / "versions"
-        self.libraries_dir = game_dir / "libraries"
-        self.assets_dir = game_dir / "assets"
+        root = store_root or game_dir
+        self.store_root = root       # nơi đặt runtime/JRE dùng chung
+        self.versions_dir = root / "versions"
+        self.libraries_dir = root / "libraries"
+        self.assets_dir = root / "assets"
         # on_progress(stage: str, done: int, total: int) — GUI nối vào đây;
         # CLI để None và chỉ in ra như cũ.
         self.on_progress = on_progress

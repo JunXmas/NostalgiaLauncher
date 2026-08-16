@@ -171,7 +171,7 @@ def build_command(
     # Rule `is_demo_user` trong version JSON tự sinh ra cờ --demo cho ta.
     features = {"is_demo_user": identity.demo, "has_custom_resolution": False}
 
-    cmd = [java or resolve_java(meta, installer.game_dir)]
+    cmd = [java or resolve_java(meta, installer.store_root)]
 
     if "arguments" in meta:  # 1.13 trở lên
         cmd += _substitute(meta["arguments"]["jvm"], values, features)
@@ -295,7 +295,7 @@ def launch_game_offline(
         say(f"[warning] {warning}")
 
     try:
-        java_bin = java or resolve_java(meta, installer.game_dir)
+        java_bin = java or resolve_java(meta, installer.store_root)
     except RuntimeError as e:
         raise OfflineLaunchError(
             f"{e}\n(Offline mode cannot download the Java runtime for you.)"

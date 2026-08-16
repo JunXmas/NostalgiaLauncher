@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import install
-from .settings import Settings
 
 DISABLED = ".disabled"
 
@@ -22,9 +21,9 @@ KINDS = {
 }
 
 
-def folder(settings: Settings, kind: str) -> Path:
-    """Thư mục dùng chung cho loại nội dung, tạo sẵn nếu chưa có."""
-    path = settings.game_path / kind
+def folder(game_dir: Path, kind: str) -> Path:
+    """Thư mục mods/resourcepacks của một instance (game_dir), tạo sẵn nếu thiếu."""
+    path = game_dir / kind
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -41,11 +40,11 @@ class Item:
     size: int
 
 
-def list_installed(settings: Settings, kind: str) -> list[Item]:
+def list_installed(game_dir: Path, kind: str) -> list[Item]:
     """Liệt kê file đã có, gồm cả bản đang tắt, sắp theo tên."""
     exts = KINDS[kind]
     out: list[Item] = []
-    for p in folder(settings, kind).iterdir():
+    for p in folder(game_dir, kind).iterdir():
         if not p.is_file():
             continue
         display = _display_name(p.name)
@@ -74,14 +73,14 @@ def delete(path: Path) -> None:
     path.unlink(missing_ok=True)
 
 
-def is_installed(settings: Settings, kind: str, filename: str) -> bool:
+def is_installed(game_dir: Path, kind: str, filename: str) -> bool:
     """Đã có file này chưa (kể cả bản đang tắt)?"""
-    base = folder(settings, kind)
+    base = folder(game_dir, kind)
     return (base / filename).exists() or (base / (filename + DISABLED)).exists()
 
 
-def install_file(settings: Settings, kind: str, *, url: str, filename: str,
+def install_file(game_dir: Path, kind: str, *, url: str, filename: str,
                  sha1: str | None = None) -> Path:
     """Tải một file về thư mục tương ứng và trả về đường dẫn."""
-    dest = folder(settings, kind) / filename
+    dest = folder(game_dir, kind) / filename
     return install.download(url, dest, sha1)

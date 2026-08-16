@@ -86,12 +86,13 @@ class LaunchWorker(QThread):
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
-                 offline: bool = False, parent=None):
+                 offline: bool = False, store_root: Path | None = None, parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
         self.version = version
-        self.game_dir = game_dir
+        self.game_dir = game_dir          # thư mục game của instance (mods/saves)
+        self.store_root = store_root or game_dir   # kho versions/libraries/assets/runtime dùng chung
         self.memory_mb = memory_mb
         self.java_path = java_path
         self.offline = offline
@@ -111,9 +112,9 @@ class LaunchWorker(QThread):
         # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
         if not self.java_path:
             from .. import jre
-            if not jre.is_installed(self.game_dir, jre.component_of(meta)):
+            if not jre.is_installed(self.store_root, jre.component_of(meta)):
                 self.status.emit("Downloading Java runtime…")
-                jre.ensure(self.game_dir, meta, on_progress=self.progress.emit)
+                jre.ensure(self.store_root, meta, on_progress=self.progress.emit)
 
         if identity.user_type == OFFLINE:
             for warning in ensure_offline_libraries(meta, installer):
@@ -127,7 +128,8 @@ class LaunchWorker(QThread):
     def run(self) -> None:  # noqa: D102
         try:
             identity = self.store.resolve_identity(self.account)
-            installer = Installer(self.game_dir, on_progress=self.progress.emit)
+            installer = Installer(self.game_dir, on_progress=self.progress.emit,
+                                  store_root=self.store_root)
 
             if self.offline:
                 code = self._launch_offline(installer, identity)

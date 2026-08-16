@@ -13,6 +13,7 @@ from .. import modrinth
 from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
+from .menus import MenuItem, popup
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton, TabBar
 
@@ -115,21 +116,24 @@ class StubPage(Page):
 # ---------- bản cài đặt ----------
 
 class InstallationsPage(Page):
-    heading = "Installations"
+    heading = "Instances"
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="No versions downloaded yet. Click ADD VERSION.")
+        self.list = ListView(self, empty_text="No instances yet. Click NEW INSTANCE (name + version).")
         self.list.activated.connect(self._select)
-        self.list.action_clicked.connect(self.ctl.ask_delete_version)
-        self.add_btn = AeroButton("ADD VERSION", self, height=32, tone="neutral")
-        self.add_btn.clicked.connect(self.ctl.open_version_menu_for_install)
+        self.list.action_clicked.connect(self._delete)
+        self.add_btn = AeroButton("NEW INSTANCE", self, height=32, tone="neutral")
+        self.add_btn.clicked.connect(self.ctl.begin_create_instance)
         self.fabric_btn = AeroButton("INSTALL FABRIC", self, height=32, tone="neutral")
         self.fabric_btn.clicked.connect(self.ctl.open_fabric_menu)
 
-    def _select(self, version_id) -> None:
-        self.ctl.set_version(version_id)
+    def _select(self, name) -> None:
+        self.ctl.set_active_instance(name)
         self.refresh()
+
+    def _delete(self, name) -> None:
+        self.ctl.ask_delete_instance(name)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         self.list.setGeometry(16, 58, self.width() - 32, self.height() - 116)
@@ -137,18 +141,17 @@ class InstallationsPage(Page):
         self.fabric_btn.setGeometry(self.width() - 356, self.height() - 46, 150, 32)
 
     def refresh(self) -> None:
-        current = self.ctl.settings.selected_version
+        current = self.ctl.instances.active
+        ready = {v["id"] for v in self.ctl.installer.installed_versions() if v["complete"]}
         rows = []
-        for v in self.ctl.installer.installed_versions():
-            state = "ready" if v["complete"] else "metadata only"
-            origin = f" · base {v['parent']}" if v.get("parent") else ""
+        for inst in self.ctl.instances.all():
+            state = "ready" if inst.version in ready else "will download on play"
             rows.append(Row(
-                title=v["id"],
-                subtitle=f"{v['type']}{origin} · Java {v['java']} · {state}",
-                right=human_size(v["size"]),
-                checked=v["id"] == current,
+                title=inst.name,
+                subtitle=f"{inst.version} · {state}",
+                checked=inst.name == current,
                 action="delete",
-                data=v["id"],
+                data=inst.name,
             ))
         self.list.set_rows(rows)
 
@@ -176,6 +179,11 @@ class ContentLibraryPage(Page):
         self._index = "downloads"         # sort đang chọn; mặc định Popular cho discover
         self._loader = "fabric"           # loader đang chọn (mods)
         self._discovered = False          # đã tự nạp mod hot lần đầu chưa
+        self._instance = ctl.active_instance()   # cài/xem mod cho instance nào
+
+        # Nút chọn instance (góc phải): quyết định cài mod vào modpack nào.
+        self.inst_btn = AeroButton("Instance ▾", self, height=28, tone="neutral")
+        self.inst_btn.clicked.connect(self._open_instance_menu)
 
         self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
         self.tabs.changed.connect(self._show_tab)
@@ -186,7 +194,7 @@ class ContentLibraryPage(Page):
         self.installed.action_clicked.connect(self._ask_delete)
         self.open_btn = AeroButton("OPEN FOLDER", self, height=32, tone="neutral")
         self.open_btn.clicked.connect(
-            lambda: self.ctl.open_path(mods_mgr.folder(self.ctl.settings, self.kind)))
+            lambda: self.ctl.open_path(mods_mgr.folder(self._game_dir(), self.kind)))
         self.reload_btn = AeroButton("REFRESH", self, height=32, tone="neutral")
         self.reload_btn.clicked.connect(self.refresh)
 
@@ -221,6 +229,40 @@ class ContentLibraryPage(Page):
     def _search_hint(self) -> str:
         return "Search mods on Modrinth…" if self.is_mod else "Search resource packs on Modrinth…"
 
+    # ---- instance đang thao tác ----
+
+    def _game_dir(self):
+        inst = self._instance or self.ctl.active_instance()
+        return self.ctl.instance_dir(inst) if inst else self.ctl.store_root
+
+    def _sync_instance(self) -> None:
+        # Instance có thể bị xoá/đổi ở nơi khác; đồng bộ lại và cập nhật nhãn nút.
+        if not (self._instance and self.ctl.instances.get(self._instance.name)):
+            self._instance = self.ctl.active_instance()
+        self.inst_btn.setText((self._instance.name if self._instance else "No instance") + " ▾")
+
+    def _open_instance_menu(self) -> None:
+        items = [MenuItem(kind="header", label="Install into")]
+        for inst in self.ctl.instances.all():
+            items.append(MenuItem(
+                label=inst.name, sublabel=inst.version,
+                checked=bool(self._instance) and inst.name == self._instance.name,
+                data=inst.name))
+        if not self.ctl.instances.all():
+            items.append(MenuItem(label="(no instances — create one first)", enabled=False))
+        origin = self.inst_btn.mapTo(self.window(), self.inst_btn.rect().topLeft())
+        popup(self.window(), items, QRect(origin, self.inst_btn.size()),
+              self._pick_instance, width=224)
+
+    def _pick_instance(self, name) -> None:
+        inst = self.ctl.instances.get(name) if name else None
+        if inst:
+            self._instance = inst
+            self._done.clear()          # trạng thái "ADDED" tính theo từng instance
+            self._sync_instance()
+            self.refresh()
+            self._render_results()
+
     def _show_tab(self, i: int) -> None:
         self.tabs.current = i
         self.tabs.update()
@@ -248,7 +290,9 @@ class ContentLibraryPage(Page):
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
-        self.tabs.setGeometry(24, 58, w - 48, 30)
+        # Nút chọn instance ở hàng tab (phải); thu hẹp tabs để không chồng lên.
+        self.inst_btn.setGeometry(w - 232, 56, 210, 30)
+        self.tabs.setGeometry(24, 58, w - 260, 30)
         # Installed
         self.installed.setGeometry(16, 98, w - 32, h - 156)
         self.reload_btn.setGeometry(w - 176, h - 46, 160, 32)
@@ -263,8 +307,9 @@ class ContentLibraryPage(Page):
     # ---- Installed ----
 
     def refresh(self) -> None:
+        self._sync_instance()
         rows = []
-        for it in mods_mgr.list_installed(self.ctl.settings, self.kind):
+        for it in mods_mgr.list_installed(self._game_dir(), self.kind):
             note = human_size(it.size) + ("" if it.enabled else " · disabled")
             rows.append(Row(
                 title=it.name,
@@ -371,12 +416,13 @@ class ContentLibraryPage(Page):
         self._render_results()
         self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
         loaders, gvs = self._target()
+        game_dir = self._game_dir()          # cố định instance đích trước khi chạy nền
 
         def work():
             f = modrinth.best_file(slug, loaders=loaders, game_versions=gvs)
             if not f:
                 raise RuntimeError("no compatible version for your Minecraft/loader")
-            mods_mgr.install_file(self.ctl.settings, self.kind,
+            mods_mgr.install_file(game_dir, self.kind,
                                   url=f["url"], filename=f["filename"], sha1=f["sha1"])
             return hit.get("title", slug)
 
