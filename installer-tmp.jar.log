@@ -1,0 +1,29 @@
+JVM info: Oracle Corporation - 1.8.0_202 - 25.202-b08
+java.net.preferIPv4Stack=true
+Current Time: 16/08/2026 23:21:57
+Host: files.minecraftforge.net [172.67.161.211, 104.21.58.163]
+Host: maven.minecraftforge.net [104.21.58.163, 172.67.161.211]
+Host: libraries.minecraft.net [13.107.253.39, 13.107.226.39]
+Host: launchermeta.mojang.com [13.107.226.39, 13.107.253.39]
+Host: piston-meta.mojang.com [13.107.226.39, 13.107.253.39]
+Host: sessionserver.mojang.com [13.107.226.39, 13.107.253.39]
+Host: authserver.mojang.com [Unknown]
+Target Directory: /tmp/forgestore_v3xljkgt
+Extracting json
+Considering minecraft client jar
+Downloading libraries
+Found 0 additional library directories
+Considering library net.minecraftforge:forge:1.12.2-14.23.5.2859
+  Extracting library from /maven/net/minecraftforge/forge/1.12.2-14.23.5.2859/forge-1.12.2-14.23.5.2859.jar
+    Extraction completed: Checksum validated.
+Considering library org.ow2.asm:asm-debug-all:5.2
+  Downloading library from https://maven.minecraftforge.net/org/ow2/asm/asm-debug-all/5.2/asm-debug-all-5.2.jar
+    Download completed: Checksum validated.
+Considering library net.minecraft:launchwrapper:1.12
+  Downloading library from https://libraries.minecraft.net/net/minecraft/launchwrapper/1.12/launchwrapper-1.12.jar
+    Download completed: Checksum validated.
+Considering library org.jline:jline:3.5.1
+  Downloading library from https://maven.minecraftforge.net/org/jline/jline/3.5.1/jline-3.5.1.jar
+    Download completed: Checksum validated.
+Considering library com.typesafe.akka:akka-actor_2.11:2.3.3
+  Downloading library from https://maven.minecraftforge.net/com/typesafe/akka/akka-actor_2.11/2.3.3/akka-actor_2.11-2.3.3.jar
