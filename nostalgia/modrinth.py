@@ -31,17 +31,29 @@ def _facets(project_type: str, loaders: list[str] | None,
 def search(query: str, project_type: str = "mod", *,
            loaders: list[str] | None = None,
            game_versions: list[str] | None = None,
+           index: str = "relevance",
            limit: int = 30) -> list[dict]:
-    """Trả về danh sách 'hit' đã gọn: id, slug, title, description, author…"""
+    """Trả về danh sách 'hit' đã gọn: id, slug, title, description, author, icon_url…
+
+    index: relevance | downloads (phổ biến) | follows | newest | updated.
+    query rỗng + index=downloads = 'discover' các mod hot nhất.
+    """
     params = {
         "query": query,
         "facets": _facets(project_type, loaders, game_versions),
         "limit": str(limit),
-        "index": "relevance",
+        "index": index,
     }
     r = requests.get(f"{BASE}/search", params=params, headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     return r.json().get("hits", [])
+
+
+def fetch_icon(url: str) -> bytes:
+    """Tải dữ liệu ảnh icon của một project (dùng cho ảnh preview)."""
+    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.content
 
 
 def versions(id_or_slug: str, *,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from PySide6.QtCore import QPointF, QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPen
+from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 from .theme import (
@@ -23,6 +23,7 @@ class Row:
     action: str = ""          # "" | "delete"
     badge: str = ""           # nhãn pill bấm được bên phải (ON/OFF, INSTALL…)
     badge_on: bool = False    # True = pill xanh (đang bật / kêu gọi cài)
+    icon: object = None       # QPixmap ảnh preview bên trái (tùy chọn)
     data: object = None
 
 
@@ -145,7 +146,23 @@ class ListView(QWidget):
             p.setBrush(QColor(255, 255, 255, 16))
             p.drawRoundedRect(body, 3, 3)
 
-        left = r.left() + 16
+        # Ảnh preview bên trái (bo góc) nếu có; đẩy phần chữ sang phải.
+        icon = row.icon
+        if icon is not None and not icon.isNull():
+            d = 34
+            ir = QRectF(r.left() + 12, r.center().y() - d / 2, d, d)
+            path = QPainterPath()
+            path.addRoundedRect(ir, 6, 6)
+            p.save()
+            p.setClipPath(path)
+            p.drawPixmap(ir.toRect(), icon)
+            p.restore()
+            p.setPen(QPen(QColor(255, 255, 255, 45), 1))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(ir, 6, 6)
+            left = r.left() + 12 + d + 12
+        else:
+            left = r.left() + 16
         # Chừa chỗ bên phải chỉ khi hàng thật sự có cột phải hoặc nút hành động,
         # nếu không tiêu đề bị cắt oan trong danh sách hẹp.
         reserved = 0
@@ -155,7 +172,7 @@ class ListView(QWidget):
             reserved += self.BADGE_W + 10
         if row.action:
             reserved += 46
-        text_w = max(60, r.width() - reserved - 26)
+        text_w = max(60, r.right() - left - reserved - 10)
 
         p.setFont(ui_font(10, bold=row.checked))
         p.setPen(TEXT)

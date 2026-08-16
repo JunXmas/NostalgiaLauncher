@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from PySide6.QtCore import QRect, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import mods as mods_mgr
@@ -162,11 +162,20 @@ class ContentLibraryPage(Page):
     is_mod = True
     project_type = "mod"
 
+    # nhãn tab sort -> tham số index của Modrinth
+    SORTS = [("Relevance", "relevance"), ("Popular", "downloads"), ("Newest", "newest")]
+    LOADERS = ["fabric", "forge", "neoforge", "quilt"]
+
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
         self._hits: list[dict] = []
         self._done: set[str] = set()      # slug đã cài trong phiên này
         self._busy: set[str] = set()      # slug đang tải
+        self._icons: dict[str, object] = {}   # url -> QPixmap đã tải
+        self._icon_wanted: set[str] = set()
+        self._index = "downloads"         # sort đang chọn; mặc định Popular cho discover
+        self._loader = "fabric"           # loader đang chọn (mods)
+        self._discovered = False          # đã tự nạp mod hot lần đầu chưa
 
         self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
         self.tabs.changed.connect(self._show_tab)
@@ -186,10 +195,18 @@ class ContentLibraryPage(Page):
         self.search.setPlaceholderText(self._search_hint)
         self.search.setStyleSheet(INPUT_QSS)
         self.search.setFont(ui_font(10))
-        self.search.returnPressed.connect(self._do_search)
+        self.search.returnPressed.connect(self._load)
         self.search_btn = AeroButton("SEARCH", self, height=32)
-        self.search_btn.clicked.connect(self._do_search)
-        self.results = ListView(self, empty_text="Type a name above, then SEARCH to browse Modrinth.")
+        self.search_btn.clicked.connect(self._load)
+
+        # Thanh discover: sort + loader
+        self.sort_tabs = TabBar([s[0] for s in self.SORTS], self)
+        self.sort_tabs.current = 1        # Popular sáng sẵn, khớp discover
+        self.sort_tabs.changed.connect(self._sort_changed)
+        self.loader_tabs = TabBar([lo.capitalize() for lo in self.LOADERS], self)
+        self.loader_tabs.changed.connect(self._loader_changed)
+
+        self.results = ListView(self, empty_text="Loading popular picks from Modrinth…")
         self.results.activated.connect(self._install)
         self.results.badge_clicked.connect(self._install)
 
@@ -210,12 +227,24 @@ class ContentLibraryPage(Page):
         browse = i == 1
         for w in (self.installed, self.open_btn, self.reload_btn):
             w.setVisible(not browse)
-        for w in (self.search, self.search_btn, self.results):
+        for w in (self.search, self.search_btn, self.results, self.sort_tabs):
             w.setVisible(browse)
+        self.loader_tabs.setVisible(browse and self.is_mod)   # resource pack không có loader
         if browse:
             self.search.setFocus()
+            if not self._discovered:
+                self._discovered = True
+                self._load()               # tự khám phá mod hot lần đầu
         else:
             self.refresh()
+
+    def _sort_changed(self, i: int) -> None:
+        self._index = self.SORTS[i][1]
+        self._load()
+
+    def _loader_changed(self, i: int) -> None:
+        self._loader = self.LOADERS[i]
+        self._load()
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
@@ -227,7 +256,9 @@ class ContentLibraryPage(Page):
         # Browse
         self.search.setGeometry(16, 98, w - 140, 32)
         self.search_btn.setGeometry(w - 116, 98, 100, 32)
-        self.results.setGeometry(16, 140, w - 32, h - 156)
+        self.sort_tabs.setGeometry(16, 140, 210, 28)
+        self.loader_tabs.setGeometry(238, 140, w - 254, 28)
+        self.results.setGeometry(16, 176, w - 32, h - 192)
 
     # ---- Installed ----
 
@@ -266,31 +297,31 @@ class ContentLibraryPage(Page):
         game_versions = None
         if chosen:
             game_versions = [chosen.get("parent") or chosen["id"]]
-        loaders = ["fabric"] if self.is_mod else None
+        loaders = [self._loader] if self.is_mod else None
         return loaders, game_versions
 
-    def _do_search(self) -> None:
+    def _load(self) -> None:
+        """Nạp kết quả: có chữ thì tìm, rỗng thì discover mod hot theo sort/loader."""
         q = self.search.text().strip()
-        if not q:
-            return
-        self.results.empty_text = "Searching Modrinth…"
+        self.results.empty_text = "Loading from Modrinth…"
         self.results.set_rows([])
         loaders, gvs = self._target()
         self.ctl._run(
             lambda: modrinth.search(q, self.project_type, loaders=loaders,
-                                    game_versions=gvs, limit=30),
+                                    game_versions=gvs, index=self._index, limit=30),
             self._show_results,
             self._search_failed,
         )
 
     def _search_failed(self, msg: str) -> None:
-        self.results.empty_text = f"Search failed: {msg}"
+        self.results.empty_text = f"Couldn't reach Modrinth: {msg}"
         self.results.set_rows([])
 
     def _show_results(self, hits: list) -> None:
         self._hits = hits
-        self.results.empty_text = "No matches on Modrinth for that search."
+        self.results.empty_text = "Nothing matched on Modrinth."
         self._render_results()
+        self._load_icons()
 
     def _render_results(self) -> None:
         rows = []
@@ -307,9 +338,30 @@ class ContentLibraryPage(Page):
                 subtitle=f"{h.get('author', '?')} · {human_count(h.get('downloads', 0))} downloads",
                 badge=badge,
                 badge_on=on,
+                icon=self._icons.get(h.get("icon_url") or ""),
                 data=h,
             ))
         self.results.set_rows(rows)
+
+    def _load_icons(self) -> None:
+        """Tải ảnh preview cho từng kết quả (nền, có cache theo URL)."""
+        for h in self._hits:
+            url = h.get("icon_url")
+            if not url or url in self._icons or url in self._icon_wanted:
+                continue
+            self._icon_wanted.add(url)
+            self.ctl._run(
+                lambda u=url: modrinth.fetch_icon(u),
+                lambda data, u=url: self._icon_ready(u, data),
+                lambda _m, u=url: self._icon_wanted.discard(u),
+            )
+
+    def _icon_ready(self, url: str, data: bytes) -> None:
+        self._icon_wanted.discard(url)
+        pm = QPixmap()
+        if pm.loadFromData(data):
+            self._icons[url] = pm
+            self._render_results()
 
     def _install(self, hit) -> None:
         slug = hit.get("slug") or hit.get("project_id")
