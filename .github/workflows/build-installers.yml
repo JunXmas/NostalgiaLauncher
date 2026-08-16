@@ -50,13 +50,6 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python packaging/make_icon.py
 
-      - name: Inject client id
-        # Nhúng client ID vào riêng bản đóng gói; kho mã nguồn vẫn sạch.
-        # Đặt secret MC_CLIENT_ID trong Settings > Secrets của repo.
-        env:
-          MC_CLIENT_ID: ${{ secrets.MC_CLIENT_ID }}
-        run: python packaging/gen_build_config.py
-
       - name: Build app bundle
         run: pyinstaller packaging/nostalgia.spec --noconfirm
 

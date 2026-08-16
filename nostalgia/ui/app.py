@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog
 
 from .. import accounts, content, fabric, identity as identity_mod
 from ..install import Installer
-from ..settings import Settings, client_id as resolve_client_id
+from ..settings import Settings, client_id as resolve_client_id, save_client_id
 from . import pages as page_mod
 from .dashboard import HomeDashboard
 from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
@@ -346,14 +346,34 @@ class Controller:
 
     def begin_login(self) -> None:
         client_id = resolve_client_id("microsoft", "MC_CLIENT_ID")
+        if not client_id:
+            self._prompt_client_id()
+            return
+        self._start_login(client_id)
+
+    def _prompt_client_id(self) -> None:
+        dlg = TextPrompt(
+            self.window, "Microsoft Client ID",
+            "Application (client) ID:",
+            placeholder="dán Application (client) ID từ Azure",
+            hint="Tạo app tại portal.azure.com (Personal Microsoft accounts, "
+                 "bật Allow public client flows), copy Application (client) ID rồi "
+                 "dán vào đây. ID được lưu lại nên lần sau khỏi nhập.",
+            ok_text="CONTINUE",
+        )
+        dlg.accepted.connect(self._client_id_entered)
+        dlg.show()
+
+    def _client_id_entered(self, value: str) -> None:
+        client_id = value.strip()
+        if not client_id:
+            return
+        save_client_id("microsoft", client_id)
+        self._start_login(client_id)
+
+    def _start_login(self, client_id: str) -> None:
         dlg = LoginDialog(self.window)
         dlg.show()
-        if not client_id:
-            dlg.show_result(False, "MC_CLIENT_ID is not set.\n\nRegister an Azure "
-                                   "application (Personal Microsoft accounts, bật "
-                                   "Allow public client flows) rồi export MC_CLIENT_ID.")
-            return
-
         worker = LoginWorker(client_id)
         worker.code_ready.connect(lambda url, code: (dlg.show_code(url, code),
                                                      QDesktopServices.openUrl(QUrl(url))))

@@ -3,9 +3,6 @@ __pycache__/
 *.pyc
 vendor/
 
-# Nhúng client ID lúc đóng gói — chỉ sinh khi build exe/dmg, không đưa vào kho.
-nostalgia/_build_config.py
-
 # Kết quả đóng gói — sinh lại được bằng packaging/, không đưa vào kho.
 build/
 dist/

@@ -12,32 +12,18 @@ from .paths import CONFIG_DIR, DEFAULT_GAME_DIR, LEGACY_GAME_DIR
 CONFIG_PATH = CONFIG_DIR / "settings.json"
 CLIENTS_PATH = CONFIG_DIR / "clients.json"
 
-DEFAULT_CLIENT_IDS = {
-    "microsoft": "",
-}
-
-# Bản đóng gói (exe/dmg) sinh nostalgia/_build_config.py lúc build để nhúng sẵn
-# client ID; bản mã nguồn không có file này nên các mặc định giữ nguyên rỗng.
-try:
-    from ._build_config import CLIENT_IDS as _BUILD_CLIENT_IDS
-except ImportError:
-    _BUILD_CLIENT_IDS = {}
-DEFAULT_CLIENT_IDS.update({k: v for k, v in _BUILD_CLIENT_IDS.items() if v})
-
 
 def client_id(name: str, env_var: str) -> str:
-    """Lấy OAuth client ID: biến môi trường, rồi file cấu hình, rồi mặc định."""
+    """Lấy OAuth client ID: ưu tiên biến môi trường, rồi tới file cấu hình cục bộ."""
     value = os.environ.get(env_var, "").strip()
     if value:
         return value
     if CLIENTS_PATH.exists():
         try:
-            saved = json.loads(CLIENTS_PATH.read_text()).get(name, "").strip()
+            return json.loads(CLIENTS_PATH.read_text()).get(name, "").strip()
         except (json.JSONDecodeError, OSError):
-            saved = ""
-        if saved:
-            return saved
-    return DEFAULT_CLIENT_IDS.get(name, "")
+            return ""
+    return ""
 
 
 def save_client_id(name: str, value: str) -> None:
