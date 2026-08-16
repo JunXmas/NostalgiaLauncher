@@ -2,6 +2,15 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.3.0
+- **Cleaner, Modrinth-style layout.** Clicking an instance now opens its own
+  page with a header (Play/Stop, Edit, play time) and tabs for **Mods,
+  Resource Packs, Shaders and Logs** — everything for that instance in one
+  place. The sidebar loses the global content tabs, all still in Aero glass.
+- **Modpack installs show a progress bar** and download files in parallel, so
+  a big pack installs fast instead of looking stuck.
+- Trimmed redundant buttons and the duplicated home shortcuts.
+
 ## 0.2.9
 - **One-click mod updates.** The Installed tab flags mods with a newer Modrinth
   build (matching your instance) and adds an *Update all* button.
