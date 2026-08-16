@@ -392,6 +392,39 @@ class Controller:
         self._workers.append(w)
         w.start()
 
+    def install_optifine(self, inst) -> None:
+        """Tải OptiFine từ optifine.net (client-side, giữ quảng cáo, không mirror)
+        vào thư mục mods của instance legacy."""
+        from .. import mods as mods_mgr, optifine
+        mc = optifine.mc_from_version_id(inst.version)
+        if not optifine.is_legacy(mc):
+            self.window.set_status(
+                "OptiFine is for legacy (≤1.12.2). On this version use Sodium/Iris instead.")
+            return
+        mods_dir = mods_mgr.folder(self.instance_dir(inst), "mods")
+
+        def work(on_progress, on_status):
+            on_status(f"Finding OptiFine for {mc}…")
+            v = optifine.latest_for(mc)
+            if not v:
+                raise RuntimeError(f"No OptiFine build listed for Minecraft {mc}.")
+            optifine.download(v["file"], mods_dir / v["file"],
+                              on_status=on_status, on_progress=on_progress)
+            return v["file"]
+
+        w = ProgressWorker(work)
+        w.progress.connect(self._set_progress)
+        w.status.connect(self.window.set_status)
+        w.done.connect(lambda f: (self.window.set_progress(None),
+                                  self.window.set_status(
+                                      f"Installed {f} (from optifine.net)."),
+                                  self.pages["instance"].refresh()))
+        w.failed.connect(lambda m: (self.window.set_progress(None),
+                                    self.window.set_status(f"OptiFine failed: {m}")))
+        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
+        self._workers.append(w)
+        w.start()
+
     def _set_progress(self, done: int, total: int) -> None:
         self.window.set_progress(done / total if total else None)
 

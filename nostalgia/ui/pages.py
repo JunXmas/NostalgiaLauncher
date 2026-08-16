@@ -653,6 +653,12 @@ class InstancePage(Page):
         self.edit_btn.clicked.connect(
             lambda: self.ctl.edit_instance(self.instance.name) if self.instance else None)
 
+        # Chỉ hiện với instance legacy (≤1.12.2) — bản mới dùng Sodium/Iris.
+        self.optifine_btn = AeroButton("＋ OptiFine", self, height=28, tone="neutral")
+        self.optifine_btn.clicked.connect(
+            lambda: self.ctl.install_optifine(self.instance) if self.instance else None)
+        self.optifine_btn.hide()
+
         self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
         self.tabs.changed.connect(self._tab)
 
@@ -666,6 +672,9 @@ class InstancePage(Page):
     def open(self, instance) -> None:
         self.instance = instance
         self.content.set_instance(instance)
+        from .. import optifine
+        self.optifine_btn.setVisible(
+            optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
         self.tabs.current = 0
         self._tab(0)
 
@@ -695,6 +704,7 @@ class InstancePage(Page):
         self.play_btn.setGeometry(w - 178, top - 4, 150, 40)
         self.edit_btn.setGeometry(w - 288, top, 96, 32)
         self.tabs.setGeometry(24, 102, w - 48, 30)
+        self.optifine_btn.setGeometry(w - 148, 101, 128, 28)  # cạnh phải hàng tab
         self.content.setGeometry(0, 138, w, h - 138)
         self.logs.setGeometry(24, 142, w - 48, h - 166)
 
