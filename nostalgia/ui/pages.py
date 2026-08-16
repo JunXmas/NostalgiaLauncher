@@ -552,6 +552,8 @@ class SettingsPage(Page):
         self.snapshots.toggled.connect(self._set_snapshots)
         self.close_on_launch = AeroToggle(s.close_on_launch, self)
         self.close_on_launch.toggled.connect(self._set_close)
+        self.check_updates = AeroToggle(s.check_updates, self)
+        self.check_updates.toggled.connect(self._set_check_updates)
 
         self.open_dir = AeroButton("OPEN GAME FOLDER", self, height=32, tone="neutral")
         self.open_dir.clicked.connect(lambda: self.ctl.open_path(self.ctl.settings.game_path))
@@ -630,6 +632,10 @@ class SettingsPage(Page):
         self.ctl.settings.close_on_launch = on
         self.ctl.settings.save()
 
+    def _set_check_updates(self, on: bool) -> None:
+        self.ctl.settings.check_updates = on
+        self.ctl.settings.save()
+
     def resizeEvent(self, event) -> None:  # noqa: N802
         w = min(560, self.width() - 52)
         self.mem.setGeometry(26, 60, w, 26)
@@ -640,6 +646,7 @@ class SettingsPage(Page):
         self.client_id.setGeometry(26, 304, w, 32)
         self.snapshots.setGeometry(26, 368, 44, 22)
         self.close_on_launch.setGeometry(26, 408, 44, 22)
+        self.check_updates.setGeometry(26, 448, 44, 22)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -670,6 +677,8 @@ class SettingsPage(Page):
                    "Show snapshots")
         p.drawText(QRect(84, 406, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Close launcher when the game starts")
+        p.drawText(QRect(84, 446, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+                   "Check for updates on startup")
 
         warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
         if warn:

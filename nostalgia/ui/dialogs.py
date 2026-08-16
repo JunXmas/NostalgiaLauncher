@@ -141,10 +141,11 @@ class TextPrompt(GlassDialog):
 class ConfirmDialog(GlassDialog):
     confirmed = Signal()
 
-    def __init__(self, parent, title: str, message: str, *, ok_text: str = "DELETE"):
+    def __init__(self, parent, title: str, message: str, *, ok_text: str = "DELETE",
+                 tone: str = "danger"):
         super().__init__(parent, title, width=440, height=206)
         self.message = message
-        self.ok = AeroButton(ok_text, self, height=34, tone="danger")
+        self.ok = AeroButton(ok_text, self, height=34, tone=tone)
         self.ok.clicked.connect(self._go)
         self.cancel = AeroButton("CANCEL", self, height=34, tone="neutral")
         self.cancel.clicked.connect(self.dismiss)

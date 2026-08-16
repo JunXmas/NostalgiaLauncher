@@ -11,7 +11,7 @@ from PySide6.QtCore import QRect, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QFileDialog
 
-from .. import accounts, content, fabric, identity as identity_mod
+from .. import __version__, accounts, content, fabric, identity as identity_mod, updater
 from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id, save_client_id
 from . import pages as page_mod
@@ -52,6 +52,7 @@ class Controller:
         self.go("home")
         self.window.rebuild_hero()
         self._ensure_version()
+        self._maybe_check_updates()
 
     # ---------- dựng ----------
 
@@ -234,6 +235,49 @@ class Controller:
                                 if worker in self._workers else None)
         self._workers.append(worker)
         worker.start()
+
+    # ---------- tự cập nhật ----------
+
+    def _maybe_check_updates(self) -> None:
+        """Tìm bản mới trên GitHub (im lặng nếu lỗi mạng hoặc đã tắt trong Settings)."""
+        if not self.settings.check_updates:
+            return
+        self._update_info = None
+        self._run(updater.check, self._on_update_found, lambda _m: None)
+
+    def _on_update_found(self, info) -> None:
+        if not info:
+            return
+        self._update_info = info
+        notes = info.get("notes", "")
+        snippet = (notes[:200] + "…") if len(notes) > 200 else notes
+        msg = f"Version {info['version']} is out — you have {__version__}."
+        if snippet:
+            msg += "\n\n" + snippet
+        dlg = ConfirmDialog(self.window, "Update available", msg,
+                            ok_text="GET UPDATE", tone="green")
+        dlg.confirmed.connect(self._get_update)
+        dlg.show()
+
+    def _get_update(self) -> None:
+        info = self._update_info or {}
+        asset = info.get("asset")
+        page = info.get("page_url", "")
+        if not asset:
+            # Không có installer khớp hệ điều hành (vd Linux) -> mở trang release.
+            self.open_url(page)
+            return
+        self.window.set_status(f"Downloading {asset['name']}…")
+        self._run(
+            lambda: updater.download_asset(asset),
+            self._update_ready,
+            lambda m: (self.open_url(page),
+                       self.window.set_status(f"Download failed ({m}); opened the release page.")),
+        )
+
+    def _update_ready(self, path) -> None:
+        self.window.set_status(f"Saved {path.name} to your Downloads — opening the installer…")
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
     def load_news(self, cb) -> None:
         self._run(content.fetch_news, cb, lambda _m: cb(None))
