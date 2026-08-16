@@ -23,6 +23,8 @@ jobs:
         include:
           - os: windows-latest
             label: Windows (x64)
+          - os: ubuntu-latest
+            label: Linux (x64)
           - os: macos-14
             label: macOS (Apple Silicon)
           # macOS Intel (macos-13) tạm bỏ: runner Intel của GitHub xếp hàng quá
@@ -79,6 +81,11 @@ jobs:
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: pwsh packaging\windows\sign.ps1 -Paths "dist\installer\*.exe"
         shell: pwsh
+
+      # ---------- Linux ----------
+      - name: Build Linux .deb package
+        if: runner.os == 'Linux'
+        run: bash packaging/linux/build-deb.sh
 
       # ---------- macOS ----------
       - name: Build macOS disk image
