@@ -1032,11 +1032,15 @@ class Controller:
                       lambda m: self.window.set_status(f"Couldn't list {loader} versions: {m}"))
 
     FO_SLUG = "fabulously-optimized"
+    # Phiên bản legacy dùng modpack khác (FO chỉ Fabric 1.16+).
+    LEGACY_OPT = {"1.12.2": "max-fps-optimized"}
 
     def _fo_info(self):
-        """(danh sách phiên bản FO hỗ trợ, icon_url) — cho luồng 'Optimized'."""
-        hits = modrinth_mod.search("Fabulously Optimized", "modpack", limit=1)
-        icon = hits[0].get("icon_url", "") if hits else ""
+        """(danh sách phiên bản tối ưu, {slug: icon_url}) cho luồng 'Optimized'."""
+        icons = {}
+        fo = modrinth_mod.search("Fabulously Optimized", "modpack", limit=1)
+        if fo:
+            icons[self.FO_SLUG] = fo[0].get("icon_url", "")
         seen, gvs = set(), []
         for v in modrinth_mod.versions(self.FO_SLUG):
             for gv in v.get("game_versions", []):
@@ -1044,13 +1048,21 @@ class Controller:
                     seen.add(gv)
                     gvs.append(gv)
         gvs.sort(key=lambda s: [int(x) for x in s.split(".") if x.isdigit()], reverse=True)
-        return gvs, icon
+        # thêm các bản legacy (vd 1.12.2) từ modpack riêng, kèm icon của chúng
+        for mc, slug in self.LEGACY_OPT.items():
+            hits = modrinth_mod.search(slug, "modpack", limit=3)
+            h = next((x for x in hits if x.get("slug") == slug), None)
+            if h:
+                icons[slug] = h.get("icon_url", "")
+            if mc not in seen:
+                gvs.append(mc)
+        return gvs, icons
 
     def _fo_ready(self, info) -> None:
-        gvs, icon = info
-        self._fo_icon = icon
+        gvs, icons = info
+        self._opt_icons = icons
         if not gvs:
-            self.window.set_status("Couldn't list Fabulously Optimized versions.")
+            self.window.set_status("Couldn't list optimized versions.")
             return
         self._open_version_picker(gvs, vanilla=False)
 
@@ -1078,8 +1090,10 @@ class Controller:
             return
         name, loader = self._new_instance_name, self._new_instance_loader
         if loader == "optimized":
-            hit = {"slug": self.FO_SLUG, "title": name or f"Fabulously Optimized {mc}",
-                   "icon_url": getattr(self, "_fo_icon", "")}
+            slug = self.LEGACY_OPT.get(mc, self.FO_SLUG)
+            default = "Fabulously Optimized" if slug == self.FO_SLUG else "MAX FPS Optimized"
+            hit = {"slug": slug, "title": name or f"{default} {mc}",
+                   "icon_url": getattr(self, "_opt_icons", {}).get(slug, "")}
             self.install_modpack(hit, game_version=mc)
             return
         if loader in ("", "vanilla"):
