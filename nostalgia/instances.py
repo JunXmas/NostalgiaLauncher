@@ -52,17 +52,33 @@ class InstanceStore:
             raw = json.loads(self.path.read_text())
         except (json.JSONDecodeError, OSError):
             return
-        self.instances = [Instance(**i) for i in raw.get("instances", [])
-                          if i.get("name") and i.get("version")]
+        # Chịu được lệch schema: bỏ qua key lạ (bản khác ghi thêm) và entry hỏng,
+        # để MỘT bản ghi lỗi không làm bay SẠCH instance -> tránh mất dữ liệu.
+        known = set(Instance.__dataclass_fields__)
+        out = []
+        for i in raw.get("instances", []):
+            if not (i.get("name") and i.get("version")):
+                continue
+            try:
+                out.append(Instance(**{k: v for k, v in i.items() if k in known}))
+            except (TypeError, ValueError):
+                continue
+        self.instances = out
         self.active = raw.get("active", "")
 
     def _save(self) -> None:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         data = {"active": self.active,
                 "instances": [asdict(i) for i in self.instances]}
-        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        # Ghi atomic: ghi ra file tạm rồi os.replace — nếu bị kill giữa chừng
+        # (vd update khởi động lại app) thì instances.json KHÔNG bị cắt về rỗng.
+        tmp = self.path.with_suffix(".json.tmp")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as f:
             json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, self.path)
 
     def all(self) -> list[Instance]:
         return list(self.instances)

@@ -542,6 +542,10 @@ class Controller:
         chuyển mods/resourcepacks dùng chung cũ vào instance đang chọn."""
         if self.instances.all():
             return
+        # Đã có file instances.json = KHÔNG phải lần đầu -> đừng tự dựng lại (kẻo
+        # tạo instance đặt tên theo version id và làm world cũ bị orphan).
+        if self.instances.path.exists():
+            return
         versions = self.installer.installed_versions()
         if not versions:
             return                      # chưa có version -> để người dùng tự tạo

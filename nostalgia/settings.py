@@ -45,9 +45,19 @@ def save_client_id(name: str, value: str) -> None:
         except json.JSONDecodeError:
             pass
     data[name] = value
-    fd = os.open(CLIENTS_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    _atomic_write_json(CLIENTS_PATH, data)
+
+
+def _atomic_write_json(path: Path, data: dict) -> None:
+    """Ghi JSON an toàn: file tạm + os.replace, không bao giờ để lại file cắt dở."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
 
 @dataclass
@@ -82,9 +92,7 @@ class Settings:
         path = self._path or CONFIG_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
         data = {k: v for k, v in asdict(self).items() if not k.startswith("_")}
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "w") as f:
-            json.dump(data, f, indent=2)
+        _atomic_write_json(path, data)
 
     @property
     def game_path(self) -> Path:
