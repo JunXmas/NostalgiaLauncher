@@ -170,25 +170,31 @@ def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
         draw_discord_icon(p, rect, color)
 
 
+_DISCORD_PM = None
+
+
+def _discord_pixmap():
+    global _DISCORD_PM
+    if _DISCORD_PM is None:
+        from pathlib import Path
+
+        from PySide6.QtGui import QPixmap
+        _DISCORD_PM = QPixmap(str(Path(__file__).parent / "assets" / "discord.png"))
+    return _DISCORD_PM
+
+
 def draw_discord_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
-    """Mặt Clyde của Discord (đơn giản hoá): thân bo tròn + hai mắt."""
-    p.save()
-    r = rect.adjusted(rect.width() * 0.04, rect.height() * 0.16,
-                      -rect.width() * 0.04, -rect.height() * 0.12)
+    """Logo Discord thật (blurple)."""
+    pm = _discord_pixmap()
+    if pm is not None and not pm.isNull():
+        p.save()
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.drawPixmap(rect, pm, QRectF(pm.rect()))
+        p.restore()
+        return
     p.setPen(Qt.NoPen)
     p.setBrush(color)
-    p.drawRoundedRect(r, r.height() * 0.44, r.height() * 0.44)
-    # hai chân nhỏ ở đáy
-    fw = r.width() * 0.20
-    p.drawEllipse(QRectF(r.left() + r.width() * 0.18, r.bottom() - fw * 0.6, fw, fw))
-    p.drawEllipse(QRectF(r.right() - r.width() * 0.18 - fw, r.bottom() - fw * 0.6, fw, fw))
-    # mắt
-    p.setBrush(QColor(38, 46, 66))
-    ex, ey = r.width() * 0.15, r.height() * 0.22
-    cy = r.center().y()
-    p.drawEllipse(QRectF(r.left() + r.width() * 0.28 - ex / 2, cy - ey / 2, ex, ey))
-    p.drawEllipse(QRectF(r.left() + r.width() * 0.72 - ex / 2, cy - ey / 2, ex, ey))
-    p.restore()
+    p.drawRoundedRect(rect.adjusted(1, 3, -1, -2), 5, 5)
 
 
 def draw_news_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
