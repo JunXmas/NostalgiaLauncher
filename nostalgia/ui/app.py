@@ -601,6 +601,14 @@ class Controller:
             if online:
                 skins.apply_to_mojang(account.access_token, png, slim=variant == "slim")
             skins.remember(png, variant)
+            # Đẩy lên backend chung để offline nhìn thấy nhau (qua CustomSkinLoader).
+            # Lỗi backend không được chặn việc đổi skin cục bộ.
+            if account:
+                try:
+                    skins.upload_to_backend(self.settings.backend_url, account.username,
+                                            png, variant, account.access_token)
+                except Exception:  # noqa: BLE001
+                    pass
             return online
 
         self.window.set_status("Applying skin…")

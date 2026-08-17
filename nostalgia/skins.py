@@ -107,3 +107,21 @@ def apply_to_mojang(access_token: str, png: bytes, *, slim: bool = False) -> Non
 
 def load_file(path: str | Path) -> bytes:
     return Path(path).read_bytes()
+
+
+def upload_to_backend(backend_url: str, username: str, png: bytes,
+                      variant: str = "classic", access_token: str = "") -> None:
+    """Đẩy skin lên backend chung để người khác (qua CustomSkinLoader) nhìn thấy.
+
+    Ghi cần Authorization = MC access token của người chơi (Worker xác minh với
+    Mojang). Offline không có token thật -> Worker cho ghi theo trust-on-first-use.
+    """
+    if not backend_url or not username:
+        return
+    headers = {"Content-Type": "image/png"}
+    if access_token and access_token != "0":
+        headers["Authorization"] = f"Bearer {access_token}"
+    r = requests.put(f"{backend_url.rstrip('/')}/skin/{username}",
+                     params={"variant": variant}, data=png, headers=headers, timeout=TIMEOUT)
+    if r.status_code >= 400:
+        raise RuntimeError(f"backend {r.status_code}: {r.text[:150]}")

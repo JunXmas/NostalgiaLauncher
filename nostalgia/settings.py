@@ -60,6 +60,8 @@ class Settings:
     background_path: str = ""     # ảnh nền tuỳ chọn; rỗng = ảnh lá xanh mặc định
     close_on_launch: bool = False
     check_updates: bool = True    # tự tìm bản mới trên GitHub khi khởi động
+    # Backend chung (Cloudflare Worker): upload skin + khôi phục danh tính.
+    backend_url: str = "https://nostalgia-backend.packaging-polish.workers.dev"
     _path: Path | None = field(default=None, repr=False, compare=False)
 
     @classmethod
