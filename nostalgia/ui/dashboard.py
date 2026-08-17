@@ -48,6 +48,8 @@ class HomeDashboard(QWidget):
         self._hot_hero_links: list[tuple[QRect, str]] = []
         self._hover_card: str | None = None
         self._icon_cache: dict = {}      # tên instance -> QImage icon modpack (hoặc None)
+        self._avatar_img: QImage | None = None   # đầu skin tài khoản làm avatar
+        self._avatar_url = ""
         self.setMouseTracking(True)
 
         self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
@@ -56,6 +58,13 @@ class HomeDashboard(QWidget):
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
+
+    def _got_avatar(self, data) -> None:
+        if data:
+            img = QImage()
+            if img.loadFromData(data):
+                self._avatar_img = img
+        self.update()
 
     def _instance_icon(self, inst):
         if inst.name not in self._icon_cache:
@@ -71,6 +80,14 @@ class HomeDashboard(QWidget):
     def refresh(self) -> None:
         self._instances = self.ctl.instances.all()
         self._icon_cache.clear()      # bắt icon modpack mới cài
+        # avatar = đầu skin của tài khoản (Microsoft có skin_url)
+        acct = self.ctl.current_account()
+        url = getattr(acct, "skin_url", "") if acct else ""
+        if url != self._avatar_url:
+            self._avatar_url = url
+            self._avatar_img = None
+            if url:
+                self.ctl.load_skin(url, self._got_avatar)
         if not self._news:
             self.ctl.load_news(self._got_news)
         self._relayout()
@@ -373,11 +390,26 @@ class HomeDashboard(QWidget):
         win = self.window()
         # avatar
         av = QRect(acc.left() + 14, acc.top() + 32, 40, 40)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(150, 112, 78))
-        p.drawRoundedRect(QRectF(av), 4, 4)
-        draw_cube_icon(p, QRectF(av.center().x() - 12, av.center().y() - 12, 24, 24),
-                       QColor(196, 150, 120), QColor(120, 86, 62))
+        if self._avatar_img is not None and not self._avatar_img.isNull() \
+                and self._avatar_img.width() >= 64:
+            clip = QPainterPath()
+            clip.addRoundedRect(QRectF(av), 4, 4)
+            p.save()
+            p.setClipPath(clip)
+            p.setRenderHint(QPainter.SmoothPixmapTransform, False)
+            img = self._avatar_img
+            p.drawImage(QRectF(av), img, QRectF(8, 8, 8, 8))    # mặt trước đầu
+            p.drawImage(QRectF(av), img, QRectF(40, 8, 8, 8))   # lớp mũ
+            p.restore()
+            p.setPen(QPen(QColor(255, 255, 255, 40), 1))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(QRectF(av), 4, 4)
+        else:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(150, 112, 78))
+            p.drawRoundedRect(QRectF(av), 4, 4)
+            draw_cube_icon(p, QRectF(av.center().x() - 12, av.center().y() - 12, 24, 24),
+                           QColor(196, 150, 120), QColor(120, 86, 62))
         p.setFont(ui_font(11, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(av.right() + 12, acc.top() + 34, acc.width() - 70, 18),
