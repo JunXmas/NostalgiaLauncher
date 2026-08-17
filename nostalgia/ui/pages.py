@@ -1100,12 +1100,29 @@ class SkinsPage(Page):
 
     def _paint_edit_tile(self, p, rect: QRect, hovered: bool):
         self._tile_bg(p, rect, hovered, False)
+        from PySide6.QtCore import QPointF
+        from PySide6.QtGui import QPolygonF
         cx, cy = rect.center().x(), rect.center().y() - 8
-        p.setPen(QPen(TEXT_DIM, 3))
-        p.setBrush(Qt.NoBrush)
-        p.drawLine(cx - 10, cy + 10, cx + 8, cy - 8)      # thân bút
-        p.drawLine(cx + 8, cy - 8, cx + 12, cy - 4)       # đầu bút
-        p.drawLine(cx - 10, cy + 10, cx - 6, cy + 13)     # ngòi
+        col = TEXT if hovered else TEXT_DIM
+        p.save()
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.translate(cx, cy)
+        p.rotate(45)                                   # cây bút nghiêng 45°, mũi hướng xuống
+        p.setPen(Qt.NoPen)
+        # thân bút
+        p.setBrush(col)
+        p.drawRoundedRect(QRectF(-4, -13, 8, 18), 1.5, 1.5)
+        # phần gỗ vót nhọn (tam giác) + ngòi
+        p.drawPolygon(QPolygonF([QPointF(-4, 5), QPointF(4, 5), QPointF(0, 13)]))
+        p.setBrush(QColor(18, 28, 44))                 # ngòi than sẫm
+        p.drawPolygon(QPolygonF([QPointF(-1.6, 9.5), QPointF(1.6, 9.5), QPointF(0, 13)]))
+        # cục tẩy trên đỉnh + đai kim loại (vạch ngăn cách)
+        p.setBrush(col)
+        p.drawRoundedRect(QRectF(-4, -15, 8, 3.5), 1.5, 1.5)
+        p.setPen(QPen(QColor(18, 28, 44), 1.2))
+        p.drawLine(QPointF(-4, -10.5), QPointF(4, -10.5))   # đai dưới cục tẩy
+        p.drawLine(QPointF(-4, 5), QPointF(4, 5))           # ranh sơn/gỗ
+        p.restore()
         p.setFont(ui_font(8))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rect.left(), rect.bottom() - 26, rect.width(), 18),
