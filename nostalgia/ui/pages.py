@@ -733,22 +733,31 @@ class InstancePage(Page):
 class SkinsPage(Page):
     heading = "Skin"
 
+    TILE = 118
+    GAP = 14
+
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.skin: QImage | None = None
+        self.skin: QImage | None = None          # skin đang hiển thị (preview)
         self.note = ""
+        self._recent: list[dict] = []            # 5 skin gần nhất (từ skins.recent())
+        self._tiles: list[tuple[QRect, str, str]] = []  # (rect, action, arg)
+        self._hover = -1
+        self.setMouseTracking(True)
 
     def refresh(self) -> None:
+        from .. import skins
         account = self.ctl.current_account()
         self.skin, self.note = None, ""
+        self._recent = skins.recent()
         if account is None:
-            self.note = "No accounts yet."
-        elif account.kind != "msa" or not account.owns_game:
-            self.note = ("Only Microsoft accounts that own the game have a server-side skin.\n"
-                         "Offline profiles and demo accounts use the default Steve/Alex skin.")
-        elif not account.skin_url:
-            self.note = "This account has no cached skin — sign in again to fetch it."
-        else:
+            self.note = "No accounts yet — add one on the Home page."
+        elif self._recent:
+            # ưu tiên hiện skin đã áp gần nhất (chạy được cả offline)
+            img = QImage()
+            if img.load(self._recent[0]["path"]):
+                self.skin = img
+        if self.skin is None and account and account.kind == "msa" and account.skin_url:
             self.ctl.load_skin(account.skin_url, self._got)
             self.note = "Loading skin…"
         self.update()
@@ -759,54 +768,139 @@ class SkinsPage(Page):
             if img.loadFromData(data):
                 self.skin = img
                 self.note = ""
-        else:
-            self.note = "Could not load skin."
         self.update()
 
-    def _part(self, p: QPainter, sx: int, sy: int, sw: int, sh: int,
-              dx: float, dy: float, scale: int) -> None:
-        p.drawImage(QRectF(dx, dy, sw * scale, sh * scale), self.skin,
-                    QRectF(sx, sy, sw, sh))
+    # ---------- vẽ mảnh skin ----------
+
+    @staticmethod
+    def _part(p, img, sx, sy, sw, sh, dx, dy, scale):
+        p.drawImage(QRectF(dx, dy, sw * scale, sh * scale), img, QRectF(sx, sy, sw, sh))
+
+    def _draw_body(self, p, img, ox, oy, scale):
+        slim = img.height() >= 64
+        self._part(p, img, 8, 8, 8, 8, ox + 4 * scale, oy, scale)                 # đầu
+        self._part(p, img, 20, 20, 8, 12, ox + 4 * scale, oy + 8 * scale, scale)  # thân
+        self._part(p, img, 44, 20, 4, 12, ox + 12 * scale, oy + 8 * scale, scale) # tay phải
+        if slim:
+            self._part(p, img, 36, 52, 4, 12, ox, oy + 8 * scale, scale)          # tay trái
+            self._part(p, img, 20, 52, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
+        else:
+            self._part(p, img, 44, 20, 4, 12, ox, oy + 8 * scale, scale)
+            self._part(p, img, 4, 20, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
+        self._part(p, img, 4, 20, 4, 12, ox + 4 * scale, oy + 20 * scale, scale)  # chân phải
+        self._part(p, img, 40, 8, 8, 8, ox + 4 * scale, oy, scale)                # lớp mũ
+
+    def _draw_head(self, p, img, rect: QRect):
+        s = rect.width() / 8.0
+        p.drawImage(QRectF(rect.left(), rect.top(), 8 * s, 8 * s), img, QRectF(8, 8, 8, 8))
+        p.drawImage(QRectF(rect.left(), rect.top(), 8 * s, 8 * s), img, QRectF(40, 8, 8, 8))
+
+    # ---------- tương tác ----------
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        hit = next((i for i, (r, _a, _g) in enumerate(self._tiles) if r.contains(pos)), -1)
+        self.setCursor(Qt.PointingHandCursor if hit >= 0 else Qt.ArrowCursor)
+        if hit != self._hover:
+            self._hover = hit
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        for rect, action, arg in self._tiles:
+            if rect.contains(pos):
+                if action == "add":
+                    self.ctl.pick_and_apply_skin()
+                elif action == "recent":
+                    self.ctl.apply_skin_file(arg)
+                return
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.SmoothPixmapTransform, False)
+        self._tiles = []
+        account = self.ctl.current_account()
 
-        if self.skin is not None and self.skin.width() >= 64:
-            scale = 7
-            ox, oy = 58, 96
-            has_slim_arms = self.skin.height() >= 64
-            # Ghép mặt trước: đầu, thân, hai tay, hai chân — toạ độ chuẩn của skin 64x64.
-            self._part(p, 8, 8, 8, 8, ox + 4 * scale, oy, scale)                  # đầu
-            self._part(p, 20, 20, 8, 12, ox + 4 * scale, oy + 8 * scale, scale)   # thân
-            self._part(p, 44, 20, 4, 12, ox + 12 * scale, oy + 8 * scale, scale)  # tay phải
-            if has_slim_arms:
-                self._part(p, 36, 52, 4, 12, ox, oy + 8 * scale, scale)           # tay trái
-                self._part(p, 20, 52, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
-            else:
-                self._part(p, 44, 20, 4, 12, ox, oy + 8 * scale, scale)
-                self._part(p, 4, 20, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
-            self._part(p, 4, 20, 4, 12, ox + 4 * scale, oy + 20 * scale, scale)   # chân phải
-            self._part(p, 40, 8, 8, 8, ox + 4 * scale, oy, scale)                 # lớp mũ
-
-            account = self.ctl.current_account()
-            p.setFont(ui_font(13, bold=True))
+        # ----- cột trái: thẻ kính + tên + preview -----
+        panel = QRectF(24, 58, 268, self.height() - 74)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(255, 255, 255, 14))
+        p.drawRoundedRect(panel, 10, 10)
+        p.setBrush(gloss_gradient(90, 0.4))
+        p.drawRoundedRect(panel, 10, 10)
+        if account:
+            name = account.username
+            p.setFont(ui_font(11, bold=True))
+            fm = p.fontMetrics()
+            bw = fm.horizontalAdvance(name) + 26
+            badge = QRectF(panel.center().x() - bw / 2, panel.top() + 16, bw, 26)
+            p.setBrush(QColor(0, 0, 0, 90))
+            p.setPen(Qt.NoPen)
+            p.drawRoundedRect(badge, 5, 5)
             p.setPen(TEXT)
-            p.drawText(QRect(ox + 150, oy + 6, 320, 24), Qt.AlignLeft | Qt.AlignVCenter,
-                       account.username if account else "")
-            p.setFont(ui_font(8))
-            p.setPen(TEXT_FAINT)
-            p.drawText(QRect(ox + 150, oy + 34, 420, 40),
-                       Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap,
-                       "Change your skin at minecraft.net/msaprofile — the launcher only shows it,\n"
-                       "uploading a new skin is not supported yet.")
-        elif self.note:
-            p.setFont(ui_font(10))
+            p.drawText(badge, Qt.AlignCenter, name)
+        if self.skin is not None and self.skin.width() >= 64:
+            scale = 9
+            self._draw_body(p, self.skin,
+                            int(panel.center().x() - 8 * scale / 2),
+                            int(panel.top() + 60), scale)
+
+        # ----- cột phải: Saved skins -----
+        rx = 316
+        p.setFont(ui_font(9, bold=True))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(rx, 62, 300, 18), Qt.AlignLeft | Qt.AlignVCenter, "SAVED SKINS")
+        y = 88
+        # ô "+ Add a skin"
+        add = QRect(rx, y, self.TILE, self.TILE)
+        self._paint_add_tile(p, add, self._hover == len(self._tiles))
+        self._tiles.append((add, "add", ""))
+        x = rx + self.TILE + self.GAP
+        # 5 skin gần nhất
+        current_path = self._recent[0]["path"] if self._recent else None
+        for it in self._recent:
+            tile = QRect(x, y, self.TILE, self.TILE)
+            self._paint_skin_tile(p, tile, it["path"], it["path"] == current_path,
+                                  self._hover == len(self._tiles))
+            self._tiles.append((tile, "recent", it["path"]))
+            x += self.TILE + self.GAP
+
+        if self.note:
+            p.setFont(ui_font(9))
             p.setPen(TEXT_DIM)
-            p.drawText(QRect(26, 70, self.width() - 52, 120),
+            p.drawText(QRect(rx, y + self.TILE + 20, self.width() - rx - 24, 40),
                        Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.note)
         p.end()
+
+    def _tile_bg(self, p, rect: QRect, hovered: bool, selected: bool):
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(255, 255, 255, 26 if hovered else 16))
+        p.drawRoundedRect(QRectF(rect), 8, 8)
+        if selected:
+            p.setBrush(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 40))
+            p.drawRoundedRect(QRectF(rect), 8, 8)
+            p.setBrush(Qt.NoBrush)
+            p.setPen(QPen(ACCENT, 2))
+            p.drawRoundedRect(QRectF(rect).adjusted(1, 1, -1, -1), 8, 8)
+
+    def _paint_add_tile(self, p, rect: QRect, hovered: bool):
+        self._tile_bg(p, rect, hovered, False)
+        cx, cy = rect.center().x(), rect.center().y() - 8
+        p.setPen(QPen(TEXT_DIM, 3))
+        p.drawLine(cx - 12, cy, cx + 12, cy)
+        p.drawLine(cx, cy - 12, cx, cy + 12)
+        p.setFont(ui_font(8))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(rect.left(), rect.bottom() - 26, rect.width(), 18),
+                   Qt.AlignCenter, "Add a skin")
+
+    def _paint_skin_tile(self, p, rect: QRect, path: str, selected: bool, hovered: bool):
+        self._tile_bg(p, rect, hovered, selected)
+        img = QImage()
+        if img.load(path) and img.width() >= 64:
+            d = rect.width() - 44
+            self._draw_head(p, img, QRect(rect.center().x() - d // 2, rect.top() + 16, d, d))
 
 
 # ---------- ghi chú phiên bản ----------

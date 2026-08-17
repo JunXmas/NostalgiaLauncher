@@ -570,6 +570,45 @@ class Controller:
     def load_skin(self, url, cb) -> None:
         self._run(lambda: requests.get(url, timeout=25).content, cb, lambda _m: cb(None))
 
+    # ---------- đổi skin ----------
+
+    def pick_and_apply_skin(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Choose a skin (64×64 PNG)", "", "Skin image (*.png)")
+        if path:
+            self.apply_skin_file(path)
+
+    def apply_skin_file(self, path: str) -> None:
+        try:
+            with open(path, "rb") as f:
+                png = f.read()
+        except OSError as e:
+            self.window.set_status(f"Couldn't read skin: {e}")
+            return
+        self.apply_skin_bytes(png)
+
+    def apply_skin_bytes(self, png: bytes, variant: str = "classic") -> None:
+        from .. import skins
+        account = self.current_account()
+        online = bool(account and account.kind == "msa" and account.owns_game
+                      and account.access_token and account.access_token != "0")
+
+        def work():
+            if online:
+                skins.apply_to_mojang(account.access_token, png, slim=variant == "slim")
+            skins.remember(png, variant)
+            return online
+
+        self.window.set_status("Applying skin…")
+        self._run(
+            work,
+            lambda was_online: (
+                self.pages["skins"].refresh(),
+                self.window.set_status(
+                    "Skin changed on your Microsoft account." if was_online else
+                    "Skin saved locally — others will see it once the skin server is set up.")),
+            lambda m: self.window.set_status(f"Couldn't change skin: {m}"))
+
     # ---------- menu tài khoản ----------
 
     def open_account_menu(self) -> None:
