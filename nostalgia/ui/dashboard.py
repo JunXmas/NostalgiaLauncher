@@ -248,19 +248,26 @@ class HomeDashboard(QWidget):
         current = self.ctl.instances.active
 
         ready = {v["id"] for v in self.ctl.installer.installed_versions() if v["complete"]}
-        x = area.left()
+        # Lưới nhiều hàng: lấp đầy chiều rộng LẪN chiều cao vùng còn lại.
         per_row = max(1, (area.width() + GAP) // (CARD_W + GAP))
+        rows_fit = max(1, (area.height() - 34 + GAP) // (CARD_H + GAP))
+        slots = per_row * rows_fit
         # Instance đang chọn (thứ PLAY sẽ chạy) hiện đầu tiên, khớp với ô version.
-        shown = sorted(self._instances, key=lambda i: i.name != current)
-        # Chừa chỗ cho thẻ "+" -> luôn hiện, là thứ hiển nhiên để bấm mà mày mò.
-        for inst in shown[:max(0, per_row - 1)]:
-            rect = QRect(x, row_top, CARD_W, CARD_H)
+        # Chừa 1 ô cuối cho thẻ "+".
+        shown = sorted(self._instances, key=lambda i: i.name != current)[:max(0, slots - 1)]
+
+        def slot_rect(idx):
+            row, col = divmod(idx, per_row)
+            return QRect(area.left() + col * (CARD_W + GAP),
+                         row_top + row * (CARD_H + GAP), CARD_W, CARD_H)
+
+        for i, inst in enumerate(shown):
+            rect = slot_rect(i)
             self._paint_instance_card(p, rect, inst, inst.name == current,
                                       inst.version in ready,
                                       hover=inst.name == self._hover_card)
             self._card_rects.append((rect, inst.name))
-            x += CARD_W + GAP
-        add_rect = QRect(x, row_top, CARD_W, CARD_H)
+        add_rect = slot_rect(len(shown))
         self._paint_add_card(p, add_rect, empty=not self._instances,
                              hover=self._hover_card == "\x00new")
         self._card_rects.append((add_rect, "\x00new"))
