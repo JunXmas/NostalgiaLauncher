@@ -370,6 +370,16 @@ class Controller:
             download(f["url"], mrpack, f.get("sha1"))
             index = modpack_mod.install_contents(mrpack, inst_dir,
                                                  on_status=on_status, on_progress=on_progress)
+            # Lưu icon modpack làm thumbnail cho card ở Home (best-effort).
+            icon_url = hit.get("icon_url")
+            if icon_url:
+                try:
+                    ir = requests.get(icon_url, timeout=20)
+                    if ir.status_code == 200 and ir.content:
+                        inst_dir.mkdir(parents=True, exist_ok=True)
+                        (inst_dir / "icon.png").write_bytes(ir.content)
+                except requests.RequestException:
+                    pass
             loader, mc = modpack_mod.loader_and_mc(index)
             if loader == "quilt":
                 raise RuntimeError("Quilt modpacks aren't supported yet")

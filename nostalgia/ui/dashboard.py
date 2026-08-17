@@ -6,7 +6,9 @@ Nền để trong suốt cho ảnh hero của cửa sổ hiện xuyên qua; mọ
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPen
+from PySide6.QtGui import (
+    QBrush, QColor, QFont, QImage, QLinearGradient, QPainter, QPainterPath, QPen,
+)
 from PySide6.QtWidgets import QWidget
 
 from .glass import draw_glass_rect
@@ -45,6 +47,7 @@ class HomeDashboard(QWidget):
         self._news_rects: list[tuple[QRect, str]] = []
         self._hot_hero_links: list[tuple[QRect, str]] = []
         self._hover_card: str | None = None
+        self._icon_cache: dict = {}      # tên instance -> QImage icon modpack (hoặc None)
         self.setMouseTracking(True)
 
         self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
@@ -54,8 +57,20 @@ class HomeDashboard(QWidget):
         self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
 
+    def _instance_icon(self, inst):
+        if inst.name not in self._icon_cache:
+            path = self.ctl.instance_dir(inst) / "icon.png"
+            img = None
+            if path.exists():
+                im = QImage()
+                if im.load(str(path)) and not im.isNull():
+                    img = im
+            self._icon_cache[inst.name] = img
+        return self._icon_cache[inst.name]
+
     def refresh(self) -> None:
         self._instances = self.ctl.instances.all()
+        self._icon_cache.clear()      # bắt icon modpack mới cài
         if not self._news:
             self.ctl.load_news(self._got_news)
         self._relayout()
@@ -272,16 +287,33 @@ class HomeDashboard(QWidget):
         # thumbnail
         thumb = QRect(rect.left() + 8, rect.top() + 8, rect.width() - 16, 78)
         col = _hash_hue(inst.name)
-        g = QLinearGradient(thumb.topLeft(), thumb.bottomRight())
-        g.setColorAt(0, col.lighter(120))
-        g.setColorAt(1, col.darker(130))
-        p.setPen(Qt.NoPen)
-        p.setBrush(g)
-        p.drawRoundedRect(QRectF(thumb), 4, 4)
-        p.setBrush(gloss_gradient(thumb.height(), 0.5))
-        p.drawRoundedRect(QRectF(thumb), 4, 4)
-        draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
-                       QColor(230, 240, 250), col.darker(150))
+        icon = self._instance_icon(inst)
+        if icon is not None and not icon.isNull():
+            # icon modpack thật: cắt giữa cho vừa khung (aspect-fill), bo góc.
+            clip = QPainterPath()
+            clip.addRoundedRect(QRectF(thumb), 4, 4)
+            p.save()
+            p.setClipPath(clip)
+            iw, ih = icon.width(), icon.height()
+            s = max(thumb.width() / iw, thumb.height() / ih)
+            sw, sh = thumb.width() / s, thumb.height() / s
+            p.drawImage(QRectF(thumb), icon,
+                        QRectF((iw - sw) / 2, (ih - sh) / 2, sw, sh))
+            p.restore()
+            p.setPen(Qt.NoPen)
+            p.setBrush(gloss_gradient(thumb.height(), 0.28))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+        else:
+            g = QLinearGradient(thumb.topLeft(), thumb.bottomRight())
+            g.setColorAt(0, col.lighter(120))
+            g.setColorAt(1, col.darker(130))
+            p.setPen(Qt.NoPen)
+            p.setBrush(g)
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            p.setBrush(gloss_gradient(thumb.height(), 0.5))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
+                           QColor(230, 240, 250), col.darker(150))
         if hover:
             # Rê chuột -> phủ nền tối + hiện ▶: dạy người dùng "bấm để mở/chơi".
             p.setPen(Qt.NoPen)
