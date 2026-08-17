@@ -168,10 +168,15 @@ def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
         # Icon bóng nhiều màu: vẽ nguyên màu, hơi to hơn khung; độ mờ theo trạng thái
         # (mục đang chọn/hover sáng rõ, mục thường dịu lại) để vẫn "sống" theo tương tác.
         op = max(0.72, min(1.0, color.lightnessF() + 0.06))
+        # Vẽ vào Ô VUÔNG căn giữa (giữ tỉ lệ) để icon không bao giờ bị kéo méo,
+        # kể cả khi khung truyền vào không vuông.
+        box = rect.adjusted(-2.5, -2.5, 2.5, 2.5)
+        side = min(box.width(), box.height())
+        sq = QRectF(box.center().x() - side / 2, box.center().y() - side / 2, side, side)
         p.save()
         p.setOpacity(op)
         p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        p.drawPixmap(rect.adjusted(-2.5, -2.5, 2.5, 2.5), pm, QRectF(pm.rect()))
+        p.drawPixmap(sq, pm, QRectF(pm.rect()))
         p.restore()
         return
     if kind == "cube":
