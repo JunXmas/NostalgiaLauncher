@@ -417,7 +417,9 @@ class Controller:
                 meta = self.installer.install(mc)
                 jre.ensure(self.store_root, meta)
                 java = str(jre.java_binary(self.store_root, jre.component_of(meta)))
-            vid = loaders_mod.install(self.installer, loader, mc, java_binary=java)
+            # on_status -> hiện tiến trình khi chạy Forge/NeoForge installer (chậm vài phút).
+            vid = loaders_mod.install(self.installer, loader, mc, java_binary=java,
+                                      on_status=on_status)
             return name, vid
 
         w = ProgressWorker(work)

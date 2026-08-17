@@ -105,10 +105,15 @@ def _run_installer(url: str, installer, java_binary: str, on_status=None) -> str
     last = ""
     for attempt in range(attempts):
         if on_status:
-            on_status("Running loader installer…"
+            on_status("Running loader installer — this can take a few minutes…"
                       + (f" (retry {attempt})" if attempt else ""))
-        proc = subprocess.run([java_binary, "-jar", str(jar), "--installClient", str(store)],
-                              capture_output=True, text=True)
+        try:
+            proc = subprocess.run(
+                [java_binary, "-jar", str(jar), "--installClient", str(store)],
+                capture_output=True, text=True, timeout=600)   # đừng treo vĩnh viễn
+        except subprocess.TimeoutExpired:
+            last = "Installer timed out (>10 min) — network too slow or it hung."
+            continue
         after = {p.name for p in installer.versions_dir.glob("*") if p.is_dir()}
         new = sorted(after - before)
         # Thành công theo dòng chốt của installer (đáng tin hơn returncode ở các bản

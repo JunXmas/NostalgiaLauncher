@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from PySide6.QtCore import (
     QEasingCurve, QRect, QRectF, Qt, QVariantAnimation, Signal,
 )
+from PySide6.QtCore import QPointF
 from PySide6.QtGui import (
     QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPixmap,
 )
@@ -35,9 +36,14 @@ SORTS = [("Relevance", "relevance"), ("Downloads", "downloads"),
          ("Follows", "follows"), ("Newest", "newest"), ("Updated", "updated")]
 
 SIDEBAR_W = 196
-CARD_H = 104
 PANEL_TOP = 90      # dưới dải kéo cửa sổ (46px) để nút BACK bấm được
 CAT_TOP = 128       # hàng category đầu tiên
+# Card gallery kiểu Modrinth: ảnh lớn trên + info dưới, xếp lưới 2 cột.
+COLS = 2
+CARD_GAP = 14
+IMG_H = 146
+INFO_H = 128
+CARD_H = IMG_H + INFO_H
 
 
 def _ago(iso: str) -> str:
@@ -83,18 +89,32 @@ class ModpackCards(QWidget):
         self.scroll = 0
         self.update()
 
+    def _cw(self) -> float:
+        return (self.width() - CARD_GAP * (COLS - 1)) / COLS
+
     def _content_h(self) -> int:
-        return len(self.hits) * CARD_H
+        rows = (len(self.hits) + COLS - 1) // COLS
+        return rows * (CARD_H + CARD_GAP)
 
-    def _rect_of(self, i: int) -> QRect:
-        return QRect(0, i * CARD_H - self.scroll, self.width(), CARD_H)
+    def _rect_of(self, i: int) -> QRectF:
+        cw = self._cw()
+        row, col = divmod(i, COLS)
+        return QRectF(col * (cw + CARD_GAP), row * (CARD_H + CARD_GAP) - self.scroll,
+                      cw, CARD_H)
 
-    def _index_at(self, y: int) -> int:
-        i = (y + self.scroll) // CARD_H
-        return i if 0 <= i < len(self.hits) else -1
+    def _index_at(self, pos) -> int:
+        cw = self._cw()
+        col = int(pos.x() // (cw + CARD_GAP))
+        if not 0 <= col < COLS:
+            return -1
+        row = int((pos.y() + self.scroll) // (CARD_H + CARD_GAP))
+        i = row * COLS + col
+        if 0 <= i < len(self.hits) and self._rect_of(i).contains(QPointF(pos.x(), pos.y())):
+            return i
+        return -1
 
     def mouseMoveEvent(self, e):  # noqa: N802
-        i = self._index_at(int(e.position().y()))
+        i = self._index_at(e.position())
         if i != self._hover:
             self._hover = i
             self._anim.stop()
@@ -110,7 +130,7 @@ class ModpackCards(QWidget):
         self.update()
 
     def mousePressEvent(self, e):  # noqa: N802
-        i = self._index_at(int(e.position().y()))
+        i = self._index_at(e.position())
         if i >= 0:
             self.activated.emit(self.hits[i])
 
@@ -145,90 +165,80 @@ class ModpackCards(QWidget):
             p.drawRoundedRect(QRectF(self.width() - 5, y, 3, bar_h), 1.5, 1.5)
         p.end()
 
-    def _paint_card(self, p: QPainter, hit: dict, r: QRect, hovered: bool) -> None:
-        body = QRectF(r.adjusted(2, 4, -8, -4))
+    def _paint_card(self, p: QPainter, hit: dict, r: QRectF, hovered: bool) -> None:
         amt = self._hover_amt if hovered else 0.0
+        body = r.adjusted(1, 1, -1, -1)
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(255, 255, 255, int(12 + 16 * amt)))
-        p.drawRoundedRect(body, 7, 7)
-        if hovered:
-            p.setBrush(Qt.NoBrush)
-            p.setPen(QPen(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(),
-                                 int(150 * amt)), 1.3))
-            p.drawRoundedRect(body.adjusted(0.6, 0.6, -0.6, -0.6), 7, 7)
+        p.setBrush(QColor(255, 255, 255, int(12 + 14 * amt)))
+        p.drawRoundedRect(body, 8, 8)
 
-        # icon
-        d = 64
-        ir = QRectF(body.left() + 12, body.center().y() - d / 2, d, d)
+        # ----- ảnh gallery lớn trên đầu -----
+        img_rect = QRectF(body.left(), body.top(), body.width(), IMG_H)
+        clip = QPainterPath()
+        clip.addRoundedRect(QRectF(body.left(), body.top(), body.width(), IMG_H + 12), 8, 8)
+        p.save()
+        p.setClipPath(clip)
+        shot = self.icons.get(hit.get("featured_gallery") or "")
+        if shot and not shot.isNull():
+            iw, ih = shot.width(), shot.height()
+            s = max(img_rect.width() / iw, img_rect.height() / ih)
+            sw, sh = img_rect.width() / s, img_rect.height() / s
+            p.drawPixmap(img_rect, shot, QRectF((iw - sw) / 2, (ih - sh) / 2, sw, sh))
+        else:
+            p.fillRect(img_rect, QColor(255, 255, 255, 12))
+        p.restore()
+
+        iy = body.top() + IMG_H
+        # icon nhỏ
+        d = 44
+        ir = QRectF(body.left() + 12, iy + 12, d, d)
         path = QPainterPath()
-        path.addRoundedRect(ir, 10, 10)
+        path.addRoundedRect(ir, 9, 9)
         p.save()
         p.setClipPath(path)
-        pm = self.icons.get(hit.get("icon_url") or "")
-        if pm and not pm.isNull():
-            p.drawPixmap(ir.toRect(), pm)
+        icon = self.icons.get(hit.get("icon_url") or "")
+        if icon and not icon.isNull():
+            p.drawPixmap(ir.toRect(), icon)
         else:
             p.fillRect(ir, QColor(255, 255, 255, 18))
         p.restore()
-        p.setPen(QPen(QColor(255, 255, 255, 40), 1))
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(ir, 10, 10)
 
-        left = int(ir.right() + 14)
-        stat_w = 150
-        text_w = int(body.right() - left - stat_w - 14)
-
-        # tiêu đề + tác giả
-        title = hit.get("title", "?")
-        p.setFont(ui_font(12, bold=True))
+        left = int(ir.right() + 12)
+        tw = int(body.right() - left - 12)
+        p.setFont(ui_font(11, bold=True))
         fm = p.fontMetrics()
-        tw = min(fm.horizontalAdvance(title), text_w)
         p.setPen(TEXT)
-        p.drawText(QRect(left, int(body.top()) + 12, tw + 2, 20),
-                   Qt.AlignLeft | Qt.AlignVCenter,
-                   fm.elidedText(title, Qt.ElideRight, text_w))
-        author = hit.get("author", "")
-        if author and tw + 60 < text_w:
-            p.setFont(ui_font(9))
-            p.setPen(TEXT_FAINT)
-            p.drawText(QRect(left + tw + 8, int(body.top()) + 12, text_w - tw - 8, 20),
-                       Qt.AlignLeft | Qt.AlignVCenter, f"by {author}")
+        p.drawText(QRect(left, int(iy) + 12, tw, 18), Qt.AlignLeft | Qt.AlignVCenter,
+                   fm.elidedText(hit.get("title", "?"), Qt.ElideRight, tw))
+        p.setFont(ui_font(8))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(left, int(iy) + 31, tw, 14), Qt.AlignLeft | Qt.AlignVCenter,
+                   "by " + hit.get("author", ""))
 
-        # mô tả (2 dòng, tự xuống dòng, cắt gọn trong khung)
-        p.setFont(ui_font(9))
+        bx = int(body.left()) + 12
+        bw = int(body.width()) - 24
+        p.setFont(ui_font(8))
         p.setPen(TEXT_DIM)
-        p.drawText(QRect(left, int(body.top()) + 34, text_w, 32),
-                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap,
-                   hit.get("description", ""))
+        p.drawText(QRect(bx, int(iy) + 60, bw, 26),
+                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, hit.get("description", ""))
+        self._paint_tags(p, hit, bx, int(iy) + 90, bw)
 
-        # tag ở đáy
-        self._paint_tags(p, hit, left, int(body.bottom()) - 24, text_w)
-
-        # cột số liệu bên phải
-        rx = int(body.right() - stat_w)
-        rw = stat_w - 6
-        p.setFont(ui_font(9, bold=True))
+        # số liệu ở đáy
+        p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT)
-        dl = _compact(hit.get("downloads", 0))
-        fol = _compact(hit.get("follows", 0))
-        p.drawText(QRect(rx, int(body.top()) + 14, rw, 16),
-                   Qt.AlignRight | Qt.AlignVCenter, f"⬇ {dl}    ♡ {fol}")
+        p.drawText(QRect(bx, int(body.bottom()) - 20, bw, 14), Qt.AlignLeft | Qt.AlignVCenter,
+                   f"⬇ {_compact(hit.get('downloads', 0))}    ♡ {_compact(hit.get('follows', 0))}")
         ago = _ago(hit.get("date_modified", ""))
         if ago:
-            p.setFont(ui_font(8))
             p.setPen(TEXT_FAINT)
-            p.drawText(QRect(rx, int(body.top()) + 34, rw, 14),
-                       Qt.AlignRight | Qt.AlignVCenter, f"updated {ago}")
+            p.drawText(QRect(bx, int(body.bottom()) - 20, bw, 14),
+                       Qt.AlignRight | Qt.AlignVCenter, ago)
 
-        # gợi ý cài: chip xanh "INSTALL" hiện khi hover
         if hovered:
-            chip = QRectF(body.right() - 92, body.bottom() - 30, 82, 22)
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), int(220 * amt)))
-            p.drawRoundedRect(chip, 4, 4)
-            p.setFont(ui_font(8, bold=True))
-            p.setPen(QColor(255, 255, 255, int(255 * amt)))
-            p.drawText(chip, Qt.AlignCenter, "INSTALL")
+            p.setBrush(Qt.NoBrush)
+            p.setPen(QPen(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(),
+                                 int(170 * amt)), 1.4))
+            p.drawRoundedRect(body.adjusted(0.7, 0.7, -0.7, -0.7), 8, 8)
 
     def _paint_tags(self, p: QPainter, hit: dict, x: int, y: int, max_w: int) -> None:
         cats = [c for c in hit.get("categories", []) if c not in ("fabric", "forge",
@@ -333,12 +343,12 @@ class ModpackBrowsePage(Page):
         self._count = len(hits)
         self.update()
         for hgt in hits:
-            url = hgt.get("icon_url")
-            if url and url not in self.cards.icons and url not in self._icon_wanted:
-                self._icon_wanted.add(url)
-                self.ctl._run(lambda u=url: modrinth.fetch_icon(u),
-                              lambda data, u=url: self._icon(u, data),
-                              lambda _m, u=url: self._icon_wanted.discard(u))
+            for url in (hgt.get("featured_gallery"), hgt.get("icon_url")):
+                if url and url not in self.cards.icons and url not in self._icon_wanted:
+                    self._icon_wanted.add(url)
+                    self.ctl._run(lambda u=url: modrinth.fetch_icon(u),
+                                  lambda data, u=url: self._icon(u, data),
+                                  lambda _m, u=url: self._icon_wanted.discard(u))
 
     def _icon(self, url, data) -> None:
         self._icon_wanted.discard(url)
