@@ -1,0 +1,14 @@
+name = "nostalgia-backend"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# R2 lưu file skin PNG (theo hash). Tạo bucket:  wrangler r2 bucket create nostalgia-skins
+[[r2_buckets]]
+binding = "SKINS"
+bucket_name = "nostalgia-skins"
+
+# KV lưu ánh xạ username->skin và sub->identity. Tạo namespace:
+#   wrangler kv namespace create META   -> dán id vào đây
+[[kv_namespaces]]
+binding = "META"
+id = "REPLACE_WITH_KV_ID"
