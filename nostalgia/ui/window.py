@@ -127,6 +127,20 @@ class CaptionButton(QAbstractButton):
         p.end()
 
 
+_LOGO = None
+
+
+def logo_pixmap():
+    """Logo lá (assets/logo.png), nạp một lần. None nếu thiếu file."""
+    global _LOGO
+    if _LOGO is None:
+        from pathlib import Path
+
+        from PySide6.QtGui import QPixmap
+        _LOGO = QPixmap(str(Path(__file__).parent / "assets" / "logo.png"))
+    return _LOGO
+
+
 class SidebarPanel(GlassPanel):
     """Sidebar: logo trên, nav phía dưới."""
 
@@ -134,9 +148,15 @@ class SidebarPanel(GlassPanel):
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
         w = self.width()
 
-        draw_cube_icon(p, QRectF(16, 22, 40, 40), QColor(126, 190, 92), QColor(150, 112, 78))
+        logo = logo_pixmap()
+        if logo is not None and not logo.isNull():
+            p.drawPixmap(QRectF(12, 18, 46, 46), logo, QRectF(logo.rect()))
+        else:
+            draw_cube_icon(p, QRectF(16, 22, 40, 40),
+                           QColor(126, 190, 92), QColor(150, 112, 78))
         f = ui_font(13, bold=True)
         f.setLetterSpacing(QFont.AbsoluteSpacing, 1.0)
         p.setFont(f)
@@ -187,6 +207,10 @@ class LauncherWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(APP_NAME)
+        _logo = logo_pixmap()
+        if _logo is not None and not _logo.isNull():
+            from PySide6.QtGui import QIcon
+            self.setWindowIcon(QIcon(_logo))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(1180, 720)
