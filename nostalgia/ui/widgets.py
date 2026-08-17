@@ -482,21 +482,46 @@ class SidebarItem(QAbstractButton):
         hov = self._hover_amt
         checked = self.isChecked()
 
+        pill = r.adjusted(4, 2, -4, -2)
         if checked:
-            draw_glass_rect(p, r.adjusted(4, 2, -4, -2), tint=QColor(255, 255, 255, 34), gloss=0.9)
+            # Pill nền accent + viền sáng + hào quang: mục đang chọn phải nổi bật rõ.
+            glow = QColor(ACCENT)
+            glow.setAlpha(60)
+            gr = QRadialGradient(pill.center(), pill.width() * 0.62)
+            gr.setColorAt(0.0, glow)
+            gr.setColorAt(1.0, QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 0))
             p.setPen(Qt.NoPen)
-            p.setBrush(ACCENT)
-            p.drawRoundedRect(QRectF(r.left() + 4, r.top() + 6, 3, r.height() - 12), 1.5, 1.5)
+            p.setBrush(gr)
+            p.drawRoundedRect(pill.adjusted(-2, -2, 2, 2), 12, 12)
+
+            grad = QLinearGradient(pill.topLeft(), pill.bottomLeft())
+            grad.setColorAt(0.0, QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 92))
+            grad.setColorAt(1.0, QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 52))
+            p.setBrush(grad)
+            p.drawRoundedRect(pill, 9, 9)
+            draw_glass_rect(p, pill, tint=QColor(255, 255, 255, 30), gloss=1.0)
+            p.setPen(QPen(QColor(255, 255, 255, 46), 1))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(pill.adjusted(0.5, 0.5, -0.5, -0.5), 9, 9)
+            # Thanh accent bên trái: cao và sáng hơn trước.
+            p.setPen(Qt.NoPen)
+            p.setBrush(GREEN_GLOW)
+            p.drawRoundedRect(QRectF(r.left() + 4, r.top() + 5, 4, r.height() - 10), 2, 2)
         elif hov > 0.01:
-            draw_glass_rect(p, r.adjusted(4, 2, -4, -2),
-                            tint=QColor(255, 255, 255, int(22 * hov)), gloss=0.5 * hov)
+            draw_glass_rect(p, pill,
+                            tint=QColor(255, 255, 255, int(34 * hov)), gloss=0.7 * hov)
+            # Gợi ý thanh accent mờ khi rê chuột — mời gọi bấm vào.
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), int(150 * hov)))
+            p.drawRoundedRect(QRectF(r.left() + 4, r.top() + 9, 3, r.height() - 18), 1.5, 1.5)
 
         # Trượt nội dung sang phải theo hover (mục đang chọn thì đứng yên).
         dx = 0.0 if checked else hov * 4.0
         # Màu icon/chữ chuyển mượt từ mờ -> rõ theo hover.
         base = TEXT if checked else _mix(TEXT_DIM, TEXT, hov)
         icon_rect = QRectF(r.left() + 16 + dx, r.center().y() - 9, 18, 18)
-        color = base
+        # Mục đang chọn: icon nhuốm xanh accent cho nổi bật.
+        color = _mix(TEXT, GREEN_GLOW, 0.55) if checked else base
         _draw_nav_icon(p, self.icon_kind, icon_rect, color)
 
         text_left = int(r.left() + 44 + dx)
@@ -512,8 +537,8 @@ class SidebarItem(QAbstractButton):
             p.drawText(QRect(text_left, int(r.top() + 24), self.width() - 50, 18),
                        Qt.AlignLeft | Qt.AlignTop, self.subtitle)
         else:
-            p.setFont(ui_font(9))
-            p.setPen(color)
+            p.setFont(ui_font(9, bold=checked))
+            p.setPen(TEXT if checked else color)
             p.drawText(QRect(text_left, int(r.top()), self.width() - 50, int(r.height())),
                        Qt.AlignLeft | Qt.AlignVCenter, self.text())
         p.end()
