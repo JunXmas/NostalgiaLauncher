@@ -147,7 +147,33 @@ def _mix(a: QColor, b: QColor, t: float) -> QColor:
                   int(a.alpha() + (b.alpha() - a.alpha()) * t))
 
 
+_NAV_PM: dict = {}
+
+
+def _nav_pixmap(kind: str):
+    """Icon Aero (Windows 7) dạng ảnh cho thanh điều hướng; None nếu không có asset."""
+    if kind not in _NAV_PM:
+        from pathlib import Path
+
+        from PySide6.QtGui import QPixmap
+        f = Path(__file__).parent / "assets" / "icons" / f"{kind}.png"
+        pm = QPixmap(str(f)) if f.exists() else QPixmap()
+        _NAV_PM[kind] = pm if not pm.isNull() else None
+    return _NAV_PM[kind]
+
+
 def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
+    pm = _nav_pixmap(kind)
+    if pm is not None:
+        # Icon bóng nhiều màu: vẽ nguyên màu, hơi to hơn khung; độ mờ theo trạng thái
+        # (mục đang chọn/hover sáng rõ, mục thường dịu lại) để vẫn "sống" theo tương tác.
+        op = max(0.72, min(1.0, color.lightnessF() + 0.06))
+        p.save()
+        p.setOpacity(op)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        p.drawPixmap(rect.adjusted(-2.5, -2.5, 2.5, 2.5), pm, QRectF(pm.rect()))
+        p.restore()
+        return
     if kind == "cube":
         draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
     elif kind == "gear":
