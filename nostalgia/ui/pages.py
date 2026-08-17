@@ -842,8 +842,10 @@ class SkinsPage(Page):
             p.drawText(badge, Qt.AlignCenter, name)
         if self.skin is not None and self.skin.width() >= 64:
             scale = 9
+            # ox là mép trái (tay trái ở ox); cả người rộng 16 ô nên canh giữa
+            # theo 8 ô (nửa của 16), không phải 4 ô — nếu không sẽ lệch phải.
             self._draw_body(p, self.skin,
-                            int(panel.center().x() - 8 * scale / 2),
+                            int(panel.center().x() - 8 * scale),
                             int(panel.top() + 60), scale)
 
         # ----- cột phải: Saved skins -----
