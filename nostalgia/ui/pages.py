@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import mods as mods_mgr
 from .. import modrinth
+from ..i18n import language, language_name, tr
 from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
@@ -1231,6 +1232,20 @@ class SettingsPage(Page):
         self.bg_btn = AeroButton("CHANGE BACKGROUND", self, height=32, tone="neutral")
         self.bg_btn.clicked.connect(self.ctl.pick_background)
 
+        self.lang_btn = AeroButton(language_name(language()), self, height=30, tone="neutral")
+        self.lang_btn.clicked.connect(self._open_language)
+
+    def _open_language(self) -> None:
+        g = self.lang_btn.geometry()
+        from .window import SIDEBAR_W
+        anchor = QRect(g)
+        anchor.translate(SIDEBAR_W, 0)
+        self.ctl.open_language_menu(anchor)
+
+    def retranslate(self) -> None:
+        self.lang_btn.setText(language_name(language()))
+        self.update()
+
     @staticmethod
     def _total_memory_mb() -> int:
         """RAM thật của máy, tính bằng MB. Trả 0 nếu không hỏi được.
@@ -1316,6 +1331,7 @@ class SettingsPage(Page):
         self.snapshots.setGeometry(26, 368, 44, 22)
         self.close_on_launch.setGeometry(26, 408, 44, 22)
         self.check_updates.setGeometry(26, 448, 44, 22)
+        self.lang_btn.setGeometry(26, 508, 200, 30)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -1336,8 +1352,9 @@ class SettingsPage(Page):
                            Qt.AlignLeft | Qt.AlignVCenter, hint)
 
         label(26, f"Max memory — {gb:.1f} GB", "")
-        label(114, "Game folder")
-        label(190, "Java path")
+        label(114, tr("Game folder"))
+        label(190, tr("Java path"))
+        label(484, tr("Language"))
         label(266, "Microsoft Client ID",
               "Needed to sign in — portal.azure.com › App registrations › your app")
         p.setFont(ui_font(9))

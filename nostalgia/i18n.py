@@ -1,0 +1,128 @@
+"""Đa ngôn ngữ đơn giản: tr(<chuỗi tiếng Anh>) trả bản dịch theo ngôn ngữ đang chọn.
+
+Khoá dịch chính là chuỗi tiếng Anh, nên chuỗi nào CHƯA có bản dịch sẽ tự rơi về
+tiếng Anh — dịch dần cũng không vỡ giao diện.
+"""
+
+from __future__ import annotations
+
+# (mã, tên hiển thị) — hiện trong Settings.
+LANGUAGES = [
+    ("en", "English"), ("vi", "Tiếng Việt"), ("es", "Español"),
+    ("fr", "Français"), ("de", "Deutsch"), ("pt", "Português"),
+    ("ru", "Русский"), ("zh", "中文"), ("ja", "日本語"), ("ko", "한국어"),
+]
+
+# Bộ chuỗi UI chính. en là khoá; mỗi ngôn ngữ khác dịch những gì có, thiếu -> en.
+_T = {
+    "vi": {
+        "Home": "Trang chủ", "Instances": "Instance", "Mods": "Mods",
+        "Resource Packs": "Gói tài nguyên", "Shaders": "Shader",
+        "Servers": "Máy chủ", "Skin": "Skin", "Settings": "Cài đặt",
+        "Welcome back!": "Chào mừng trở lại!",
+        "What will we build today?": "Hôm nay ta xây gì nào?",
+        "My Instances": "Instance của tôi", "New Instance": "Instance mới",
+        "PLAY": "CHƠI", "NEW INSTANCE": "INSTANCE MỚI",
+        "Manage Account": "Quản lý tài khoản", "YOUR ACCOUNT": "TÀI KHOẢN",
+        "Connected": "Đã kết nối", "Offline": "Ngoại tuyến", "NEWS": "TIN TỨC",
+        "Language": "Ngôn ngữ", "Game folder": "Thư mục game",
+        "Java path": "Đường dẫn Java", "Everything is up to date!": "Mọi thứ đã mới nhất!",
+    },
+    "es": {
+        "Home": "Inicio", "Instances": "Instancias", "Resource Packs": "Paquetes de recursos",
+        "Shaders": "Shaders", "Servers": "Servidores", "Skin": "Skin", "Settings": "Ajustes",
+        "Welcome back!": "¡Bienvenido de nuevo!", "What will we build today?": "¿Qué construiremos hoy?",
+        "My Instances": "Mis instancias", "New Instance": "Nueva instancia", "PLAY": "JUGAR",
+        "NEW INSTANCE": "NUEVA INSTANCIA", "Manage Account": "Gestionar cuenta",
+        "YOUR ACCOUNT": "TU CUENTA", "Connected": "Conectado", "Offline": "Sin conexión",
+        "NEWS": "NOTICIAS", "Language": "Idioma", "Game folder": "Carpeta del juego",
+        "Java path": "Ruta de Java",
+    },
+    "fr": {
+        "Home": "Accueil", "Instances": "Instances", "Resource Packs": "Packs de ressources",
+        "Shaders": "Shaders", "Servers": "Serveurs", "Skin": "Skin", "Settings": "Paramètres",
+        "Welcome back!": "Bon retour !", "What will we build today?": "Que construisons-nous aujourd'hui ?",
+        "My Instances": "Mes instances", "New Instance": "Nouvelle instance", "PLAY": "JOUER",
+        "NEW INSTANCE": "NOUVELLE INSTANCE", "Manage Account": "Gérer le compte",
+        "YOUR ACCOUNT": "VOTRE COMPTE", "Connected": "Connecté", "Offline": "Hors ligne",
+        "NEWS": "ACTUALITÉS", "Language": "Langue", "Game folder": "Dossier du jeu",
+        "Java path": "Chemin Java",
+    },
+    "de": {
+        "Home": "Startseite", "Instances": "Instanzen", "Resource Packs": "Ressourcenpakete",
+        "Shaders": "Shader", "Servers": "Server", "Skin": "Skin", "Settings": "Einstellungen",
+        "Welcome back!": "Willkommen zurück!", "What will we build today?": "Was bauen wir heute?",
+        "My Instances": "Meine Instanzen", "New Instance": "Neue Instanz", "PLAY": "SPIELEN",
+        "NEW INSTANCE": "NEUE INSTANZ", "Manage Account": "Konto verwalten",
+        "YOUR ACCOUNT": "DEIN KONTO", "Connected": "Verbunden", "Offline": "Offline",
+        "NEWS": "NEUES", "Language": "Sprache", "Game folder": "Spielordner",
+        "Java path": "Java-Pfad",
+    },
+    "pt": {
+        "Home": "Início", "Instances": "Instâncias", "Resource Packs": "Pacotes de recursos",
+        "Shaders": "Shaders", "Servers": "Servidores", "Skin": "Skin", "Settings": "Configurações",
+        "Welcome back!": "Bem-vindo de volta!", "What will we build today?": "O que vamos construir hoje?",
+        "My Instances": "Minhas instâncias", "New Instance": "Nova instância", "PLAY": "JOGAR",
+        "NEW INSTANCE": "NOVA INSTÂNCIA", "Manage Account": "Gerenciar conta",
+        "YOUR ACCOUNT": "SUA CONTA", "Connected": "Conectado", "Offline": "Offline",
+        "NEWS": "NOTÍCIAS", "Language": "Idioma", "Game folder": "Pasta do jogo",
+        "Java path": "Caminho do Java",
+    },
+    "ru": {
+        "Home": "Главная", "Instances": "Сборки", "Mods": "Моды",
+        "Resource Packs": "Ресурспаки", "Shaders": "Шейдеры", "Servers": "Серверы",
+        "Skin": "Скин", "Settings": "Настройки", "Welcome back!": "С возвращением!",
+        "What will we build today?": "Что построим сегодня?", "My Instances": "Мои сборки",
+        "New Instance": "Новая сборка", "PLAY": "ИГРАТЬ", "NEW INSTANCE": "НОВАЯ СБОРКА",
+        "Manage Account": "Управление аккаунтом", "YOUR ACCOUNT": "ВАШ АККАУНТ",
+        "Connected": "Подключено", "Offline": "Оффлайн", "NEWS": "НОВОСТИ",
+        "Language": "Язык", "Game folder": "Папка игры", "Java path": "Путь к Java",
+    },
+    "zh": {
+        "Home": "主页", "Instances": "实例", "Mods": "模组", "Resource Packs": "资源包",
+        "Shaders": "光影", "Servers": "服务器", "Skin": "皮肤", "Settings": "设置",
+        "Welcome back!": "欢迎回来！", "What will we build today?": "今天要建造什么？",
+        "My Instances": "我的实例", "New Instance": "新建实例", "PLAY": "开始游戏",
+        "NEW INSTANCE": "新建实例", "Manage Account": "管理账户", "YOUR ACCOUNT": "你的账户",
+        "Connected": "已连接", "Offline": "离线", "NEWS": "新闻", "Language": "语言",
+        "Game folder": "游戏文件夹", "Java path": "Java 路径",
+    },
+    "ja": {
+        "Home": "ホーム", "Instances": "インスタンス", "Mods": "Mod",
+        "Resource Packs": "リソースパック", "Shaders": "シェーダー", "Servers": "サーバー",
+        "Skin": "スキン", "Settings": "設定", "Welcome back!": "おかえりなさい！",
+        "What will we build today?": "今日は何を作る？", "My Instances": "マイインスタンス",
+        "New Instance": "新規インスタンス", "PLAY": "プレイ", "NEW INSTANCE": "新規インスタンス",
+        "Manage Account": "アカウント管理", "YOUR ACCOUNT": "アカウント", "Connected": "接続済み",
+        "Offline": "オフライン", "NEWS": "ニュース", "Language": "言語",
+        "Game folder": "ゲームフォルダー", "Java path": "Java のパス",
+    },
+    "ko": {
+        "Home": "홈", "Instances": "인스턴스", "Mods": "모드", "Resource Packs": "리소스 팩",
+        "Shaders": "셰이더", "Servers": "서버", "Skin": "스킨", "Settings": "설정",
+        "Welcome back!": "다시 오신 걸 환영해요!", "What will we build today?": "오늘은 무엇을 만들까요?",
+        "My Instances": "내 인스턴스", "New Instance": "새 인스턴스", "PLAY": "플레이",
+        "NEW INSTANCE": "새 인스턴스", "Manage Account": "계정 관리", "YOUR ACCOUNT": "내 계정",
+        "Connected": "연결됨", "Offline": "오프라인", "NEWS": "뉴스", "Language": "언어",
+        "Game folder": "게임 폴더", "Java path": "Java 경로",
+    },
+}
+
+_current = "en"
+
+
+def set_language(code: str) -> None:
+    global _current
+    _current = code if code in dict(LANGUAGES) else "en"
+
+
+def language() -> str:
+    return _current
+
+
+def language_name(code: str) -> str:
+    return dict(LANGUAGES).get(code, code)
+
+
+def tr(s: str) -> str:
+    return _T.get(_current, {}).get(s, s)

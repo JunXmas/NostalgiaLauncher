@@ -14,6 +14,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QAbstractButton, QWidget
 
+from ..i18n import tr
 from ..paths import APP_NAME
 from .glass import GlassPanel, draw_glass_rect
 from .hero import render_hero
@@ -252,7 +253,8 @@ class LauncherWindow(QWidget):
 
         self.nav: dict[str, SidebarItem] = {}
         for key, label, icon in NAV:
-            item = SidebarItem(label, icon, self.sidebar)
+            item = SidebarItem(tr(label), icon, self.sidebar)
+            item._i18n_key = label
             item.clicked.connect(lambda _=False, k=key: self.nav_clicked.emit(k))
             self.nav[key] = item
         self.nav["home"].setChecked(True)
@@ -266,6 +268,19 @@ class LauncherWindow(QWidget):
         self.btn_min.clicked.connect(self.showMinimized)
         self.btn_max.clicked.connect(
             lambda: self.showNormal() if self.isMaximized() else self.showMaximized())
+
+    def retranslate(self) -> None:
+        """Đổi ngôn ngữ: cập nhật chữ trên nav + nút, rồi vẽ lại toàn bộ."""
+        for item in self.nav.values():
+            key = getattr(item, "_i18n_key", None)
+            if key:
+                item.setText(tr(key))
+            item.update()
+        for page in getattr(self, "pages", {}).values():
+            if hasattr(page, "retranslate"):
+                page.retranslate()
+            page.update()
+        self.update()
 
     def rebuild_hero(self) -> None:
         """Dựng lại ảnh nền + bản blur (gọi khi đổi background_path)."""

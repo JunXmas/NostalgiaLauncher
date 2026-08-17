@@ -62,6 +62,7 @@ class Settings:
     check_updates: bool = True    # tự tìm bản mới trên GitHub khi khởi động
     # Backend chung (Cloudflare Worker): upload skin + khôi phục danh tính.
     backend_url: str = "https://nostalgia-backend.junbob.workers.dev"
+    language: str = "en"          # mã ngôn ngữ giao diện (xem nostalgia/i18n.py)
     _path: Path | None = field(default=None, repr=False, compare=False)
 
     @classmethod

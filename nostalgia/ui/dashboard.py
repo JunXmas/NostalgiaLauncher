@@ -11,6 +11,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QWidget
 
+from ..i18n import tr
+
 from .glass import draw_glass_rect
 from .theme import (
     ACCENT, AERO_TINT, CONNECTED, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT,
@@ -64,12 +66,18 @@ class HomeDashboard(QWidget):
         self._avatar_url = ""
         self.setMouseTracking(True)
 
-        self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
+        self.play_btn = AeroButton(tr("PLAY"), self, height=58, arrow=True)
         self.play_btn.clicked.connect(self.ctl.toggle_play)
-        self.new_btn = AeroButton("NEW INSTANCE", self, height=30, tone="neutral")
+        self.new_btn = AeroButton(tr("NEW INSTANCE"), self, height=30, tone="neutral")
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
-        self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")
+        self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
+
+    def retranslate(self) -> None:
+        self.play_btn.setText(tr("PLAY"))
+        self.new_btn.setText(tr("NEW INSTANCE"))
+        self.manage_btn.setText(tr("Manage Account"))
+        self.update()
 
     def _got_avatar(self, data) -> None:
         if data:
@@ -255,11 +263,11 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(22, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(hero.left() + 68, hero.top() + 20, hero.width() - 90, 34),
-                   Qt.AlignLeft | Qt.AlignVCenter, "Welcome back!")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("Welcome back!"))
         p.setFont(ui_font(10))
         p.setPen(TEXT_DIM)
         p.drawText(QRect(hero.left() + 70, hero.top() + 54, hero.width() - 90, 20),
-                   Qt.AlignLeft | Qt.AlignVCenter, "What will we build today?")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("What will we build today?"))
 
         # version pill cạnh PLAY
         pill = QRect(hero.left() + 250, hero.top() + 108, hero.width() - 250 - 26, 34)
@@ -280,7 +288,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(12, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
-                   Qt.AlignLeft | Qt.AlignVCenter, "My Instances")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("My Instances"))
         row_top = area.top() + 34
         current = self.ctl.instances.active
 
@@ -324,7 +332,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(rect.left(), rect.top() + 96, rect.width(), 20),
-                   Qt.AlignHCenter | Qt.AlignVCenter, "New Instance")
+                   Qt.AlignHCenter | Qt.AlignVCenter, tr("New Instance"))
 
     def _paint_instance_card(self, p, rect, inst, selected, ready, hover=False):
         self._card(p, rect, radius=7, strong=True)
@@ -405,7 +413,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(acc.left() + 14, acc.top() + 10, acc.width() - 28, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, "YOUR ACCOUNT")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("YOUR ACCOUNT"))
         win = self.window()
         # avatar
         av = QRect(acc.left() + 14, acc.top() + 32, 40, 40)
@@ -449,7 +457,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(news.left() + 14, news.top() + 10, news.width() - 28, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, "NEWS")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("NEWS"))
         y = news.top() + 32
         if not self._news:
             p.setFont(ui_font(8))

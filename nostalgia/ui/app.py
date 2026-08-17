@@ -41,6 +41,8 @@ class Controller:
     def __init__(self, window: LauncherWindow):
         self.window = window
         self.settings = Settings.load()
+        from .. import i18n
+        i18n.set_language(self.settings.language)
         self.store = accounts.AccountStore()
         self.identities = identity_mod.IdentityStore()
         self.installer = Installer(self.settings.game_path)
@@ -587,6 +589,22 @@ class Controller:
         self.settings.save()
         self.installer = Installer(self.settings.game_path)
         self.pages["installations"].refresh()
+
+    def set_language(self, code) -> None:
+        if not code:
+            return
+        from .. import i18n
+        i18n.set_language(code)
+        self.settings.language = code
+        self.settings.save()
+        self.window.retranslate()
+
+    def open_language_menu(self, anchor: QRect) -> None:
+        from .. import i18n
+        items = [MenuItem(kind="header", label="Language")]
+        for code, name in i18n.LANGUAGES:
+            items.append(MenuItem(label=name, checked=code == i18n.language(), data=code))
+        popup(self.window, items, anchor, self.set_language, width=220)
 
     # ---------- việc chạy nền ----------
 
