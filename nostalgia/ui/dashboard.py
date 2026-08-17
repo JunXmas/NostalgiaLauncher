@@ -35,6 +35,18 @@ def _hash_hue(name: str) -> QColor:
     return table[h % len(table)]
 
 
+_CUBE_IMG = None
+
+
+def _cube_image():
+    """Grass block dùng làm icon instance mặc định (assets/cube.png)."""
+    global _CUBE_IMG
+    if _CUBE_IMG is None:
+        from pathlib import Path
+        _CUBE_IMG = QImage(str(Path(__file__).parent / "assets" / "cube.png"))
+    return _CUBE_IMG
+
+
 class HomeDashboard(QWidget):
     scrim = False  # để hero hiện xuyên qua
 
@@ -344,8 +356,15 @@ class HomeDashboard(QWidget):
             p.drawRoundedRect(QRectF(thumb), 4, 4)
             p.setBrush(gloss_gradient(thumb.height(), 0.5))
             p.drawRoundedRect(QRectF(thumb), 4, 4)
-            draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
-                           QColor(230, 240, 250), col.darker(150))
+            cube = _cube_image()
+            if cube is not None and not cube.isNull():
+                p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                d = 46
+                p.drawImage(QRectF(thumb.center().x() - d / 2, thumb.center().y() - d / 2, d, d),
+                            cube, QRectF(cube.rect()))
+            else:
+                draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
+                               QColor(230, 240, 250), col.darker(150))
         if hover:
             # Rê chuột -> phủ nền tối + hiện ▶: dạy người dùng "bấm để mở/chơi".
             p.setPen(Qt.NoPen)
