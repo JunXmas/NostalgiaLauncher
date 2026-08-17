@@ -797,7 +797,7 @@ class SkinsPage(Page):
         from .. import skins
         account = self.ctl.current_account()
         self.skin, self.note = None, ""
-        self._recent = skins.recent()
+        self._recent = skins.recent(account.username if account else "")
         if account is None:
             self.note = "No accounts yet — add one on the Home page."
         elif self._recent:
@@ -819,6 +819,11 @@ class SkinsPage(Page):
 
     def _got_defaults(self, items) -> None:
         self._defaults = items or []
+        # Tài khoản chưa có skin/lịch sử -> hiện tạm Steve để preview không trống.
+        if self.skin is None and self._defaults:
+            img = QImage()
+            if img.load(self._defaults[0]["path"]):
+                self.skin = img
         self.update()
 
     def _got_account_skins(self, items) -> None:

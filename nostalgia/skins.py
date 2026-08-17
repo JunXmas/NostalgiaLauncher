@@ -51,24 +51,30 @@ def ensure_defaults() -> list[dict]:
     return out
 
 
-def _index() -> list[dict]:
+def _index() -> dict:
+    """Lịch sử theo TÀI KHOẢN: {account_key: [ {file,variant,ts} ]}."""
     if INDEX_PATH.exists():
         try:
-            return json.loads(INDEX_PATH.read_text())
+            data = json.loads(INDEX_PATH.read_text())
+            return data if isinstance(data, dict) else {}   # bỏ định dạng list global cũ
         except (json.JSONDecodeError, OSError):
-            return []
-    return []
+            return {}
+    return {}
 
 
-def _write_index(items: list[dict]) -> None:
+def _write_index(data: dict) -> None:
     SKINS_DIR.mkdir(parents=True, exist_ok=True)
-    INDEX_PATH.write_text(json.dumps(items, indent=2))
+    INDEX_PATH.write_text(json.dumps(data, indent=2))
 
 
-def recent() -> list[dict]:
-    """5 skin gần nhất, mới nhất trước: [{file, variant, ts}] với file là đường dẫn tuyệt đối."""
+def _acc_key(account_key: str) -> str:
+    return (account_key or "").strip().lower() or "_"
+
+
+def recent(account_key: str = "") -> list[dict]:
+    """5 skin gần nhất CỦA TÀI KHOẢN này (theo username), mới nhất trước."""
     out = []
-    for it in _index():
+    for it in _index().get(_acc_key(account_key), []):
         p = SKINS_DIR / it["file"]
         if p.exists():
             out.append({"path": str(p), "variant": it.get("variant", "classic"),
@@ -76,19 +82,24 @@ def recent() -> list[dict]:
     return out
 
 
-def remember(png: bytes, variant: str = "classic") -> str:
-    """Lưu skin vào lịch sử (khử trùng theo nội dung), giữ tối đa 5. Trả về đường dẫn file."""
+def remember(png: bytes, variant: str = "classic", account_key: str = "") -> str:
+    """Lưu skin vào lịch sử của tài khoản (khử trùng, giữ tối đa 5). Trả về đường dẫn file."""
     SKINS_DIR.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha1(png).hexdigest()[:16]
     fname = f"{digest}.png"
     (SKINS_DIR / fname).write_bytes(png)
-    items = [it for it in _index() if it.get("file") != fname]
+    data = _index()
+    k = _acc_key(account_key)
+    items = [it for it in data.get(k, []) if it.get("file") != fname]
     items.insert(0, {"file": fname, "variant": variant, "ts": int(time.time())})
-    # cắt còn 5, xoá file thừa
     keep, drop = items[:MAX_RECENT], items[MAX_RECENT:]
+    data[k] = keep
+    # File dùng chung theo nội dung: chỉ xoá khi KHÔNG tài khoản nào còn tham chiếu.
+    used = {it["file"] for lst in data.values() for it in lst}
     for it in drop:
-        (SKINS_DIR / it["file"]).unlink(missing_ok=True)
-    _write_index(keep)
+        if it["file"] not in used:
+            (SKINS_DIR / it["file"]).unlink(missing_ok=True)
+    _write_index(data)
     return str(SKINS_DIR / fname)
 
 

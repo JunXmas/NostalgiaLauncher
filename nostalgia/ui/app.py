@@ -646,7 +646,7 @@ class Controller:
         def work():
             if online:
                 skins.apply_to_mojang(account.access_token, png, slim=variant == "slim")
-            skins.remember(png, variant)
+            skins.remember(png, variant, account.username if account else "")
             # Đẩy lên backend chung để offline nhìn thấy nhau (qua CustomSkinLoader).
             # Lỗi backend không được chặn việc đổi skin cục bộ.
             if account:
