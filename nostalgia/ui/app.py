@@ -188,8 +188,25 @@ class Controller:
                                   data=inst.name))
         if not self.instances.all():
             items.append(MenuItem(label="(none — click NEW INSTANCE)", enabled=False))
-        popup(self.window, items, anchor,
-              lambda n: self.set_active_instance(n) if n else None, width=260)
+        items.append(MenuItem(kind="separator"))
+        items.append(MenuItem(label="＋ Pick a version (Optimized)",
+                              sublabel="Fabulously Optimized, ready to play",
+                              data="\x00optimized"))
+        popup(self.window, items, anchor, self._instance_menu_chosen, width=260)
+
+    def _instance_menu_chosen(self, data) -> None:
+        if data == "\x00optimized":
+            self.begin_optimized_instance()
+        elif data:
+            self.set_active_instance(data)
+
+    def begin_optimized_instance(self) -> None:
+        """Chọn nhanh phiên bản -> tạo instance Fabulously Optimized, không hỏi tên."""
+        self._new_instance_name = None
+        self._new_instance_loader = "optimized"
+        self.window.set_status("Fetching Fabulously Optimized versions…")
+        self._run(self._fo_info, self._fo_ready,
+                  lambda m: self.window.set_status(f"Couldn't reach Modrinth: {m}"))
 
     def _java_status(self) -> str:
         """Java hiển thị ở status bar — chỉ đọc dữ liệu cục bộ, không gọi mạng."""
@@ -1043,7 +1060,7 @@ class Controller:
             return
         name, loader = self._new_instance_name, self._new_instance_loader
         if loader == "optimized":
-            hit = {"slug": self.FO_SLUG, "title": name,
+            hit = {"slug": self.FO_SLUG, "title": name or f"Fabulously Optimized {mc}",
                    "icon_url": getattr(self, "_fo_icon", "")}
             self.install_modpack(hit, game_version=mc)
             return
