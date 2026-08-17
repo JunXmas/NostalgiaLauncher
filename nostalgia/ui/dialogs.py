@@ -180,6 +180,8 @@ class LoaderDialog(GlassDialog):
     picked = Signal(str)  # phát ra khoá loader: vanilla/fabric/forge/neoforge
 
     ROWS = [
+        ("Optimized", "optimized",
+         "Fabulously Optimized preinstalled — best FPS, zero setup", QColor(120, 200, 120)),
         ("Vanilla", "vanilla", "Plain Minecraft, no mods", QColor(120, 170, 90)),
         ("Fabric", "fabric", "Light and fast — most modern mods", QColor(150, 128, 104)),
         ("Forge", "forge", "The classic loader for big mods", QColor(90, 150, 210)),

@@ -383,7 +383,7 @@ class Controller:
     def begin_browse_modpacks(self) -> None:
         self.go("modpacks")
 
-    def install_modpack(self, hit) -> None:
+    def install_modpack(self, hit, game_version: str | None = None) -> None:
         slug = hit.get("slug") or hit.get("project_id")
         title = hit.get("title") or slug
         name = self.instances.unique_name(title)
@@ -394,7 +394,8 @@ class Controller:
             import tempfile
             from .. import jre
             from ..install import download
-            f = modrinth_mod.best_file(slug)
+            f = modrinth_mod.best_file(
+                slug, game_versions=[game_version] if game_version else None)
             if not f:
                 raise RuntimeError("no downloadable modpack file")
             on_status("Downloading modpack…")
@@ -982,7 +983,11 @@ class Controller:
             return
         self._new_instance_loader = loader
         self.window.set_status("Fetching versions…")
-        if loader in ("", "vanilla"):
+        if loader == "optimized":
+            self.window.set_status("Fetching Fabulously Optimized versions…")
+            self._run(self._fo_info, self._fo_ready,
+                      lambda m: self.window.set_status(f"Couldn't reach Modrinth: {m}"))
+        elif loader in ("", "vanilla"):
             self._run(lambda: self.installer.list_versions("release"),
                       lambda vs: self._open_version_picker(vs, vanilla=True),
                       lambda m: self.window.set_status(f"Couldn't list versions: {m}"))
@@ -990,6 +995,29 @@ class Controller:
             self._run(lambda: loaders_mod.game_versions(loader) or [],
                       lambda vs: self._open_version_picker(vs, vanilla=False),
                       lambda m: self.window.set_status(f"Couldn't list {loader} versions: {m}"))
+
+    FO_SLUG = "fabulously-optimized"
+
+    def _fo_info(self):
+        """(danh sách phiên bản FO hỗ trợ, icon_url) — cho luồng 'Optimized'."""
+        hits = modrinth_mod.search("Fabulously Optimized", "modpack", limit=1)
+        icon = hits[0].get("icon_url", "") if hits else ""
+        seen, gvs = set(), []
+        for v in modrinth_mod.versions(self.FO_SLUG):
+            for gv in v.get("game_versions", []):
+                if gv not in seen and gv[:1].isdigit() and "-" not in gv and "w" not in gv:
+                    seen.add(gv)
+                    gvs.append(gv)
+        gvs.sort(key=lambda s: [int(x) for x in s.split(".") if x.isdigit()], reverse=True)
+        return gvs, icon
+
+    def _fo_ready(self, info) -> None:
+        gvs, icon = info
+        self._fo_icon = icon
+        if not gvs:
+            self.window.set_status("Couldn't list Fabulously Optimized versions.")
+            return
+        self._open_version_picker(gvs, vanilla=False)
 
     def _open_version_picker(self, versions, *, vanilla: bool) -> None:
         from .dialogs import VersionPickerDialog
@@ -1014,6 +1042,11 @@ class Controller:
         if not mc:
             return
         name, loader = self._new_instance_name, self._new_instance_loader
+        if loader == "optimized":
+            hit = {"slug": self.FO_SLUG, "title": name,
+                   "icon_url": getattr(self, "_fo_icon", "")}
+            self.install_modpack(hit, game_version=mc)
+            return
         if loader in ("", "vanilla"):
             self.create_instance(name, mc)
             self.go("home")
