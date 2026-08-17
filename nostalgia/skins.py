@@ -109,6 +109,32 @@ def load_file(path: str | Path) -> bytes:
     return Path(path).read_bytes()
 
 
+CSL_PROJECT = "customskinloader"          # slug trên Modrinth
+
+
+def write_csl_config(game_dir: Path, backend_url: str) -> Path:
+    """Ghi CustomSkinLoader.json trỏ nguồn skin về backend của mình (ưu tiên),
+    Mojang làm dự phòng. CSL sẽ tự lấy skin theo tên khi render người chơi khác."""
+    cfg = {
+        "version": "auto",
+        "loadlist": [
+            {"name": "NostalgiaLauncher", "type": "CustomSkinAPI",
+             "root": backend_url.rstrip("/")},
+            {"name": "Mojang", "type": "MojangAPI",
+             "apiRoot": "https://api.mojang.com/",
+             "sessionRoot": "https://sessionserver.mojang.com/"},
+        ],
+        "enableSkull": True, "enableDynamicSkull": True,
+        "enableTransparentSkin": True, "enableCape": True,
+        "cacheExpiry": 0, "enableCacheAutoClear": True,
+    }
+    d = Path(game_dir) / "CustomSkinLoader"
+    d.mkdir(parents=True, exist_ok=True)
+    out = d / "CustomSkinLoader.json"
+    out.write_text(json.dumps(cfg, indent=4))
+    return out
+
+
 def upload_to_backend(backend_url: str, username: str, png: bytes,
                       variant: str = "classic", access_token: str = "") -> None:
     """Đẩy skin lên backend chung để người khác (qua CustomSkinLoader) nhìn thấy.

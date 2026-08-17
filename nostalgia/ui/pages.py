@@ -659,6 +659,12 @@ class InstancePage(Page):
             lambda: self.ctl.install_optifine(self.instance) if self.instance else None)
         self.optifine_btn.hide()
 
+        # Bật "shared skins" (CustomSkinLoader) — chỉ instance có loader (Fabric/Forge).
+        self.shared_btn = AeroButton("Shared skins", self, height=28, tone="neutral")
+        self.shared_btn.clicked.connect(
+            lambda: self.ctl.enable_shared_skins(self.instance) if self.instance else None)
+        self.shared_btn.hide()
+
         self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
         self.tabs.changed.connect(self._tab)
 
@@ -675,8 +681,20 @@ class InstancePage(Page):
         from .. import optifine
         self.optifine_btn.setVisible(
             optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
+        v = (instance.version or "").lower()
+        self.shared_btn.setVisible(any(k in v for k in ("fabric", "forge", "neoforge")))
+        self._relayout_actions()
         self.tabs.current = 0
         self._tab(0)
+
+    def _relayout_actions(self) -> None:
+        # Xếp các nút hành động (Shared skins / OptiFine) từ phải sang, chỉ cái đang hiện.
+        x = self.width() - 20
+        for btn in (self.optifine_btn, self.shared_btn):
+            if btn.isVisible():
+                x -= 128
+                btn.setGeometry(x, 101, 128, 28)
+                x -= 8
 
     def refresh(self) -> None:
         self.ctl._update_play_button()
@@ -704,7 +722,7 @@ class InstancePage(Page):
         self.play_btn.setGeometry(w - 178, top - 4, 150, 40)
         self.edit_btn.setGeometry(w - 288, top, 96, 32)
         self.tabs.setGeometry(24, 102, w - 48, 30)
-        self.optifine_btn.setGeometry(w - 148, 101, 128, 28)  # cạnh phải hàng tab
+        self._relayout_actions()                              # nút ở cạnh phải hàng tab
         self.content.setGeometry(0, 138, w, h - 138)
         self.logs.setGeometry(24, 142, w - 48, h - 166)
 
