@@ -742,6 +742,13 @@ class Controller:
         if path:
             self.apply_skin_file(path, variant)
 
+    def open_skin_editor(self, start_img=None, variant: str = "classic") -> None:
+        """Mở trình vẽ skin; khi LƯU thì áp qua luồng đổi skin sẵn có."""
+        from .skin_editor import SkinEditorDialog
+        dlg = SkinEditorDialog(self.window, start_img, variant)
+        dlg.saved.connect(lambda png, var: self.apply_skin_bytes(png, var))
+        dlg.show()
+
     def apply_skin_file(self, path: str, variant: str = "classic") -> None:
         try:
             with open(path, "rb") as f:

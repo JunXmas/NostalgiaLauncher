@@ -914,6 +914,8 @@ class SkinsPage(Page):
                     self.update()
                 elif action == "add":
                     self.ctl.pick_and_apply_skin(self._variant)
+                elif action == "edit":
+                    self.ctl.open_skin_editor(self.skin, self._variant)
                 elif action == "cape":
                     self.ctl.apply_cape(path or None)
                 else:  # recent | default
@@ -976,7 +978,10 @@ class SkinsPage(Page):
         add = QRect(rx, y, self.TILE_W, self.TILE_H)
         self._paint_add_tile(p, add, self._hover == len(self._tiles))
         self._tiles.append((add, "add", "", ""))
-        x = rx + self.TILE_W + self.GAP
+        edit = QRect(rx + self.TILE_W + self.GAP, y, self.TILE_W, self.TILE_H)
+        self._paint_edit_tile(p, edit, self._hover == len(self._tiles))
+        self._tiles.append((edit, "edit", "", ""))
+        x = edit.right() + self.GAP
         current_path = self._recent[0]["path"] if self._recent else None
         for it in self._recent:
             tile = QRect(x, y, self.TILE_W, self.TILE_H)
@@ -1092,6 +1097,19 @@ class SkinsPage(Page):
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rect.left(), rect.bottom() - 26, rect.width(), 18),
                    Qt.AlignCenter, "Add a skin")
+
+    def _paint_edit_tile(self, p, rect: QRect, hovered: bool):
+        self._tile_bg(p, rect, hovered, False)
+        cx, cy = rect.center().x(), rect.center().y() - 8
+        p.setPen(QPen(TEXT_DIM, 3))
+        p.setBrush(Qt.NoBrush)
+        p.drawLine(cx - 10, cy + 10, cx + 8, cy - 8)      # thân bút
+        p.drawLine(cx + 8, cy - 8, cx + 12, cy - 4)       # đầu bút
+        p.drawLine(cx - 10, cy + 10, cx - 6, cy + 13)     # ngòi
+        p.setFont(ui_font(8))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(rect.left(), rect.bottom() - 26, rect.width(), 18),
+                   Qt.AlignCenter, "Draw skin")
 
     def _paint_skin_tile(self, p, rect: QRect, item: dict, selected: bool, hovered: bool):
         self._tile_bg(p, rect, hovered, selected)
