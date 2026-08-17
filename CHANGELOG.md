@@ -2,6 +2,13 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.1
+- **Fixed: updating could wipe your instance list.** Settings and instance
+  data are now written atomically, so an update restarting the app mid-save
+  can no longer leave the file empty (which made instances vanish and worlds
+  look deleted). Instance data also loads defensively across versions. Your
+  worlds were never actually deleted — they stay in your game folder.
+
 ## 0.7.0
 - **One-click optimized instances.** Pick a Minecraft version and get a
   ready-to-play instance with the optimization stack already installed —
