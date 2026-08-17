@@ -6,7 +6,7 @@
 ; Kết quả: dist\installer\NostalgiaLauncher-<phiên bản>-Setup.exe
 
 #define AppName "Nostalgia Launcher"
-#define AppVersion "0.4.0"
+#define AppVersion "0.5.0"
 #define AppPublisher "Nostalgia Launcher"
 #define AppURL "https://github.com/jun/nostalgia-launcher"
 #define AppExeName "Nostalgia Launcher.exe"

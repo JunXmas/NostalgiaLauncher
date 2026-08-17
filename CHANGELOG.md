@@ -2,6 +2,17 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.5.0
+- **Sign in with Microsoft just works.** The launcher now ships with its own
+  approved Microsoft application, so you no longer have to create and paste an
+  Azure client ID — click sign in and go. (You can still override it with your
+  own ID in Settings or the `MC_CLIENT_ID` environment variable.)
+- **Fixed: creating a legacy instance (e.g. Forge 1.12.2) failed.** Older
+  Minecraft versions could crash mid-download or the Forge installer would give
+  up on a dropped connection. Asset downloads are now de-duplicated and retried,
+  the loader installer retries too, and a truncated version file re-downloads
+  itself instead of erroring out.
+
 ## 0.4.0
 - **The whole UI feels alive now.** Every button lifts, glows and casts a
   softer shadow as you hover — as if floating up to be pressed — and sinks

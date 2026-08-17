@@ -1,14 +1,14 @@
 JVM info: Oracle Corporation - 1.8.0_202 - 25.202-b08
 java.net.preferIPv4Stack=true
-Current Time: 16/08/2026 23:34:44
-Host: files.minecraftforge.net [172.67.161.211, 104.21.58.163]
-Host: maven.minecraftforge.net [172.67.161.211, 104.21.58.163]
+Current Time: 17/08/2026 00:05:50
+Host: files.minecraftforge.net [104.21.58.163, 172.67.161.211]
+Host: maven.minecraftforge.net [104.21.58.163, 172.67.161.211]
 Host: libraries.minecraft.net [13.107.226.39, 13.107.253.39]
-Host: launchermeta.mojang.com [13.107.253.39, 13.107.226.39]
-Host: piston-meta.mojang.com [13.107.226.39, 13.107.253.39]
-Host: sessionserver.mojang.com [150.171.110.65]
+Host: launchermeta.mojang.com [13.107.226.39, 13.107.253.39]
+Host: piston-meta.mojang.com [13.107.253.39, 13.107.226.39]
+Host: sessionserver.mojang.com [150.171.110.70]
 Host: authserver.mojang.com [Unknown]
-Target Directory: /tmp/forgestore_2x6vpr2b
+Target Directory: /home/jun/.nostalgia-launcher
 Extracting json
 Considering minecraft client jar
 Downloading libraries
