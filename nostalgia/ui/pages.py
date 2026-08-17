@@ -778,6 +778,10 @@ class SkinsPage(Page):
         self._variant = "classic"                # kiểu tay đang chọn: classic/slim
         self._tiles: list[tuple[QRect, str, str, str]] = []  # (rect, action, path, variant)
         self._hover = -1
+        self._yaw = -28.0        # góc xoay preview 3D (kéo chuột để đổi)
+        self._pitch = 12.0
+        self._preview_rect = QRect()
+        self._drag_from = None
         self.setMouseTracking(True)
 
     def refresh(self) -> None:
@@ -856,8 +860,19 @@ class SkinsPage(Page):
 
     def mouseMoveEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
+        if self._drag_from is not None:                # đang xoay preview
+            self._yaw += (pos.x() - self._drag_from.x()) * 0.6
+            self._pitch = max(-32.0, min(32.0, self._pitch - (pos.y() - self._drag_from.y()) * 0.5))
+            self._drag_from = pos
+            self.update()
+            return
         hit = next((i for i, t in enumerate(self._tiles) if t[0].contains(pos)), -1)
-        self.setCursor(Qt.PointingHandCursor if hit >= 0 else Qt.ArrowCursor)
+        if hit >= 0:
+            self.setCursor(Qt.PointingHandCursor)
+        elif self._preview_rect.contains(pos) and self.skin is not None:
+            self.setCursor(Qt.OpenHandCursor)          # gợi ý "kéo để xoay"
+        else:
+            self.setCursor(Qt.ArrowCursor)
         if hit != self._hover:
             self._hover = hit
             self.update()
@@ -875,6 +890,14 @@ class SkinsPage(Page):
                     self._variant = variant
                     self.ctl.apply_skin_file(path, variant)
                 return
+        if self._preview_rect.contains(pos) and self.skin is not None:
+            self._drag_from = pos                      # bắt đầu xoay
+            self.setCursor(Qt.ClosedHandCursor)
+
+    def mouseReleaseEvent(self, e):  # noqa: N802
+        if self._drag_from is not None:
+            self._drag_from = None
+            self.setCursor(Qt.OpenHandCursor)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
@@ -901,13 +924,14 @@ class SkinsPage(Page):
             p.drawRoundedRect(badge, 5, 5)
             p.setPen(TEXT)
             p.drawText(badge, Qt.AlignCenter, name)
+        # vùng preview 3D (kéo chuột để xoay)
+        self._preview_rect = QRect(int(panel.left()), int(panel.top() + 52),
+                                   int(panel.width()), int(panel.height() - 100))
         if self.skin is not None and self.skin.width() >= 64:
-            scale = 9
-            # ox là mép trái (tay trái ở ox); cả người rộng 16 ô nên canh giữa
-            # theo 8 ô (nửa của 16), không phải 4 ô — nếu không sẽ lệch phải.
-            self._draw_body(p, self.skin,
-                            int(panel.center().x() - 8 * scale),
-                            int(panel.top() + 60), scale, self._variant == "slim")
+            from . import skin3d
+            skin3d.render(p, self.skin, self._preview_rect.center().x(),
+                          self._preview_rect.center().y(), 8.0,
+                          self._yaw, self._pitch, self._variant == "slim")
 
         # toggle Classic / Slim ở đáy thẻ trái
         self._paint_variant_toggle(p, panel)
