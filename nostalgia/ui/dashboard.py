@@ -210,10 +210,19 @@ class HomeDashboard(QWidget):
         p.drawLine(int(inner.left() + radius), int(inner.bottom() - 1),
                    int(inner.right() - radius), int(inner.bottom() - 1))
 
+    def _draw_logo(self, p, rect):
+        """Vẽ logo lá vào rect; nếu thiếu asset thì fallback về cube vẽ tay."""
+        from .window import logo_pixmap
+        logo = logo_pixmap()
+        if logo is not None and not logo.isNull():
+            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            p.drawPixmap(rect, logo, QRectF(logo.rect()))
+        else:
+            draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
+
     def _paint_hero(self, p, hero):
         self._card(p, hero, radius=9, strong=True)
-        draw_cube_icon(p, QRectF(hero.left() + 24, hero.top() + 22, 34, 34),
-                       QColor(126, 190, 92), QColor(150, 112, 78))
+        self._draw_logo(p, QRectF(hero.left() + 22, hero.top() + 20, 38, 38))
         p.setFont(ui_font(22, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(hero.left() + 68, hero.top() + 20, hero.width() - 90, 34),
@@ -226,8 +235,7 @@ class HomeDashboard(QWidget):
         # version pill cạnh PLAY
         pill = QRect(hero.left() + 250, hero.top() + 108, hero.width() - 250 - 26, 34)
         draw_glass_rect(p, QRectF(pill), radius=4, tint=QColor(255, 255, 255, 30), gloss=0.7)
-        draw_cube_icon(p, QRectF(pill.left() + 8, pill.center().y() - 9, 18, 18),
-                       QColor(126, 190, 92), QColor(150, 112, 78))
+        self._draw_logo(p, QRectF(pill.left() + 7, pill.center().y() - 10, 20, 20))
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(pill.left() + 34, pill.top(), pill.width() - 44, pill.height()),
