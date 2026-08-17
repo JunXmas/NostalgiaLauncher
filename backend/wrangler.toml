@@ -6,4 +6,4 @@ compatibility_date = "2024-11-01"
 # Tạo namespace:  wrangler kv namespace create META   -> dán id trả về vào đây.
 [[kv_namespaces]]
 binding = "META"
-id = "REPLACE_WITH_KV_ID"
+id = "23102190d2af4fb199be49004f364202"
