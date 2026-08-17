@@ -2,6 +2,16 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.2
+- **Draw your own skin in the launcher.** A new *Draw skin* tile on the
+  Skins page opens a full pixel editor: paint the 64×64 map with pencil,
+  eraser, fill and eyedropper, a colour palette plus a custom-colour
+  picker, undo/redo, a grid and per-part guides, and a live rotatable 3D
+  preview. Saving applies it like any other skin change.
+- **Brighter, glossier sidebar.** The navigation icons are now full-colour
+  Aero-style icons that light up on hover, and the selected item sits in a
+  glowing accent pill so you always see where you are.
+
 ## 0.7.1
 - **Fixed: updating could wipe your instance list.** Settings and instance
   data are now written atomically, so an update restarting the app mid-save
