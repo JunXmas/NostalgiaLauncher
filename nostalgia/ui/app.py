@@ -303,7 +303,35 @@ class Controller:
         dlg.saved.connect(lambda nm, mem, jv: self._apply_instance_settings(name, nm, mem, jv))
         dlg.duplicate.connect(lambda: self.duplicate_instance(name))
         dlg.repair.connect(lambda: self.repair_instance(name))
+        dlg.set_icon.connect(lambda: self._pick_instance_icon(name))
+        dlg.reset_icon.connect(lambda: self._reset_instance_icon(name))
         dlg.show()
+
+    def _pick_instance_icon(self, name: str) -> None:
+        from PySide6.QtGui import QImage
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Choose an icon", "", "Image (*.png *.jpg *.jpeg *.webp)")
+        if not path:
+            return
+        img = QImage()
+        if not img.load(path):
+            self.window.set_status("Couldn't read that image.")
+            return
+        dest = self.instance_dir(inst) / "icon.png"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        img.save(str(dest), "PNG")          # chuẩn hoá về PNG (nhận jpg/webp)
+        self.pages["home"].refresh()
+        self.window.set_status(f"Icon set for '{name}'.")
+
+    def _reset_instance_icon(self, name: str) -> None:
+        inst = self.instances.get(name)
+        if inst:
+            (self.instance_dir(inst) / "icon.png").unlink(missing_ok=True)
+            self.pages["home"].refresh()
+            self.window.set_status(f"Icon reset for '{name}'.")
 
     def _apply_instance_settings(self, old_name, new_name, memory, java) -> None:
         import shutil

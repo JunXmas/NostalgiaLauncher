@@ -559,9 +559,11 @@ class InstanceSettingsDialog(GlassDialog):
     saved = Signal(str, int, str)   # tên mới, RAM (MB), java path
     duplicate = Signal()
     repair = Signal()
+    set_icon = Signal()
+    reset_icon = Signal()
 
     def __init__(self, parent, inst, *, default_memory: int, max_memory: int):
-        super().__init__(parent, f"Instance settings", width=480, height=336)
+        super().__init__(parent, f"Instance settings", width=480, height=392)
         self.old_name = inst.name
         self.name = QLineEdit(inst.name, self)
         self.name.setStyleSheet(INPUT_QSS)
@@ -580,6 +582,10 @@ class InstanceSettingsDialog(GlassDialog):
         self.dup.clicked.connect(lambda: (self.duplicate.emit(), self.dismiss()))
         self.rep = AeroButton("REPAIR", self, height=32, tone="neutral")
         self.rep.clicked.connect(lambda: (self.repair.emit(), self.dismiss()))
+        self.icon_btn = AeroButton("SET ICON", self, height=30, tone="neutral")
+        self.icon_btn.clicked.connect(self.set_icon.emit)
+        self.icon_reset = AeroButton("RESET", self, height=30, tone="neutral")
+        self.icon_reset.clicked.connect(self.reset_icon.emit)
         self.place()
 
     def _save(self) -> None:
@@ -592,10 +598,12 @@ class InstanceSettingsDialog(GlassDialog):
         self.name.setGeometry(c.left() + 22, c.top() + 76, c.width() - 44, 32)
         self.mem.setGeometry(c.left() + 22, c.top() + 150, c.width() - 44, 26)
         self.java.setGeometry(c.left() + 22, c.top() + 222, c.width() - 44, 32)
-        self.dup.setGeometry(c.left() + 22, c.bottom() - 48, 108, 32)
-        self.rep.setGeometry(c.left() + 138, c.bottom() - 48, 92, 32)
-        self.ok.setGeometry(c.right() - 128, c.bottom() - 48, 106, 32)
-        self.cancel.setGeometry(c.right() - 244, c.bottom() - 48, 104, 32)
+        self.icon_btn.setGeometry(c.left() + 22, c.top() + 292, 120, 30)
+        self.icon_reset.setGeometry(c.left() + 150, c.top() + 292, 84, 30)
+        self.dup.setGeometry(c.left() + 22, c.bottom() - 46, 108, 30)
+        self.rep.setGeometry(c.left() + 138, c.bottom() - 46, 92, 30)
+        self.ok.setGeometry(c.right() - 128, c.bottom() - 46, 106, 30)
+        self.cancel.setGeometry(c.right() - 244, c.bottom() - 46, 104, 30)
 
     def paint_body(self, p: QPainter) -> None:
         c = self.card
@@ -609,3 +617,4 @@ class InstanceSettingsDialog(GlassDialog):
         label(c.top() + 52, "Name")
         label(c.top() + 122, f"Max memory — {self.mem.value / 1024:.1f} GB")
         label(c.top() + 198, "Java path (this instance)")
+        label(c.top() + 270, "Icon (shown on the Home card)")
