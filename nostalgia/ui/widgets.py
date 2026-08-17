@@ -166,6 +166,29 @@ def _draw_nav_icon(p: QPainter, kind: str, rect: QRectF, color: QColor) -> None:
         draw_skin_icon(p, rect, color)
     elif kind == "shaders":
         draw_shaders_icon(p, rect, color)
+    elif kind == "discord":
+        draw_discord_icon(p, rect, color)
+
+
+def draw_discord_icon(p: QPainter, rect: QRectF, color: QColor) -> None:
+    """Mặt Clyde của Discord (đơn giản hoá): thân bo tròn + hai mắt."""
+    p.save()
+    r = rect.adjusted(rect.width() * 0.04, rect.height() * 0.16,
+                      -rect.width() * 0.04, -rect.height() * 0.12)
+    p.setPen(Qt.NoPen)
+    p.setBrush(color)
+    p.drawRoundedRect(r, r.height() * 0.44, r.height() * 0.44)
+    # hai chân nhỏ ở đáy
+    fw = r.width() * 0.20
+    p.drawEllipse(QRectF(r.left() + r.width() * 0.18, r.bottom() - fw * 0.6, fw, fw))
+    p.drawEllipse(QRectF(r.right() - r.width() * 0.18 - fw, r.bottom() - fw * 0.6, fw, fw))
+    # mắt
+    p.setBrush(QColor(38, 46, 66))
+    ex, ey = r.width() * 0.15, r.height() * 0.22
+    cy = r.center().y()
+    p.drawEllipse(QRectF(r.left() + r.width() * 0.28 - ex / 2, cy - ey / 2, ex, ey))
+    p.drawEllipse(QRectF(r.left() + r.width() * 0.72 - ex / 2, cy - ey / 2, ex, ey))
+    p.restore()
 
 
 def draw_news_icon(p: QPainter, rect: QRectF, color: QColor) -> None:

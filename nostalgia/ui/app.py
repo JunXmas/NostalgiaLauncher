@@ -98,6 +98,10 @@ class Controller:
     # ---------- điều hướng ----------
 
     def go(self, key: str) -> None:
+        if key == "discord":                 # nav item Discord = mở link mời
+            from .window import DISCORD_INVITE
+            self.open_url(DISCORD_INVITE)
+            return
         self.window.show_page(key)
 
     # ---------- trạng thái ----------

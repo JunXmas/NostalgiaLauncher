@@ -36,7 +36,10 @@ NAV = [
     ("servers", "Servers", "servers"),
     ("skins", "Skin", "skin"),
     ("settings", "Settings", "gear"),
+    ("discord", "Discord", "discord"),   # mở link mời, không phải trang
 ]
+
+DISCORD_INVITE = "https://discord.gg/XVrBBswt5w"
 
 
 class TitleDragBar(QWidget):
