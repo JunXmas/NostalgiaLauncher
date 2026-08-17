@@ -83,40 +83,66 @@ def _shade(rn) -> QColor | None:
     return QColor(0, 0, 0, int((1.0 - inten) * 150))
 
 
+_CACHE: dict = {}     # (img.cacheKey(), slim) -> [(corners, normal, subimg)]
+
+
+def _fully_transparent(sub) -> bool:
+    for y in range(sub.height()):
+        for x in range(sub.width()):
+            if sub.pixelColor(x, y).alpha() != 0:
+                return False
+    return True
+
+
+def _prepare(img, slim):
+    """Cắt sẵn texture từng mặt thành ảnh con nhỏ (cache) — tránh vẽ lại cả ảnh
+    64x64 + clip cho mỗi mặt mỗi frame. Bỏ luôn mặt lớp phủ trong suốt hoàn toàn."""
+    key = (img.cacheKey(), slim)
+    hit = _CACHE.get(key)
+    if hit is not None:
+        return hit
+    faces = []
+    for name, center, size, tex, ov in _BOXES:
+        for corners, normal, uv, layer in _box_faces(name, center, size, tex, ov, slim):
+            u, v, w, h = (int(round(x)) for x in uv)
+            sub = img.copy(u, v, w, h)
+            if layer == 1 and _fully_transparent(sub):
+                continue
+            faces.append((corners, normal, sub))
+    if len(_CACHE) > 8:
+        _CACHE.clear()
+    _CACHE[key] = faces
+    return faces
+
+
 def render(p: QPainter, img, cx: float, cy: float, scale: float,
            yaw_deg: float, pitch_deg: float, slim: bool = False) -> None:
     """Vẽ model skin vào tâm (cx, cy). yaw/pitch tính bằng độ."""
     if img is None or img.width() < 64:
         return
     rot = _rotator(math.radians(yaw_deg), math.radians(pitch_deg))
-    faces = []
-    for name, center, size, tex, ov in _BOXES:
-        faces.extend(_box_faces(name, center, size, tex, ov, slim))
-
     drawable = []
-    for corners, normal, uv, layer in faces:
+    for corners, normal, sub in _prepare(img, slim):
         rn = rot(normal)
         if rn[2] <= 0.02:                # quay lưng -> bỏ
             continue
         rc = [rot(c) for c in corners]
-        depth = sum(c[2] for c in rc) / 4 + layer * 0.02
-        drawable.append((depth, rc, uv, rn))
+        depth = sum(c[2] for c in rc) / 4
+        drawable.append((depth, rc, sub, rn))
     drawable.sort(key=lambda t: t[0])    # xa (z nhỏ) vẽ trước
 
     p.setRenderHint(QPainter.SmoothPixmapTransform, False)
-    for _depth, rc, uv, rn in drawable:
+    for _depth, rc, sub, rn in drawable:
         scr = [(cx + c[0] * scale, cy - c[1] * scale) for c in rc]
-        u, v, w, h = uv
         tl, tr, _br, bl = scr
+        w, h = sub.width(), sub.height()
         ax, ay = (tr[0] - tl[0]) / w, (tr[1] - tl[1]) / w
         bx, by = (bl[0] - tl[0]) / h, (bl[1] - tl[1]) / h
         p.save()
-        p.setTransform(QTransform(ax, ay, bx, by,
-                                  tl[0] - u * ax - v * bx, tl[1] - u * ay - v * by))
-        p.setClipRect(QRectF(u, v, w, h))
-        p.drawImage(0, 0, img)
+        p.setTransform(QTransform(ax, ay, bx, by, tl[0], tl[1]))
+        p.drawImage(0, 0, sub)           # chỉ vẽ ảnh con nhỏ, không cần clip
         sh = _shade(rn)
         if sh:
-            p.fillRect(QRectF(u, v, w, h), sh)
+            p.fillRect(QRectF(0, 0, w, h), sh)
         p.restore()
     p.setTransform(QTransform())

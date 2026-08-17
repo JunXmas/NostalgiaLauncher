@@ -782,7 +782,16 @@ class SkinsPage(Page):
         self._pitch = 12.0
         self._preview_rect = QRect()
         self._drag_from = None
+        self._img_cache: dict = {}    # path -> QImage (tránh load lại đĩa mỗi frame)
         self.setMouseTracking(True)
+
+    def _img(self, path: str) -> QImage:
+        im = self._img_cache.get(path)
+        if im is None:
+            im = QImage()
+            im.load(path)
+            self._img_cache[path] = im
+        return im
 
     def refresh(self) -> None:
         from .. import skins
@@ -1021,8 +1030,8 @@ class SkinsPage(Page):
 
     def _paint_skin_tile(self, p, rect: QRect, item: dict, selected: bool, hovered: bool):
         self._tile_bg(p, rect, hovered, selected)
-        img = QImage()
-        if img.load(item["path"]) and img.width() >= 64:
+        img = self._img(item["path"])
+        if not img.isNull() and img.width() >= 64:
             scale = 3                                   # render cả người kiểu NameMC
             slim = item.get("variant") == "slim"
             ox = int(rect.center().x() - 8 * scale)
