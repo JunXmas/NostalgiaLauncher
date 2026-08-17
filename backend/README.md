@@ -1,16 +1,15 @@
 # Nostalgia backend (Cloudflare Worker)
 
 Một Worker duy nhất phục vụ **skin** (để người chơi offline nhìn thấy skin của nhau
-qua CustomSkinLoader) và **khôi phục danh tính** (gắn với Google `sub`). Miễn phí ở
-mức dùng của một cộng đồng nhỏ (Workers free + R2 free 10GB + KV free).
+qua CustomSkinLoader) và **khôi phục danh tính** (gắn với Google `sub`). Chỉ dùng KV
+nên **miễn phí hoàn toàn, không cần bật R2 / thêm thẻ**.
 
 ## Deploy (một lần)
 
 ```bash
 npm i -g wrangler
-wrangler login
-wrangler r2 bucket create nostalgia-skins
-wrangler kv namespace create META      # dán "id" trả về vào wrangler.toml
+wrangler login                          # mở trình duyệt, cho phép
+wrangler kv namespace create META       # dán "id" trả về vào wrangler.toml
 cd backend && wrangler deploy
 ```
 

@@ -10,8 +10,9 @@
 //        PUT  /identity/{sub}         -> lưu/cập nhật
 //
 // Bindings (xem wrangler.toml):
-//   R2  SKINS   — lưu file PNG theo hash (textures/<hash>)
-//   KV  META    — lưu ánh xạ username->skin và sub->identity
+//   KV  META    — lưu tất cả: PNG skin (tex:<hash>), ánh xạ username->skin
+//                 (skin:<user>) và sub->identity (id:<sub>). Chỉ KV nên FREE hoàn
+//                 toàn, không cần bật R2 / thêm thẻ. Skin vài KB, thừa sức KV (25MiB/value).
 //
 // Bảo mật: KHÔNG có secret nhúng ở client. Ghi skin/identity phải kèm
 // Authorization: Bearer <minecraft_access_token>; Worker gọi Mojang để xác minh
@@ -56,9 +57,9 @@ async function getSkinJson(username, env) {
 }
 
 async function getTexture(hash, env) {
-  const obj = await env.SKINS.get(`textures/${hash}`);
-  if (!obj) return new Response("not found", { status: 404, headers: CORS });
-  return new Response(obj.body, {
+  const buf = await env.META.get(`tex:${hash}`, "arrayBuffer");
+  if (!buf) return new Response("not found", { status: 404, headers: CORS });
+  return new Response(buf, {
     headers: { ...CORS, "Content-Type": "image/png",
                "Cache-Control": "public, max-age=31536000, immutable" },
   });
@@ -73,7 +74,7 @@ async function putSkin(username, request, env) {
   if (png.length < 8 || png[0] !== 0x89 || png[1] !== 0x50)
     return json({ error: "not a PNG" }, 400);
   const hash = await sha256hex(png);
-  await env.SKINS.put(`textures/${hash}`, png);
+  await env.META.put(`tex:${hash}`, png);
   await env.META.put(`skin:${username.toLowerCase()}`,
                      JSON.stringify({ hash, variant, ts: Date.now() }));
   return json({ ok: true, hash, variant });
