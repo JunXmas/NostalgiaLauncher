@@ -22,7 +22,10 @@ DEFAULTS_DIR = SKINS_DIR / "defaults"
 INDEX_PATH = SKINS_DIR / "recent.json"
 MAX_RECENT = 5
 TIMEOUT = 30
+PROFILE = "https://api.minecraftservices.com/minecraft/profile"
 PROFILE_SKINS = "https://api.minecraftservices.com/minecraft/profile/skins"
+CAPES_ACTIVE = "https://api.minecraftservices.com/minecraft/profile/capes/active"
+CAPES_DIR = SKINS_DIR / "capes"
 _TEX = "http://textures.minecraft.net/texture"
 
 # Skin mặc định của Mojang (URL texture ổn định). classic = tay 4px, slim = 3px.
@@ -121,6 +124,41 @@ def apply_to_mojang(access_token: str, png: bytes, *, slim: bool = False) -> Non
 
 def load_file(path: str | Path) -> bytes:
     return Path(path).read_bytes()
+
+
+# ---------- cape (chỉ tài khoản premium) ----------
+
+def fetch_capes(access_token: str) -> list[dict]:
+    """Cape mà tài khoản premium sở hữu: [{id, alias, state, url, path}] (đã cache PNG)."""
+    r = requests.get(PROFILE, headers={"Authorization": f"Bearer {access_token}"},
+                     timeout=TIMEOUT)
+    r.raise_for_status()
+    CAPES_DIR.mkdir(parents=True, exist_ok=True)
+    out = []
+    for c in r.json().get("capes", []):
+        cid, url = c.get("id"), c.get("url", "")
+        p = CAPES_DIR / f"{cid}.png"
+        if url and not p.exists():
+            try:
+                tr = requests.get(url, timeout=TIMEOUT)
+                if tr.status_code == 200 and tr.content[:2] == b"\x89P":
+                    p.write_bytes(tr.content)
+            except requests.RequestException:
+                pass
+        out.append({"id": cid, "alias": c.get("alias", ""), "state": c.get("state", ""),
+                    "url": url, "path": str(p) if p.exists() else ""})
+    return out
+
+
+def set_cape(access_token: str, cape_id: str | None) -> None:
+    """Chọn cape đang mặc (cape_id=None -> gỡ cape)."""
+    h = {"Authorization": f"Bearer {access_token}"}
+    if cape_id:
+        r = requests.put(CAPES_ACTIVE, headers=h, json={"capeId": cape_id}, timeout=TIMEOUT)
+    else:
+        r = requests.delete(CAPES_ACTIVE, headers=h, timeout=TIMEOUT)
+    if r.status_code >= 400:
+        raise RuntimeError(f"Mojang từ chối đổi cape ({r.status_code}): {r.text[:150]}")
 
 
 CSL_PROJECT = "customskinloader"          # slug trên Modrinth

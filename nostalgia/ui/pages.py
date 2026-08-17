@@ -775,6 +775,8 @@ class SkinsPage(Page):
         self.note = ""
         self._recent: list[dict] = []            # 5 skin gần nhất (từ skins.recent())
         self._defaults: list[dict] = []          # skin mặc định (Steve/Alex…)
+        self._capes: list[dict] = []             # cape sở hữu (tài khoản premium)
+        self._cape_img: QImage | None = None     # cape đang mặc, để render 3D
         self._variant = "classic"                # kiểu tay đang chọn: classic/slim
         self._tiles: list[tuple[QRect, str, str, str]] = []  # (rect, action, path, variant)
         self._hover = -1
@@ -815,6 +817,17 @@ class SkinsPage(Page):
         # thay cho danh sách cục bộ khi lấy được.
         if account:
             self.ctl.load_account_skins(self._got_account_skins)
+            self.ctl.load_capes(self._got_capes)
+        self.update()
+
+    def _got_capes(self, items) -> None:
+        self._capes = items or []
+        self._cape_img = None
+        active = next((c for c in self._capes if c.get("state") == "ACTIVE"), None)
+        if active and active.get("path"):
+            img = self._img(active["path"])
+            if not img.isNull():
+                self._cape_img = img
         self.update()
 
     def _got_defaults(self, items) -> None:
@@ -900,6 +913,8 @@ class SkinsPage(Page):
                     self.update()
                 elif action == "add":
                     self.ctl.pick_and_apply_skin(self._variant)
+                elif action == "cape":
+                    self.ctl.apply_cape(path or None)
                 else:  # recent | default
                     self._variant = variant
                     self.ctl.apply_skin_file(path, variant)
@@ -945,7 +960,8 @@ class SkinsPage(Page):
             from . import skin3d
             skin3d.render(p, self.skin, self._preview_rect.center().x(),
                           self._preview_rect.center().y(), 8.0,
-                          self._yaw, self._pitch, self._variant == "slim")
+                          self._yaw, self._pitch, self._variant == "slim",
+                          cape=self._cape_img)
 
         # toggle Classic / Slim ở đáy thẻ trái
         self._paint_variant_toggle(p, panel)
@@ -983,12 +999,55 @@ class SkinsPage(Page):
                 self._tiles.append((tile, "default", d["path"], d.get("variant", "classic")))
                 x += self.TILE_W + self.GAP
 
+        # ----- Capes (chỉ tài khoản premium sở hữu cape) -----
+        if self._capes:
+            y3 = y2 + 26 + self.TILE_H + 34
+            p.setFont(ui_font(9, bold=True))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(rx, y3, 300, 18), Qt.AlignLeft | Qt.AlignVCenter, "CAPES")
+            cyr = y3 + 26
+            x = rx
+            active_id = next((c["id"] for c in self._capes if c.get("state") == "ACTIVE"), None)
+            none_tile = QRect(x, cyr, self.TILE_W, self.TILE_H)
+            self._paint_cape_tile(p, none_tile, None, active_id is None,
+                                  self._hover == len(self._tiles))
+            self._tiles.append((none_tile, "cape", "", ""))
+            x += self.TILE_W + self.GAP
+            for c in self._capes:
+                tile = QRect(x, cyr, self.TILE_W, self.TILE_H)
+                self._paint_cape_tile(p, tile, c, c["id"] == active_id,
+                                      self._hover == len(self._tiles))
+                self._tiles.append((tile, "cape", c["id"], ""))
+                x += self.TILE_W + self.GAP
+
         if self.note:
             p.setFont(ui_font(9))
             p.setPen(TEXT_DIM)
             p.drawText(QRect(rx, self.height() - 70, self.width() - rx - 24, 40),
                        Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.note)
         p.end()
+
+    def _paint_cape_tile(self, p, rect: QRect, cape, active: bool, hovered: bool):
+        self._tile_bg(p, rect, hovered, active)
+        if cape and cape.get("path"):
+            img = self._img(cape["path"])
+            if not img.isNull() and img.width() >= 64:
+                f = max(1, img.width() // 64)
+                th = rect.height() - 42
+                tw = th * 10.0 / 16.0
+                p.setRenderHint(QPainter.SmoothPixmapTransform, False)
+                p.drawImage(QRectF(rect.center().x() - tw / 2, rect.top() + 14, tw, th),
+                            img, QRectF(1 * f, 1 * f, 10 * f, 16 * f))
+            label = cape.get("alias", "")
+        else:
+            cx, cy = rect.center().x(), rect.center().y() - 8
+            p.setPen(QPen(TEXT_DIM, 3))
+            p.drawLine(cx - 13, cy - 13, cx + 13, cy + 13)
+            label = "None"
+        p.setFont(ui_font(7))
+        p.setPen(TEXT if active else TEXT_FAINT)
+        p.drawText(QRect(rect.left(), rect.bottom() - 18, rect.width(), 14),
+                   Qt.AlignCenter, label)
 
     def _paint_variant_toggle(self, p, panel: QRectF) -> None:
         w, h = 88, 26

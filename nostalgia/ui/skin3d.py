@@ -115,14 +115,55 @@ def _prepare(img, slim):
     return faces
 
 
+_CAPE_CACHE: dict = {}
+
+
+def _prepare_cape(cape):
+    """Cape là một tấm mỏng sau lưng thân. Texture cape gốc 64x32 (HD thì nhân lên)."""
+    key = cape.cacheKey()
+    hit = _CAPE_CACHE.get(key)
+    if hit is not None:
+        return hit
+    f = max(1, cape.width() // 64)
+    ex, ey, ez = 5.0, 8.0, 0.5          # cape 10x16x1
+    czc = -3.0                          # ngay sau lưng thân (mặt lưng thân ở z=-2)
+
+    def c(sx, sy, sz):
+        return (sx * ex, sy * ey, czc + sz * ez)
+
+    def uv(u, v, w, h):
+        return (u * f, v * f, w * f, h * f)
+
+    defs = {
+        # mặt "thiết kế" (ngoài) quay ra sau (-z)
+        "back": ([c(1, 1, -1), c(-1, 1, -1), c(-1, -1, -1), c(1, -1, -1)], (0, 0, -1), uv(1, 1, 10, 16)),
+        "front": ([c(-1, 1, 1), c(1, 1, 1), c(1, -1, 1), c(-1, -1, 1)], (0, 0, 1), uv(12, 1, 10, 16)),
+        "top": ([c(-1, 1, -1), c(1, 1, -1), c(1, 1, 1), c(-1, 1, 1)], (0, 1, 0), uv(1, 0, 10, 1)),
+        "bottom": ([c(-1, -1, 1), c(1, -1, 1), c(1, -1, -1), c(-1, -1, -1)], (0, -1, 0), uv(11, 0, 10, 1)),
+        "right": ([c(-1, 1, -1), c(-1, 1, 1), c(-1, -1, 1), c(-1, -1, -1)], (-1, 0, 0), uv(0, 1, 1, 16)),
+        "left": ([c(1, 1, 1), c(1, 1, -1), c(1, -1, -1), c(1, -1, 1)], (1, 0, 0), uv(11, 1, 1, 16)),
+    }
+    faces = []
+    for _fn, (corners, normal, uvr) in defs.items():
+        u, v, w, h = (int(round(x)) for x in uvr)
+        faces.append((corners, normal, cape.copy(u, v, w, h)))
+    if len(_CAPE_CACHE) > 8:
+        _CAPE_CACHE.clear()
+    _CAPE_CACHE[key] = faces
+    return faces
+
+
 def render(p: QPainter, img, cx: float, cy: float, scale: float,
-           yaw_deg: float, pitch_deg: float, slim: bool = False) -> None:
-    """Vẽ model skin vào tâm (cx, cy). yaw/pitch tính bằng độ."""
+           yaw_deg: float, pitch_deg: float, slim: bool = False, cape=None) -> None:
+    """Vẽ model skin vào tâm (cx, cy). yaw/pitch tính bằng độ. cape: QImage tuỳ chọn."""
     if img is None or img.width() < 64:
         return
     rot = _rotator(math.radians(yaw_deg), math.radians(pitch_deg))
+    faces = list(_prepare(img, slim))
+    if cape is not None and not cape.isNull() and cape.width() >= 64:
+        faces += _prepare_cape(cape)
     drawable = []
-    for corners, normal, sub in _prepare(img, slim):
+    for corners, normal, sub in faces:
         rn = rot(normal)
         if rn[2] <= 0.02:                # quay lưng -> bỏ
             continue

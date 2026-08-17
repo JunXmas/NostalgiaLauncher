@@ -625,6 +625,33 @@ class Controller:
                                                     account.username),
                   cb, lambda _m: cb([]))
 
+    def _premium(self):
+        a = self.current_account()
+        if a and a.kind == "msa" and a.owns_game and a.access_token and a.access_token != "0":
+            return a
+        return None
+
+    def load_capes(self, cb) -> None:
+        """Cape sở hữu của tài khoản premium hiện tại."""
+        from .. import skins
+        a = self._premium()
+        if not a:
+            cb([])
+            return
+        self._run(lambda: skins.fetch_capes(a.access_token), cb, lambda _m: cb([]))
+
+    def apply_cape(self, cape_id) -> None:
+        from .. import skins
+        a = self._premium()
+        if not a:
+            self.window.set_status("Capes need a Microsoft account that owns the game.")
+            return
+        self.window.set_status("Applying cape…")
+        self._run(lambda: skins.set_cape(a.access_token, cape_id),
+                  lambda _r: (self.pages["skins"].refresh(),
+                              self.window.set_status("Cape updated.")),
+                  lambda m: self.window.set_status(f"Couldn't change cape: {m}"))
+
     def pick_and_apply_skin(self, variant: str = "classic") -> None:
         path, _ = QFileDialog.getOpenFileName(
             self.window, "Choose a skin (64×64 PNG)", "", "Skin image (*.png)")
