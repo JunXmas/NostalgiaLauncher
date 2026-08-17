@@ -2,6 +2,20 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.6.0
+- **A real skin manager.** Change your skin right in the launcher, keep your
+  last five skins as history that follows your **account** (not just this PC),
+  pick from the default skins, toggle Classic/Slim, and spin a **3D preview**
+  of your character.
+- **Capes.** Microsoft accounts can view and wear their Mojang capes in-app;
+  the cape shows on the 3D model too.
+- **Everyone sees everyone's skins — even offline.** The launcher runs a small
+  skin service and auto-installs CustomSkinLoader when you make a modded
+  instance or a modpack, so players using Nostalgia see each other's custom
+  skins on any server, offline profiles included.
+- **Modpack icons** now appear on the Home instance cards instead of a plain
+  cube.
+
 ## 0.5.0
 - **Sign in with Microsoft just works.** The launcher now ships with its own
   approved Microsoft application, so you no longer have to create and paste an
