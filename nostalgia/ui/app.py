@@ -425,48 +425,51 @@ class Controller:
         self._workers.append(w)
         w.start()
 
-    def enable_shared_skins(self, inst) -> None:
-        """Cài CustomSkinLoader + cấu hình trỏ về backend, để offline nhìn skin nhau."""
+    def enable_shared_skins(self, inst, *, silent: bool = False) -> None:
+        """Cài CustomSkinLoader + cấu hình trỏ về backend, để offline nhìn skin nhau.
+
+        silent=True: chạy nền khi tạo instance / cài modpack, không báo lỗi ra UI.
+        """
         from .. import mods as mods_mgr, optifine, skins
         from .. import modrinth as mr
         v = (inst.version or "").lower()
         loader = ("fabric" if "fabric" in v else "neoforge" if "neoforge" in v
                   else "forge" if "forge" in v else "")
-        if not loader:
-            self.window.set_status("Shared skins need a Fabric/Forge instance.")
+        if not loader:                       # vanilla không có loader -> không thể cài CSL
+            if not silent:
+                self.window.set_status("Shared skins need a Fabric/Forge instance.")
             return
         mc = optifine.mc_from_version_id(inst.version)
         game_dir = self.instance_dir(inst)
 
-        def work(on_progress, on_status):
-            on_status("Finding CustomSkinLoader…")
+        def work():
             f = mr.best_file(skins.CSL_PROJECT, loaders=[loader],
                              game_versions=[mc] if mc else None)
             if not f:
                 raise RuntimeError(f"No CustomSkinLoader build for {loader} {mc}.")
-            on_status("Installing CustomSkinLoader…")
             mods_mgr.install_file(game_dir, "mods", url=f["url"],
                                   filename=f["filename"], sha1=f.get("sha1"))
             skins.write_csl_config(game_dir, self.settings.backend_url)
             return f["filename"]
 
-        w = ProgressWorker(work)
-        w.status.connect(self.window.set_status)
-        w.done.connect(lambda name: self.window.set_status(
-            "Shared skins enabled — you'll see other players' skins in-game."))
-        w.failed.connect(lambda m: self.window.set_status(
-            f"Couldn't enable shared skins: {m}"))
-        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
-        self._workers.append(w)
-        w.start()
+        if not silent:
+            self.window.set_status("Installing CustomSkinLoader…")
+        self._run(
+            work,
+            (lambda _n: None) if silent else
+            (lambda _n: self.window.set_status(
+                "Shared skins enabled — you'll see other players' skins in-game.")),
+            (lambda _m: None) if silent else
+            (lambda m: self.window.set_status(f"Couldn't enable shared skins: {m}")))
 
     def _set_progress(self, done: int, total: int) -> None:
         self.window.set_progress(done / total if total else None)
 
     def _modpack_installed(self, name: str, version: str) -> None:
         self.window.set_progress(None)
-        self.instances.add(name, version)
+        inst = self.instances.add(name, version)
         self.set_active_instance(name)
+        self.enable_shared_skins(inst, silent=True)   # để offline nhìn skin nhau
         self.window.set_status(f"Modpack '{name}' installed — press PLAY.")
         self.go("home")
 
@@ -957,9 +960,14 @@ class Controller:
 
         self._run(
             work,
-            lambda vid: (self.create_instance(name, vid), self.go("home")),
+            lambda vid: self._instance_created(name, vid),
             lambda m: self.window.set_status(f"Couldn't install {loader}: {m}"),
         )
+
+    def _instance_created(self, name: str, vid: str) -> None:
+        inst = self.create_instance(name, vid)
+        self.enable_shared_skins(inst, silent=True)   # tự cài CSL để offline thấy skin nhau
+        self.go("home")
 
     # ---------- Fabric ----------
 
