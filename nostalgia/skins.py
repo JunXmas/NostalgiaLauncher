@@ -93,8 +93,11 @@ def remember(png: bytes, variant: str = "classic") -> str:
 
 
 def apply_to_mojang(access_token: str, png: bytes, *, slim: bool = False) -> None:
-    """Đổi skin trên tài khoản Mojang/Microsoft (cần access token còn hạn của MC)."""
-    r = requests.put(
+    """Đổi skin trên tài khoản Mojang/Microsoft (cần access token còn hạn của MC).
+
+    Endpoint đúng là POST (PUT trả 405 METHOD_NOT_ALLOWED).
+    """
+    r = requests.post(
         PROFILE_SKINS,
         headers={"Authorization": f"Bearer {access_token}"},
         data={"variant": "slim" if slim else "classic"},
