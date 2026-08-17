@@ -741,7 +741,9 @@ class SkinsPage(Page):
         self.skin: QImage | None = None          # skin đang hiển thị (preview)
         self.note = ""
         self._recent: list[dict] = []            # 5 skin gần nhất (từ skins.recent())
-        self._tiles: list[tuple[QRect, str, str]] = []  # (rect, action, arg)
+        self._defaults: list[dict] = []          # skin mặc định (Steve/Alex…)
+        self._variant = "classic"                # kiểu tay đang chọn: classic/slim
+        self._tiles: list[tuple[QRect, str, str, str]] = []  # (rect, action, path, variant)
         self._hover = -1
         self.setMouseTracking(True)
 
@@ -757,9 +759,16 @@ class SkinsPage(Page):
             img = QImage()
             if img.load(self._recent[0]["path"]):
                 self.skin = img
+                self._variant = self._recent[0].get("variant", "classic")
         if self.skin is None and account and account.kind == "msa" and account.skin_url:
             self.ctl.load_skin(account.skin_url, self._got)
             self.note = "Loading skin…"
+        if not self._defaults:
+            self.ctl.ensure_default_skins(self._got_defaults)
+        self.update()
+
+    def _got_defaults(self, items) -> None:
+        self._defaults = items or []
         self.update()
 
     def _got(self, data: bytes | None) -> None:
@@ -776,19 +785,20 @@ class SkinsPage(Page):
     def _part(p, img, sx, sy, sw, sh, dx, dy, scale):
         p.drawImage(QRectF(dx, dy, sw * scale, sh * scale), img, QRectF(sx, sy, sw, sh))
 
-    def _draw_body(self, p, img, ox, oy, scale):
-        slim = img.height() >= 64
-        self._part(p, img, 8, 8, 8, 8, ox + 4 * scale, oy, scale)                 # đầu
-        self._part(p, img, 20, 20, 8, 12, ox + 4 * scale, oy + 8 * scale, scale)  # thân
-        self._part(p, img, 44, 20, 4, 12, ox + 12 * scale, oy + 8 * scale, scale) # tay phải
-        if slim:
-            self._part(p, img, 36, 52, 4, 12, ox, oy + 8 * scale, scale)          # tay trái
-            self._part(p, img, 20, 52, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
-        else:
-            self._part(p, img, 44, 20, 4, 12, ox, oy + 8 * scale, scale)
-            self._part(p, img, 4, 20, 4, 12, ox + 8 * scale, oy + 20 * scale, scale)
-        self._part(p, img, 4, 20, 4, 12, ox + 4 * scale, oy + 20 * scale, scale)  # chân phải
-        self._part(p, img, 40, 8, 8, 8, ox + 4 * scale, oy, scale)                # lớp mũ
+    def _draw_body(self, p, img, ox, oy, scale, slim=False):
+        s = scale
+        legacy = img.height() < 64                # skin 64x32 cũ không có tay/chân trái riêng
+        aw = 3 if slim else 4                     # tay slim rộng 3px, classic 4px
+        self._part(p, img, 8, 8, 8, 8, ox + 4 * s, oy, s)                 # đầu
+        self._part(p, img, 20, 20, 8, 12, ox + 4 * s, oy + 8 * s, s)      # thân
+        self._part(p, img, 44, 20, aw, 12, ox + 12 * s, oy + 8 * s, s)    # tay phải
+        la_x, la_y = (44, 20) if legacy else (36, 52)
+        self._part(p, img, la_x, la_y, aw, 12,
+                   ox + (1 if slim else 0) * s, oy + 8 * s, s)            # tay trái
+        self._part(p, img, 4, 20, 4, 12, ox + 4 * s, oy + 20 * s, s)      # chân phải
+        ll_x, ll_y = (4, 20) if legacy else (20, 52)
+        self._part(p, img, ll_x, ll_y, 4, 12, ox + 8 * s, oy + 20 * s, s) # chân trái
+        self._part(p, img, 40, 8, 8, 8, ox + 4 * s, oy, s)               # lớp mũ
 
     def _draw_head(self, p, img, rect: QRect):
         s = rect.width() / 8.0
@@ -799,7 +809,7 @@ class SkinsPage(Page):
 
     def mouseMoveEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
-        hit = next((i for i, (r, _a, _g) in enumerate(self._tiles) if r.contains(pos)), -1)
+        hit = next((i for i, t in enumerate(self._tiles) if t[0].contains(pos)), -1)
         self.setCursor(Qt.PointingHandCursor if hit >= 0 else Qt.ArrowCursor)
         if hit != self._hover:
             self._hover = hit
@@ -807,12 +817,16 @@ class SkinsPage(Page):
 
     def mousePressEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
-        for rect, action, arg in self._tiles:
+        for rect, action, path, variant in self._tiles:
             if rect.contains(pos):
-                if action == "add":
-                    self.ctl.pick_and_apply_skin()
-                elif action == "recent":
-                    self.ctl.apply_skin_file(arg)
+                if action == "toggle":
+                    self._variant = variant
+                    self.update()
+                elif action == "add":
+                    self.ctl.pick_and_apply_skin(self._variant)
+                else:  # recent | default
+                    self._variant = variant
+                    self.ctl.apply_skin_file(path, variant)
                 return
 
     def paintEvent(self, event) -> None:
@@ -846,7 +860,10 @@ class SkinsPage(Page):
             # theo 8 ô (nửa của 16), không phải 4 ô — nếu không sẽ lệch phải.
             self._draw_body(p, self.skin,
                             int(panel.center().x() - 8 * scale),
-                            int(panel.top() + 60), scale)
+                            int(panel.top() + 60), scale, self._variant == "slim")
+
+        # toggle Classic / Slim ở đáy thẻ trái
+        self._paint_variant_toggle(p, panel)
 
         # ----- cột phải: Saved skins -----
         rx = 316
@@ -854,26 +871,60 @@ class SkinsPage(Page):
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rx, 62, 300, 18), Qt.AlignLeft | Qt.AlignVCenter, "SAVED SKINS")
         y = 88
-        # ô "+ Add a skin"
         add = QRect(rx, y, self.TILE, self.TILE)
         self._paint_add_tile(p, add, self._hover == len(self._tiles))
-        self._tiles.append((add, "add", ""))
+        self._tiles.append((add, "add", "", ""))
         x = rx + self.TILE + self.GAP
-        # 5 skin gần nhất
         current_path = self._recent[0]["path"] if self._recent else None
         for it in self._recent:
             tile = QRect(x, y, self.TILE, self.TILE)
             self._paint_skin_tile(p, tile, it["path"], it["path"] == current_path,
                                   self._hover == len(self._tiles))
-            self._tiles.append((tile, "recent", it["path"]))
+            self._tiles.append((tile, "recent", it["path"], it.get("variant", "classic")))
             x += self.TILE + self.GAP
+
+        # ----- Default skins -----
+        y2 = y + self.TILE + 34
+        if self._defaults:
+            p.setFont(ui_font(9, bold=True))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(rx, y2, 300, 18), Qt.AlignLeft | Qt.AlignVCenter, "DEFAULT SKINS")
+            xy = y2 + 26
+            x = rx
+            for d in self._defaults:
+                tile = QRect(x, xy, self.TILE, self.TILE)
+                self._paint_skin_tile(p, tile, d["path"], d["path"] == current_path,
+                                      self._hover == len(self._tiles))
+                self._tiles.append((tile, "default", d["path"], d.get("variant", "classic")))
+                x += self.TILE + self.GAP
 
         if self.note:
             p.setFont(ui_font(9))
             p.setPen(TEXT_DIM)
-            p.drawText(QRect(rx, y + self.TILE + 20, self.width() - rx - 24, 40),
+            p.drawText(QRect(rx, self.height() - 70, self.width() - rx - 24, 40),
                        Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.note)
         p.end()
+
+    def _paint_variant_toggle(self, p, panel: QRectF) -> None:
+        w, h = 88, 26
+        gap = 8
+        total = w * 2 + gap
+        x0 = panel.center().x() - total / 2
+        y0 = panel.bottom() - 42
+        for i, (label, variant) in enumerate((("Classic", "classic"), ("Slim", "slim"))):
+            r = QRect(int(x0 + i * (w + gap)), int(y0), w, h)
+            on = self._variant == variant
+            hovered = self._hover == len(self._tiles)
+            p.setPen(Qt.NoPen)
+            if on:
+                p.setBrush(QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 210))
+            else:
+                p.setBrush(QColor(255, 255, 255, 30 if hovered else 18))
+            p.drawRoundedRect(QRectF(r), 5, 5)
+            p.setFont(ui_font(9, bold=on))
+            p.setPen(QColor(255, 255, 255) if on else TEXT_DIM)
+            p.drawText(r, Qt.AlignCenter, label)
+            self._tiles.append((r, "toggle", "", variant))
 
     def _tile_bg(self, p, rect: QRect, hovered: bool, selected: bool):
         p.setPen(Qt.NoPen)

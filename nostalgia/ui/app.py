@@ -572,20 +572,24 @@ class Controller:
 
     # ---------- đổi skin ----------
 
-    def pick_and_apply_skin(self) -> None:
+    def ensure_default_skins(self, cb) -> None:
+        from .. import skins
+        self._run(skins.ensure_defaults, cb, lambda _m: cb([]))
+
+    def pick_and_apply_skin(self, variant: str = "classic") -> None:
         path, _ = QFileDialog.getOpenFileName(
             self.window, "Choose a skin (64×64 PNG)", "", "Skin image (*.png)")
         if path:
-            self.apply_skin_file(path)
+            self.apply_skin_file(path, variant)
 
-    def apply_skin_file(self, path: str) -> None:
+    def apply_skin_file(self, path: str, variant: str = "classic") -> None:
         try:
             with open(path, "rb") as f:
                 png = f.read()
         except OSError as e:
             self.window.set_status(f"Couldn't read skin: {e}")
             return
-        self.apply_skin_bytes(png)
+        self.apply_skin_bytes(png, variant)
 
     def apply_skin_bytes(self, png: bytes, variant: str = "classic") -> None:
         from .. import skins

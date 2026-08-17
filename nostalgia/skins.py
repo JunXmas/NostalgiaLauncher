@@ -18,10 +18,37 @@ import requests
 from .paths import CONFIG_DIR
 
 SKINS_DIR = CONFIG_DIR / "skins"
+DEFAULTS_DIR = SKINS_DIR / "defaults"
 INDEX_PATH = SKINS_DIR / "recent.json"
 MAX_RECENT = 5
 TIMEOUT = 30
 PROFILE_SKINS = "https://api.minecraftservices.com/minecraft/profile/skins"
+_TEX = "http://textures.minecraft.net/texture"
+
+# Skin mặc định của Mojang (URL texture ổn định). classic = tay 4px, slim = 3px.
+DEFAULT_SKINS = [
+    ("Steve", "classic", f"{_TEX}/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb"),
+    ("Alex", "slim", f"{_TEX}/1abc803022d8300ab7578b189294cce39622d9a404cdc00d3feacfdf45be6981"),
+]
+
+
+def ensure_defaults() -> list[dict]:
+    """Tải (một lần) & cache skin mặc định; trả [{name, variant, path}] cái nào có."""
+    DEFAULTS_DIR.mkdir(parents=True, exist_ok=True)
+    out = []
+    for name, variant, url in DEFAULT_SKINS:
+        p = DEFAULTS_DIR / f"{name.lower()}.png"
+        if not p.exists():
+            try:
+                r = requests.get(url, timeout=TIMEOUT,
+                                 headers={"User-Agent": "NostalgiaLauncher"})
+                if r.status_code == 200 and r.content[:2] == b"\x89P":
+                    p.write_bytes(r.content)
+            except requests.RequestException:
+                pass
+        if p.exists():
+            out.append({"name": name, "variant": variant, "path": str(p)})
+    return out
 
 
 def _index() -> list[dict]:
