@@ -34,6 +34,8 @@ export default {
         return await getSkinJson(path.slice(0, -5), env);
       if (request.method === "GET" && path.startsWith("textures/"))
         return await getTexture(path.slice("textures/".length), env);
+      if (request.method === "GET" && path.startsWith("history/"))
+        return await getHistory(path.slice("history/".length), env);
       if (request.method === "PUT" && path.startsWith("skin/"))
         return await putSkin(path.slice("skin/".length), request, env);
       if (request.method === "GET" && path.startsWith("identity/"))
@@ -74,10 +76,20 @@ async function putSkin(username, request, env) {
   if (png.length < 8 || png[0] !== 0x89 || png[1] !== 0x50)
     return json({ error: "not a PNG" }, 400);
   const hash = await sha256hex(png);
+  const user = username.toLowerCase();
+  const ts = Date.now();
   await env.META.put(`tex:${hash}`, png);
-  await env.META.put(`skin:${username.toLowerCase()}`,
-                     JSON.stringify({ hash, variant, ts: Date.now() }));
+  await env.META.put(`skin:${user}`, JSON.stringify({ hash, variant, ts }));
+  // Lịch sử 5 lần đổi gần nhất của tài khoản (khử trùng theo hash).
+  const hist = (await env.META.get(`hist:${user}`, "json")) || [];
+  const next = [{ hash, variant, ts }, ...hist.filter((h) => h.hash !== hash)].slice(0, 5);
+  await env.META.put(`hist:${user}`, JSON.stringify(next));
   return json({ ok: true, hash, variant });
+}
+
+async function getHistory(username, env) {
+  const hist = (await env.META.get(`hist:${username.toLowerCase()}`, "json")) || [];
+  return json({ username, history: hist });
 }
 
 // Xác minh người gọi có quyền ghi skin cho `username`.

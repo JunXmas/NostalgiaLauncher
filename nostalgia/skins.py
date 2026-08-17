@@ -135,6 +135,39 @@ def write_csl_config(game_dir: Path, backend_url: str) -> Path:
     return out
 
 
+def fetch_account_skins(backend_url: str, username: str) -> list[dict]:
+    """5 skin gần nhất CỦA TÀI KHOẢN (theo username) từ backend — đi theo tài khoản,
+    xuyên máy. Tải & cache PNG về máy để hiển thị. Trả [{path, variant, ts}]."""
+    if not backend_url or not username:
+        return []
+    base = backend_url.rstrip("/")
+    try:
+        r = requests.get(f"{base}/history/{username}", timeout=TIMEOUT)
+        r.raise_for_status()
+        hist = r.json().get("history", [])
+    except (requests.RequestException, ValueError):
+        return []
+    cache = SKINS_DIR / "cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    out = []
+    for h in hist[:MAX_RECENT]:
+        hs = h.get("hash")
+        if not hs:
+            continue
+        p = cache / f"{hs}.png"
+        if not p.exists():
+            try:
+                tr = requests.get(f"{base}/textures/{hs}", timeout=TIMEOUT)
+                if tr.status_code != 200 or tr.content[:2] != b"\x89P":
+                    continue
+                p.write_bytes(tr.content)
+            except requests.RequestException:
+                continue
+        out.append({"path": str(p), "variant": h.get("variant", "classic"),
+                    "ts": h.get("ts", 0)})
+    return out
+
+
 def upload_to_backend(backend_url: str, username: str, png: bytes,
                       variant: str = "classic", access_token: str = "") -> None:
     """Đẩy skin lên backend chung để người khác (qua CustomSkinLoader) nhìn thấy.

@@ -748,10 +748,25 @@ class InstancePage(Page):
 
 # ---------- skin ----------
 
+def _reltime(ts) -> str:
+    """'2d ago' — nhận ts theo giây (lịch sử cục bộ) hoặc mili-giây (backend)."""
+    import time
+    ts = float(ts)
+    if ts > 1e12:
+        ts /= 1000.0
+    secs = max(0.0, time.time() - ts)
+    for div, unit in ((86400, "d"), (3600, "h"), (60, "m")):
+        n = int(secs // div)
+        if n >= 1:
+            return f"{n}{unit} ago"
+    return "just now"
+
+
 class SkinsPage(Page):
     heading = "Skin"
 
-    TILE = 118
+    TILE_W = 96      # tile khổ dọc kiểu NameMC: đủ chỗ render cả người
+    TILE_H = 132
     GAP = 14
 
     def __init__(self, ctl, parent=None):
@@ -783,10 +798,24 @@ class SkinsPage(Page):
             self.note = "Loading skin…"
         if not self._defaults:
             self.ctl.ensure_default_skins(self._got_defaults)
+        # Lịch sử skin THEO TÀI KHOẢN từ backend (đi theo tài khoản, xuyên máy) —
+        # thay cho danh sách cục bộ khi lấy được.
+        if account:
+            self.ctl.load_account_skins(self._got_account_skins)
         self.update()
 
     def _got_defaults(self, items) -> None:
         self._defaults = items or []
+        self.update()
+
+    def _got_account_skins(self, items) -> None:
+        if items:
+            self._recent = items
+            img = QImage()
+            if img.load(items[0]["path"]):
+                self.skin = img
+                self._variant = items[0].get("variant", "classic")
+                self.note = ""
         self.update()
 
     def _got(self, data: bytes | None) -> None:
@@ -889,20 +918,20 @@ class SkinsPage(Page):
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rx, 62, 300, 18), Qt.AlignLeft | Qt.AlignVCenter, "SAVED SKINS")
         y = 88
-        add = QRect(rx, y, self.TILE, self.TILE)
+        add = QRect(rx, y, self.TILE_W, self.TILE_H)
         self._paint_add_tile(p, add, self._hover == len(self._tiles))
         self._tiles.append((add, "add", "", ""))
-        x = rx + self.TILE + self.GAP
+        x = rx + self.TILE_W + self.GAP
         current_path = self._recent[0]["path"] if self._recent else None
         for it in self._recent:
-            tile = QRect(x, y, self.TILE, self.TILE)
-            self._paint_skin_tile(p, tile, it["path"], it["path"] == current_path,
+            tile = QRect(x, y, self.TILE_W, self.TILE_H)
+            self._paint_skin_tile(p, tile, it, it["path"] == current_path,
                                   self._hover == len(self._tiles))
             self._tiles.append((tile, "recent", it["path"], it.get("variant", "classic")))
-            x += self.TILE + self.GAP
+            x += self.TILE_W + self.GAP
 
         # ----- Default skins -----
-        y2 = y + self.TILE + 34
+        y2 = y + self.TILE_H + 34
         if self._defaults:
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT_FAINT)
@@ -910,11 +939,11 @@ class SkinsPage(Page):
             xy = y2 + 26
             x = rx
             for d in self._defaults:
-                tile = QRect(x, xy, self.TILE, self.TILE)
-                self._paint_skin_tile(p, tile, d["path"], d["path"] == current_path,
+                tile = QRect(x, xy, self.TILE_W, self.TILE_H)
+                self._paint_skin_tile(p, tile, d, d["path"] == current_path,
                                       self._hover == len(self._tiles))
                 self._tiles.append((tile, "default", d["path"], d.get("variant", "classic")))
-                x += self.TILE + self.GAP
+                x += self.TILE_W + self.GAP
 
         if self.note:
             p.setFont(ui_font(9))
@@ -966,12 +995,20 @@ class SkinsPage(Page):
         p.drawText(QRect(rect.left(), rect.bottom() - 26, rect.width(), 18),
                    Qt.AlignCenter, "Add a skin")
 
-    def _paint_skin_tile(self, p, rect: QRect, path: str, selected: bool, hovered: bool):
+    def _paint_skin_tile(self, p, rect: QRect, item: dict, selected: bool, hovered: bool):
         self._tile_bg(p, rect, hovered, selected)
         img = QImage()
-        if img.load(path) and img.width() >= 64:
-            d = rect.width() - 44
-            self._draw_head(p, img, QRect(rect.center().x() - d // 2, rect.top() + 16, d, d))
+        if img.load(item["path"]) and img.width() >= 64:
+            scale = 3                                   # render cả người kiểu NameMC
+            slim = item.get("variant") == "slim"
+            ox = int(rect.center().x() - 8 * scale)
+            self._draw_body(p, img, ox, rect.top() + 10, scale, slim)
+        ts = item.get("ts")
+        if ts:
+            p.setFont(ui_font(7))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(rect.left(), rect.bottom() - 18, rect.width(), 14),
+                       Qt.AlignCenter, _reltime(ts))
 
 
 # ---------- ghi chú phiên bản ----------

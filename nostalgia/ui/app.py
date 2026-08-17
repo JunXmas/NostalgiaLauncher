@@ -611,6 +611,17 @@ class Controller:
         from .. import skins
         self._run(skins.ensure_defaults, cb, lambda _m: cb([]))
 
+    def load_account_skins(self, cb) -> None:
+        """5 skin gần nhất của TÀI KHOẢN hiện tại từ backend (đi theo tài khoản)."""
+        from .. import skins
+        account = self.current_account()
+        if not account:
+            cb([])
+            return
+        self._run(lambda: skins.fetch_account_skins(self.settings.backend_url,
+                                                    account.username),
+                  cb, lambda _m: cb([]))
+
     def pick_and_apply_skin(self, variant: str = "classic") -> None:
         path, _ = QFileDialog.getOpenFileName(
             self.window, "Choose a skin (64×64 PNG)", "", "Skin image (*.png)")
