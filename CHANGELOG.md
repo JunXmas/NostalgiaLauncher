@@ -2,6 +2,24 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.0
+- **One-click optimized instances.** Pick a Minecraft version and get a
+  ready-to-play instance with the optimization stack already installed —
+  **Fabulously Optimized** on modern versions, **MAX FPS: Optimized** on
+  1.12.2. Choose it from *New Instance* or straight from the version dropdown
+  next to PLAY, no setup, best FPS out of the box.
+- **Your language.** Settings now has a language picker — **Tiếng Việt** plus
+  Spanish, French, German, Portuguese, Russian, Chinese, Japanese and Korean.
+  It switches instantly, no restart.
+- **A livelier Home.** Your instances now fill a grid (many at a glance), each
+  showing its modpack's icon or a grass-block default; you can set a custom
+  icon per instance in its settings. Your account avatar is your skin's face,
+  there's a new leaf logo, and a Discord link sits in the sidebar.
+- **Browse modpacks like Modrinth** — the modpack page is now a gallery of
+  cards with big preview screenshots.
+- **Fixed:** installing a Forge modpack no longer looks frozen — it shows what
+  the installer is doing and can't hang forever.
+
 ## 0.6.0
 - **A real skin manager.** Change your skin right in the launcher, keep your
   last five skins as history that follows your **account** (not just this PC),
