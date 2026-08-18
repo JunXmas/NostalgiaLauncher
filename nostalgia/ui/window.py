@@ -286,7 +286,7 @@ class LauncherWindow(QWidget):
         """Dựng lại ảnh nền + bản blur (gọi khi đổi background_path)."""
         w, h = max(1, self.width()), max(1, self.height())
         self.hero = render_hero(w, h, self.background_path)
-        self.blurred = blur_pixmap(self.hero, factor=14, passes=2)
+        self.blurred = blur_pixmap(self.hero, factor=15, passes=3)
         self.update()
         self.update_all()
 
@@ -355,7 +355,7 @@ class LauncherWindow(QWidget):
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
         self.hero = render_hero(w, h, self.background_path)
-        self.blurred = blur_pixmap(self.hero, factor=14, passes=2)
+        self.blurred = blur_pixmap(self.hero, factor=15, passes=3)
 
         self.sidebar.setGeometry(0, 0, SIDEBAR_W, h - STATUSBAR_H)
         self.statusbar.setGeometry(0, h - STATUSBAR_H, w, STATUSBAR_H)

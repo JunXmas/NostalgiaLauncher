@@ -9,13 +9,14 @@ from PySide6.QtCore import Qt, QPointF
 
 # ---------- màu ----------
 # Sắc kính Aero: xanh lam lạnh, khá trong — Windows 7 để màu sau kính ánh lên rõ.
-GLASS_TINT = QColor(46, 82, 128, 62)
-GLASS_TINT_STRONG = QColor(32, 62, 104, 92)
-AERO_TINT = QColor(70, 116, 170, 90)   # dùng cho các thẻ trên dashboard
+# Tint nhẹ đi để nhìn xuyên kính rõ hơn (trong hơn), bù lại tăng bevel + phản chiếu.
+GLASS_TINT = QColor(46, 82, 128, 44)
+GLASS_TINT_STRONG = QColor(32, 62, 104, 70)
+AERO_TINT = QColor(70, 116, 170, 82)   # dùng cho các thẻ trên dashboard
 
 # Viền vát: sáng ở cạnh trên, tối ở cạnh dưới -> tạo cảm giác tấm kính dày.
-BEVEL_LIGHT = QColor(255, 255, 255, 130)
-BEVEL_DARK = QColor(0, 0, 0, 90)
+BEVEL_LIGHT = QColor(255, 255, 255, 175)
+BEVEL_DARK = QColor(0, 0, 0, 96)
 
 TEXT = QColor(238, 244, 250)
 TEXT_DIM = QColor(165, 182, 199)
@@ -65,11 +66,23 @@ def gloss_gradient(height: float, strength: float = 1.0) -> QLinearGradient:
     # Bỏ dải cắt-giữa: chỉ giữ ánh sáng dịu ở đỉnh rồi tắt dần, không còn
     # vệt sáng kết thúc ngang giữa panel.
     g = QLinearGradient(QPointF(0, 0), QPointF(0, height))
-    a = lambda v: int(v * strength)  # noqa: E731
-    g.setColorAt(0.00, QColor(255, 255, 255, a(95)))
-    g.setColorAt(0.14, QColor(255, 255, 255, a(30)))
-    g.setColorAt(0.40, QColor(255, 255, 255, a(6)))
+    a = lambda v: int(min(255, v * strength))  # noqa: E731
+    g.setColorAt(0.00, QColor(255, 255, 255, a(120)))
+    g.setColorAt(0.10, QColor(255, 255, 255, a(46)))
+    g.setColorAt(0.34, QColor(255, 255, 255, a(9)))
     g.setColorAt(1.00, QColor(255, 255, 255, a(4)))
+    return g
+
+
+def glass_reflection(height: float) -> QLinearGradient:
+    """Quầng phản chiếu hắt lên từ đáy tấm kính — thêm chiều sâu kiểu Vista/7.
+
+    Ánh sáng dịu màu lam-trắng dâng từ mép dưới rồi tắt dần lên giữa, làm mặt
+    kính như có đáy cong hứng sáng chứ không phẳng lì.
+    """
+    g = QLinearGradient(QPointF(0, height), QPointF(0, height * 0.55))
+    g.setColorAt(0.00, QColor(202, 226, 255, 34))
+    g.setColorAt(1.00, QColor(202, 226, 255, 0))
     return g
 
 
@@ -97,10 +110,10 @@ def sheen_gradient(width: float, strength: float = 1.0) -> QLinearGradient:
     panel cao 600px thì thành đường nối ngang giữa màn hình, không phải mặt kính.
     """
     g = QLinearGradient(QPointF(0, 0), QPointF(width, 0))
-    a = lambda v: int(v * strength)  # noqa: E731
-    g.setColorAt(0.00, QColor(255, 255, 255, a(46)))
-    g.setColorAt(0.30, QColor(255, 255, 255, a(18)))
-    g.setColorAt(1.00, QColor(255, 255, 255, a(6)))
+    a = lambda v: int(min(255, v * strength))  # noqa: E731
+    g.setColorAt(0.00, QColor(255, 255, 255, a(60)))
+    g.setColorAt(0.28, QColor(255, 255, 255, a(22)))
+    g.setColorAt(1.00, QColor(255, 255, 255, a(7)))
     return g
 
 

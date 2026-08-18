@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QWidget
 
 from .theme import (
     BEVEL_DARK, BEVEL_LIGHT, GLASS_TINT, GLASS_TINT_STRONG, diagonal_streak,
-    gloss_gradient, noise_tile, sheen_gradient,
+    glass_reflection, gloss_gradient, noise_tile, sheen_gradient,
 )
 
 
@@ -68,6 +68,9 @@ class GlassPanel(QWidget):
         if self.streak > 0:
             p.fillRect(rect, diagonal_streak(rect.width(), rect.height(), self.streak))
 
+        # 3c. Quầng phản chiếu hắt lên từ đáy — tấm kính có chiều sâu, không phẳng lì.
+        p.fillRect(rect, glass_reflection(rect.height()))
+
         # 4. Viền vát cho tấm kính có bề dày.
         self._draw_bevel(p, rect)
         p.end()
@@ -112,15 +115,23 @@ def draw_glass_rect(p: QPainter, rect, *, radius: float = 3.0, tint: QColor | No
         p.setBrush(gloss_gradient(rect.height(), gloss * 0.7))
         p.drawRoundedRect(path_rect, radius, radius)
 
-    # Nhiễu hạt Acrylic, cắt theo bo góc.
+    # Nhiễu hạt Acrylic + độ cong lồi, cắt theo bo góc.
     p.save()
     clip = QPainterPath()
     clip.addRoundedRect(path_rect, radius, radius)
     p.setClipPath(clip)
     p.fillRect(path_rect, QBrush(noise_tile()))
+    # Highlight trong ở đỉnh + bóng nhẹ ở đáy -> ô kính lồi lên khỏi mặt phẳng.
+    from PySide6.QtGui import QLinearGradient
+    depth = QLinearGradient(path_rect.topLeft(), path_rect.bottomLeft())
+    depth.setColorAt(0.00, QColor(255, 255, 255, 82))
+    depth.setColorAt(0.16, QColor(255, 255, 255, 0))
+    depth.setColorAt(0.80, QColor(0, 0, 0, 0))
+    depth.setColorAt(1.00, QColor(0, 0, 0, 46))
+    p.fillRect(path_rect, depth)
     p.restore()
 
     p.setBrush(Qt.NoBrush)
-    p.setPen(QPen(border or QColor(255, 255, 255, 60), 1))
+    p.setPen(QPen(border or QColor(255, 255, 255, 70), 1))
     p.drawRoundedRect(path_rect, radius, radius)
     p.restore()
