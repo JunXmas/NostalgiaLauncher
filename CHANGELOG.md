@@ -2,6 +2,18 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.4
+- **Continue playing.** The Home page swaps the old news feed for a
+  Continue playing card: your recent single-player worlds and saved
+  servers, newest first, with total play time in the header. Servers show
+  their real icon and live MOTD and player count (pulled with a quick
+  server ping), just like the in-game list.
+- **Click to jump back in.** Clicking a world or server asks to confirm,
+  then launches that instance and drops you straight into the world or
+  server via Minecraft Quick Play (on 1.20+).
+- **Nicer glass.** The Aero panes are clearer and softer, with a crisper
+  top edge, a bottom reflection, and small glass chips that read as convex.
+
 ## 0.7.3
 - **The installed app now wears the leaf logo.** The Windows, macOS and
   Linux packages previously shipped a generic glass-ball icon; they now use
