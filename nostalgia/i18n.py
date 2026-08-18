@@ -32,6 +32,12 @@ _T = {
         "just now": "vừa xong", "{n}m ago": "{n} phút trước",
         "{n}h ago": "{n} giờ trước", "{n}d ago": "{n} ngày trước",
         "{n}mo ago": "{n} tháng trước",
+        "Join server?": "Vào máy chủ?", "Open world?": "Mở thế giới?",
+        "Launch “{inst}” and connect to {name}?":
+            "Chạy “{inst}” và kết nối tới {name}?",
+        "Launch “{inst}” and load the world “{name}”?":
+            "Chạy “{inst}” và mở thế giới “{name}”?",
+        "That instance no longer exists.": "Instance này không còn nữa.",
         "Language": "Ngôn ngữ", "Game folder": "Thư mục game",
         "Java path": "Đường dẫn Java", "Everything is up to date!": "Mọi thứ đã mới nhất!",
     },

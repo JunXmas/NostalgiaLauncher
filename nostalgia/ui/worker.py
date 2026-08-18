@@ -107,7 +107,8 @@ class LaunchWorker(QThread):
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
-                 offline: bool = False, store_root: Path | None = None, parent=None):
+                 offline: bool = False, store_root: Path | None = None,
+                 quick_play: dict | None = None, parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
@@ -117,6 +118,7 @@ class LaunchWorker(QThread):
         self.memory_mb = memory_mb
         self.java_path = java_path
         self.offline = offline
+        self.quick_play = quick_play      # vào thẳng server/thế giới (Quick Play)
         self._proc = None            # tiến trình game, để dừng khi bấm STOP
 
     def _capture(self, proc) -> None:
@@ -137,6 +139,7 @@ class LaunchWorker(QThread):
             on_status=self.status.emit,
             on_start=self._capture,
             on_line=self.log_line.emit,
+            quick_play=self.quick_play,
         )
 
     def _launch_online(self, installer: Installer, identity) -> int:
@@ -155,7 +158,8 @@ class LaunchWorker(QThread):
                 self.status.emit(warning)
 
         cmd = build_command(meta, installer, identity,
-                            java=self.java_path or None, max_memory_mb=self.memory_mb)
+                            java=self.java_path or None, max_memory_mb=self.memory_mb,
+                            quick_play=self.quick_play)
         self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
         return run(cmd, self.game_dir, on_start=self._capture, on_line=self.log_line.emit)
 

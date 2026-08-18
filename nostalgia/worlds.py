@@ -124,7 +124,7 @@ def recent_worlds(store, game_root: Path, limit: int = 8) -> list[dict]:
                     last = lp
             except Exception:  # noqa: BLE001 — hỏng thì dùng mtime + tên thư mục
                 pass
-            out.append({"kind": "world", "title": name,
+            out.append({"kind": "world", "title": name, "folder": wd.name,
                         "instance": inst.name, "last": last})
     out.sort(key=lambda w: w["last"], reverse=True)
     return out[:limit]

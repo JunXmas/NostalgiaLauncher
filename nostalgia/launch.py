@@ -141,6 +141,7 @@ def build_command(
     *,
     java: str | None = None,
     max_memory_mb: int = 2048,
+    quick_play: dict | None = None,
 ) -> list[str]:
     version_id = meta["id"]
     classpath = installer.library_paths(meta) + [installer.client_jar(meta)]
@@ -191,6 +192,15 @@ def build_command(
         cmd += _substitute(meta["minecraftArguments"].split(), values, features)
         if identity.demo:
             cmd.append("--demo")  # bản cũ không có feature flag, phải tự thêm
+
+    # Vào thẳng server/thế giới (Quick Play, có từ 1.20). Chỉ thêm cho bản khai báo
+    # "arguments" (1.13+); Minecraft cho phép cờ lạ nên bản <1.20 sẽ bỏ qua an toàn.
+    if quick_play and "arguments" in meta:
+        target = str(quick_play.get("target", "")).strip()
+        if quick_play.get("type") == "multiplayer" and target:
+            cmd += ["--quickPlayMultiplayer", target]
+        elif quick_play.get("type") == "singleplayer" and target:
+            cmd += ["--quickPlaySingleplayer", target]
 
     return cmd
 
@@ -271,6 +281,7 @@ def launch_game_offline(
     on_status=None,
     on_start=None,
     on_line=None,
+    quick_play: dict | None = None,
 ) -> int:
     """Khởi chạy game mà không phát một request mạng nào.
 
@@ -304,7 +315,7 @@ def launch_game_offline(
         ) from e
 
     cmd = build_command(meta, installer, identity, java=java_bin,
-                        max_memory_mb=max_memory_mb)
+                        max_memory_mb=max_memory_mb, quick_play=quick_play)
     say(f"Launching {version_id} offline as '{identity.username}'"
         + (" (demo)" if identity.demo else ""))
     return run(cmd, installer.game_dir, on_start=on_start, on_line=on_line)

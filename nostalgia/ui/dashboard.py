@@ -224,9 +224,9 @@ class HomeDashboard(QWidget):
                 else:
                     self.ctl.open_instance(name)
                 return
-        for rect, inst in self._continue_rects:
+        for rect, entry in self._continue_rects:
             if rect.contains(pos):
-                self.ctl.open_instance(inst)
+                self.ctl.play_continue_item(entry)
                 return
         for rect, action in self._hot_hero_links:
             if rect.contains(pos):
@@ -588,5 +588,5 @@ class HomeDashboard(QWidget):
             sub = fm.elidedText(e.get("_sub", ""), Qt.ElideRight, item.width() - 48)
             p.drawText(QRect(icon.right() + 8, item.top() + 24, item.width() - 48, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, sub)
-            self._continue_rects.append((item, e["instance"]))
+            self._continue_rects.append((item, e))
             y += 50

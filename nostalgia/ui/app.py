@@ -713,6 +713,35 @@ class Controller:
 
         self._run(work, cb, lambda _m: cb({"items": [], "playtime": 0}))
 
+    def play_continue_item(self, item: dict) -> None:
+        """Bấm một mục 'Continue playing' -> hỏi xác nhận rồi vào thẳng server/thế giới."""
+        from ..i18n import tr
+        inst = self.instances.get(item.get("instance", ""))
+        if inst is None:
+            self.window.set_status(tr("That instance no longer exists."))
+            return
+        name = item.get("_title") or item.get("title") or item.get("instance")
+        if item.get("kind") == "server":
+            title = tr("Join server?")
+            msg = tr("Launch “{inst}” and connect to {name}?").format(
+                inst=inst.name, name=name)
+        else:
+            title = tr("Open world?")
+            msg = tr("Launch “{inst}” and load the world “{name}”?").format(
+                inst=inst.name, name=name)
+        dlg = ConfirmDialog(self.window, title, msg, ok_text="PLAY", tone="green")
+        dlg.confirmed.connect(lambda: self._do_play_continue(item))
+        dlg.show()
+
+    def _do_play_continue(self, item: dict) -> None:
+        self.set_active_instance(item.get("instance", ""))
+        quick = None
+        if item.get("kind") == "server" and item.get("ip"):
+            quick = {"type": "multiplayer", "target": item["ip"]}
+        elif item.get("kind") == "world" and item.get("folder"):
+            quick = {"type": "singleplayer", "target": item["folder"]}
+        self.start_launch(quick_play=quick)
+
     def load_patch_notes(self, cb) -> None:
         self._run(content.fetch_patch_notes, cb, lambda _m: cb(None))
 
@@ -1281,7 +1310,7 @@ class Controller:
             w.stop()
         self.window.set_status("Stopping game…")
 
-    def start_launch(self) -> None:
+    def start_launch(self, quick_play: dict | None = None) -> None:
         account = self.current_account()
         if account is None:
             self.window.set_status("No account — click the name at the top left to add one.")
@@ -1311,6 +1340,7 @@ class Controller:
         worker = LaunchWorker(
             self.store, account, version, game_dir,
             memory_mb=memory, java_path=java, store_root=self.store_root,
+            quick_play=quick_play,
         )
         worker.instance_name = inst.name if inst else ""
         worker.started_ts = 0.0
