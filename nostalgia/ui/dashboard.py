@@ -37,6 +37,64 @@ def _hash_hue(name: str) -> QColor:
     return table[h % len(table)]
 
 
+def _fmt_playtime(seconds: int) -> str:
+    """Tổng giờ chơi gọn: '3h 12m', '45m', '0m'."""
+    m = max(0, int(seconds)) // 60
+    h, m = divmod(m, 60)
+    if h and m:
+        return f"{h}h {m}m"
+    if h:
+        return f"{h}h"
+    return f"{m}m"
+
+
+def _reltime_ms(ms: int) -> str:
+    """Khoảng thời gian từ mốc (ms epoch) tới giờ, dạng ngắn."""
+    import time
+    if not ms:
+        return ""
+    secs = max(0, time.time() - ms / 1000.0)
+    if secs < 90:
+        return tr("just now")
+    mins = secs / 60
+    if mins < 60:
+        return tr("{n}m ago").format(n=int(mins))
+    hours = mins / 60
+    if hours < 24:
+        return tr("{n}h ago").format(n=int(hours))
+    days = hours / 24
+    if days < 30:
+        return tr("{n}d ago").format(n=int(days))
+    return tr("{n}mo ago").format(n=int(days / 30))
+
+
+def _continue_glyph(p: QPainter, r: QRect, kind: str) -> None:
+    """Icon nhỏ cho mục Continue playing: quả địa cầu (world) / khối server."""
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing, True)
+    cx, cy = r.center().x(), r.center().y()
+    if kind == "world":
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(96, 168, 120))
+        p.drawEllipse(QRectF(r.left() + 4, r.top() + 4, r.width() - 8, r.height() - 8))
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(255, 255, 255, 150), 1.3))
+        rad = (r.width() - 8) / 2
+        p.drawEllipse(QRectF(cx - rad, cy - rad, rad * 2, rad * 2))
+        p.drawArc(QRectF(cx - rad * 0.5, cy - rad, rad, rad * 2), 90 * 16, 180 * 16)
+        p.drawArc(QRectF(cx - rad * 0.5, cy - rad, rad, rad * 2), -90 * 16, 180 * 16)
+        p.drawLine(int(cx - rad), cy, int(cx + rad), cy)
+    else:  # server
+        p.setPen(Qt.NoPen)
+        for i in range(2):
+            bar = QRectF(r.left() + 4, r.top() + 6 + i * 12, r.width() - 8, 9)
+            p.setBrush(QColor(120, 160, 210))
+            p.drawRoundedRect(bar, 2, 2)
+            p.setBrush(CONNECTED)                 # đèn báo
+            p.drawEllipse(QRectF(bar.left() + 4, bar.center().y() - 2, 4, 4))
+    p.restore()
+
+
 _CUBE_IMG = None
 
 
@@ -56,11 +114,12 @@ class HomeDashboard(QWidget):
         super().__init__(parent)
         self.ctl = ctl
         self._instances: list[dict] = []
-        self._news: list[dict] = []
+        self._continue: dict | None = None
         self._card_rects: list[tuple[QRect, str]] = []
-        self._news_rects: list[tuple[QRect, str]] = []
+        self._continue_rects: list[tuple[QRect, str]] = []
         self._hot_hero_links: list[tuple[QRect, str]] = []
         self._hover_card: str | None = None
+        self._hover_continue: int = -1
         self._icon_cache: dict = {}      # tên instance -> QImage icon modpack (hoặc None)
         self._avatar_img: QImage | None = None   # đầu skin tài khoản làm avatar
         self._avatar_url = ""
@@ -108,13 +167,12 @@ class HomeDashboard(QWidget):
             self._avatar_img = None
             if url:
                 self.ctl.load_skin(url, self._got_avatar)
-        if not self._news:
-            self.ctl.load_news(self._got_news)
+        self.ctl.load_continue(self._got_continue)
         self._relayout()
         self.update()
 
-    def _got_news(self, entries) -> None:
-        self._news = entries or []
+    def _got_continue(self, data) -> None:
+        self._continue = data or {"items": [], "playtime": 0}
         self.update()
 
     # ---------- layout ----------
@@ -148,9 +206,9 @@ class HomeDashboard(QWidget):
                 else:
                     self.ctl.open_instance(name)
                 return
-        for rect, url in self._news_rects:
+        for rect, inst in self._continue_rects:
             if rect.contains(pos):
-                self.ctl.open_url(url)
+                self.ctl.open_instance(inst)
                 return
         for rect, action in self._hot_hero_links:
             if rect.contains(pos):
@@ -165,15 +223,17 @@ class HomeDashboard(QWidget):
 
     def _hot(self, pos) -> bool:
         return (any(r.contains(pos) for r, _ in self._card_rects)
-                or any(r.contains(pos) for r, _ in self._news_rects)
+                or any(r.contains(pos) for r, _ in self._continue_rects)
                 or any(r.contains(pos) for r, _ in self._hot_hero_links))
 
     def mouseMoveEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
         self.setCursor(Qt.PointingHandCursor if self._hot(pos) else Qt.ArrowCursor)
         hovered = next((name for rect, name in self._card_rects if rect.contains(pos)), None)
-        if hovered != self._hover_card:
+        hc = next((i for i, (rect, _) in enumerate(self._continue_rects) if rect.contains(pos)), -1)
+        if hovered != self._hover_card or hc != self._hover_continue:
             self._hover_card = hovered
+            self._hover_continue = hc
             self.update()
 
     def leaveEvent(self, e):  # noqa: N802
@@ -187,7 +247,7 @@ class HomeDashboard(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         self._card_rects.clear()
-        self._news_rects.clear()
+        self._continue_rects.clear()
         self._hot_hero_links.clear()
 
         hero = QRect(PAD, PAD, self._center_w(), HERO_H)
@@ -450,43 +510,57 @@ class HomeDashboard(QWidget):
         p.drawText(QRect(av.right() + 24, acc.top() + 52, acc.width() - 90, 14),
                    Qt.AlignLeft | Qt.AlignVCenter, win.account_mode)
 
-        # --- News ---
-        news = QRect(col.left(), acc.bottom() + 14, col.width(),
+        # --- Continue playing ---
+        cont = QRect(col.left(), acc.bottom() + 14, col.width(),
                      col.bottom() - acc.bottom() - 14)
-        self._card(p, news, radius=8, strong=True)
+        self._card(p, cont, radius=8, strong=True)
         p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT_FAINT)
-        p.drawText(QRect(news.left() + 14, news.top() + 10, news.width() - 28, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, tr("NEWS"))
-        y = news.top() + 32
-        if not self._news:
+        p.drawText(QRect(cont.left() + 14, cont.top() + 10, cont.width() - 28, 14),
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("CONTINUE PLAYING"))
+        # tổng giờ chơi ở góc phải tiêu đề
+        total = (self._continue or {}).get("playtime", 0)
+        p.setPen(TEXT_DIM)
+        p.drawText(QRect(cont.left() + 14, cont.top() + 10, cont.width() - 28, 14),
+                   Qt.AlignRight | Qt.AlignVCenter, _fmt_playtime(total))
+
+        y = cont.top() + 34
+        if self._continue is None:
             p.setFont(ui_font(8))
             p.setPen(TEXT_FAINT)
-            p.drawText(QRect(news.left() + 14, y, news.width() - 28, 20),
-                       Qt.AlignLeft | Qt.AlignTop, "Loading…")
+            p.drawText(QRect(cont.left() + 14, y, cont.width() - 28, 20),
+                       Qt.AlignLeft | Qt.AlignTop, tr("Loading…"))
             return
-        for e in self._news:
-            if y + 52 > news.bottom() - 8:
+        items = self._continue.get("items", [])
+        if not items:
+            p.setFont(ui_font(8))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(cont.left() + 14, y, cont.width() - 28, 40),
+                       Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap,
+                       tr("No worlds or servers yet — play a bit and they'll show up here."))
+            return
+        fm = p.fontMetrics()
+        for e in items:
+            if y + 50 > cont.bottom() - 8:
                 break
-            item = QRect(news.left() + 10, y, news.width() - 20, 50)
-            if any(r is item for r, _ in self._news_rects):
-                pass
-            # thumbnail nhỏ
-            th = QRect(item.left(), item.top() + 4, 42, 42)
-            col2 = _hash_hue(e["title"])
-            p.setPen(Qt.NoPen)
-            p.setBrush(col2)
-            p.drawRoundedRect(QRectF(th), 3, 3)
+            item = QRect(cont.left() + 10, y, cont.width() - 20, 46)
+            if self._hover_continue == len(self._continue_rects):
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(255, 255, 255, 20))
+                p.drawRoundedRect(QRectF(item), 5, 5)
+            icon = QRect(item.left() + 2, item.top() + 7, 32, 32)
+            _continue_glyph(p, icon, e["kind"])
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT)
-            fm = p.fontMetrics()
-            title = fm.elidedText(e["title"], Qt.ElideRight, item.width() - 54)
-            p.drawText(QRect(th.right() + 8, item.top() + 4, item.width() - 54, 16),
+            title = fm.elidedText(e["title"], Qt.ElideRight, item.width() - 48)
+            p.drawText(QRect(icon.right() + 8, item.top() + 5, item.width() - 48, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, title)
             p.setFont(ui_font(7))
             p.setPen(TEXT_FAINT)
-            sub = fm.elidedText(e.get("date", ""), Qt.ElideRight, item.width() - 54)
-            p.drawText(QRect(th.right() + 8, item.top() + 24, item.width() - 54, 22),
-                       Qt.AlignLeft | Qt.AlignTop, sub)
-            self._news_rects.append((item, e.get("url", "")))
-            y += 54
+            tag = tr("World") if e["kind"] == "world" else tr("Server")
+            sub = f"{tag} · {e['instance']} · {_reltime_ms(e.get('last', 0))}"
+            sub = fm.elidedText(sub, Qt.ElideRight, item.width() - 48)
+            p.drawText(QRect(icon.right() + 8, item.top() + 24, item.width() - 48, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter, sub)
+            self._continue_rects.append((item, e["instance"]))
+            y += 50

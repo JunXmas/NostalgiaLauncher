@@ -682,6 +682,20 @@ class Controller:
     def load_news(self, cb) -> None:
         self._run(content.fetch_news, cb, lambda _m: cb(None))
 
+    def load_continue(self, cb) -> None:
+        """Thế giới + server chơi gần nhất và tổng giờ chơi, cho thẻ 'Continue playing'."""
+        from .. import worlds
+
+        def work():
+            root = self.settings.game_path
+            store = self.instances
+            items = worlds.recent_worlds(store, root, 8) + worlds.recent_servers(store, root, 8)
+            items.sort(key=lambda i: i["last"], reverse=True)
+            total = sum(i.playtime_sec for i in store.all())
+            return {"items": items[:8], "playtime": total}
+
+        self._run(work, cb, lambda _m: cb({"items": [], "playtime": 0}))
+
     def load_patch_notes(self, cb) -> None:
         self._run(content.fetch_patch_notes, cb, lambda _m: cb(None))
 

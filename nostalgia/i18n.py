@@ -25,6 +25,13 @@ _T = {
         "PLAY": "CHƠI", "NEW INSTANCE": "INSTANCE MỚI",
         "Manage Account": "Quản lý tài khoản", "YOUR ACCOUNT": "TÀI KHOẢN",
         "Connected": "Đã kết nối", "Offline": "Ngoại tuyến", "NEWS": "TIN TỨC",
+        "CONTINUE PLAYING": "CHƠI TIẾP", "World": "Thế giới", "Server": "Máy chủ",
+        "No worlds or servers yet — play a bit and they'll show up here.":
+            "Chưa có thế giới hay máy chủ nào — chơi một chút là nó hiện ở đây.",
+        "Loading…": "Đang tải…",
+        "just now": "vừa xong", "{n}m ago": "{n} phút trước",
+        "{n}h ago": "{n} giờ trước", "{n}d ago": "{n} ngày trước",
+        "{n}mo ago": "{n} tháng trước",
         "Language": "Ngôn ngữ", "Game folder": "Thư mục game",
         "Java path": "Đường dẫn Java", "Everything is up to date!": "Mọi thứ đã mới nhất!",
     },
