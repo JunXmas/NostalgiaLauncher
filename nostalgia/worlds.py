@@ -7,7 +7,10 @@ server) thay vì kéo thêm thư viện ngoài — ta chỉ cần vài trường
 
 from __future__ import annotations
 
+import base64
 import gzip
+import json
+import socket
 import struct
 from pathlib import Path
 
@@ -144,7 +147,122 @@ def recent_servers(store, game_root: Path, limit: int = 8) -> list[dict]:
             if not isinstance(s, dict):
                 continue
             ip = str(s.get("ip", ""))
+            icon = None
+            raw_icon = s.get("icon")            # favicon base64 game đã cache
+            if isinstance(raw_icon, str) and raw_icon:
+                try:
+                    icon = base64.b64decode(raw_icon.split(",")[-1])
+                except Exception:  # noqa: BLE001
+                    icon = None
             out.append({"kind": "server", "title": str(s.get("name") or ip or "Server"),
-                        "ip": ip, "instance": inst.name, "last": mtime})
+                        "ip": ip, "instance": inst.name, "last": mtime, "icon": icon})
     out.sort(key=lambda s: s["last"], reverse=True)
     return out[:limit]
+
+
+# ---------- Server List Ping (lấy MOTD + số người + favicon trực tiếp) ----------
+
+def _write_varint(value: int) -> bytes:
+    out = bytearray()
+    v = value & 0xFFFFFFFF
+    while True:
+        b = v & 0x7F
+        v >>= 7
+        if v:
+            out.append(b | 0x80)
+        else:
+            out.append(b)
+            return bytes(out)
+
+
+def _read_varint(sock: socket.socket) -> int:
+    num = shift = 0
+    for _ in range(5):
+        d = sock.recv(1)
+        if not d:
+            raise OSError("kết nối đóng")
+        b = d[0]
+        num |= (b & 0x7F) << shift
+        if not (b & 0x80):
+            return num
+        shift += 7
+    raise OSError("varint quá dài")
+
+
+def _flatten_motd(desc) -> str:
+    if isinstance(desc, str):
+        return desc
+    if isinstance(desc, list):
+        return "".join(_flatten_motd(e) for e in desc)
+    if isinstance(desc, dict):
+        s = desc.get("text", "")
+        for e in desc.get("extra", []):
+            s += _flatten_motd(e)
+        return s
+    return ""
+
+
+def _strip_codes(s: str) -> str:
+    """Bỏ mã màu §x của Minecraft, gộp nhiều khoảng trắng."""
+    out = []
+    skip = False
+    for ch in s:
+        if skip:
+            skip = False
+            continue
+        if ch == "§":
+            skip = True
+            continue
+        out.append(ch)
+    return "".join(out)
+
+
+def ping_server(address: str, timeout: float = 1.2) -> dict | None:
+    """Truy vấn trạng thái máy chủ (giao thức 1.7+). Trả về MOTD/số người/favicon,
+    hoặc None nếu không kết nối được. Best-effort — không hỗ trợ bản ghi SRV."""
+    host, port = address, 25565
+    if address.count(":") == 1:
+        h, _, pt = address.partition(":")
+        host = h
+        try:
+            port = int(pt)
+        except ValueError:
+            port = 25565
+    try:
+        sock = socket.create_connection((host, port), timeout=timeout)
+    except OSError:
+        return None
+    try:
+        sock.settimeout(timeout)
+        host_b = host.encode("utf-8")
+        handshake = (b"\x00" + _write_varint(47) + _write_varint(len(host_b)) + host_b
+                     + struct.pack(">H", port) + b"\x01")
+        sock.sendall(_write_varint(len(handshake)) + handshake)
+        sock.sendall(_write_varint(1) + b"\x00")     # status request
+        _read_varint(sock)                            # tổng độ dài gói (bỏ qua)
+        _read_varint(sock)                            # packet id (0)
+        jlen = _read_varint(sock)
+        buf = bytearray()
+        while len(buf) < jlen:
+            chunk = sock.recv(jlen - len(buf))
+            if not chunk:
+                break
+            buf += chunk
+        data = json.loads(bytes(buf).decode("utf-8", "replace"))
+    except (OSError, ValueError):
+        return None
+    finally:
+        sock.close()
+
+    motd = _strip_codes(_flatten_motd(data.get("description", ""))).strip()
+    motd = " ".join(motd.split())                     # gộp xuống dòng/khoảng trắng
+    players = data.get("players") or {}
+    fav = data.get("favicon")
+    favicon = None
+    if isinstance(fav, str) and "base64," in fav:
+        try:
+            favicon = base64.b64decode(fav.split("base64,", 1)[1])
+        except Exception:  # noqa: BLE001
+            favicon = None
+    return {"motd": motd, "online": players.get("online"), "max": players.get("max"),
+            "favicon": favicon}

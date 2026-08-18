@@ -687,12 +687,29 @@ class Controller:
         from .. import worlds
 
         def work():
+            from concurrent.futures import ThreadPoolExecutor
             root = self.settings.game_path
             store = self.instances
             items = worlds.recent_worlds(store, root, 8) + worlds.recent_servers(store, root, 8)
             items.sort(key=lambda i: i["last"], reverse=True)
+            items = items[:8]
+            # Ping song song để lấy MOTD + số người + favicon mới (như danh sách trong game).
+            servers = [i for i in items if i["kind"] == "server" and i.get("ip")]
+            if servers:
+                with ThreadPoolExecutor(max_workers=min(6, len(servers))) as ex:
+                    futs = {ex.submit(worlds.ping_server, s["ip"]): s for s in servers}
+                    for f, s in futs.items():
+                        try:
+                            r = f.result(timeout=2.0)
+                        except Exception:  # noqa: BLE001
+                            r = None
+                        if r:
+                            s["motd"] = r["motd"]
+                            s["online"], s["max"] = r["online"], r["max"]
+                            if r["favicon"]:
+                                s["icon"] = r["favicon"]
             total = sum(i.playtime_sec for i in store.all())
-            return {"items": items[:8], "playtime": total}
+            return {"items": items, "playtime": total}
 
         self._run(work, cb, lambda _m: cb({"items": [], "playtime": 0}))
 

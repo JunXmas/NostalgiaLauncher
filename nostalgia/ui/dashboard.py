@@ -173,6 +173,24 @@ class HomeDashboard(QWidget):
 
     def _got_continue(self, data) -> None:
         self._continue = data or {"items": [], "playtime": 0}
+        for it in self._continue.get("items", []):
+            if it["kind"] == "server":
+                img = None
+                if it.get("icon"):
+                    qi = QImage()
+                    if qi.loadFromData(it["icon"]):
+                        img = qi
+                it["_img"] = img
+                motd = (it.get("motd") or "").strip()
+                it["_title"] = motd or it.get("title") or it.get("ip") or "Server"
+                if it.get("online") is not None:
+                    it["_sub"] = f"{it['online']}/{it['max']} · {it['instance']}"
+                else:
+                    it["_sub"] = f"{tr('Server')} · {it['instance']}"
+            else:  # world
+                it["_img"] = None
+                it["_title"] = it["title"]
+                it["_sub"] = f"{tr('World')} · {it['instance']} · {_reltime_ms(it.get('last', 0))}"
         self.update()
 
     # ---------- layout ----------
@@ -549,17 +567,25 @@ class HomeDashboard(QWidget):
                 p.setBrush(QColor(255, 255, 255, 20))
                 p.drawRoundedRect(QRectF(item), 5, 5)
             icon = QRect(item.left() + 2, item.top() + 7, 32, 32)
-            _continue_glyph(p, icon, e["kind"])
+            img = e.get("_img")
+            if img is not None and not img.isNull():
+                p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                path = QPainterPath()
+                path.addRoundedRect(QRectF(icon), 4, 4)
+                p.save()
+                p.setClipPath(path)
+                p.drawImage(QRectF(icon), img, QRectF(img.rect()))
+                p.restore()
+            else:
+                _continue_glyph(p, icon, e["kind"])
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT)
-            title = fm.elidedText(e["title"], Qt.ElideRight, item.width() - 48)
+            title = fm.elidedText(e.get("_title", ""), Qt.ElideRight, item.width() - 48)
             p.drawText(QRect(icon.right() + 8, item.top() + 5, item.width() - 48, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, title)
             p.setFont(ui_font(7))
             p.setPen(TEXT_FAINT)
-            tag = tr("World") if e["kind"] == "world" else tr("Server")
-            sub = f"{tag} · {e['instance']} · {_reltime_ms(e.get('last', 0))}"
-            sub = fm.elidedText(sub, Qt.ElideRight, item.width() - 48)
+            sub = fm.elidedText(e.get("_sub", ""), Qt.ElideRight, item.width() - 48)
             p.drawText(QRect(icon.right() + 8, item.top() + 24, item.width() - 48, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, sub)
             self._continue_rects.append((item, e["instance"]))
