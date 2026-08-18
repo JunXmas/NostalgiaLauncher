@@ -23,73 +23,42 @@ import struct
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QBuffer, QByteArray, QPointF, QRectF, Qt
-from PySide6.QtGui import (
-    QBrush, QColor, QGuiApplication, QImage, QLinearGradient, QPainter,
-    QPainterPath, QRadialGradient,
-)
+from PySide6.QtCore import QBuffer, QByteArray, QRectF, Qt
+from PySide6.QtGui import QGuiApplication, QImage, QPainter
 
-# Cỡ nào cũng phải vẽ lại từ đầu chứ không thu nhỏ từ bản lớn: nét vẽ mảnh khi
-# thu nhỏ sẽ mờ thành một vệt xám.
+# Cỡ nào cũng vẽ lại từ bản logo gốc phân giải cao rồi thu nhỏ mượt, để mọi cỡ
+# đều khớp nhau và luôn theo đúng logo của launcher.
 SIZES = (16, 24, 32, 48, 64, 128, 256, 512, 1024)
 
-GLASS_TOP = QColor(150, 205, 245)
-GLASS_BOTTOM = QColor(38, 104, 170)
-RIM = QColor(255, 255, 255)
+# Logo ứng dụng: khối lá xanh dùng khắp giao diện (nostalgia/ui/assets/logo.png).
+LOGO_PATH = Path(__file__).resolve().parent.parent / "nostalgia" / "ui" / "assets" / "logo.png"
+_LOGO: QImage | None = None
+
+
+def _logo() -> QImage:
+    global _LOGO
+    if _LOGO is None:
+        img = QImage()
+        if not img.load(str(LOGO_PATH)):
+            raise FileNotFoundError(f"Không đọc được logo: {LOGO_PATH}")
+        _LOGO = img.convertToFormat(QImage.Format_ARGB32)
+    return _LOGO
 
 
 def draw(size: int) -> QImage:
-    """Vẽ một viên kính Aero: vòm sáng ở trên, đáy sâu, viền trong suốt."""
-    image = QImage(size, size, QImage.Format_ARGB32_Premultiplied)
+    """Kết xuất logo lá của launcher ra một cỡ, căn giữa, giữ tỉ lệ, nền trong suốt."""
+    image = QImage(size, size, QImage.Format_ARGB32)
     image.fill(Qt.transparent)
     p = QPainter(image)
-    p.setRenderHint(QPainter.Antialiasing)
-
-    s = size
-    margin = s * 0.06
-    body = QRectF(margin, margin, s - 2 * margin, s - 2 * margin)
-
-    # Thân kính: chuyển sắc dọc từ xanh nhạt xuống xanh sâu.
-    fill = QLinearGradient(body.topLeft(), body.bottomLeft())
-    fill.setColorAt(0.0, GLASS_TOP)
-    fill.setColorAt(0.55, QColor(72, 150, 210))
-    fill.setColorAt(1.0, GLASS_BOTTOM)
-    p.setPen(Qt.NoPen)
-    p.setBrush(QBrush(fill))
-    p.drawEllipse(body)
-
-    # Quầng sáng hắt lên từ đáy — chỗ này làm viên kính trông có chiều sâu.
-    glow = QRadialGradient(QPointF(body.center().x(), body.bottom()), body.width() * 0.7)
-    glow.setColorAt(0.0, QColor(180, 235, 255, 140))
-    glow.setColorAt(1.0, QColor(180, 235, 255, 0))
-    p.setBrush(QBrush(glow))
-    p.drawEllipse(body)
-
-    # Vệt bóng nửa trên: nửa hình bầu dục sáng, cắt phựt ở giữa. Đây là chi tiết
-    # nhận ra Aero ngay lập tức, thiếu nó thì chỉ còn một quả cầu xanh bất kỳ.
-    sheen = QPainterPath()
-    top = QRectF(body.left() + s * 0.06, body.top() + s * 0.04,
-                 body.width() - s * 0.12, body.height() * 0.52)
-    sheen.addEllipse(top)
-    gloss = QLinearGradient(top.topLeft(), top.bottomLeft())
-    gloss.setColorAt(0.0, QColor(255, 255, 255, 210))
-    gloss.setColorAt(1.0, QColor(255, 255, 255, 30))
-    p.setBrush(QBrush(gloss))
-    p.drawPath(sheen)
-
-    # Viền: sáng ở trên, tắt dần xuống dưới, như ánh sáng chỉ tới từ một phía.
-    rim = QLinearGradient(body.topLeft(), body.bottomLeft())
-    rim.setColorAt(0.0, QColor(RIM.red(), RIM.green(), RIM.blue(), 230))
-    rim.setColorAt(1.0, QColor(RIM.red(), RIM.green(), RIM.blue(), 40))
-    pen_width = max(1.0, s * 0.018)
-    p.setBrush(Qt.NoBrush)
-    p.setPen(QColor(255, 255, 255, 0))
-    pen = p.pen()
-    pen.setBrush(QBrush(rim))
-    pen.setWidthF(pen_width)
-    p.setPen(pen)
-    p.drawEllipse(body.adjusted(pen_width / 2, pen_width / 2, -pen_width / 2, -pen_width / 2))
-
+    p.setRenderHint(QPainter.Antialiasing, True)
+    p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+    src = _logo()
+    # Chừa lề nhỏ để logo không chạm sát mép khung icon.
+    margin = size * 0.04
+    box = QRectF(margin, margin, size - 2 * margin, size - 2 * margin)
+    side = min(box.width(), box.height())
+    dst = QRectF(box.center().x() - side / 2, box.center().y() - side / 2, side, side)
+    p.drawImage(dst, src, QRectF(src.rect()))
     p.end()
     return image
 
