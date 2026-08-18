@@ -2,6 +2,12 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.3
+- **The installed app now wears the leaf logo.** The Windows, macOS and
+  Linux packages previously shipped a generic glass-ball icon; they now use
+  the launcher's own leaf-block logo everywhere — taskbar, dock, desktop
+  shortcut and installer.
+
 ## 0.7.2
 - **Draw your own skin in the launcher.** A new *Draw skin* tile on the
   Skins page opens a full pixel editor: paint the 64×64 map with pencil,
