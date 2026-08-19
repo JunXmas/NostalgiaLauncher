@@ -706,6 +706,7 @@ class InstancePage(Page):
             if not btn.isHidden():          # ý định hiện (không phụ thuộc parent đã show)
                 x -= w
                 btn.setGeometry(x, 101, w, 28)
+                btn.raise_()                # nổi lên TRÊN thanh tab, không thì tab nuốt click
                 x -= 8
 
     def refresh(self) -> None:

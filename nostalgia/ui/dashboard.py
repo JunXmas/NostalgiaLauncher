@@ -18,7 +18,6 @@ from .theme import (
     ACCENT, AERO_TINT, CONNECTED, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT,
     gloss_gradient, noise_tile, ui_font,
 )
-from .controls import AeroToggle
 from .widgets import AeroButton, draw_cube_icon
 
 PAD = 18
@@ -132,9 +131,6 @@ class HomeDashboard(QWidget):
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
-        # Công tắc bật/tắt Aero glass trong game (áp resource pack Aero cho instance).
-        self.aero_toggle = AeroToggle(bool(getattr(self.ctl.settings, "aero_ui", True)), self)
-        self.aero_toggle.toggled.connect(self.ctl.set_aero_ui)
 
     def retranslate(self) -> None:
         self.play_btn.setText(tr("PLAY"))
@@ -210,8 +206,6 @@ class HomeDashboard(QWidget):
         hero = QRect(cx, PAD, self._center_w(), HERO_H)
         # PLAY to trong hero
         self.play_btn.setGeometry(hero.left() + 26, hero.top() + 96, 210, 58)
-        # Công tắc Aero glass ngay dưới PLAY (nhãn vẽ trong paintEvent).
-        self.aero_toggle.move(hero.left() + 26, hero.top() + 96 + 58 + 12)
         # New Instance nằm ở dải "My Instances"
         inst_top = hero.bottom() + 20
         self.new_btn.setGeometry(hero.right() - 150, inst_top - 2, 150, 30)
@@ -276,11 +270,6 @@ class HomeDashboard(QWidget):
 
         hero = QRect(PAD, PAD, self._center_w(), HERO_H)
         self._paint_hero(p, hero)
-        # Nhãn cho công tắc Aero glass (widget nằm ở dưới PLAY).
-        tg = self.aero_toggle.geometry()
-        p.setFont(ui_font(9, bold=True)); p.setPen(TEXT)
-        p.drawText(QRect(tg.right() + 9, tg.top() - 2, 180, tg.height() + 4),
-                   Qt.AlignLeft | Qt.AlignVCenter, tr("Aero glass in game"))
         self._paint_instances(p, QRect(PAD, hero.bottom() + 20, self._center_w(),
                                        self.height() - hero.bottom() - 20 - PAD))
         self._paint_right(p, QRect(self.width() - RIGHT_W - PAD, RTOP, RIGHT_W,
