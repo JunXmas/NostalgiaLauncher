@@ -247,17 +247,10 @@ def build_panorama() -> None:
         print("  (skip panorama: no wallpaper.jpg)")
         return
     dest = GUI / "title" / "background"
-    S = 1024
-    # Tường: phóng lấp đầy hình vuông rồi cắt giữa.
-    filled = src.scaled(S, S, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
-    x = (filled.width() - S) // 2
-    y = (filled.height() - S) // 2
-    wall = filled.copy(x, y, S, S)
-    for i in (0, 1, 2, 3):
-        write_png(wall, dest / f"panorama_{i}.png")
-    # Trần/sàn: gradient dọc từ màu sáng (đỉnh ảnh) tới màu tối (đáy ảnh).
+    S = 512
+    # 6 mặt panorama = màu XANH PHẲNG (gradient nhẹ), lấy tông từ ảnh. Đồng đều
+    # nên vòng xoay không lộ gì — không còn "panorama", chỉ là nền tĩnh.
     top = src.pixelColor(src.width() // 2, 4)
-    midf = src.pixelColor(src.width() // 2, src.height() // 2)
     bot = src.pixelColor(src.width() // 2, src.height() - 4)
 
     def flat(c1, c2):
@@ -266,14 +259,13 @@ def build_panorama() -> None:
         p = QPainter(img); p.fillRect(0, 0, S, S, g); p.end()
         return img
 
-    write_png(flat(top, midf), dest / "panorama_4.png")     # trần (sky)
-    write_png(flat(midf, bot), dest / "panorama_5.png")     # sàn (ground)
+    for i in range(6):
+        write_png(flat(top, bot), dest / f"panorama_{i}.png")
 
-    # panorama_overlay: ảnh 2D vẽ PHẲNG, ĐỨNG YÊN đè lên panorama. Đặt wallpaper
-    # ĐỤC (alpha 255) làm overlay -> phủ kín vòng xoay -> title screen nhìn STATIC.
-    ov = src.scaled(1024, 640, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    # panorama_overlay: tấm ảnh 2D vẽ PHẲNG, đè kín — chính là "ảnh đơn thuần".
+    # Full-res + đục hẳn cho nét nhất có thể (bản cũ vẫn bị Minecraft blur skybox).
+    ov = src.scaled(1920, 1200, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
     ov = ov.convertToFormat(QImage.Format_ARGB32)
-    # ép đục hẳn để không lộ panorama xoay phía sau.
     solid = QImage(ov.size(), QImage.Format_ARGB32); solid.fill(Qt.black)
     pp = QPainter(solid); pp.drawImage(0, 0, ov); pp.end()
     write_png(solid, dest / "panorama_overlay.png")
