@@ -611,6 +611,34 @@ class Controller:
     def aero_ui_enabled(self, inst) -> bool:
         return (self.instance_dir(inst) / "resourcepacks" / "Aero UI.zip").exists()
 
+    def open_saves_folder(self, inst) -> None:
+        """Mở thư mục saves của instance để kéo-thả world vào."""
+        if inst:
+            self.open_path(self.instance_dir(inst) / "saves")
+
+    def import_world(self, inst) -> None:
+        """Chọn một file .zip world rồi nhập vào instance."""
+        if inst is None:
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Import a world", "", "World zip (*.zip)")
+        if path:
+            self._do_import_world(inst, path)
+
+    def _do_import_world(self, inst, zip_path) -> None:
+        from ..worlds import import_world_zip
+        saves = self.instance_dir(inst) / "saves"
+        self.window.set_status("Importing world…")
+
+        def done(name):
+            self.window.set_status(f"Imported world '{name}' into '{inst.name}'.")
+            page = self.pages.get("instance")
+            if page is not None:
+                page.refresh()
+
+        self._run(lambda: import_world_zip(Path(zip_path), saves), done,
+                  lambda m: self.window.set_status(f"Couldn't import world: {m}"))
+
     def set_aero_ui(self, on: bool) -> None:
         """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""
         from .. import aero

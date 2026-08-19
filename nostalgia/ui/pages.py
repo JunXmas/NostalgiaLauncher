@@ -666,6 +666,16 @@ class InstancePage(Page):
             lambda: self.ctl.enable_shared_skins(self.instance) if self.instance else None)
         self.shared_btn.hide()
 
+        # Nhập world: chọn file .zip, hoặc mở thư mục saves để kéo-thả (cũng kéo-thả
+        # .zip thẳng vào trang này được — xem dropEvent).
+        self.import_btn = AeroButton("＋ IMPORT WORLD", self, height=28, tone="neutral")
+        self.import_btn.clicked.connect(
+            lambda: self.ctl.import_world(self.instance) if self.instance else None)
+        self.saves_btn = AeroButton("SAVES FOLDER", self, height=28, tone="neutral")
+        self.saves_btn.clicked.connect(
+            lambda: self.ctl.open_saves_folder(self.instance) if self.instance else None)
+        self.setAcceptDrops(True)
+
         self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
         self.tabs.changed.connect(self._tab)
 
@@ -689,12 +699,13 @@ class InstancePage(Page):
         self._tab(0)
 
     def _relayout_actions(self) -> None:
-        # Xếp các nút hành động (Shared skins / OptiFine) từ phải sang, chỉ cái đang hiện.
+        # Xếp các nút hành động từ phải sang; Import World / Saves luôn hiện.
         x = self.width() - 20
-        for btn in (self.optifine_btn, self.shared_btn):
-            if btn.isVisible():
-                x -= 128
-                btn.setGeometry(x, 101, 128, 28)
+        for btn, w in ((self.import_btn, 150), (self.saves_btn, 128),
+                       (self.optifine_btn, 128), (self.shared_btn, 128)):
+            if not btn.isHidden():          # ý định hiện (không phụ thuộc parent đã show)
+                x -= w
+                btn.setGeometry(x, 101, w, 28)
                 x -= 8
 
     def refresh(self) -> None:
@@ -726,6 +737,21 @@ class InstancePage(Page):
         self._relayout_actions()                              # nút ở cạnh phải hàng tab
         self.content.setGeometry(0, 138, w, h - 138)
         self.logs.setGeometry(24, 142, w - 48, h - 166)
+
+    # ---- kéo-thả file .zip world thẳng vào trang để nhập ----
+    def _dropped_zips(self, e):
+        return [u.toLocalFile() for u in e.mimeData().urls()
+                if u.toLocalFile().lower().endswith(".zip")]
+
+    def dragEnterEvent(self, e):  # noqa: N802
+        if self.instance and self._dropped_zips(e):
+            e.acceptProposedAction()
+
+    def dropEvent(self, e):  # noqa: N802
+        if not self.instance:
+            return
+        for f in self._dropped_zips(e):
+            self.ctl._do_import_world(self.instance, f)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)

@@ -10,11 +10,52 @@ from __future__ import annotations
 import base64
 import gzip
 import json
+import re
+import shutil
 import socket
 import struct
+import zipfile
 from pathlib import Path
 
 from .instances import slug
+
+
+def _safe_world_name(name: str) -> str:
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", name).strip().strip(".")
+    return name[:64] or "World"
+
+
+def import_world_zip(zip_path: Path, saves_dir: Path) -> str:
+    """Giải nén một world Minecraft từ file .zip vào <instance>/saves/<tên>.
+
+    Tự nhận diện thư mục world (thư mục chứa level.dat, nông nhất) dù zip gói world
+    ở gốc hay trong một thư mục con. Trả về tên world đã thêm.
+    """
+    zip_path, saves_dir = Path(zip_path), Path(saves_dir)
+    with zipfile.ZipFile(zip_path) as z:
+        names = [n for n in z.namelist() if not n.endswith("/")]
+        levels = [n for n in names if n.rsplit("/", 1)[-1] == "level.dat"]
+        if not levels:
+            raise ValueError("This zip has no level.dat — it isn't a Minecraft world.")
+        levels.sort(key=lambda n: n.count("/"))
+        root = levels[0][: -len("level.dat")]        # "" hoặc "MyWorld/"
+        base = root.rstrip("/").rsplit("/", 1)[-1] if root else zip_path.stem
+        dest = saves_dir / _safe_world_name(base)
+        n = 2
+        while dest.exists():                          # không đè world sẵn có
+            dest = saves_dir / f"{_safe_world_name(base)} ({n})"; n += 1
+        dest.mkdir(parents=True)
+        for member in names:
+            if root and not member.startswith(root):
+                continue
+            rel = member[len(root):] if root else member
+            target = (dest / rel).resolve()
+            if not str(target).startswith(str(dest.resolve())):
+                continue                              # chặn zip-slip (../)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(member) as src, open(target, "wb") as out:
+                shutil.copyfileobj(src, out)
+    return dest.name
 
 # Mã tag NBT
 _TAG_END = 0
