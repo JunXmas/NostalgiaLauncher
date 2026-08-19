@@ -611,6 +611,19 @@ class Controller:
     def aero_ui_enabled(self, inst) -> bool:
         return (self.instance_dir(inst) / "resourcepacks" / "Aero UI.zip").exists()
 
+    def set_aero_ui(self, on: bool) -> None:
+        """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""
+        from .. import aero
+        self.settings.aero_ui = on
+        self.settings.save()
+        for inst in self.instances.all():
+            if on:
+                self.apply_aero_ui(inst, silent=True)
+            else:
+                aero.remove_from_instance(self.instance_dir(inst))
+        self.window.set_status("Aero glass " + ("enabled" if on else "disabled")
+                               + " — takes effect next time the game opens.")
+
     def _bootstrap_instances(self) -> None:
         """Lần đầu chạy bản có instance: dựng instance từ các version đã cài và
         chuyển mods/resourcepacks dùng chung cũ vào instance đang chọn."""
