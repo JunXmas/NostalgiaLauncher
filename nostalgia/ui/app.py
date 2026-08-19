@@ -353,13 +353,24 @@ class Controller:
             return
         dlg = InstanceSettingsDialog(self.window, inst,
                                      default_memory=self.settings.memory_mb,
-                                     max_memory=SettingsPage._max_memory())
+                                     max_memory=SettingsPage._max_memory(),
+                                     aero_on=self.aero_ui_enabled(inst))
         dlg.saved.connect(lambda nm, mem, jv: self._apply_instance_settings(name, nm, mem, jv))
         dlg.duplicate.connect(lambda: self.duplicate_instance(name))
         dlg.repair.connect(lambda: self.repair_instance(name))
         dlg.set_icon.connect(lambda: self._pick_instance_icon(name))
         dlg.reset_icon.connect(lambda: self._reset_instance_icon(name))
+        dlg.aero_toggled.connect(lambda on: self._toggle_instance_aero(name, on))
         dlg.show()
+
+    def _toggle_instance_aero(self, name: str, on: bool) -> None:
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        if on:
+            self.apply_aero_ui(inst)
+        else:
+            self.remove_aero_ui(inst)
 
     def _pick_instance_icon(self, name: str) -> None:
         from PySide6.QtGui import QImage

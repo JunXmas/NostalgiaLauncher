@@ -563,8 +563,10 @@ class InstanceSettingsDialog(GlassDialog):
     repair = Signal()
     set_icon = Signal()
     reset_icon = Signal()
+    aero_toggled = Signal(bool)     # bật/tắt Aero UI cho instance này
 
-    def __init__(self, parent, inst, *, default_memory: int, max_memory: int):
+    def __init__(self, parent, inst, *, default_memory: int, max_memory: int,
+                 aero_on: bool = False):
         super().__init__(parent, f"Instance settings", width=480, height=392)
         self.old_name = inst.name
         self.name = QLineEdit(inst.name, self)
@@ -588,7 +590,21 @@ class InstanceSettingsDialog(GlassDialog):
         self.icon_btn.clicked.connect(self.set_icon.emit)
         self.icon_reset = AeroButton("RESET", self, height=30, tone="neutral")
         self.icon_reset.clicked.connect(self.reset_icon.emit)
+        self.aero_on = aero_on
+        self.aero_btn = AeroButton(self._aero_label(), self, height=30,
+                                   tone="green" if aero_on else "neutral")
+        self.aero_btn.clicked.connect(self._toggle_aero)
         self.place()
+
+    def _aero_label(self) -> str:
+        return "AERO UI: ON" if self.aero_on else "AERO UI: OFF"
+
+    def _toggle_aero(self) -> None:
+        self.aero_on = not self.aero_on
+        self.aero_btn.setText(self._aero_label())
+        self.aero_btn.tone = "green" if self.aero_on else "neutral"
+        self.aero_btn.update()
+        self.aero_toggled.emit(self.aero_on)
 
     def _save(self) -> None:
         self.saved.emit(self.name.text().strip() or self.old_name,
@@ -602,6 +618,7 @@ class InstanceSettingsDialog(GlassDialog):
         self.java.setGeometry(c.left() + 22, c.top() + 222, c.width() - 44, 32)
         self.icon_btn.setGeometry(c.left() + 22, c.top() + 292, 120, 30)
         self.icon_reset.setGeometry(c.left() + 150, c.top() + 292, 84, 30)
+        self.aero_btn.setGeometry(c.left() + 244, c.top() + 292, 194, 30)
         self.dup.setGeometry(c.left() + 22, c.bottom() - 46, 108, 30)
         self.rep.setGeometry(c.left() + 138, c.bottom() - 46, 92, 30)
         self.ok.setGeometry(c.right() - 128, c.bottom() - 46, 106, 30)
