@@ -85,6 +85,7 @@ class Controller:
         self._fabric_games: list[str] = []
         self._log_lines: list[str] = []           # log game gần nhất
         self._log_dialog = None
+        self._launching = False        # có launch đang khởi động (tải/chuẩn bị) không
 
         self._build_pages()
         window.nav_clicked.connect(self.go)
@@ -1317,26 +1318,36 @@ class Controller:
     def _any_game_running(self) -> bool:
         return any(w._proc is not None and w._proc.poll() is None for w in self._launches)
 
+    def _launch_active(self) -> bool:
+        """Có launch nào đang diễn ra không — tính CẢ lúc đang tải/chuẩn bị,
+        chứ không chỉ khi tiến trình game đã chạy. Nhờ vậy nút đổi sang STOP ngay
+        khi bấm Play, để người chơi thấy rõ 'đang khởi động', không tưởng là đơ."""
+        return self._launching or any(w.isRunning() for w in self._launches)
+
     def _update_play_button(self) -> None:
-        running = self._any_game_running()
+        active = self._launch_active()
         for key in ("home", "instance"):
             btn = getattr(self.pages.get(key), "play_btn", None)
             if btn is not None:
-                btn.setText("STOP" if running else "PLAY")
-                btn.arrow = not running
-                btn.tone = "danger" if running else "green"
+                btn.setText("STOP" if active else "PLAY")
+                btn.arrow = not active
+                btn.tone = "danger" if active else "green"
                 btn.update()
 
     def toggle_play(self) -> None:
-        if self._any_game_running():
+        if self._launch_active():
             self.stop_launch()
         else:
             self.start_launch()
 
     def stop_launch(self) -> None:
+        # Đặt cờ tắt trước để nút phản hồi ngay, rồi mới bảo worker dừng: nếu game
+        # đã chạy thì kết thúc tiến trình; nếu còn đang tải thì huỷ, không bật game.
+        self._launching = False
         for w in list(self._launches):
             w.stop()
-        self.window.set_status("Stopping game…")
+        self.window.set_status("Stopping…")
+        self._update_play_button()
 
     def start_launch(self, quick_play: dict | None = None) -> None:
         account = self.current_account()
@@ -1353,6 +1364,13 @@ class Controller:
         if not version:
             self.window.set_status("No instance yet — click NEW INSTANCE to make one.")
             return
+
+        # Phản hồi tức thì: đổi nút sang STOP ngay khi bấm Play, TRƯỚC cả bước làm
+        # mới token (có thể gọi mạng) và tải. Người chơi thấy ngay là 'đang khởi
+        # động', không tưởng bấm hụt. Cờ được worker.isRunning() tiếp quản bên dưới.
+        self._launching = True
+        self.window.set_status("Starting…")
+        self._update_play_button()
 
         if account.kind == accounts.MSA:
             client_id = resolve_client_id("microsoft", "MC_CLIENT_ID")
@@ -1382,6 +1400,9 @@ class Controller:
         worker.finished.connect(lambda: self._launch_finished(worker))
         self._launches.append(worker)
         worker.start()
+        # Worker đã chạy → isRunning() giữ trạng thái STOP; bỏ cờ tạm.
+        self._launching = False
+        self._update_play_button()
 
     def _append_log(self, line: str) -> None:
         self._log_lines.append(line)
