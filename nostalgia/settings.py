@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -86,7 +87,32 @@ class Settings:
         if raw.get("game_dir") == LEGACY_GAME_DIR:
             raw["game_dir"] = str(DEFAULT_GAME_DIR)
         known = {f for f in cls.__dataclass_fields__ if not f.startswith("_")}
-        return cls(**{k: v for k, v in raw.items() if k in known}, _path=path)
+        obj = cls(**{k: v for k, v in raw.items() if k in known}, _path=path)
+        obj._heal_game_dir()
+        return obj
+
+    def _heal_game_dir(self) -> None:
+        """Lùi game_dir về mặc định nếu nó trỏ vào chỗ không dùng được.
+
+        Kho game (versions/libraries/assets/instances) phải nằm ở nơi bền vững.
+        Nếu game_dir trỏ vào một thư mục tạm của hệ điều hành (bị xoá mỗi lần khởi
+        động lại) hoặc một đường dẫn đã biến mất, thì PLAY sẽ trỏ vào một kho rỗng
+        và "không launch được game" mà không rõ lý do. Trường hợp đó ta âm thầm
+        dùng lại thư mục mặc định — nơi dữ liệu thường vẫn còn — thay vì chịu chết.
+        Chỉ sửa trong bộ nhớ; không tự ghi đè file để khỏi bất ngờ ép đường dẫn.
+        """
+        default = str(DEFAULT_GAME_DIR)
+        if self.game_dir == default:
+            return
+        try:
+            here = Path(self.game_dir).expanduser().resolve()
+        except (OSError, RuntimeError, ValueError):
+            self.game_dir = default
+            return
+        tmp_root = Path(tempfile.gettempdir()).resolve()
+        under_tmp = here == tmp_root or tmp_root in here.parents
+        if under_tmp or not here.exists():
+            self.game_dir = default
 
     def save(self) -> None:
         path = self._path or CONFIG_PATH

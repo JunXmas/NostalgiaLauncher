@@ -2,6 +2,14 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.5
+- **Fixed: the launcher could point at a game folder that no longer exists.**
+  If your configured game folder had been deleted or lived somewhere temporary
+  that the system wipes on reboot, PLAY aimed at an empty store and the game
+  wouldn't launch, with no clear reason. The launcher now detects that on start
+  and falls back to the default game folder — where your instances, versions and
+  Java runtime normally live — so it keeps working instead of failing silently.
+
 ## 0.7.4
 - **Continue playing.** The Home page swaps the old news feed for a
   Continue playing card: your recent single-player worlds and saved
