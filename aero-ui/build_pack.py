@@ -36,11 +36,14 @@ TINTS = {
 ALPHA = {"normal": 150, "hover": 176, "disabled": 96}
 
 
-def paint_button(state: str) -> QImage:
-    """Một thanh nút kính 200×20: nền xanh mờ + gloss dọc + bevel trên/dưới.
+RADIUS = 4.0   # bo góc (px); ≤ border của 9-slice để bản mới không kéo méo góc
 
-    Đồng đều theo chiều ngang (nút vanilla lấy mép trái/phải từ texture nên phải
-    tránh vân dọc), gradient theo chiều dọc để ra ánh kính.
+def paint_button(state: str) -> QImage:
+    """Một nút kính Aero 200×20 BO GÓC — theo đúng công thức nút của launcher:
+    thân kính xanh trong, gloss nửa trên, vạch sáng đỉnh, mép đáy tối, viền bo mềm.
+
+    Ngoài vùng bo góc để TRONG SUỐT nên góc nút lộ nền phía sau → cảm giác kính
+    thật. Đồng đều theo chiều ngang (nút vanilla/9-slice kéo giãn ngang).
     """
     img = QImage(BTN_W, BTN_H, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
@@ -48,31 +51,46 @@ def paint_button(state: str) -> QImage:
     p.setRenderHint(QPainter.Antialiasing, True)
     tint = TINTS[state]
     a = ALPHA[state]
-    r = QRectF(0.5, 0.5, BTN_W - 1, BTN_H - 1)
 
-    # Nền kính: gradient dọc, trên sáng hơn đáy.
+    from PySide6.QtGui import QPainterPath
+    path = QPainterPath()
+    path.addRoundedRect(QRectF(0.5, 0.5, BTN_W - 1, BTN_H - 1), RADIUS, RADIUS)
+
+    p.save()
+    p.setClipPath(path)   # mọi thứ vẽ ra đều nằm trong hình bo góc
+
+    # Thân kính: gradient dọc, trên sáng hơn đáy.
     base = QLinearGradient(0, 0, 0, BTN_H)
-    top = QColor(tint); top.setAlpha(min(255, a + 26))
-    bot = QColor(tint.darker(122)); bot.setAlpha(a)
+    top = QColor(tint.lighter(118)); top.setAlpha(min(255, a + 34))
+    mid = QColor(tint); mid.setAlpha(a)
+    bot = QColor(tint.darker(126)); bot.setAlpha(min(255, a + 8))
     base.setColorAt(0.0, top)
+    base.setColorAt(0.5, mid)
     base.setColorAt(1.0, bot)
-    p.fillRect(r, base)
+    p.fillRect(QRectF(0, 0, BTN_W, BTN_H), base)
 
-    # Gloss: nửa trên phủ trắng mờ rồi tắt dần ở giữa.
+    # Gloss nửa trên: trắng đậm ở đỉnh, tắt hẳn ở giữa (ánh kính Aero).
+    hi = 132 if state == "hover" else (108 if state == "normal" else 52)
     gloss = QLinearGradient(0, 0, 0, BTN_H)
-    gloss.setColorAt(0.0, QColor(255, 255, 255, 96 if state != "disabled" else 40))
-    gloss.setColorAt(0.48, QColor(255, 255, 255, 18))
+    gloss.setColorAt(0.0, QColor(255, 255, 255, hi))
+    gloss.setColorAt(0.46, QColor(255, 255, 255, 22))
     gloss.setColorAt(0.5, QColor(255, 255, 255, 0))
     gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
     p.fillRect(QRectF(0, 0, BTN_W, BTN_H), gloss)
 
-    # Bevel trên sáng + mép dưới tối, cho cảm giác lồi.
-    p.fillRect(QRectF(0, 0, BTN_W, 1), QColor(255, 255, 255, 150))
-    p.fillRect(QRectF(0, BTN_H - 1, BTN_W, 1), QColor(0, 0, 0, 96))
+    # Vạch sáng sát đỉnh + mép đáy tối → cảm giác lồi, có chiều sâu.
+    p.fillRect(QRectF(1, 1, BTN_W - 2, 1), QColor(255, 255, 255, 190))
+    p.fillRect(QRectF(1, BTN_H - 2, BTN_W - 2, 1), QColor(0, 0, 0, 120))
+    p.restore()
 
-    # Viền mảnh để nút tách khỏi nền.
-    p.setPen(QColor(255, 255, 255, 70))
-    p.drawRect(r)
+    # Viền bo góc: ngoài tối nhẹ cho tách nền, trong sáng cho ánh kính.
+    p.setBrush(Qt.NoBrush)
+    p.setPen(QColor(0, 0, 0, 90))
+    p.drawPath(path)
+    inner = QPainterPath()
+    inner.addRoundedRect(QRectF(1.5, 1.5, BTN_W - 3, BTN_H - 3), RADIUS - 1, RADIUS - 1)
+    p.setPen(QColor(255, 255, 255, 96 if state != "disabled" else 40))
+    p.drawPath(inner)
     p.end()
     return img
 
@@ -87,8 +105,9 @@ def build_modern() -> None:
     sprites = GUI / "sprites" / "widget"
     mapping = {"button": "normal", "button_highlighted": "hover",
                "button_disabled": "disabled"}
+    # border ≥ RADIUS để góc bo nằm trọn trong ô góc, không bị kéo méo.
     meta = {"gui": {"scaling": {"type": "nine_slice",
-                                "width": BTN_W, "height": BTN_H, "border": 3}}}
+                                "width": BTN_W, "height": BTN_H, "border": 5}}}
     for name, state in mapping.items():
         write_png(paint_button(state), sprites / f"{name}.png")
         (sprites / f"{name}.png.mcmeta").write_text(json.dumps(meta, indent=2))
