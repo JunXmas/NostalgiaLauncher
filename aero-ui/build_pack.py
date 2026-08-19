@@ -269,6 +269,15 @@ def build_panorama() -> None:
     write_png(flat(top, midf), dest / "panorama_4.png")     # trần (sky)
     write_png(flat(midf, bot), dest / "panorama_5.png")     # sàn (ground)
 
+    # panorama_overlay: ảnh 2D vẽ PHẲNG, ĐỨNG YÊN đè lên panorama. Đặt wallpaper
+    # ĐỤC (alpha 255) làm overlay -> phủ kín vòng xoay -> title screen nhìn STATIC.
+    ov = src.scaled(1024, 640, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    ov = ov.convertToFormat(QImage.Format_ARGB32)
+    # ép đục hẳn để không lộ panorama xoay phía sau.
+    solid = QImage(ov.size(), QImage.Format_ARGB32); solid.fill(Qt.black)
+    pp = QPainter(solid); pp.drawImage(0, 0, ov); pp.end()
+    write_png(solid, dest / "panorama_overlay.png")
+
 
 def build_meta() -> None:
     PACK.mkdir(parents=True, exist_ok=True)
