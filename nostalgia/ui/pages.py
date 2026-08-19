@@ -635,6 +635,128 @@ class ShaderPacksPage(ContentLibraryPage):
 
 # ---------- trang chi tiết một instance (kiểu Modrinth) ----------
 
+_WROW = 66   # chiều cao một hàng world
+
+
+class WorldsView(QWidget):
+    """Danh sách thế giới của instance: icon + tên + lần chơi + dung lượng + chế độ.
+
+    Xem nhanh ngay trong launcher, khỏi phải mở thư mục saves. Bấm một world để
+    mở thư mục của riêng nó.
+    """
+
+    def __init__(self, ctl, parent=None):
+        super().__init__(parent)
+        self.ctl = ctl
+        self.instance = None
+        self._worlds: list = []
+        self._scroll = 0
+        self._hover = -1
+        self._rects: list = []
+        self.setMouseTracking(True)
+
+    def set_instance(self, inst) -> None:
+        self.instance = inst
+        self.refresh()
+
+    def refresh(self) -> None:
+        from ..worlds import list_worlds
+        self._worlds = []
+        if self.instance is not None:
+            for w in list_worlds(self.ctl.instance_dir(self.instance) / "saves"):
+                img = None
+                if w.get("icon"):
+                    qi = QImage()
+                    if qi.loadFromData(w["icon"]):
+                        img = qi
+                w["_img"] = img
+                self._worlds.append(w)
+        self._scroll = 0
+        self.update()
+
+    @staticmethod
+    def _fmt_last(ms: int) -> str:
+        import datetime
+        if not ms:
+            return "never"
+        try:
+            return datetime.datetime.fromtimestamp(ms / 1000).strftime("%Y-%m-%d %H:%M")
+        except (OverflowError, OSError, ValueError):
+            return "never"
+
+    def wheelEvent(self, e):  # noqa: N802
+        maxs = max(0, len(self._worlds) * _WROW - self.height() + 24)
+        self._scroll = min(maxs, max(0, self._scroll - e.angleDelta().y()))
+        self.update()
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        h = next((i for i, (r, _) in enumerate(self._rects) if r.contains(pos)), -1)
+        if h != self._hover:
+            self._hover = h
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        for r, folder in self._rects:
+            if r.contains(pos) and self.instance:
+                self.ctl.open_path(self.ctl.instance_dir(self.instance) / "saves" / folder)
+                return
+
+    def paintEvent(self, event):  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        self._rects = []
+        if not self._worlds:
+            p.setFont(ui_font(11))
+            p.setPen(TEXT_DIM)
+            p.drawText(self.rect(), Qt.AlignCenter,
+                       tr("No worlds yet — press PLAY to create one, or Import World."))
+            p.end()
+            return
+        w = self.width()
+        for i, world in enumerate(self._worlds):
+            y = 6 - self._scroll + i * _WROW
+            if y + _WROW < 0 or y > self.height():
+                continue
+            row = QRect(4, y, w - 8, _WROW - 8)
+            self._rects.append((row, world["folder"]))
+            if i == self._hover:
+                p.setBrush(QColor(255, 255, 255, 20)); p.setPen(Qt.NoPen)
+                p.drawRoundedRect(row, 8, 8)
+            # icon 48×48 bo góc (hoặc ô mặc định)
+            ic = QRect(row.left() + 10, row.top() + 5, 48, 48)
+            p.save()
+            p.setClipRect(ic)
+            if world.get("_img") is not None:
+                p.drawImage(ic, world["_img"])
+            else:
+                p.fillRect(ic, QColor(40, 60, 90, 160))
+                p.setPen(QColor(200, 220, 255, 120)); p.setFont(ui_font(16, bold=True))
+                p.drawText(ic, Qt.AlignCenter, "🌍")
+            p.restore()
+            p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush)
+            p.drawRect(ic)
+            # tên + phụ đề
+            tx = ic.right() + 14
+            p.setFont(ui_font(12, bold=True)); p.setPen(TEXT)
+            title = world["title"] + ("  ⚠ Hardcore" if world.get("hardcore") else "")
+            p.drawText(QRect(tx, row.top() + 6, row.right() - tx - 8, 20),
+                       Qt.AlignLeft | Qt.AlignVCenter, title)
+            bits = [self._fmt_last(world.get("last", 0)), human_size(world.get("size", 0))]
+            if world.get("mode"):
+                bits.append(world["mode"])
+            if world.get("version"):
+                bits.append(world["version"])
+            p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+            p.drawText(QRect(tx, row.top() + 28, row.right() - tx - 8, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, "  ·  ".join(bits))
+            p.setFont(ui_font(8)); p.setPen(TEXT_FAINT)
+            p.drawText(QRect(tx, row.top() + 44, row.right() - tx - 8, 14),
+                       Qt.AlignLeft | Qt.AlignVCenter, world["folder"])
+        p.end()
+
+
 class InstancePage(Page):
     """Mở khi nhấn vào một instance: quản lý mọi thứ của riêng nó tại một nơi."""
 
@@ -676,11 +798,13 @@ class InstancePage(Page):
             lambda: self.ctl.open_saves_folder(self.instance) if self.instance else None)
         self.setAcceptDrops(True)
 
-        self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
+        self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Worlds", "Logs"], self)
         self.tabs.changed.connect(self._tab)
 
         self.content = ContentLibraryPage(ctl, self)
         self.content.enter_embedded(None)
+        self.worlds = WorldsView(ctl, self)
+        self.worlds.hide()
         self.logs = QTextBrowser(self)
         self.logs.setStyleSheet(TEXT_QSS)
         self.logs.setFont(QFont("monospace", 8))
@@ -689,6 +813,7 @@ class InstancePage(Page):
     def open(self, instance) -> None:
         self.instance = instance
         self.content.set_instance(instance)
+        self.worlds.set_instance(instance)
         from .. import optifine
         self.optifine_btn.setVisible(
             optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
@@ -711,16 +836,23 @@ class InstancePage(Page):
 
     def refresh(self) -> None:
         self.ctl._update_play_button()
-        if self.tabs.current < len(self.CONTENT):
+        n = len(self.CONTENT)
+        if self.tabs.current < n:
             self.content.refresh()
+        elif self.tabs.current == n:
+            self.worlds.refresh()
 
     def _tab(self, i: int) -> None:
         self.tabs.current = i
         self.tabs.update()
-        is_logs = i == len(self.CONTENT)
-        self.content.setVisible(not is_logs)
+        n = len(self.CONTENT)
+        is_worlds, is_logs = i == n, i == n + 1
+        self.content.setVisible(i < n)
+        self.worlds.setVisible(is_worlds)
         self.logs.setVisible(is_logs)
-        if is_logs:
+        if is_worlds:
+            self.worlds.refresh()
+        elif is_logs:
             self.logs.setPlainText("".join(self.ctl._log_lines)
                                    or "No log yet — press PLAY to start the game.")
         else:
@@ -737,6 +869,7 @@ class InstancePage(Page):
         self.tabs.setGeometry(24, 102, w - 48, 30)
         self._relayout_actions()                              # nút ở cạnh phải hàng tab
         self.content.setGeometry(0, 138, w, h - 138)
+        self.worlds.setGeometry(24, 142, w - 48, h - 166)
         self.logs.setGeometry(24, 142, w - 48, h - 166)
 
     # ---- kéo-thả file .zip world thẳng vào trang để nhập ----
