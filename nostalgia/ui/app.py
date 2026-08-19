@@ -565,8 +565,40 @@ class Controller:
         inst = self.instances.add(name, version)
         self.set_active_instance(name)
         self.enable_shared_skins(inst, silent=True)   # để offline nhìn skin nhau
+        self.apply_aero_ui(inst, silent=True)         # UI kính Aero đi kèm sẵn
         self.window.set_status(f"Modpack '{name}' installed — press PLAY.")
         self.go("home")
+
+    def apply_aero_ui(self, inst, silent: bool = False) -> None:
+        """Cài resource pack Aero UI vào instance (nút/slider/tab thành kính).
+
+        Bản modern dùng sprite ship sẵn; bản legacy (≤1.20.1) ghép nút Aero vào
+        widgets.png rút từ jar của chính bản đó. Nhẹ nên chạy thẳng, không cần luồng.
+        """
+        from .. import aero
+        jar = None
+        try:
+            meta = self.installer.offline_version_json(inst.version)
+            cj = self.installer.client_jar(meta)
+            jar = cj if cj and Path(cj).exists() else None
+        except Exception:  # noqa: BLE001 - thiếu meta/jar thì cứ dùng sprite modern
+            jar = None
+        try:
+            kind = aero.apply_to_instance(self.instance_dir(inst), jar)
+        except Exception as e:  # noqa: BLE001
+            if not silent:
+                self.window.set_status(f"Couldn't install Aero UI: {e}")
+            return
+        if not silent:
+            self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
+
+    def remove_aero_ui(self, inst) -> None:
+        from .. import aero
+        aero.remove_from_instance(self.instance_dir(inst))
+        self.window.set_status(f"Aero UI removed from '{inst.name}'.")
+
+    def aero_ui_enabled(self, inst) -> bool:
+        return (self.instance_dir(inst) / "resourcepacks" / "Aero UI.zip").exists()
 
     def _bootstrap_instances(self) -> None:
         """Lần đầu chạy bản có instance: dựng instance từ các version đã cài và

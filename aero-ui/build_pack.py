@@ -20,7 +20,10 @@ from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter
 from PySide6.QtWidgets import QApplication
 
 ROOT = Path(__file__).resolve().parent
-PACK = ROOT / "aero-pack"
+# Pack SHIPPED cùng launcher (chỉ sprite modern, 100% của mình). Nằm dưới
+# ui/assets nên được PyInstaller đóng gói sẵn. Legacy widgets.png KHÔNG ship —
+# nó được ghép lúc cài từ jar của chính người dùng (xem nostalgia/aero.py).
+PACK = ROOT.parent / "nostalgia" / "ui" / "assets" / "aero-pack"
 GUI = PACK / "assets" / "minecraft" / "textures" / "gui"
 VANILLA_WIDGETS = Path(sys.argv[1]) if len(sys.argv) > 1 else (
     ROOT / "vanilla" / "widgets.png")
@@ -275,11 +278,11 @@ def build_preview() -> None:
 
 def main() -> None:
     QApplication([])
-    build_modern()
-    build_legacy()
+    build_modern()   # sprite modern -> ship trong ui/assets/aero-pack
     build_meta()
-    build_preview()
-    print("Aero pack -> ", PACK)
+    build_preview()  # ảnh xem trước -> aero-ui/preview.png (không ship)
+    # build_legacy() KHÔNG chạy: widgets.png được ghép lúc cài từ jar người dùng.
+    print("Aero pack (modern, shipped) -> ", PACK)
 
 
 if __name__ == "__main__":
