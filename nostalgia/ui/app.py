@@ -1408,6 +1408,12 @@ class Controller:
             self.window.set_status("No instance yet — click NEW INSTANCE to make one.")
             return
 
+        # Aero UI mặc định + KHOÁ: đảm bảo pack có mặt & được bật mỗi lần chạy, kể cả
+        # instance cũ hay khi người chơi lỡ tắt trong game (lần sau tự bật lại). Tắt
+        # được bằng Settings (aero_ui=False). Nhẹ nên chạy thẳng.
+        if inst is not None and getattr(self.settings, "aero_ui", True):
+            self.apply_aero_ui(inst, silent=True)
+
         # Phản hồi tức thì: đổi nút sang STOP ngay khi bấm Play, TRƯỚC cả bước làm
         # mới token (có thể gọi mạng) và tải. Người chơi thấy ngay là 'đang khởi
         # động', không tưởng bấm hụt. Cờ được worker.isRunning() tiếp quản bên dưới.

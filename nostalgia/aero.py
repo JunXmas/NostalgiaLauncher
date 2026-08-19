@@ -82,8 +82,10 @@ def _enable_in_options(options: Path, modern: bool) -> None:
                 arr = json.loads(ln.split(":", 1)[1])
             except ValueError:
                 arr = []
-            if entry not in arr:
-                arr.append(entry)
+            # Bỏ mọi biến thể Aero rồi thêm lại ở CUỐI = ưu tiên cao nhất, để
+            # không pack nào của modpack đè lên nút/nền kính của mình.
+            arr = [e for e in arr if e not in (PACK_NAME, "file/" + PACK_NAME)]
+            arr.append(entry)
             out.append("resourcePacks:" + json.dumps(arr))
         else:
             out.append(ln)

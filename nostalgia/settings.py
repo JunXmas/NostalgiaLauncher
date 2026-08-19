@@ -71,6 +71,7 @@ class Settings:
     background_path: str = ""     # ảnh nền tuỳ chọn; rỗng = ảnh lá xanh mặc định
     close_on_launch: bool = False
     check_updates: bool = True    # tự tìm bản mới trên GitHub khi khởi động
+    aero_ui: bool = True          # lắp & khoá resource pack Aero UI mỗi lần chạy
     # Backend chung (Cloudflare Worker): upload skin + khôi phục danh tính.
     backend_url: str = "https://nostalgia-backend.junbob.workers.dev"
     language: str = "en"          # mã ngôn ngữ giao diện (xem nostalgia/i18n.py)
