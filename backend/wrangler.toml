@@ -1,0 +1,9 @@
+name = "nostalgia-backend"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# KV lưu tất cả (skin PNG + ánh xạ + identity). Chỉ KV nên FREE, không cần R2/thẻ.
+# Tạo namespace:  wrangler kv namespace create META   -> dán id trả về vào đây.
+[[kv_namespaces]]
+binding = "META"
+id = "23102190d2af4fb199be49004f364202"

@@ -23,13 +23,14 @@ jobs:
         include:
           - os: windows-latest
             label: Windows (x64)
-          # Hai runner macOS cho hai kiến trúc: macos-14 là Apple Silicon, còn
-          # macos-13 vẫn là Intel. Bản build trên máy này không chạy trên máy kia,
-          # nên phải có cả hai thì mới phủ hết người dùng Mac.
+          - os: ubuntu-latest
+            label: Linux (x64)
           - os: macos-14
             label: macOS (Apple Silicon)
-          - os: macos-13
-            label: macOS (Intel)
+          # macOS Intel (macos-13) tạm bỏ: runner Intel của GitHub xếp hàng quá
+          # lâu, chặn cả bản phát hành. Thêm lại khi cần phủ máy Mac Intel:
+          #   - os: macos-13
+          #     label: macOS (Intel)
 
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +45,17 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install PySide6-Essentials pyinstaller
 
+      - name: Install Qt system libraries (Linux)
+        # Runner Linux trần thiếu lib hệ thống Qt cần để chỉ import QtGui (libEGL…),
+        # nên cả make_icon lẫn pyinstaller đều đổ. Cài trước là qua.
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libxcb-cursor0 \
+            libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libdbus-1-3
+
       - name: Generate icons
         # Runner không có màn hình; offscreen cho phép Qt vẽ thẳng vào bộ nhớ.
         env:
@@ -54,6 +66,16 @@ jobs:
         run: pyinstaller packaging/nostalgia.spec --noconfirm
 
       # ---------- Windows ----------
+      # Ký app trước khi Inno gói lại, để bản đã cài cũng có chữ ký. Không có
+      # secret chứng chỉ thì sign.ps1 tự bỏ qua.
+      - name: Sign the app executable
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: pwsh packaging\windows\sign.ps1 -Paths "dist\Nostalgia Launcher\Nostalgia Launcher.exe"
+        shell: pwsh
+
       - name: Build Windows installer
         if: runner.os == 'Windows'
         run: |
@@ -62,6 +84,19 @@ jobs:
           # $env:ProgramFiles(x86) thì PowerShell hiểu là lời gọi hàm và báo lỗi cú pháp.
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" packaging\windows\nostalgia.iss
         shell: pwsh
+
+      - name: Sign the Windows installer
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: pwsh packaging\windows\sign.ps1 -Paths "dist\installer\*.exe"
+        shell: pwsh
+
+      # ---------- Linux ----------
+      - name: Build Linux .deb package
+        if: runner.os == 'Linux'
+        run: bash packaging/linux/build-deb.sh
 
       # ---------- macOS ----------
       - name: Build macOS disk image
@@ -81,20 +116,20 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - uses: actions/checkout@v4      # cần CHANGELOG.md để dựng mô tả release
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: Build release notes
+        # Lấy phần changelog của đúng phiên bản (tag v0.2.7 -> mục 0.2.7) làm
+        # mô tả release, kèm ghi chú cài đặt.
+        run: bash packaging/release_notes.sh "${GITHUB_REF_NAME#v}" release_notes.md
 
       - name: Attach installers to the release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
-          draft: true      # để nháp, xem lại rồi mới bấm công bố
-          body: |
-            Bản cài chưa được ký số, nên hệ điều hành sẽ cảnh báo ở lần mở đầu tiên:
-
-            - **Windows** — SmartScreen hiện "Windows protected your PC".
-              Bấm *More info* → *Run anyway*.
-            - **macOS** — báo "cannot be opened because the developer cannot be verified".
-              Bấm chuột phải vào app → *Open* → *Open*, hoặc vào
-              System Settings → Privacy & Security → *Open Anyway*.
+          draft: true              # để nháp, xem lại rồi mới bấm công bố
+          body_path: release_notes.md

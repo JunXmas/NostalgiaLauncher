@@ -6,8 +6,12 @@ Nền để trong suốt cho ảnh hero của cửa sổ hiện xuyên qua; mọ
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPen
+from PySide6.QtGui import (
+    QBrush, QColor, QFont, QImage, QLinearGradient, QPainter, QPainterPath, QPen,
+)
 from PySide6.QtWidgets import QWidget
+
+from ..i18n import tr
 
 from .glass import draw_glass_rect
 from .theme import (
@@ -33,6 +37,76 @@ def _hash_hue(name: str) -> QColor:
     return table[h % len(table)]
 
 
+def _fmt_playtime(seconds: int) -> str:
+    """Tổng giờ chơi gọn: '3h 12m', '45m', '0m'."""
+    m = max(0, int(seconds)) // 60
+    h, m = divmod(m, 60)
+    if h and m:
+        return f"{h}h {m}m"
+    if h:
+        return f"{h}h"
+    return f"{m}m"
+
+
+def _reltime_ms(ms: int) -> str:
+    """Khoảng thời gian từ mốc (ms epoch) tới giờ, dạng ngắn."""
+    import time
+    if not ms:
+        return ""
+    secs = max(0, time.time() - ms / 1000.0)
+    if secs < 90:
+        return tr("just now")
+    mins = secs / 60
+    if mins < 60:
+        return tr("{n}m ago").format(n=int(mins))
+    hours = mins / 60
+    if hours < 24:
+        return tr("{n}h ago").format(n=int(hours))
+    days = hours / 24
+    if days < 30:
+        return tr("{n}d ago").format(n=int(days))
+    return tr("{n}mo ago").format(n=int(days / 30))
+
+
+def _continue_glyph(p: QPainter, r: QRect, kind: str) -> None:
+    """Icon nhỏ cho mục Continue playing: quả địa cầu (world) / khối server."""
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing, True)
+    cx, cy = r.center().x(), r.center().y()
+    if kind == "world":
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(96, 168, 120))
+        p.drawEllipse(QRectF(r.left() + 4, r.top() + 4, r.width() - 8, r.height() - 8))
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(255, 255, 255, 150), 1.3))
+        rad = (r.width() - 8) / 2
+        p.drawEllipse(QRectF(cx - rad, cy - rad, rad * 2, rad * 2))
+        p.drawArc(QRectF(cx - rad * 0.5, cy - rad, rad, rad * 2), 90 * 16, 180 * 16)
+        p.drawArc(QRectF(cx - rad * 0.5, cy - rad, rad, rad * 2), -90 * 16, 180 * 16)
+        p.drawLine(int(cx - rad), cy, int(cx + rad), cy)
+    else:  # server
+        p.setPen(Qt.NoPen)
+        for i in range(2):
+            bar = QRectF(r.left() + 4, r.top() + 6 + i * 12, r.width() - 8, 9)
+            p.setBrush(QColor(120, 160, 210))
+            p.drawRoundedRect(bar, 2, 2)
+            p.setBrush(CONNECTED)                 # đèn báo
+            p.drawEllipse(QRectF(bar.left() + 4, bar.center().y() - 2, 4, 4))
+    p.restore()
+
+
+_CUBE_IMG = None
+
+
+def _cube_image():
+    """Grass block dùng làm icon instance mặc định (assets/cube.png)."""
+    global _CUBE_IMG
+    if _CUBE_IMG is None:
+        from pathlib import Path
+        _CUBE_IMG = QImage(str(Path(__file__).parent / "assets" / "cube.png"))
+    return _CUBE_IMG
+
+
 class HomeDashboard(QWidget):
     scrim = False  # để hero hiện xuyên qua
 
@@ -40,28 +114,83 @@ class HomeDashboard(QWidget):
         super().__init__(parent)
         self.ctl = ctl
         self._instances: list[dict] = []
-        self._news: list[dict] = []
+        self._continue: dict | None = None
         self._card_rects: list[tuple[QRect, str]] = []
-        self._news_rects: list[tuple[QRect, str]] = []
+        self._continue_rects: list[tuple[QRect, str]] = []
         self._hot_hero_links: list[tuple[QRect, str]] = []
+        self._hover_card: str | None = None
+        self._hover_continue: int = -1
+        self._icon_cache: dict = {}      # tên instance -> QImage icon modpack (hoặc None)
+        self._avatar_img: QImage | None = None   # đầu skin tài khoản làm avatar
+        self._avatar_url = ""
         self.setMouseTracking(True)
 
-        self.play_btn = AeroButton("PLAY", self, height=58, arrow=True)
-        self.play_btn.clicked.connect(self.ctl.start_launch)
-        self.new_btn = AeroButton("NEW INSTANCE", self, height=30, tone="neutral")
-        self.new_btn.clicked.connect(lambda: self.ctl.go("installations"))
-        self.manage_btn = AeroButton("Manage Account", self, height=28, tone="neutral")
+        self.play_btn = AeroButton(tr("PLAY"), self, height=58, arrow=True)
+        self.play_btn.clicked.connect(self.ctl.toggle_play)
+        self.new_btn = AeroButton(tr("NEW INSTANCE"), self, height=30, tone="neutral")
+        self.new_btn.clicked.connect(self.ctl.begin_create_instance)
+        self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
 
+    def retranslate(self) -> None:
+        self.play_btn.setText(tr("PLAY"))
+        self.new_btn.setText(tr("NEW INSTANCE"))
+        self.manage_btn.setText(tr("Manage Account"))
+        self.update()
+
+    def _got_avatar(self, data) -> None:
+        if data:
+            img = QImage()
+            if img.loadFromData(data):
+                self._avatar_img = img
+        self.update()
+
+    def _instance_icon(self, inst):
+        if inst.name not in self._icon_cache:
+            path = self.ctl.instance_dir(inst) / "icon.png"
+            img = None
+            if path.exists():
+                im = QImage()
+                if im.load(str(path)) and not im.isNull():
+                    img = im
+            self._icon_cache[inst.name] = img
+        return self._icon_cache[inst.name]
+
     def refresh(self) -> None:
-        self._instances = self.ctl.installer.installed_versions()
-        if not self._news:
-            self.ctl.load_news(self._got_news)
+        self._instances = self.ctl.instances.all()
+        self._icon_cache.clear()      # bắt icon modpack mới cài
+        # avatar = đầu skin của tài khoản (Microsoft có skin_url)
+        acct = self.ctl.current_account()
+        url = getattr(acct, "skin_url", "") if acct else ""
+        if url != self._avatar_url:
+            self._avatar_url = url
+            self._avatar_img = None
+            if url:
+                self.ctl.load_skin(url, self._got_avatar)
+        self.ctl.load_continue(self._got_continue)
         self._relayout()
         self.update()
 
-    def _got_news(self, entries) -> None:
-        self._news = entries or []
+    def _got_continue(self, data) -> None:
+        self._continue = data or {"items": [], "playtime": 0}
+        for it in self._continue.get("items", []):
+            if it["kind"] == "server":
+                img = None
+                if it.get("icon"):
+                    qi = QImage()
+                    if qi.loadFromData(it["icon"]):
+                        img = qi
+                it["_img"] = img
+                motd = (it.get("motd") or "").strip()
+                it["_title"] = motd or it.get("title") or it.get("ip") or "Server"
+                if it.get("online") is not None:
+                    it["_sub"] = f"{it['online']}/{it['max']} · {it['instance']}"
+                else:
+                    it["_sub"] = f"{tr('Server')} · {it['instance']}"
+            else:  # world
+                it["_img"] = None
+                it["_title"] = it["title"]
+                it["_sub"] = f"{tr('World')} · {it['instance']} · {_reltime_ms(it.get('last', 0))}"
         self.update()
 
     # ---------- layout ----------
@@ -88,19 +217,22 @@ class HomeDashboard(QWidget):
 
     def mousePressEvent(self, e):  # noqa: N802
         pos = e.position().toPoint()
-        for rect, vid in self._card_rects:
+        for rect, name in self._card_rects:
             if rect.contains(pos):
-                self.ctl.select_version(vid)
+                if name == "\x00new":
+                    self.ctl.begin_create_instance()
+                else:
+                    self.ctl.open_instance(name)
                 return
-        for rect, url in self._news_rects:
+        for rect, entry in self._continue_rects:
             if rect.contains(pos):
-                self.ctl.open_url(url)
+                self.ctl.play_continue_item(entry)
                 return
         for rect, action in self._hot_hero_links:
             if rect.contains(pos):
                 if action == "version":
                     origin = self.mapTo(self.window(), rect.topLeft())
-                    self.ctl.open_version_menu(QRect(origin, rect.size()))
+                    self.ctl.open_instance_menu(QRect(origin, rect.size()))
                 elif action.startswith("nav:"):
                     self.ctl.go(action[4:])
                 return
@@ -109,12 +241,23 @@ class HomeDashboard(QWidget):
 
     def _hot(self, pos) -> bool:
         return (any(r.contains(pos) for r, _ in self._card_rects)
-                or any(r.contains(pos) for r, _ in self._news_rects)
+                or any(r.contains(pos) for r, _ in self._continue_rects)
                 or any(r.contains(pos) for r, _ in self._hot_hero_links))
 
     def mouseMoveEvent(self, e):  # noqa: N802
-        self.setCursor(Qt.PointingHandCursor if self._hot(e.position().toPoint())
-                       else Qt.ArrowCursor)
+        pos = e.position().toPoint()
+        self.setCursor(Qt.PointingHandCursor if self._hot(pos) else Qt.ArrowCursor)
+        hovered = next((name for rect, name in self._card_rects if rect.contains(pos)), None)
+        hc = next((i for i, (rect, _) in enumerate(self._continue_rects) if rect.contains(pos)), -1)
+        if hovered != self._hover_card or hc != self._hover_continue:
+            self._hover_card = hovered
+            self._hover_continue = hc
+            self.update()
+
+    def leaveEvent(self, e):  # noqa: N802
+        if self._hover_card is not None:
+            self._hover_card = None
+            self.update()
 
     # ---------- vẽ ----------
 
@@ -122,7 +265,7 @@ class HomeDashboard(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         self._card_rects.clear()
-        self._news_rects.clear()
+        self._continue_rects.clear()
         self._hot_hero_links.clear()
 
         hero = QRect(PAD, PAD, self._center_w(), HERO_H)
@@ -182,24 +325,32 @@ class HomeDashboard(QWidget):
         p.drawLine(int(inner.left() + radius), int(inner.bottom() - 1),
                    int(inner.right() - radius), int(inner.bottom() - 1))
 
+    def _draw_logo(self, p, rect):
+        """Vẽ logo lá vào rect; nếu thiếu asset thì fallback về cube vẽ tay."""
+        from .window import logo_pixmap
+        logo = logo_pixmap()
+        if logo is not None and not logo.isNull():
+            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            p.drawPixmap(rect, logo, QRectF(logo.rect()))
+        else:
+            draw_cube_icon(p, rect, QColor(126, 190, 92), QColor(150, 112, 78))
+
     def _paint_hero(self, p, hero):
         self._card(p, hero, radius=9, strong=True)
-        draw_cube_icon(p, QRectF(hero.left() + 24, hero.top() + 22, 34, 34),
-                       QColor(126, 190, 92), QColor(150, 112, 78))
+        self._draw_logo(p, QRectF(hero.left() + 22, hero.top() + 20, 38, 38))
         p.setFont(ui_font(22, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(hero.left() + 68, hero.top() + 20, hero.width() - 90, 34),
-                   Qt.AlignLeft | Qt.AlignVCenter, "Welcome back!")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("Welcome back!"))
         p.setFont(ui_font(10))
         p.setPen(TEXT_DIM)
         p.drawText(QRect(hero.left() + 70, hero.top() + 54, hero.width() - 90, 20),
-                   Qt.AlignLeft | Qt.AlignVCenter, "What will we build today?")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("What will we build today?"))
 
         # version pill cạnh PLAY
         pill = QRect(hero.left() + 250, hero.top() + 108, hero.width() - 250 - 26, 34)
         draw_glass_rect(p, QRectF(pill), radius=4, tint=QColor(255, 255, 255, 30), gloss=0.7)
-        draw_cube_icon(p, QRectF(pill.left() + 8, pill.center().y() - 9, 18, 18),
-                       QColor(126, 190, 92), QColor(150, 112, 78))
+        self._draw_logo(p, QRectF(pill.left() + 7, pill.center().y() - 10, 20, 20))
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(pill.left() + 34, pill.top(), pill.width() - 44, pill.height()),
@@ -210,78 +361,128 @@ class HomeDashboard(QWidget):
         p.drawLine(pill.right() - 12, cy + 2, pill.right() - 8, cy - 2)
         self._hot_hero_links.append((pill, "version"))
 
-        # quick links
-        p.setPen(QPen(QColor(255, 255, 255, 26), 1))
-        p.drawLine(hero.left() + 24, hero.bottom() - 34, hero.right() - 24, hero.bottom() - 34)
-        links = [("Browse Mods", "mods"), ("Instances", "installations"),
-                 ("Skin", "skins"), ("Settings", "settings")]
-        lx = hero.left() + 26
-        p.setFont(ui_font(9))
-        for label, action in links:
-            wdt = p.fontMetrics().horizontalAdvance(label) + 24
-            rect = QRect(lx, hero.bottom() - 28, wdt, 20)
-            p.setPen(ACCENT)
-            p.drawText(rect, Qt.AlignLeft | Qt.AlignVCenter, label)
-            self._hot_hero_links.append((rect, "nav:" + action))
-            lx += wdt + 16
 
     def _paint_instances(self, p, area):
         p.setFont(ui_font(12, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
-                   Qt.AlignLeft | Qt.AlignVCenter, "My Instances")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("My Instances"))
         row_top = area.top() + 34
-        current = self.ctl.settings.selected_version
+        current = self.ctl.instances.active
 
-        if not self._instances:
-            p.setFont(ui_font(9))
-            p.setPen(TEXT_FAINT)
-            p.drawText(QRect(area.left() + 2, row_top, area.width() - 4, 40),
-                       Qt.AlignLeft | Qt.AlignTop,
-                       "No instances yet. Click NEW INSTANCE to download a version.")
-            return
-
-        x = area.left()
+        ready = {v["id"] for v in self.ctl.installer.installed_versions() if v["complete"]}
+        # Lưới nhiều hàng: lấp đầy chiều rộng LẪN chiều cao vùng còn lại.
         per_row = max(1, (area.width() + GAP) // (CARD_W + GAP))
-        for i, v in enumerate(self._instances[:per_row]):
-            rect = QRect(x, row_top, CARD_W, CARD_H)
-            self._paint_instance_card(p, rect, v, v["id"] == current)
-            self._card_rects.append((rect, v["id"]))
-            x += CARD_W + GAP
+        rows_fit = max(1, (area.height() - 34 + GAP) // (CARD_H + GAP))
+        slots = per_row * rows_fit
+        # Instance đang chọn (thứ PLAY sẽ chạy) hiện đầu tiên, khớp với ô version.
+        # Chừa 1 ô cuối cho thẻ "+".
+        shown = sorted(self._instances, key=lambda i: i.name != current)[:max(0, slots - 1)]
 
-    def _paint_instance_card(self, p, rect, v, selected):
+        def slot_rect(idx):
+            row, col = divmod(idx, per_row)
+            return QRect(area.left() + col * (CARD_W + GAP),
+                         row_top + row * (CARD_H + GAP), CARD_W, CARD_H)
+
+        for i, inst in enumerate(shown):
+            rect = slot_rect(i)
+            self._paint_instance_card(p, rect, inst, inst.name == current,
+                                      inst.version in ready,
+                                      hover=inst.name == self._hover_card)
+            self._card_rects.append((rect, inst.name))
+        add_rect = slot_rect(len(shown))
+        self._paint_add_card(p, add_rect, empty=not self._instances,
+                             hover=self._hover_card == "\x00new")
+        self._card_rects.append((add_rect, "\x00new"))
+
+    def _paint_add_card(self, p, rect, empty=False, hover=False):
+        # Thẻ tạo instance: viền đứt + dấu cộng lớn. Rê chuột thì sáng lên.
+        edge = 150 if hover else (90 if empty else 55)
+        fill = 34 if hover else (20 if empty else 12)
+        p.setPen(QPen(QColor(255, 255, 255, edge), 1.6, Qt.DashLine))
+        p.setBrush(QColor(255, 255, 255, fill))
+        p.drawRoundedRect(QRectF(rect).adjusted(1, 1, -1, -1), 7, 7)
+        cx, cy = rect.center().x(), rect.top() + 48
+        r = 20
+        p.setPen(QPen(ACCENT.lighter(120) if hover else ACCENT, 4))
+        p.drawLine(cx - r, cy, cx + r, cy)
+        p.drawLine(cx, cy - r, cx, cy + r)
+        p.setFont(ui_font(10, bold=True))
+        p.setPen(TEXT)
+        p.drawText(QRect(rect.left(), rect.top() + 96, rect.width(), 20),
+                   Qt.AlignHCenter | Qt.AlignVCenter, tr("New Instance"))
+
+    def _paint_instance_card(self, p, rect, inst, selected, ready, hover=False):
         self._card(p, rect, radius=7, strong=True)
         # thumbnail
         thumb = QRect(rect.left() + 8, rect.top() + 8, rect.width() - 16, 78)
-        col = _hash_hue(v["id"])
-        g = QLinearGradient(thumb.topLeft(), thumb.bottomRight())
-        g.setColorAt(0, col.lighter(120))
-        g.setColorAt(1, col.darker(130))
-        p.setPen(Qt.NoPen)
-        p.setBrush(g)
-        p.drawRoundedRect(QRectF(thumb), 4, 4)
-        p.setBrush(gloss_gradient(thumb.height(), 0.5))
-        p.drawRoundedRect(QRectF(thumb), 4, 4)
-        draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
-                       QColor(230, 240, 250), col.darker(150))
-        if selected:
-            p.setPen(QPen(ACCENT, 2))
+        col = _hash_hue(inst.name)
+        icon = self._instance_icon(inst)
+        if icon is not None and not icon.isNull():
+            # icon modpack thật: cắt giữa cho vừa khung (aspect-fill), bo góc.
+            clip = QPainterPath()
+            clip.addRoundedRect(QRectF(thumb), 4, 4)
+            p.save()
+            p.setClipPath(clip)
+            iw, ih = icon.width(), icon.height()
+            s = max(thumb.width() / iw, thumb.height() / ih)
+            sw, sh = thumb.width() / s, thumb.height() / s
+            p.drawImage(QRectF(thumb), icon,
+                        QRectF((iw - sw) / 2, (ih - sh) / 2, sw, sh))
+            p.restore()
+            p.setPen(Qt.NoPen)
+            p.setBrush(gloss_gradient(thumb.height(), 0.28))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+        else:
+            g = QLinearGradient(thumb.topLeft(), thumb.bottomRight())
+            g.setColorAt(0, col.lighter(120))
+            g.setColorAt(1, col.darker(130))
+            p.setPen(Qt.NoPen)
+            p.setBrush(g)
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            p.setBrush(gloss_gradient(thumb.height(), 0.5))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            cube = _cube_image()
+            if cube is not None and not cube.isNull():
+                p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                d = 46
+                p.drawImage(QRectF(thumb.center().x() - d / 2, thumb.center().y() - d / 2, d, d),
+                            cube, QRectF(cube.rect()))
+            else:
+                draw_cube_icon(p, QRectF(thumb.center().x() - 16, thumb.center().y() - 16, 32, 32),
+                               QColor(230, 240, 250), col.darker(150))
+        if hover:
+            # Rê chuột -> phủ nền tối + hiện ▶: dạy người dùng "bấm để mở/chơi".
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(0, 0, 0, 95))
+            p.drawRoundedRect(QRectF(thumb), 4, 4)
+            c = thumb.center()
+            tri = QPainterPath()
+            tri.moveTo(c.x() - 9, c.y() - 12)
+            tri.lineTo(c.x() + 13, c.y())
+            tri.lineTo(c.x() - 9, c.y() + 12)
+            tri.closeSubpath()
+            p.setBrush(QColor(255, 255, 255, 235))
+            p.drawPath(tri)
+        if selected or hover:
+            p.setPen(QPen(ACCENT if selected else ACCENT.lighter(135), 2))
             p.setBrush(Qt.NoBrush)
             p.drawRoundedRect(QRectF(rect).adjusted(1, 1, -1, -1), 7, 7)
 
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(rect.left() + 10, rect.top() + 92, rect.width() - 20, 16),
-                   Qt.AlignLeft | Qt.AlignVCenter, v["id"])
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   p.fontMetrics().elidedText(inst.name, Qt.ElideRight, rect.width() - 20))
         p.setFont(ui_font(8))
         p.setPen(TEXT_DIM)
-        loader = v.get("loader") or v["type"]
         p.drawText(QRect(rect.left() + 10, rect.top() + 110, rect.width() - 20, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, f"{loader} · Java {v['java']}")
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   p.fontMetrics().elidedText(inst.version, Qt.ElideRight, rect.width() - 20))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rect.left() + 10, rect.top() + 126, rect.width() - 20, 14),
                    Qt.AlignLeft | Qt.AlignVCenter,
-                   "ready" if v["complete"] else "metadata only")
+                   "ready" if ready else "will download on play")
 
     def _paint_right(self, p, col):
         # --- Account ---
@@ -290,15 +491,30 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(acc.left() + 14, acc.top() + 10, acc.width() - 28, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, "YOUR ACCOUNT")
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("YOUR ACCOUNT"))
         win = self.window()
         # avatar
         av = QRect(acc.left() + 14, acc.top() + 32, 40, 40)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(150, 112, 78))
-        p.drawRoundedRect(QRectF(av), 4, 4)
-        draw_cube_icon(p, QRectF(av.center().x() - 12, av.center().y() - 12, 24, 24),
-                       QColor(196, 150, 120), QColor(120, 86, 62))
+        if self._avatar_img is not None and not self._avatar_img.isNull() \
+                and self._avatar_img.width() >= 64:
+            clip = QPainterPath()
+            clip.addRoundedRect(QRectF(av), 4, 4)
+            p.save()
+            p.setClipPath(clip)
+            p.setRenderHint(QPainter.SmoothPixmapTransform, False)
+            img = self._avatar_img
+            p.drawImage(QRectF(av), img, QRectF(8, 8, 8, 8))    # mặt trước đầu
+            p.drawImage(QRectF(av), img, QRectF(40, 8, 8, 8))   # lớp mũ
+            p.restore()
+            p.setPen(QPen(QColor(255, 255, 255, 40), 1))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(QRectF(av), 4, 4)
+        else:
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(150, 112, 78))
+            p.drawRoundedRect(QRectF(av), 4, 4)
+            draw_cube_icon(p, QRectF(av.center().x() - 12, av.center().y() - 12, 24, 24),
+                           QColor(196, 150, 120), QColor(120, 86, 62))
         p.setFont(ui_font(11, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(av.right() + 12, acc.top() + 34, acc.width() - 70, 18),
@@ -312,43 +528,65 @@ class HomeDashboard(QWidget):
         p.drawText(QRect(av.right() + 24, acc.top() + 52, acc.width() - 90, 14),
                    Qt.AlignLeft | Qt.AlignVCenter, win.account_mode)
 
-        # --- News ---
-        news = QRect(col.left(), acc.bottom() + 14, col.width(),
+        # --- Continue playing ---
+        cont = QRect(col.left(), acc.bottom() + 14, col.width(),
                      col.bottom() - acc.bottom() - 14)
-        self._card(p, news, radius=8, strong=True)
+        self._card(p, cont, radius=8, strong=True)
         p.setFont(ui_font(8, bold=True))
         p.setPen(TEXT_FAINT)
-        p.drawText(QRect(news.left() + 14, news.top() + 10, news.width() - 28, 14),
-                   Qt.AlignLeft | Qt.AlignVCenter, "NEWS")
-        y = news.top() + 32
-        if not self._news:
+        p.drawText(QRect(cont.left() + 14, cont.top() + 10, cont.width() - 28, 14),
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("CONTINUE PLAYING"))
+        # tổng giờ chơi ở góc phải tiêu đề
+        total = (self._continue or {}).get("playtime", 0)
+        p.setPen(TEXT_DIM)
+        p.drawText(QRect(cont.left() + 14, cont.top() + 10, cont.width() - 28, 14),
+                   Qt.AlignRight | Qt.AlignVCenter, _fmt_playtime(total))
+
+        y = cont.top() + 34
+        if self._continue is None:
             p.setFont(ui_font(8))
             p.setPen(TEXT_FAINT)
-            p.drawText(QRect(news.left() + 14, y, news.width() - 28, 20),
-                       Qt.AlignLeft | Qt.AlignTop, "Loading…")
+            p.drawText(QRect(cont.left() + 14, y, cont.width() - 28, 20),
+                       Qt.AlignLeft | Qt.AlignTop, tr("Loading…"))
             return
-        for e in self._news:
-            if y + 52 > news.bottom() - 8:
+        items = self._continue.get("items", [])
+        if not items:
+            p.setFont(ui_font(8))
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(cont.left() + 14, y, cont.width() - 28, 40),
+                       Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap,
+                       tr("No worlds or servers yet — play a bit and they'll show up here."))
+            return
+        fm = p.fontMetrics()
+        for e in items:
+            if y + 50 > cont.bottom() - 8:
                 break
-            item = QRect(news.left() + 10, y, news.width() - 20, 50)
-            if any(r is item for r, _ in self._news_rects):
-                pass
-            # thumbnail nhỏ
-            th = QRect(item.left(), item.top() + 4, 42, 42)
-            col2 = _hash_hue(e["title"])
-            p.setPen(Qt.NoPen)
-            p.setBrush(col2)
-            p.drawRoundedRect(QRectF(th), 3, 3)
+            item = QRect(cont.left() + 10, y, cont.width() - 20, 46)
+            if self._hover_continue == len(self._continue_rects):
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(255, 255, 255, 20))
+                p.drawRoundedRect(QRectF(item), 5, 5)
+            icon = QRect(item.left() + 2, item.top() + 7, 32, 32)
+            img = e.get("_img")
+            if img is not None and not img.isNull():
+                p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+                path = QPainterPath()
+                path.addRoundedRect(QRectF(icon), 4, 4)
+                p.save()
+                p.setClipPath(path)
+                p.drawImage(QRectF(icon), img, QRectF(img.rect()))
+                p.restore()
+            else:
+                _continue_glyph(p, icon, e["kind"])
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT)
-            fm = p.fontMetrics()
-            title = fm.elidedText(e["title"], Qt.ElideRight, item.width() - 54)
-            p.drawText(QRect(th.right() + 8, item.top() + 4, item.width() - 54, 16),
+            title = fm.elidedText(e.get("_title", ""), Qt.ElideRight, item.width() - 48)
+            p.drawText(QRect(icon.right() + 8, item.top() + 5, item.width() - 48, 16),
                        Qt.AlignLeft | Qt.AlignVCenter, title)
             p.setFont(ui_font(7))
             p.setPen(TEXT_FAINT)
-            sub = fm.elidedText(e.get("date", ""), Qt.ElideRight, item.width() - 54)
-            p.drawText(QRect(th.right() + 8, item.top() + 24, item.width() - 54, 22),
-                       Qt.AlignLeft | Qt.AlignTop, sub)
-            self._news_rects.append((item, e.get("url", "")))
-            y += 54
+            sub = fm.elidedText(e.get("_sub", ""), Qt.ElideRight, item.width() - 48)
+            p.drawText(QRect(icon.right() + 8, item.top() + 24, item.width() - 48, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter, sub)
+            self._continue_rects.append((item, e))
+            y += 50

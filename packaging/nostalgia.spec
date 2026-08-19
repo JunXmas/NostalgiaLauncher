@@ -17,7 +17,7 @@ ROOT = Path(SPECPATH).parent
 ASSETS = ROOT / "packaging" / "assets"
 
 APP_NAME = "Nostalgia Launcher"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.7.6"
 BUNDLE_ID = "com.nostalgia.launcher"
 
 WINDOWS = sys.platform == "win32"
@@ -38,7 +38,7 @@ a = Analysis(
     [str(ROOT / "packaging" / "entry.py")],
     pathex=[str(ROOT)],
     binaries=[],
-    datas=[],
+    datas=[(str(ROOT / "nostalgia" / "ui" / "assets"), "nostalgia/ui/assets")],
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],

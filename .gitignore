@@ -8,3 +8,8 @@ build/
 dist/
 *.spec.bak
 packaging/assets/
+
+# Local credentials / secrets — never commit
+clients.json
+.env
+*.pfx

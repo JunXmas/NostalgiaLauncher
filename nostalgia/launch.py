@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from .accounts import LaunchIdentity
-from .install import Installer, rules_allow
+from .install import CURRENT_OS, Installer, rules_allow
 
 CLASSPATH_SEP = ";" if os.name == "nt" else ":"
 
@@ -141,6 +141,7 @@ def build_command(
     *,
     java: str | None = None,
     max_memory_mb: int = 2048,
+    quick_play: dict | None = None,
 ) -> list[str]:
     version_id = meta["id"]
     classpath = installer.library_paths(meta) + [installer.client_jar(meta)]
@@ -171,12 +172,16 @@ def build_command(
     # Rule `is_demo_user` trong version JSON tự sinh ra cờ --demo cho ta.
     features = {"is_demo_user": identity.demo, "has_custom_resolution": False}
 
-    cmd = [java or resolve_java(meta, installer.game_dir)]
+    cmd = [java or resolve_java(meta, installer.store_root)]
 
     if "arguments" in meta:  # 1.13 trở lên
         cmd += _substitute(meta["arguments"]["jvm"], values, features)
     else:  # bản cũ không khai báo JVM args
         cmd += [f"-Djava.library.path={values['natives_directory']}", "-cp", values["classpath"]]
+        # Bản ≤1.12 (LWJGL2) không tự thêm cờ này. Trên macOS, LWJGL/GLFW bắt buộc
+        # tạo cửa sổ trên luồng đầu tiên; thiếu -XstartOnFirstThread là crash ngay.
+        if CURRENT_OS == "osx":
+            cmd.append("-XstartOnFirstThread")
 
     cmd += [f"-Xmx{max_memory_mb}M", "-XX:+UseG1GC"]
     cmd.append(meta["mainClass"])
@@ -187,6 +192,15 @@ def build_command(
         cmd += _substitute(meta["minecraftArguments"].split(), values, features)
         if identity.demo:
             cmd.append("--demo")  # bản cũ không có feature flag, phải tự thêm
+
+    # Vào thẳng server/thế giới (Quick Play, có từ 1.20). Chỉ thêm cho bản khai báo
+    # "arguments" (1.13+); Minecraft cho phép cờ lạ nên bản <1.20 sẽ bỏ qua an toàn.
+    if quick_play and "arguments" in meta:
+        target = str(quick_play.get("target", "")).strip()
+        if quick_play.get("type") == "multiplayer" and target:
+            cmd += ["--quickPlayMultiplayer", target]
+        elif quick_play.get("type") == "singleplayer" and target:
+            cmd += ["--quickPlaySingleplayer", target]
 
     return cmd
 
@@ -265,6 +279,9 @@ def launch_game_offline(
     java: str | None = None,
     max_memory_mb: int = 2048,
     on_status=None,
+    on_start=None,
+    on_line=None,
+    quick_play: dict | None = None,
 ) -> int:
     """Khởi chạy game mà không phát một request mạng nào.
 
@@ -291,25 +308,29 @@ def launch_game_offline(
         say(f"[warning] {warning}")
 
     try:
-        java_bin = java or resolve_java(meta, installer.game_dir)
+        java_bin = java or resolve_java(meta, installer.store_root)
     except RuntimeError as e:
         raise OfflineLaunchError(
             f"{e}\n(Offline mode cannot download the Java runtime for you.)"
         ) from e
 
     cmd = build_command(meta, installer, identity, java=java_bin,
-                        max_memory_mb=max_memory_mb)
+                        max_memory_mb=max_memory_mb, quick_play=quick_play)
     say(f"Launching {version_id} offline as '{identity.username}'"
         + (" (demo)" if identity.demo else ""))
-    return run(cmd, installer.game_dir)
+    return run(cmd, installer.game_dir, on_start=on_start, on_line=on_line)
 
 
-def run(cmd: list[str], game_dir: Path) -> int:
+def run(cmd: list[str], game_dir: Path, on_start=None, on_line=None) -> int:
     game_dir.mkdir(parents=True, exist_ok=True)
     process = subprocess.Popen(
         cmd, cwd=game_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, errors="replace", **NO_WINDOW,
     )
+    if on_start:
+        on_start(process)          # để phía gọi giữ handle mà dừng game khi cần
     for line in process.stdout:
         print(line, end="")
+        if on_line:
+            on_line(line)          # đẩy log ra UI
     return process.wait()

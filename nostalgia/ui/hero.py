@@ -7,9 +7,23 @@ thì đổi màu theo mùa/theo instance được. Người dùng vẫn thay b�
 from __future__ import annotations
 
 import math
+import sys
+from pathlib import Path
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPixmap, QPolygonF
+
+
+def _asset(name: str) -> Path:
+    """Đường dẫn file asset, chạy được cả khi đóng gói PyInstaller lẫn từ mã nguồn."""
+    if getattr(sys, "frozen", False):
+        base = Path(sys._MEIPASS) / "nostalgia" / "ui" / "assets"
+    else:
+        base = Path(__file__).parent / "assets"
+    return base / name
+
+
+DEFAULT_BG = _asset("leaves.jpg")
 
 # Mỗi khối lấy 3 sắc độ: mặt trên hứng sáng, hai mặt bên tối dần.
 BLOCKS = {
@@ -87,10 +101,10 @@ def _cube(p: QPainter, cx: float, cy: float, kind: str, haze: float = 0.0) -> No
 
 
 def render_hero(width: int, height: int, bg_path: str = "") -> QPixmap:
-    # Có ảnh nền tuỳ chọn thì dùng nó (co giãn phủ kín), không thì dựng đảo voxel.
-    if bg_path:
-        from PySide6.QtGui import QPixmap as _P
-        src = _P(bg_path)
+    # Thứ tự ưu tiên: ảnh người dùng chọn -> ảnh lá xanh mặc định -> đảo voxel.
+    source = bg_path or (str(DEFAULT_BG) if DEFAULT_BG.exists() else "")
+    if source:
+        src = QPixmap(source)
         if not src.isNull():
             pm = QPixmap(width, height)
             p = QPainter(pm)

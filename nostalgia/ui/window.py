@@ -6,12 +6,15 @@ Trang Home tự dựng cột giữa + cột phải bên trong nó (xem dashboard
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import (
+    QEasingCurve, QPoint, QRect, QRectF, Qt, QVariantAnimation, Signal,
+)
 from PySide6.QtGui import (
     QColor, QCursor, QFont, QGuiApplication, QPainter, QPainterPath, QPen,
 )
 from PySide6.QtWidgets import QAbstractButton, QWidget
 
+from ..i18n import tr
 from ..paths import APP_NAME
 from .glass import GlassPanel, draw_glass_rect
 from .hero import render_hero
@@ -30,10 +33,14 @@ NAV = [
     ("installations", "Instances", "cube"),
     ("mods", "Mods", "mods"),
     ("resourcepacks", "Resource Packs", "packs"),
+    ("shaders", "Shaders", "shaders"),
     ("servers", "Servers", "servers"),
     ("skins", "Skin", "skin"),
     ("settings", "Settings", "gear"),
+    ("discord", "Discord", "discord"),   # mở link mời, không phải trang
 ]
+
+DISCORD_INVITE = "https://discord.gg/XVrBBswt5w"
 
 
 class TitleDragBar(QWidget):
@@ -71,23 +78,47 @@ class CaptionButton(QAbstractButton):
         self.setFixedSize(30, 22)
         self.setCursor(Qt.PointingHandCursor)
         self._hover = False
+        self._hover_amt = 0.0
+        self._hover_anim = QVariantAnimation(self)
+        self._hover_anim.valueChanged.connect(self._on_hover_anim)
+
+    def _on_hover_anim(self, v):
+        self._hover_amt = float(v)
+        self.update()
+
+    def _animate_hover(self, target: float, ms: int):
+        self._hover_anim.stop()
+        self._hover_anim.setDuration(ms)
+        self._hover_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._hover_anim.setStartValue(self._hover_amt)
+        self._hover_anim.setEndValue(target)
+        self._hover_anim.start()
 
     def enterEvent(self, e):  # noqa: N802
         self._hover = True
+        self._animate_hover(1.0, 110)
         self.update()
 
     def leaveEvent(self, e):  # noqa: N802
         self._hover = False
+        self._animate_hover(0.0, 150)
         self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
-        base = (QColor(214, 96, 96, 150 if self._hover else 70) if self.kind == "close"
-                else QColor(255, 255, 255, 60 if self._hover else 26))
+        h = self._hover_amt
+        if self.kind == "close":
+            base = QColor(214, 96, 96, int(70 + (150 - 70) * h))
+        else:
+            base = QColor(255, 255, 255, int(26 + (60 - 26) * h))
         draw_glass_rect(p, r, radius=3, tint=base, gloss=1.0)
-        p.setPen(QPen(QColor(255, 255, 255) if (self.kind == "close" and self._hover) else TEXT, 1.3))
+        glyph = TEXT if self.kind != "close" else QColor(
+            int(TEXT.red() + (255 - TEXT.red()) * h),
+            int(TEXT.green() + (255 - TEXT.green()) * h),
+            int(TEXT.blue() + (255 - TEXT.blue()) * h))
+        p.setPen(QPen(glyph, 1.3))
         c = r.center()
         if self.kind == "close":
             p.drawLine(c.x() - 4, c.y() - 4, c.x() + 4, c.y() + 4)
@@ -100,6 +131,20 @@ class CaptionButton(QAbstractButton):
         p.end()
 
 
+_LOGO = None
+
+
+def logo_pixmap():
+    """Logo lá (assets/logo.png), nạp một lần. None nếu thiếu file."""
+    global _LOGO
+    if _LOGO is None:
+        from pathlib import Path
+
+        from PySide6.QtGui import QPixmap
+        _LOGO = QPixmap(str(Path(__file__).parent / "assets" / "logo.png"))
+    return _LOGO
+
+
 class SidebarPanel(GlassPanel):
     """Sidebar: logo trên, nav phía dưới."""
 
@@ -107,9 +152,15 @@ class SidebarPanel(GlassPanel):
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
         w = self.width()
 
-        draw_cube_icon(p, QRectF(16, 22, 40, 40), QColor(126, 190, 92), QColor(150, 112, 78))
+        logo = logo_pixmap()
+        if logo is not None and not logo.isNull():
+            p.drawPixmap(QRectF(12, 18, 46, 46), logo, QRectF(logo.rect()))
+        else:
+            draw_cube_icon(p, QRectF(16, 22, 40, 40),
+                           QColor(126, 190, 92), QColor(150, 112, 78))
         f = ui_font(13, bold=True)
         f.setLetterSpacing(QFont.AbsoluteSpacing, 1.0)
         p.setFont(f)
@@ -142,6 +193,14 @@ class StatusBar(GlassPanel):
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(self.width() - 320, 0, 300, self.height()),
                    Qt.AlignRight | Qt.AlignVCenter, win.status_right)
+
+        # Thanh tiến độ download (mảnh, chạy dọc mép trên của status bar).
+        if win.progress is not None:
+            frac = max(0.0, min(1.0, float(win.progress)))
+            p.setBrush(QColor(255, 255, 255, 26))
+            p.drawRect(QRectF(0, 0, self.width(), 3))
+            p.setBrush(ACCENT)
+            p.drawRect(QRectF(0, 0, self.width() * frac, 3))
         p.end()
 
 
@@ -152,6 +211,10 @@ class LauncherWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(APP_NAME)
+        _logo = logo_pixmap()
+        if _logo is not None and not _logo.isNull():
+            from PySide6.QtGui import QIcon
+            self.setWindowIcon(QIcon(_logo))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(1180, 720)
@@ -168,6 +231,7 @@ class LauncherWindow(QWidget):
         self.account_state = "off"
         self.status_left = "Ready"
         self.status_right = ""
+        self.progress = None      # None = ẩn; 0..1 = tiến độ thanh download
 
         self.pages: dict[str, QWidget] = {}
         self.current_page: QWidget | None = None
@@ -189,7 +253,8 @@ class LauncherWindow(QWidget):
 
         self.nav: dict[str, SidebarItem] = {}
         for key, label, icon in NAV:
-            item = SidebarItem(label, icon, self.sidebar)
+            item = SidebarItem(tr(label), icon, self.sidebar)
+            item._i18n_key = label
             item.clicked.connect(lambda _=False, k=key: self.nav_clicked.emit(k))
             self.nav[key] = item
         self.nav["home"].setChecked(True)
@@ -204,11 +269,24 @@ class LauncherWindow(QWidget):
         self.btn_max.clicked.connect(
             lambda: self.showNormal() if self.isMaximized() else self.showMaximized())
 
+    def retranslate(self) -> None:
+        """Đổi ngôn ngữ: cập nhật chữ trên nav + nút, rồi vẽ lại toàn bộ."""
+        for item in self.nav.values():
+            key = getattr(item, "_i18n_key", None)
+            if key:
+                item.setText(tr(key))
+            item.update()
+        for page in getattr(self, "pages", {}).values():
+            if hasattr(page, "retranslate"):
+                page.retranslate()
+            page.update()
+        self.update()
+
     def rebuild_hero(self) -> None:
         """Dựng lại ảnh nền + bản blur (gọi khi đổi background_path)."""
         w, h = max(1, self.width()), max(1, self.height())
         self.hero = render_hero(w, h, self.background_path)
-        self.blurred = blur_pixmap(self.hero, factor=14, passes=2)
+        self.blurred = blur_pixmap(self.hero, factor=15, passes=3)
         self.update()
         self.update_all()
 
@@ -261,6 +339,11 @@ class LauncherWindow(QWidget):
         self.status_right = text
         self.statusbar.update()
 
+    def set_progress(self, frac) -> None:
+        """frac 0..1 để hiện thanh tiến độ; None để ẩn."""
+        self.progress = frac
+        self.statusbar.update()
+
     def update_all(self) -> None:
         self.sidebar.update()
         self.statusbar.update()
@@ -272,7 +355,7 @@ class LauncherWindow(QWidget):
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
         self.hero = render_hero(w, h, self.background_path)
-        self.blurred = blur_pixmap(self.hero, factor=14, passes=2)
+        self.blurred = blur_pixmap(self.hero, factor=15, passes=3)
 
         self.sidebar.setGeometry(0, 0, SIDEBAR_W, h - STATUSBAR_H)
         self.statusbar.setGeometry(0, h - STATUSBAR_H, w, STATUSBAR_H)

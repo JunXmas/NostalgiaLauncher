@@ -8,6 +8,7 @@ import platform
 import re
 import shutil
 import threading
+import time
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -57,29 +58,48 @@ def _sha1(path: Path) -> str:
     return h.hexdigest()
 
 
-def download(url: str, dest: Path, sha1: str | None = None) -> Path:
-    """Tải nếu thiếu hoặc sai hash. Có sha1 nên luôn kiểm tra để tự sửa file hỏng."""
+def download(url: str, dest: Path, sha1: str | None = None, *, attempts: int = 4) -> Path:
+    """Tải nếu thiếu hoặc sai hash. Có sha1 nên luôn kiểm tra để tự sửa file hỏng.
+
+    Thử lại vài lần với backoff: server Mojang hay rớt kết nối khi tải hàng nghìn
+    asset nhỏ song song (RemoteDisconnected), một cú rớt không nên làm hỏng cả lần cài.
+    """
     if dest.exists() and (sha1 is None or _sha1(dest) == sha1):
         return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
-    with requests.get(url, stream=True, timeout=TIMEOUT) as r:
-        r.raise_for_status()
-        tmp = dest.with_suffix(dest.suffix + ".part")
-        with tmp.open("wb") as f:
-            for chunk in r.iter_content(1 << 16):
-                f.write(chunk)
-        tmp.replace(dest)
-    if sha1 and _sha1(dest) != sha1:
-        raise RuntimeError(f"Hash không khớp sau khi tải: {dest}")
-    return dest
+    last: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            with requests.get(url, stream=True, timeout=TIMEOUT) as r:
+                r.raise_for_status()
+                # Tên tạm riêng theo luồng: nếu hai job cùng đích chạy song song
+                # (asset index đời cũ có nhiều tên trỏ cùng hash) thì không giẫm .part nhau.
+                tmp = dest.with_suffix(f"{dest.suffix}.{threading.get_ident()}.part")
+                with tmp.open("wb") as f:
+                    for chunk in r.iter_content(1 << 16):
+                        f.write(chunk)
+                tmp.replace(dest)
+            if sha1 and _sha1(dest) != sha1:
+                raise RuntimeError(f"Hash không khớp sau khi tải: {dest}")
+            return dest
+        except (requests.RequestException, RuntimeError) as e:
+            last = e
+            if attempt < attempts - 1:
+                time.sleep(0.5 * (attempt + 1))
+    raise last if last else RuntimeError(f"Không tải được: {url}")
 
 
 class Installer:
-    def __init__(self, game_dir: Path, on_progress=None):
+    def __init__(self, game_dir: Path, on_progress=None, *, store_root: Path | None = None):
+        # game_dir = thư mục game khi chạy (mods/saves/--gameDir) — riêng từng
+        # instance. store_root = kho versions/libraries/assets dùng chung; mặc
+        # định trùng game_dir để giữ tương thích với chỗ gọi cũ.
         self.game_dir = game_dir
-        self.versions_dir = game_dir / "versions"
-        self.libraries_dir = game_dir / "libraries"
-        self.assets_dir = game_dir / "assets"
+        root = store_root or game_dir
+        self.store_root = root       # nơi đặt runtime/JRE dùng chung
+        self.versions_dir = root / "versions"
+        self.libraries_dir = root / "libraries"
+        self.assets_dir = root / "assets"
         # on_progress(stage: str, done: int, total: int) — GUI nối vào đây;
         # CLI để None và chỉ in ra như cũ.
         self.on_progress = on_progress
@@ -134,7 +154,12 @@ class Installer:
     def _raw_version_json(self, version_id: str) -> dict:
         local = self.versions_dir / version_id / f"{version_id}.json"
         if local.exists():
-            return json.loads(local.read_text())
+            data = json.loads(local.read_text())
+            # JSON hợp lệ phải có 'downloads' (bản gốc Mojang) hoặc 'inheritsFrom'
+            # (Fabric/Forge). Thiếu cả hai -> file cụt/hỏng, tải lại cho lành thay
+            # vì để KeyError('downloads') làm chết cả lần cài.
+            if "downloads" in data or "inheritsFrom" in data:
+                return data
         manifest = requests.get(VERSION_MANIFEST, timeout=TIMEOUT).json()
         entry = next((v for v in manifest["versions"] if v["id"] == version_id), None)
         if entry is None:
@@ -280,9 +305,15 @@ class Installer:
         index = json.loads(index_path.read_text())
         objects = index["objects"]
 
+        # Khử trùng theo hash: index đời cũ (vd 1.12.2) liệt kê nhiều tên trỏ cùng
+        # một object, không lọc sẽ tải trùng và hai luồng đua nhau ghi cùng file.
         jobs = []
+        seen: set[str] = set()
         for obj in objects.values():
             h = obj["hash"]
+            if h in seen:
+                continue
+            seen.add(h)
             jobs.append((f"{RESOURCES_BASE}/{h[:2]}/{h}", self.assets_dir / "objects" / h[:2] / h, h))
         print(f"  {len(jobs)} assets ...")
         self._run_jobs("Đang tải assets", jobs)

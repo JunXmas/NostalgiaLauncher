@@ -25,16 +25,27 @@ ALL_RUNTIMES = (
 TIMEOUT = 30
 DEFAULT_COMPONENT = "jre-legacy"  # phiên bản cũ không khai component thì mặc định Java 8
 
+# Mojang KHÔNG host các runtime cũ này cho máy ARM (Apple Silicon, Windows-ARM):
+# chỉ có gamma (17) và delta (21). Nên bản game ≤1.17 phải chạy runtime x86_64
+# qua Rosetta/emulation — thư viện natives của các bản đó cũng chỉ có x86_64.
+_ARM_MISSING = {"jre-legacy", "java-runtime-alpha", "java-runtime-beta"}
 
-def _os_key() -> str:
+
+def _os_key(component: str | None = None) -> str:
     system = platform.system()
     machine = platform.machine()
     if system == "Linux":
         return "linux" if machine in ("x86_64", "AMD64", "aarch64", "arm64") else "linux-i386"
     if system == "Darwin":
-        return "mac-os-arm64" if machine in ("arm64", "aarch64") else "mac-os"
+        arm = machine in ("arm64", "aarch64")
+        if arm and component in _ARM_MISSING:
+            return "mac-os"          # Rosetta: bản cũ chỉ có runtime x86_64
+        return "mac-os-arm64" if arm else "mac-os"
     if system == "Windows":
-        if machine in ("ARM64", "aarch64"):
+        arm = machine in ("ARM64", "aarch64")
+        if arm and component in _ARM_MISSING:
+            return "windows-x64"     # emulation cho bản cũ trên Windows-ARM
+        if arm:
             return "windows-arm64"
         return "windows-x64" if machine in ("AMD64", "x86_64") else "windows-x86"
     return "linux"
@@ -45,7 +56,7 @@ def component_of(meta: dict) -> str:
 
 
 def runtime_dir(game_dir: Path, component: str) -> Path:
-    return game_dir / "runtime" / component / _os_key() / component
+    return game_dir / "runtime" / component / _os_key(component) / component
 
 
 def java_binary(game_dir: Path, component: str) -> Path:
@@ -70,7 +81,7 @@ def is_installed(game_dir: Path, component: str) -> bool:
 
 def _manifest_url(component: str) -> str | None:
     data = requests.get(ALL_RUNTIMES, timeout=TIMEOUT).json()
-    entries = data.get(_os_key(), {}).get(component, [])
+    entries = data.get(_os_key(component), {}).get(component, [])
     if not entries:
         return None
     return entries[0]["manifest"]["url"]
@@ -81,7 +92,7 @@ def install(game_dir: Path, component: str, on_progress=None) -> Path:
     url = _manifest_url(component)
     if url is None:
         raise RuntimeError(
-            f"Mojang has no JRE '{component}' for {_os_key()}. "
+            f"Mojang has no JRE '{component}' for {_os_key(component)}. "
             "Install Java manually and set its path in Settings."
         )
     manifest = requests.get(url, timeout=TIMEOUT).json()
@@ -112,8 +123,10 @@ def install(game_dir: Path, component: str, on_progress=None) -> Path:
         url_, dest, sha = job
         dest.parent.mkdir(parents=True, exist_ok=True)
         download(url_, dest, sha)
-        # Giữ cờ thực thi cho bin/java và các script.
-        if files[str(dest.relative_to(base))].get("executable"):
+        # Giữ cờ thực thi cho bin/java và các script. Key trong manifest luôn
+        # dùng dấu '/', nên phải as_posix() — trên Windows str() ra dấu '\' và
+        # gây KeyError, làm hỏng cả bộ JRE (Minecraft không có Java để chạy).
+        if files[dest.relative_to(base).as_posix()].get("executable"):
             dest.chmod(dest.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
         if on_progress:
             done += 1

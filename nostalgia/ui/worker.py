@@ -34,6 +34,25 @@ class FnWorker(QThread):
             self.failed.emit(str(e))
 
 
+class ProgressWorker(QThread):
+    """Như FnWorker nhưng hàm nhận (on_progress, on_status) để báo tiến độ."""
+
+    progress = Signal(int, int)   # đã xong, tổng
+    status = Signal(str)
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, fn, parent=None):
+        super().__init__(parent)
+        self.fn = fn
+
+    def run(self) -> None:  # noqa: D102
+        try:
+            self.done.emit(self.fn(self.progress.emit, self.status.emit))
+        except Exception as e:  # noqa: BLE001
+            self.failed.emit(str(e))
+
+
 class LoginWorker(QThread):
     """Device code flow: phát mã ra UI trước, rồi chờ người dùng xác nhận trên web."""
 
@@ -83,18 +102,34 @@ class LaunchWorker(QThread):
     status = Signal(str)
     failed = Signal(str)
     finished_ok = Signal()
+    game_started = Signal()           # tiến trình game đã chạy -> đổi PLAY thành STOP
+    log_line = Signal(str)            # từng dòng log game -> hiện trong app
 
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
-                 offline: bool = False, parent=None):
+                 offline: bool = False, store_root: Path | None = None,
+                 quick_play: dict | None = None, parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
         self.version = version
-        self.game_dir = game_dir
+        self.game_dir = game_dir          # thư mục game của instance (mods/saves)
+        self.store_root = store_root or game_dir   # kho versions/libraries/assets/runtime dùng chung
         self.memory_mb = memory_mb
         self.java_path = java_path
         self.offline = offline
+        self.quick_play = quick_play      # vào thẳng server/thế giới (Quick Play)
+        self._proc = None            # tiến trình game, để dừng khi bấm STOP
+
+    def _capture(self, proc) -> None:
+        self._proc = proc
+        self.game_started.emit()
+
+    def stop(self) -> None:
+        """Dừng game đang chạy (bấm STOP)."""
+        proc = self._proc
+        if proc and proc.poll() is None:
+            proc.terminate()
 
     def _launch_offline(self, installer: Installer, identity) -> int:
         return launch_game_offline(
@@ -102,6 +137,9 @@ class LaunchWorker(QThread):
             java=self.java_path or None,
             max_memory_mb=self.memory_mb,
             on_status=self.status.emit,
+            on_start=self._capture,
+            on_line=self.log_line.emit,
+            quick_play=self.quick_play,
         )
 
     def _launch_online(self, installer: Installer, identity) -> int:
@@ -111,23 +149,25 @@ class LaunchWorker(QThread):
         # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
         if not self.java_path:
             from .. import jre
-            if not jre.is_installed(self.game_dir, jre.component_of(meta)):
+            if not jre.is_installed(self.store_root, jre.component_of(meta)):
                 self.status.emit("Downloading Java runtime…")
-                jre.ensure(self.game_dir, meta, on_progress=self.progress.emit)
+                jre.ensure(self.store_root, meta, on_progress=self.progress.emit)
 
         if identity.user_type == OFFLINE:
             for warning in ensure_offline_libraries(meta, installer):
                 self.status.emit(warning)
 
         cmd = build_command(meta, installer, identity,
-                            java=self.java_path or None, max_memory_mb=self.memory_mb)
+                            java=self.java_path or None, max_memory_mb=self.memory_mb,
+                            quick_play=self.quick_play)
         self.status.emit(f"Launching {self.version}" + (" (demo)" if identity.demo else ""))
-        return run(cmd, self.game_dir)
+        return run(cmd, self.game_dir, on_start=self._capture, on_line=self.log_line.emit)
 
     def run(self) -> None:  # noqa: D102
         try:
             identity = self.store.resolve_identity(self.account)
-            installer = Installer(self.game_dir, on_progress=self.progress.emit)
+            installer = Installer(self.game_dir, on_progress=self.progress.emit,
+                                  store_root=self.store_root)
 
             if self.offline:
                 code = self._launch_offline(installer, identity)
