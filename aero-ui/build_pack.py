@@ -235,6 +235,29 @@ def build_legacy() -> None:
 
 WALLPAPER = ROOT / "wallpaper.png"   # ảnh Aero GỐC (vẽ bằng make_wallpaper.py)
 
+def build_edition(text: str = "NOSTALGIA EDITION") -> None:
+    """Thay chữ 'JAVA EDITION' dưới logo bằng text khác (gui/title/edition.png).
+
+    Vẽ text nhỏ (không khử răng cưa) rồi PHÓNG TO nearest -> ra khối pixel giống
+    phông edition của Minecraft. Xuất 512×64 (tỉ lệ 8:1 như bản gốc); game tự co
+    giãn nên phủ mọi phiên bản qua cùng một path.
+    """
+    from PySide6.QtGui import QFont, QFontMetrics
+    base = QFont("monospace"); base.setBold(True); base.setPixelSize(16)
+    fm = QFontMetrics(base)
+    tw, th = fm.horizontalAdvance(text) + 4, fm.height() + 4
+    small = QImage(tw, th, QImage.Format_ARGB32); small.fill(Qt.transparent)
+    p = QPainter(small); p.setFont(base)
+    p.setRenderHint(QPainter.Antialiasing, False)
+    p.setRenderHint(QPainter.TextAntialiasing, False)
+    y = fm.ascent() + 1
+    p.setPen(QColor(28, 30, 34, 210)); p.drawText(2, y + 1, text)   # bóng đổ
+    p.setPen(QColor(214, 219, 226)); p.drawText(1, y, text)         # chữ xám sáng
+    p.end()
+    big = small.scaled(512, 64, Qt.IgnoreAspectRatio, Qt.FastTransformation)
+    write_png(big, GUI / "title" / "edition.png")
+
+
 def build_panorama() -> None:
     """Thay panorama title screen bằng wallpaper Aero (xoay chậm sau menu chính).
 
@@ -318,6 +341,7 @@ def main() -> None:
     QApplication([])
     build_modern()   # sprite modern -> ship trong ui/assets/aero-pack
     build_panorama() # wallpaper title screen (mọi phiên bản)
+    build_edition()  # "NOSTALGIA EDITION" thay "JAVA EDITION"
     build_meta()
     build_preview()  # ảnh xem trước -> aero-ui/preview.png (không ship)
     # build_legacy() KHÔNG chạy: widgets.png được ghép lúc cài từ jar người dùng.
