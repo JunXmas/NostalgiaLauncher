@@ -233,6 +233,43 @@ def build_legacy() -> None:
     write_png(base, GUI / "widgets.png")
 
 
+WALLPAPER = ROOT / "wallpaper.jpg"
+
+def build_panorama() -> None:
+    """Thay panorama title screen bằng wallpaper Aero (xoay chậm sau menu chính).
+
+    Đường dẫn `gui/title/background/panorama_*` giống nhau từ 1.8→26.x nên một bộ
+    phủ mọi phiên bản. 4 mặt tường = ảnh (fill vuông), trần/sàn = gradient xanh
+    mượt lấy màu từ ảnh, tránh vệt sáng vắt lên 'trần' trông kỳ.
+    """
+    src = QImage(str(WALLPAPER))
+    if src.isNull():
+        print("  (skip panorama: no wallpaper.jpg)")
+        return
+    dest = GUI / "title" / "background"
+    S = 1024
+    # Tường: phóng lấp đầy hình vuông rồi cắt giữa.
+    filled = src.scaled(S, S, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+    x = (filled.width() - S) // 2
+    y = (filled.height() - S) // 2
+    wall = filled.copy(x, y, S, S)
+    for i in (0, 1, 2, 3):
+        write_png(wall, dest / f"panorama_{i}.png")
+    # Trần/sàn: gradient dọc từ màu sáng (đỉnh ảnh) tới màu tối (đáy ảnh).
+    top = src.pixelColor(src.width() // 2, 4)
+    midf = src.pixelColor(src.width() // 2, src.height() // 2)
+    bot = src.pixelColor(src.width() // 2, src.height() - 4)
+
+    def flat(c1, c2):
+        img = QImage(S, S, QImage.Format_ARGB32)
+        g = QLinearGradient(0, 0, 0, S); g.setColorAt(0, c1); g.setColorAt(1, c2)
+        p = QPainter(img); p.fillRect(0, 0, S, S, g); p.end()
+        return img
+
+    write_png(flat(top, midf), dest / "panorama_4.png")     # trần (sky)
+    write_png(flat(midf, bot), dest / "panorama_5.png")     # sàn (ground)
+
+
 def build_meta() -> None:
     PACK.mkdir(parents=True, exist_ok=True)
     # pack_format 3 để 1.12.2 nạp; supported_formats để bản mới nhận sạch.
@@ -279,6 +316,7 @@ def build_preview() -> None:
 def main() -> None:
     QApplication([])
     build_modern()   # sprite modern -> ship trong ui/assets/aero-pack
+    build_panorama() # wallpaper title screen (mọi phiên bản)
     build_meta()
     build_preview()  # ảnh xem trước -> aero-ui/preview.png (không ship)
     # build_legacy() KHÔNG chạy: widgets.png được ghép lúc cài từ jar người dùng.
