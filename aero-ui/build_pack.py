@@ -233,7 +233,7 @@ def build_legacy() -> None:
     write_png(base, GUI / "widgets.png")
 
 
-WALLPAPER = ROOT / "wallpaper.jpg"
+WALLPAPER = ROOT / "wallpaper.png"   # ảnh Aero GỐC (vẽ bằng make_wallpaper.py)
 
 def build_panorama() -> None:
     """Thay panorama title screen bằng wallpaper Aero (xoay chậm sau menu chính).
