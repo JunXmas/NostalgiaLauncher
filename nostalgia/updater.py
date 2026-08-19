@@ -18,6 +18,25 @@ import requests
 
 from . import __version__
 
+
+def clean_child_env() -> dict:
+    """Env để spawn chương trình NGOÀI bundle (trình duyệt, file manager, installer).
+
+    Bản đóng gói PyInstaller đặt LD_LIBRARY_PATH (macOS: DYLD_LIBRARY_PATH) tới thư
+    mục lib bundle. Tiến trình con thừa hưởng biến đó sẽ nạp nhầm lib bundle rồi
+    chết lặng — 'Open folder', các link, và cả việc mở installer đều im ru. Trả
+    biến về giá trị gốc PyInstaller lưu ở *_ORIG (hoặc bỏ hẳn nếu vốn không có).
+    Chạy từ mã nguồn thì các biến này không tồn tại nên đây là no-op.
+    """
+    env = os.environ.copy()
+    for var in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"):
+        original = env.pop(var + "_ORIG", None)
+        if original is not None:
+            env[var] = original
+        else:
+            env.pop(var, None)
+    return env
+
 REPO = "JunXmas/NostalgiaLauncher"
 LATEST_URL = f"https://api.github.com/repos/{REPO}/releases/latest"
 TIMEOUT = 15
@@ -97,9 +116,9 @@ def _open(path: Path) -> None:
     if platform.system() == "Windows":
         os.startfile(str(path))          # type: ignore[attr-defined]
     elif platform.system() == "Darwin":
-        subprocess.Popen(["open", str(path)])
+        subprocess.Popen(["open", str(path)], env=clean_child_env())
     else:
-        subprocess.Popen(["xdg-open", str(path)])
+        subprocess.Popen(["xdg-open", str(path)], env=clean_child_env())
 
 
 def install(path: Path) -> str:

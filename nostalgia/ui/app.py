@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -26,6 +27,35 @@ from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
 from .worker import FnWorker, GoogleLinkWorker, LaunchWorker, LoginWorker, ProgressWorker
+
+
+def open_native(target: str) -> bool:
+    """Mở một đường dẫn hoặc URL bằng handler mặc định của hệ điều hành.
+
+    Dùng subprocess với env đã làm sạch (updater.clean_child_env) thay cho
+    QDesktopServices.openUrl, vì cái sau kế thừa nguyên môi trường (gồm
+    LD_LIBRARY_PATH của bundle) cho tiến trình con — thủ phạm khiến 'Open folder'
+    và các link không hoạt động ở bản cài.
+    """
+    if not target:
+        return False
+    try:
+        if os.name == "nt":
+            os.startfile(target)  # noqa: S606 - handler mặc định của Windows
+            return True
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.Popen(
+            [opener, target], env=updater.clean_child_env(),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return True
+    except OSError:
+        # Còn nước còn tát: để Qt thử, ít nhất chạy-từ-nguồn vẫn mở được.
+        from urllib.parse import urlparse
+        is_url = bool(urlparse(target).scheme) and not os.path.exists(target)
+        return QDesktopServices.openUrl(
+            QUrl(target) if is_url else QUrl.fromLocalFile(target))
 
 
 def describe(store: accounts.AccountStore, account) -> tuple[str, str]:
@@ -139,7 +169,7 @@ class Controller:
 
         worker = GoogleLinkWorker(client_id, secret)
         worker.url_ready.connect(lambda url: (
-            QDesktopServices.openUrl(QUrl(url)),
+            self.open_url(url),
             dlg.show_result(True, "Browser opened. Pick your Google account, then come back."),
         ))
         worker.linked.connect(lambda info: self._google_linked(dlg, info))
@@ -985,7 +1015,7 @@ class Controller:
         dlg.show()
         worker = LoginWorker(client_id)
         worker.code_ready.connect(lambda url, code: (dlg.show_code(url, code),
-                                                     QDesktopServices.openUrl(QUrl(url))))
+                                                     self.open_url(url)))
         worker.logged_in.connect(lambda s: self._login_ok(dlg, s))
         worker.failed.connect(lambda m: dlg.show_result(False, m))
         worker.finished.connect(lambda: self._workers.remove(worker)
@@ -1272,13 +1302,11 @@ class Controller:
 
     def open_url(self, url) -> None:
         if url:
-            QDesktopServices.openUrl(QUrl(url))
+            open_native(str(url))
 
     def open_path(self, path: Path) -> None:
-        # Qt tự biết gọi Explorer, Finder hay xdg-open tuỳ hệ điều hành, nên khỏi
-        # phải tự phân nhánh — `xdg-open` vốn chỉ có trên Linux.
         path.mkdir(parents=True, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+        open_native(str(path))
 
     # ---------- chạy game ----------
 

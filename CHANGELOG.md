@@ -2,6 +2,14 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.7.6
+- **Fixed: "Open folder", links and the installer opener did nothing in the
+  installed app.** In the packaged build, the buttons that open a folder (Mods,
+  Resource Packs, Shaders, Game folder), the Discord and sign-in links, and the
+  "open the downloaded update" step all launched a helper that inherited the
+  app's bundled library path and crashed on the spot — so nothing happened, with
+  no error. These now launch with a clean environment, so they open reliably.
+
 ## 0.7.5
 - **Fixed: the launcher could point at a game folder that no longer exists.**
   If your configured game folder had been deleted or lived somewhere temporary
