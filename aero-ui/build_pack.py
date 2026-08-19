@@ -39,6 +39,10 @@ TINTS = {
 ALPHA = {"normal": 150, "hover": 176, "disabled": 96}
 
 
+def _a(color: QColor, alpha: int) -> QColor:
+    c = QColor(color); c.setAlpha(max(0, min(255, alpha))); return c
+
+
 RADIUS = 4.0   # bo góc (px); ≤ border của 9-slice để bản mới không kéo méo góc
 
 def paint_button(state: str) -> QImage:
@@ -61,39 +65,42 @@ def paint_button(state: str) -> QImage:
 
     p.save()
     p.setClipPath(path)   # mọi thứ vẽ ra đều nằm trong hình bo góc
+    dis = state == "disabled"
 
-    # Thân kính: gradient dọc, trên sáng hơn đáy.
+    # Thân kính: gradient dọc SÂU hơn — đỉnh sáng, giữa hơi thắt tối (bụng kính),
+    # đáy sáng nhẹ lại cho cảm giác dày.
     base = QLinearGradient(0, 0, 0, BTN_H)
-    top = QColor(tint.lighter(118)); top.setAlpha(min(255, a + 34))
-    mid = QColor(tint); mid.setAlpha(a)
-    bot = QColor(tint.darker(126)); bot.setAlpha(min(255, a + 8))
-    base.setColorAt(0.0, top)
-    base.setColorAt(0.5, mid)
-    base.setColorAt(1.0, bot)
+    base.setColorAt(0.0, _a(tint.lighter(126), min(255, a + 46)))
+    base.setColorAt(0.5, _a(tint.darker(104), a))
+    base.setColorAt(0.52, _a(tint.darker(116), min(255, a + 10)))
+    base.setColorAt(1.0, _a(tint.darker(120), min(255, a + 16)))
     p.fillRect(QRectF(0, 0, BTN_W, BTN_H), base)
 
-    # Gloss nửa trên: trắng đậm ở đỉnh, tắt hẳn ở giữa (ánh kính Aero).
-    hi = 132 if state == "hover" else (108 if state == "normal" else 52)
+    # Gloss trên: dải phản chiếu CRISP ở 1/2 trên, tắt gọn ở giữa.
+    hi = 150 if state == "hover" else (124 if state == "normal" else 58)
     gloss = QLinearGradient(0, 0, 0, BTN_H)
     gloss.setColorAt(0.0, QColor(255, 255, 255, hi))
-    gloss.setColorAt(0.46, QColor(255, 255, 255, 22))
+    gloss.setColorAt(0.38, QColor(255, 255, 255, int(hi * 0.32)))
     gloss.setColorAt(0.5, QColor(255, 255, 255, 0))
-    gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
-    p.fillRect(QRectF(0, 0, BTN_W, BTN_H), gloss)
+    p.fillRect(QRectF(0, 0, BTN_W, BTN_H * 0.5), gloss)
 
-    # Vạch sáng sát đỉnh + mép đáy tối → cảm giác lồi, có chiều sâu.
-    p.fillRect(QRectF(1, 1, BTN_W - 2, 1), QColor(255, 255, 255, 190))
-    p.fillRect(QRectF(1, BTN_H - 2, BTN_W - 2, 1), QColor(0, 0, 0, 120))
+    # Phản chiếu đáy: quầng xanh-trắng dịu hắt lên từ mép dưới (glass reflection).
+    refl = QLinearGradient(0, BTN_H * 0.68, 0, BTN_H)
+    refl.setColorAt(0.0, QColor(190, 222, 255, 0))
+    refl.setColorAt(1.0, QColor(200, 228, 255, 0 if dis else 40))
+    p.fillRect(QRectF(0, BTN_H * 0.68, BTN_W, BTN_H * 0.32), refl)
+
+    # Vạch sáng sát đỉnh + mép đáy tối → khối lồi, chiều sâu.
+    p.fillRect(QRectF(1, 1, BTN_W - 2, 1), QColor(255, 255, 255, 210 if not dis else 90))
+    p.fillRect(QRectF(1, BTN_H - 2, BTN_W - 2, 1), QColor(0, 0, 0, 130))
     p.restore()
 
-    # Viền bo góc: ngoài tối nhẹ cho tách nền, trong sáng cho ánh kính.
+    # Viền kép: ngoài tối tách nền, trong sáng cho ánh kính.
     p.setBrush(Qt.NoBrush)
-    p.setPen(QColor(0, 0, 0, 90))
-    p.drawPath(path)
+    p.setPen(QColor(0, 0, 0, 96)); p.drawPath(path)
     inner = QPainterPath()
     inner.addRoundedRect(QRectF(1.5, 1.5, BTN_W - 3, BTN_H - 3), RADIUS - 1, RADIUS - 1)
-    p.setPen(QColor(255, 255, 255, 96 if state != "disabled" else 40))
-    p.drawPath(inner)
+    p.setPen(QColor(255, 255, 255, 110 if not dis else 44)); p.drawPath(inner)
     p.end()
     return img
 
@@ -105,22 +112,23 @@ def _glass_body(p, w, h, tint, a, radius):
     path.addRoundedRect(QRectF(0.5, 0.5, w - 1, h - 1), radius, radius)
     p.save(); p.setClipPath(path)
     base = QLinearGradient(0, 0, 0, h)
-    top = QColor(tint.lighter(118)); top.setAlpha(min(255, a + 34))
-    mid = QColor(tint); mid.setAlpha(a)
-    bot = QColor(tint.darker(126)); bot.setAlpha(min(255, a + 8))
-    base.setColorAt(0.0, top); base.setColorAt(0.5, mid); base.setColorAt(1.0, bot)
+    base.setColorAt(0.0, _a(tint.lighter(126), min(255, a + 46)))
+    base.setColorAt(0.5, _a(tint.darker(104), a))
+    base.setColorAt(1.0, _a(tint.darker(120), min(255, a + 16)))
     p.fillRect(QRectF(0, 0, w, h), base)
     gloss = QLinearGradient(0, 0, 0, h)
-    gloss.setColorAt(0.0, QColor(255, 255, 255, 120))
-    gloss.setColorAt(0.46, QColor(255, 255, 255, 22))
+    gloss.setColorAt(0.0, QColor(255, 255, 255, 150))
+    gloss.setColorAt(0.4, QColor(255, 255, 255, 48))
     gloss.setColorAt(0.5, QColor(255, 255, 255, 0))
-    gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
-    p.fillRect(QRectF(0, 0, w, h), gloss)
-    p.fillRect(QRectF(1, 1, w - 2, 1), QColor(255, 255, 255, 190))
-    p.fillRect(QRectF(1, h - 2, w - 2, 1), QColor(0, 0, 0, 120))
+    p.fillRect(QRectF(0, 0, w, h * 0.5), gloss)
+    refl = QLinearGradient(0, h * 0.68, 0, h)
+    refl.setColorAt(0.0, QColor(200, 228, 255, 0)); refl.setColorAt(1.0, QColor(200, 228, 255, 44))
+    p.fillRect(QRectF(0, h * 0.68, w, h * 0.32), refl)
+    p.fillRect(QRectF(1, 1, w - 2, 1), QColor(255, 255, 255, 210))
+    p.fillRect(QRectF(1, h - 2, w - 2, 1), QColor(0, 0, 0, 130))
     p.restore()
     p.setBrush(Qt.NoBrush)
-    p.setPen(QColor(0, 0, 0, 90)); p.drawPath(path)
+    p.setPen(QColor(0, 0, 0, 96)); p.drawPath(path)
 
 
 def paint_slider_track() -> QImage:
@@ -165,14 +173,15 @@ def paint_tab(selected: bool) -> QImage:
     path.quadTo(w - 0.5, 0.5, w - 0.5, 5); path.lineTo(w - 0.5, h)
     p.save(); p.setClipPath(path)
     g = QLinearGradient(0, 0, 0, h)
-    tp = QColor(tint.lighter(116)); tp.setAlpha(min(255, a + 30))
-    bt = QColor(tint.darker(120)); bt.setAlpha(a)
-    g.setColorAt(0, tp); g.setColorAt(1, bt)
+    g.setColorAt(0, _a(tint.lighter(124), min(255, a + 40)))
+    g.setColorAt(0.5, _a(tint.darker(104), a))
+    g.setColorAt(1, _a(tint.darker(120), min(255, a + 12)))
     p.fillRect(QRectF(0, 0, w, h), g)
-    gl = QLinearGradient(0, 0, 0, h)
-    gl.setColorAt(0, QColor(255, 255, 255, 110)); gl.setColorAt(0.5, QColor(255, 255, 255, 0))
-    p.fillRect(QRectF(0, 0, w, h), gl)
-    p.fillRect(QRectF(2, 1, w - 4, 1), QColor(255, 255, 255, 180))
+    gl = QLinearGradient(0, 0, 0, h * 0.5)
+    gl.setColorAt(0, QColor(255, 255, 255, 132 if selected else 104))
+    gl.setColorAt(0.4, QColor(255, 255, 255, 40)); gl.setColorAt(1, QColor(255, 255, 255, 0))
+    p.fillRect(QRectF(0, 0, w, h * 0.5), gl)
+    p.fillRect(QRectF(2, 1, w - 4, 1), QColor(255, 255, 255, 200))
     p.restore()
     p.setBrush(Qt.NoBrush); p.setPen(QColor(0, 0, 0, 80)); p.drawPath(path)
     p.end(); return img
