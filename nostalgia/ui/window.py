@@ -46,7 +46,7 @@ NAV = [
     ("discord", "Discord", "discord", "Open our community Discord in your browser."),
 ]
 
-DISCORD_INVITE = "https://discord.gg/DYss52D2BU"
+DISCORD_INVITE = "https://discord.gg/DS6djZ6aN9"
 
 
 class TitleDragBar(QWidget):
