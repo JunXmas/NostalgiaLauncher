@@ -202,6 +202,12 @@ class ContentLibraryPage(Page):
         # --- Installed ---
         self._items: list = []
         self._updates: dict = {}          # tên hiển thị -> file bản mới (Modrinth)
+        self._mod_icons: dict = {}        # (path, size) -> QPixmap icon rút từ jar
+        self.inst_search = QLineEdit(self)
+        self.inst_search.setPlaceholderText("Filter installed…")
+        self.inst_search.setStyleSheet(INPUT_QSS)
+        self.inst_search.setFont(ui_font(10))
+        self.inst_search.textChanged.connect(lambda _t: self._apply_installed_filter())
         self.installed = ListView(self, empty_text=self._empty_installed)
         self.installed.badge_clicked.connect(self._toggle)
         self.installed.action_clicked.connect(self._ask_delete)
@@ -315,7 +321,7 @@ class ContentLibraryPage(Page):
         self.tabs.current = i
         self.tabs.update()
         browse = i == 1
-        for w in (self.installed, self.open_btn):
+        for w in (self.installed, self.open_btn, self.inst_search):
             w.setVisible(not browse)
         self.update_btn.setVisible((not browse) and bool(self._updates))
         for w in (self.search, self.search_btn, self.results, self.sort_tabs):
@@ -346,8 +352,9 @@ class ContentLibraryPage(Page):
         else:
             self.inst_btn.setGeometry(w - 232, t - 2, 210, 30)
             self.tabs.setGeometry(24, t, w - 260, 30)
-        # Installed
-        self.installed.setGeometry(16, t + 40, w - 32, h - (t + 40) - 58)
+        # Installed: ô lọc trên, danh sách dưới.
+        self.inst_search.setGeometry(16, t + 40, w - 32, 32)
+        self.installed.setGeometry(16, t + 80, w - 32, h - (t + 80) - 58)
         self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
         self.update_btn.setGeometry(w - 356, h - 46, 156, 32)
         # Browse
@@ -366,8 +373,28 @@ class ContentLibraryPage(Page):
 
     def _render_installed(self) -> None:
         self._items = mods_mgr.list_installed(self._game_dir(), self.kind)
+        self._apply_installed_filter()
+
+    def _installed_icon(self, it):
+        """Icon rút từ jar/zip (cache theo path+size); None nếu không có."""
+        key = (str(it.path), it.size)
+        if key not in self._mod_icons:
+            pm = None
+            data = mods_mgr.content_icon(it.path)
+            if data:
+                from PySide6.QtGui import QPixmap
+                p = QPixmap()
+                if p.loadFromData(data) and not p.isNull():
+                    pm = p
+            self._mod_icons[key] = pm
+        return self._mod_icons[key]
+
+    def _apply_installed_filter(self) -> None:
+        q = self.inst_search.text().strip().lower()
         rows = []
         for it in self._items:
+            if q and q not in it.name.lower():
+                continue
             note = human_size(it.size) + ("" if it.enabled else " · disabled")
             rows.append(Row(
                 title=it.name,
@@ -377,6 +404,7 @@ class ContentLibraryPage(Page):
                 badge_on=it.enabled,
                 action="delete",
                 data=it,
+                icon=self._installed_icon(it),
             ))
         self.installed.set_rows(rows)
         has = bool(self._updates) and self.tabs.current == 0
