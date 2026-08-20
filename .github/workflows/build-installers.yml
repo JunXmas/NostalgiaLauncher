@@ -132,4 +132,5 @@ jobs:
         with:
           files: artifacts/**/*
           draft: true              # để nháp, xem lại rồi mới bấm công bố
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           body_path: release_notes.md

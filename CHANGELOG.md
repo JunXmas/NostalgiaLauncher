@@ -2,6 +2,24 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.8.0-beta.1
+_Beta — a big ease-of-use and looks upgrade. Please report anything odd._
+
+- **Easier for newcomers.** A first-run welcome sets up a ready-to-play game in
+  one click; menus speak plain language ("Games" instead of "Instances", with
+  hover tips everywhere); the sidebar is trimmed to five task-first entries
+  (mods, resource packs and shaders now live inside each game); and rarely-used
+  settings (game folder, Java path) hide behind an "Advanced" toggle.
+- **Safer to explore.** Removing a game now moves it to a `.trash` folder you can
+  restore from, instead of deleting it outright.
+- **Aero glass menus.** A frosted-glass Aero look across in-game menus (with the
+  world softly blurred behind), and the animated **title-screen panorama** now
+  ships in **Day** and **Night** themes — switch them under Settings.
+- **Extras bundled for modern Fabric games.** Blur+ (animated menu blur) and
+  FancyMenu (menu customization) install and lock in automatically alongside the
+  Aero pack.
+- **Fully translatable UI**, with Vietnamese included for all the new screens.
+
 ## 0.7.6
 - **Fixed: "Open folder", links and the installer opener did nothing in the
   installed app.** In the packaged build, the buttons that open a folder (Mods,
