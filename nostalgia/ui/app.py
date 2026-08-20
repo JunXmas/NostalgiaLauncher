@@ -18,12 +18,13 @@ from .. import (
     instances as instances_mod, loaders as loaders_mod, modpack as modpack_mod,
     modrinth as modrinth_mod, updater,
 )
+from ..i18n import tr
 from ..install import Installer
 from ..settings import Settings, client_id as resolve_client_id
 from . import pages as page_mod
 from .dashboard import HomeDashboard
 from .modpack_page import ModpackBrowsePage
-from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
+from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt, WelcomeDialog
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
 from .worker import FnWorker, GoogleLinkWorker, LaunchWorker, LoginWorker, ProgressWorker
@@ -88,6 +89,10 @@ class Controller:
         self._launching = False        # có launch đang khởi động (tải/chuẩn bị) không
 
         self._build_pages()
+        # Sidebar được dựng trong LauncherWindow TRƯỚC khi Controller đặt ngôn ngữ,
+        # nên với người dùng chọn tiếng khác, nhãn nav khởi đầu còn là tiếng Anh.
+        # Dịch lại một lần ở đây để nav khớp ngôn ngữ đã lưu ngay khi mở app.
+        self.window.retranslate()
         window.nav_clicked.connect(self.go)
         window.closing.connect(self.shutdown)
         self.refresh()
@@ -96,6 +101,7 @@ class Controller:
         self._ensure_version()
         self._bootstrap_instances()
         self._maybe_check_updates()
+        self._maybe_welcome()
 
     # ---------- dựng ----------
 
@@ -209,7 +215,7 @@ class Controller:
         inst = self.active_instance()
         if inst:
             return f"{inst.name}  ·  {inst.version}"
-        return self.settings.selected_version or "No instance yet"
+        return self.settings.selected_version or tr("No game yet")
 
     def open_instance_menu(self, anchor: QRect) -> None:
         items = [MenuItem(kind="header", label="Instance")]
@@ -324,20 +330,89 @@ class Controller:
         self.window.set_status(f"Created instance '{inst.name}' ({version}).")
         return inst
 
+    # ---------- onboarding lần đầu ----------
+
+    def _maybe_welcome(self) -> None:
+        """Người mới toanh (chưa có game nào, chưa từng thấy màn chào) -> hiện
+        WelcomeDialog dẫn tới lần chơi đầu bằng một cú bấm."""
+        if self.settings.seen_welcome or self.instances.all():
+            return
+        dlg = WelcomeDialog(self.window)
+        dlg.setup.connect(self.onboard_default_game)
+        dlg.browse.connect(lambda: (self._mark_welcomed(), self.begin_browse_modpacks()))
+        dlg.closed.connect(self._mark_welcomed)   # bấm Skip / Esc cũng coi như đã xem
+        dlg.show()
+        dlg.setFocus()
+
+    def _mark_welcomed(self) -> None:
+        if not self.settings.seen_welcome:
+            self.settings.seen_welcome = True
+            self.settings.save()
+
+    def onboard_default_game(self) -> None:
+        """Tạo sẵn một bản game chơi được ngay (release mới nhất + Aero) rồi thả
+        người chơi về Home với nút PLAY. Không hỏi tên/phiên bản — làm hộ hết."""
+        self._mark_welcomed()
+        self.window.set_status("Setting up your first game…")
+
+        def work():
+            vs = self.installer.list_versions("release")
+            return vs[0] if vs else None
+
+        def done(v):
+            if not v:
+                self.window.set_status(
+                    "Couldn't fetch versions — use NEW GAME to pick one yourself.")
+                return
+            name = self.instances.unique_name("My First Game")
+            inst = self.create_instance(name, v)
+            self.apply_aero_ui(inst, silent=True)
+            self.pages["installations"].refresh()
+            self.pages["home"].refresh()
+            self.go("home")
+            self.window.set_status(f"Your first game is ready ({v}) — press PLAY to start!")
+
+        self._run(work, done,
+                  lambda m: self.window.set_status(f"Setup failed: {m}"))
+
     def delete_instance(self, name: str) -> None:
+        """Dời instance vào .trash thay vì xoá hẳn — lỡ tay vẫn khôi phục được
+        (giữ vài bản gần nhất). Không dời được thì mới xoá thật."""
         import shutil
         inst = self.instances.get(name)
         if inst:
-            shutil.rmtree(self.instance_dir(inst), ignore_errors=True)
+            src = self.instance_dir(inst)
+            if src.exists():
+                trash = self.store_root / ".trash"
+                trash.mkdir(parents=True, exist_ok=True)
+                dest, n = trash / src.name, 1
+                while dest.exists():
+                    dest = trash / f"{src.name}-{n}"; n += 1
+                try:
+                    shutil.move(str(src), str(dest))
+                    self._prune_trash(trash)
+                except OSError:
+                    shutil.rmtree(src, ignore_errors=True)
         self.instances.remove(name)
         self.set_active_instance(self.instances.active)
-        self.window.set_status(f"Removed instance '{name}'.")
+        self.window.set_status(f"Moved '{name}' to Trash — restore it from {self.store_root}/.trash")
+
+    def _prune_trash(self, trash: Path, keep: int = 6) -> None:
+        import shutil
+        try:
+            items = sorted(trash.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+        except OSError:
+            return
+        for old in items[keep:]:
+            shutil.rmtree(old, ignore_errors=True)
 
     def ask_delete_instance(self, name: str) -> None:
         dlg = ConfirmDialog(
-            self.window, "Remove instance",
-            f"Delete instance '{name}' and its mods/saves?\n\n"
-            "Shared versions, libraries and assets are kept.",
+            self.window, "Remove this game?",
+            f"Move '{name}' and its mods/saves to Trash?\n\n"
+            "You can restore it later from the .trash folder. Shared versions, "
+            "libraries and assets are kept either way.",
+            ok_text="MOVE TO TRASH",
         )
         dlg.confirmed.connect(lambda: (self.delete_instance(name),
                                        self.pages["installations"].refresh()))
@@ -1486,7 +1561,7 @@ class Controller:
         else:
             version, game_dir = self.settings.selected_version, self.store_root
         if not version:
-            self.window.set_status("No instance yet — click NEW INSTANCE to make one.")
+            self.window.set_status(tr("No game yet — click NEW GAME to make one."))
             return
 
         # Aero UI mặc định + KHOÁ: đảm bảo pack có mặt & được bật mỗi lần chạy, kể cả

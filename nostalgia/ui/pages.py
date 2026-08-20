@@ -508,6 +508,8 @@ class ContentLibraryPage(Page):
         self.sort_tabs.current = 1        # Popular sáng sẵn, khớp discover
         self.sort_tabs.changed.connect(self._sort_changed)
         self.loader_tabs = TabBar([lo.capitalize() for lo in self.LOADERS], self)
+        self.loader_tabs.setToolTip(tr(
+            "Show add-ons for this mod system. Match it to your game (Fabric is the most common)."))
         self.loader_tabs.changed.connect(self._loader_changed)
 
         self._page = 1
@@ -521,7 +523,7 @@ class ContentLibraryPage(Page):
     # tiện lấy theo lớp con
     @property
     def _empty_installed(self) -> str:
-        return f"No {self.kind} yet. Open the Browse tab to add some from Modrinth."
+        return tr("Nothing here yet — open the Browse tab to add some from Modrinth.")
 
     @property
     def _search_hint(self) -> str:
@@ -1721,17 +1723,23 @@ class SettingsPage(Page):
         super().__init__(ctl, parent)
         s = ctl.settings
         self.mem = AeroSlider(1024, self._max_memory(), s.memory_mb, 512, self)
+        self.mem.setToolTip(tr(
+            "How much memory the game may use. More helps big modpacks; too much can slow your PC."))
         self.mem.changed.connect(self._set_memory)
 
         self.game_dir = QLineEdit(s.game_dir, self)
         self.game_dir.setStyleSheet(INPUT_QSS)
         self.game_dir.setFont(ui_font(9))
+        self.game_dir.setToolTip(tr(
+            "Advanced: where games and downloads are stored. Most people never change this."))
         self.game_dir.editingFinished.connect(self._set_dir)
 
         self.java = QLineEdit(s.java_path, self)
         self.java.setPlaceholderText("leave empty = auto-detect per version")
         self.java.setStyleSheet(INPUT_QSS)
         self.java.setFont(ui_font(9))
+        self.java.setToolTip(tr(
+            "Advanced: leave empty and the launcher picks the right Java for you."))
         self.java.editingFinished.connect(self._set_java)
 
         # Đăng nhập Microsoft luôn dùng client ID của launcher (đã duyệt) — người

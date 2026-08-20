@@ -9,6 +9,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import modrinth
+from ..i18n import tr
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
@@ -170,6 +171,43 @@ class ConfirmDialog(GlassDialog):
         p.setPen(TEXT_DIM)
         p.drawText(QRect(c.left() + 22, c.top() + 54, c.width() - 44, 66),
                    Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.message)
+
+
+# ---------- chào mừng lần đầu (onboarding) ----------
+
+class WelcomeDialog(GlassDialog):
+    """Màn chào lần đầu: một hành động chính rõ ràng (Fitts) dẫn người mới tới
+    lần chơi đầu tiên, cộng hai lối phụ. Chỉ hiện khi chưa có game nào."""
+
+    setup = Signal()    # tạo game mặc định 1-click
+    browse = Signal()   # mở kho modpack dựng sẵn
+
+    BODY = ("Let’s get your first game running. One click sets up a ready-to-play "
+            "copy of Minecraft with the Aero glass look — no setup, no jargon.\n\n"
+            "After that, three easy moves make it yours:  play once  ·  add a skin  ·  add a mod.")
+
+    def __init__(self, parent):
+        super().__init__(parent, tr("Welcome to Nostalgia Launcher"), width=520, height=312)
+        self.primary = AeroButton(tr("SET UP MY FIRST GAME"), self, height=42, tone="green")
+        self.primary.clicked.connect(lambda: (self.setup.emit(), self.dismiss()))
+        self.browse_btn = AeroButton(tr("BROWSE READY-MADE PACKS"), self, height=32, tone="neutral")
+        self.browse_btn.clicked.connect(lambda: (self.browse.emit(), self.dismiss()))
+        self.skip = AeroButton(tr("SKIP FOR NOW"), self, height=32, tone="neutral")
+        self.skip.clicked.connect(self.dismiss)
+        self.place()
+
+    def place(self) -> None:
+        c = self.card
+        self.browse_btn.setGeometry(c.left() + 22, c.bottom() - 104, c.width() - 232, 32)
+        self.skip.setGeometry(c.right() - 182, c.bottom() - 104, 160, 32)
+        self.primary.setGeometry(c.left() + 22, c.bottom() - 60, c.width() - 44, 42)
+
+    def paint_body(self, p: QPainter) -> None:
+        c = self.card
+        p.setFont(ui_font(9))
+        p.setPen(TEXT_DIM)
+        p.drawText(QRect(c.left() + 22, c.top() + 52, c.width() - 44, 96),
+                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, tr(self.BODY))
 
 
 # ---------- chọn loader ----------

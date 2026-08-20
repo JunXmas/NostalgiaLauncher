@@ -50,6 +50,31 @@ _T = {
             "Gói đổi hình ảnh và âm thanh của game.",
         "Choose which game to install this into.":
             "Chọn game để cài vào.",
+        # Onboarding lần đầu.
+        "Welcome to Nostalgia Launcher": "Chào mừng đến Nostalgia Launcher",
+        "SET UP MY FIRST GAME": "TẠO GAME ĐẦU TIÊN",
+        "BROWSE READY-MADE PACKS": "XEM CÁC GÓI DỰNG SẴN",
+        "SKIP FOR NOW": "ĐỂ SAU",
+        ("Let’s get your first game running. One click sets up a ready-to-play "
+         "copy of Minecraft with the Aero glass look — no setup, no jargon.\n\n"
+         "After that, three easy moves make it yours:  play once  ·  add a skin  ·  add a mod."):
+            ("Cùng chạy game đầu tiên nào. Một cú bấm là có ngay một bản Minecraft "
+             "chơi được với giao diện kính Aero — không cài đặt, không thuật ngữ.\n\n"
+             "Sau đó, ba bước là thành của bạn:  chơi thử  ·  đổi skin  ·  thêm mod."),
+        # Empty state + tooltip.
+        "Nothing here yet — open the Browse tab to add some from Modrinth.":
+            "Chưa có gì ở đây — mở tab Browse để thêm từ Modrinth.",
+        "Show add-ons for this mod system. Match it to your game (Fabric is the most common).":
+            "Hiện tiện ích theo hệ mod này. Chọn khớp với game của bạn (Fabric phổ biến nhất).",
+        "How much memory the game may use. More helps big modpacks; too much can slow your PC.":
+            "Bộ nhớ game được dùng. Nhiều giúp modpack lớn; quá nhiều có thể làm máy chậm.",
+        "Advanced: where games and downloads are stored. Most people never change this.":
+            "Nâng cao: nơi lưu game và bản tải. Hầu như không cần đổi.",
+        "Advanced: leave empty and the launcher picks the right Java for you.":
+            "Nâng cao: để trống, launcher tự chọn Java đúng cho bạn.",
+        "No game yet": "Chưa có game",
+        "No game yet — click NEW GAME to make one.":
+            "Chưa có game — bấm NEW GAME để tạo.",
         "Welcome back!": "Chào mừng trở lại!",
         "What will we build today?": "Hôm nay ta xây gì nào?",
         "My Instances": "Trò chơi của tôi", "New Instance": "Trò chơi mới",
