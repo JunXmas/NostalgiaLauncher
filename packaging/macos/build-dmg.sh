@@ -9,8 +9,9 @@ set -euo pipefail
 
 APP_NAME="Nostalgia Launcher"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# Số phiên bản lấy từ nguồn duy nhất: nostalgia/__init__.py (giống build-deb.sh).
-VERSION="$(grep -oP '__version__ = "\K[^"]+' "$ROOT/nostalgia/__init__.py")"
+# Số phiên bản lấy từ nguồn duy nhất: nostalgia/__init__.py. Dùng sed (không -P)
+# để chạy được cả BSD grep/sed của macOS.
+VERSION="$(sed -n 's/^__version__ = "\([^"]*\)".*/\1/p' "$ROOT/nostalgia/__init__.py")"
 APP="$ROOT/dist/$APP_NAME.app"
 OUT_DIR="$ROOT/dist/installer"
 STAGE="$(mktemp -d)"

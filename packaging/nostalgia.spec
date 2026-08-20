@@ -21,8 +21,9 @@ APP_NAME = "Nostalgia Launcher"
 # chuỗi đầy đủ (vd "0.8.0-beta.1"); Apple bắt CFBundleVersion là số nên tách phần
 # số ở NUMERIC_VERSION ("0.8.0") cho các trường Info.plist.
 import re as _re
-APP_VERSION = _re.search(r'__version__ = "([^"]+)"',
-                         (ROOT / "nostalgia" / "__init__.py").read_text()).group(1)
+APP_VERSION = _re.search(
+    r'__version__ = "([^"]+)"',
+    (ROOT / "nostalgia" / "__init__.py").read_text(encoding="utf-8")).group(1)
 NUMERIC_VERSION = APP_VERSION.split("-")[0]
 BUNDLE_ID = "com.nostalgia.launcher"
 
