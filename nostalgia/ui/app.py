@@ -700,23 +700,25 @@ class Controller:
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
             return
-        # Soft-lock Fabric: kèm Blur+ (làm đẹp nền menu — blur động, animation, màu).
-        # Chạy nền, best-effort; texture kính đã đủ đứng một mình nếu blur lỗi.
+        # Soft-lock Fabric: kèm mod làm đẹp menu (Blur+ = blur động; FancyMenu =
+        # tuỳ biến bố cục title/pause). Chạy nền, best-effort; texture kính vẫn
+        # đứng một mình được nếu mod lỗi.
         if not hard and "fabric" in v and mc:
-            self._install_blur_async(inst, mc)
+            self._install_aero_mods_async(inst, mc)
         if not silent:
             self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
 
-    # Blur+ + phụ thuộc bắt buộc của nó. Chỉ cài khi ĐẢM BẢO đủ dep, nếu không
-    # Fabric sẽ hiện màn hình lỗi thiếu-dependency và không cho vào game.
-    BLUR_SLUG = "blur-plus"
-    BLUR_DEP_SLUGS = ("fabric-api", "midnightlib")
+    # Mod làm đẹp menu (soft-lock) + thư viện bắt buộc của từng cái. Mỗi mod chỉ
+    # cài khi ĐỦ dep của riêng nó cho đúng `mc`; thiếu dep -> bỏ QUA mod đó (không
+    # để lại dependency gãy khiến Fabric chặn vào game). fabric-api dùng chung.
+    AERO_MODS = (
+        ("blur-plus", "blur", ("midnightlib",)),
+        ("fancymenu", "fancymenu", ("melody", "konkrete")),
+    )
 
-    def _install_blur_async(self, inst, mc: str) -> None:
-        """Tải Blur+ (+ dep còn thiếu) vào mods/ cho instance Fabric — nền, im lặng.
-
-        Idempotent: đã có blur thì bỏ qua. Chỉ cài khi lấy được đủ dep cho đúng
-        `mc`; thiếu bất kỳ dep nào -> KHÔNG cài gì (không để lại dep gãy)."""
+    def _install_aero_mods_async(self, inst, mc: str) -> None:
+        """Tải các mod làm đẹp menu (Blur+, FancyMenu) + dep còn thiếu vào mods/
+        — nền, im lặng, idempotent (đã có thì bỏ qua). fabric-api chia sẻ."""
         from .. import mods as mods_mgr
         from .. import modrinth as mr
         game_dir = self.instance_dir(inst)
@@ -725,29 +727,41 @@ class Controller:
         def work():
             present = ({p.name.lower() for p in mods_dir.glob("*.jar")}
                        if mods_dir.exists() else set())
+            added: set[str] = set()   # marker/tên đã cài trong lượt này (dedup dep chung)
 
             def has(*subs):
-                return any(any(s in n for s in subs) for n in present)
+                pool = present | added
+                return any(any(s in n for s in subs) for n in pool)
 
-            if has("blur"):                      # đã có mod blur nào đó -> thôi
-                return None
-            files, dep_names = [], {"fabric-api": ("fabric-api", "fabric_api"),
-                                    "midnightlib": ("midnightlib",)}
-            for slug in self.BLUR_DEP_SLUGS:
-                if has(*dep_names[slug]):
-                    continue
-                f = mr.best_file(slug, loaders=["fabric"], game_versions=[mc])
-                if not f:                        # không đảm bảo dep -> bỏ luôn Blur+
-                    return None
-                files.append(f)
-            fb = mr.best_file(self.BLUR_SLUG, loaders=["fabric"], game_versions=[mc])
-            if not fb:
-                return None
-            files.append(fb)
-            for f in files:
+            def install(f, *markers):
                 mods_mgr.install_file(game_dir, "mods", url=f["url"],
                                       filename=f["filename"], sha1=f.get("sha1"))
-            return fb["filename"]
+                added.add(f["filename"].lower())
+                added.update(markers)
+
+            installed = 0
+            for slug, marker, libs in self.AERO_MODS:
+                if has(marker):                  # đã có mod này rồi
+                    continue
+                batch, ok = [], True
+                for lib in ("fabric-api",) + libs:
+                    if has(lib, lib.replace("-", "_")):
+                        continue
+                    lf = mr.best_file(lib, loaders=["fabric"], game_versions=[mc])
+                    if not lf:                   # thiếu dep bắt buộc -> bỏ mod này
+                        ok = False
+                        break
+                    batch.append((lib, lf))
+                if not ok:
+                    continue
+                mf = mr.best_file(slug, loaders=["fabric"], game_versions=[mc])
+                if not mf:
+                    continue
+                for lib, lf in batch:
+                    install(lf, lib, lib.replace("-", "_"))
+                install(mf, marker)
+                installed += 1
+            return installed
 
         self._run(work, lambda _n: None, lambda _m: None)
 

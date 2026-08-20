@@ -1761,6 +1761,19 @@ class SettingsPage(Page):
         self.lang_btn = AeroButton(language_name(language()), self, height=30, tone="neutral")
         self.lang_btn.clicked.connect(self._open_language)
 
+        # Progressive disclosure: game folder + Java path ẩn sau "Advanced" nên
+        # người mới không thấy chúng như bài-tập-phải-làm; mặc định thu gọn.
+        self._advanced = False
+        self.adv_btn = AeroButton("ADVANCED  ▾", self, height=28, tone="neutral")
+        self.adv_btn.setToolTip(tr("Settings most people never need to touch."))
+        self.adv_btn.clicked.connect(self._toggle_advanced)
+
+    def _toggle_advanced(self) -> None:
+        self._advanced = not self._advanced
+        self.adv_btn.setText("ADVANCED  ▴" if self._advanced else "ADVANCED  ▾")
+        self._relayout()
+        self.update()
+
     def _open_language(self) -> None:
         g = self.lang_btn.geometry()
         from .window import SIDEBAR_W
@@ -1840,15 +1853,28 @@ class SettingsPage(Page):
         self.ctl.settings.check_updates = on
         self.ctl.settings.save()
 
+    # Mốc y cố định cho từng hàng — dùng CHUNG cho đặt widget và vẽ nhãn, để hai
+    # bên không lệch. Khối "Advanced" (game folder + Java) chỉ chiếm chỗ khi mở.
+    Y_MEM, Y_SNAP, Y_CLOSE, Y_UPD, Y_LANG, Y_ADV = 60, 126, 166, 206, 266, 312
+    Y_DIR, Y_JAVA = 378, 448
+
     def resizeEvent(self, event) -> None:  # noqa: N802
+        self._relayout()
+
+    def _relayout(self) -> None:
         w = min(560, self.width() - 52)
-        self.mem.setGeometry(26, 60, w, 26)
-        self.game_dir.setGeometry(26, 142, w, 32)
-        self.java.setGeometry(26, 218, w, 32)
-        self.snapshots.setGeometry(26, 282, 44, 22)
-        self.close_on_launch.setGeometry(26, 322, 44, 22)
-        self.check_updates.setGeometry(26, 362, 44, 22)
-        self.lang_btn.setGeometry(26, 422, 200, 30)
+        self.mem.setGeometry(26, self.Y_MEM, w, 26)
+        self.snapshots.setGeometry(26, self.Y_SNAP, 44, 22)
+        self.close_on_launch.setGeometry(26, self.Y_CLOSE, 44, 22)
+        self.check_updates.setGeometry(26, self.Y_UPD, 44, 22)
+        self.lang_btn.setGeometry(26, self.Y_LANG, 200, 30)
+        self.adv_btn.setGeometry(26, self.Y_ADV, 200, 28)
+        adv = self._advanced
+        self.game_dir.setVisible(adv)
+        self.java.setVisible(adv)
+        if adv:
+            self.game_dir.setGeometry(26, self.Y_DIR, w, 32)
+            self.java.setGeometry(26, self.Y_JAVA, w, 32)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -1858,33 +1884,27 @@ class SettingsPage(Page):
         p = QPainter(self)
         gb = self.ctl.settings.memory_mb / 1024
 
-        def label(y: int, title: str, hint: str = "") -> None:
+        def label(y: int, title: str) -> None:
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT)
-            p.drawText(QRect(26, y, self.width() - 52, 18), Qt.AlignLeft | Qt.AlignVCenter, title)
-            if hint:
-                p.setFont(ui_font(8))
-                p.setPen(TEXT_FAINT)
-                p.drawText(QRect(26, y + 17, self.width() - 52, 16),
-                           Qt.AlignLeft | Qt.AlignVCenter, hint)
+            p.drawText(QRect(26, y, self.width() - 52, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, title)
 
-        label(26, f"Max memory — {gb:.1f} GB", "")
-        label(114, tr("Game folder"))
-        label(190, tr("Java path"))
-        label(398, tr("Language"))
-        p.setFont(ui_font(9))
-        p.setPen(TEXT)
-        p.drawText(QRect(84, 280, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Show snapshots")
-        p.drawText(QRect(84, 320, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Close launcher when the game starts")
-        p.drawText(QRect(84, 360, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Check for updates on startup")
+        def toggle_text(y: int, text: str) -> None:
+            p.setFont(ui_font(9)); p.setPen(TEXT)
+            p.drawText(QRect(84, y, 460, 22), Qt.AlignLeft | Qt.AlignVCenter, text)
 
-        warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
-        if warn:
-            p.setFont(ui_font(8))
-            p.setPen(DEGRADED)
-            p.drawText(QRect(26, 90, self.width() - 52, 16), Qt.AlignLeft | Qt.AlignVCenter,
-                       "Setting near all your RAM can freeze the system.")
+        label(self.Y_MEM - 34, f"Max memory — {gb:.1f} GB")
+        if self.ctl.settings.memory_mb > self._max_memory() * 0.9:
+            p.setFont(ui_font(8)); p.setPen(DEGRADED)
+            p.drawText(QRect(26, self.Y_MEM + 30, self.width() - 52, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter,
+                       tr("Setting near all your RAM can freeze the system."))
+        toggle_text(self.Y_SNAP, tr("Show snapshots"))
+        toggle_text(self.Y_CLOSE, tr("Close launcher when the game starts"))
+        toggle_text(self.Y_UPD, tr("Check for updates on startup"))
+        label(self.Y_LANG - 22, tr("Language"))
+        if self._advanced:
+            label(self.Y_DIR - 22, tr("Game folder"))
+            label(self.Y_JAVA - 22, tr("Java path"))
         p.end()

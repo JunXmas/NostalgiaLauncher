@@ -25,6 +25,8 @@ _T = {
             "Bảng điều khiển — vào lại game nhanh.",
         "Your separate Minecraft setups. Each has its own version, mods and worlds.":
             "Các bản Minecraft riêng của bạn. Mỗi bản có phiên bản, mod và thế giới riêng.",
+        "Your games. Open one to play it or add mods, resource packs and shaders.":
+            "Các game của bạn. Mở một game để chơi hoặc thêm mod, gói giao diện, shader.",
         "Add-ons that change or add features to the game.":
             "Tiện ích thêm/đổi tính năng cho game.",
         "Texture & sound packs that change how the game looks and sounds.":
@@ -75,6 +77,13 @@ _T = {
         "No game yet": "Chưa có game",
         "No game yet — click NEW GAME to make one.":
             "Chưa có game — bấm NEW GAME để tạo.",
+        "Show snapshots": "Hiện bản snapshot",
+        "Close launcher when the game starts": "Đóng launcher khi game khởi động",
+        "Check for updates on startup": "Kiểm tra cập nhật khi mở",
+        "Setting near all your RAM can freeze the system.":
+            "Đặt gần hết RAM có thể làm treo máy.",
+        "Settings most people never need to touch.":
+            "Những cài đặt hầu như không ai cần đụng tới.",
         "Welcome back!": "Chào mừng trở lại!",
         "What will we build today?": "Hôm nay ta xây gì nào?",
         "My Instances": "Trò chơi của tôi", "New Instance": "Trò chơi mới",
