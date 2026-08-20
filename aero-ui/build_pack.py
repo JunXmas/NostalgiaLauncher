@@ -303,6 +303,34 @@ def build_panorama() -> None:
     write_png(solid, dest / "panorama_overlay.png")
 
 
+def _flat_tile(base: QColor, alpha: int, size: int = 16) -> QImage:
+    """Ô tint kính Aero PHẲNG (một màu, một alpha) để game tile kín màn hình.
+
+    Phải phẳng: tile lặp mỗi `size` px nên bất kỳ gradient/nhiễu nào cũng lộ mạch
+    lưới. Blur là do vanilla lo (menuBackgroundBlurriness); ô này chỉ nhuộm màu.
+    """
+    img = QImage(size, size, QImage.Format_ARGB32)
+    img.fill(_a(base, alpha))
+    return img
+
+
+def build_glass_background() -> None:
+    """Nền menu = kính Aero mờ (1.20.5+).
+
+    Từ 1.20.5 Minecraft đã BLUR sẵn thế giới sau mỗi màn hình; ta chỉ phủ một
+    lớp tint xanh Aero translucent lên trên -> ra 'frosted acrylic'. Ba texture:
+      • inworld_menu_background      — phủ toàn màn khi mở menu lúc đang trong game
+      • inworld_menu_list_background — vùng danh sách (đậm hơn cho dễ đọc)
+      • menu_list_background         — khi KHÔNG có world phía sau (đè lên panorama)
+    Bản cũ không có các path này thì bỏ qua êm — không ảnh hưởng.
+    """
+    aero = QColor(18, 40, 74)          # xanh Aero đậm
+    write_png(_flat_tile(aero, 150), GUI / "inworld_menu_background.png")
+    write_png(_flat_tile(QColor(10, 24, 46), 172),
+              GUI / "inworld_menu_list_background.png")
+    write_png(_flat_tile(aero, 128), GUI / "menu_list_background.png")
+
+
 def build_meta() -> None:
     PACK.mkdir(parents=True, exist_ok=True)
     # pack_format 3 để 1.12.2 nạp; supported_formats để bản mới nhận sạch.
@@ -349,6 +377,7 @@ def build_preview() -> None:
 def main() -> None:
     QApplication([])
     build_modern()   # sprite modern -> ship trong ui/assets/aero-pack
+    build_glass_background()  # nền menu kính mờ (1.20.5+)
     build_panorama() # wallpaper title screen (mọi phiên bản)
     build_edition()  # "NOSTALGIA EDITION" thay "JAVA EDITION"
     build_meta()

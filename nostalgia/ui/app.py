@@ -625,8 +625,56 @@ class Controller:
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
             return
+        # Soft-lock Fabric: kèm Blur+ (làm đẹp nền menu — blur động, animation, màu).
+        # Chạy nền, best-effort; texture kính đã đủ đứng một mình nếu blur lỗi.
+        if not hard and "fabric" in v and mc:
+            self._install_blur_async(inst, mc)
         if not silent:
             self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
+
+    # Blur+ + phụ thuộc bắt buộc của nó. Chỉ cài khi ĐẢM BẢO đủ dep, nếu không
+    # Fabric sẽ hiện màn hình lỗi thiếu-dependency và không cho vào game.
+    BLUR_SLUG = "blur-plus"
+    BLUR_DEP_SLUGS = ("fabric-api", "midnightlib")
+
+    def _install_blur_async(self, inst, mc: str) -> None:
+        """Tải Blur+ (+ dep còn thiếu) vào mods/ cho instance Fabric — nền, im lặng.
+
+        Idempotent: đã có blur thì bỏ qua. Chỉ cài khi lấy được đủ dep cho đúng
+        `mc`; thiếu bất kỳ dep nào -> KHÔNG cài gì (không để lại dep gãy)."""
+        from .. import mods as mods_mgr
+        from .. import modrinth as mr
+        game_dir = self.instance_dir(inst)
+        mods_dir = game_dir / "mods"
+
+        def work():
+            present = ({p.name.lower() for p in mods_dir.glob("*.jar")}
+                       if mods_dir.exists() else set())
+
+            def has(*subs):
+                return any(any(s in n for s in subs) for n in present)
+
+            if has("blur"):                      # đã có mod blur nào đó -> thôi
+                return None
+            files, dep_names = [], {"fabric-api": ("fabric-api", "fabric_api"),
+                                    "midnightlib": ("midnightlib",)}
+            for slug in self.BLUR_DEP_SLUGS:
+                if has(*dep_names[slug]):
+                    continue
+                f = mr.best_file(slug, loaders=["fabric"], game_versions=[mc])
+                if not f:                        # không đảm bảo dep -> bỏ luôn Blur+
+                    return None
+                files.append(f)
+            fb = mr.best_file(self.BLUR_SLUG, loaders=["fabric"], game_versions=[mc])
+            if not fb:
+                return None
+            files.append(fb)
+            for f in files:
+                mods_mgr.install_file(game_dir, "mods", url=f["url"],
+                                      filename=f["filename"], sha1=f.get("sha1"))
+            return fb["filename"]
+
+        self._run(work, lambda _n: None, lambda _m: None)
 
     def remove_aero_ui(self, inst) -> None:
         from .. import aero

@@ -73,6 +73,26 @@ def _build_zip(dest: Path, legacy_widgets: bytes | None) -> None:
             z.writestr(WIDGETS, legacy_widgets)
 
 
+def _set_option(options: Path, key: str, value: str) -> None:
+    """Đặt (ghi đè) một dòng `key:value` trong options.txt, giữ các dòng khác.
+
+    Dùng để kéo `menuBackgroundBlurriness` lên max -> vanilla blur thế giới sau
+    menu mạnh nhất, cộng lớp tint kính Aero của pack = frosted acrylic. Bản cũ
+    không có tuỳ chọn này thì thêm dòng thừa vô hại, game bỏ qua.
+    """
+    lines = options.read_text().splitlines() if options.exists() else []
+    out, found = [], False
+    for ln in lines:
+        if ln.startswith(key + ":"):
+            out.append(f"{key}:{value}"); found = True
+        else:
+            out.append(ln)
+    if not found:
+        out.append(f"{key}:{value}")
+    options.parent.mkdir(parents=True, exist_ok=True)
+    options.write_text("\n".join(out) + "\n")
+
+
 def _enable_in_options(options: Path, modern: bool) -> None:
     """Thêm pack vào resourcePacks trong options.txt (giữ nguyên các dòng khác)."""
     entry = ("file/" if modern else "") + PACK_NAME
@@ -122,6 +142,9 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
     modern = legacy is None
     _build_zip(gd / "resourcepacks" / PACK_NAME, legacy)
     _enable_in_options(gd / "options.txt", modern)
+    # Kéo blur nền menu lên max: cùng lớp tint kính Aero trong pack -> frosted
+    # acrylic. Chỉ có tác dụng ở 1.20.5+; bản cũ bỏ qua dòng này.
+    _set_option(gd / "options.txt", "menuBackgroundBlurriness", "1.0")
     return "modern" if modern else "legacy"
 
 
