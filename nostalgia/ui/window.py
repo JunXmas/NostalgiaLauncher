@@ -21,7 +21,7 @@ from .hero import render_hero
 from .theme import ACCENT, CONNECTED, TEXT, TEXT_DIM, TEXT_FAINT, blur_pixmap, ui_font
 from .widgets import SidebarItem, draw_cube_icon
 
-SIDEBAR_W = 212
+SIDEBAR_W = 224
 STATUSBAR_H = 26
 CORNER = 8
 LOGO_H = 88
@@ -377,8 +377,8 @@ class LauncherWindow(QWidget):
 
         y = LOGO_H + 14
         for item in self.nav.values():
-            item.setGeometry(0, y, SIDEBAR_W, 40)
-            y += 42
+            item.setGeometry(0, y, SIDEBAR_W, 46)
+            y += 50
 
         # Thanh kéo phủ mép trên, chừa phần sidebar-logo (đã kéo được sẵn) không sao.
         self.dragbar.setGeometry(0, 0, w, 46)
