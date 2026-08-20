@@ -811,8 +811,9 @@ class Controller:
         self.settings.save()
         for inst in self.instances.all():
             self.apply_aero_ui(inst, silent=True)
-        self.window.set_status(
-            ("Night" if on else "Day") + " menu background — takes effect next time the game opens.")
+        self.window.set_status(tr(
+            ("Night" if on else "Day")
+            + " menu background — press F3+T in-game to apply now, or it shows on next launch."))
 
     def set_aero_ui(self, on: bool) -> None:
         """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""

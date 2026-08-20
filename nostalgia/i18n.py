@@ -84,6 +84,10 @@ _T = {
         "Menu background: off = daytime panorama, on = nighttime.":
             "Nền menu: tắt = panorama ban ngày, bật = ban đêm.",
         "Menu: Day": "Menu: Ngày", "Menu: Night": "Menu: Đêm",
+        "Day menu background — press F3+T in-game to apply now, or it shows on next launch.":
+            "Nền menu ngày — bấm F3+T trong game để áp ngay, hoặc hiện ở lần mở tới.",
+        "Night menu background — press F3+T in-game to apply now, or it shows on next launch.":
+            "Nền menu đêm — bấm F3+T trong game để áp ngay, hoặc hiện ở lần mở tới.",
         "Switch the in-game menu background between day and night.":
             "Đổi nền menu trong game giữa ngày và đêm.",
         "Setting near all your RAM can freeze the system.":
