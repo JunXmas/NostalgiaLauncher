@@ -83,6 +83,9 @@ _T = {
         "Dark menu background (night panorama)": "Nền menu tối (panorama ban đêm)",
         "Menu background: off = daytime panorama, on = nighttime.":
             "Nền menu: tắt = panorama ban ngày, bật = ban đêm.",
+        "Menu: Day": "Menu: Ngày", "Menu: Night": "Menu: Đêm",
+        "Switch the in-game menu background between day and night.":
+            "Đổi nền menu trong game giữa ngày và đêm.",
         "Setting near all your RAM can freeze the system.":
             "Đặt gần hết RAM có thể làm treo máy.",
         "Settings most people never need to touch.":

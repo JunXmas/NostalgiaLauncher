@@ -131,11 +131,23 @@ class HomeDashboard(QWidget):
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
+        # Toggle nền menu ngày/đêm ngay trên Home (khỏi vào Settings).
+        self.theme_btn = AeroButton(self._theme_label(), self, height=28, tone="neutral")
+        self.theme_btn.setToolTip(tr("Switch the in-game menu background between day and night."))
+        self.theme_btn.clicked.connect(self._toggle_theme)
+
+    def _theme_label(self) -> str:
+        return tr("Menu: Night") if self.ctl.settings.menu_dark else tr("Menu: Day")
+
+    def _toggle_theme(self) -> None:
+        self.ctl.set_menu_dark(not self.ctl.settings.menu_dark)
+        self.theme_btn.setText(self._theme_label())
 
     def retranslate(self) -> None:
         self.play_btn.setText(tr("PLAY"))
         self.new_btn.setText(tr("NEW GAME"))
         self.manage_btn.setText(tr("Manage Account"))
+        self.theme_btn.setText(self._theme_label())
         self.update()
 
     def _got_avatar(self, data) -> None:
@@ -204,6 +216,8 @@ class HomeDashboard(QWidget):
     def _relayout(self) -> None:
         cx = PAD
         hero = QRect(cx, PAD, self._center_w(), HERO_H)
+        # Toggle ngày/đêm ở góc trên-phải hero (khỏi vào Settings).
+        self.theme_btn.setGeometry(hero.right() - 154, hero.top() + 18, 138, 28)
         # PLAY to trong hero
         self.play_btn.setGeometry(hero.left() + 26, hero.top() + 96, 210, 58)
         # New Instance nằm ở dải "My Instances"
