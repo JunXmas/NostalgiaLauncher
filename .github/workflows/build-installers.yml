@@ -80,9 +80,12 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install innosetup --no-progress -y
+          # Số phiên bản lấy từ nguồn duy nhất (nostalgia/__init__.py) rồi truyền
+          # vào Inno Setup, để tên Setup.exe khớp bản thật thay vì hằng số cũ.
+          $ver = (Select-String -Path nostalgia\__init__.py -Pattern '__version__ = "([^"]+)"').Matches[0].Groups[1].Value
           # Dấu ngoặc trong tên biến bắt buộc phải bọc bằng ${...}: viết
           # $env:ProgramFiles(x86) thì PowerShell hiểu là lời gọi hàm và báo lỗi cú pháp.
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" packaging\windows\nostalgia.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$ver" packaging\windows\nostalgia.iss
         shell: pwsh
 
       - name: Sign the Windows installer

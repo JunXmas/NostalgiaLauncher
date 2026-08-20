@@ -8,8 +8,9 @@
 set -euo pipefail
 
 APP_NAME="Nostalgia Launcher"
-VERSION="0.7.6"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# Số phiên bản lấy từ nguồn duy nhất: nostalgia/__init__.py (giống build-deb.sh).
+VERSION="$(grep -oP '__version__ = "\K[^"]+' "$ROOT/nostalgia/__init__.py")"
 APP="$ROOT/dist/$APP_NAME.app"
 OUT_DIR="$ROOT/dist/installer"
 STAGE="$(mktemp -d)"
