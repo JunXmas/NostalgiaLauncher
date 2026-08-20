@@ -303,7 +303,7 @@ class ModrinthResultsView(QWidget):
         # icon
         ic = QRect(card.left() + 12, card.top() + 12, 60, 60)
         pm = self._icons.get(hit.get("icon_url") or "")
-        p.save(); p.setClipRect(ic)
+        p.save(); p.setClipRect(ic, Qt.IntersectClip)   # giao với clip nội dung, icon không lòi ra
         if pm is not None and not pm.isNull():
             p.setRenderHint(QPainter.SmoothPixmapTransform, True)
             scaled = pm.scaled(ic.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
