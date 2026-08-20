@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QRect, QRectF, Qt, Signal
+from PySide6.QtCore import QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
@@ -211,7 +211,11 @@ class ModrinthResultsView(QWidget):
         self._icons: dict = {}
         self._badges: dict = {}
         self._page = self._pages = 1
-        self._scroll = 0
+        self._scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)            # ~60fps
+        self._scroll_anim.timeout.connect(self._scroll_tick)
         self._hover = -1
         self._card_rects: list = []
         self._page_rects: list = []
@@ -220,7 +224,8 @@ class ModrinthResultsView(QWidget):
     def set_page(self, hits, page, pages, badges) -> None:
         self._hits, self._page, self._pages = hits, page, max(1, pages)
         self._badges = badges
-        self._scroll = 0
+        self._scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
         self._hover = -1
         self.update()
 
@@ -233,7 +238,17 @@ class ModrinthResultsView(QWidget):
 
     def wheelEvent(self, e):  # noqa: N802
         maxs = max(0, len(self._hits) * self.CARD_H + 8 - self._content_h())
-        self._scroll = min(maxs, max(0, self._scroll - e.angleDelta().y()))
+        self._scroll_target = min(maxs, max(0.0, self._scroll_target - e.angleDelta().y()))
+        if not self._scroll_anim.isActive():
+            self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self._scroll
+        if abs(d) < 0.6:                             # tới nơi -> dừng
+            self._scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self._scroll += d * 0.28                 # ease-out mượt về đích
         self.update()
 
     def mouseMoveEvent(self, e):  # noqa: N802
@@ -286,7 +301,7 @@ class ModrinthResultsView(QWidget):
             p.end()
             return
         for i, hit in enumerate(self._hits):
-            y = 4 - self._scroll + i * self.CARD_H
+            y = int(4 - self._scroll + i * self.CARD_H)
             if y + self.CARD_H < 0 or y > ch:
                 continue
             card = QRect(6, y, w - 12, self.CARD_H - 8)
@@ -930,7 +945,11 @@ class WorldsView(QWidget):
         self.ctl = ctl
         self.instance = None
         self._worlds: list = []
-        self._scroll = 0
+        self._scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)
+        self._scroll_anim.timeout.connect(self._scroll_tick)
         self._hover = -1
         self._rects: list = []
         self.setMouseTracking(True)
@@ -951,7 +970,8 @@ class WorldsView(QWidget):
                         img = qi
                 w["_img"] = img
                 self._worlds.append(w)
-        self._scroll = 0
+        self._scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
         self.update()
 
     @staticmethod
@@ -966,7 +986,17 @@ class WorldsView(QWidget):
 
     def wheelEvent(self, e):  # noqa: N802
         maxs = max(0, len(self._worlds) * _WROW - self.height() + 24)
-        self._scroll = min(maxs, max(0, self._scroll - e.angleDelta().y()))
+        self._scroll_target = min(maxs, max(0.0, self._scroll_target - e.angleDelta().y()))
+        if not self._scroll_anim.isActive():
+            self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self._scroll
+        if abs(d) < 0.6:
+            self._scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self._scroll += d * 0.28
         self.update()
 
     def mouseMoveEvent(self, e):  # noqa: N802
@@ -996,7 +1026,7 @@ class WorldsView(QWidget):
             return
         w = self.width()
         for i, world in enumerate(self._worlds):
-            y = 6 - self._scroll + i * _WROW
+            y = int(6 - self._scroll + i * _WROW)
             if y + _WROW < 0 or y > self.height():
                 continue
             row = QRect(4, y, w - 8, _WROW - 8)
