@@ -16,13 +16,45 @@ LANGUAGES = [
 # Bộ chuỗi UI chính. en là khoá; mỗi ngôn ngữ khác dịch những gì có, thiếu -> en.
 _T = {
     "vi": {
-        "Home": "Trang chủ", "Instances": "Instance", "Mods": "Mods",
-        "Resource Packs": "Gói tài nguyên", "Shaders": "Shader",
+        "Home": "Trang chủ", "Instances": "Trò chơi", "Games": "Trò chơi",
+        "Mods": "Mods",
+        "Resource Packs": "Gói giao diện", "Shaders": "Shader",
         "Servers": "Máy chủ", "Skin": "Skin", "Settings": "Cài đặt",
+        # Tooltip helper cho nav (giải thích bằng lời thường).
+        "Your dashboard — jump straight back into a game.":
+            "Bảng điều khiển — vào lại game nhanh.",
+        "Your separate Minecraft setups. Each has its own version, mods and worlds.":
+            "Các bản Minecraft riêng của bạn. Mỗi bản có phiên bản, mod và thế giới riêng.",
+        "Add-ons that change or add features to the game.":
+            "Tiện ích thêm/đổi tính năng cho game.",
+        "Texture & sound packs that change how the game looks and sounds.":
+            "Gói đổi hình ảnh & âm thanh của game.",
+        "Fancy lighting and visual effects for a better-looking game.":
+            "Ánh sáng và hiệu ứng đẹp hơn cho game.",
+        "Change how your character looks in the game.":
+            "Đổi ngoại hình nhân vật trong game.",
+        "Memory, folders, language and updates.":
+            "Bộ nhớ, thư mục, ngôn ngữ và cập nhật.",
+        "Open our community Discord in your browser.":
+            "Mở Discord cộng đồng trên trình duyệt.",
+        # Subheading / helper trên các trang + tooltip nút.
+        "Each is a separate copy of the game — its own version, mods and worlds.":
+            "Mỗi bản là một bản game riêng — phiên bản, mod và thế giới riêng.",
+        "No games yet. Click NEW GAME to set one up — just a name and a version.":
+            "Chưa có game nào. Bấm NEW GAME để tạo — chỉ cần tên và phiên bản.",
+        "Set up a fresh copy of the game (pick a name and version).":
+            "Tạo một bản game mới (đặt tên và chọn phiên bản).",
+        "Install a ready-made bundle of mods someone already put together.":
+            "Cài một gói mod dựng sẵn của người khác.",
+        "Packs that change how the game looks and sounds.":
+            "Gói đổi hình ảnh và âm thanh của game.",
+        "Choose which game to install this into.":
+            "Chọn game để cài vào.",
         "Welcome back!": "Chào mừng trở lại!",
         "What will we build today?": "Hôm nay ta xây gì nào?",
-        "My Instances": "Instance của tôi", "New Instance": "Instance mới",
-        "PLAY": "CHƠI", "NEW INSTANCE": "INSTANCE MỚI",
+        "My Instances": "Trò chơi của tôi", "New Instance": "Trò chơi mới",
+        "My Games": "Trò chơi của tôi", "New Game": "Trò chơi mới",
+        "PLAY": "CHƠI", "NEW INSTANCE": "TRÒ CHƠI MỚI", "NEW GAME": "TRÒ CHƠI MỚI",
         "Manage Account": "Quản lý tài khoản", "YOUR ACCOUNT": "TÀI KHOẢN",
         "Connected": "Đã kết nối", "Offline": "Ngoại tuyến", "NEWS": "TIN TỨC",
         "CONTINUE PLAYING": "CHƠI TIẾP", "World": "Thế giới", "Server": "Máy chủ",

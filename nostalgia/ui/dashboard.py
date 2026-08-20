@@ -127,14 +127,14 @@ class HomeDashboard(QWidget):
 
         self.play_btn = AeroButton(tr("PLAY"), self, height=58, arrow=True)
         self.play_btn.clicked.connect(self.ctl.toggle_play)
-        self.new_btn = AeroButton(tr("NEW INSTANCE"), self, height=30, tone="neutral")
+        self.new_btn = AeroButton(tr("NEW GAME"), self, height=30, tone="neutral")
         self.new_btn.clicked.connect(self.ctl.begin_create_instance)
         self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
 
     def retranslate(self) -> None:
         self.play_btn.setText(tr("PLAY"))
-        self.new_btn.setText(tr("NEW INSTANCE"))
+        self.new_btn.setText(tr("NEW GAME"))
         self.manage_btn.setText(tr("Manage Account"))
         self.update()
 
@@ -366,7 +366,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(12, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
-                   Qt.AlignLeft | Qt.AlignVCenter, tr("My Instances"))
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("My Games"))
         row_top = area.top() + 34
         current = self.ctl.instances.active
 
@@ -410,7 +410,7 @@ class HomeDashboard(QWidget):
         p.setFont(ui_font(10, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(rect.left(), rect.top() + 96, rect.width(), 20),
-                   Qt.AlignHCenter | Qt.AlignVCenter, tr("New Instance"))
+                   Qt.AlignHCenter | Qt.AlignVCenter, tr("New Game"))
 
     def _paint_instance_card(self, p, rect, inst, selected, ready, hover=False):
         self._card(p, rect, radius=7, strong=True)

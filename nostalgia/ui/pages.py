@@ -59,6 +59,7 @@ class Page(QWidget):
 
     scrim = True
     heading = ""
+    subheading = ""   # dòng giải thích ngắn bằng lời thường, vẽ cạnh heading
 
     def __init__(self, ctl, parent=None):
         super().__init__(parent)
@@ -88,8 +89,19 @@ class Page(QWidget):
             f.setLetterSpacing(QFont.AbsoluteSpacing, 0.6)
             p.setFont(f)
             p.setPen(TEXT)
+            head = tr(self.heading)
             p.drawText(QRect(26, 18, self.width() - 52, 26),
-                       Qt.AlignLeft | Qt.AlignVCenter, self.heading)
+                       Qt.AlignLeft | Qt.AlignVCenter, head)
+            # Helper bằng lời thường, ngay sau tiêu đề — người mới hiểu trang này
+            # để làm gì mà không cần biết thuật ngữ. Ẩn khi cửa sổ hẹp để khỏi chật.
+            if self.subheading:
+                hw = p.fontMetrics().horizontalAdvance(head)
+                x = 26 + hw + 16
+                if self.width() - x - 26 > 160:
+                    p.setFont(ui_font(9))
+                    p.setPen(TEXT_FAINT)
+                    p.drawText(QRect(x, 18, self.width() - x - 26, 26),
+                               Qt.AlignLeft | Qt.AlignVCenter, tr(self.subheading))
             p.setPen(QPen(QColor(255, 255, 255, 26), 1))
             p.drawLine(26, 48, self.width() - 26, 48)
         p.end()
@@ -116,17 +128,22 @@ class StubPage(Page):
 # ---------- bản cài đặt ----------
 
 class InstallationsPage(Page):
-    heading = "Instances"
+    heading = "Games"
+    subheading = "Each is a separate copy of the game — its own version, mods and worlds."
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="No instances yet. Click NEW INSTANCE (name + version).")
+        self.list = ListView(self, empty_text=tr(
+            "No games yet. Click NEW GAME to set one up — just a name and a version."))
         self.list.activated.connect(self._select)
         self.list.action_clicked.connect(self._delete)
         self.list.badge_clicked.connect(self.ctl.edit_instance)
-        self.add_btn = AeroButton("NEW INSTANCE", self, height=32, tone="neutral")
+        self.add_btn = AeroButton("NEW GAME", self, height=32, tone="neutral")
+        self.add_btn.setToolTip(tr("Set up a fresh copy of the game (pick a name and version)."))
         self.add_btn.clicked.connect(self.ctl.begin_create_instance)
         self.fabric_btn = AeroButton("GET MODPACK", self, height=32, tone="neutral")
+        self.fabric_btn.setToolTip(tr(
+            "Install a ready-made bundle of mods someone already put together."))
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
         self.logs_btn = AeroButton("LOGS", self, height=32, tone="neutral")
         self.logs_btn.clicked.connect(self.ctl.show_logs)
@@ -450,7 +467,8 @@ class ContentLibraryPage(Page):
         self._instance = ctl.active_instance()   # cài/xem mod cho instance nào
 
         # Nút chọn instance (góc phải): quyết định cài mod vào modpack nào.
-        self.inst_btn = AeroButton("Instance ▾", self, height=28, tone="neutral")
+        self.inst_btn = AeroButton("Game ▾", self, height=28, tone="neutral")
+        self.inst_btn.setToolTip(tr("Choose which game to install this into."))
         self.inst_btn.clicked.connect(self._open_instance_menu)
 
         self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
@@ -909,6 +927,7 @@ class ContentLibraryPage(Page):
 
 class ModsPage(ContentLibraryPage):
     heading = "Mods"
+    subheading = "Add-ons that change or add features to the game."
     kind = "mods"
     is_mod = True
     project_type = "mod"
@@ -916,6 +935,7 @@ class ModsPage(ContentLibraryPage):
 
 class ResourcePacksPage(ContentLibraryPage):
     heading = "Resource Packs"
+    subheading = "Packs that change how the game looks and sounds."
     kind = "resourcepacks"
     is_mod = False
     project_type = "resourcepack"
@@ -923,6 +943,7 @@ class ResourcePacksPage(ContentLibraryPage):
 
 class ShaderPacksPage(ContentLibraryPage):
     heading = "Shaders"
+    subheading = "Fancy lighting and visual effects for a better-looking game."
     kind = "shaderpacks"
     is_mod = False
     project_type = "shader"

@@ -28,15 +28,20 @@ LOGO_H = 88
 
 OVERLAY_CLASSES = ("GlassMenu", "TextPrompt", "ConfirmDialog", "LoginDialog", "ReportDialog")
 
+# (route, nhãn, icon, helper). Helper = tooltip giải thích bằng lời thường —
+# người mới rê chuột là hiểu ngay, không cần biết thuật ngữ trước.
 NAV = [
-    ("home", "Home", "home"),
-    ("installations", "Instances", "cube"),
-    ("mods", "Mods", "mods"),
-    ("resourcepacks", "Resource Packs", "packs"),
-    ("shaders", "Shaders", "shaders"),
-    ("skins", "Skin", "skin"),
-    ("settings", "Settings", "gear"),
-    ("discord", "Discord", "discord"),   # mở link mời, không phải trang
+    ("home", "Home", "home", "Your dashboard — jump straight back into a game."),
+    ("installations", "Games", "cube",
+     "Your separate Minecraft setups. Each has its own version, mods and worlds."),
+    ("mods", "Mods", "mods", "Add-ons that change or add features to the game."),
+    ("resourcepacks", "Resource Packs", "packs",
+     "Texture & sound packs that change how the game looks and sounds."),
+    ("shaders", "Shaders", "shaders",
+     "Fancy lighting and visual effects for a better-looking game."),
+    ("skins", "Skin", "skin", "Change how your character looks in the game."),
+    ("settings", "Settings", "gear", "Memory, folders, language and updates."),
+    ("discord", "Discord", "discord", "Open our community Discord in your browser."),
 ]
 
 DISCORD_INVITE = "https://discord.gg/XVrBBswt5w"
@@ -251,9 +256,11 @@ class LauncherWindow(QWidget):
         self.statusbar = StatusBar(self, strong=True, edges="t", gloss=0.6)
 
         self.nav: dict[str, SidebarItem] = {}
-        for key, label, icon in NAV:
+        for key, label, icon, help in NAV:
             item = SidebarItem(tr(label), icon, self.sidebar)
             item._i18n_key = label
+            item._i18n_help = help
+            item.setToolTip(tr(help))
             item.clicked.connect(lambda _=False, k=key: self.nav_clicked.emit(k))
             self.nav[key] = item
         self.nav["home"].setChecked(True)
@@ -274,6 +281,9 @@ class LauncherWindow(QWidget):
             key = getattr(item, "_i18n_key", None)
             if key:
                 item.setText(tr(key))
+            help = getattr(item, "_i18n_help", None)
+            if help:
+                item.setToolTip(tr(help))
             item.update()
         for page in getattr(self, "pages", {}).values():
             if hasattr(page, "retranslate"):
