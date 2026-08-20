@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"        # cần JDK 25 để compile với Minecraft 26.x
       - name: Build the mod
         working-directory: aero-ui-mod
         run: |

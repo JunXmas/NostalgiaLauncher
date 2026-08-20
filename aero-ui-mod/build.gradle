@@ -26,12 +26,8 @@ dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Chỉ cần đúng module resource-loader (đăng ký built-in pack). Dùng nguyên
-	// fabric-api sẽ kéo theo fabric-biome-api-v1 với access-widener khác namespace
-	// -> lỗi setup. Lấy riêng một module thì tránh được. (Loom 1.17 tự remap nên
-	// dùng 'implementation', không phải 'modImplementation'.)
-	implementation fabricApi.module("fabric-resource-loader-v0", project.fabric_api_version)
+	// 26.x: Fabric API có access-widener namespace 'official' nên khớp Loom 1.17.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 processResources {
