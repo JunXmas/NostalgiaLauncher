@@ -375,7 +375,7 @@ class ModrinthResultsView(QWidget):
         slug = hit.get("slug") or hit.get("project_id")
         st = self._badges.get(slug)
         if st:
-            p.setPen(ACCENT if st == "ADDED" else TEXT_DIM)
+            p.setPen(ACCENT if st in ("ADDED", "INSTALLED") else TEXT_DIM)
             p.drawText(QRect(right_edge, card.top() + 44, 160, 16),
                        Qt.AlignRight | Qt.AlignVCenter, st)
         # mô tả
@@ -459,6 +459,7 @@ class ContentLibraryPage(Page):
         self._hits: list[dict] = []
         self._done: set[str] = set()      # slug đã cài trong phiên này
         self._busy: set[str] = set()      # slug đang tải
+        self._installed_ids: set[str] = set()  # project_id đã có sẵn trên đĩa (theo hash)
         self._icons: dict[str, object] = {}   # url -> QPixmap đã tải
         self._icon_wanted: set[str] = set()
         self._index = "downloads"         # sort đang chọn; mặc định Popular cho discover
@@ -593,8 +594,10 @@ class ContentLibraryPage(Page):
         if inst:
             self._instance = inst
             self._done.clear()          # trạng thái "ADDED" tính theo từng instance
+            self._installed_ids = set()  # tập đã-cài cũng theo instance
             self._sync_instance()
             self.refresh()
+            self._refresh_installed_ids()
             self._render_results()
 
     def _show_tab(self, i: int) -> None:
@@ -609,6 +612,7 @@ class ContentLibraryPage(Page):
         self.loader_tabs.setVisible(browse and self.is_mod)   # resource pack không có loader
         if browse:
             self.search.setFocus()
+            self._refresh_installed_ids()  # đánh dấu mod đã cài trong kết quả
             if not self._discovered:
                 self._discovered = True
                 self._load()               # tự khám phá mod hot lần đầu
@@ -839,11 +843,34 @@ class ContentLibraryPage(Page):
         b = {}
         for h in self._hits:
             slug = h.get("slug") or h.get("project_id")
+            pid = h.get("project_id")
             if slug in self._busy:
                 b[slug] = "…"
             elif slug in self._done:
                 b[slug] = "ADDED"
+            elif pid and pid in self._installed_ids:
+                b[slug] = "INSTALLED"
         return b
+
+    def _refresh_installed_ids(self) -> None:
+        """Hỏi Modrinth (theo sha1) xem những jar đang cài là project nào, để
+        Browse đánh dấu 'INSTALLED' và không tải lại. Chạy nền, im lặng."""
+        game_dir, kind = self._game_dir(), self.kind
+
+        def work():
+            hashes = []
+            for it in mods_mgr.list_installed(game_dir, kind):
+                try:
+                    hashes.append(mods_mgr.file_sha1(it.path))
+                except OSError:
+                    pass
+            return modrinth.projects_for_hashes(hashes)
+
+        self.ctl._run(work, self._got_installed_ids, lambda _m: None)
+
+    def _got_installed_ids(self, ids: set) -> None:
+        self._installed_ids = ids or set()
+        self._render_results()
 
     def _pages(self) -> int:
         import math
@@ -874,7 +901,9 @@ class ContentLibraryPage(Page):
 
     def _install(self, hit) -> None:
         slug = hit.get("slug") or hit.get("project_id")
-        if slug in self._busy or slug in self._done:
+        pid = hit.get("project_id")
+        # Đã đang tải, đã cài phiên này, hoặc đã có sẵn trên đĩa -> không tải lại.
+        if slug in self._busy or slug in self._done or (pid and pid in self._installed_ids):
             return
         self._busy.add(slug)
         self._render_results()

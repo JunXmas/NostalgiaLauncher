@@ -104,6 +104,22 @@ def updates(hashes: list[str], *, loaders: list[str] | None = None,
     return r.json()
 
 
+def projects_for_hashes(hashes: list[str]) -> set[str]:
+    """Tập project_id mà các file (theo sha1) thuộc về — để Browse biết mod nào
+    đã cài rồi.
+
+    /version_files trả map {sha1: version_object}; version_object.project_id là
+    dự án trên Modrinth. Jar không phải của Modrinth (modpack tự đóng…) không có
+    trong map nên bị bỏ qua — không đánh dấu nhầm."""
+    if not hashes:
+        return set()
+    r = requests.post(f"{BASE}/version_files",
+                      json={"hashes": list(hashes), "algorithm": "sha1"},
+                      headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return {v.get("project_id") for v in r.json().values() if v.get("project_id")}
+
+
 def versions(id_or_slug: str, *,
              loaders: list[str] | None = None,
              game_versions: list[str] | None = None) -> list[dict]:
