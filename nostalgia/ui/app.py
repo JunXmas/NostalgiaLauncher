@@ -701,17 +701,12 @@ class Controller:
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
             return
-        # Soft-lock Fabric: kèm mod làm đẹp menu (Blur+ = blur động; FancyMenu =
-        # tuỳ biến bố cục title/pause). Chạy nền, best-effort; texture kính vẫn
-        # đứng một mình được nếu mod lỗi.
+        # Soft-lock Fabric: kèm Blur+ (blur động sau menu). Chạy nền, best-effort;
+        # texture kính vẫn đứng một mình được nếu mod lỗi.
+        # (FancyMenu đã bỏ: element/nút custom không render trên 1.21.11 + FO, còn
+        #  nền menu thì resource pack panorama lo tốt hơn — xem set_menu_dark.)
         if not hard and "fabric" in v and mc:
             self._install_aero_mods_async(inst, mc)
-            # Layout FancyMenu Aero + hard-lock editor (ép lại mỗi lần áp). File-
-            # only nên chạy thẳng; chỉ ăn khi FancyMenu đã cài, bằng không nằm im.
-            try:
-                aero.apply_fancymenu(self.instance_dir(inst), lock=True)
-            except Exception:  # noqa: BLE001 - không chặn nếu ghi config lỗi
-                pass
         if not silent:
             self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
 
@@ -720,7 +715,6 @@ class Controller:
     # để lại dependency gãy khiến Fabric chặn vào game). fabric-api dùng chung.
     AERO_MODS = (
         ("blur-plus", "blur", ("midnightlib",)),
-        ("fancymenu", "fancymenu", ("melody", "konkrete")),
     )
 
     def _install_aero_mods_async(self, inst, mc: str) -> None:
@@ -1680,6 +1674,8 @@ class Controller:
 
 def run_gui(game_dir: Path | None = None, version: str = "") -> int:
     app = QApplication(sys.argv)
+    from .theme import load_bundled_fonts
+    load_bundled_fonts()          # Selawik (font Windows 7) trước khi dựng UI
     window = LauncherWindow()
     ctl = Controller(window)
     if game_dir is not None and str(game_dir) != ctl.settings.game_dir:
