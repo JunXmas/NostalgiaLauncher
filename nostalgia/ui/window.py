@@ -33,14 +33,18 @@ OVERLAY_CLASSES = ("GlassMenu", "TextPrompt", "ConfirmDialog", "LoginDialog", "R
 # (route, nhãn, icon, helper). Helper = tooltip giải thích bằng lời thường —
 # người mới rê chuột là hiểu ngay, không cần biết thuật ngữ trước.
 #
-# Điều hướng THEO TÁC VỤ (Hick's Law): sidebar chỉ giữ những nơi người chơi thật
-# sự muốn tới. Mods / Resource Packs / Shaders KHÔNG còn ở đây — chúng thuộc về
-# từng game và được quản lý trong tab của game đó (mở một game để thêm nội dung),
-# đúng cách người mới nghĩ ("sửa game này") thay vì duyệt theo loại file.
+# Mods / Resource Packs / Shaders có mặt Ở CẢ HAI nơi: mục top-level ở sidebar
+# (duyệt & cài nhanh cho game đang chọn) VÀ trong tab của từng instance (quản lý
+# nội dung của riêng game đó). Hai lối bổ trợ nhau, không loại nhau.
 NAV = [
     ("home", "Home", "home", "Your dashboard — jump straight back into a game."),
     ("installations", "Games", "cube",
-     "Your games. Open one to play it or add mods, resource packs and shaders."),
+     "Your separate Minecraft setups. Each has its own version, mods and worlds."),
+    ("mods", "Mods", "mods", "Add-ons that change or add features to the game."),
+    ("resourcepacks", "Resource Packs", "packs",
+     "Texture & sound packs that change how the game looks and sounds."),
+    ("shaders", "Shaders", "shaders",
+     "Fancy lighting and visual effects for a better-looking game."),
     ("skins", "Skin", "skin", "Change how your character looks in the game."),
     ("settings", "Settings", "gear", "Memory, folders, language and updates."),
     ("discord", "Discord", "discord", "Open our community Discord in your browser."),
