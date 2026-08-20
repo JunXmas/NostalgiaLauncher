@@ -444,7 +444,10 @@ class Controller:
     def begin_browse_modpacks(self) -> None:
         self.go("modpacks")
 
-    def install_modpack(self, hit, game_version: str | None = None) -> None:
+    SUPER_RES_SLUG = "superresolution"   # mod render-low-then-upscale (kèm bản Optimized)
+
+    def install_modpack(self, hit, game_version: str | None = None,
+                        optimized: bool = False) -> None:
         slug = hit.get("slug") or hit.get("project_id")
         title = hit.get("title") or slug
         name = self.instances.unique_name(title)
@@ -486,6 +489,19 @@ class Controller:
             # on_status -> hiện tiến trình khi chạy Forge/NeoForge installer (chậm vài phút).
             vid = loaders_mod.install(self.installer, loader, mc, java_binary=java,
                                       on_status=on_status)
+            # Bản Optimized: kèm mod Super Resolution (render thấp rồi upscale -> thêm FPS).
+            # Client-side, không phụ thuộc; bản nào không có (vd 1.12.2) thì bỏ qua êm.
+            if optimized:
+                on_status("Adding Super Resolution…")
+                try:
+                    from .. import mods as mods_mgr
+                    sr = modrinth_mod.best_file(self.SUPER_RES_SLUG, loaders=[loader],
+                                                game_versions=[mc] if mc else None)
+                    if sr:
+                        mods_mgr.install_file(inst_dir, "mods", url=sr["url"],
+                                              filename=sr["filename"], sha1=sr.get("sha1"))
+                except Exception:  # noqa: BLE001 - không chặn tạo instance nếu mod lỗi
+                    pass
             return name, vid
 
         w = ProgressWorker(work)
@@ -1280,7 +1296,7 @@ class Controller:
             default = "Fabulously Optimized" if slug == self.FO_SLUG else "MAX FPS Optimized"
             hit = {"slug": slug, "title": name or f"{default} {mc}",
                    "icon_url": getattr(self, "_opt_icons", {}).get(slug, "")}
-            self.install_modpack(hit, game_version=mc)
+            self.install_modpack(hit, game_version=mc, optimized=True)
             return
         if loader in ("", "vanilla"):
             self.create_instance(name, mc)
