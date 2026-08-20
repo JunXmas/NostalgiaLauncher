@@ -324,13 +324,14 @@ def build_glass_background() -> None:
       • menu_list_background         — khi KHÔNG có world phía sau (đè lên panorama)
     Bản cũ không có các path này thì bỏ qua êm — không ảnh hưởng.
     """
-    # Alpha THẤP để world blur còn hiện xuyên qua = kính mờ thật (không phải nền
-    # đặc). Aero glass ~translucent; chỉ nhuộm xanh + tối nhẹ cho chữ trắng đọc rõ.
-    aero = QColor(24, 52, 92)          # xanh Aero
-    write_png(_flat_tile(aero, 92), GUI / "inworld_menu_background.png")
-    write_png(_flat_tile(QColor(14, 32, 58), 120),
+    # Translucent để world (đã blur trên GPU thật / bởi mod Blur+) hiện xuyên qua
+    # = kính mờ Aero. Alpha đủ cao để thành một "tấm kính" rõ và chữ trắng đọc tốt
+    # kể cả khi blur bị tắt, nhưng vẫn thấy cảnh phía sau.
+    aero = QColor(22, 48, 86)          # xanh Aero
+    write_png(_flat_tile(aero, 125), GUI / "inworld_menu_background.png")
+    write_png(_flat_tile(QColor(12, 28, 52), 150),
               GUI / "inworld_menu_list_background.png")
-    write_png(_flat_tile(aero, 104), GUI / "menu_list_background.png")
+    write_png(_flat_tile(aero, 120), GUI / "menu_list_background.png")
 
 
 def build_meta() -> None:
