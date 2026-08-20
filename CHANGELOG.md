@@ -2,6 +2,14 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.8.0-beta.2
+- **Fixed: some game versions wouldn't launch at all** (e.g. 1.21.4, 1.20.6),
+  while others (like 1.21.11) worked. A Fabric game's own libraries and the
+  base game's libraries could include the same library at two versions, and both
+  ended up loaded at once — which the mod loader refuses, so the game quit before
+  it even opened, with no error. The launcher now keeps a single version of each
+  library (the loader's), matching the official launcher.
+
 ## 0.8.0-beta.1
 _Beta — a big ease-of-use and looks upgrade. Please report anything odd._
 
