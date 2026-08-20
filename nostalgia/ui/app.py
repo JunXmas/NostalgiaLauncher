@@ -608,8 +608,19 @@ class Controller:
             jar = cj if cj and Path(cj).exists() else None
         except Exception:  # noqa: BLE001 - thiếu meta/jar thì cứ dùng sprite modern
             jar = None
+        # Hard-lock (mod Fabric ALWAYS_ENABLED) chỉ ở era 26.x+ — nơi mod build
+        # được và chạy được. Bản 1.x hoặc non-Fabric -> soft-lock (resource pack).
+        from .. import optifine
+        v = (inst.version or "").lower()
+        # MC version: fabric id = "fabric-loader-<loader>-<mc>"; scheme mới "26.2"
+        # thì optifine.mc_from_version_id không hiểu nên tự tách đoạn cuối.
+        if "fabric-loader" in v:
+            mc = (inst.version or "").rsplit("-", 1)[-1]
+        else:
+            mc = optifine.mc_from_version_id(inst.version) or (inst.version or "")
+        hard = ("fabric" in v) and bool(mc) and not mc.startswith("1.")
         try:
-            kind = aero.apply_to_instance(self.instance_dir(inst), jar)
+            kind = aero.apply_to_instance(self.instance_dir(inst), jar, hard_lock=hard)
         except Exception as e:  # noqa: BLE001
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
@@ -623,7 +634,9 @@ class Controller:
         self.window.set_status(f"Aero UI removed from '{inst.name}'.")
 
     def aero_ui_enabled(self, inst) -> bool:
-        return (self.instance_dir(inst) / "resourcepacks" / "Aero UI.zip").exists()
+        d = self.instance_dir(inst)
+        return ((d / "resourcepacks" / "Aero UI.zip").exists()
+                or (d / "mods" / "aero-ui-mod.jar").exists())
 
     def open_saves_folder(self, inst) -> None:
         """Mở thư mục saves của instance để kéo-thả world vào."""

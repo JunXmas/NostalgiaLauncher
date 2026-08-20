@@ -22,6 +22,9 @@ from pathlib import Path
 
 PACK_NAME = "Aero UI.zip"
 PACK_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-pack"
+# Mod Fabric khoá cứng (ALWAYS_ENABLED) — build cho era 26.x, chỉ dùng ở đó.
+MOD_JAR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-ui-mod.jar"
+MOD_NAME = "aero-ui-mod.jar"
 
 SPRITES = "assets/minecraft/textures/gui/sprites/widget"
 WIDGETS = "assets/minecraft/textures/gui/widgets.png"
@@ -95,23 +98,38 @@ def _enable_in_options(options: Path, modern: bool) -> None:
     options.write_text("\n".join(out) + "\n")
 
 
-def apply_to_instance(game_dir: Path, client_jar: Path | None = None) -> str:
-    """Cài Aero UI vào instance tại game_dir. Trả về 'modern' hoặc 'legacy'.
+def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
+                      hard_lock: bool = False) -> str:
+    """Cài Aero UI vào instance tại game_dir.
 
-    client_jar: jar client của bản đó (để ghép widgets.png cho bản legacy). Bỏ
-    trống hoặc bản modern -> chỉ dùng sprite ship sẵn.
+    hard_lock=True (chỉ dùng cho bản 26.x+ Fabric — nơi mod chạy được): cài mod
+    Fabric ALWAYS_ENABLED vào mods/ để người chơi KHÔNG tắt được pack, và bỏ
+    resource pack thường (mod đã kèm pack). Trả về 'locked'.
+
+    Ngược lại: soft-lock — cài resource pack (ghép widgets.png cho bản legacy từ
+    client_jar) và bật trong options.txt. Trả về 'modern'/'legacy'.
     """
+    gd = Path(game_dir)
+    if hard_lock and MOD_JAR.exists():
+        mods = gd / "mods"
+        mods.mkdir(parents=True, exist_ok=True)
+        import shutil
+        shutil.copyfile(MOD_JAR, mods / MOD_NAME)
+        (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)   # mod đã kèm pack
+        return "locked"
+
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
     modern = legacy is None
-    _build_zip(Path(game_dir) / "resourcepacks" / PACK_NAME, legacy)
-    _enable_in_options(Path(game_dir) / "options.txt", modern)
+    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy)
+    _enable_in_options(gd / "options.txt", modern)
     return "modern" if modern else "legacy"
 
 
 def remove_from_instance(game_dir: Path) -> None:
-    """Gỡ Aero UI: xoá zip và bỏ khỏi options.txt (tắt công tắc)."""
+    """Gỡ Aero UI: xoá zip, mod, và bỏ khỏi options.txt (tắt công tắc)."""
     gd = Path(game_dir)
     (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)
+    (gd / "mods" / MOD_NAME).unlink(missing_ok=True)
     options = gd / "options.txt"
     if not options.exists():
         return
