@@ -396,14 +396,81 @@ class ReportDialog(GlassDialog):
         self.close_btn.setGeometry(c.right() - 122, c.bottom() - 48, 100, 32)
 
 
-# ---------- duyệt & cài modpack Modrinth ----------
-
 def _compact(n: int) -> str:
     for div, suf in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
         if n >= div:
             return f"{n / div:.1f}{suf}"
     return str(n)
 
+
+class ModpackDetailDialog(GlassDialog):
+    """Xem mô tả đầy đủ của một modpack rồi mới quyết định cài."""
+
+    def __init__(self, parent, ctl, hit):
+        super().__init__(parent, hit.get("title", "Modpack"),
+                         width=min(700, parent.width() - 70),
+                         height=min(520, parent.height() - 80))
+        self.ctl = ctl
+        self.hit = hit
+        self._icon = None
+        self.view = QTextBrowser(self)
+        self.view.setStyleSheet(REPORT_QSS)
+        self.view.setFont(ui_font(9))
+        self.view.setOpenExternalLinks(True)
+        self.view.setMarkdown((hit.get("description") or "").strip() or "Loading…")
+        self.install_btn = AeroButton("INSTALL", self, height=34, tone="green")
+        self.install_btn.clicked.connect(self._install)
+        self.close_btn = AeroButton("CLOSE", self, height=34, tone="neutral")
+        self.close_btn.clicked.connect(self.dismiss)
+        self.place()
+        slug = hit.get("slug") or hit.get("project_id")
+        if slug:
+            ctl._run(lambda: modrinth.project(slug), self._got_project, lambda _m: None)
+        url = hit.get("icon_url")
+        if url:
+            ctl._run(lambda: modrinth.fetch_icon(url), self._got_icon, lambda _m: None)
+
+    def _got_project(self, proj) -> None:
+        body = (proj.get("body") or "").strip()
+        if body:
+            self.view.setMarkdown(body)
+
+    def _got_icon(self, data) -> None:
+        pm = QPixmap()
+        if pm.loadFromData(data):
+            self._icon = pm
+            self.update()
+
+    def _install(self) -> None:
+        self.ctl.install_modpack(self.hit)
+        self.dismiss()
+
+    def place(self) -> None:
+        c = self.card
+        self.view.setGeometry(c.left() + 20, c.top() + 100, c.width() - 40, c.height() - 164)
+        self.install_btn.setGeometry(c.right() - 254, c.bottom() - 48, 124, 34)
+        self.close_btn.setGeometry(c.right() - 122, c.bottom() - 48, 100, 34)
+
+    def paint_body(self, p: QPainter) -> None:
+        c = self.card
+        ic = QRect(c.left() + 22, c.top() + 46, 46, 46)
+        if self._icon is not None:
+            p.fillRect(ic, QColor(28, 40, 60, 120))
+            s = self._icon.scaled(46, 46, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            p.drawPixmap(ic.left() + (46 - s.width()) // 2, ic.top() + (46 - s.height()) // 2, s)
+        else:
+            p.fillRect(ic, QColor(40, 60, 90, 160))
+        p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush); p.drawRect(ic)
+        h = self.hit
+        p.setFont(ui_font(10, bold=True)); p.setPen(TEXT)
+        p.drawText(ic.right() + 14, c.top() + 62, f"by {h.get('author', '?')}")
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        p.drawText(QRect(ic.right() + 14, c.top() + 70, c.width() - 120, 18),
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   f"⬇ {_compact(h.get('downloads', 0))}    ♥ {_compact(h.get('follows', 0))}")
+
+
+# ---------- duyệt & cài modpack Modrinth ----------
 
 class ModpackDialog(GlassDialog):
     """Tìm modpack trên Modrinth và cài thẳng thành một instance mới."""

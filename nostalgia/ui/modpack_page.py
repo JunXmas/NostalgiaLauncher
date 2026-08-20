@@ -291,7 +291,7 @@ class ModpackBrowsePage(Page):
         self.version.returnPressed.connect(self._load)
 
         self.cards = ModpackCards(self)
-        self.cards.activated.connect(self._install)
+        self.cards.activated.connect(self._open_detail)
 
     # ---------- vòng đời ----------
 
@@ -357,9 +357,10 @@ class ModpackBrowsePage(Page):
             self.cards.icons[url] = pm
             self.cards.update()
 
-    def _install(self, hit) -> None:
-        self.ctl.install_modpack(hit)
-        self.ctl.go("installations")
+    def _open_detail(self, hit) -> None:
+        """Bấm một modpack -> mở cửa sổ mô tả (icon, tác giả, mô tả đầy đủ) rồi mới cài."""
+        from .dialogs import ModpackDetailDialog
+        ModpackDetailDialog(self.window(), self.ctl, hit).show()
 
     # ---------- sort + lọc ----------
 

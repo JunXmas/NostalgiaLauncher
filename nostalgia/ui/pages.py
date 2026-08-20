@@ -305,7 +305,12 @@ class ModrinthResultsView(QWidget):
         pm = self._icons.get(hit.get("icon_url") or "")
         p.save(); p.setClipRect(ic)
         if pm is not None and not pm.isNull():
-            p.drawPixmap(ic, pm)
+            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            scaled = pm.scaled(ic.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            ox = ic.left() + (ic.width() - scaled.width()) // 2
+            oy = ic.top() + (ic.height() - scaled.height()) // 2
+            p.fillRect(ic, QColor(28, 40, 60, 120))
+            p.drawPixmap(ox, oy, scaled)
         else:
             p.fillRect(ic, QColor(40, 60, 90, 160))
         p.restore()

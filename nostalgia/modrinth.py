@@ -76,6 +76,13 @@ def fetch_icon(url: str) -> bytes:
     return r.content
 
 
+def project(id_or_slug: str) -> dict:
+    """Chi tiết đầy đủ một project (gồm 'body' mô tả dài dạng markdown)."""
+    r = requests.get(f"{BASE}/project/{id_or_slug}", headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
 def updates(hashes: list[str], *, loaders: list[str] | None = None,
             game_versions: list[str] | None = None) -> dict:
     """Bản mới nhất cho từng file mod (theo sha1), lọc loader + bản game.
