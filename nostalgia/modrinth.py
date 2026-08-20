@@ -49,6 +49,26 @@ def search(query: str, project_type: str = "mod", *,
     return r.json().get("hits", [])
 
 
+def search_page(query: str, project_type: str = "mod", *,
+                loaders: list[str] | None = None,
+                game_versions: list[str] | None = None,
+                index: str = "relevance",
+                limit: int = 20, offset: int = 0) -> dict:
+    """Như search() nhưng có phân trang: trả {hits, total, offset, limit}."""
+    params = {
+        "query": query,
+        "facets": _facets(project_type, loaders, game_versions),
+        "limit": str(limit),
+        "offset": str(offset),
+        "index": index,
+    }
+    r = requests.get(f"{BASE}/search", params=params, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    d = r.json()
+    return {"hits": d.get("hits", []), "total": int(d.get("total_hits", 0)),
+            "offset": int(d.get("offset", offset)), "limit": int(d.get("limit", limit))}
+
+
 def fetch_icon(url: str) -> bytes:
     """Tải dữ liệu ảnh icon của một project (dùng cho ảnh preview)."""
     r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QRect, QRectF, Qt
+from PySide6.QtCore import QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
@@ -166,6 +166,243 @@ class InstallationsPage(Page):
 
 # ---------- thư viện nội dung: Mods / Resource Packs ----------
 
+_LOADER_COLORS = {
+    "fabric": QColor(222, 210, 168), "quilt": QColor(178, 132, 226),
+    "forge": QColor(120, 142, 190), "neoforge": QColor(232, 152, 92),
+}
+_LOADERS = {"fabric", "forge", "neoforge", "quilt", "liteloader", "rift",
+            "modloader", "optifine", "iris", "canvas", "vanilla", "datapack",
+            "folia", "paper", "spigot", "bukkit", "purpur", "sponge",
+            "velocity", "waterfall", "bungeecord"}
+
+
+def _reltime_iso(iso: str) -> str:
+    import datetime
+    if not iso:
+        return ""
+    try:
+        d = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        now = datetime.datetime.now(datetime.timezone.utc)
+        s = (now - d).total_seconds()
+    except (ValueError, TypeError):
+        return ""
+    for unit, sec in (("y", 31536000), ("mo", 2592000), ("d", 86400),
+                      ("h", 3600), ("m", 60)):
+        if s >= sec:
+            n = int(s // sec)
+            return f"{n}{unit} ago"
+    return "just now"
+
+
+class ModrinthResultsView(QWidget):
+    """Danh sách kết quả Modrinth kiểu thẻ: icon, tên · tác giả, mô tả, lượt tải/
+    thích/cập nhật, pill danh mục + loader, và thanh phân trang ở đáy."""
+
+    activated = Signal(object)     # bấm thẻ -> cài hit
+    page_changed = Signal(int)     # bấm số trang -> nạp trang
+
+    CARD_H = 96
+    PAGER_H = 44
+
+    def __init__(self, parent=None, *, empty_text: str = ""):
+        super().__init__(parent)
+        self.empty_text = empty_text
+        self._hits: list = []
+        self._icons: dict = {}
+        self._badges: dict = {}
+        self._page = self._pages = 1
+        self._scroll = 0
+        self._hover = -1
+        self._card_rects: list = []
+        self._page_rects: list = []
+        self.setMouseTracking(True)
+
+    def set_page(self, hits, page, pages, badges) -> None:
+        self._hits, self._page, self._pages = hits, page, max(1, pages)
+        self._badges = badges
+        self._scroll = 0
+        self._hover = -1
+        self.update()
+
+    def set_state(self, icons, badges) -> None:      # icon/badge cập nhật -> vẽ lại
+        self._icons, self._badges = icons, badges
+        self.update()
+
+    def _content_h(self) -> int:
+        return self.height() - self.PAGER_H
+
+    def wheelEvent(self, e):  # noqa: N802
+        maxs = max(0, len(self._hits) * self.CARD_H + 8 - self._content_h())
+        self._scroll = min(maxs, max(0, self._scroll - e.angleDelta().y()))
+        self.update()
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        h = next((i for i, (r, _) in enumerate(self._card_rects) if r.contains(pos)), -1)
+        if h != self._hover:
+            self._hover = h
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        for r, page in self._page_rects:
+            if r.contains(pos) and page != self._page:
+                self.page_changed.emit(page)
+                return
+        for r, hit in self._card_rects:
+            if r.contains(pos):
+                self.activated.emit(hit)
+                return
+
+    def _pills(self, hit) -> list[tuple]:
+        """(nhãn, màu|None) cho môi trường + danh mục + loader."""
+        out = []
+        cs, ss = hit.get("client_side"), hit.get("server_side")
+        env = ("Client or server" if cs != "unsupported" and ss != "unsupported"
+               else "Server" if ss != "unsupported" else "Client")
+        out.append((env, None))
+        cats = hit.get("display_categories") or hit.get("categories") or []
+        for c in cats:
+            if c not in _LOADERS:
+                out.append((c.replace("-", " ").title(), None))
+        for c in hit.get("categories", []):
+            if c in _LOADERS:
+                out.append((c.title(), _LOADER_COLORS.get(c, QColor(150, 160, 180))))
+        return out
+
+    def paintEvent(self, event):  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        self._card_rects = []
+        self._page_rects = []
+        w = self.width()
+        ch = self._content_h()
+        p.setClipRect(0, 0, w, ch)
+        if not self._hits:
+            p.setPen(TEXT_DIM); p.setFont(ui_font(11))
+            p.drawText(QRect(0, 0, w, ch), Qt.AlignCenter, self.empty_text)
+            p.setClipping(False)
+            self._paint_pager(p)
+            p.end()
+            return
+        for i, hit in enumerate(self._hits):
+            y = 4 - self._scroll + i * self.CARD_H
+            if y + self.CARD_H < 0 or y > ch:
+                continue
+            card = QRect(6, y, w - 12, self.CARD_H - 8)
+            self._card_rects.append((card, hit))
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(255, 255, 255, 24 if i == self._hover else 12))
+            p.drawRoundedRect(card, 8, 8)
+            self._paint_card(p, card, hit)
+        p.setClipping(False)
+        self._paint_pager(p)
+        p.end()
+
+    def _paint_card(self, p, card, hit):
+        # icon
+        ic = QRect(card.left() + 12, card.top() + 12, 60, 60)
+        pm = self._icons.get(hit.get("icon_url") or "")
+        p.save(); p.setClipRect(ic)
+        if pm is not None and not pm.isNull():
+            p.drawPixmap(ic, pm)
+        else:
+            p.fillRect(ic, QColor(40, 60, 90, 160))
+        p.restore()
+        p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush); p.drawRect(ic)
+
+        tx = ic.right() + 14
+        # thống kê bên phải
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        dls = f"⬇ {human_count(hit.get('downloads', 0))}"
+        fol = f"♥ {human_count(hit.get('follows', 0))}"
+        upd = _reltime_iso(hit.get("date_modified", ""))
+        rx = card.right() - 12
+        fm = p.fontMetrics()
+        stat = f"{dls}    {fol}"
+        p.drawText(QRect(rx - 220, card.top() + 8, 220, 16),
+                   Qt.AlignRight | Qt.AlignVCenter, stat)
+        if upd:
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(rx - 220, card.top() + 26, 220, 16),
+                       Qt.AlignRight | Qt.AlignVCenter, f"🕒 {upd}")
+        right_edge = rx - 230
+        # tên + tác giả
+        p.setFont(ui_font(12, bold=True)); p.setPen(TEXT)
+        title = hit.get("title", "?")
+        tw = p.fontMetrics().horizontalAdvance(title)
+        p.drawText(tx, card.top() + 24, title)
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        p.drawText(tx + tw + 8, card.top() + 24, f"by {hit.get('author', '?')}")
+        # trạng thái cài
+        slug = hit.get("slug") or hit.get("project_id")
+        st = self._badges.get(slug)
+        if st:
+            p.setPen(ACCENT if st == "ADDED" else TEXT_DIM)
+            p.drawText(QRect(right_edge, card.top() + 44, 160, 16),
+                       Qt.AlignRight | Qt.AlignVCenter, st)
+        # mô tả
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        desc = (hit.get("description") or "").strip()
+        p.drawText(tx, card.top() + 42,
+                   p.fontMetrics().elidedText(desc, Qt.ElideRight, right_edge - tx))
+        # pills
+        self._paint_pills(p, tx, card.top() + 54, right_edge, self._pills(hit))
+
+    def _paint_pills(self, p, x, y, right, pills):
+        p.setFont(ui_font(8))
+        fm = p.fontMetrics()
+        for label, color in pills:
+            tw = fm.horizontalAdvance(label)
+            dot = 12 if color is not None else 0
+            pw = tw + 16 + dot
+            if x + pw > right - 24:
+                p.setPen(TEXT_FAINT); p.setBrush(Qt.NoBrush)
+                p.drawText(x + 2, y + 15, "…")
+                break
+            pill = QRect(x, y, pw, 20)
+            p.setPen(Qt.NoPen); p.setBrush(QColor(255, 255, 255, 18))
+            p.drawRoundedRect(pill, 10, 10)
+            lx = x + 8
+            if color is not None:
+                p.setBrush(color); p.drawEllipse(QRect(lx, y + 7, 6, 6)); lx += 12
+            p.setPen(TEXT_DIM)
+            p.drawText(QRect(lx, y, tw + 8, 20), Qt.AlignLeft | Qt.AlignVCenter, label)
+            x += pw + 6
+
+    def _paint_pager(self, p):
+        if self._pages <= 1:
+            return
+        y = self.height() - self.PAGER_H
+        p.setPen(QPen(QColor(255, 255, 255, 24), 1))
+        p.drawLine(6, y, self.width() - 6, y)
+        cur, last = self._page, self._pages
+        nums = sorted({1, cur - 1, cur, cur + 1, last})
+        nums = [n for n in nums if 1 <= n <= last]
+        seq, prev = [], 0
+        for n in nums:
+            if prev and n - prev > 1:
+                seq.append(None)      # dấu …
+            seq.append(n); prev = n
+        p.setFont(ui_font(10, bold=True))
+        x = self.width() - 12
+        for item in reversed(seq):    # xếp từ phải sang
+            if item is None:
+                x -= 24
+                p.setPen(TEXT_FAINT)
+                p.drawText(QRect(x, y, 24, self.PAGER_H), Qt.AlignCenter, "…")
+                continue
+            box = QRect(x - 34, y + 7, 30, 30)
+            self._page_rects.append((box, item))
+            if item == cur:
+                p.setPen(Qt.NoPen); p.setBrush(ACCENT)
+                p.drawEllipse(box); p.setPen(QColor(10, 20, 14))
+            else:
+                p.setPen(TEXT_DIM); p.setBrush(Qt.NoBrush)
+            p.drawText(box, Qt.AlignCenter, str(item))
+            x -= 40
+
+
 class ContentLibraryPage(Page):
     """Hai tab: 'Installed' (bật/tắt/xoá/mở thư mục) và 'Browse' (tìm & cài từ Modrinth)."""
 
@@ -235,9 +472,11 @@ class ContentLibraryPage(Page):
         self.loader_tabs = TabBar([lo.capitalize() for lo in self.LOADERS], self)
         self.loader_tabs.changed.connect(self._loader_changed)
 
-        self.results = ListView(self, empty_text="Loading popular picks from Modrinth…")
+        self._page = 1
+        self._total = 0
+        self.results = ModrinthResultsView(self, empty_text="Loading popular picks from Modrinth…")
         self.results.activated.connect(self._install)
-        self.results.badge_clicked.connect(self._install)
+        self.results.page_changed.connect(self._go_page)
 
         self._show_tab(0)
 
@@ -274,7 +513,8 @@ class ContentLibraryPage(Page):
         self._discovered = False
         self._updates = {}
         self._hits = []
-        self.results.set_rows([])
+        self._page, self._total = 1, 0
+        self.results.set_page([], 1, 1, {})
         self._show_tab(0)
 
     # ---- instance đang thao tác ----
@@ -521,48 +761,56 @@ class ContentLibraryPage(Page):
         loaders = [self._loader] if self.is_mod else None
         return loaders, game_versions
 
-    def _load(self) -> None:
-        """Nạp kết quả: có chữ thì tìm, rỗng thì discover mod hot theo sort/loader."""
+    PER_PAGE = 20
+
+    def _go_page(self, page: int) -> None:
+        self._page = max(1, page)
+        self._load(reset=False)
+
+    def _load(self, reset: bool = True) -> None:
+        """Nạp một trang kết quả: có chữ thì tìm, rỗng thì discover mod hot."""
+        if reset:
+            self._page = 1
         q = self.search.text().strip()
         self.results.empty_text = "Loading from Modrinth…"
-        self.results.set_rows([])
+        self.results.set_page([], self._page, 1, {})
         loaders, gvs = self._target()
+        offset = (self._page - 1) * self.PER_PAGE
         self.ctl._run(
-            lambda: modrinth.search(q, self.project_type, loaders=loaders,
-                                    game_versions=gvs, index=self._index, limit=30),
+            lambda: modrinth.search_page(q, self.project_type, loaders=loaders,
+                                         game_versions=gvs, index=self._index,
+                                         limit=self.PER_PAGE, offset=offset),
             self._show_results,
             self._search_failed,
         )
 
     def _search_failed(self, msg: str) -> None:
         self.results.empty_text = f"Couldn't reach Modrinth: {msg}"
-        self.results.set_rows([])
+        self.results.set_page([], self._page, 1, {})
 
-    def _show_results(self, hits: list) -> None:
-        self._hits = hits
+    def _show_results(self, res: dict) -> None:
+        self._hits = res.get("hits", [])
+        self._total = res.get("total", len(self._hits))
         self.results.empty_text = "Nothing matched on Modrinth."
         self._render_results()
         self._load_icons()
 
-    def _render_results(self) -> None:
-        rows = []
+    def _result_badges(self) -> dict:
+        b = {}
         for h in self._hits:
             slug = h.get("slug") or h.get("project_id")
             if slug in self._busy:
-                badge, on = "…", False
+                b[slug] = "…"
             elif slug in self._done:
-                badge, on = "ADDED", False
-            else:
-                badge, on = "GET", True
-            rows.append(Row(
-                title=h.get("title", slug),
-                subtitle=f"{h.get('author', '?')} · {human_count(h.get('downloads', 0))} downloads",
-                badge=badge,
-                badge_on=on,
-                icon=self._icons.get(h.get("icon_url") or ""),
-                data=h,
-            ))
-        self.results.set_rows(rows)
+                b[slug] = "ADDED"
+        return b
+
+    def _pages(self) -> int:
+        import math
+        return max(1, math.ceil(self._total / self.PER_PAGE)) if self._total else 1
+
+    def _render_results(self) -> None:
+        self.results.set_page(self._hits, self._page, self._pages(), self._result_badges())
 
     def _load_icons(self) -> None:
         """Tải ảnh preview cho từng kết quả (nền, có cache theo URL)."""
@@ -582,7 +830,7 @@ class ContentLibraryPage(Page):
         pm = QPixmap()
         if pm.loadFromData(data):
             self._icons[url] = pm
-            self._render_results()
+            self.results.set_state(self._icons, self._result_badges())
 
     def _install(self, hit) -> None:
         slug = hit.get("slug") or hit.get("project_id")
