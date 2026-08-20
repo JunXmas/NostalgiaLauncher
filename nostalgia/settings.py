@@ -17,13 +17,19 @@ CLIENTS_PATH = CONFIG_DIR / "clients.json"
 # Client ID mặc định: app Azure "Nostalgia Launcher" đã được Microsoft duyệt
 # (Supported account types = Personal Microsoft accounts). Đây là *public client*
 # dùng luồng device-code — KHÔNG có client secret, nên Client ID là công khai và
-# nhúng vào mã/binary là an toàn, đúng chuẩn (giống PrismLauncher). Người dùng vẫn
-# override được bằng env MC_CLIENT_ID hoặc tự nhập trong Settings.
+# nhúng vào mã/binary là an toàn, đúng chuẩn (giống PrismLauncher).
 DEFAULT_CLIENT_IDS = {"microsoft": "868f1ec1-fa81-46de-a1f3-599156f2edd7"}
 
 
 def client_id(name: str, env_var: str) -> str:
-    """Lấy OAuth client ID: env -> file cấu hình người dùng -> ID mặc định đã duyệt."""
+    """Lấy OAuth client ID.
+
+    Microsoft: LUÔN dùng client ID của launcher (app Azure đã duyệt) — không cho
+    người chơi đổi, để mọi đăng nhập đi qua đúng app này. Các dịch vụ khác (vd
+    Google) vẫn cho override qua env / file cấu hình.
+    """
+    if name == "microsoft":
+        return DEFAULT_CLIENT_IDS["microsoft"]
     value = os.environ.get(env_var, "").strip()
     if value:
         return value

@@ -11,7 +11,6 @@ from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 from .. import mods as mods_mgr
 from .. import modrinth
 from ..i18n import language, language_name, tr
-from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
 from .menus import MenuItem, popup
@@ -1403,16 +1402,8 @@ class SettingsPage(Page):
         self.java.setFont(ui_font(9))
         self.java.editingFinished.connect(self._set_java)
 
-        # Đăng nhập Microsoft đòi một Azure client ID, mà cho tới giờ chỉ đặt được
-        # bằng biến môi trường hoặc sửa tay clients.json. Cách đó vô dụng với bản
-        # cài đặt: người bấm vào installer không có terminal để export biến, và
-        # càng không đi mò file JSON trong %APPDATA%. Nên nó phải nằm ở đây.
-        self.client_id = QLineEdit(resolve_client_id("microsoft", "MC_CLIENT_ID"), self)
-        self.client_id.setPlaceholderText("paste the Application (client) ID from Azure")
-        self.client_id.setStyleSheet(INPUT_QSS)
-        self.client_id.setFont(ui_font(9))
-        self.client_id.editingFinished.connect(self._set_client_id)
-
+        # Đăng nhập Microsoft luôn dùng client ID của launcher (đã duyệt) — người
+        # chơi không cần và không được đổi, nên không có ô nhập ở đây nữa.
         self.snapshots = AeroToggle(s.show_snapshots, self)
         self.snapshots.toggled.connect(self._set_snapshots)
         self.close_on_launch = AeroToggle(s.close_on_launch, self)
@@ -1497,12 +1488,6 @@ class SettingsPage(Page):
         self.ctl.settings.java_path = self.java.text().strip()
         self.ctl.settings.save()
 
-    def _set_client_id(self) -> None:
-        # Client ID không phải bí mật (mọi launcher mã nguồn mở đều công khai của
-        # mình), nhưng save_client_id vẫn ghi file với quyền 0600 cho đồng nhất
-        # với chỗ đang giữ client secret của Google.
-        save_client_id("microsoft", self.client_id.text().strip())
-
     def _set_snapshots(self, on: bool) -> None:
         self.ctl.settings.show_snapshots = on
         self.ctl.settings.save()
@@ -1520,13 +1505,10 @@ class SettingsPage(Page):
         self.mem.setGeometry(26, 60, w, 26)
         self.game_dir.setGeometry(26, 142, w, 32)
         self.java.setGeometry(26, 218, w, 32)
-        # Ô này có thêm một dòng gợi ý dưới nhãn nên tụt xuống 38px thay vì 28px
-        # như các ô khác.
-        self.client_id.setGeometry(26, 304, w, 32)
-        self.snapshots.setGeometry(26, 368, 44, 22)
-        self.close_on_launch.setGeometry(26, 408, 44, 22)
-        self.check_updates.setGeometry(26, 448, 44, 22)
-        self.lang_btn.setGeometry(26, 508, 200, 30)
+        self.snapshots.setGeometry(26, 282, 44, 22)
+        self.close_on_launch.setGeometry(26, 322, 44, 22)
+        self.check_updates.setGeometry(26, 362, 44, 22)
+        self.lang_btn.setGeometry(26, 422, 200, 30)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -1549,16 +1531,14 @@ class SettingsPage(Page):
         label(26, f"Max memory — {gb:.1f} GB", "")
         label(114, tr("Game folder"))
         label(190, tr("Java path"))
-        label(484, tr("Language"))
-        label(266, "Microsoft Client ID",
-              "Needed to sign in — portal.azure.com › App registrations › your app")
+        label(398, tr("Language"))
         p.setFont(ui_font(9))
         p.setPen(TEXT)
-        p.drawText(QRect(84, 366, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+        p.drawText(QRect(84, 280, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Show snapshots")
-        p.drawText(QRect(84, 406, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+        p.drawText(QRect(84, 320, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Close launcher when the game starts")
-        p.drawText(QRect(84, 446, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
+        p.drawText(QRect(84, 360, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
                    "Check for updates on startup")
 
         warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
