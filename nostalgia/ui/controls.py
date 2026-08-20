@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from PySide6.QtCore import (
-    QEasingCurve, QPointF, QRect, QRectF, Qt, QVariantAnimation, Signal,
+    QEasingCurve, QPointF, QRect, QRectF, Qt, QTimer, QVariantAnimation, Signal,
 )
 from PySide6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
@@ -43,7 +43,11 @@ class ListView(QWidget):
         super().__init__(parent)
         self.rows: list[Row] = []
         self.empty_text = empty_text
-        self.scroll = 0
+        self.scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)
+        self._scroll_anim.timeout.connect(self._scroll_tick)
         self._hover = -1
         self._hover_action = False
         self._hover_badge = False
@@ -68,14 +72,16 @@ class ListView(QWidget):
 
     def set_rows(self, rows: list[Row]) -> None:
         self.rows = rows
-        self.scroll = min(self.scroll, max(0, self._content_h() - self.height()))
+        cap = max(0, self._content_h() - self.height())
+        self.scroll = min(self.scroll, cap)
+        self._scroll_target = min(self._scroll_target, cap)
         self.update()
 
     def _content_h(self) -> int:
         return len(self.rows) * self.ROW_H
 
     def _rect_of(self, i: int) -> QRect:
-        return QRect(0, i * self.ROW_H - self.scroll, self.width(), self.ROW_H)
+        return QRect(0, int(i * self.ROW_H - self.scroll), self.width(), self.ROW_H)
 
     def _action_rect(self, row_rect: QRect) -> QRect:
         return QRect(row_rect.right() - 46, row_rect.center().y() - 14, 30, 28)
@@ -85,7 +91,7 @@ class ListView(QWidget):
         return QRect(right - self.BADGE_W, row_rect.center().y() - 13, self.BADGE_W, 26)
 
     def _index_at(self, pos) -> int:
-        i = (pos.y() + self.scroll) // self.ROW_H
+        i = int((pos.y() + self.scroll) // self.ROW_H)
         return i if 0 <= i < len(self.rows) else -1
 
     def mouseMoveEvent(self, e):  # noqa: N802
@@ -123,8 +129,18 @@ class ListView(QWidget):
     def wheelEvent(self, e):  # noqa: N802
         overflow = self._content_h() - self.height()
         if overflow > 0:
-            self.scroll = max(0, min(overflow, self.scroll - e.angleDelta().y()))
-            self.update()
+            self._scroll_target = max(0.0, min(overflow, self._scroll_target - e.angleDelta().y()))
+            if not self._scroll_anim.isActive():
+                self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self.scroll
+        if abs(d) < 0.6:
+            self.scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self.scroll += d * 0.28
+        self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
