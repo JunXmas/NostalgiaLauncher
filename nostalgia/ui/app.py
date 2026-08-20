@@ -705,6 +705,12 @@ class Controller:
         # đứng một mình được nếu mod lỗi.
         if not hard and "fabric" in v and mc:
             self._install_aero_mods_async(inst, mc)
+            # Layout FancyMenu Aero + hard-lock editor (ép lại mỗi lần áp). File-
+            # only nên chạy thẳng; chỉ ăn khi FancyMenu đã cài, bằng không nằm im.
+            try:
+                aero.apply_fancymenu(self.instance_dir(inst), lock=True)
+            except Exception:  # noqa: BLE001 - không chặn nếu ghi config lỗi
+                pass
         if not silent:
             self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
 

@@ -22,6 +22,9 @@ from pathlib import Path
 
 PACK_NAME = "Aero UI.zip"
 PACK_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-pack"
+# Layout FancyMenu Aero (viết tay) + ảnh nền, ship kèm launcher. Chỉ có tác dụng
+# khi instance đã cài mod FancyMenu (xem app._install_aero_mods_async).
+FANCYMENU_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "fancymenu"
 # Mod Fabric khoá cứng (ALWAYS_ENABLED) — build cho era 26.x, chỉ dùng ở đó.
 MOD_JAR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-ui-mod.jar"
 MOD_NAME = "aero-ui-mod.jar"
@@ -148,11 +151,54 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
     return "modern" if modern else "legacy"
 
 
+def apply_fancymenu(game_dir: Path, lock: bool = True) -> None:
+    """Cài layout FancyMenu Aero (nền title screen) vào instance, và — nếu lock —
+    ẩn thanh editor của FancyMenu để KHÔNG đổi/tắt được giao diện trong game
+    (hard-lock kiểu Lunar). Ghi file trực tiếp, không mạng.
+
+    Chỉ ăn khi instance có mod FancyMenu; bản không có mod thì file này nằm im,
+    vô hại. Chạy lại mỗi lần áp Aero nên trạng thái khoá luôn được ép lại.
+    """
+    layout = FANCYMENU_DIR / "aero_title.txt"
+    bg = FANCYMENU_DIR / "aero_bg.png"
+    if not layout.exists() or not bg.exists():
+        return
+    import shutil
+    fm = Path(game_dir) / "config" / "fancymenu"
+    (fm / "customization").mkdir(parents=True, exist_ok=True)
+    (fm / "assets").mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(layout, fm / "customization" / "aero_title.txt")
+    shutil.copyfile(bg, fm / "assets" / "aero_bg.png")
+    if not lock:
+        return
+    # Ẩn thanh Customization/Tools/Help -> người chơi không mở được editor. Chỉ
+    # sửa được khi options.txt đã tồn tại (FancyMenu tạo ở lần chạy đầu); lần áp
+    # sau sẽ khoá. Chỉ đụng đúng một dòng, giữ nguyên phần còn lại của config.
+    opts = fm / "options.txt"
+    if opts.exists():
+        import re
+        t = opts.read_text()
+        if "show_customization_overlay" in t:
+            t = re.sub(r"B:show_customization_overlay = '[^']*';",
+                       "B:show_customization_overlay = 'false';", t)
+            opts.write_text(t)
+
+
 def remove_from_instance(game_dir: Path) -> None:
     """Gỡ Aero UI: xoá zip, mod, và bỏ khỏi options.txt (tắt công tắc)."""
     gd = Path(game_dir)
     (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)
     (gd / "mods" / MOD_NAME).unlink(missing_ok=True)
+    # FancyMenu: xoá layout Aero và MỞ LẠI editor (bỏ hard-lock).
+    fm = gd / "config" / "fancymenu"
+    (fm / "customization" / "aero_title.txt").unlink(missing_ok=True)
+    opts = fm / "options.txt"
+    if opts.exists():
+        import re
+        t = opts.read_text()
+        if "show_customization_overlay" in t:
+            opts.write_text(re.sub(r"B:show_customization_overlay = '[^']*';",
+                                   "B:show_customization_overlay = 'true';", t))
     options = gd / "options.txt"
     if not options.exists():
         return
