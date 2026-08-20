@@ -108,8 +108,6 @@ class Controller:
             "resourcepacks": page_mod.ResourcePacksPage(self),
             "shaders": page_mod.ShaderPacksPage(self),
             "modpacks": ModpackBrowsePage(self),
-            "servers": page_mod.StubPage(self, "Servers",
-                "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),
             "settings": page_mod.SettingsPage(self),
         }

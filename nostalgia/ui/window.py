@@ -34,7 +34,6 @@ NAV = [
     ("mods", "Mods", "mods"),
     ("resourcepacks", "Resource Packs", "packs"),
     ("shaders", "Shaders", "shaders"),
-    ("servers", "Servers", "servers"),
     ("skins", "Skin", "skin"),
     ("settings", "Settings", "gear"),
     ("discord", "Discord", "discord"),   # mở link mời, không phải trang
