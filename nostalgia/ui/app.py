@@ -695,7 +695,8 @@ class Controller:
             mc = optifine.mc_from_version_id(inst.version) or (inst.version or "")
         hard = ("fabric" in v) and bool(mc) and not mc.startswith("1.")
         try:
-            kind = aero.apply_to_instance(self.instance_dir(inst), jar, hard_lock=hard)
+            kind = aero.apply_to_instance(self.instance_dir(inst), jar, hard_lock=hard,
+                                          dark=self.settings.menu_dark)
         except Exception as e:  # noqa: BLE001
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
@@ -808,6 +809,16 @@ class Controller:
 
         self._run(lambda: import_world_zip(Path(zip_path), saves), done,
                   lambda m: self.window.set_status(f"Couldn't import world: {m}"))
+
+    def set_menu_dark(self, on: bool) -> None:
+        """Đổi panorama menu ngày/đêm: lưu lựa chọn rồi dựng lại pack Aero (đổi 6
+        mặt panorama) cho mọi instance. Có hiệu lực ở lần mở game tới."""
+        self.settings.menu_dark = on
+        self.settings.save()
+        for inst in self.instances.all():
+            self.apply_aero_ui(inst, silent=True)
+        self.window.set_status(
+            ("Night" if on else "Day") + " menu background — takes effect next time the game opens.")
 
     def set_aero_ui(self, on: bool) -> None:
         """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""

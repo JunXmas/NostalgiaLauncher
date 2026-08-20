@@ -80,6 +80,9 @@ _T = {
         "Show snapshots": "Hiện bản snapshot",
         "Close launcher when the game starts": "Đóng launcher khi game khởi động",
         "Check for updates on startup": "Kiểm tra cập nhật khi mở",
+        "Dark menu background (night panorama)": "Nền menu tối (panorama ban đêm)",
+        "Menu background: off = daytime panorama, on = nighttime.":
+            "Nền menu: tắt = panorama ban ngày, bật = ban đêm.",
         "Setting near all your RAM can freeze the system.":
             "Đặt gần hết RAM có thể làm treo máy.",
         "Settings most people never need to touch.":

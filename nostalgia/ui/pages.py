@@ -1750,6 +1750,10 @@ class SettingsPage(Page):
         self.close_on_launch.toggled.connect(self._set_close)
         self.check_updates = AeroToggle(s.check_updates, self)
         self.check_updates.toggled.connect(self._set_check_updates)
+        self.menu_dark = AeroToggle(s.menu_dark, self)
+        self.menu_dark.setToolTip(tr(
+            "Menu background: off = daytime panorama, on = nighttime."))
+        self.menu_dark.toggled.connect(lambda on: self.ctl.set_menu_dark(on))
 
         self.open_dir = AeroButton("OPEN GAME FOLDER", self, height=32, tone="neutral")
         self.open_dir.clicked.connect(lambda: self.ctl.open_path(self.ctl.settings.game_path))
@@ -1855,8 +1859,8 @@ class SettingsPage(Page):
 
     # Mốc y cố định cho từng hàng — dùng CHUNG cho đặt widget và vẽ nhãn, để hai
     # bên không lệch. Khối "Advanced" (game folder + Java) chỉ chiếm chỗ khi mở.
-    Y_MEM, Y_SNAP, Y_CLOSE, Y_UPD, Y_LANG, Y_ADV = 60, 126, 166, 206, 266, 312
-    Y_DIR, Y_JAVA = 378, 448
+    Y_MEM, Y_SNAP, Y_CLOSE, Y_UPD, Y_THEME = 60, 126, 166, 206, 246
+    Y_LANG, Y_ADV, Y_DIR, Y_JAVA = 300, 346, 412, 482
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         self._relayout()
@@ -1867,6 +1871,7 @@ class SettingsPage(Page):
         self.snapshots.setGeometry(26, self.Y_SNAP, 44, 22)
         self.close_on_launch.setGeometry(26, self.Y_CLOSE, 44, 22)
         self.check_updates.setGeometry(26, self.Y_UPD, 44, 22)
+        self.menu_dark.setGeometry(26, self.Y_THEME, 44, 22)
         self.lang_btn.setGeometry(26, self.Y_LANG, 200, 30)
         self.adv_btn.setGeometry(26, self.Y_ADV, 200, 28)
         adv = self._advanced
@@ -1903,6 +1908,7 @@ class SettingsPage(Page):
         toggle_text(self.Y_SNAP, tr("Show snapshots"))
         toggle_text(self.Y_CLOSE, tr("Close launcher when the game starts"))
         toggle_text(self.Y_UPD, tr("Check for updates on startup"))
+        toggle_text(self.Y_THEME, tr("Dark menu background (night panorama)"))
         label(self.Y_LANG - 22, tr("Language"))
         if self._advanced:
             label(self.Y_DIR - 22, tr("Game folder"))

@@ -25,6 +25,10 @@ PACK_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-pack"
 # Layout FancyMenu Aero (viết tay) + ảnh nền, ship kèm launcher. Chỉ có tác dụng
 # khi instance đã cài mod FancyMenu (xem app._install_aero_mods_async).
 FANCYMENU_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "fancymenu"
+# Panorama title screen theo chế độ sáng/tối: day/ (ban ngày) và night/ (ban đêm),
+# mỗi bộ 6 mặt panorama_0..5. Ghi đè panorama trong pack lúc đóng gói.
+PANORAMA_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "panoramas"
+PANO_REL = "assets/minecraft/textures/gui/title/background"
 # Mod Fabric khoá cứng (ALWAYS_ENABLED) — build cho era 26.x, chỉ dùng ở đó.
 MOD_JAR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-ui-mod.jar"
 MOD_NAME = "aero-ui-mod.jar"
@@ -66,12 +70,29 @@ def _legacy_widgets_png(client_jar: Path) -> bytes | None:
     return bytes(ba)
 
 
-def _build_zip(dest: Path, legacy_widgets: bytes | None) -> None:
+def _build_zip(dest: Path, legacy_widgets: bytes | None, dark: bool = False) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
+    # Bộ panorama theo chế độ; có thì THAY 6 mặt panorama trong pack và BỎ
+    # panorama_overlay (overlay làm nền tĩnh — bỏ đi để panorama XOAY như title
+    # gốc). Không có bộ ảnh thì giữ nguyên panorama sẵn trong pack.
+    pano_src = PANORAMA_DIR / ("night" if dark else "day")
+    use_pano = pano_src.is_dir() and (pano_src / "panorama_0.png").exists()
+    skip = set()
+    if use_pano:
+        skip = {f"{PANO_REL}/panorama_{i}.png" for i in range(6)}
+        skip.add(f"{PANO_REL}/panorama_overlay.png")
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
         for f in sorted(PACK_DIR.rglob("*")):
             if f.is_file():
-                z.write(f, f.relative_to(PACK_DIR).as_posix())
+                rel = f.relative_to(PACK_DIR).as_posix()
+                if rel in skip:
+                    continue
+                z.write(f, rel)
+        if use_pano:
+            for i in range(6):
+                face = pano_src / f"panorama_{i}.png"
+                if face.exists():
+                    z.write(face, f"{PANO_REL}/panorama_{i}.png")
         if legacy_widgets is not None:
             z.writestr(WIDGETS, legacy_widgets)
 
@@ -122,7 +143,7 @@ def _enable_in_options(options: Path, modern: bool) -> None:
 
 
 def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
-                      hard_lock: bool = False) -> str:
+                      hard_lock: bool = False, dark: bool = False) -> str:
     """Cài Aero UI vào instance tại game_dir.
 
     hard_lock=True (chỉ dùng cho bản 26.x+ Fabric — nơi mod chạy được): cài mod
@@ -143,7 +164,7 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
 
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
     modern = legacy is None
-    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy)
+    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark)
     _enable_in_options(gd / "options.txt", modern)
     # Kéo blur nền menu lên max: cùng lớp tint kính Aero trong pack -> frosted
     # acrylic. Chỉ có tác dụng ở 1.20.5+; bản cũ bỏ qua dòng này.
@@ -159,16 +180,13 @@ def apply_fancymenu(game_dir: Path, lock: bool = True) -> None:
     Chỉ ăn khi instance có mod FancyMenu; bản không có mod thì file này nằm im,
     vô hại. Chạy lại mỗi lần áp Aero nên trạng thái khoá luôn được ép lại.
     """
-    layout = FANCYMENU_DIR / "aero_title.txt"
-    bg = FANCYMENU_DIR / "aero_bg.png"
-    if not layout.exists() or not bg.exists():
-        return
-    import shutil
     fm = Path(game_dir) / "config" / "fancymenu"
-    (fm / "customization").mkdir(parents=True, exist_ok=True)
-    (fm / "assets").mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(layout, fm / "customization" / "aero_title.txt")
-    shutil.copyfile(bg, fm / "assets" / "aero_bg.png")
+    if not fm.is_dir():
+        return
+    # Nền title screen giờ do PANORAMA của resource pack lo (ngày/đêm). Gỡ nền
+    # tĩnh FancyMenu cũ (ảnh Aero xanh) nếu còn, để panorama hiện lên.
+    (fm / "customization" / "aero_title.txt").unlink(missing_ok=True)
+    (fm / "assets" / "aero_bg.png").unlink(missing_ok=True)
     if not lock:
         return
     # Ẩn thanh Customization/Tools/Help -> người chơi không mở được editor. Chỉ
