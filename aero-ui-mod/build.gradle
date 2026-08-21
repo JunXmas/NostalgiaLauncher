@@ -25,9 +25,13 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	// 26.x: Fabric API có access-widener namespace 'official' nên khớp Loom 1.17.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// Dev map = official Mojang (source viết tên Identifier/PackRepository...). Loom
+	// tự remap jar production sang intermediary + sinh refmap cho Mixin -> chạy được
+	// trên runtime Fabric thật (intermediary). THIẾU dòng này là lý do jar cũ ra
+	// tên-Mojang và crash lúc load (NoClassDefFoundError net/minecraft/resources/Identifier).
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 processResources {
