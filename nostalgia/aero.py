@@ -31,10 +31,13 @@ PANORAMA_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "panoramas"
 PANO_REL = "assets/minecraft/textures/gui/title/background"
 MOD_NAME = "aero-ui-mod.jar"
 _ASSETS = Path(__file__).resolve().parent / "ui" / "assets"
-# Jar hard-lock Fabric cho dòng 1.21.x (obfuscate -> intermediary). Đã verify chạy
-# trên 1.21.11 (pack_format 75). Mixin để `required` nên CHỈ áp cho bản khớp, kẻo
-# sai target thì crash lúc load — bản không khớp rơi về soft-lock (an toàn).
-MOD_JAR_FABRIC_121 = _ASSETS / "aero-ui-mod.jar"
+# Jar hard-lock Fabric build từ MỘT source, mỗi era một bản (xem aero-ui-mod/):
+#   • 121: 1.21.x obfuscate -> intermediary. Verify chạy 1.21.11 (pack_format 75).
+#   • 26x: 26.x KHÔNG obfuscate -> tên Mojang. Verify chạy 26.2 (pack_format 88).
+# Mixin để `required` nên CHỈ áp cho bản đã verify (khớp format), kẻo sai target thì
+# crash lúc load — bản không khớp rơi về soft-lock (an toàn).
+MOD_JAR_FABRIC_121 = _ASSETS / "aero-ui-mod-121.jar"
+MOD_JAR_FABRIC_26X = _ASSETS / "aero-ui-mod-26x.jar"
 
 
 def _obfuscated(mc: str) -> bool:
@@ -49,7 +52,9 @@ def _obfuscated(mc: str) -> bool:
 # Hiện chỉ có 1.21.x Fabric; 26.x / Fabric cũ / Forge sẽ bổ sung sau (rơi soft-lock).
 _HARD_LOCK_ARTIFACTS = [
     ("fabric", MOD_JAR_FABRIC_121,
-     lambda mc, fmt: _obfuscated(mc) and fmt == 75),
+     lambda mc, fmt: _obfuscated(mc) and fmt == 75),        # 1.21.11
+    ("fabric", MOD_JAR_FABRIC_26X,
+     lambda mc, fmt: not _obfuscated(mc) and fmt == 88),    # 26.2
 ]
 
 
