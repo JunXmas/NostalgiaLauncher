@@ -131,6 +131,7 @@ _ASSETS = Path(__file__).resolve().parent / "ui" / "assets"
 # crash lúc load — bản không khớp rơi về soft-lock (an toàn).
 MOD_JAR_FABRIC_121 = _ASSETS / "aero-ui-mod-121.jar"
 MOD_JAR_FABRIC_26X = _ASSETS / "aero-ui-mod-26x.jar"
+MOD_JAR_FABRIC_20X = _ASSETS / "aero-ui-mod-20x.jar"   # 1.20.x legacy, verify 1.20.6
 
 
 def _obfuscated(mc: str) -> bool:
@@ -148,6 +149,8 @@ _HARD_LOCK_ARTIFACTS = [
      lambda mc, fmt: _obfuscated(mc) and fmt == 75),        # 1.21.11
     ("fabric", MOD_JAR_FABRIC_26X,
      lambda mc, fmt: not _obfuscated(mc) and fmt == 88),    # 26.2
+    ("fabric", MOD_JAR_FABRIC_20X,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 32),        # 1.20.6
 ]
 
 
