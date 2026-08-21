@@ -2,6 +2,20 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.8.0-beta.3
+- **Day/night menu, one click from Home.** A "Menu: Day/Night" button on the
+  dashboard flips the title-screen panorama between the daytime and nighttime
+  scenes. It applies on next launch — or, in a running game, press **F3+T** at
+  the title screen to see it switch live, no restart needed.
+- **The Windows 7 look.** The interface now ships with Selawik (an open-source
+  stand-in for Segoe UI, the Aero-era font) and a larger, easier-to-read sidebar.
+- **Browse knows what you already have.** Mods already installed show an
+  "Installed" tag when browsing, and won't be downloaded again.
+- **Mods, Resource Packs and Shaders are back in the sidebar** (and still inside
+  each game's tabs), so you can browse them either way.
+- Removed the bundled FancyMenu mod (it added nothing on this version); the
+  animated menu blur (Blur+) stays. Updated the Discord link.
+
 ## 0.8.0-beta.2
 - **Fixed: some game versions wouldn't launch at all** (e.g. 1.21.4, 1.20.6),
   while others (like 1.21.11) worked. A Fabric game's own libraries and the
