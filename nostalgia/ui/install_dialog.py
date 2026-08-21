@@ -14,7 +14,7 @@ Chia thành component rõ ràng: `instance_target`/`check_compat` (thuần logic
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 from .. import optifine
@@ -105,25 +105,50 @@ class InstanceRow(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect().adjusted(0, 2, -1, -2))
 
-        # Nền kính: mờ hẳn khi disable, sáng khi hover/selected.
-        base = 26 if self._enabled else 12
-        if self._selected:
-            base = 64
-        elif self._hover:
-            base = 44
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor(AERO_TINT.red(), AERO_TINT.green(), AERO_TINT.blue(), base))
-        p.drawRoundedRect(r, 7, 7)
+        # ---- Mặt kính Aero: tint + gloss + sheen, cắt theo bo góc ----
+        clip = QPainterPath()
+        clip.addRoundedRect(r, 8, 8)
+        p.save()
+        p.setClipPath(clip)
+        # 1) sắc kính lam (mờ hẳn khi disable, sáng khi hover/selected)
+        tint = 14 if not self._enabled else 66 if self._selected else 50 if self._hover else 32
+        p.fillRect(r, QColor(AERO_TINT.red(), AERO_TINT.green(), AERO_TINT.blue(), tint))
+        # 2) gloss: sáng nửa trên, "kệ" ở giữa, tối nhẹ đáy (bóng nút Aero)
+        top_a = 40 if self._enabled else 14
+        g = QLinearGradient(r.left(), r.top(), r.left(), r.bottom())
+        g.setColorAt(0.0, QColor(255, 255, 255, top_a))
+        g.setColorAt(0.48, QColor(255, 255, 255, top_a // 5))
+        g.setColorAt(0.52, QColor(255, 255, 255, 0))
+        g.setColorAt(1.0, QColor(10, 20, 35, 46))
+        p.fillRect(r, g)
+        # 3) sheen chéo khi hover/selected
+        if self._enabled and (self._hover or self._selected):
+            s = QLinearGradient(r.left(), r.top(), r.right(), r.bottom())
+            s.setColorAt(0.0, QColor(255, 255, 255, 34))
+            s.setColorAt(0.35, QColor(255, 255, 255, 8))
+            s.setColorAt(0.6, QColor(255, 255, 255, 0))
+            p.fillRect(r, s)
+        p.restore()
 
-        # Viền: cyan khi selected, mờ khi disable.
+        # ---- Bevel: gờ sáng đỉnh + phản chiếu lam đáy ----
+        inner = r.adjusted(1, 1, -1, -1)
+        p.setPen(QPen(QColor(255, 255, 255, 120 if self._enabled else 36), 1))
+        p.drawLine(int(inner.left()) + 8, int(inner.top()),
+                   int(inner.right()) - 8, int(inner.top()))
+        p.setPen(QPen(QColor(120, 190, 240, 70 if self._enabled else 22), 1))
+        p.drawLine(int(inner.left()) + 8, int(inner.bottom()),
+                   int(inner.right()) - 8, int(inner.bottom()))
+
+        # ---- Viền ngoài / glow cyan khi selected ----
+        p.setBrush(Qt.NoBrush)
         if self._selected:
-            p.setBrush(Qt.NoBrush)
-            p.setPen(QPen(QColor(111, 208, 239), 1.6))
-            p.drawRoundedRect(r.adjusted(0.8, 0.8, -0.8, -0.8), 7, 7)
+            p.setPen(QPen(QColor(111, 208, 239, 70), 3))
+            p.drawRoundedRect(r.adjusted(1.5, 1.5, -1.5, -1.5), 8, 8)
+            p.setPen(QPen(QColor(150, 224, 245), 1.4))
+            p.drawRoundedRect(r.adjusted(0.7, 0.7, -0.7, -0.7), 8, 8)
         else:
-            p.setPen(QPen(QColor(255, 255, 255, 40 if self._enabled else 18), 1))
-            p.setBrush(Qt.NoBrush)
-            p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 7, 7)
+            p.setPen(QPen(QColor(255, 255, 255, 44 if self._enabled else 18), 1))
+            p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 8, 8)
 
         left = int(r.left()) + 14
         # Hàng "tạo mới": dấu ＋ + nhãn, tông accent.
@@ -238,3 +263,24 @@ class InstallTargetDialog(GlassDialog):
             y += InstanceRow.ROW_H + 6
         self.ok.setGeometry(c.right() - 132, c.bottom() - 46, 110, 34)
         self.cancel.setGeometry(c.right() - 250, c.bottom() - 46, 108, 34)
+
+    def paint_body(self, p: QPainter) -> None:
+        """Thêm chất kính Aero cho thẻ: sheen chéo lớn + gờ sáng đỉnh + gạch dưới tiêu đề."""
+        c = self.card
+        cf = QRectF(c)
+        clip = QPainterPath()
+        clip.addRoundedRect(cf, 5, 5)
+        p.save()
+        p.setClipPath(clip)
+        # Sheen chéo phủ nửa trên thẻ.
+        s = QLinearGradient(cf.left(), cf.top(), cf.right(), cf.center().y())
+        s.setColorAt(0.0, QColor(255, 255, 255, 24))
+        s.setColorAt(0.4, QColor(255, 255, 255, 6))
+        s.setColorAt(0.72, QColor(255, 255, 255, 0))
+        p.fillRect(cf, s)
+        p.restore()
+        # Gờ sáng đỉnh + gạch mờ dưới tiêu đề.
+        p.setPen(QPen(QColor(255, 255, 255, 80), 1))
+        p.drawLine(c.left() + 6, c.top() + 1, c.right() - 6, c.top() + 1)
+        p.setPen(QPen(QColor(255, 255, 255, 28), 1))
+        p.drawLine(c.left() + 22, c.top() + 45, c.right() - 22, c.top() + 45)
