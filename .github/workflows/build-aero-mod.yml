@@ -1,8 +1,9 @@
 name: Build Aero UI mod
 
-# Build the Fabric "hard lock" resource-pack mod (aero-ui-mod) into a jar.
-# Runs on any change to the mod, and can be dispatched manually. The jar is
-# uploaded as a build artifact; download it from the run to bundle in the app.
+# Build the Fabric "hard lock" resource-pack mod (aero-ui-mod) from one source
+# into a jar PER version-era (matrix). Runs on any change to the mod, and can be
+# dispatched manually. Each jar is uploaded as its own artifact; download and
+# bundle in the app (nostalgia/ui/assets/) under the name the registry expects.
 
 on:
   push:
@@ -17,20 +18,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ["121", "26x"]   # 1.21.x (intermediary) and 26.x (Mojang-native)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "25"        # cần JDK 25 để compile với Minecraft 26.x
-      - name: Build the mod
+      - name: Build the mod (${{ matrix.target }})
         working-directory: aero-ui-mod
         run: |
           chmod +x gradlew
-          ./gradlew build --no-daemon --stacktrace
-      - name: Upload mod jar
+          ./gradlew build -PaeroTarget=${{ matrix.target }} --no-daemon --stacktrace
+      - name: Upload mod jar (${{ matrix.target }})
         uses: actions/upload-artifact@v4
         with:
-          name: aero-ui-mod-jar
-          path: aero-ui-mod/build/libs/aero-ui-*.jar
+          name: aero-ui-mod-${{ matrix.target }}
+          path: aero-ui-mod/build/libs/aero-ui-${{ matrix.target }}-*.jar
           if-no-files-found: error

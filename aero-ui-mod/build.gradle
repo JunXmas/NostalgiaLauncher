@@ -1,19 +1,39 @@
-plugins {
-	// fabric-loom-remap: dùng cho các bản Minecraft CÒN obfuscate (<= 1.21.11).
-	// Nó remap jar production sang intermediary + sinh refmap cho Mixin -> chạy
-	// đúng trên runtime intermediary mà launcher tạo (fabric-loader + intermediary).
-	// Plugin 'net.fabricmc.fabric-loom' (không -remap) là cho bản KHÔNG obfuscate
-	// (26.1+): jar ra tên-Mojang, chỉ chạy runtime Mojang-native -> KHÔNG dùng ở đây.
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
-	id 'maven-publish'
+// Build đa phiên bản từ MỘT source (AeroUiClient + PackRepositoryMixin). Chọn era
+// bằng -PaeroTarget=<key> (mặc định 121). Mỗi era một toolchain vì ranh giới
+// obfuscate của Minecraft:
+//   • 121: 1.21.x CÒN obfuscate  -> plugin fabric-loom-remap + officialMojangMappings
+//          -> jar được remap sang INTERMEDIARY (chạy runtime intermediary).
+//   • 26x: 26.x KHÔNG obfuscate   -> plugin fabric-loom (thường), không mappings
+//          -> jar giữ tên Mojang (chạy runtime Mojang-native).
+// Loom jar đăng ký CẢ hai plugin id nên nạp qua buildscript rồi apply theo era.
+buildscript {
+	repositories {
+		maven { url = 'https://maven.fabricmc.net/' }
+		gradlePluginPortal()
+		mavenCentral()
+	}
+	dependencies {
+		classpath "net.fabricmc:fabric-loom:${loom_version}"
+	}
+}
+
+ext.aeroTarget = (project.findProperty('aeroTarget') ?: '121').toString()
+ext.TARGETS = [
+	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true ],
+	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false],
+]
+def T = TARGETS[aeroTarget]
+if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
+
+apply plugin: T.plugin
+apply plugin: 'maven-publish'
+
+base {
+	// jar riêng cho từng era: aero-ui-121-1.0.0.jar / aero-ui-26x-1.0.0.jar
+	archivesName = "aero-ui-${aeroTarget}"
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
 }
 
 loom {
@@ -28,11 +48,14 @@ loom {
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
+	minecraft "com.mojang:minecraft:${T.mc}"
+	// Bản obfuscate: dev map = official Mojang (source giữ tên Identifier/PackRepository),
+	// loom remap jar sang intermediary. Bản không obfuscate: MC đã là tên Mojang -> khỏi.
+	if (T.mojmap) {
+		mappings loom.officialMojangMappings()
+	}
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${T.api}"
 }
 
 processResources {
@@ -49,9 +72,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_21
@@ -67,7 +87,6 @@ jar {
 	}
 }
 
-// configure the maven publication
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
@@ -75,11 +94,6 @@ publishing {
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }
