@@ -131,7 +131,13 @@ _ASSETS = Path(__file__).resolve().parent / "ui" / "assets"
 # crash lúc load — bản không khớp rơi về soft-lock (an toàn).
 MOD_JAR_FABRIC_121 = _ASSETS / "aero-ui-mod-121.jar"
 MOD_JAR_FABRIC_26X = _ASSETS / "aero-ui-mod-26x.jar"
-MOD_JAR_FABRIC_20X = _ASSETS / "aero-ui-mod-20x.jar"   # 1.20.x legacy, verify 1.20.6
+# Dòng legacy (obfuscate -> intermediary, tên ResourceLocation, Java ≤17). Mỗi bản
+# một jar riêng vì pack_format/fabric-api/Java khác nhau. Verify chạy: 1.16.5, 1.20.6.
+MOD_JAR_FABRIC_20X = _ASSETS / "aero-ui-mod-20x.jar"   # 1.20.6 (format 32)
+MOD_JAR_FABRIC_194 = _ASSETS / "aero-ui-mod-194.jar"   # 1.19.4 (format 13)
+MOD_JAR_FABRIC_182 = _ASSETS / "aero-ui-mod-182.jar"   # 1.18.2 (format 8)
+MOD_JAR_FABRIC_171 = _ASSETS / "aero-ui-mod-171.jar"   # 1.17.1 (format 7)
+MOD_JAR_FABRIC_165 = _ASSETS / "aero-ui-mod-165.jar"   # 1.16.5 (format 6)
 
 
 def _obfuscated(mc: str) -> bool:
@@ -151,6 +157,14 @@ _HARD_LOCK_ARTIFACTS = [
      lambda mc, fmt: not _obfuscated(mc) and fmt == 88),    # 26.2
     ("fabric", MOD_JAR_FABRIC_20X,
      lambda mc, fmt: _obfuscated(mc) and fmt == 32),        # 1.20.6
+    ("fabric", MOD_JAR_FABRIC_194,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 13),        # 1.19.4
+    ("fabric", MOD_JAR_FABRIC_182,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 8),         # 1.18.2
+    ("fabric", MOD_JAR_FABRIC_171,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 7),         # 1.17.1
+    ("fabric", MOD_JAR_FABRIC_165,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 6),         # 1.16.5
 ]
 
 
