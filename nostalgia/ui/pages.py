@@ -901,7 +901,10 @@ class ContentLibraryPage(Page):
         # Đích cài: instance người dùng chọn ở modal, hoặc instance đang xem (nhúng).
         if instance is not None:
             mc, loader = instance_target(instance)
-            loaders, gvs = [loader], [mc]
+            # Resource pack / shader gắn loader "minecraft" trên Modrinth, KHÔNG
+            # phải fabric/forge — chỉ lọc theo loader khi là mod (như _target()).
+            loaders = [loader] if self.is_mod else None
+            gvs = [mc]
             game_dir = self.ctl.instance_dir(instance)
             self.ctl.window.set_status(f"Installing {hit.get('title', slug)} → {instance.name}…")
         else:

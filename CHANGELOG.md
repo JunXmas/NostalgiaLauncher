@@ -2,6 +2,13 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.3
+- **Fixed: couldn't install resource packs or shaders from Browse Modrinth.**
+  When installing into a chosen game, the launcher wrongly filtered by the mod
+  loader (Fabric/Forge) — but resource packs and shaders aren't tied to a loader,
+  so nothing matched and you got "no compatible version". They install correctly
+  now.
+
 ## 0.9.2
 - **Full translations for eight more languages.** Spanish, French, German,
   Portuguese, Russian, Chinese, Japanese and Korean now cover the whole
