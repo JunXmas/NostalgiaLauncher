@@ -24,7 +24,7 @@ from .theme import (
 
 # Thẻ + lưới.
 CARD_W = 300
-CARD_H = 256
+CARD_H = 228              # gọn lại sau khi bỏ mô tả + tags
 PREVIEW_H = 128           # nửa trên = ảnh xem trước
 GAP = 18
 PAD = 26
@@ -220,10 +220,10 @@ class PanoramaPage(QWidget):
 
         tx = icon_r.right() + 12
         tw = rect.right() - tx - 14
-        source, desc, tags = _META.get(
+        source, _, _ = _META.get(
             tid, (f"by {'Nostalgia' if theme['builtin'] else 'You'}",
-                  tr("Custom panorama background you imported."), _DEFAULT_TAGS))
-        # Tiêu đề + nguồn.
+                  "", _DEFAULT_TAGS))
+        # Tiêu đề + nguồn (đã bỏ mô tả và tags cho gọn).
         p.setFont(ui_font(11, bold=True))
         p.setPen(TEXT)
         p.drawText(QRect(tx, info_top + 12, tw, 18),
@@ -232,13 +232,6 @@ class PanoramaPage(QWidget):
         p.setPen(TEXT_DIM)
         p.drawText(QRect(tx, info_top + 32, tw, 14),
                    Qt.AlignLeft | Qt.AlignVCenter, source)
-        # Mô tả 2 dòng.
-        p.setFont(ui_font(8))
-        p.setPen(TEXT_FAINT)
-        p.drawText(QRect(ix, info_top + 66, rect.width() - 28, 30),
-                   Qt.AlignLeft | Qt.TextWordWrap, desc)
-        # Tags (chừa lề phải cho badge trạng thái ở cùng hàng, khỏi đè lên nhau).
-        self._paint_tags(p, QRect(ix, info_top + 98, rect.width() - 28 - 96, 18), tags)
 
         # Thanh trạng thái dưới: badge Active hoặc gợi ý Select.
         badge = QRect(rect.right() - 92, rect.bottom() - 30, 78, 20)
@@ -279,22 +272,6 @@ class PanoramaPage(QWidget):
         else:
             p.setPen(QPen(QColor(255, 255, 255, 55), 1))
             p.drawRoundedRect(rf.adjusted(0.5, 0.5, -0.5, -0.5), RADIUS, RADIUS)
-
-    def _paint_tags(self, p: QPainter, area: QRect, tags: list[str]) -> None:
-        p.setFont(ui_font(7))
-        x = area.left()
-        fm = p.fontMetrics()
-        for tag in tags:
-            w = fm.horizontalAdvance(tag) + 16
-            if x + w > area.right():
-                break
-            pill = QRect(x, area.top(), w, 16)
-            p.setBrush(QColor(70, 116, 170, 70))
-            p.setPen(Qt.NoPen)
-            p.drawRoundedRect(QRectF(pill), 8, 8)
-            p.setPen(QColor(198, 220, 240))
-            p.drawText(pill, Qt.AlignCenter, tag)
-            x += w + 6
 
 
 def QBrushNoise():
