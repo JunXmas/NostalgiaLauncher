@@ -2,6 +2,7 @@ package com.nostalgia.aeroui.mixin;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -61,6 +62,8 @@ public class PackRepositoryMixin {
 		List<Pack> reordered = new ArrayList<>(selected);
 		reordered.remove(ours);
 		reordered.add(ours); // cuối danh sách = áp sau cùng = ưu tiên cao nhất
-		cir.setReturnValue(List.copyOf(reordered));
+		// Collections.unmodifiableList thay cho List.copyOf (Java 10) để build được
+		// cả release 8 (1.16.5). Ngữ nghĩa như nhau: trả danh sách bất biến.
+		cir.setReturnValue(Collections.unmodifiableList(reordered));
 	}
 }
