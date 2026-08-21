@@ -138,6 +138,9 @@ MOD_JAR_FABRIC_194 = _ASSETS / "aero-ui-mod-194.jar"   # 1.19.4 (format 13)
 MOD_JAR_FABRIC_182 = _ASSETS / "aero-ui-mod-182.jar"   # 1.18.2 (format 8)
 MOD_JAR_FABRIC_171 = _ASSETS / "aero-ui-mod-171.jar"   # 1.17.1 (format 7)
 MOD_JAR_FABRIC_165 = _ASSETS / "aero-ui-mod-165.jar"   # 1.16.5 (format 6)
+# Forge 1.12.2 (RetroFuturaGradle, Java 8). KHÁC Fabric: mod KHÔNG kèm pack — nó chỉ
+# ép "Aero UI.zip" (do launcher đặt) luôn bật + top mỗi ~2s. Verify chạy 1.12.2.
+MOD_JAR_FORGE_1122 = _ASSETS / "aero-forge-mod.jar"
 
 
 def _obfuscated(mc: str) -> bool:
@@ -165,7 +168,13 @@ _HARD_LOCK_ARTIFACTS = [
      lambda mc, fmt: _obfuscated(mc) and fmt == 7),         # 1.17.1
     ("fabric", MOD_JAR_FABRIC_165,
      lambda mc, fmt: _obfuscated(mc) and fmt == 6),         # 1.16.5
+    ("forge", MOD_JAR_FORGE_1122,
+     lambda mc, fmt: mc.startswith("1.12") and fmt == 3),   # 1.12.2 Forge
 ]
+
+# Jar mà mod KHÔNG kèm pack -> launcher phải đặt "Aero UI.zip" trong resourcepacks/
+# (soft-lock) rồi mod ép nó luôn bật. Hiện chỉ Forge.
+_EXTERNAL_PACK_JARS = {MOD_JAR_FORGE_1122}
 
 
 def select_hard_lock(loader: str, mc: str, pack_format: int) -> Path | None:
@@ -356,11 +365,19 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
         mods.mkdir(parents=True, exist_ok=True)
         dest_jar = mods / MOD_NAME
         shutil.copyfile(jar, dest_jar)
-        # Theme panorama đã chọn: nhúng thẳng vào bản jar trong instance để có tác
-        # dụng dù pack của mod đang top-priority. Rỗng = giữ panorama gốc của mod.
-        if panorama_theme:
-            _inject_panorama_into_jar(dest_jar, _panorama_dir(panorama_theme, dark))
-        (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)   # mod đã kèm pack
+        if jar in _EXTERNAL_PACK_JARS:
+            # Forge: mod KHÔNG kèm pack -> đặt "Aero UI.zip" (như soft-lock, có theme
+            # panorama) rồi bật; mod lo phần ép luôn bật + top mỗi tick.
+            legacy = _legacy_widgets_png(client_jar) if client_jar else None
+            _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark,
+                       pack_format=fmt, panorama_theme=panorama_theme)
+            _enable_in_options(gd / "options.txt", modern=legacy is None)
+        else:
+            # Fabric: mod kèm pack. Theme panorama đã chọn -> nhúng thẳng vào jar
+            # trong instance để có tác dụng dù pack của mod đang top-priority.
+            if panorama_theme:
+                _inject_panorama_into_jar(dest_jar, _panorama_dir(panorama_theme, dark))
+            (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)   # mod đã kèm pack
         return "locked"
 
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
