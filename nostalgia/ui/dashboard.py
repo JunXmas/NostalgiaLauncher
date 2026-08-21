@@ -137,7 +137,7 @@ class HomeDashboard(QWidget):
         self.theme_btn.clicked.connect(self._toggle_theme)
 
     def _theme_label(self) -> str:
-        return tr("Menu: Night") if self.ctl.settings.menu_dark else tr("Menu: Day")
+        return tr("Theme: Night") if self.ctl.settings.menu_dark else tr("Theme: Day")
 
     def _toggle_theme(self) -> None:
         self.ctl.set_menu_dark(not self.ctl.settings.menu_dark)
