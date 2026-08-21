@@ -91,18 +91,16 @@ class PanoramaPage(QWidget):
 
     def _relayout(self) -> None:
         cols = self._columns()
-        # Ô cuối luôn là thẻ "+ Import" để người dùng tự thêm theme.
-        slots = [t["id"] for t in self._themes] + ["__import__"]
-        rows = (len(slots) + cols - 1) // max(1, cols)
+        rows = (len(self._themes) + cols - 1) // max(1, cols)
         # Căn giữa khối lưới theo bề ngang.
         grid_w = cols * CARD_W + (cols - 1) * GAP
         x0 = max(PAD, (self.width() - grid_w) // 2)
         self._card_rects.clear()
-        for i, sid in enumerate(slots):
+        for i, t in enumerate(self._themes):
             r, c = divmod(i, cols)
             x = x0 + c * (CARD_W + GAP)
             y = PAD + 40 + r * (CARD_H + GAP) - self._scroll
-            self._card_rects.append((QRect(x, y, CARD_W, CARD_H), sid))
+            self._card_rects.append((QRect(x, y, CARD_W, CARD_H), t["id"]))
         self._content_h = PAD + 40 + rows * (CARD_H + GAP) + PAD
 
     def wheelEvent(self, e):  # noqa: N802
@@ -136,10 +134,6 @@ class PanoramaPage(QWidget):
         if e.button() != Qt.LeftButton:
             return
         tid = self._at(e.position().toPoint())
-        if tid == "__import__":
-            # >>> Mở hộp thoại nhập theme (chọn thư mục 6 mặt + đặt tên) ở backend.
-            self.ctl.import_panorama()
-            return
         if tid and tid != self._active_id:
             # >>> Gửi lựa chọn xuống backend launcher: lưu settings + dựng lại pack/jar
             #     Aero cho mọi instance (xem app.set_panorama_theme -> aero.apply...).
@@ -163,42 +157,9 @@ class PanoramaPage(QWidget):
         for rect, tid in self._card_rects:
             if rect.bottom() < 0 or rect.top() > self.height():
                 continue  # ngoài khung nhìn -> khỏi vẽ
-            if tid == "__import__":
-                self._paint_import_card(p, rect)
-                continue
             theme = next((t for t in self._themes if t["id"] == tid), None)
             if theme:
                 self._paint_card(p, rect, theme)
-
-    def _paint_import_card(self, p: QPainter, rect: QRect) -> None:
-        """Thẻ '+ Import theme' — viền đứt, dấu cộng lớn."""
-        hovered = self._hover == "__import__"
-        rf = QRectF(rect)
-        p.save()
-        clip = QPainterPath()
-        clip.addRoundedRect(rf, RADIUS, RADIUS)
-        p.setClipPath(clip)
-        p.fillRect(rf, QColor(30, 30, 36, 150 if hovered else 110))
-        p.restore()
-        pen = QPen(QColor(150, 210, 255, 190) if hovered else QColor(255, 255, 255, 70), 2)
-        pen.setStyle(Qt.DashLine)
-        p.setPen(pen)
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(rf.adjusted(2, 2, -2, -2), RADIUS, RADIUS)
-        # Dấu cộng.
-        cx, cy = rect.center().x(), rect.center().y() - 12
-        p.setPen(QPen(QColor(200, 224, 245) if hovered else TEXT_DIM, 3))
-        p.drawLine(cx - 16, cy, cx + 16, cy)
-        p.drawLine(cx, cy - 16, cx, cy + 16)
-        p.setFont(ui_font(11, bold=True))
-        p.setPen(TEXT if hovered else TEXT_DIM)
-        p.drawText(QRect(rect.left(), cy + 22, rect.width(), 24),
-                   Qt.AlignHCenter | Qt.AlignTop, tr("Import theme"))
-        p.setFont(ui_font(8))
-        p.setPen(TEXT_FAINT)
-        p.drawText(QRect(rect.left() + 20, cy + 48, rect.width() - 40, 30),
-                   Qt.AlignHCenter | Qt.TextWordWrap,
-                   tr("A folder with panorama_0…5.png"))
 
     def _paint_card(self, p: QPainter, rect: QRect, theme: dict) -> None:
         tid = theme["id"]

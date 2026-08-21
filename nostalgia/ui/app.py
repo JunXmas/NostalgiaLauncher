@@ -829,37 +829,6 @@ class Controller:
             "Panorama theme changed — press F3+T in-game to apply now, or it shows "
             "on next launch."))
 
-    def import_panorama(self) -> None:
-        """Nhập theme panorama: chọn thư mục chứa panorama_0..5.png rồi đặt tên."""
-        d = QFileDialog.getExistingDirectory(
-            self.window, "Choose a panorama folder (panorama_0…5.png)")
-        if not d:
-            return
-        folder = Path(d)
-        faces = [folder / f"panorama_{i}.png" for i in range(6)]
-        missing = [f.name for f in faces if not f.exists()]
-        if missing:
-            self.window.set_status(
-                "Folder needs panorama_0…5.png (missing " + ", ".join(missing) + ").")
-            return
-        self._pending_panorama_faces = faces
-        dlg = TextPrompt(self.window, "Import panorama theme", "Theme name:",
-                         placeholder=folder.name, ok_text="IMPORT")
-        dlg.accepted.connect(self._panorama_named)
-        dlg.show()
-
-    def _panorama_named(self, name: str) -> None:
-        from .. import aero
-        faces = getattr(self, "_pending_panorama_faces", None)
-        if not faces:
-            return
-        self._pending_panorama_faces = None
-        tid = aero.import_panorama_theme(name, faces)
-        self.pages["panorama"].refresh()
-        self.set_panorama_theme(tid)          # chọn luôn theme vừa nhập
-        self.pages["panorama"].update()
-        self.window.set_status(f"Imported panorama theme '{name}'.")
-
     def set_aero_ui(self, on: bool) -> None:
         """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""
         from .. import aero
