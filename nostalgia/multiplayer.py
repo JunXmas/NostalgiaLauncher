@@ -47,6 +47,12 @@ def detect_open_to_lan(timeout: float = 5.0) -> Optional[tuple[int, str]]:
     tiên, hoặc None nếu hết giờ. Dùng ở máy HOST để biết cổng world vừa mở."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # Minecraft (host) cũng bind 4445 để nghe LAN -> cần REUSEPORT để cùng nghe.
+    if hasattr(socket, "SO_REUSEPORT"):
+        try:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except OSError:
+            pass
     try:
         s.bind(("", MC_PORT))
     except OSError:

@@ -46,6 +46,8 @@ NAV = [
     ("shaders", "Shaders", "shaders",
      "Fancy lighting and visual effects for a better-looking game."),
     ("skins", "Skin", "skin", "Change how your character looks in the game."),
+    ("playtogether", "Play Together", "servers",
+     "Chơi cùng bạn bè không cần server — chỉ chia sẻ một mã phòng."),
     ("panorama", "Theme In-Game", "packs",
      "Pick the animated background shown behind the in-game menu."),
     ("settings", "Settings", "gear", "Memory, folders, language and updates."),

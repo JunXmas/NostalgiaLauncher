@@ -25,6 +25,7 @@ from . import pages as page_mod
 from .dashboard import HomeDashboard
 from .modpack_page import ModpackBrowsePage
 from .panorama import PanoramaPage
+from .playtogether import PlayTogetherPage
 from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt, WelcomeDialog
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
@@ -116,6 +117,7 @@ class Controller:
             "shaders": page_mod.ShaderPacksPage(self),
             "modpacks": ModpackBrowsePage(self),
             "skins": page_mod.SkinsPage(self),
+            "playtogether": PlayTogetherPage(self),
             "panorama": PanoramaPage(self),
             "settings": page_mod.SettingsPage(self),
         }
