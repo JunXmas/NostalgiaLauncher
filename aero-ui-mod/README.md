@@ -43,9 +43,16 @@ CI builds it on every change to `aero-ui-mod/` (see
 
 ## Toolchain note
 
-The versions in `gradle.properties` must form a **compatible Fabric set** for the
-target Minecraft version — loom's mapping base (official vs intermediary) has to
-match the Fabric API build's access-widener namespace, or Loom fails at
-"Failed to setup Minecraft … Expected official namespace … found intermediary".
-Pin `loom_version` / `fabric_api_version` to a set that matches the target MC
-(and the Gradle wrapper version) before building.
+This mod targets **Minecraft 1.21.11**, which is still **obfuscated**, so it must
+use the **`net.fabricmc.fabric-loom-remap`** Gradle plugin (not plain
+`net.fabricmc.fabric-loom`, which is for the unobfuscated 26.1+ runtimes). With
+`-remap`, source keeps the official Mojang names (`Identifier`, `PackRepository`…)
+via `officialMojangMappings()`, and loom remaps the production jar to the
+**intermediary** namespace and remaps the Mixin — so it loads on the launcher's
+standard Fabric instances (whose runtime is intermediary, `net.minecraft.class_*`).
+
+Using plain `fabric-loom` here ships a **Mojang-named** jar that crashes at load
+on an intermediary runtime (`NoClassDefFoundError net/minecraft/resources/Identifier`,
+and the Mixin target "not found"). CI only compiles; this was caught by a headless
+runtime test. Keep `fabric_api_version` on the **intermediary** build for the
+target MC (e.g. `0.141.6+1.21.11`), matching the plugin/namespace.
