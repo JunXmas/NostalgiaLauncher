@@ -12,6 +12,13 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
+// FG2 phân giải forge userdev từ repo project (không chỉ buildscript). Maven forge
+// đã đổi URL nên phải khai báo lại ở đây, kẻo "Could not find forge-userdev.jar".
+repositories {
+    maven { url = 'https://maven.minecraftforge.net/' }
+    mavenCentral()
+}
+
 version = '1.0.0'
 group = 'com.nostalgia.aeroforge'
 archivesBaseName = 'aero-forge'
