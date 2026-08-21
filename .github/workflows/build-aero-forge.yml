@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"       # chạy Gradle; JDK 8 toolchain do RFG/foojay tự tải
+          java-version: "25"       # RFG 2.0.2 cần Java 25 để chạy; JDK 8 toolchain do foojay tự tải
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
