@@ -683,8 +683,8 @@ class Controller:
             jar = cj if cj and Path(cj).exists() else None
         except Exception:  # noqa: BLE001 - thiếu meta/jar thì cứ dùng sprite modern
             jar = None
-        # Hard-lock (mod Fabric ALWAYS_ENABLED) chỉ ở era 26.x+ — nơi mod build
-        # được và chạy được. Bản 1.x hoặc non-Fabric -> soft-lock (resource pack).
+        # Launcher TỰ chọn hard-lock (mod ALWAYS_ENABLED) hay soft-lock (resource
+        # pack) theo (loader, mc, pack_format) của instance — xem aero.select_hard_lock.
         from .. import optifine
         v = (inst.version or "").lower()
         # MC version: fabric id = "fabric-loader-<loader>-<mc>"; scheme mới "26.2"
@@ -693,19 +693,19 @@ class Controller:
             mc = (inst.version or "").rsplit("-", 1)[-1]
         else:
             mc = optifine.mc_from_version_id(inst.version) or (inst.version or "")
-        hard = ("fabric" in v) and bool(mc) and not mc.startswith("1.")
+        loader = "fabric" if "fabric" in v else ("forge" if "forge" in v else "")
         try:
-            kind = aero.apply_to_instance(self.instance_dir(inst), jar, hard_lock=hard,
-                                          dark=self.settings.menu_dark)
+            kind = aero.apply_to_instance(self.instance_dir(inst), jar, mc=mc,
+                                          loader=loader, dark=self.settings.menu_dark)
         except Exception as e:  # noqa: BLE001
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
             return
         # Soft-lock Fabric: kèm Blur+ (blur động sau menu). Chạy nền, best-effort;
-        # texture kính vẫn đứng một mình được nếu mod lỗi.
+        # texture kính vẫn đứng một mình được nếu mod lỗi. Chỉ khi KHÔNG hard-lock.
         # (FancyMenu đã bỏ: element/nút custom không render trên 1.21.11 + FO, còn
         #  nền menu thì resource pack panorama lo tốt hơn — xem set_menu_dark.)
-        if not hard and "fabric" in v and mc:
+        if kind != "locked" and "fabric" in v and mc:
             self._install_aero_mods_async(inst, mc)
         if not silent:
             self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")

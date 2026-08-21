@@ -29,9 +29,36 @@ FANCYMENU_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "fancymenu"
 # mỗi bộ 6 mặt panorama_0..5. Ghi đè panorama trong pack lúc đóng gói.
 PANORAMA_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "panoramas"
 PANO_REL = "assets/minecraft/textures/gui/title/background"
-# Mod Fabric khoá cứng (ALWAYS_ENABLED) — build cho era 26.x, chỉ dùng ở đó.
-MOD_JAR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-ui-mod.jar"
 MOD_NAME = "aero-ui-mod.jar"
+_ASSETS = Path(__file__).resolve().parent / "ui" / "assets"
+# Jar hard-lock Fabric cho dòng 1.21.x (obfuscate -> intermediary). Đã verify chạy
+# trên 1.21.11 (pack_format 75). Mixin để `required` nên CHỈ áp cho bản khớp, kẻo
+# sai target thì crash lúc load — bản không khớp rơi về soft-lock (an toàn).
+MOD_JAR_FABRIC_121 = _ASSETS / "aero-ui-mod.jar"
+
+
+def _obfuscated(mc: str) -> bool:
+    """Bản CÒN obfuscate (chạy runtime intermediary) hay không. Ranh giới của
+    Fabric: ≤1.21.11 obfuscate; 26.1+ (đánh số mới, không bắt đầu bằng "1.") thì
+    không. Dùng để tách jar intermediary khỏi jar Mojang-native."""
+    return mc.startswith("1.")
+
+
+# Registry artifact hard-lock: (loader, đường-dẫn-jar, vị-ngữ-khớp). Auto-chọn theo
+# (loader, mc, pack_format) của TỪNG instance. Thêm era mới = thêm một dòng ở đây.
+# Hiện chỉ có 1.21.x Fabric; 26.x / Fabric cũ / Forge sẽ bổ sung sau (rơi soft-lock).
+_HARD_LOCK_ARTIFACTS = [
+    ("fabric", MOD_JAR_FABRIC_121,
+     lambda mc, fmt: _obfuscated(mc) and fmt == 75),
+]
+
+
+def select_hard_lock(loader: str, mc: str, pack_format: int) -> Path | None:
+    """Chọn jar/coremod hard-lock hợp instance, hoặc None (→ soft-lock)."""
+    for a_loader, jar, matches in _HARD_LOCK_ARTIFACTS:
+        if loader == a_loader and jar.exists() and matches(mc or "", pack_format):
+            return jar
+    return None
 
 SPRITES = "assets/minecraft/textures/gui/sprites/widget"
 WIDGETS = "assets/minecraft/textures/gui/widgets.png"
@@ -190,29 +217,31 @@ def _enable_in_options(options: Path, modern: bool) -> None:
 
 
 def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
-                      hard_lock: bool = False, dark: bool = False) -> str:
-    """Cài Aero UI vào instance tại game_dir.
+                      *, mc: str = "", loader: str = "", dark: bool = False) -> str:
+    """Cài Aero UI vào instance tại game_dir — launcher TỰ chọn cách khoá theo bản.
 
-    hard_lock=True (chỉ dùng cho bản 26.x+ Fabric — nơi mod chạy được): cài mod
-    Fabric ALWAYS_ENABLED vào mods/ để người chơi KHÔNG tắt được pack, và bỏ
-    resource pack thường (mod đã kèm pack). Trả về 'locked'.
+    Nếu có artifact hard-lock hợp (loader, mc, pack_format) — xem
+    select_hard_lock(): cài mod/coremod ALWAYS_ENABLED vào mods/ để người chơi
+    KHÔNG tắt được pack (và bỏ resource pack thường vì mod đã kèm pack). Trả 'locked'.
 
-    Ngược lại: soft-lock — cài resource pack (ghép widgets.png cho bản legacy từ
-    client_jar) và bật trong options.txt. Trả về 'modern'/'legacy'.
+    Không có artifact hợp: soft-lock — cài resource pack (ghép widgets.png cho bản
+    legacy từ client_jar, pack.mcmeta đúng format của bản) và bật trong options.txt.
+    Trả 'modern'/'legacy'.
     """
     gd = Path(game_dir)
-    if hard_lock and MOD_JAR.exists():
+    fmt = _pack_format(client_jar)
+    jar = select_hard_lock(loader, mc, fmt)
+    if jar is not None:
         mods = gd / "mods"
         mods.mkdir(parents=True, exist_ok=True)
         import shutil
-        shutil.copyfile(MOD_JAR, mods / MOD_NAME)
+        shutil.copyfile(jar, mods / MOD_NAME)
         (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)   # mod đã kèm pack
         return "locked"
 
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
     modern = legacy is None
-    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark,
-               pack_format=_pack_format(client_jar))
+    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark, pack_format=fmt)
     _enable_in_options(gd / "options.txt", modern)
     # Kéo blur nền menu lên max: cùng lớp tint kính Aero trong pack -> frosted
     # acrylic. Chỉ có tác dụng ở 1.20.5+; bản cũ bỏ qua dòng này.
