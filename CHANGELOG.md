@@ -2,6 +2,21 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.0-beta.1
+- **Panorama backgrounds you can pick.** A new **Panorama** page shows your
+  menu backgrounds as a card grid — a live preview, name, tags and an Active
+  badge. Click one to set it; the launcher rebuilds the Aero pack for every
+  game so the title-screen background changes on next launch (or press
+  **F3+T** in-game to see it live). Comes with Day, Night and a few Aero
+  panorama themes.
+- **The Aero look now locks in on more versions.** The launcher picks the right
+  hard-lock automatically per game: the Aero pack can't be turned off *or*
+  overridden on 1.21.11 and on the newest 26.x builds, and simply shows as a
+  normal (re-applied) pack everywhere else from 1.16.5 up.
+- **The Aero pack loads cleanly on every version.** Its pack format is now
+  matched to each game, so newer versions no longer drop it as "incompatible".
+- Refreshed the built-in Day and Night title-screen panoramas.
+
 ## 0.8.0-beta.3
 - **Day/night menu, one click from Home.** A "Menu: Day/Night" button on the
   dashboard flips the title-screen panorama between the daytime and nighttime
