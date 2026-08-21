@@ -19,8 +19,10 @@ buildscript {
 
 ext.aeroTarget = (project.findProperty('aeroTarget') ?: '121').toString()
 ext.TARGETS = [
-	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true ],
-	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false],
+	// packFormat = resource_major của bản (version.json) -> pack.mcmeta khớp đúng,
+	// kẻo game GỠ pack vì "incompatible" (1.21.11=75, 26.2=88).
+	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75],
+	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88],
 ]
 def T = TARGETS[aeroTarget]
 if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
@@ -65,9 +67,14 @@ dependencies {
 processResources {
 	def version = project.version
 	inputs.property "version", version
+	inputs.property "packFormat", T.packFormat
 
 	filesMatching("fabric.mod.json") {
 		expand "version": version
+	}
+	// pack.mcmeta có ${packFormat} -> thay bằng format của era đang build.
+	filesMatching("resourcepacks/aero-ui/pack.mcmeta") {
+		expand "packFormat": T.packFormat
 	}
 }
 
