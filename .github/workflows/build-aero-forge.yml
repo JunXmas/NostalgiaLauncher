@@ -17,6 +17,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ["1122", "189"]   # Forge 1.12.2 và 1.8.9
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -26,12 +30,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
-      - name: Build the Forge mod
+      - name: Build the Forge mod (${{ matrix.target }})
         working-directory: aero-forge-mod
-        run: gradle build --no-daemon --stacktrace
-      - name: Upload mod jar
+        run: gradle build -PforgeTarget=${{ matrix.target }} --no-daemon --stacktrace
+      - name: Upload mod jar (${{ matrix.target }})
         uses: actions/upload-artifact@v4
         with:
-          name: aero-forge-mod
-          path: aero-forge-mod/build/libs/aero-forge-*.jar
+          name: aero-forge-mod-${{ matrix.target }}
+          path: aero-forge-mod/build/libs/aero-forge-${{ matrix.target }}-*.jar
           if-no-files-found: error

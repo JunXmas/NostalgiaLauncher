@@ -20,8 +20,11 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * <p>Pack "Aero UI.zip" do launcher đặt sẵn trong {@code resourcepacks/} (soft-lock
  * cho bản legacy). Mod này lo phần "ép luôn bật + top".
  */
-@Mod(modid = AeroForge.MODID, name = "Aero UI", version = "1.0.0",
-     clientSideOnly = true, acceptedMinecraftVersions = "[1.12.2]")
+// Không đặt acceptedMinecraftVersions: cùng một source build cho nhiều bản (1.12.2,
+// 1.8.9) qua RFG, mỗi bản một jar reobf riêng. Launcher (aero.select_hard_lock) mới
+// là chốt chọn jar đúng bản; API resource pack ở đây (gameSettings.resourcePacks,
+// refreshResources, saveOptions) trùng tên MCP giữa 1.8–1.12.
+@Mod(modid = AeroForge.MODID, name = "Aero UI", version = "1.0.0", clientSideOnly = true)
 public class AeroForge {
     public static final String MODID = "aeroui";
     private static final String PACK = "Aero UI.zip";
