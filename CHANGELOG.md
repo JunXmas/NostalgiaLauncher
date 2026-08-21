@@ -2,6 +2,28 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.0
+- **Play together — no server, no setup.** A new **Play Together** page lets you
+  host your world or join a friend's with just a short room code. The host opens
+  their world to LAN, shares the code, and the friend's world shows up right in
+  Minecraft's LAN list — no dedicated server, no mods, no port-forwarding, and it
+  works even when the two of you are on different networks.
+- **The Aero look locks in across far more versions.** The launcher auto-picks a
+  real hard-lock for Fabric **1.16.5, 1.17.1, 1.18.2, 1.19.4, 1.20.6 and
+  1.21.11**, the newest **26.x** builds, and **Forge 1.12.2** — there the Aero
+  pack can't be turned off *or* overridden by another pack. Every other version
+  keeps the re-applied pack, so the theme still shows everywhere (down to 1.8.9).
+- **Pick your in-game background.** The new **Theme In-Game** page shows your menu
+  backgrounds as a card grid with a gently rotating live preview; click one to set
+  it. Comes with distinct Day and Night scenes plus any you add, and backgrounds
+  can be renamed.
+- **Install to the right game, every time.** Installing a mod or resource pack now
+  opens a modal to pick which game it goes into — incompatible games are dimmed
+  with the reason — so nothing lands in the wrong place. The easy-to-miss corner
+  dropdown is gone.
+- Removed the redundant "Dark menu background" toggle from Settings (the Theme
+  In-Game page covers it now).
+
 ## 0.9.0-beta.2
 - **The Aero look now locks in across far more versions.** The launcher
   auto-picks a real hard-lock for Fabric **1.16.5, 1.17.1, 1.18.2, 1.19.4,
