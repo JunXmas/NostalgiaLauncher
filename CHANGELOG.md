@@ -2,6 +2,17 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.0-beta.2
+- **The Aero look now locks in across far more versions.** The launcher
+  auto-picks a real hard-lock for Fabric **1.16.5, 1.17.1, 1.18.2, 1.19.4,
+  1.20.6 and 1.21.11**, the newest **26.x** builds, and **Forge 1.12.2** — on
+  those the Aero pack can't be turned off *or* overridden by another pack. Every
+  other version keeps the re-applied pack, so the theme still shows everywhere
+  (including 1.8.9).
+- **Panorama page polish.** Backgrounds can be renamed, the Day and Night scenes
+  are now distinct, and the old Home "Theme: Day/Night" button is gone — the
+  Panorama page covers day, night and every custom background.
+
 ## 0.9.0-beta.1
 - **Panorama backgrounds you can pick.** A new **Panorama** page shows your
   menu backgrounds as a card grid — a live preview, name, tags and an Active
