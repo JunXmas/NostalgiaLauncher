@@ -21,7 +21,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ["121", "26x", "20x"]   # 1.21.x, 26.x (Mojang-native), 1.20.x (legacy)
+        # 1.21.x, 26.x (Mojang-native), then legacy 1.16.5–1.20.6
+        target: ["121", "26x", "20x", "194", "182", "171", "165"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
