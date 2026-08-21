@@ -2,10 +2,25 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtGui import (
     QColor, QFont, QFontDatabase, QImage, QLinearGradient, QPainter, QPixmap,
 )
 from PySide6.QtCore import Qt, QPointF
+
+_FONTS_DIR = Path(__file__).resolve().parent / "assets" / "fonts"
+
+
+def load_bundled_fonts() -> None:
+    """Nạp Selawik — bản open-source thay Segoe UI của Windows 7 — đóng gói kèm,
+    để giao diện có đúng font thời Aero trên MỌI máy (Linux/macOS không có Segoe
+    UI). ui_font() đã ưu tiên 'Selawik' nên sau khi nạp là tự dùng. Gọi một lần
+    sau khi tạo QApplication."""
+    for ttf in ("selawk.ttf", "selawkb.ttf"):
+        p = _FONTS_DIR / ttf
+        if p.exists():
+            QFontDatabase.addApplicationFont(str(p))
 
 # ---------- màu ----------
 # Sắc kính Aero: xanh lam lạnh, khá trong — Windows 7 để màu sau kính ánh lên rõ.

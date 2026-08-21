@@ -120,18 +120,24 @@ class LaunchWorker(QThread):
         self.offline = offline
         self.quick_play = quick_play      # vào thẳng server/thế giới (Quick Play)
         self._proc = None            # tiến trình game, để dừng khi bấm STOP
+        self._cancelled = False      # bấm STOP khi còn đang tải/chuẩn bị
 
     def _capture(self, proc) -> None:
         self._proc = proc
         self.game_started.emit()
 
     def stop(self) -> None:
-        """Dừng game đang chạy (bấm STOP)."""
+        """Bấm STOP: nếu game đã chạy thì kết thúc tiến trình; nếu còn đang tải/
+        chuẩn bị thì đánh dấu huỷ để KHÔNG bật game lên sau khi tải xong."""
+        self._cancelled = True
+        self.requestInterruption()
         proc = self._proc
         if proc and proc.poll() is None:
             proc.terminate()
 
-    def _launch_offline(self, installer: Installer, identity) -> int:
+    def _launch_offline(self, installer: Installer, identity):
+        if self._interrupted():
+            return None
         return launch_game_offline(
             self.version, installer, identity,
             java=self.java_path or None,
@@ -142,9 +148,18 @@ class LaunchWorker(QThread):
             quick_play=self.quick_play,
         )
 
-    def _launch_online(self, installer: Installer, identity) -> int:
+    def _interrupted(self) -> bool:
+        """Đã bấm STOP trong lúc chuẩn bị? Nếu có, báo và bỏ, đừng bật game."""
+        if self._cancelled or self.isInterruptionRequested():
+            self.status.emit("Stopped.")
+            return True
+        return False
+
+    def _launch_online(self, installer: Installer, identity):
         self.status.emit(f"Preparing {self.version}…")
         meta = installer.install(self.version)
+        if self._interrupted():
+            return None
 
         # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
         if not self.java_path:
@@ -156,6 +171,9 @@ class LaunchWorker(QThread):
         if identity.user_type == OFFLINE:
             for warning in ensure_offline_libraries(meta, installer):
                 self.status.emit(warning)
+
+        if self._interrupted():   # có thể vừa bấm STOP trong lúc tải JRE
+            return None
 
         cmd = build_command(meta, installer, identity,
                             java=self.java_path or None, max_memory_mb=self.memory_mb,
@@ -179,6 +197,8 @@ class LaunchWorker(QThread):
                     self.status.emit("No connection — using what is already downloaded…")
                     code = self._launch_offline(installer, identity)
 
+            if code is None:      # đã bấm STOP khi đang tải/chuẩn bị → huỷ lặng lẽ
+                return
             if code != 0:
                 self.failed.emit(f"Game exited with code {code}")
                 return

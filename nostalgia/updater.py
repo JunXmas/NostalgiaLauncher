@@ -1,8 +1,11 @@
-"""Kiểm tra bản phát hành mới trên GitHub và tải đúng installer cho hệ điều hành.
+"""Kiểm tra bản phát hành mới trên GitHub và TỰ tải + cài trên cả ba nền tảng.
 
-Không tự thay thế binary (bản cài chưa ký số, tự thay ngầm rất dễ hỏng và bị
-Gatekeeper/SmartScreen chặn). Thay vào đó: báo có bản mới, rồi tải file cài phù
-hợp về thư mục tải xuống và mở ra để người dùng bấm cài — an toàn, xuyên nền.
+Báo có bản mới, rồi tải đúng file cài cho hệ điều hành và cài thẳng — không bắt
+người dùng lên GitHub tải tay nữa:
+  • Windows: chạy installer Inno im lặng, tự đóng & mở lại app.
+  • macOS:   mount .dmg, thay .app đang chạy bằng bản mới, tự mở lại.
+  • Linux:   cài .deb qua pkexec (một lần nhập mật khẩu), tự mở lại.
+Nếu thiếu công cụ hoặc lỗi, lùi an toàn về mở file / trang release cho người dùng.
 """
 
 from __future__ import annotations
@@ -55,13 +58,14 @@ def _parse(tag: str) -> tuple:
 
 
 def _os_asset(assets: list[dict]) -> dict | None:
-    """Chọn file cài đúng nền tảng: .exe cho Windows, .dmg (đúng kiến trúc) cho macOS."""
+    """Chọn file cài đúng nền tảng: .exe (Windows), .dmg (macOS), .deb (Linux)."""
     system = platform.system()
+    machine = platform.machine().lower()
     names = [(a.get("name", ""), a) for a in assets]
     if system == "Windows":
         return next((a for name, a in names if name.lower().endswith(".exe")), None)
     if system == "Darwin":
-        arm = platform.machine().lower() in ("arm64", "aarch64")
+        arm = machine in ("arm64", "aarch64")
         dmgs = [(name, a) for name, a in names if name.lower().endswith(".dmg")]
         if arm:
             hit = next((a for name, a in dmgs if "arm64" in name.lower()), None)
@@ -70,6 +74,11 @@ def _os_asset(assets: list[dict]) -> dict | None:
         # Intel hoặc không rõ: ưu tiên file không phải arm64, rồi tới bất kỳ .dmg nào.
         return next((a for name, a in dmgs if "arm64" not in name.lower()),
                     dmgs[0][1] if dmgs else None)
+    if system == "Linux":
+        want = "arm64" if machine in ("arm64", "aarch64") else "amd64"
+        debs = [(name, a) for name, a in names if name.lower().endswith(".deb")]
+        hit = next((a for name, a in debs if want in name.lower()), None)
+        return hit or (debs[0][1] if debs else None)
     return None
 
 
@@ -121,17 +130,60 @@ def _open(path: Path) -> None:
         subprocess.Popen(["xdg-open", str(path)], env=clean_child_env())
 
 
+def _current_app_bundle() -> Path | None:
+    """Đường dẫn .app đang chạy trên macOS (…/Nostalgia Launcher.app)."""
+    if not getattr(sys, "frozen", False):
+        return None
+    for parent in Path(sys.executable).resolve().parents:
+        if parent.suffix == ".app":
+            return parent
+    return None
+
+
+def _install_dmg_macos(dmg: Path) -> str:
+    """Tự cập nhật trên macOS: mount .dmg, thay .app đang chạy bằng bản mới, mở lại.
+
+    App đang chạy không tự ghi đè chính nó được, nên ghi một script chờ app thoát
+    rồi mới copy đè + mở lại; app trả 'quit' để thoát ngay cho script làm việc.
+    """
+    import tempfile
+    dest = _current_app_bundle()
+    if dest is None:
+        _open(dmg)                       # chạy từ nguồn / không rõ vị trí -> mở tay
+        return "opened"
+    mount = tempfile.mkdtemp(prefix="nl-dmg-")
+    subprocess.run(["hdiutil", "attach", str(dmg), "-nobrowse", "-noverify",
+                    "-noautoopen", "-mountpoint", mount], check=True, env=clean_child_env())
+    apps = list(Path(mount).glob("*.app"))
+    if not apps:
+        subprocess.run(["hdiutil", "detach", mount, "-quiet"], env=clean_child_env())
+        raise RuntimeError("The disk image has no app to install.")
+    new_app, script = apps[0], Path(tempfile.mkstemp(prefix="nl-upd-", suffix=".sh")[1])
+    script.write_text(
+        "#!/bin/bash\n"
+        "sleep 1\n"
+        f'app="{dest}"\n'
+        'for i in $(seq 1 120); do pgrep -f "$app/Contents/MacOS/" >/dev/null || break; sleep 0.5; done\n'
+        f'/usr/bin/ditto "{new_app}" "$app.new" && /bin/rm -rf "$app" && /bin/mv "$app.new" "$app"\n'
+        f'/usr/bin/hdiutil detach "{mount}" -quiet || true\n'
+        '/usr/bin/open "$app"\n'
+        f'/bin/rm -f "{script}"\n'
+    )
+    script.chmod(0o755)
+    subprocess.Popen(["/bin/bash", str(script)], env=clean_child_env(),
+                     start_new_session=True)
+    return "quit"                        # thoát ngay để script thay .app rồi mở lại
+
+
 def install(path: Path) -> str:
     """Cài đặt bản đã tải thẳng vào máy. Trả về mode cho phía gọi xử lý tiếp:
 
-    - 'quit'      (Windows): đã chạy installer im lặng ở nền; app PHẢI thoát ngay
-                  để installer thay được file .exe đang bị khoá — Inno tự đóng &
-                  mở lại app. Bản cài per-user nên không cần quyền admin.
-    - 'installed' (Linux .deb qua pkexec): đã cài xong (một hộp thoại xin mật
-                  khẩu); phía gọi mời khởi động lại. Tự kéo cả thư viện phụ thuộc.
-    - 'opened'    (macOS .dmg hoặc thiếu công cụ): mở file cho người dùng tự cài.
+    - 'quit'      (Windows / macOS): tiến trình cài đang chạy nền chờ app thoát để
+                  thay file rồi tự mở lại; app PHẢI thoát ngay.
+    - 'installed' (Linux .deb qua pkexec): đã cài xong; phía gọi tự mở lại.
+    - 'opened'    (thiếu công cụ): đã mở file cho người dùng tự cài.
 
-    Ném lỗi nếu lệnh cài thất bại — phía gọi bắt để lùi về mở file thủ công.
+    Ném lỗi nếu lệnh cài thất bại — phía gọi bắt để lùi về mở trang release.
     """
     system = platform.system()
     suffix = path.suffix.lower()
@@ -139,6 +191,8 @@ def install(path: Path) -> str:
         subprocess.Popen([str(path), "/VERYSILENT", "/SUPPRESSMSGBOXES",
                           "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"])
         return "quit"
+    if system == "Darwin" and suffix == ".dmg":
+        return _install_dmg_macos(path)
     if system == "Linux" and suffix == ".deb" and shutil.which("pkexec"):
         subprocess.run(["pkexec", "apt-get", "install", "-y", str(path)], check=True)
         return "installed"

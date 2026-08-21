@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.nostalgia.aeroui.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"PackRepositoryMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

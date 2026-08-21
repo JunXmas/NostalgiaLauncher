@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QRect, QRectF, Qt
+from PySide6.QtCore import QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import mods as mods_mgr
 from .. import modrinth
 from ..i18n import language, language_name, tr
-from ..settings import client_id as resolve_client_id, save_client_id
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
 from .menus import MenuItem, popup
@@ -60,6 +59,7 @@ class Page(QWidget):
 
     scrim = True
     heading = ""
+    subheading = ""   # dòng giải thích ngắn bằng lời thường, vẽ cạnh heading
 
     def __init__(self, ctl, parent=None):
         super().__init__(parent)
@@ -89,8 +89,19 @@ class Page(QWidget):
             f.setLetterSpacing(QFont.AbsoluteSpacing, 0.6)
             p.setFont(f)
             p.setPen(TEXT)
+            head = tr(self.heading)
             p.drawText(QRect(26, 18, self.width() - 52, 26),
-                       Qt.AlignLeft | Qt.AlignVCenter, self.heading)
+                       Qt.AlignLeft | Qt.AlignVCenter, head)
+            # Helper bằng lời thường, ngay sau tiêu đề — người mới hiểu trang này
+            # để làm gì mà không cần biết thuật ngữ. Ẩn khi cửa sổ hẹp để khỏi chật.
+            if self.subheading:
+                hw = p.fontMetrics().horizontalAdvance(head)
+                x = 26 + hw + 16
+                if self.width() - x - 26 > 160:
+                    p.setFont(ui_font(9))
+                    p.setPen(TEXT_FAINT)
+                    p.drawText(QRect(x, 18, self.width() - x - 26, 26),
+                               Qt.AlignLeft | Qt.AlignVCenter, tr(self.subheading))
             p.setPen(QPen(QColor(255, 255, 255, 26), 1))
             p.drawLine(26, 48, self.width() - 26, 48)
         p.end()
@@ -117,17 +128,22 @@ class StubPage(Page):
 # ---------- bản cài đặt ----------
 
 class InstallationsPage(Page):
-    heading = "Instances"
+    heading = "Games"
+    subheading = "Each is a separate copy of the game — its own version, mods and worlds."
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
-        self.list = ListView(self, empty_text="No instances yet. Click NEW INSTANCE (name + version).")
+        self.list = ListView(self, empty_text=tr(
+            "No games yet. Click NEW GAME to set one up — just a name and a version."))
         self.list.activated.connect(self._select)
         self.list.action_clicked.connect(self._delete)
         self.list.badge_clicked.connect(self.ctl.edit_instance)
-        self.add_btn = AeroButton("NEW INSTANCE", self, height=32, tone="neutral")
+        self.add_btn = AeroButton("NEW GAME", self, height=32, tone="neutral")
+        self.add_btn.setToolTip(tr("Set up a fresh copy of the game (pick a name and version)."))
         self.add_btn.clicked.connect(self.ctl.begin_create_instance)
         self.fabric_btn = AeroButton("GET MODPACK", self, height=32, tone="neutral")
+        self.fabric_btn.setToolTip(tr(
+            "Install a ready-made bundle of mods someone already put together."))
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
         self.logs_btn = AeroButton("LOGS", self, height=32, tone="neutral")
         self.logs_btn.clicked.connect(self.ctl.show_logs)
@@ -167,6 +183,263 @@ class InstallationsPage(Page):
 
 # ---------- thư viện nội dung: Mods / Resource Packs ----------
 
+_LOADER_COLORS = {
+    "fabric": QColor(222, 210, 168), "quilt": QColor(178, 132, 226),
+    "forge": QColor(120, 142, 190), "neoforge": QColor(232, 152, 92),
+}
+_LOADERS = {"fabric", "forge", "neoforge", "quilt", "liteloader", "rift",
+            "modloader", "optifine", "iris", "canvas", "vanilla", "datapack",
+            "folia", "paper", "spigot", "bukkit", "purpur", "sponge",
+            "velocity", "waterfall", "bungeecord"}
+
+
+def _reltime_iso(iso: str) -> str:
+    import datetime
+    if not iso:
+        return ""
+    try:
+        d = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        now = datetime.datetime.now(datetime.timezone.utc)
+        s = (now - d).total_seconds()
+    except (ValueError, TypeError):
+        return ""
+    for unit, sec in (("y", 31536000), ("mo", 2592000), ("d", 86400),
+                      ("h", 3600), ("m", 60)):
+        if s >= sec:
+            n = int(s // sec)
+            return f"{n}{unit} ago"
+    return "just now"
+
+
+class ModrinthResultsView(QWidget):
+    """Danh sách kết quả Modrinth kiểu thẻ: icon, tên · tác giả, mô tả, lượt tải/
+    thích/cập nhật, pill danh mục + loader, và thanh phân trang ở đáy."""
+
+    activated = Signal(object)     # bấm thẻ -> cài hit
+    page_changed = Signal(int)     # bấm số trang -> nạp trang
+
+    CARD_H = 96
+    PAGER_H = 44
+
+    def __init__(self, parent=None, *, empty_text: str = ""):
+        super().__init__(parent)
+        self.empty_text = empty_text
+        self._hits: list = []
+        self._icons: dict = {}
+        self._badges: dict = {}
+        self._page = self._pages = 1
+        self._scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)            # ~60fps
+        self._scroll_anim.timeout.connect(self._scroll_tick)
+        self._hover = -1
+        self._card_rects: list = []
+        self._page_rects: list = []
+        self.setMouseTracking(True)
+
+    def set_page(self, hits, page, pages, badges) -> None:
+        self._hits, self._page, self._pages = hits, page, max(1, pages)
+        self._badges = badges
+        self._scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
+        self._hover = -1
+        self.update()
+
+    def set_state(self, icons, badges) -> None:      # icon/badge cập nhật -> vẽ lại
+        self._icons, self._badges = icons, badges
+        self.update()
+
+    def _content_h(self) -> int:
+        return self.height() - self.PAGER_H
+
+    def wheelEvent(self, e):  # noqa: N802
+        maxs = max(0, len(self._hits) * self.CARD_H + 8 - self._content_h())
+        self._scroll_target = min(maxs, max(0.0, self._scroll_target - e.angleDelta().y()))
+        if not self._scroll_anim.isActive():
+            self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self._scroll
+        if abs(d) < 0.6:                             # tới nơi -> dừng
+            self._scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self._scroll += d * 0.28                 # ease-out mượt về đích
+        self.update()
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        h = next((i for i, (r, _) in enumerate(self._card_rects) if r.contains(pos)), -1)
+        if h != self._hover:
+            self._hover = h
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        for r, page in self._page_rects:
+            if r.contains(pos) and page != self._page:
+                self.page_changed.emit(page)
+                return
+        for r, hit in self._card_rects:
+            if r.contains(pos):
+                self.activated.emit(hit)
+                return
+
+    def _pills(self, hit) -> list[tuple]:
+        """(nhãn, màu|None) cho môi trường + danh mục + loader."""
+        out = []
+        cs, ss = hit.get("client_side"), hit.get("server_side")
+        env = ("Client or server" if cs != "unsupported" and ss != "unsupported"
+               else "Server" if ss != "unsupported" else "Client")
+        out.append((env, None))
+        cats = hit.get("display_categories") or hit.get("categories") or []
+        for c in cats:
+            if c not in _LOADERS:
+                out.append((c.replace("-", " ").title(), None))
+        for c in hit.get("categories", []):
+            if c in _LOADERS:
+                out.append((c.title(), _LOADER_COLORS.get(c, QColor(150, 160, 180))))
+        return out
+
+    def paintEvent(self, event):  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        self._card_rects = []
+        self._page_rects = []
+        w = self.width()
+        ch = self._content_h()
+        p.setClipRect(0, 0, w, ch)
+        if not self._hits:
+            p.setPen(TEXT_DIM); p.setFont(ui_font(11))
+            p.drawText(QRect(0, 0, w, ch), Qt.AlignCenter, self.empty_text)
+            p.setClipping(False)
+            self._paint_pager(p)
+            p.end()
+            return
+        for i, hit in enumerate(self._hits):
+            y = int(4 - self._scroll + i * self.CARD_H)
+            if y + self.CARD_H < 0 or y > ch:
+                continue
+            card = QRect(6, y, w - 12, self.CARD_H - 8)
+            self._card_rects.append((card, hit))
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(255, 255, 255, 24 if i == self._hover else 12))
+            p.drawRoundedRect(card, 8, 8)
+            self._paint_card(p, card, hit)
+        p.setClipping(False)
+        self._paint_pager(p)
+        p.end()
+
+    def _paint_card(self, p, card, hit):
+        # icon
+        ic = QRect(card.left() + 12, card.top() + 12, 60, 60)
+        pm = self._icons.get(hit.get("icon_url") or "")
+        p.save(); p.setClipRect(ic, Qt.IntersectClip)   # giao với clip nội dung, icon không lòi ra
+        if pm is not None and not pm.isNull():
+            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+            scaled = pm.scaled(ic.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            ox = ic.left() + (ic.width() - scaled.width()) // 2
+            oy = ic.top() + (ic.height() - scaled.height()) // 2
+            p.fillRect(ic, QColor(28, 40, 60, 120))
+            p.drawPixmap(ox, oy, scaled)
+        else:
+            p.fillRect(ic, QColor(40, 60, 90, 160))
+        p.restore()
+        p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush); p.drawRect(ic)
+
+        tx = ic.right() + 14
+        # thống kê bên phải
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        dls = f"⬇ {human_count(hit.get('downloads', 0))}"
+        fol = f"♥ {human_count(hit.get('follows', 0))}"
+        upd = _reltime_iso(hit.get("date_modified", ""))
+        rx = card.right() - 12
+        fm = p.fontMetrics()
+        stat = f"{dls}    {fol}"
+        p.drawText(QRect(rx - 220, card.top() + 8, 220, 16),
+                   Qt.AlignRight | Qt.AlignVCenter, stat)
+        if upd:
+            p.setPen(TEXT_FAINT)
+            p.drawText(QRect(rx - 220, card.top() + 26, 220, 16),
+                       Qt.AlignRight | Qt.AlignVCenter, f"🕒 {upd}")
+        right_edge = rx - 230
+        # tên + tác giả
+        p.setFont(ui_font(12, bold=True)); p.setPen(TEXT)
+        title = hit.get("title", "?")
+        tw = p.fontMetrics().horizontalAdvance(title)
+        p.drawText(tx, card.top() + 24, title)
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        p.drawText(tx + tw + 8, card.top() + 24, f"by {hit.get('author', '?')}")
+        # trạng thái cài
+        slug = hit.get("slug") or hit.get("project_id")
+        st = self._badges.get(slug)
+        if st:
+            p.setPen(ACCENT if st in ("ADDED", "INSTALLED") else TEXT_DIM)
+            p.drawText(QRect(right_edge, card.top() + 44, 160, 16),
+                       Qt.AlignRight | Qt.AlignVCenter, st)
+        # mô tả
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        desc = (hit.get("description") or "").strip()
+        p.drawText(tx, card.top() + 42,
+                   p.fontMetrics().elidedText(desc, Qt.ElideRight, right_edge - tx))
+        # pills
+        self._paint_pills(p, tx, card.top() + 54, right_edge, self._pills(hit))
+
+    def _paint_pills(self, p, x, y, right, pills):
+        p.setFont(ui_font(8))
+        fm = p.fontMetrics()
+        for label, color in pills:
+            tw = fm.horizontalAdvance(label)
+            dot = 12 if color is not None else 0
+            pw = tw + 16 + dot
+            if x + pw > right - 24:
+                p.setPen(TEXT_FAINT); p.setBrush(Qt.NoBrush)
+                p.drawText(x + 2, y + 15, "…")
+                break
+            pill = QRect(x, y, pw, 20)
+            p.setPen(Qt.NoPen); p.setBrush(QColor(255, 255, 255, 18))
+            p.drawRoundedRect(pill, 10, 10)
+            lx = x + 8
+            if color is not None:
+                p.setBrush(color); p.drawEllipse(QRect(lx, y + 7, 6, 6)); lx += 12
+            p.setPen(TEXT_DIM)
+            p.drawText(QRect(lx, y, tw + 8, 20), Qt.AlignLeft | Qt.AlignVCenter, label)
+            x += pw + 6
+
+    def _paint_pager(self, p):
+        if self._pages <= 1:
+            return
+        y = self.height() - self.PAGER_H
+        p.setPen(QPen(QColor(255, 255, 255, 24), 1))
+        p.drawLine(6, y, self.width() - 6, y)
+        cur, last = self._page, self._pages
+        nums = sorted({1, cur - 1, cur, cur + 1, last})
+        nums = [n for n in nums if 1 <= n <= last]
+        seq, prev = [], 0
+        for n in nums:
+            if prev and n - prev > 1:
+                seq.append(None)      # dấu …
+            seq.append(n); prev = n
+        p.setFont(ui_font(10, bold=True))
+        x = self.width() - 12
+        for item in reversed(seq):    # xếp từ phải sang
+            if item is None:
+                x -= 24
+                p.setPen(TEXT_FAINT)
+                p.drawText(QRect(x, y, 24, self.PAGER_H), Qt.AlignCenter, "…")
+                continue
+            box = QRect(x - 34, y + 7, 30, 30)
+            self._page_rects.append((box, item))
+            if item == cur:
+                p.setPen(Qt.NoPen); p.setBrush(ACCENT)
+                p.drawEllipse(box); p.setPen(QColor(10, 20, 14))
+            else:
+                p.setPen(TEXT_DIM); p.setBrush(Qt.NoBrush)
+            p.drawText(box, Qt.AlignCenter, str(item))
+            x -= 40
+
+
 class ContentLibraryPage(Page):
     """Hai tab: 'Installed' (bật/tắt/xoá/mở thư mục) và 'Browse' (tìm & cài từ Modrinth)."""
 
@@ -186,6 +459,7 @@ class ContentLibraryPage(Page):
         self._hits: list[dict] = []
         self._done: set[str] = set()      # slug đã cài trong phiên này
         self._busy: set[str] = set()      # slug đang tải
+        self._installed_ids: set[str] = set()  # project_id đã có sẵn trên đĩa (theo hash)
         self._icons: dict[str, object] = {}   # url -> QPixmap đã tải
         self._icon_wanted: set[str] = set()
         self._index = "downloads"         # sort đang chọn; mặc định Popular cho discover
@@ -194,7 +468,8 @@ class ContentLibraryPage(Page):
         self._instance = ctl.active_instance()   # cài/xem mod cho instance nào
 
         # Nút chọn instance (góc phải): quyết định cài mod vào modpack nào.
-        self.inst_btn = AeroButton("Instance ▾", self, height=28, tone="neutral")
+        self.inst_btn = AeroButton("Game ▾", self, height=28, tone="neutral")
+        self.inst_btn.setToolTip(tr("Choose which game to install this into."))
         self.inst_btn.clicked.connect(self._open_instance_menu)
 
         self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
@@ -203,6 +478,12 @@ class ContentLibraryPage(Page):
         # --- Installed ---
         self._items: list = []
         self._updates: dict = {}          # tên hiển thị -> file bản mới (Modrinth)
+        self._mod_icons: dict = {}        # (path, size) -> QPixmap icon rút từ jar
+        self.inst_search = QLineEdit(self)
+        self.inst_search.setPlaceholderText("Filter installed…")
+        self.inst_search.setStyleSheet(INPUT_QSS)
+        self.inst_search.setFont(ui_font(10))
+        self.inst_search.textChanged.connect(lambda _t: self._apply_installed_filter())
         self.installed = ListView(self, empty_text=self._empty_installed)
         self.installed.badge_clicked.connect(self._toggle)
         self.installed.action_clicked.connect(self._ask_delete)
@@ -228,18 +509,22 @@ class ContentLibraryPage(Page):
         self.sort_tabs.current = 1        # Popular sáng sẵn, khớp discover
         self.sort_tabs.changed.connect(self._sort_changed)
         self.loader_tabs = TabBar([lo.capitalize() for lo in self.LOADERS], self)
+        self.loader_tabs.setToolTip(tr(
+            "Show add-ons for this mod system. Match it to your game (Fabric is the most common)."))
         self.loader_tabs.changed.connect(self._loader_changed)
 
-        self.results = ListView(self, empty_text="Loading popular picks from Modrinth…")
+        self._page = 1
+        self._total = 0
+        self.results = ModrinthResultsView(self, empty_text="Loading popular picks from Modrinth…")
         self.results.activated.connect(self._install)
-        self.results.badge_clicked.connect(self._install)
+        self.results.page_changed.connect(self._go_page)
 
         self._show_tab(0)
 
     # tiện lấy theo lớp con
     @property
     def _empty_installed(self) -> str:
-        return f"No {self.kind} yet. Open the Browse tab to add some from Modrinth."
+        return tr("Nothing here yet — open the Browse tab to add some from Modrinth.")
 
     @property
     def _search_hint(self) -> str:
@@ -269,7 +554,8 @@ class ContentLibraryPage(Page):
         self._discovered = False
         self._updates = {}
         self._hits = []
-        self.results.set_rows([])
+        self._page, self._total = 1, 0
+        self.results.set_page([], 1, 1, {})
         self._show_tab(0)
 
     # ---- instance đang thao tác ----
@@ -308,15 +594,17 @@ class ContentLibraryPage(Page):
         if inst:
             self._instance = inst
             self._done.clear()          # trạng thái "ADDED" tính theo từng instance
+            self._installed_ids = set()  # tập đã-cài cũng theo instance
             self._sync_instance()
             self.refresh()
+            self._refresh_installed_ids()
             self._render_results()
 
     def _show_tab(self, i: int) -> None:
         self.tabs.current = i
         self.tabs.update()
         browse = i == 1
-        for w in (self.installed, self.open_btn):
+        for w in (self.installed, self.open_btn, self.inst_search):
             w.setVisible(not browse)
         self.update_btn.setVisible((not browse) and bool(self._updates))
         for w in (self.search, self.search_btn, self.results, self.sort_tabs):
@@ -324,6 +612,7 @@ class ContentLibraryPage(Page):
         self.loader_tabs.setVisible(browse and self.is_mod)   # resource pack không có loader
         if browse:
             self.search.setFocus()
+            self._refresh_installed_ids()  # đánh dấu mod đã cài trong kết quả
             if not self._discovered:
                 self._discovered = True
                 self._load()               # tự khám phá mod hot lần đầu
@@ -347,8 +636,9 @@ class ContentLibraryPage(Page):
         else:
             self.inst_btn.setGeometry(w - 232, t - 2, 210, 30)
             self.tabs.setGeometry(24, t, w - 260, 30)
-        # Installed
-        self.installed.setGeometry(16, t + 40, w - 32, h - (t + 40) - 58)
+        # Installed: ô lọc trên, danh sách dưới.
+        self.inst_search.setGeometry(16, t + 40, w - 32, 32)
+        self.installed.setGeometry(16, t + 80, w - 32, h - (t + 80) - 58)
         self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
         self.update_btn.setGeometry(w - 356, h - 46, 156, 32)
         # Browse
@@ -367,8 +657,28 @@ class ContentLibraryPage(Page):
 
     def _render_installed(self) -> None:
         self._items = mods_mgr.list_installed(self._game_dir(), self.kind)
+        self._apply_installed_filter()
+
+    def _installed_icon(self, it):
+        """Icon rút từ jar/zip (cache theo path+size); None nếu không có."""
+        key = (str(it.path), it.size)
+        if key not in self._mod_icons:
+            pm = None
+            data = mods_mgr.content_icon(it.path)
+            if data:
+                from PySide6.QtGui import QPixmap
+                p = QPixmap()
+                if p.loadFromData(data) and not p.isNull():
+                    pm = p
+            self._mod_icons[key] = pm
+        return self._mod_icons[key]
+
+    def _apply_installed_filter(self) -> None:
+        q = self.inst_search.text().strip().lower()
         rows = []
         for it in self._items:
+            if q and q not in it.name.lower():
+                continue
             note = human_size(it.size) + ("" if it.enabled else " · disabled")
             rows.append(Row(
                 title=it.name,
@@ -378,6 +688,7 @@ class ContentLibraryPage(Page):
                 badge_on=it.enabled,
                 action="delete",
                 data=it,
+                icon=self._installed_icon(it),
             ))
         self.installed.set_rows(rows)
         has = bool(self._updates) and self.tabs.current == 0
@@ -494,48 +805,79 @@ class ContentLibraryPage(Page):
         loaders = [self._loader] if self.is_mod else None
         return loaders, game_versions
 
-    def _load(self) -> None:
-        """Nạp kết quả: có chữ thì tìm, rỗng thì discover mod hot theo sort/loader."""
+    PER_PAGE = 20
+
+    def _go_page(self, page: int) -> None:
+        self._page = max(1, page)
+        self._load(reset=False)
+
+    def _load(self, reset: bool = True) -> None:
+        """Nạp một trang kết quả: có chữ thì tìm, rỗng thì discover mod hot."""
+        if reset:
+            self._page = 1
         q = self.search.text().strip()
         self.results.empty_text = "Loading from Modrinth…"
-        self.results.set_rows([])
+        self.results.set_page([], self._page, 1, {})
         loaders, gvs = self._target()
+        offset = (self._page - 1) * self.PER_PAGE
         self.ctl._run(
-            lambda: modrinth.search(q, self.project_type, loaders=loaders,
-                                    game_versions=gvs, index=self._index, limit=30),
+            lambda: modrinth.search_page(q, self.project_type, loaders=loaders,
+                                         game_versions=gvs, index=self._index,
+                                         limit=self.PER_PAGE, offset=offset),
             self._show_results,
             self._search_failed,
         )
 
     def _search_failed(self, msg: str) -> None:
         self.results.empty_text = f"Couldn't reach Modrinth: {msg}"
-        self.results.set_rows([])
+        self.results.set_page([], self._page, 1, {})
 
-    def _show_results(self, hits: list) -> None:
-        self._hits = hits
+    def _show_results(self, res: dict) -> None:
+        self._hits = res.get("hits", [])
+        self._total = res.get("total", len(self._hits))
         self.results.empty_text = "Nothing matched on Modrinth."
         self._render_results()
         self._load_icons()
 
-    def _render_results(self) -> None:
-        rows = []
+    def _result_badges(self) -> dict:
+        b = {}
         for h in self._hits:
             slug = h.get("slug") or h.get("project_id")
+            pid = h.get("project_id")
             if slug in self._busy:
-                badge, on = "…", False
+                b[slug] = "…"
             elif slug in self._done:
-                badge, on = "ADDED", False
-            else:
-                badge, on = "GET", True
-            rows.append(Row(
-                title=h.get("title", slug),
-                subtitle=f"{h.get('author', '?')} · {human_count(h.get('downloads', 0))} downloads",
-                badge=badge,
-                badge_on=on,
-                icon=self._icons.get(h.get("icon_url") or ""),
-                data=h,
-            ))
-        self.results.set_rows(rows)
+                b[slug] = "ADDED"
+            elif pid and pid in self._installed_ids:
+                b[slug] = "INSTALLED"
+        return b
+
+    def _refresh_installed_ids(self) -> None:
+        """Hỏi Modrinth (theo sha1) xem những jar đang cài là project nào, để
+        Browse đánh dấu 'INSTALLED' và không tải lại. Chạy nền, im lặng."""
+        game_dir, kind = self._game_dir(), self.kind
+
+        def work():
+            hashes = []
+            for it in mods_mgr.list_installed(game_dir, kind):
+                try:
+                    hashes.append(mods_mgr.file_sha1(it.path))
+                except OSError:
+                    pass
+            return modrinth.projects_for_hashes(hashes)
+
+        self.ctl._run(work, self._got_installed_ids, lambda _m: None)
+
+    def _got_installed_ids(self, ids: set) -> None:
+        self._installed_ids = ids or set()
+        self._render_results()
+
+    def _pages(self) -> int:
+        import math
+        return max(1, math.ceil(self._total / self.PER_PAGE)) if self._total else 1
+
+    def _render_results(self) -> None:
+        self.results.set_page(self._hits, self._page, self._pages(), self._result_badges())
 
     def _load_icons(self) -> None:
         """Tải ảnh preview cho từng kết quả (nền, có cache theo URL)."""
@@ -555,11 +897,13 @@ class ContentLibraryPage(Page):
         pm = QPixmap()
         if pm.loadFromData(data):
             self._icons[url] = pm
-            self._render_results()
+            self.results.set_state(self._icons, self._result_badges())
 
     def _install(self, hit) -> None:
         slug = hit.get("slug") or hit.get("project_id")
-        if slug in self._busy or slug in self._done:
+        pid = hit.get("project_id")
+        # Đã đang tải, đã cài phiên này, hoặc đã có sẵn trên đĩa -> không tải lại.
+        if slug in self._busy or slug in self._done or (pid and pid in self._installed_ids):
             return
         self._busy.add(slug)
         self._render_results()
@@ -614,6 +958,7 @@ class ContentLibraryPage(Page):
 
 class ModsPage(ContentLibraryPage):
     heading = "Mods"
+    subheading = "Add-ons that change or add features to the game."
     kind = "mods"
     is_mod = True
     project_type = "mod"
@@ -621,6 +966,7 @@ class ModsPage(ContentLibraryPage):
 
 class ResourcePacksPage(ContentLibraryPage):
     heading = "Resource Packs"
+    subheading = "Packs that change how the game looks and sounds."
     kind = "resourcepacks"
     is_mod = False
     project_type = "resourcepack"
@@ -628,12 +974,150 @@ class ResourcePacksPage(ContentLibraryPage):
 
 class ShaderPacksPage(ContentLibraryPage):
     heading = "Shaders"
+    subheading = "Fancy lighting and visual effects for a better-looking game."
     kind = "shaderpacks"
     is_mod = False
     project_type = "shader"
 
 
 # ---------- trang chi tiết một instance (kiểu Modrinth) ----------
+
+_WROW = 66   # chiều cao một hàng world
+
+
+class WorldsView(QWidget):
+    """Danh sách thế giới của instance: icon + tên + lần chơi + dung lượng + chế độ.
+
+    Xem nhanh ngay trong launcher, khỏi phải mở thư mục saves. Bấm một world để
+    mở thư mục của riêng nó.
+    """
+
+    def __init__(self, ctl, parent=None):
+        super().__init__(parent)
+        self.ctl = ctl
+        self.instance = None
+        self._worlds: list = []
+        self._scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)
+        self._scroll_anim.timeout.connect(self._scroll_tick)
+        self._hover = -1
+        self._rects: list = []
+        self.setMouseTracking(True)
+
+    def set_instance(self, inst) -> None:
+        self.instance = inst
+        self.refresh()
+
+    def refresh(self) -> None:
+        from ..worlds import list_worlds
+        self._worlds = []
+        if self.instance is not None:
+            for w in list_worlds(self.ctl.instance_dir(self.instance) / "saves"):
+                img = None
+                if w.get("icon"):
+                    qi = QImage()
+                    if qi.loadFromData(w["icon"]):
+                        img = qi
+                w["_img"] = img
+                self._worlds.append(w)
+        self._scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
+        self.update()
+
+    @staticmethod
+    def _fmt_last(ms: int) -> str:
+        import datetime
+        if not ms:
+            return "never"
+        try:
+            return datetime.datetime.fromtimestamp(ms / 1000).strftime("%Y-%m-%d %H:%M")
+        except (OverflowError, OSError, ValueError):
+            return "never"
+
+    def wheelEvent(self, e):  # noqa: N802
+        maxs = max(0, len(self._worlds) * _WROW - self.height() + 24)
+        self._scroll_target = min(maxs, max(0.0, self._scroll_target - e.angleDelta().y()))
+        if not self._scroll_anim.isActive():
+            self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self._scroll
+        if abs(d) < 0.6:
+            self._scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self._scroll += d * 0.28
+        self.update()
+
+    def mouseMoveEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        h = next((i for i, (r, _) in enumerate(self._rects) if r.contains(pos)), -1)
+        if h != self._hover:
+            self._hover = h
+            self.update()
+
+    def mousePressEvent(self, e):  # noqa: N802
+        pos = e.position().toPoint()
+        for r, folder in self._rects:
+            if r.contains(pos) and self.instance:
+                self.ctl.open_path(self.ctl.instance_dir(self.instance) / "saves" / folder)
+                return
+
+    def paintEvent(self, event):  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        self._rects = []
+        if not self._worlds:
+            p.setFont(ui_font(11))
+            p.setPen(TEXT_DIM)
+            p.drawText(self.rect(), Qt.AlignCenter,
+                       tr("No worlds yet — press PLAY to create one, or Import World."))
+            p.end()
+            return
+        w = self.width()
+        for i, world in enumerate(self._worlds):
+            y = int(6 - self._scroll + i * _WROW)
+            if y + _WROW < 0 or y > self.height():
+                continue
+            row = QRect(4, y, w - 8, _WROW - 8)
+            self._rects.append((row, world["folder"]))
+            if i == self._hover:
+                p.setBrush(QColor(255, 255, 255, 20)); p.setPen(Qt.NoPen)
+                p.drawRoundedRect(row, 8, 8)
+            # icon 48×48 bo góc (hoặc ô mặc định)
+            ic = QRect(row.left() + 10, row.top() + 5, 48, 48)
+            p.save()
+            p.setClipRect(ic)
+            if world.get("_img") is not None:
+                p.drawImage(ic, world["_img"])
+            else:
+                p.fillRect(ic, QColor(40, 60, 90, 160))
+                p.setPen(QColor(200, 220, 255, 120)); p.setFont(ui_font(16, bold=True))
+                p.drawText(ic, Qt.AlignCenter, "🌍")
+            p.restore()
+            p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush)
+            p.drawRect(ic)
+            # tên + phụ đề
+            tx = ic.right() + 14
+            p.setFont(ui_font(12, bold=True)); p.setPen(TEXT)
+            title = world["title"] + ("  ⚠ Hardcore" if world.get("hardcore") else "")
+            p.drawText(QRect(tx, row.top() + 6, row.right() - tx - 8, 20),
+                       Qt.AlignLeft | Qt.AlignVCenter, title)
+            bits = [self._fmt_last(world.get("last", 0)), human_size(world.get("size", 0))]
+            if world.get("mode"):
+                bits.append(world["mode"])
+            if world.get("version"):
+                bits.append(world["version"])
+            p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+            p.drawText(QRect(tx, row.top() + 28, row.right() - tx - 8, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, "  ·  ".join(bits))
+            p.setFont(ui_font(8)); p.setPen(TEXT_FAINT)
+            p.drawText(QRect(tx, row.top() + 44, row.right() - tx - 8, 14),
+                       Qt.AlignLeft | Qt.AlignVCenter, world["folder"])
+        p.end()
+
 
 class InstancePage(Page):
     """Mở khi nhấn vào một instance: quản lý mọi thứ của riêng nó tại một nơi."""
@@ -666,11 +1150,23 @@ class InstancePage(Page):
             lambda: self.ctl.enable_shared_skins(self.instance) if self.instance else None)
         self.shared_btn.hide()
 
-        self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Logs"], self)
+        # Nhập world: chọn file .zip, hoặc mở thư mục saves để kéo-thả (cũng kéo-thả
+        # .zip thẳng vào trang này được — xem dropEvent).
+        self.import_btn = AeroButton("＋ IMPORT WORLD", self, height=28, tone="neutral")
+        self.import_btn.clicked.connect(
+            lambda: self.ctl.import_world(self.instance) if self.instance else None)
+        self.saves_btn = AeroButton("SAVES FOLDER", self, height=28, tone="neutral")
+        self.saves_btn.clicked.connect(
+            lambda: self.ctl.open_saves_folder(self.instance) if self.instance else None)
+        self.setAcceptDrops(True)
+
+        self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Worlds", "Logs"], self)
         self.tabs.changed.connect(self._tab)
 
         self.content = ContentLibraryPage(ctl, self)
         self.content.enter_embedded(None)
+        self.worlds = WorldsView(ctl, self)
+        self.worlds.hide()
         self.logs = QTextBrowser(self)
         self.logs.setStyleSheet(TEXT_QSS)
         self.logs.setFont(QFont("monospace", 8))
@@ -679,6 +1175,7 @@ class InstancePage(Page):
     def open(self, instance) -> None:
         self.instance = instance
         self.content.set_instance(instance)
+        self.worlds.set_instance(instance)
         from .. import optifine
         self.optifine_btn.setVisible(
             optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
@@ -689,26 +1186,35 @@ class InstancePage(Page):
         self._tab(0)
 
     def _relayout_actions(self) -> None:
-        # Xếp các nút hành động (Shared skins / OptiFine) từ phải sang, chỉ cái đang hiện.
+        # Xếp các nút hành động từ phải sang; Import World / Saves luôn hiện.
         x = self.width() - 20
-        for btn in (self.optifine_btn, self.shared_btn):
-            if btn.isVisible():
-                x -= 128
-                btn.setGeometry(x, 101, 128, 28)
+        for btn, w in ((self.import_btn, 150), (self.saves_btn, 128),
+                       (self.optifine_btn, 128), (self.shared_btn, 128)):
+            if not btn.isHidden():          # ý định hiện (không phụ thuộc parent đã show)
+                x -= w
+                btn.setGeometry(x, 101, w, 28)
+                btn.raise_()                # nổi lên TRÊN thanh tab, không thì tab nuốt click
                 x -= 8
 
     def refresh(self) -> None:
         self.ctl._update_play_button()
-        if self.tabs.current < len(self.CONTENT):
+        n = len(self.CONTENT)
+        if self.tabs.current < n:
             self.content.refresh()
+        elif self.tabs.current == n:
+            self.worlds.refresh()
 
     def _tab(self, i: int) -> None:
         self.tabs.current = i
         self.tabs.update()
-        is_logs = i == len(self.CONTENT)
-        self.content.setVisible(not is_logs)
+        n = len(self.CONTENT)
+        is_worlds, is_logs = i == n, i == n + 1
+        self.content.setVisible(i < n)
+        self.worlds.setVisible(is_worlds)
         self.logs.setVisible(is_logs)
-        if is_logs:
+        if is_worlds:
+            self.worlds.refresh()
+        elif is_logs:
             self.logs.setPlainText("".join(self.ctl._log_lines)
                                    or "No log yet — press PLAY to start the game.")
         else:
@@ -725,7 +1231,23 @@ class InstancePage(Page):
         self.tabs.setGeometry(24, 102, w - 48, 30)
         self._relayout_actions()                              # nút ở cạnh phải hàng tab
         self.content.setGeometry(0, 138, w, h - 138)
+        self.worlds.setGeometry(24, 142, w - 48, h - 166)
         self.logs.setGeometry(24, 142, w - 48, h - 166)
+
+    # ---- kéo-thả file .zip world thẳng vào trang để nhập ----
+    def _dropped_zips(self, e):
+        return [u.toLocalFile() for u in e.mimeData().urls()
+                if u.toLocalFile().lower().endswith(".zip")]
+
+    def dragEnterEvent(self, e):  # noqa: N802
+        if self.instance and self._dropped_zips(e):
+            e.acceptProposedAction()
+
+    def dropEvent(self, e):  # noqa: N802
+        if not self.instance:
+            return
+        for f in self._dropped_zips(e):
+            self.ctl._do_import_world(self.instance, f)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
@@ -1230,35 +1752,37 @@ class SettingsPage(Page):
         super().__init__(ctl, parent)
         s = ctl.settings
         self.mem = AeroSlider(1024, self._max_memory(), s.memory_mb, 512, self)
+        self.mem.setToolTip(tr(
+            "How much memory the game may use. More helps big modpacks; too much can slow your PC."))
         self.mem.changed.connect(self._set_memory)
 
         self.game_dir = QLineEdit(s.game_dir, self)
         self.game_dir.setStyleSheet(INPUT_QSS)
         self.game_dir.setFont(ui_font(9))
+        self.game_dir.setToolTip(tr(
+            "Advanced: where games and downloads are stored. Most people never change this."))
         self.game_dir.editingFinished.connect(self._set_dir)
 
         self.java = QLineEdit(s.java_path, self)
         self.java.setPlaceholderText("leave empty = auto-detect per version")
         self.java.setStyleSheet(INPUT_QSS)
         self.java.setFont(ui_font(9))
+        self.java.setToolTip(tr(
+            "Advanced: leave empty and the launcher picks the right Java for you."))
         self.java.editingFinished.connect(self._set_java)
 
-        # Đăng nhập Microsoft đòi một Azure client ID, mà cho tới giờ chỉ đặt được
-        # bằng biến môi trường hoặc sửa tay clients.json. Cách đó vô dụng với bản
-        # cài đặt: người bấm vào installer không có terminal để export biến, và
-        # càng không đi mò file JSON trong %APPDATA%. Nên nó phải nằm ở đây.
-        self.client_id = QLineEdit(resolve_client_id("microsoft", "MC_CLIENT_ID"), self)
-        self.client_id.setPlaceholderText("paste the Application (client) ID from Azure")
-        self.client_id.setStyleSheet(INPUT_QSS)
-        self.client_id.setFont(ui_font(9))
-        self.client_id.editingFinished.connect(self._set_client_id)
-
+        # Đăng nhập Microsoft luôn dùng client ID của launcher (đã duyệt) — người
+        # chơi không cần và không được đổi, nên không có ô nhập ở đây nữa.
         self.snapshots = AeroToggle(s.show_snapshots, self)
         self.snapshots.toggled.connect(self._set_snapshots)
         self.close_on_launch = AeroToggle(s.close_on_launch, self)
         self.close_on_launch.toggled.connect(self._set_close)
         self.check_updates = AeroToggle(s.check_updates, self)
         self.check_updates.toggled.connect(self._set_check_updates)
+        self.menu_dark = AeroToggle(s.menu_dark, self)
+        self.menu_dark.setToolTip(tr(
+            "Menu background: off = daytime panorama, on = nighttime."))
+        self.menu_dark.toggled.connect(lambda on: self.ctl.set_menu_dark(on))
 
         self.open_dir = AeroButton("OPEN GAME FOLDER", self, height=32, tone="neutral")
         self.open_dir.clicked.connect(lambda: self.ctl.open_path(self.ctl.settings.game_path))
@@ -1269,6 +1793,19 @@ class SettingsPage(Page):
 
         self.lang_btn = AeroButton(language_name(language()), self, height=30, tone="neutral")
         self.lang_btn.clicked.connect(self._open_language)
+
+        # Progressive disclosure: game folder + Java path ẩn sau "Advanced" nên
+        # người mới không thấy chúng như bài-tập-phải-làm; mặc định thu gọn.
+        self._advanced = False
+        self.adv_btn = AeroButton("ADVANCED  ▾", self, height=28, tone="neutral")
+        self.adv_btn.setToolTip(tr("Settings most people never need to touch."))
+        self.adv_btn.clicked.connect(self._toggle_advanced)
+
+    def _toggle_advanced(self) -> None:
+        self._advanced = not self._advanced
+        self.adv_btn.setText("ADVANCED  ▴" if self._advanced else "ADVANCED  ▾")
+        self._relayout()
+        self.update()
 
     def _open_language(self) -> None:
         g = self.lang_btn.geometry()
@@ -1337,12 +1874,6 @@ class SettingsPage(Page):
         self.ctl.settings.java_path = self.java.text().strip()
         self.ctl.settings.save()
 
-    def _set_client_id(self) -> None:
-        # Client ID không phải bí mật (mọi launcher mã nguồn mở đều công khai của
-        # mình), nhưng save_client_id vẫn ghi file với quyền 0600 cho đồng nhất
-        # với chỗ đang giữ client secret của Google.
-        save_client_id("microsoft", self.client_id.text().strip())
-
     def _set_snapshots(self, on: bool) -> None:
         self.ctl.settings.show_snapshots = on
         self.ctl.settings.save()
@@ -1355,18 +1886,29 @@ class SettingsPage(Page):
         self.ctl.settings.check_updates = on
         self.ctl.settings.save()
 
+    # Mốc y cố định cho từng hàng — dùng CHUNG cho đặt widget và vẽ nhãn, để hai
+    # bên không lệch. Khối "Advanced" (game folder + Java) chỉ chiếm chỗ khi mở.
+    Y_MEM, Y_SNAP, Y_CLOSE, Y_UPD, Y_THEME = 60, 126, 166, 206, 246
+    Y_LANG, Y_ADV, Y_DIR, Y_JAVA = 300, 346, 412, 482
+
     def resizeEvent(self, event) -> None:  # noqa: N802
+        self._relayout()
+
+    def _relayout(self) -> None:
         w = min(560, self.width() - 52)
-        self.mem.setGeometry(26, 60, w, 26)
-        self.game_dir.setGeometry(26, 142, w, 32)
-        self.java.setGeometry(26, 218, w, 32)
-        # Ô này có thêm một dòng gợi ý dưới nhãn nên tụt xuống 38px thay vì 28px
-        # như các ô khác.
-        self.client_id.setGeometry(26, 304, w, 32)
-        self.snapshots.setGeometry(26, 368, 44, 22)
-        self.close_on_launch.setGeometry(26, 408, 44, 22)
-        self.check_updates.setGeometry(26, 448, 44, 22)
-        self.lang_btn.setGeometry(26, 508, 200, 30)
+        self.mem.setGeometry(26, self.Y_MEM, w, 26)
+        self.snapshots.setGeometry(26, self.Y_SNAP, 44, 22)
+        self.close_on_launch.setGeometry(26, self.Y_CLOSE, 44, 22)
+        self.check_updates.setGeometry(26, self.Y_UPD, 44, 22)
+        self.menu_dark.setGeometry(26, self.Y_THEME, 44, 22)
+        self.lang_btn.setGeometry(26, self.Y_LANG, 200, 30)
+        self.adv_btn.setGeometry(26, self.Y_ADV, 200, 28)
+        adv = self._advanced
+        self.game_dir.setVisible(adv)
+        self.java.setVisible(adv)
+        if adv:
+            self.game_dir.setGeometry(26, self.Y_DIR, w, 32)
+            self.java.setGeometry(26, self.Y_JAVA, w, 32)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -1376,35 +1918,28 @@ class SettingsPage(Page):
         p = QPainter(self)
         gb = self.ctl.settings.memory_mb / 1024
 
-        def label(y: int, title: str, hint: str = "") -> None:
+        def label(y: int, title: str) -> None:
             p.setFont(ui_font(9, bold=True))
             p.setPen(TEXT)
-            p.drawText(QRect(26, y, self.width() - 52, 18), Qt.AlignLeft | Qt.AlignVCenter, title)
-            if hint:
-                p.setFont(ui_font(8))
-                p.setPen(TEXT_FAINT)
-                p.drawText(QRect(26, y + 17, self.width() - 52, 16),
-                           Qt.AlignLeft | Qt.AlignVCenter, hint)
+            p.drawText(QRect(26, y, self.width() - 52, 18),
+                       Qt.AlignLeft | Qt.AlignVCenter, title)
 
-        label(26, f"Max memory — {gb:.1f} GB", "")
-        label(114, tr("Game folder"))
-        label(190, tr("Java path"))
-        label(484, tr("Language"))
-        label(266, "Microsoft Client ID",
-              "Needed to sign in — portal.azure.com › App registrations › your app")
-        p.setFont(ui_font(9))
-        p.setPen(TEXT)
-        p.drawText(QRect(84, 366, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Show snapshots")
-        p.drawText(QRect(84, 406, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Close launcher when the game starts")
-        p.drawText(QRect(84, 446, 400, 26), Qt.AlignLeft | Qt.AlignVCenter,
-                   "Check for updates on startup")
+        def toggle_text(y: int, text: str) -> None:
+            p.setFont(ui_font(9)); p.setPen(TEXT)
+            p.drawText(QRect(84, y, 460, 22), Qt.AlignLeft | Qt.AlignVCenter, text)
 
-        warn = self.ctl.settings.memory_mb > self._max_memory() * 0.9
-        if warn:
-            p.setFont(ui_font(8))
-            p.setPen(DEGRADED)
-            p.drawText(QRect(26, 90, self.width() - 52, 16), Qt.AlignLeft | Qt.AlignVCenter,
-                       "Setting near all your RAM can freeze the system.")
+        label(self.Y_MEM - 34, f"Max memory — {gb:.1f} GB")
+        if self.ctl.settings.memory_mb > self._max_memory() * 0.9:
+            p.setFont(ui_font(8)); p.setPen(DEGRADED)
+            p.drawText(QRect(26, self.Y_MEM + 30, self.width() - 52, 16),
+                       Qt.AlignLeft | Qt.AlignVCenter,
+                       tr("Setting near all your RAM can freeze the system."))
+        toggle_text(self.Y_SNAP, tr("Show snapshots"))
+        toggle_text(self.Y_CLOSE, tr("Close launcher when the game starts"))
+        toggle_text(self.Y_UPD, tr("Check for updates on startup"))
+        toggle_text(self.Y_THEME, tr("Dark menu background (night panorama)"))
+        label(self.Y_LANG - 22, tr("Language"))
+        if self._advanced:
+            label(self.Y_DIR - 22, tr("Game folder"))
+            label(self.Y_JAVA - 22, tr("Java path"))
         p.end()

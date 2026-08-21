@@ -16,13 +16,89 @@ LANGUAGES = [
 # Bộ chuỗi UI chính. en là khoá; mỗi ngôn ngữ khác dịch những gì có, thiếu -> en.
 _T = {
     "vi": {
-        "Home": "Trang chủ", "Instances": "Instance", "Mods": "Mods",
-        "Resource Packs": "Gói tài nguyên", "Shaders": "Shader",
+        "Home": "Trang chủ", "Instances": "Trò chơi", "Games": "Trò chơi",
+        "Mods": "Mods",
+        "Resource Packs": "Gói giao diện", "Shaders": "Shader",
         "Servers": "Máy chủ", "Skin": "Skin", "Settings": "Cài đặt",
+        # Tooltip helper cho nav (giải thích bằng lời thường).
+        "Your dashboard — jump straight back into a game.":
+            "Bảng điều khiển — vào lại game nhanh.",
+        "Your separate Minecraft setups. Each has its own version, mods and worlds.":
+            "Các bản Minecraft riêng của bạn. Mỗi bản có phiên bản, mod và thế giới riêng.",
+        "Your games. Open one to play it or add mods, resource packs and shaders.":
+            "Các game của bạn. Mở một game để chơi hoặc thêm mod, gói giao diện, shader.",
+        "Add-ons that change or add features to the game.":
+            "Tiện ích thêm/đổi tính năng cho game.",
+        "Texture & sound packs that change how the game looks and sounds.":
+            "Gói đổi hình ảnh & âm thanh của game.",
+        "Fancy lighting and visual effects for a better-looking game.":
+            "Ánh sáng và hiệu ứng đẹp hơn cho game.",
+        "Change how your character looks in the game.":
+            "Đổi ngoại hình nhân vật trong game.",
+        "Memory, folders, language and updates.":
+            "Bộ nhớ, thư mục, ngôn ngữ và cập nhật.",
+        "Open our community Discord in your browser.":
+            "Mở Discord cộng đồng trên trình duyệt.",
+        # Subheading / helper trên các trang + tooltip nút.
+        "Each is a separate copy of the game — its own version, mods and worlds.":
+            "Mỗi bản là một bản game riêng — phiên bản, mod và thế giới riêng.",
+        "No games yet. Click NEW GAME to set one up — just a name and a version.":
+            "Chưa có game nào. Bấm NEW GAME để tạo — chỉ cần tên và phiên bản.",
+        "Set up a fresh copy of the game (pick a name and version).":
+            "Tạo một bản game mới (đặt tên và chọn phiên bản).",
+        "Install a ready-made bundle of mods someone already put together.":
+            "Cài một gói mod dựng sẵn của người khác.",
+        "Packs that change how the game looks and sounds.":
+            "Gói đổi hình ảnh và âm thanh của game.",
+        "Choose which game to install this into.":
+            "Chọn game để cài vào.",
+        # Onboarding lần đầu.
+        "Welcome to Nostalgia Launcher": "Chào mừng đến Nostalgia Launcher",
+        "SET UP MY FIRST GAME": "TẠO GAME ĐẦU TIÊN",
+        "BROWSE READY-MADE PACKS": "XEM CÁC GÓI DỰNG SẴN",
+        "SKIP FOR NOW": "ĐỂ SAU",
+        ("Let’s get your first game running. One click sets up a ready-to-play "
+         "copy of Minecraft with the Aero glass look — no setup, no jargon.\n\n"
+         "After that, three easy moves make it yours:  play once  ·  add a skin  ·  add a mod."):
+            ("Cùng chạy game đầu tiên nào. Một cú bấm là có ngay một bản Minecraft "
+             "chơi được với giao diện kính Aero — không cài đặt, không thuật ngữ.\n\n"
+             "Sau đó, ba bước là thành của bạn:  chơi thử  ·  đổi skin  ·  thêm mod."),
+        # Empty state + tooltip.
+        "Nothing here yet — open the Browse tab to add some from Modrinth.":
+            "Chưa có gì ở đây — mở tab Browse để thêm từ Modrinth.",
+        "Show add-ons for this mod system. Match it to your game (Fabric is the most common).":
+            "Hiện tiện ích theo hệ mod này. Chọn khớp với game của bạn (Fabric phổ biến nhất).",
+        "How much memory the game may use. More helps big modpacks; too much can slow your PC.":
+            "Bộ nhớ game được dùng. Nhiều giúp modpack lớn; quá nhiều có thể làm máy chậm.",
+        "Advanced: where games and downloads are stored. Most people never change this.":
+            "Nâng cao: nơi lưu game và bản tải. Hầu như không cần đổi.",
+        "Advanced: leave empty and the launcher picks the right Java for you.":
+            "Nâng cao: để trống, launcher tự chọn Java đúng cho bạn.",
+        "No game yet": "Chưa có game",
+        "No game yet — click NEW GAME to make one.":
+            "Chưa có game — bấm NEW GAME để tạo.",
+        "Show snapshots": "Hiện bản snapshot",
+        "Close launcher when the game starts": "Đóng launcher khi game khởi động",
+        "Check for updates on startup": "Kiểm tra cập nhật khi mở",
+        "Dark menu background (night panorama)": "Nền menu tối (panorama ban đêm)",
+        "Menu background: off = daytime panorama, on = nighttime.":
+            "Nền menu: tắt = panorama ban ngày, bật = ban đêm.",
+        "Theme: Day": "Theme: Ngày", "Theme: Night": "Theme: Đêm",
+        "Day menu background — press F3+T in-game to apply now, or it shows on next launch.":
+            "Nền menu ngày — bấm F3+T trong game để áp ngay, hoặc hiện ở lần mở tới.",
+        "Night menu background — press F3+T in-game to apply now, or it shows on next launch.":
+            "Nền menu đêm — bấm F3+T trong game để áp ngay, hoặc hiện ở lần mở tới.",
+        "Switch the in-game menu background between day and night.":
+            "Đổi nền menu trong game giữa ngày và đêm.",
+        "Setting near all your RAM can freeze the system.":
+            "Đặt gần hết RAM có thể làm treo máy.",
+        "Settings most people never need to touch.":
+            "Những cài đặt hầu như không ai cần đụng tới.",
         "Welcome back!": "Chào mừng trở lại!",
         "What will we build today?": "Hôm nay ta xây gì nào?",
-        "My Instances": "Instance của tôi", "New Instance": "Instance mới",
-        "PLAY": "CHƠI", "NEW INSTANCE": "INSTANCE MỚI",
+        "My Instances": "Trò chơi của tôi", "New Instance": "Trò chơi mới",
+        "My Games": "Trò chơi của tôi", "New Game": "Trò chơi mới",
+        "PLAY": "CHƠI", "NEW INSTANCE": "TRÒ CHƠI MỚI", "NEW GAME": "TRÒ CHƠI MỚI",
         "Manage Account": "Quản lý tài khoản", "YOUR ACCOUNT": "TÀI KHOẢN",
         "Connected": "Đã kết nối", "Offline": "Ngoại tuyến", "NEWS": "TIN TỨC",
         "CONTINUE PLAYING": "CHƠI TIẾP", "World": "Thế giới", "Server": "Máy chủ",

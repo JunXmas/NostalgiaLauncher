@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from PySide6.QtCore import (
-    QEasingCurve, QRect, QRectF, Qt, QVariantAnimation, Signal,
+    QEasingCurve, QRect, QRectF, Qt, QTimer, QVariantAnimation, Signal,
 )
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import (
@@ -72,7 +72,11 @@ class ModpackCards(QWidget):
         self.hits: list = []
         self.icons: dict = {}
         self.empty_text = "Loading modpacks…"
-        self.scroll = 0
+        self.scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)
+        self._scroll_anim.timeout.connect(self._scroll_tick)
         self._hover = -1
         self._hover_amt = 0.0
         self._anim = QVariantAnimation(self)
@@ -86,7 +90,8 @@ class ModpackCards(QWidget):
 
     def set_hits(self, hits) -> None:
         self.hits = hits
-        self.scroll = 0
+        self.scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
         self.update()
 
     def _cw(self) -> float:
@@ -137,8 +142,18 @@ class ModpackCards(QWidget):
     def wheelEvent(self, e):  # noqa: N802
         overflow = self._content_h() - self.height()
         if overflow > 0:
-            self.scroll = max(0, min(overflow, self.scroll - e.angleDelta().y()))
-            self.update()
+            self._scroll_target = max(0.0, min(overflow, self._scroll_target - e.angleDelta().y()))
+            if not self._scroll_anim.isActive():
+                self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self.scroll
+        if abs(d) < 0.6:
+            self.scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self.scroll += d * 0.28
+        self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
@@ -291,7 +306,7 @@ class ModpackBrowsePage(Page):
         self.version.returnPressed.connect(self._load)
 
         self.cards = ModpackCards(self)
-        self.cards.activated.connect(self._install)
+        self.cards.activated.connect(self._open_detail)
 
     # ---------- vòng đời ----------
 
@@ -357,9 +372,10 @@ class ModpackBrowsePage(Page):
             self.cards.icons[url] = pm
             self.cards.update()
 
-    def _install(self, hit) -> None:
-        self.ctl.install_modpack(hit)
-        self.ctl.go("installations")
+    def _open_detail(self, hit) -> None:
+        """Bấm một modpack -> mở cửa sổ mô tả (icon, tác giả, mô tả đầy đủ) rồi mới cài."""
+        from .dialogs import ModpackDetailDialog
+        ModpackDetailDialog(self.window(), self.ctl, hit).show()
 
     # ---------- sort + lọc ----------
 

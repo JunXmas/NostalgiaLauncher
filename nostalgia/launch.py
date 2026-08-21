@@ -183,7 +183,12 @@ def build_command(
         if CURRENT_OS == "osx":
             cmd.append("-XstartOnFirstThread")
 
-    cmd += [f"-Xmx{max_memory_mb}M", "-XX:+UseG1GC"]
+    # Heap cố định + GC hợp máy (ZGC cho máy khoẻ, ngược lại G1GC-Aikar) — bớt
+    # micro-stutter, FPS ổn định hơn cờ -Xmx + G1GC trơn trước đây.
+    from . import tuning
+    cmd += tuning.jvm_flags(
+        max_memory_mb,
+        java_major=meta.get("javaVersion", {}).get("majorVersion", 17))
     cmd.append(meta["mainClass"])
 
     if "arguments" in meta:

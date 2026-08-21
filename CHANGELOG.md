@@ -2,6 +2,46 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.8.0-beta.3
+- **Day/night menu, one click from Home.** A "Menu: Day/Night" button on the
+  dashboard flips the title-screen panorama between the daytime and nighttime
+  scenes. It applies on next launch — or, in a running game, press **F3+T** at
+  the title screen to see it switch live, no restart needed.
+- **The Windows 7 look.** The interface now ships with Selawik (an open-source
+  stand-in for Segoe UI, the Aero-era font) and a larger, easier-to-read sidebar.
+- **Browse knows what you already have.** Mods already installed show an
+  "Installed" tag when browsing, and won't be downloaded again.
+- **Mods, Resource Packs and Shaders are back in the sidebar** (and still inside
+  each game's tabs), so you can browse them either way.
+- Removed the bundled FancyMenu mod (it added nothing on this version); the
+  animated menu blur (Blur+) stays. Updated the Discord link.
+
+## 0.8.0-beta.2
+- **Fixed: some game versions wouldn't launch at all** (e.g. 1.21.4, 1.20.6),
+  while others (like 1.21.11) worked. A Fabric game's own libraries and the
+  base game's libraries could include the same library at two versions, and both
+  ended up loaded at once — which the mod loader refuses, so the game quit before
+  it even opened, with no error. The launcher now keeps a single version of each
+  library (the loader's), matching the official launcher.
+
+## 0.8.0-beta.1
+_Beta — a big ease-of-use and looks upgrade. Please report anything odd._
+
+- **Easier for newcomers.** A first-run welcome sets up a ready-to-play game in
+  one click; menus speak plain language ("Games" instead of "Instances", with
+  hover tips everywhere); the sidebar is trimmed to five task-first entries
+  (mods, resource packs and shaders now live inside each game); and rarely-used
+  settings (game folder, Java path) hide behind an "Advanced" toggle.
+- **Safer to explore.** Removing a game now moves it to a `.trash` folder you can
+  restore from, instead of deleting it outright.
+- **Aero glass menus.** A frosted-glass Aero look across in-game menus (with the
+  world softly blurred behind), and the animated **title-screen panorama** now
+  ships in **Day** and **Night** themes — switch them under Settings.
+- **Extras bundled for modern Fabric games.** Blur+ (animated menu blur) and
+  FancyMenu (menu customization) install and lock in automatically alongside the
+  Aero pack.
+- **Fully translatable UI**, with Vietnamese included for all the new screens.
+
 ## 0.7.6
 - **Fixed: "Open folder", links and the installer opener did nothing in the
   installed app.** In the packaged build, the buttons that open a folder (Mods,

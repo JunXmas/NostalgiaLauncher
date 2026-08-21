@@ -18,12 +18,13 @@ from .. import (
     instances as instances_mod, loaders as loaders_mod, modpack as modpack_mod,
     modrinth as modrinth_mod, updater,
 )
+from ..i18n import tr
 from ..install import Installer
-from ..settings import Settings, client_id as resolve_client_id, save_client_id
+from ..settings import Settings, client_id as resolve_client_id
 from . import pages as page_mod
 from .dashboard import HomeDashboard
 from .modpack_page import ModpackBrowsePage
-from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt
+from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt, WelcomeDialog
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
 from .worker import FnWorker, GoogleLinkWorker, LaunchWorker, LoginWorker, ProgressWorker
@@ -85,8 +86,13 @@ class Controller:
         self._fabric_games: list[str] = []
         self._log_lines: list[str] = []           # log game gần nhất
         self._log_dialog = None
+        self._launching = False        # có launch đang khởi động (tải/chuẩn bị) không
 
         self._build_pages()
+        # Sidebar được dựng trong LauncherWindow TRƯỚC khi Controller đặt ngôn ngữ,
+        # nên với người dùng chọn tiếng khác, nhãn nav khởi đầu còn là tiếng Anh.
+        # Dịch lại một lần ở đây để nav khớp ngôn ngữ đã lưu ngay khi mở app.
+        self.window.retranslate()
         window.nav_clicked.connect(self.go)
         window.closing.connect(self.shutdown)
         self.refresh()
@@ -95,6 +101,7 @@ class Controller:
         self._ensure_version()
         self._bootstrap_instances()
         self._maybe_check_updates()
+        self._maybe_welcome()
 
     # ---------- dựng ----------
 
@@ -107,8 +114,6 @@ class Controller:
             "resourcepacks": page_mod.ResourcePacksPage(self),
             "shaders": page_mod.ShaderPacksPage(self),
             "modpacks": ModpackBrowsePage(self),
-            "servers": page_mod.StubPage(self, "Servers",
-                "A server list is not built yet."),
             "skins": page_mod.SkinsPage(self),
             "settings": page_mod.SettingsPage(self),
         }
@@ -210,7 +215,7 @@ class Controller:
         inst = self.active_instance()
         if inst:
             return f"{inst.name}  ·  {inst.version}"
-        return self.settings.selected_version or "No instance yet"
+        return self.settings.selected_version or tr("No game yet")
 
     def open_instance_menu(self, anchor: QRect) -> None:
         items = [MenuItem(kind="header", label="Instance")]
@@ -325,20 +330,89 @@ class Controller:
         self.window.set_status(f"Created instance '{inst.name}' ({version}).")
         return inst
 
+    # ---------- onboarding lần đầu ----------
+
+    def _maybe_welcome(self) -> None:
+        """Người mới toanh (chưa có game nào, chưa từng thấy màn chào) -> hiện
+        WelcomeDialog dẫn tới lần chơi đầu bằng một cú bấm."""
+        if self.settings.seen_welcome or self.instances.all():
+            return
+        dlg = WelcomeDialog(self.window)
+        dlg.setup.connect(self.onboard_default_game)
+        dlg.browse.connect(lambda: (self._mark_welcomed(), self.begin_browse_modpacks()))
+        dlg.closed.connect(self._mark_welcomed)   # bấm Skip / Esc cũng coi như đã xem
+        dlg.show()
+        dlg.setFocus()
+
+    def _mark_welcomed(self) -> None:
+        if not self.settings.seen_welcome:
+            self.settings.seen_welcome = True
+            self.settings.save()
+
+    def onboard_default_game(self) -> None:
+        """Tạo sẵn một bản game chơi được ngay (release mới nhất + Aero) rồi thả
+        người chơi về Home với nút PLAY. Không hỏi tên/phiên bản — làm hộ hết."""
+        self._mark_welcomed()
+        self.window.set_status("Setting up your first game…")
+
+        def work():
+            vs = self.installer.list_versions("release")
+            return vs[0] if vs else None
+
+        def done(v):
+            if not v:
+                self.window.set_status(
+                    "Couldn't fetch versions — use NEW GAME to pick one yourself.")
+                return
+            name = self.instances.unique_name("My First Game")
+            inst = self.create_instance(name, v)
+            self.apply_aero_ui(inst, silent=True)
+            self.pages["installations"].refresh()
+            self.pages["home"].refresh()
+            self.go("home")
+            self.window.set_status(f"Your first game is ready ({v}) — press PLAY to start!")
+
+        self._run(work, done,
+                  lambda m: self.window.set_status(f"Setup failed: {m}"))
+
     def delete_instance(self, name: str) -> None:
+        """Dời instance vào .trash thay vì xoá hẳn — lỡ tay vẫn khôi phục được
+        (giữ vài bản gần nhất). Không dời được thì mới xoá thật."""
         import shutil
         inst = self.instances.get(name)
         if inst:
-            shutil.rmtree(self.instance_dir(inst), ignore_errors=True)
+            src = self.instance_dir(inst)
+            if src.exists():
+                trash = self.store_root / ".trash"
+                trash.mkdir(parents=True, exist_ok=True)
+                dest, n = trash / src.name, 1
+                while dest.exists():
+                    dest = trash / f"{src.name}-{n}"; n += 1
+                try:
+                    shutil.move(str(src), str(dest))
+                    self._prune_trash(trash)
+                except OSError:
+                    shutil.rmtree(src, ignore_errors=True)
         self.instances.remove(name)
         self.set_active_instance(self.instances.active)
-        self.window.set_status(f"Removed instance '{name}'.")
+        self.window.set_status(f"Moved '{name}' to Trash — restore it from {self.store_root}/.trash")
+
+    def _prune_trash(self, trash: Path, keep: int = 6) -> None:
+        import shutil
+        try:
+            items = sorted(trash.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+        except OSError:
+            return
+        for old in items[keep:]:
+            shutil.rmtree(old, ignore_errors=True)
 
     def ask_delete_instance(self, name: str) -> None:
         dlg = ConfirmDialog(
-            self.window, "Remove instance",
-            f"Delete instance '{name}' and its mods/saves?\n\n"
-            "Shared versions, libraries and assets are kept.",
+            self.window, "Remove this game?",
+            f"Move '{name}' and its mods/saves to Trash?\n\n"
+            "You can restore it later from the .trash folder. Shared versions, "
+            "libraries and assets are kept either way.",
+            ok_text="MOVE TO TRASH",
         )
         dlg.confirmed.connect(lambda: (self.delete_instance(name),
                                        self.pages["installations"].refresh()))
@@ -352,13 +426,24 @@ class Controller:
             return
         dlg = InstanceSettingsDialog(self.window, inst,
                                      default_memory=self.settings.memory_mb,
-                                     max_memory=SettingsPage._max_memory())
+                                     max_memory=SettingsPage._max_memory(),
+                                     aero_on=self.aero_ui_enabled(inst))
         dlg.saved.connect(lambda nm, mem, jv: self._apply_instance_settings(name, nm, mem, jv))
         dlg.duplicate.connect(lambda: self.duplicate_instance(name))
         dlg.repair.connect(lambda: self.repair_instance(name))
         dlg.set_icon.connect(lambda: self._pick_instance_icon(name))
         dlg.reset_icon.connect(lambda: self._reset_instance_icon(name))
+        dlg.aero_toggled.connect(lambda on: self._toggle_instance_aero(name, on))
         dlg.show()
+
+    def _toggle_instance_aero(self, name: str, on: bool) -> None:
+        inst = self.instances.get(name)
+        if not inst:
+            return
+        if on:
+            self.apply_aero_ui(inst)
+        else:
+            self.remove_aero_ui(inst)
 
     def _pick_instance_icon(self, name: str) -> None:
         from PySide6.QtGui import QImage
@@ -432,7 +517,10 @@ class Controller:
     def begin_browse_modpacks(self) -> None:
         self.go("modpacks")
 
-    def install_modpack(self, hit, game_version: str | None = None) -> None:
+    SUPER_RES_SLUG = "superresolution"   # mod render-low-then-upscale (kèm bản Optimized)
+
+    def install_modpack(self, hit, game_version: str | None = None,
+                        optimized: bool = False) -> None:
         slug = hit.get("slug") or hit.get("project_id")
         title = hit.get("title") or slug
         name = self.instances.unique_name(title)
@@ -474,6 +562,19 @@ class Controller:
             # on_status -> hiện tiến trình khi chạy Forge/NeoForge installer (chậm vài phút).
             vid = loaders_mod.install(self.installer, loader, mc, java_binary=java,
                                       on_status=on_status)
+            # Bản Optimized: kèm mod Super Resolution (render thấp rồi upscale -> thêm FPS).
+            # Client-side, không phụ thuộc; bản nào không có (vd 1.12.2) thì bỏ qua êm.
+            if optimized:
+                on_status("Adding Super Resolution…")
+                try:
+                    from .. import mods as mods_mgr
+                    sr = modrinth_mod.best_file(self.SUPER_RES_SLUG, loaders=[loader],
+                                                game_versions=[mc] if mc else None)
+                    if sr:
+                        mods_mgr.install_file(inst_dir, "mods", url=sr["url"],
+                                              filename=sr["filename"], sha1=sr.get("sha1"))
+                except Exception:  # noqa: BLE001 - không chặn tạo instance nếu mod lỗi
+                    pass
             return name, vid
 
         w = ProgressWorker(work)
@@ -564,8 +665,168 @@ class Controller:
         inst = self.instances.add(name, version)
         self.set_active_instance(name)
         self.enable_shared_skins(inst, silent=True)   # để offline nhìn skin nhau
+        self.apply_aero_ui(inst, silent=True)         # UI kính Aero đi kèm sẵn
         self.window.set_status(f"Modpack '{name}' installed — press PLAY.")
         self.go("home")
+
+    def apply_aero_ui(self, inst, silent: bool = False) -> None:
+        """Cài resource pack Aero UI vào instance (nút/slider/tab thành kính).
+
+        Bản modern dùng sprite ship sẵn; bản legacy (≤1.20.1) ghép nút Aero vào
+        widgets.png rút từ jar của chính bản đó. Nhẹ nên chạy thẳng, không cần luồng.
+        """
+        from .. import aero
+        jar = None
+        try:
+            meta = self.installer.offline_version_json(inst.version)
+            cj = self.installer.client_jar(meta)
+            jar = cj if cj and Path(cj).exists() else None
+        except Exception:  # noqa: BLE001 - thiếu meta/jar thì cứ dùng sprite modern
+            jar = None
+        # Hard-lock (mod Fabric ALWAYS_ENABLED) chỉ ở era 26.x+ — nơi mod build
+        # được và chạy được. Bản 1.x hoặc non-Fabric -> soft-lock (resource pack).
+        from .. import optifine
+        v = (inst.version or "").lower()
+        # MC version: fabric id = "fabric-loader-<loader>-<mc>"; scheme mới "26.2"
+        # thì optifine.mc_from_version_id không hiểu nên tự tách đoạn cuối.
+        if "fabric-loader" in v:
+            mc = (inst.version or "").rsplit("-", 1)[-1]
+        else:
+            mc = optifine.mc_from_version_id(inst.version) or (inst.version or "")
+        hard = ("fabric" in v) and bool(mc) and not mc.startswith("1.")
+        try:
+            kind = aero.apply_to_instance(self.instance_dir(inst), jar, hard_lock=hard,
+                                          dark=self.settings.menu_dark)
+        except Exception as e:  # noqa: BLE001
+            if not silent:
+                self.window.set_status(f"Couldn't install Aero UI: {e}")
+            return
+        # Soft-lock Fabric: kèm Blur+ (blur động sau menu). Chạy nền, best-effort;
+        # texture kính vẫn đứng một mình được nếu mod lỗi.
+        # (FancyMenu đã bỏ: element/nút custom không render trên 1.21.11 + FO, còn
+        #  nền menu thì resource pack panorama lo tốt hơn — xem set_menu_dark.)
+        if not hard and "fabric" in v and mc:
+            self._install_aero_mods_async(inst, mc)
+        if not silent:
+            self.window.set_status(f"Aero UI installed ({kind}) for '{inst.name}'.")
+
+    # Mod làm đẹp menu (soft-lock) + thư viện bắt buộc của từng cái. Mỗi mod chỉ
+    # cài khi ĐỦ dep của riêng nó cho đúng `mc`; thiếu dep -> bỏ QUA mod đó (không
+    # để lại dependency gãy khiến Fabric chặn vào game). fabric-api dùng chung.
+    AERO_MODS = (
+        ("blur-plus", "blur", ("midnightlib",)),
+    )
+
+    def _install_aero_mods_async(self, inst, mc: str) -> None:
+        """Tải các mod làm đẹp menu (Blur+, FancyMenu) + dep còn thiếu vào mods/
+        — nền, im lặng, idempotent (đã có thì bỏ qua). fabric-api chia sẻ."""
+        from .. import mods as mods_mgr
+        from .. import modrinth as mr
+        game_dir = self.instance_dir(inst)
+        mods_dir = game_dir / "mods"
+
+        def work():
+            present = ({p.name.lower() for p in mods_dir.glob("*.jar")}
+                       if mods_dir.exists() else set())
+            added: set[str] = set()   # marker/tên đã cài trong lượt này (dedup dep chung)
+
+            def has(*subs):
+                pool = present | added
+                return any(any(s in n for s in subs) for n in pool)
+
+            def install(f, *markers):
+                mods_mgr.install_file(game_dir, "mods", url=f["url"],
+                                      filename=f["filename"], sha1=f.get("sha1"))
+                added.add(f["filename"].lower())
+                added.update(markers)
+
+            installed = 0
+            for slug, marker, libs in self.AERO_MODS:
+                if has(marker):                  # đã có mod này rồi
+                    continue
+                batch, ok = [], True
+                for lib in ("fabric-api",) + libs:
+                    if has(lib, lib.replace("-", "_")):
+                        continue
+                    lf = mr.best_file(lib, loaders=["fabric"], game_versions=[mc])
+                    if not lf:                   # thiếu dep bắt buộc -> bỏ mod này
+                        ok = False
+                        break
+                    batch.append((lib, lf))
+                if not ok:
+                    continue
+                mf = mr.best_file(slug, loaders=["fabric"], game_versions=[mc])
+                if not mf:
+                    continue
+                for lib, lf in batch:
+                    install(lf, lib, lib.replace("-", "_"))
+                install(mf, marker)
+                installed += 1
+            return installed
+
+        self._run(work, lambda _n: None, lambda _m: None)
+
+    def remove_aero_ui(self, inst) -> None:
+        from .. import aero
+        aero.remove_from_instance(self.instance_dir(inst))
+        self.window.set_status(f"Aero UI removed from '{inst.name}'.")
+
+    def aero_ui_enabled(self, inst) -> bool:
+        d = self.instance_dir(inst)
+        return ((d / "resourcepacks" / "Aero UI.zip").exists()
+                or (d / "mods" / "aero-ui-mod.jar").exists())
+
+    def open_saves_folder(self, inst) -> None:
+        """Mở thư mục saves của instance để kéo-thả world vào."""
+        if inst:
+            self.open_path(self.instance_dir(inst) / "saves")
+
+    def import_world(self, inst) -> None:
+        """Chọn một file .zip world rồi nhập vào instance."""
+        if inst is None:
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Import a world", "", "World zip (*.zip)")
+        if path:
+            self._do_import_world(inst, path)
+
+    def _do_import_world(self, inst, zip_path) -> None:
+        from ..worlds import import_world_zip
+        saves = self.instance_dir(inst) / "saves"
+        self.window.set_status("Importing world…")
+
+        def done(name):
+            self.window.set_status(f"Imported world '{name}' into '{inst.name}'.")
+            page = self.pages.get("instance")
+            if page is not None:
+                page.refresh()
+
+        self._run(lambda: import_world_zip(Path(zip_path), saves), done,
+                  lambda m: self.window.set_status(f"Couldn't import world: {m}"))
+
+    def set_menu_dark(self, on: bool) -> None:
+        """Đổi panorama menu ngày/đêm: lưu lựa chọn rồi dựng lại pack Aero (đổi 6
+        mặt panorama) cho mọi instance. Có hiệu lực ở lần mở game tới."""
+        self.settings.menu_dark = on
+        self.settings.save()
+        for inst in self.instances.all():
+            self.apply_aero_ui(inst, silent=True)
+        self.window.set_status(tr(
+            ("Night" if on else "Day")
+            + " menu background — press F3+T in-game to apply now, or it shows on next launch."))
+
+    def set_aero_ui(self, on: bool) -> None:
+        """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""
+        from .. import aero
+        self.settings.aero_ui = on
+        self.settings.save()
+        for inst in self.instances.all():
+            if on:
+                self.apply_aero_ui(inst, silent=True)
+            else:
+                aero.remove_from_instance(self.instance_dir(inst))
+        self.window.set_status("Aero glass " + ("enabled" if on else "disabled")
+                               + " — takes effect next time the game opens.")
 
     def _bootstrap_instances(self) -> None:
         """Lần đầu chạy bản có instance: dựng instance từ các version đã cài và
@@ -892,7 +1153,6 @@ class Controller:
         items += [
             MenuItem(kind="separator"),
             MenuItem(label="Add Microsoft account…", data=("add", None)),
-            MenuItem(label="Change Client ID…", data=("client_id", None)),
             MenuItem(label="Add offline profile…", data=("offline", None)),
         ]
         if self.store.accounts:
@@ -937,8 +1197,6 @@ class Controller:
             self.pages["skins"].refresh()
         elif action == "add":
             self.begin_login()
-        elif action == "client_id":
-            self.change_client_id()
         elif action == "offline":
             self.begin_add_offline()
         elif action == "link_google":
@@ -975,40 +1233,8 @@ class Controller:
     # ---------- đăng nhập ----------
 
     def begin_login(self) -> None:
-        client_id = resolve_client_id("microsoft", "MC_CLIENT_ID")
-        if not client_id:
-            self._prompt_client_id()
-            return
-        self._start_login(client_id)
-
-    def _prompt_client_id(self, *, prefill: str = "", then_login: bool = True) -> None:
-        dlg = TextPrompt(
-            self.window, "Microsoft Client ID",
-            "Application (client) ID:",
-            placeholder="dán Application (client) ID từ Azure",
-            hint="Tạo app tại portal.azure.com (Personal accounts, bật Allow "
-                 "public client flows), dán ID vào đây — sẽ được lưu lại.",
-            ok_text="CONTINUE" if then_login else "SAVE",
-        )
-        if prefill:
-            dlg.edit.setText(prefill)
-        dlg.accepted.connect(lambda v: self._client_id_entered(v, then_login))
-        dlg.show()
-
-    def change_client_id(self) -> None:
-        """Mở prompt điền sẵn Client ID hiện tại để sửa mà không cần đăng nhập lại."""
-        current = resolve_client_id("microsoft", "MC_CLIENT_ID")
-        self._prompt_client_id(prefill=current, then_login=False)
-
-    def _client_id_entered(self, value: str, then_login: bool = True) -> None:
-        client_id = value.strip()
-        if not client_id:
-            return
-        save_client_id("microsoft", client_id)
-        if not then_login:
-            self.window.set_status("Microsoft Client ID saved.")
-            return
-        self._start_login(client_id)
+        # Luôn dùng client ID của launcher (đã khoá trong settings.client_id).
+        self._start_login(resolve_client_id("microsoft", "MC_CLIENT_ID"))
 
     def _start_login(self, client_id: str) -> None:
         dlg = LoginDialog(self.window)
@@ -1195,7 +1421,7 @@ class Controller:
             default = "Fabulously Optimized" if slug == self.FO_SLUG else "MAX FPS Optimized"
             hit = {"slug": slug, "title": name or f"{default} {mc}",
                    "icon_url": getattr(self, "_opt_icons", {}).get(slug, "")}
-            self.install_modpack(hit, game_version=mc)
+            self.install_modpack(hit, game_version=mc, optimized=True)
             return
         if loader in ("", "vanilla"):
             self.create_instance(name, mc)
@@ -1317,26 +1543,36 @@ class Controller:
     def _any_game_running(self) -> bool:
         return any(w._proc is not None and w._proc.poll() is None for w in self._launches)
 
+    def _launch_active(self) -> bool:
+        """Có launch nào đang diễn ra không — tính CẢ lúc đang tải/chuẩn bị,
+        chứ không chỉ khi tiến trình game đã chạy. Nhờ vậy nút đổi sang STOP ngay
+        khi bấm Play, để người chơi thấy rõ 'đang khởi động', không tưởng là đơ."""
+        return self._launching or any(w.isRunning() for w in self._launches)
+
     def _update_play_button(self) -> None:
-        running = self._any_game_running()
+        active = self._launch_active()
         for key in ("home", "instance"):
             btn = getattr(self.pages.get(key), "play_btn", None)
             if btn is not None:
-                btn.setText("STOP" if running else "PLAY")
-                btn.arrow = not running
-                btn.tone = "danger" if running else "green"
+                btn.setText("STOP" if active else "PLAY")
+                btn.arrow = not active
+                btn.tone = "danger" if active else "green"
                 btn.update()
 
     def toggle_play(self) -> None:
-        if self._any_game_running():
+        if self._launch_active():
             self.stop_launch()
         else:
             self.start_launch()
 
     def stop_launch(self) -> None:
+        # Đặt cờ tắt trước để nút phản hồi ngay, rồi mới bảo worker dừng: nếu game
+        # đã chạy thì kết thúc tiến trình; nếu còn đang tải thì huỷ, không bật game.
+        self._launching = False
         for w in list(self._launches):
             w.stop()
-        self.window.set_status("Stopping game…")
+        self.window.set_status("Stopping…")
+        self._update_play_button()
 
     def start_launch(self, quick_play: dict | None = None) -> None:
         account = self.current_account()
@@ -1351,8 +1587,21 @@ class Controller:
         else:
             version, game_dir = self.settings.selected_version, self.store_root
         if not version:
-            self.window.set_status("No instance yet — click NEW INSTANCE to make one.")
+            self.window.set_status(tr("No game yet — click NEW GAME to make one."))
             return
+
+        # Aero UI mặc định + KHOÁ: đảm bảo pack có mặt & được bật mỗi lần chạy, kể cả
+        # instance cũ hay khi người chơi lỡ tắt trong game (lần sau tự bật lại). Tắt
+        # được bằng Settings (aero_ui=False). Nhẹ nên chạy thẳng.
+        if inst is not None and getattr(self.settings, "aero_ui", True):
+            self.apply_aero_ui(inst, silent=True)
+
+        # Phản hồi tức thì: đổi nút sang STOP ngay khi bấm Play, TRƯỚC cả bước làm
+        # mới token (có thể gọi mạng) và tải. Người chơi thấy ngay là 'đang khởi
+        # động', không tưởng bấm hụt. Cờ được worker.isRunning() tiếp quản bên dưới.
+        self._launching = True
+        self.window.set_status("Starting…")
+        self._update_play_button()
 
         if account.kind == accounts.MSA:
             client_id = resolve_client_id("microsoft", "MC_CLIENT_ID")
@@ -1382,6 +1631,9 @@ class Controller:
         worker.finished.connect(lambda: self._launch_finished(worker))
         self._launches.append(worker)
         worker.start()
+        # Worker đã chạy → isRunning() giữ trạng thái STOP; bỏ cờ tạm.
+        self._launching = False
+        self._update_play_button()
 
     def _append_log(self, line: str) -> None:
         self._log_lines.append(line)
@@ -1423,6 +1675,8 @@ class Controller:
 
 def run_gui(game_dir: Path | None = None, version: str = "") -> int:
     app = QApplication(sys.argv)
+    from .theme import load_bundled_fonts
+    load_bundled_fonts()          # Selawik (font Windows 7) trước khi dựng UI
     window = LauncherWindow()
     ctl = Controller(window)
     if game_dir is not None and str(game_dir) != ctl.settings.game_dir:

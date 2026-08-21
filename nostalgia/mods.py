@@ -7,12 +7,76 @@ install.download() (đã kiểm tra hash sha1).
 
 from __future__ import annotations
 
+import json
+import re
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import install
 
 DISABLED = ".disabled"
+
+
+def content_icon(path: Path) -> bytes | None:
+    """Rút icon của một mod / resource pack / shader từ file .jar/.zip.
+
+    Đọc khai báo icon theo từng định dạng (Fabric/Quilt/Forge/NeoForge/mcmod), rồi
+    lùi về các đường dẫn icon thông dụng (pack.png, icon.png…). Trả về PNG/ảnh bytes
+    hoặc None nếu không có.
+    """
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = set(z.namelist())
+            want: list[str] = []
+
+            def js(name):
+                try:
+                    return json.loads(z.read(name).decode("utf-8", "replace"))
+                except (KeyError, ValueError):
+                    return None
+
+            if "fabric.mod.json" in names:
+                d = js("fabric.mod.json") or {}
+                ic = d.get("icon")
+                if isinstance(ic, str):
+                    want.append(ic)
+                elif isinstance(ic, dict) and ic:   # {"64":"...","128":"..."} -> lấy lớn nhất
+                    big = sorted(ic, key=lambda k: int(k) if k.isdigit() else 0)[-1]
+                    want.append(ic[big])
+            if "quilt.mod.json" in names:
+                d = js("quilt.mod.json") or {}
+                ic = (d.get("quilt_loader", {}).get("metadata", {}) or {}).get("icon")
+                if isinstance(ic, str):
+                    want.append(ic)
+            for toml_name in ("META-INF/mods.toml", "META-INF/neoforge.mods.toml"):
+                if toml_name in names:
+                    try:
+                        txt = z.read(toml_name).decode("utf-8", "replace")
+                        m = re.search(r'logoFile\s*=\s*"([^"]+)"', txt)
+                        if m:
+                            want.append(m.group(1))
+                    except KeyError:
+                        pass
+            if "mcmod.info" in names:                # Forge 1.12-
+                arr = js("mcmod.info")
+                if isinstance(arr, list):
+                    want += [e["logoFile"] for e in arr
+                             if isinstance(e, dict) and e.get("logoFile")]
+
+            want += ["icon.png", "pack.png", "logo.png", "logoFile.png"]
+            for c in want:
+                c = c.lstrip("/")
+                if c in names:
+                    data = z.read(c)
+                    if data:
+                        return data
+            for n in names:                          # bí quá: assets/<mod>/icon.png
+                if n.startswith("assets/") and n.endswith("/icon.png"):
+                    return z.read(n)
+    except (OSError, zipfile.BadZipFile):
+        return None
+    return None
 
 # Đuôi hợp lệ cho từng loại nội dung.
 KINDS = {

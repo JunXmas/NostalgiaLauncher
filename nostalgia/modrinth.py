@@ -49,11 +49,38 @@ def search(query: str, project_type: str = "mod", *,
     return r.json().get("hits", [])
 
 
+def search_page(query: str, project_type: str = "mod", *,
+                loaders: list[str] | None = None,
+                game_versions: list[str] | None = None,
+                index: str = "relevance",
+                limit: int = 20, offset: int = 0) -> dict:
+    """Như search() nhưng có phân trang: trả {hits, total, offset, limit}."""
+    params = {
+        "query": query,
+        "facets": _facets(project_type, loaders, game_versions),
+        "limit": str(limit),
+        "offset": str(offset),
+        "index": index,
+    }
+    r = requests.get(f"{BASE}/search", params=params, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    d = r.json()
+    return {"hits": d.get("hits", []), "total": int(d.get("total_hits", 0)),
+            "offset": int(d.get("offset", offset)), "limit": int(d.get("limit", limit))}
+
+
 def fetch_icon(url: str) -> bytes:
     """Tải dữ liệu ảnh icon của một project (dùng cho ảnh preview)."""
     r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     return r.content
+
+
+def project(id_or_slug: str) -> dict:
+    """Chi tiết đầy đủ một project (gồm 'body' mô tả dài dạng markdown)."""
+    r = requests.get(f"{BASE}/project/{id_or_slug}", headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
 
 
 def updates(hashes: list[str], *, loaders: list[str] | None = None,
@@ -75,6 +102,22 @@ def updates(hashes: list[str], *, loaders: list[str] | None = None,
                       headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
+
+
+def projects_for_hashes(hashes: list[str]) -> set[str]:
+    """Tập project_id mà các file (theo sha1) thuộc về — để Browse biết mod nào
+    đã cài rồi.
+
+    /version_files trả map {sha1: version_object}; version_object.project_id là
+    dự án trên Modrinth. Jar không phải của Modrinth (modpack tự đóng…) không có
+    trong map nên bị bỏ qua — không đánh dấu nhầm."""
+    if not hashes:
+        return set()
+    r = requests.post(f"{BASE}/version_files",
+                      json={"hashes": list(hashes), "algorithm": "sha1"},
+                      headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return {v.get("project_id") for v in r.json().values() if v.get("project_id")}
 
 
 def versions(id_or_slug: str, *,

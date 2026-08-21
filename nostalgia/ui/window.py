@@ -21,26 +21,36 @@ from .hero import render_hero
 from .theme import ACCENT, CONNECTED, TEXT, TEXT_DIM, TEXT_FAINT, blur_pixmap, ui_font
 from .widgets import SidebarItem, draw_cube_icon
 
-SIDEBAR_W = 212
+SIDEBAR_W = 224
 STATUSBAR_H = 26
 CORNER = 8
 LOGO_H = 88
 
 OVERLAY_CLASSES = ("GlassMenu", "TextPrompt", "ConfirmDialog", "LoginDialog", "ReportDialog")
 
+# (route, nhãn, icon, helper). Helper = tooltip giải thích bằng lời thường —
+# người mới rê chuột là hiểu ngay, không cần biết thuật ngữ trước.
+# (route, nhãn, icon, helper). Helper = tooltip giải thích bằng lời thường —
+# người mới rê chuột là hiểu ngay, không cần biết thuật ngữ trước.
+#
+# Mods / Resource Packs / Shaders có mặt Ở CẢ HAI nơi: mục top-level ở sidebar
+# (duyệt & cài nhanh cho game đang chọn) VÀ trong tab của từng instance (quản lý
+# nội dung của riêng game đó). Hai lối bổ trợ nhau, không loại nhau.
 NAV = [
-    ("home", "Home", "home"),
-    ("installations", "Instances", "cube"),
-    ("mods", "Mods", "mods"),
-    ("resourcepacks", "Resource Packs", "packs"),
-    ("shaders", "Shaders", "shaders"),
-    ("servers", "Servers", "servers"),
-    ("skins", "Skin", "skin"),
-    ("settings", "Settings", "gear"),
-    ("discord", "Discord", "discord"),   # mở link mời, không phải trang
+    ("home", "Home", "home", "Your dashboard — jump straight back into a game."),
+    ("installations", "Games", "cube",
+     "Your separate Minecraft setups. Each has its own version, mods and worlds."),
+    ("mods", "Mods", "mods", "Add-ons that change or add features to the game."),
+    ("resourcepacks", "Resource Packs", "packs",
+     "Texture & sound packs that change how the game looks and sounds."),
+    ("shaders", "Shaders", "shaders",
+     "Fancy lighting and visual effects for a better-looking game."),
+    ("skins", "Skin", "skin", "Change how your character looks in the game."),
+    ("settings", "Settings", "gear", "Memory, folders, language and updates."),
+    ("discord", "Discord", "discord", "Open our community Discord in your browser."),
 ]
 
-DISCORD_INVITE = "https://discord.gg/XVrBBswt5w"
+DISCORD_INVITE = "https://discord.gg/DS6djZ6aN9"
 
 
 class TitleDragBar(QWidget):
@@ -252,9 +262,11 @@ class LauncherWindow(QWidget):
         self.statusbar = StatusBar(self, strong=True, edges="t", gloss=0.6)
 
         self.nav: dict[str, SidebarItem] = {}
-        for key, label, icon in NAV:
+        for key, label, icon, help in NAV:
             item = SidebarItem(tr(label), icon, self.sidebar)
             item._i18n_key = label
+            item._i18n_help = help
+            item.setToolTip(tr(help))
             item.clicked.connect(lambda _=False, k=key: self.nav_clicked.emit(k))
             self.nav[key] = item
         self.nav["home"].setChecked(True)
@@ -275,6 +287,9 @@ class LauncherWindow(QWidget):
             key = getattr(item, "_i18n_key", None)
             if key:
                 item.setText(tr(key))
+            help = getattr(item, "_i18n_help", None)
+            if help:
+                item.setToolTip(tr(help))
             item.update()
         for page in getattr(self, "pages", {}).values():
             if hasattr(page, "retranslate"):
@@ -362,8 +377,8 @@ class LauncherWindow(QWidget):
 
         y = LOGO_H + 14
         for item in self.nav.values():
-            item.setGeometry(0, y, SIDEBAR_W, 40)
-            y += 42
+            item.setGeometry(0, y, SIDEBAR_W, 46)
+            y += 50
 
         # Thanh kéo phủ mép trên, chừa phần sidebar-logo (đã kéo được sẵn) không sao.
         self.dragbar.setGeometry(0, 0, w, 46)
