@@ -103,6 +103,17 @@ processResources {
 	}
 }
 
+// mixins.json: compatibilityLevel phải khớp bytecode release để Mixin set được
+// trên đúng JRE (1.16.5 chạy Java 8 KHÔNG set nổi JAVA_21 -> crash lúc load).
+// File nằm ở client resources (split) hoặc main resources (merged) -> phủ mọi task
+// ProcessResources. JAVA_8/JAVA_16/JAVA_17/JAVA_21 theo T.release.
+def mixinCompat = "JAVA_${T.release}".toString()
+tasks.withType(ProcessResources).configureEach {
+	filesMatching("aero-ui.mixins.json") {
+		expand "mixinCompat": mixinCompat
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = T.release   // bytecode ≤ Java runtime của game theo era
 }
