@@ -199,7 +199,9 @@ class LaunchWorker(QThread):
 
             if code is None:      # đã bấm STOP khi đang tải/chuẩn bị → huỷ lặng lẽ
                 return
-            if code != 0:
+            # Bấm STOP hoặc bị reap (kill/đóng stdout) thì mã thoát khác 0 là bình
+            # thường — đừng báo lỗi.
+            if code != 0 and not self._cancelled:
                 self.failed.emit(f"Game exited with code {code}")
                 return
             self.finished_ok.emit()

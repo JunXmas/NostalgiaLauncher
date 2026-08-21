@@ -2,6 +2,12 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.4
+- **Fixed: PLAY button stuck on STOP after closing the game.** When Minecraft was
+  closed with Alt+F4 (or Stop hit an error), the button could stay on STOP and
+  never flip back to PLAY. The button now tracks the real game process, and a
+  watchdog resets it within a second even if the log reader is still winding down.
+
 ## 0.9.3
 - **Fixed: couldn't install resource packs or shaders from Browse Modrinth.**
   When installing into a chosen game, the launcher wrongly filtered by the mod

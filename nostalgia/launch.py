@@ -334,8 +334,14 @@ def run(cmd: list[str], game_dir: Path, on_start=None, on_line=None) -> int:
     )
     if on_start:
         on_start(process)          # để phía gọi giữ handle mà dừng game khi cần
-    for line in process.stdout:
-        print(line, end="")
-        if on_line:
-            on_line(line)          # đẩy log ra UI
+    try:
+        for line in process.stdout:
+            print(line, end="")
+            if on_line:
+                on_line(line)      # đẩy log ra UI
+    except (ValueError, OSError):
+        # stdout bị đóng từ ngoài để nhả vòng đọc khi tiến trình game đã thoát
+        # (vd tiến trình con còn giữ ống làm `for line` không bao giờ EOF). Thoát
+        # vòng, lấy mã thoát thật ở dưới.
+        pass
     return process.wait()

@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 import requests
-from PySide6.QtCore import QRect, QUrl
+from PySide6.QtCore import QRect, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QFileDialog
 
@@ -90,6 +90,14 @@ class Controller:
         self._log_dialog = None
         self._launching = False        # có launch đang khởi động (tải/chuẩn bị) không
 
+        # Watchdog: tiến trình game có thể chết (ALT+F4) mà thread worker còn kẹt
+        # đọc stdout — không signal nào bắn để đổi nút. Rà định kỳ theo tiến trình
+        # THẬT rồi cập nhật nút + reap worker chết.
+        self._watchdog = QTimer(window)
+        self._watchdog.setInterval(1000)
+        self._watchdog.timeout.connect(self._poll_launches)
+        self._watchdog.start()
+
         self._build_pages()
         # Sidebar được dựng trong LauncherWindow TRƯỚC khi Controller đặt ngôn ngữ,
         # nên với người dùng chọn tiếng khác, nhãn nav khởi đầu còn là tiếng Anh.
@@ -129,8 +137,20 @@ class Controller:
         Không làm thì Qt kêu "QThread: Destroyed while thread is still running"
         và tiến trình có thể treo lại sau khi đóng.
         """
+        if getattr(self, "_watchdog", None) is not None:
+            self._watchdog.stop()
         for worker in list(self._workers) + list(self._launches):
             worker.requestInterruption()
+            # Kết thúc tiến trình game để write-end đóng -> reader EOF -> thread
+            # thoát trước khi wait() dưới đây (không tự đóng stdout: sẽ chờ khóa
+            # buffer của reader mà treo).
+            proc = getattr(worker, "_proc", None)
+            if proc is not None:
+                try:
+                    if proc.poll() is None:
+                        proc.terminate()
+                except Exception:
+                    pass
             worker.quit()
             worker.wait(2000)
         self._workers.clear()
@@ -1554,7 +1574,10 @@ class Controller:
 
     @property
     def running_count(self) -> int:
-        return sum(1 for w in self._launches if w.isRunning())
+        # Đếm theo TIẾN TRÌNH game còn sống, không theo thread — thread có thể còn
+        # kẹt đọc stdout sau khi game đã thoát (ALT+F4).
+        return sum(1 for w in self._launches
+                   if w.isRunning() and (w._proc is None or w._proc.poll() is None))
 
     def _any_game_running(self) -> bool:
         return any(w._proc is not None and w._proc.poll() is None for w in self._launches)
@@ -1562,8 +1585,26 @@ class Controller:
     def _launch_active(self) -> bool:
         """Có launch nào đang diễn ra không — tính CẢ lúc đang tải/chuẩn bị,
         chứ không chỉ khi tiến trình game đã chạy. Nhờ vậy nút đổi sang STOP ngay
-        khi bấm Play, để người chơi thấy rõ 'đang khởi động', không tưởng là đơ."""
-        return self._launching or any(w.isRunning() for w in self._launches)
+        khi bấm Play, để người chơi thấy rõ 'đang khởi động', không tưởng là đơ.
+
+        Bám theo TIẾN TRÌNH THẬT, không chỉ thread: một worker chỉ tính là 'đang
+        chạy' khi thread còn sống VÀ (chưa bật game -> đang chuẩn bị, HOẶC tiến
+        trình game vẫn sống `poll() is None`). Nhờ vậy khi game thoát (ALT+F4) mà
+        thread còn kẹt đọc stdout, nút vẫn về PLAY thay vì kẹt STOP."""
+        return self._launching or any(
+            w.isRunning() and (w._proc is None or w._proc.poll() is None)
+            for w in self._launches)
+
+    def _poll_launches(self) -> None:
+        """Chạy mỗi giây: game có thể đã thoát mà không signal nào bắn (thread kẹt
+        đọc stdout do tiến trình con giữ ống). Cập nhật nút Play/Stop theo tiến
+        trình THẬT nên nút về PLAY dù thread chưa nhả. KHÔNG tự đóng stdout ở đây —
+        làm từ GUI thread có thể chờ khóa buffer của reader và treo cả app."""
+        for w in list(self._launches):
+            proc = getattr(w, "_proc", None)
+            if proc is not None and proc.poll() is not None and w.isRunning():
+                w._cancelled = True   # nếu thread nhả sau này, thoát khác 0 là bình thường
+        self._update_play_button()
 
     def _update_play_button(self) -> None:
         active = self._launch_active()
