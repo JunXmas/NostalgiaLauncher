@@ -1,0 +1,36 @@
+name: Build Aero Forge mod
+
+# Forge 1.12.2 hard-lock mod. Hệ build cổ: ForgeGradle 2.3 + Gradle 4.10.3 + JDK 8.
+# Tách riêng khỏi build-aero-mod.yml (Fabric, loom, JDK 25) vì không tương thích.
+
+on:
+  push:
+    paths:
+      - "aero-forge-mod/**"
+      - ".github/workflows/build-aero-forge.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "8"        # ForgeGradle 2.3 / 1.12.2 chạy trên Java 8
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "4.10.3" # bản Gradle tối đa mà ForgeGradle 2.3 hỗ trợ
+      - name: Build the Forge mod
+        working-directory: aero-forge-mod
+        run: gradle setupCiWorkspace build --no-daemon --stacktrace
+      - name: Upload mod jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: aero-forge-mod
+          path: aero-forge-mod/build/libs/aero-forge-*.jar
+          if-no-files-found: error

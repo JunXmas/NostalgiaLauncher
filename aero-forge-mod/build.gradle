@@ -1,0 +1,44 @@
+// Mod Forge 1.12.2 khoá cứng resource pack Aero. Hệ build KHÁC HẲN Fabric:
+// ForgeGradle 2.3 + Gradle 4.10 + JDK 8 + MCP mappings (stable_39). Không có API
+// ALWAYS_ENABLED nên "hard-lock" = một @Mod tick lại đảm bảo pack luôn bật + top.
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+version = '1.0.0'
+group = 'com.nostalgia.aeroforge'
+archivesBaseName = 'aero-forge'
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
+
+minecraft {
+    version = '1.12.2-14.23.5.2859'
+    runDir = 'run'
+    // MCP stable cho 1.12.2 — tên hàm/field ổn định để viết mod.
+    mappings = 'stable_39'
+}
+
+dependencies {
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
