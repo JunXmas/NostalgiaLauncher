@@ -1,7 +1,8 @@
 name: Build Aero Forge mod
 
-# Forge 1.12.2 hard-lock mod. Hệ build cổ: ForgeGradle 2.3 + Gradle 4.10.3 + JDK 8.
-# Tách riêng khỏi build-aero-mod.yml (Fabric, loom, JDK 25) vì không tương thích.
+# Forge 1.12.2 hard-lock mod, build bằng RetroFuturaGradle (RFG) — ForgeGradle 2 đã
+# chết (không phân giải được forge-userdev). RFG: Gradle 9.5 + JDK 8 toolchain (foojay
+# tự tải). Tách khỏi build-aero-mod.yml (Fabric/loom).
 
 on:
   push:
@@ -21,13 +22,13 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "8"        # ForgeGradle 2.3 / 1.12.2 chạy trên Java 8
+          java-version: "21"       # chạy Gradle; JDK 8 toolchain do RFG/foojay tự tải
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "4.10.3" # bản Gradle tối đa mà ForgeGradle 2.3 hỗ trợ
+          gradle-version: "9.5.0"
       - name: Build the Forge mod
         working-directory: aero-forge-mod
-        run: gradle setupCiWorkspace build --no-daemon --stacktrace
+        run: gradle build --no-daemon --stacktrace
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
         with:
