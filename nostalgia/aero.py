@@ -50,19 +50,35 @@ def _theme_faces(pano_dir: Path) -> bool:
     return pano_dir.is_dir() and (pano_dir / "panorama_0.png").exists()
 
 
+def _display_name(pano_dir: Path, default: str) -> str:
+    """Tên hiển thị của theme: đọc `name.txt` trong thư mục nếu có (giữ nguyên hoa
+    thường), ngược lại dùng default. Cho phép đổi tên mục mà không đổi id/thư mục."""
+    f = pano_dir / "name.txt"
+    if f.exists():
+        try:
+            txt = f.read_text(encoding="utf-8").strip()
+            if txt:
+                return txt
+        except OSError:
+            pass
+    return default
+
+
 def panorama_themes() -> list[dict]:
     """Danh sách theme panorama chọn được: 2 bộ dựng sẵn (day/night) + các theme
-    người dùng nhập ở USER_PANORAMA_DIR. Mỗi mục: id, name, dir, preview, builtin."""
+    người dùng nhập ở USER_PANORAMA_DIR. Mỗi mục: id, name, dir, preview, builtin.
+    Tên hiển thị có thể ghi đè bằng file name.txt trong thư mục theme."""
     out: list[dict] = []
     for tid, name in _BUILTIN_PANORAMAS:
         d = PANORAMA_DIR / tid
         if _theme_faces(d):
-            out.append({"id": tid, "name": name, "dir": d,
+            out.append({"id": tid, "name": _display_name(d, name), "dir": d,
                         "preview": d / "panorama_0.png", "builtin": True})
     if USER_PANORAMA_DIR.is_dir():
         for d in sorted(USER_PANORAMA_DIR.iterdir()):
             if _theme_faces(d):
-                out.append({"id": d.name, "name": d.name.replace("-", " ").title(),
+                out.append({"id": d.name,
+                            "name": _display_name(d, d.name.replace("-", " ").title()),
                             "dir": d, "preview": d / "panorama_0.png", "builtin": False})
     return out
 
