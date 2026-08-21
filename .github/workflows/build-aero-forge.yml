@@ -20,7 +20,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ["1122", "189"]   # Forge 1.12.2 và 1.8.9
+        # 1.8.9 (189) TẠM BỎ: RFG 2.0.2 "Unsupported MC version 1.8.9", ForgeGradle 2
+        # đã chết -> chưa có toolchain build được 1.8.9 (xem báo cáo).
+        target: ["1122"]   # Forge 1.12.2
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
