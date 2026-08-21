@@ -7,9 +7,10 @@ aero.panorama_themes() (2 bộ dựng sẵn day/night + theme người dùng nh�
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
-from PySide6.QtCore import QRect, QRectF, Qt, QTimer
+from PySide6.QtCore import QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap,
 )
@@ -26,6 +27,7 @@ from .theme import (
 CARD_W = 300
 CARD_H = 228              # gọn lại sau khi bỏ mô tả + tags
 PREVIEW_H = 128           # nửa trên = ảnh xem trước
+PAN_ZOOM = 1.22           # scale preview rộng hơn khung để có đất pan (xoay nhẹ)
 GAP = 18
 PAD = 26
 RADIUS = 10
@@ -53,6 +55,13 @@ class PanoramaPage(QWidget):
         self._hover: str | None = None
         self._scroll = 0
         self._content_h = 0
+        # Animation "xoay nhẹ" panorama: pan ngang khung cắt theo _phase. Cache ảnh
+        # đã scale (rộng hơn khung) nên mỗi frame chỉ dời crop → nhẹ CPU.
+        self._phase = 0.0
+        self._scaled_cache: dict[str, QPixmap] = {}
+        self._anim = QTimer(self)
+        self._anim.setInterval(45)               # ~22fps
+        self._anim.timeout.connect(self._tick)
         self.refresh()
 
     # ---------- dữ liệu ----------
@@ -61,8 +70,33 @@ class PanoramaPage(QWidget):
         """Nạp lại danh sách theme + theme đang chọn, rồi vẽ lại."""
         self._themes = aero.panorama_themes()
         self._preview_cache.clear()
+        self._scaled_cache.clear()
         self._relayout()
         self.update()
+
+    def showEvent(self, e):  # noqa: N802
+        self._anim.start()   # chỉ chạy animation khi trang đang hiện
+
+    def hideEvent(self, e):  # noqa: N802
+        self._anim.stop()
+
+    def _tick(self) -> None:
+        self._phase += 0.02
+        self.update()
+
+    def _scaled_preview(self, theme: dict) -> QPixmap | None:
+        """Preview scale-to-cover RỘNG hơn khung (chừa đất pan ngang), có cache."""
+        tid = theme["id"]
+        pm = self._scaled_cache.get(tid)
+        if pm is not None:
+            return pm
+        raw = self._preview(theme)
+        if raw is None or raw.isNull():
+            return None
+        pm = raw.scaled(QSize(int(CARD_W * PAN_ZOOM), PREVIEW_H),
+                        Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        self._scaled_cache[tid] = pm
+        return pm
 
     @property
     def _active_id(self) -> str:
@@ -181,14 +215,17 @@ class PanoramaPage(QWidget):
         p.fillRect(rf, QColor(AERO_TINT.red(), AERO_TINT.green(), AERO_TINT.blue(), 40))
         p.fillRect(rf, QBrushNoise())
 
-        # --- ảnh xem trước (nửa trên) ---
-        prev = self._preview(theme)
+        # --- ảnh xem trước (nửa trên), PAN nhẹ như panorama 360 xoay ---
+        prev = self._preview(theme)              # bản gốc (cho icon 48px bên dưới)
         pv = QRect(rect.left(), rect.top(), rect.width(), PREVIEW_H)
-        if prev and not prev.isNull():
-            scaled = prev.scaled(pv.size(), Qt.KeepAspectRatioByExpanding,
-                                 Qt.SmoothTransformation)
-            sx = (scaled.width() - pv.width()) // 2
-            sy = (scaled.height() - pv.height()) // 2
+        scaled = self._scaled_preview(theme)     # bản rộng để dời crop
+        if scaled and not scaled.isNull():
+            excess_x = max(0, scaled.width() - pv.width())
+            # ping-pong theo sin; lệch pha theo từng theme cho tự nhiên (không đồng loạt)
+            off = sum(ord(c) for c in tid) % 100 / 100.0 * math.tau
+            frac = math.sin(self._phase + off) * 0.5 + 0.5
+            sx = int(excess_x * frac)
+            sy = max(0, (scaled.height() - pv.height()) // 2)
             p.drawPixmap(pv, scaled, QRect(sx, sy, pv.width(), pv.height()))
         else:
             p.fillRect(pv, QColor(24, 40, 64, 220))
