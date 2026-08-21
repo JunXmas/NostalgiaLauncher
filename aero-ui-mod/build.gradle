@@ -28,8 +28,10 @@ ext.TARGETS = [
 	'20x': [mc: '1.20.6',  api: '0.100.8+1.20.6',  plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 32, era: 'legacy', release: 17, mcDep: '>=1.20 <1.21'],
 	'194': [mc: '1.19.4',  api: '0.87.2+1.19.4',   plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 13, era: 'legacy', release: 17, mcDep: '>=1.19 <1.20'],
 	'182': [mc: '1.18.2',  api: '0.77.0+1.18.2',   plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 8,  era: 'legacy', release: 17, mcDep: '>=1.18 <1.19'],
-	'171': [mc: '1.17.1',  api: '0.46.1+1.17',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 7,  era: 'legacy', release: 16, mcDep: '>=1.17 <1.18'],
-	'165': [mc: '1.16.5',  api: '0.42.0+1.16',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 6,  era: 'legacy', release: 8,  mcDep: '>=1.16.5 <1.17'],
+	// 1.17.1/1.16.5 KHÔNG có bundled server jar -> không split env source set được
+	// (split chỉ từ 1.18). Dùng merged jar: split=false -> code client dồn vào main.
+	'171': [mc: '1.17.1',  api: '0.46.1+1.17',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 7,  era: 'legacy', release: 16, mcDep: '>=1.17 <1.18', split: false],
+	'165': [mc: '1.16.5',  api: '0.42.0+1.16',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 6,  era: 'legacy', release: 8,  mcDep: '>=1.16.5 <1.17', split: false],
 ]
 def T = TARGETS[aeroTarget]
 if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
@@ -45,20 +47,32 @@ base {
 repositories {
 }
 
-loom {
-	splitEnvironmentSourceSets()
+def useSplit = (T.split != false)   // mặc định split (client sourceSet riêng)
 
+loom {
+	if (useSplit) {
+		splitEnvironmentSourceSets()
+	}
 	mods {
 		"aero-ui" {
 			sourceSet sourceSets.main
-			sourceSet sourceSets.client
+			if (useSplit) {
+				sourceSet sourceSets.client
+			}
 		}
 	}
 }
 
-// AeroUiClient khác nhau theo era (Identifier vs ResourceLocation) -> thêm thư mục
-// source đúng era vào sourceSet client. Mixin nằm ở src/client/java dùng chung.
-sourceSets.client.java.srcDir "src/client-${T.era}/java"
+// AeroUiClient khác nhau theo era (Identifier vs ResourceLocation). Mixin nằm ở
+// src/client/java dùng chung. Split: code client ở sourceSet 'client'. Merged (bản
+// cũ không split được): dồn cả Mixin + AeroUiClient + mixins.json vào 'main'.
+if (useSplit) {
+	sourceSets.client.java.srcDir "src/client-${T.era}/java"
+} else {
+	sourceSets.main.java.srcDir "src/client/java"
+	sourceSets.main.java.srcDir "src/client-${T.era}/java"
+	sourceSets.main.resources.srcDir "src/client/resources"
+}
 
 dependencies {
 	minecraft "com.mojang:minecraft:${T.mc}"
