@@ -2,6 +2,13 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.1
+- **Five built-in menu backgrounds.** TUT 11 Sunrise, TUT11 sunset, TUT1
+  panorama, DanTDM Labs and TUT1 Village now ship with the launcher — pick any of
+  them on the Theme In-Game page, no importing needed.
+- The Play Together page now shows in your chosen language (its text was
+  English-only before).
+
 ## 0.9.0
 - **Play together — no server, no setup.** A new **Play Together** page lets you
   host your world or join a friend's with just a short room code. The host opens

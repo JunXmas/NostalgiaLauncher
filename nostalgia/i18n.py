@@ -116,6 +116,42 @@ _T = {
         "That instance no longer exists.": "Instance này không còn nữa.",
         "Language": "Ngôn ngữ", "Game folder": "Thư mục game",
         "Java path": "Đường dẫn Java", "Everything is up to date!": "Mọi thứ đã mới nhất!",
+        # Play Together (chơi cùng bạn bè không cần server).
+        "Play Together": "Chơi cùng nhau",
+        "Play with friends without a server — just share a room code.":
+            "Chơi cùng bạn bè không cần server — chỉ chia sẻ một mã phòng.",
+        "Play with friends — no server needed, just share a room code.":
+            "Chơi cùng bạn bè — không cần server, chỉ chia sẻ một mã phòng.",
+        "HOST — OPEN A ROOM": "CHỦ PHÒNG — MỞ PHÒNG",
+        "JOIN — ENTER A ROOM": "VÀO PHÒNG — NHẬP MÃ",
+        "ROOM CODE — send to friends": "MÃ PHÒNG — gửi cho bạn bè",
+        ("You're the host: open your world to friends. Click the button, "
+         "then in Minecraft open your world and choose Esc → Open to LAN. "
+         "The launcher gives you a room code to send to your friends."):
+            "Bạn là chủ phòng: mở thế giới cho bạn bè vào. Bấm nút, rồi trong "
+            "Minecraft mở thế giới và chọn Esc → Open to LAN. Launcher sẽ cho bạn "
+            "một mã phòng để gửi cho bạn bè.",
+        "Waiting… in Minecraft: Esc → Open to LAN":
+            "Đang chờ… trong Minecraft: Esc → Open to LAN",
+        "Live — friends can join now": "Đang mở — bạn bè có thể vào ngay",
+        ("Paste a friend's room code and click JOIN. Their world shows up in "
+         "Minecraft's LAN tab, or click Launch & Join to jump straight in."):
+            "Dán mã phòng của bạn bè rồi bấm JOIN. Thế giới của họ sẽ hiện trong "
+            "tab LAN của Minecraft, hoặc bấm Launch & Join để vào thẳng.",
+        "Connecting to the room…": "Đang kết nối tới phòng…",
+        "Ready — open the LAN tab, or Launch & Join":
+            "Sẵn sàng — mở tab LAN, hoặc Launch & Join",
+        "Enter your friend's room code": "Nhập mã phòng của bạn bè",
+        "That room code doesn't look right.": "Mã phòng không hợp lệ.",
+        "Connection error.": "Lỗi kết nối.",
+        # Modal chọn game khi cài mod / resource pack.
+        "Install {mod}": "Cài {mod}",
+        "Create a new instance": "Tạo game mới",
+        "Incompatible": "Không tương thích",
+        "Selected ✓": "Đã chọn ✓",
+        "Needs {loaders}": "Cần {loaders}",
+        "Not for MC {mc}": "Không hợp MC {mc}",
+        "CONFIRM": "XÁC NHẬN", "CANCEL": "HỦY",
     },
     "es": {
         "Home": "Inicio", "Instances": "Instancias", "Resource Packs": "Paquetes de recursos",

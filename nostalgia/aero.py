@@ -35,8 +35,15 @@ PANORAMA_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "panoramas"
 PANO_REL = "assets/minecraft/textures/gui/title/background"
 # Theme panorama do người dùng thêm (mỗi theme = 1 thư mục panorama_0..5.png).
 USER_PANORAMA_DIR = CONFIG_DIR / "panoramas"
-# Theme dựng sẵn: ánh xạ id -> tên hiển thị (2 bộ day/night đã ship kèm launcher).
-_BUILTIN_PANORAMAS = (("day", "Aero Day"), ("night", "Aero Night"))
+# Theme dựng sẵn: ánh xạ id -> tên hiển thị (ship kèm launcher). Tên hiển thị thật
+# lấy từ name.txt trong mỗi thư mục; giá trị ở đây chỉ là fallback.
+_BUILTIN_PANORAMAS = (
+    ("day", "TUT 11 Sunrise"),
+    ("night", "TUT11 sunset"),
+    ("tut1-panorama", "TUT1 panorama"),
+    ("dantdm-labs", "DanTDM Labs"),
+    ("tut1-village", "TUT1 Village"),
+)
 
 
 def _slug(name: str) -> str:
@@ -69,17 +76,23 @@ def panorama_themes() -> list[dict]:
     người dùng nhập ở USER_PANORAMA_DIR. Mỗi mục: id, name, dir, preview, builtin.
     Tên hiển thị có thể ghi đè bằng file name.txt trong thư mục theme."""
     out: list[dict] = []
+    seen: set[str] = set()   # tên hiển thị đã có -> tránh trùng (vd bản user cũ đã lên built-in)
     for tid, name in _BUILTIN_PANORAMAS:
         d = PANORAMA_DIR / tid
         if _theme_faces(d):
-            out.append({"id": tid, "name": _display_name(d, name), "dir": d,
+            disp = _display_name(d, name)
+            out.append({"id": tid, "name": disp, "dir": d,
                         "preview": d / "panorama_0.png", "builtin": True})
+            seen.add(disp.casefold())
     if USER_PANORAMA_DIR.is_dir():
         for d in sorted(USER_PANORAMA_DIR.iterdir()):
             if _theme_faces(d):
-                out.append({"id": d.name,
-                            "name": _display_name(d, d.name.replace("-", " ").title()),
+                disp = _display_name(d, d.name.replace("-", " ").title())
+                if disp.casefold() in seen:
+                    continue   # đã có bản dựng sẵn cùng tên
+                out.append({"id": d.name, "name": disp,
                             "dir": d, "preview": d / "panorama_0.png", "builtin": False})
+                seen.add(disp.casefold())
     return out
 
 

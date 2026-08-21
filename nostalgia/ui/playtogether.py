@@ -20,7 +20,7 @@ _PANEL_TOP = 64
 
 class PlayTogetherPage(Page):
     heading = "Play Together"
-    subheading = "Chơi cùng bạn bè — không cần server, chỉ chia sẻ một mã phòng."
+    subheading = "Play with friends — no server needed, just share a room code."
 
     def __init__(self, ctl, parent=None):
         super().__init__(ctl, parent)
@@ -50,7 +50,7 @@ class PlayTogetherPage(Page):
         # JOIN
         self.code_in = QLineEdit(self)
         self.code_in.setStyleSheet(INPUT_QSS)
-        self.code_in.setPlaceholderText(tr("Nhập mã phòng của bạn bè"))
+        self.code_in.setPlaceholderText(tr("Enter your friend's room code"))
         self.code_in.setMaxLength(12)
         self.code_in.returnPressed.connect(self._on_join)
         self.join_btn = AeroButton("JOIN", self, height=40, tone="neutral")
@@ -101,7 +101,7 @@ class PlayTogetherPage(Page):
     def _on_join(self) -> None:
         code = self.code_in.text().strip().upper()
         if len(code) < 4:
-            self._error = "Mã phòng chưa hợp lệ."
+            self._error = "That room code doesn't look right."
             self._sync()
             return
         if self.svc.role:
@@ -123,7 +123,7 @@ class PlayTogetherPage(Page):
 
     # ── chung ────────────────────────────────────────────────────────────────
     def _on_failed(self, msg: str) -> None:
-        self._error = msg or "Có lỗi kết nối."
+        self._error = msg or "Connection error."
         self._host_state = self._join_state = "idle"
         self._sync()
 
@@ -182,43 +182,43 @@ class PlayTogetherPage(Page):
         host, join = self._panels()
 
         # ── HOST ──
-        self._panel(p, host, "HOST — MỞ PHÒNG", ACCENT)
+        self._panel(p, host, tr("HOST — OPEN A ROOM"), ACCENT)
         hx = host.x() + 20
         if self._host_state == "idle":
             p.setFont(ui_font(9)); p.setPen(TEXT_FAINT)
             p.drawText(QRect(hx, host.y() + 48, host.width() - 40, 120),
                        Qt.TextWordWrap,
-                       tr("Bạn chủ nhà: mở thế giới của mình cho bạn bè vào. Bấm nút, "
-                          "rồi trong Minecraft mở world và chọn Esc → Open to LAN. "
-                          "Launcher sẽ đưa cho bạn một mã phòng để gửi cho bạn bè."))
+                       tr("You're the host: open your world to friends. Click the button, "
+                          "then in Minecraft open your world and choose Esc → Open to LAN. "
+                          "The launcher gives you a room code to send to your friends."))
         else:
             # mã phòng lớn để chia sẻ
             p.setFont(ui_font(9)); p.setPen(TEXT_FAINT)
             p.drawText(QRect(hx, host.y() + 48, host.width() - 40, 18),
-                       Qt.AlignLeft, tr("MÃ PHÒNG — gửi cho bạn bè"))
+                       Qt.AlignLeft, tr("ROOM CODE — send to friends"))
             cf = ui_font(26, bold=True); cf.setLetterSpacing(QFont.AbsoluteSpacing, 6.0)
             p.setFont(cf); p.setPen(TEXT)
             p.drawText(QRect(hx, host.y() + 66, host.width() - 40, 44),
                        Qt.AlignLeft | Qt.AlignVCenter, self._code)
             if self._host_state == "waiting":
                 self._status_dot(p, hx, host.y() + 120, DEGRADED,
-                                 "Chờ… trong Minecraft: Esc → Open to LAN")
+                                 "Waiting… in Minecraft: Esc → Open to LAN")
             else:
                 self._status_dot(p, hx, host.y() + 120, CONNECTED,
-                                 "Live — bạn bè đã có thể vào phòng")
+                                 "Live — friends can join now")
 
         # ── JOIN ──
-        self._panel(p, join, "JOIN — VÀO PHÒNG", QColor(120, 180, 235))
+        self._panel(p, join, tr("JOIN — ENTER A ROOM"), QColor(120, 180, 235))
         jx = join.x() + 20
         p.setFont(ui_font(9)); p.setPen(TEXT_FAINT)
         p.drawText(QRect(jx, join.y() + 48, join.width() - 40, 60), Qt.TextWordWrap,
-                   tr("Dán mã phòng bạn bè gửi, bấm JOIN. World của họ sẽ hiện trong "
-                      "tab LAN của Minecraft, hoặc bấm Launch & Join để vào thẳng."))
+                   tr("Paste a friend's room code and click JOIN. Their world shows up in "
+                      "Minecraft's LAN tab, or click Launch & Join to jump straight in."))
         if self._join_state == "connecting":
-            self._status_dot(p, jx, join.y() + 160, DEGRADED, "Đang nối tới phòng…")
+            self._status_dot(p, jx, join.y() + 160, DEGRADED, "Connecting to the room…")
         elif self._join_state == "ready":
             self._status_dot(p, jx, join.y() + 160, CONNECTED,
-                             "Sẵn sàng — mở tab LAN, hoặc Launch & Join")
+                             "Ready — open the LAN tab, or Launch & Join")
 
         if self._error:
             p.setFont(ui_font(9)); p.setPen(QColor(228, 130, 130))

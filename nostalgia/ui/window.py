@@ -47,7 +47,7 @@ NAV = [
      "Fancy lighting and visual effects for a better-looking game."),
     ("skins", "Skin", "skin", "Change how your character looks in the game."),
     ("playtogether", "Play Together", "servers",
-     "Chơi cùng bạn bè không cần server — chỉ chia sẻ một mã phòng."),
+     "Play with friends without a server — just share a room code."),
     ("panorama", "Theme In-Game", "packs",
      "Pick the animated background shown behind the in-game menu."),
     ("settings", "Settings", "gear", "Memory, folders, language and updates."),
