@@ -46,7 +46,7 @@ NAV = [
     ("shaders", "Shaders", "shaders",
      "Fancy lighting and visual effects for a better-looking game."),
     ("skins", "Skin", "skin", "Change how your character looks in the game."),
-    ("panorama", "Panorama", "packs",
+    ("panorama", "Theme In-Game", "packs",
      "Pick the animated background shown behind the in-game menu."),
     ("settings", "Settings", "gear", "Memory, folders, language and updates."),
     ("discord", "Discord", "discord", "Open our community Discord in your browser."),
