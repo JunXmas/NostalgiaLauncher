@@ -20,9 +20,12 @@ buildscript {
 ext.aeroTarget = (project.findProperty('aeroTarget') ?: '121').toString()
 ext.TARGETS = [
 	// packFormat = resource_major của bản (version.json) -> pack.mcmeta khớp đúng,
-	// kẻo game GỠ pack vì "incompatible" (1.21.11=75, 26.2=88).
-	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75],
-	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88],
+	// kẻo game GỠ pack vì "incompatible" (1.21.11=75, 26.2=88, 1.20.6=32).
+	// era = biến thể source của AeroUiClient (modern=Identifier / legacy=ResourceLocation).
+	// release = phiên bản bytecode: phải ≤ Java runtime của game (1.20.x chạy Java 17).
+	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75, era: 'modern', release: 21],
+	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88, era: 'modern', release: 21],
+	'20x': [mc: '1.20.6',  api: '0.100.8+1.20.6',  plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 32, era: 'legacy', release: 17],
 ]
 def T = TARGETS[aeroTarget]
 if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
@@ -48,6 +51,10 @@ loom {
 		}
 	}
 }
+
+// AeroUiClient khác nhau theo era (Identifier vs ResourceLocation) -> thêm thư mục
+// source đúng era vào sourceSet client. Mixin nằm ở src/client/java dùng chung.
+sourceSets.client.java.srcDir "src/client-${T.era}/java"
 
 dependencies {
 	minecraft "com.mojang:minecraft:${T.mc}"
@@ -79,14 +86,14 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = T.release   // bytecode ≤ Java runtime của game theo era
 }
 
 java {
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.toVersion(T.release)
+	targetCompatibility = JavaVersion.toVersion(T.release)
 }
 
 jar {
