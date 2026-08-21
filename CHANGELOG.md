@@ -2,6 +2,12 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.2
+- **Full translations for eight more languages.** Spanish, French, German,
+  Portuguese, Russian, Chinese, Japanese and Korean now cover the whole
+  interface — menus, pages, dialogs and the new Play Together page — instead of
+  just a handful of labels. Pick your language in Settings.
+
 ## 0.9.1
 - **Five built-in menu backgrounds.** TUT 11 Sunrise, TUT11 sunset, TUT1
   panorama, DanTDM Labs and TUT1 Village now ship with the launcher — pick any of
