@@ -38,6 +38,49 @@ WIDGETS = "assets/minecraft/textures/gui/widgets.png"
 # Toạ độ 3 trạng thái nút trong widgets.png (256×256), mỗi vùng 200×20.
 BTN_REGIONS = {"button_disabled.png": 46, "button.png": 66, "button_highlighted.png": 86}
 
+PACK_DESC = "§bAero glass UI §7— Nostalgia Launcher"
+# Bản không có version.json (≤ 1.12.2) -> pack_format 3: 1.12.2 nhận sạch, còn
+# 1.8–1.11 chỉ hiện cảnh báo "incompatible" nhưng vẫn nạp pack (bản cũ không
+# chặn cứng). 1.13+ luôn có version.json nên lấy đúng số.
+_LEGACY_PACK_FORMAT = 3
+
+
+def _pack_format(client_jar: Path | None) -> int:
+    """Số resource pack_format ĐÚNG cho chính bản này, đọc từ `version.json` trong
+    jar (`pack_version.resource_major`). Nhờ vậy launcher tự khớp mọi era —
+    1.16.5(6) … 1.21.11(75) … 26.x(cao hơn) — không đoán theo tên phiên bản.
+    """
+    if client_jar:
+        try:
+            with zipfile.ZipFile(client_jar) as z:
+                if "version.json" in z.namelist():
+                    pv = json.loads(z.read("version.json")).get("pack_version")
+                    if isinstance(pv, dict):
+                        val = pv.get("resource_major", pv.get("resource"))
+                        if isinstance(val, int):
+                            return val
+                    elif isinstance(pv, int):
+                        return pv
+        except (OSError, zipfile.BadZipFile, ValueError):
+            pass
+    return _LEGACY_PACK_FORMAT
+
+
+def _mcmeta(pack_format: int) -> bytes:
+    """pack.mcmeta khai báo CẢ hai lược đồ để nạp sạch trên mọi era:
+      • `pack_format` — bản cũ (≤ 1.21.8) đọc field này.
+      • `min_format`/`max_format` — từ snapshot 25w31a (1.21.9+, gồm 26.x) BẮT BUỘC,
+        thiếu là bản mới GỠ pack ("missing mandatory fields min_format and max_format").
+    Bản không hiểu field lạ thì bỏ qua, nên một file phủ hết.
+    """
+    meta = {"pack": {
+        "pack_format": pack_format,
+        "min_format": pack_format,
+        "max_format": pack_format,
+        "description": PACK_DESC,
+    }}
+    return json.dumps(meta, indent=2).encode("utf-8")
+
 
 def _legacy_widgets_png(client_jar: Path) -> bytes | None:
     """Rút widgets.png từ jar rồi sơn 3 nút Aero lên, trả về PNG bytes.
@@ -70,18 +113,22 @@ def _legacy_widgets_png(client_jar: Path) -> bytes | None:
     return bytes(ba)
 
 
-def _build_zip(dest: Path, legacy_widgets: bytes | None, dark: bool = False) -> None:
+def _build_zip(dest: Path, legacy_widgets: bytes | None, dark: bool = False,
+               pack_format: int = _LEGACY_PACK_FORMAT) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     # Bộ panorama theo chế độ; có thì THAY 6 mặt panorama trong pack và BỎ
     # panorama_overlay (overlay làm nền tĩnh — bỏ đi để panorama XOAY như title
     # gốc). Không có bộ ảnh thì giữ nguyên panorama sẵn trong pack.
     pano_src = PANORAMA_DIR / ("night" if dark else "day")
     use_pano = pano_src.is_dir() and (pano_src / "panorama_0.png").exists()
-    skip = set()
+    # pack.mcmeta tĩnh trong PACK_DIR bị BỎ QUA; ta ghi bản tính theo phiên bản
+    # (đúng pack_format của chính instance) để nạp sạch trên mọi era.
+    skip = {"pack.mcmeta"}
     if use_pano:
-        skip = {f"{PANO_REL}/panorama_{i}.png" for i in range(6)}
+        skip |= {f"{PANO_REL}/panorama_{i}.png" for i in range(6)}
         skip.add(f"{PANO_REL}/panorama_overlay.png")
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("pack.mcmeta", _mcmeta(pack_format))
         for f in sorted(PACK_DIR.rglob("*")):
             if f.is_file():
                 rel = f.relative_to(PACK_DIR).as_posix()
@@ -164,7 +211,8 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
 
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
     modern = legacy is None
-    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark)
+    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark,
+               pack_format=_pack_format(client_jar))
     _enable_in_options(gd / "options.txt", modern)
     # Kéo blur nền menu lên max: cùng lớp tint kính Aero trong pack -> frosted
     # acrylic. Chỉ có tác dụng ở 1.20.5+; bản cũ bỏ qua dòng này.
