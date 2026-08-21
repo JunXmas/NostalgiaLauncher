@@ -1,5 +1,10 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	// fabric-loom-remap: dùng cho các bản Minecraft CÒN obfuscate (<= 1.21.11).
+	// Nó remap jar production sang intermediary + sinh refmap cho Mixin -> chạy
+	// đúng trên runtime intermediary mà launcher tạo (fabric-loader + intermediary).
+	// Plugin 'net.fabricmc.fabric-loom' (không -remap) là cho bản KHÔNG obfuscate
+	// (26.1+): jar ra tên-Mojang, chỉ chạy runtime Mojang-native -> KHÔNG dùng ở đây.
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -25,9 +30,9 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	// 26.x: Fabric API có access-widener namespace 'official' nên khớp Loom 1.17.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 processResources {
