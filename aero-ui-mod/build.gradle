@@ -54,8 +54,12 @@ dependencies {
 	if (T.mojmap) {
 		mappings loom.officialMojangMappings()
 	}
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${T.api}"
+	// Bản obfuscate cần remap dep mod -> modImplementation. Bản không obfuscate
+	// (fabric-loom thường) KHÔNG có cấu hình modImplementation vì chẳng remap gì,
+	// nên dùng implementation. Chọn động theo era.
+	def modDep = T.mojmap ? 'modImplementation' : 'implementation'
+	add(modDep, "net.fabricmc:fabric-loader:${project.loader_version}")
+	add(modDep, "net.fabricmc.fabric-api:fabric-api:${T.api}")
 }
 
 processResources {
