@@ -23,9 +23,9 @@ ext.TARGETS = [
 	// kẻo game GỠ pack vì "incompatible" (1.21.11=75, 26.2=88, 1.20.6=32).
 	// era = biến thể source của AeroUiClient (modern=Identifier / legacy=ResourceLocation).
 	// release = phiên bản bytecode: phải ≤ Java runtime của game (1.20.x chạy Java 17).
-	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75, era: 'modern', release: 21],
-	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88, era: 'modern', release: 21],
-	'20x': [mc: '1.20.6',  api: '0.100.8+1.20.6',  plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 32, era: 'legacy', release: 17],
+	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75, era: 'modern', release: 21, mcDep: '>=1.21'],
+	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88, era: 'modern', release: 21, mcDep: '>=1.21'],
+	'20x': [mc: '1.20.6',  api: '0.100.8+1.20.6',  plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 32, era: 'legacy', release: 17, mcDep: '>=1.20 <1.21'],
 ]
 def T = TARGETS[aeroTarget]
 if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
@@ -77,7 +77,7 @@ processResources {
 	inputs.property "packFormat", T.packFormat
 
 	filesMatching("fabric.mod.json") {
-		expand "version": version
+		expand "version": version, "mcDep": T.mcDep, "javaDep": ">=${T.release}".toString()
 	}
 	// pack.mcmeta có ${packFormat} -> thay bằng format của era đang build.
 	filesMatching("resourcepacks/aero-ui/pack.mcmeta") {
