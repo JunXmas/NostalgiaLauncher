@@ -24,6 +24,7 @@ from ..settings import Settings, client_id as resolve_client_id
 from . import pages as page_mod
 from .dashboard import HomeDashboard
 from .modpack_page import ModpackBrowsePage
+from .panorama import PanoramaPage
 from .dialogs import ConfirmDialog, LoginDialog, ReportDialog, TextPrompt, WelcomeDialog
 from .menus import MenuItem, popup
 from .window import SIDEBAR_W, LauncherWindow
@@ -115,6 +116,7 @@ class Controller:
             "shaders": page_mod.ShaderPacksPage(self),
             "modpacks": ModpackBrowsePage(self),
             "skins": page_mod.SkinsPage(self),
+            "panorama": PanoramaPage(self),
             "settings": page_mod.SettingsPage(self),
         }
         self.window.register_pages(self.pages)
@@ -696,7 +698,8 @@ class Controller:
         loader = "fabric" if "fabric" in v else ("forge" if "forge" in v else "")
         try:
             kind = aero.apply_to_instance(self.instance_dir(inst), jar, mc=mc,
-                                          loader=loader, dark=self.settings.menu_dark)
+                                          loader=loader, dark=self.settings.menu_dark,
+                                          panorama_theme=self.settings.panorama_theme)
         except Exception as e:  # noqa: BLE001
             if not silent:
                 self.window.set_status(f"Couldn't install Aero UI: {e}")
@@ -814,6 +817,17 @@ class Controller:
         self.window.set_status(tr(
             ("Night" if on else "Day")
             + " menu background — press F3+T in-game to apply now, or it shows on next launch."))
+
+    def set_panorama_theme(self, theme_id: str) -> None:
+        """Chọn theme panorama nền menu: lưu lựa chọn rồi dựng lại pack/jar Aero
+        (thay 6 mặt panorama) cho mọi instance. Có hiệu lực ở lần mở game tới."""
+        self.settings.panorama_theme = theme_id or ""
+        self.settings.save()
+        for inst in self.instances.all():
+            self.apply_aero_ui(inst, silent=True)
+        self.window.set_status(tr(
+            "Panorama theme changed — press F3+T in-game to apply now, or it shows "
+            "on next launch."))
 
     def set_aero_ui(self, on: bool) -> None:
         """Công tắc Aero glass ở Home: lưu lựa chọn, áp/gỡ cho mọi instance ngay."""

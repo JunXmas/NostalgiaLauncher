@@ -80,6 +80,7 @@ class Settings:
     aero_ui: bool = True          # lắp & khoá resource pack Aero UI mỗi lần chạy
     seen_welcome: bool = False    # đã hiện onboarding lần đầu chưa (khỏi hiện lại)
     menu_dark: bool = False       # panorama menu: False=ngày (light), True=đêm (dark)
+    panorama_theme: str = ""      # id theme panorama đã chọn (rỗng = day/night theo menu_dark)
     # Backend chung (Cloudflare Worker): upload skin + khôi phục danh tính.
     backend_url: str = "https://nostalgia-backend.junbob.workers.dev"
     language: str = "en"          # mã ngôn ngữ giao diện (xem nostalgia/i18n.py)

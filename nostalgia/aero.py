@@ -17,8 +17,12 @@ from __future__ import annotations
 
 import io
 import json
+import re
+import shutil
 import zipfile
 from pathlib import Path
+
+from .paths import CONFIG_DIR
 
 PACK_NAME = "Aero UI.zip"
 PACK_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "aero-pack"
@@ -29,6 +33,79 @@ FANCYMENU_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "fancymenu"
 # mỗi bộ 6 mặt panorama_0..5. Ghi đè panorama trong pack lúc đóng gói.
 PANORAMA_DIR = Path(__file__).resolve().parent / "ui" / "assets" / "panoramas"
 PANO_REL = "assets/minecraft/textures/gui/title/background"
+# Theme panorama do người dùng thêm (mỗi theme = 1 thư mục panorama_0..5.png).
+USER_PANORAMA_DIR = CONFIG_DIR / "panoramas"
+# Theme dựng sẵn: ánh xạ id -> tên hiển thị (2 bộ day/night đã ship kèm launcher).
+_BUILTIN_PANORAMAS = (("day", "Aero Day"), ("night", "Aero Night"))
+
+
+def _slug(name: str) -> str:
+    """Tên theme -> slug an toàn làm tên thư mục."""
+    s = re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
+    return s or "theme"
+
+
+def _theme_faces(pano_dir: Path) -> bool:
+    """Thư mục có đủ mặt panorama_0 để coi là một theme dùng được."""
+    return pano_dir.is_dir() and (pano_dir / "panorama_0.png").exists()
+
+
+def panorama_themes() -> list[dict]:
+    """Danh sách theme panorama chọn được: 2 bộ dựng sẵn (day/night) + các theme
+    người dùng nhập ở USER_PANORAMA_DIR. Mỗi mục: id, name, dir, preview, builtin."""
+    out: list[dict] = []
+    for tid, name in _BUILTIN_PANORAMAS:
+        d = PANORAMA_DIR / tid
+        if _theme_faces(d):
+            out.append({"id": tid, "name": name, "dir": d,
+                        "preview": d / "panorama_0.png", "builtin": True})
+    if USER_PANORAMA_DIR.is_dir():
+        for d in sorted(USER_PANORAMA_DIR.iterdir()):
+            if _theme_faces(d):
+                out.append({"id": d.name, "name": d.name.replace("-", " ").title(),
+                            "dir": d, "preview": d / "panorama_0.png", "builtin": False})
+    return out
+
+
+def _panorama_dir(panorama_theme: str, dark: bool) -> Path:
+    """Thư mục 6 mặt panorama sẽ dùng: theo theme đã chọn nếu hợp lệ, ngược lại
+    quay về day/night theo cờ dark (giữ tương thích ngược khi chưa chọn theme)."""
+    if panorama_theme:
+        for t in panorama_themes():
+            if t["id"] == panorama_theme and _theme_faces(t["dir"]):
+                return t["dir"]
+    return PANORAMA_DIR / ("night" if dark else "day")
+
+
+def import_panorama_theme(name: str, faces: list[Path]) -> str:
+    """Nhập một theme panorama từ 6 file panorama_0..5 (thứ tự theo faces). Chép
+    vào USER_PANORAMA_DIR/<slug>. Trả về id (slug) của theme."""
+    slug = _slug(name)
+    dest = USER_PANORAMA_DIR / slug
+    dest.mkdir(parents=True, exist_ok=True)
+    for i, f in enumerate(faces[:6]):
+        shutil.copyfile(f, dest / f"panorama_{i}.png")
+    return slug
+
+
+def _inject_panorama_into_jar(jar_path: Path, pano_dir: Path) -> None:
+    """Thay 6 mặt panorama (và BỎ panorama_overlay tĩnh) trong pack nhúng của mod
+    hard-lock, để theme panorama đã chọn có tác dụng cả trên instance hard-lock."""
+    if not _theme_faces(pano_dir):
+        return
+    rel = f"resourcepacks/aero-ui/{PANO_REL}"
+    drop = {f"{rel}/panorama_{i}.png" for i in range(6)}
+    drop.add(f"{rel}/panorama_overlay.png")
+    with zipfile.ZipFile(jar_path) as zin:
+        keep = [(it, zin.read(it.filename)) for it in zin.infolist()
+                if it.filename not in drop]
+    tmp = jar_path.with_suffix(".jar.tmp")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        for it, data in keep:
+            zout.writestr(it, data)
+        for i in range(6):
+            zout.write(pano_dir / f"panorama_{i}.png", f"{rel}/panorama_{i}.png")
+    tmp.replace(jar_path)
 MOD_NAME = "aero-ui-mod.jar"
 _ASSETS = Path(__file__).resolve().parent / "ui" / "assets"
 # Jar hard-lock Fabric build từ MỘT source, mỗi era một bản (xem aero-ui-mod/):
@@ -146,13 +223,14 @@ def _legacy_widgets_png(client_jar: Path) -> bytes | None:
 
 
 def _build_zip(dest: Path, legacy_widgets: bytes | None, dark: bool = False,
-               pack_format: int = _LEGACY_PACK_FORMAT) -> None:
+               pack_format: int = _LEGACY_PACK_FORMAT,
+               panorama_theme: str = "") -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    # Bộ panorama theo chế độ; có thì THAY 6 mặt panorama trong pack và BỎ
-    # panorama_overlay (overlay làm nền tĩnh — bỏ đi để panorama XOAY như title
-    # gốc). Không có bộ ảnh thì giữ nguyên panorama sẵn trong pack.
-    pano_src = PANORAMA_DIR / ("night" if dark else "day")
-    use_pano = pano_src.is_dir() and (pano_src / "panorama_0.png").exists()
+    # Bộ panorama theo THEME đã chọn (hoặc day/night theo dark); có thì THAY 6 mặt
+    # panorama trong pack và BỎ panorama_overlay (overlay tĩnh — bỏ để panorama XOAY
+    # như title gốc). Không có bộ ảnh thì giữ nguyên panorama sẵn trong pack.
+    pano_src = _panorama_dir(panorama_theme, dark)
+    use_pano = _theme_faces(pano_src)
     # pack.mcmeta tĩnh trong PACK_DIR bị BỎ QUA; ta ghi bản tính theo phiên bản
     # (đúng pack_format của chính instance) để nạp sạch trên mọi era.
     skip = {"pack.mcmeta"}
@@ -222,7 +300,8 @@ def _enable_in_options(options: Path, modern: bool) -> None:
 
 
 def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
-                      *, mc: str = "", loader: str = "", dark: bool = False) -> str:
+                      *, mc: str = "", loader: str = "", dark: bool = False,
+                      panorama_theme: str = "") -> str:
     """Cài Aero UI vào instance tại game_dir — launcher TỰ chọn cách khoá theo bản.
 
     Nếu có artifact hard-lock hợp (loader, mc, pack_format) — xem
@@ -232,6 +311,9 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
     Không có artifact hợp: soft-lock — cài resource pack (ghép widgets.png cho bản
     legacy từ client_jar, pack.mcmeta đúng format của bản) và bật trong options.txt.
     Trả 'modern'/'legacy'.
+
+    panorama_theme: id theme panorama (xem panorama_themes()) — áp cho cả hard-lock
+    (nhúng vào jar) lẫn soft-lock (thay trong pack). Rỗng = day/night theo dark.
     """
     gd = Path(game_dir)
     fmt = _pack_format(client_jar)
@@ -239,14 +321,19 @@ def apply_to_instance(game_dir: Path, client_jar: Path | None = None,
     if jar is not None:
         mods = gd / "mods"
         mods.mkdir(parents=True, exist_ok=True)
-        import shutil
-        shutil.copyfile(jar, mods / MOD_NAME)
+        dest_jar = mods / MOD_NAME
+        shutil.copyfile(jar, dest_jar)
+        # Theme panorama đã chọn: nhúng thẳng vào bản jar trong instance để có tác
+        # dụng dù pack của mod đang top-priority. Rỗng = giữ panorama gốc của mod.
+        if panorama_theme:
+            _inject_panorama_into_jar(dest_jar, _panorama_dir(panorama_theme, dark))
         (gd / "resourcepacks" / PACK_NAME).unlink(missing_ok=True)   # mod đã kèm pack
         return "locked"
 
     legacy = _legacy_widgets_png(client_jar) if client_jar else None
     modern = legacy is None
-    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark, pack_format=fmt)
+    _build_zip(gd / "resourcepacks" / PACK_NAME, legacy, dark=dark, pack_format=fmt,
+               panorama_theme=panorama_theme)
     _enable_in_options(gd / "options.txt", modern)
     # Kéo blur nền menu lên max: cùng lớp tint kính Aero trong pack -> frosted
     # acrylic. Chỉ có tác dụng ở 1.20.5+; bản cũ bỏ qua dòng này.
