@@ -27,6 +27,10 @@ import struct
 from typing import Awaitable, Callable, Optional
 from urllib.parse import urlsplit
 
+# Relay công khai đã deploy (Cloudflare Worker + Durable Object). Người chơi
+# không cấu hình gì; đổi ở đây nếu tự host relay khác.
+DEFAULT_RELAY = "wss://nostalgia-multiplayer-relay.junbob.workers.dev"
+
 MC_GROUP = "224.0.2.60"
 MC_PORT = 4445
 _AD = re.compile(rb"\[AD\](\d+)\[/AD\]")
@@ -141,15 +145,24 @@ class _WSDuplex(Duplex):
     def __init__(self, r: asyncio.StreamReader, w: asyncio.StreamWriter):
         self._r, self._w = r, w
         self._closed = False
+        self._wlock = asyncio.Lock()   # serialize khung gửi (host mux nhiều stream)
 
     @classmethod
     async def connect(cls, url: str, timeout: float = 15.0) -> "_WSDuplex":
         u = urlsplit(url)
         secure = u.scheme == "wss"
         port = u.port or (443 if secure else 80)
-        ctx = ssl.create_default_context() if secure else None
+        ctx = None
+        if secure:
+            ctx = ssl.create_default_context()
+            # WS handshake kiểu Upgrade chỉ có ở HTTP/1.1 -> ép ALPN, tránh h2.
+            ctx.set_alpn_protocols(["http/1.1"])
+        # server_hostname (SNI) là bắt buộc để Cloudflare route đúng zone.
         r, w = await asyncio.wait_for(
-            asyncio.open_connection(u.hostname, port, ssl=ctx), timeout)
+            asyncio.open_connection(
+                u.hostname, port, ssl=ctx,
+                server_hostname=u.hostname if secure else None),
+            timeout)
         key = base64.b64encode(os.urandom(16)).decode()
         path = u.path or "/"
         if u.query:
@@ -188,8 +201,9 @@ class _WSDuplex(Duplex):
     async def send(self, data: bytes) -> None:
         if self._closed:
             return
-        self._w.write(self._frame(0x2, data))
-        await self._w.drain()
+        async with self._wlock:
+            self._w.write(self._frame(0x2, data))
+            await self._w.drain()
 
     async def recv(self) -> bytes:
         buf = bytearray()
@@ -212,8 +226,9 @@ class _WSDuplex(Duplex):
                 await self.close()
                 return b""
             if opcode == 0x9:             # ping -> pong
-                self._w.write(self._frame(0xA, payload))
-                await self._w.drain()
+                async with self._wlock:
+                    self._w.write(self._frame(0xA, payload))
+                    await self._w.drain()
                 continue
             if opcode == 0xA:             # pong
                 continue
@@ -226,8 +241,9 @@ class _WSDuplex(Duplex):
             return
         self._closed = True
         try:
-            self._w.write(self._frame(0x8, b""))
-            await self._w.drain()
+            async with self._wlock:
+                self._w.write(self._frame(0x8, b""))
+                await self._w.drain()
         except Exception:
             pass
         try:
@@ -325,6 +341,7 @@ class HostRelay:
         self._world_port = world_port
         self._ws: Optional[_WSDuplex] = None
         self._streams: dict[int, asyncio.StreamWriter] = {}
+        self._pumps: set[asyncio.Task] = set()
         self._task: Optional[asyncio.Task] = None
 
     async def _open_stream(self, sid: int) -> Optional[asyncio.StreamWriter]:
@@ -333,7 +350,9 @@ class HostRelay:
         except OSError:
             return None
         self._streams[sid] = w
-        asyncio.ensure_future(self._world_to_ws(sid, r))
+        t = asyncio.ensure_future(self._world_to_ws(sid, r))
+        self._pumps.add(t)
+        t.add_done_callback(self._pumps.discard)
         return w
 
     async def _world_to_ws(self, sid: int, r: asyncio.StreamReader) -> None:
@@ -376,6 +395,8 @@ class HostRelay:
         finally:
             for sid in list(self._streams):
                 self._close_stream(sid)
+            for t in list(self._pumps):
+                t.cancel()
             await self._ws.close()
 
     def start(self) -> None:
