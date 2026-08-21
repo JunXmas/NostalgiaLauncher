@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QRect, QRectF, Qt, QTimer
 from PySide6.QtGui import (
-    QColor, QImage, QPainter, QPainterPath, QPen, QPixmap,
+    QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap,
 )
 from PySide6.QtWidgets import QWidget
 
@@ -195,8 +195,33 @@ class PanoramaPage(QWidget):
         # Vệt tối chân ảnh cho chữ dễ đọc.
         p.fillRect(QRect(pv.left(), pv.bottom() - 26, pv.width(), 26),
                    QColor(20, 22, 28, 150))
-        p.fillRect(rf, gloss_gradient(rf.height(), 0.5))
+
+        # --- Kính Aero cho phần info (nửa dưới): tint + gloss gờ sáng đỉnh ---
+        info_rf = QRectF(rect.left(), rect.top() + PREVIEW_H,
+                         rect.width(), rect.height() - PREVIEW_H)
+        p.fillRect(info_rf, QColor(14, 24, 40, 66))
+        ig = QLinearGradient(info_rf.left(), info_rf.top(), info_rf.left(), info_rf.bottom())
+        ig.setColorAt(0.0, QColor(255, 255, 255, 30))
+        ig.setColorAt(0.30, QColor(255, 255, 255, 6))
+        ig.setColorAt(1.0, QColor(10, 20, 35, 40))
+        p.fillRect(info_rf, ig)
+        # --- Sheen chéo phủ cả thẻ khi hover/active ---
+        if hovered or active:
+            s = QLinearGradient(rf.left(), rf.top(), rf.right(), rf.bottom())
+            s.setColorAt(0.0, QColor(255, 255, 255, 32))
+            s.setColorAt(0.35, QColor(255, 255, 255, 7))
+            s.setColorAt(0.6, QColor(255, 255, 255, 0))
+            p.fillRect(rf, s)
         p.restore()
+
+        # --- Bevel: gờ sáng đỉnh + phản chiếu lam đáy (trong bo góc) ---
+        inner = rf.adjusted(1.5, 1.5, -1.5, -1.5)
+        p.setPen(QPen(QColor(255, 255, 255, 150), 1))
+        p.drawLine(int(inner.left()) + RADIUS, int(inner.top()),
+                   int(inner.right()) - RADIUS, int(inner.top()))
+        p.setPen(QPen(QColor(150, 200, 245, 80), 1))
+        p.drawLine(int(inner.left()) + RADIUS, int(inner.bottom()),
+                   int(inner.right()) - RADIUS, int(inner.bottom()))
 
         # --- phần thông tin (nửa dưới) ---
         info_top = rect.top() + PREVIEW_H
@@ -250,12 +275,14 @@ class PanoramaPage(QWidget):
             p.setPen(TEXT_DIM)
             p.drawText(badge, Qt.AlignCenter, tr("Select"))
 
-        # --- viền: active (cyan/xanh Aero) + check, hoặc hover glow, hoặc thường ---
+        # --- viền: active (glow cyan dày) + check, hoặc hover, hoặc thường ---
         p.setBrush(Qt.NoBrush)
         if active:
-            glow = QColor(96, 208, 200)
-            p.setPen(QPen(glow, 2))
-            p.drawRoundedRect(rf.adjusted(1, 1, -1, -1), RADIUS, RADIUS)
+            glow = QColor(111, 208, 239)
+            p.setPen(QPen(QColor(111, 208, 239, 70), 3))     # quầng glow ngoài
+            p.drawRoundedRect(rf.adjusted(1.5, 1.5, -1.5, -1.5), RADIUS, RADIUS)
+            p.setPen(QPen(QColor(150, 224, 245), 1.6))       # viền sáng trong
+            p.drawRoundedRect(rf.adjusted(0.7, 0.7, -0.7, -0.7), RADIUS, RADIUS)
             # Check góc trên-phải.
             ck = QRect(rect.right() - 34, rect.top() + 10, 22, 22)
             p.setBrush(glow)
@@ -267,8 +294,8 @@ class PanoramaPage(QWidget):
             p.drawLine(ck.center().x() - 1, ck.bottom() - 6,
                        ck.right() - 5, ck.top() + 6)
         elif hovered:
-            p.setPen(QPen(QColor(150, 210, 255, 190), 2))
-            p.drawRoundedRect(rf.adjusted(1, 1, -1, -1), RADIUS, RADIUS)
+            p.setPen(QPen(QColor(160, 215, 255, 210), 1.8))
+            p.drawRoundedRect(rf.adjusted(0.9, 0.9, -0.9, -0.9), RADIUS, RADIUS)
         else:
             p.setPen(QPen(QColor(255, 255, 255, 55), 1))
             p.drawRoundedRect(rf.adjusted(0.5, 0.5, -0.5, -0.5), RADIUS, RADIUS)
