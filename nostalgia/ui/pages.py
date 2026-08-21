@@ -13,6 +13,7 @@ from .. import modrinth
 from ..i18n import language, language_name, tr
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
+from .install_dialog import InstallTargetDialog, instance_target
 from .menus import MenuItem, popup
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton, TabBar
@@ -465,12 +466,9 @@ class ContentLibraryPage(Page):
         self._index = "downloads"         # sort đang chọn; mặc định Popular cho discover
         self._loader = "fabric"           # loader đang chọn (mods)
         self._discovered = False          # đã tự nạp mod hot lần đầu chưa
-        self._instance = ctl.active_instance()   # cài/xem mod cho instance nào
-
-        # Nút chọn instance (góc phải): quyết định cài mod vào modpack nào.
-        self.inst_btn = AeroButton("Game ▾", self, height=28, tone="neutral")
-        self.inst_btn.setToolTip(tr("Choose which game to install this into."))
-        self.inst_btn.clicked.connect(self._open_instance_menu)
+        self._instance = ctl.active_instance()   # instance để XEM tab Installed (mods đã cài)
+        # (Bỏ ô dropdown chọn instance cố định — trước đây dễ cài nhầm vào sai game.
+        #  Giờ nút Install trên mỗi card mở modal chọn instance: _ask_install_target.)
 
         self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
         self.tabs.changed.connect(self._show_tab)
@@ -516,7 +514,7 @@ class ContentLibraryPage(Page):
         self._page = 1
         self._total = 0
         self.results = ModrinthResultsView(self, empty_text="Loading popular picks from Modrinth…")
-        self.results.activated.connect(self._install)
+        self.results.activated.connect(self._ask_install_target)
         self.results.page_changed.connect(self._go_page)
 
         self._show_tab(0)
@@ -538,7 +536,6 @@ class ContentLibraryPage(Page):
         self.scrim = False           # trang instance tự vẽ nền/tiêu đề
         self._top = 6
         self._fixed_instance = instance
-        self.inst_btn.hide()
 
     def set_instance(self, instance) -> None:
         self._fixed_instance = instance
@@ -571,34 +568,9 @@ class ContentLibraryPage(Page):
         if self.embedded:
             self._instance = self._fixed_instance
             return
-        # Instance có thể bị xoá/đổi ở nơi khác; đồng bộ lại và cập nhật nhãn nút.
+        # Instance có thể bị xoá/đổi ở nơi khác; đồng bộ lại (dùng cho tab Installed).
         if not (self._instance and self.ctl.instances.get(self._instance.name)):
             self._instance = self.ctl.active_instance()
-        self.inst_btn.setText((self._instance.name if self._instance else "No instance") + " ▾")
-
-    def _open_instance_menu(self) -> None:
-        items = [MenuItem(kind="header", label="Install into")]
-        for inst in self.ctl.instances.all():
-            items.append(MenuItem(
-                label=inst.name, sublabel=inst.version,
-                checked=bool(self._instance) and inst.name == self._instance.name,
-                data=inst.name))
-        if not self.ctl.instances.all():
-            items.append(MenuItem(label="(no instances — create one first)", enabled=False))
-        origin = self.inst_btn.mapTo(self.window(), self.inst_btn.rect().topLeft())
-        popup(self.window(), items, QRect(origin, self.inst_btn.size()),
-              self._pick_instance, width=224)
-
-    def _pick_instance(self, name) -> None:
-        inst = self.ctl.instances.get(name) if name else None
-        if inst:
-            self._instance = inst
-            self._done.clear()          # trạng thái "ADDED" tính theo từng instance
-            self._installed_ids = set()  # tập đã-cài cũng theo instance
-            self._sync_instance()
-            self.refresh()
-            self._refresh_installed_ids()
-            self._render_results()
 
     def _show_tab(self, i: int) -> None:
         self.tabs.current = i
@@ -630,12 +602,8 @@ class ContentLibraryPage(Page):
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
         t = self._top
-        # Nút chọn instance ở hàng tab (phải); ẩn khi nhúng (instance đã cố định).
-        if self.embedded:
-            self.tabs.setGeometry(24, t, w - 48, 30)
-        else:
-            self.inst_btn.setGeometry(w - 232, t - 2, 210, 30)
-            self.tabs.setGeometry(24, t, w - 260, 30)
+        # Tab chiếm trọn hàng — không còn nút chọn instance cố định (đã thay bằng modal).
+        self.tabs.setGeometry(24, t, w - 48, 30)
         # Installed: ô lọc trên, danh sách dưới.
         self.inst_search.setGeometry(16, t + 40, w - 32, 32)
         self.installed.setGeometry(16, t + 80, w - 32, h - (t + 80) - 58)
@@ -899,7 +867,30 @@ class ContentLibraryPage(Page):
             self._icons[url] = pm
             self.results.set_state(self._icons, self._result_badges())
 
-    def _install(self, hit) -> None:
+    def _ask_install_target(self, hit) -> None:
+        """Bấm Install trên card mod → mở modal chọn Instance (kiểm tra tương thích).
+
+        Nhúng trong một trang instance thì cài thẳng vào đó (đã cố định); chưa có
+        instance nào thì mời tạo trước.
+        """
+        if self.embedded and self._fixed_instance:
+            self._install(hit, self._fixed_instance)
+            return
+        instances = self.ctl.instances.all()
+        if not instances:
+            self.ctl.begin_create_instance()
+            return
+        mc_versions = hit.get("versions") or []
+        cats = (hit.get("display_categories") or []) + (hit.get("categories") or [])
+        loaders = [c for c in cats if c in _LOADERS] if self.kind == "mods" else []
+
+        dlg = InstallTargetDialog(self.window(), mod_name=hit.get("title", "mod"),
+                                  instances=instances, mc_versions=mc_versions, loaders=loaders)
+        dlg.confirmed.connect(lambda name: self._install(hit, self.ctl.instances.get(name)))
+        dlg.create_new.connect(self.ctl.begin_create_instance)   # tạo xong -> bấm Install lại
+        dlg.show()
+
+    def _install(self, hit, instance=None) -> None:
         slug = hit.get("slug") or hit.get("project_id")
         pid = hit.get("project_id")
         # Đã đang tải, đã cài phiên này, hoặc đã có sẵn trên đĩa -> không tải lại.
@@ -907,9 +898,16 @@ class ContentLibraryPage(Page):
             return
         self._busy.add(slug)
         self._render_results()
-        self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
-        loaders, gvs = self._target()
-        game_dir = self._game_dir()          # cố định instance đích trước khi chạy nền
+        # Đích cài: instance người dùng chọn ở modal, hoặc instance đang xem (nhúng).
+        if instance is not None:
+            mc, loader = instance_target(instance)
+            loaders, gvs = [loader], [mc]
+            game_dir = self.ctl.instance_dir(instance)
+            self.ctl.window.set_status(f"Installing {hit.get('title', slug)} → {instance.name}…")
+        else:
+            loaders, gvs = self._target()
+            game_dir = self._game_dir()      # cố định instance đích trước khi chạy nền
+            self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
         kind = self.kind
         title = hit.get("title", slug)
 
