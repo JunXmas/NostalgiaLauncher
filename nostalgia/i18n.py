@@ -175,6 +175,18 @@ _T = {
         "GAME TO LAUNCH": "GAME ĐỂ CHẠY",
         "No game — create one first": "Chưa có game — hãy tạo một cái trước",
         "＋ IMPORT FILE": "＋ NHẬP FILE", "Import file": "Nhập file",
+        "＋ IMPORT PACK": "＋ NHẬP MODPACK",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Cài modpack bạn đã tải — file .mrpack (Modrinth) hoặc .zip (CurseForge).",
+        "Import modpack": "Nhập modpack",
+        "Modpacks (*.mrpack *.zip)": "Modpack (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Đây không phải modpack Modrinth (.mrpack) hay CurseForge (.zip).",
+        "Couldn't read that modpack: {m}": "Không đọc được modpack: {m}",
+        "Installing modpack '{name}'…": "Đang cài modpack '{name}'…",
+        "Modpack install failed: {m}": "Cài modpack thất bại: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Đã cài modpack '{name}' — {n} mod không tải được. Bấm CHƠI.",
         "Imported {n} file(s).": "Đã nhập {n} file.",
     },
     "es": {
@@ -197,6 +209,18 @@ _T = {
         "LAUNCH & HOST": "INICIAR Y ALOJAR", "GAME TO LAUNCH": "JUEGO A INICIAR",
         "No game — create one first": "No hay juego — crea uno primero",
         "＋ IMPORT FILE": "＋ IMPORTAR ARCHIVO", "Import file": "Importar archivo",
+        "＋ IMPORT PACK": "＋ IMPORTAR PACK",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Instala un modpack que descargaste — un .mrpack de Modrinth o .zip de CurseForge.",
+        "Import modpack": "Importar modpack",
+        "Modpacks (*.mrpack *.zip)": "Modpacks (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Eso no es un modpack de Modrinth (.mrpack) ni de CurseForge (.zip).",
+        "Couldn't read that modpack: {m}": "No se pudo leer ese modpack: {m}",
+        "Installing modpack '{name}'…": "Instalando modpack '{name}'…",
+        "Modpack install failed: {m}": "Falló la instalación del modpack: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Modpack '{name}' instalado — no se pudieron descargar {n} mod(s). Pulsa JUGAR.",
         "Imported {n} file(s).": "Se importaron {n} archivo(s).",
         "NEW GAME": "NUEVO JUEGO",
         "Manage Account": "Gestionar cuenta",
@@ -317,6 +341,18 @@ _T = {
         "LAUNCH & HOST": "LANCER ET HÉBERGER", "GAME TO LAUNCH": "JEU À LANCER",
         "No game — create one first": "Aucun jeu — créez-en un d'abord",
         "＋ IMPORT FILE": "＋ IMPORTER UN FICHIER", "Import file": "Importer un fichier",
+        "＋ IMPORT PACK": "＋ IMPORTER UN PACK",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Installe un modpack téléchargé — un .mrpack Modrinth ou un .zip CurseForge.",
+        "Import modpack": "Importer un modpack",
+        "Modpacks (*.mrpack *.zip)": "Modpacks (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Ce n'est pas un modpack Modrinth (.mrpack) ni CurseForge (.zip).",
+        "Couldn't read that modpack: {m}": "Impossible de lire ce modpack : {m}",
+        "Installing modpack '{name}'…": "Installation du modpack « {name} »…",
+        "Modpack install failed: {m}": "Échec de l'installation du modpack : {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Modpack « {name} » installé — {n} mod(s) n'ont pas pu être téléchargés. Appuie sur JOUER.",
         "Imported {n} file(s).": "{n} fichier(s) importé(s).",
         "NEW GAME": "NOUVEAU JEU",
         "Manage Account": "Gérer le compte",
@@ -437,6 +473,18 @@ _T = {
         "LAUNCH & HOST": "STARTEN & HOSTEN", "GAME TO LAUNCH": "ZU STARTENDES SPIEL",
         "No game — create one first": "Kein Spiel — erst eines erstellen",
         "＋ IMPORT FILE": "＋ DATEI IMPORTIEREN", "Import file": "Datei importieren",
+        "＋ IMPORT PACK": "＋ PACK IMPORTIEREN",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Installiere ein heruntergeladenes Modpack — eine Modrinth-.mrpack- oder CurseForge-.zip-Datei.",
+        "Import modpack": "Modpack importieren",
+        "Modpacks (*.mrpack *.zip)": "Modpacks (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Das ist kein Modrinth- (.mrpack) oder CurseForge- (.zip) Modpack.",
+        "Couldn't read that modpack: {m}": "Modpack konnte nicht gelesen werden: {m}",
+        "Installing modpack '{name}'…": "Modpack „{name}“ wird installiert…",
+        "Modpack install failed: {m}": "Modpack-Installation fehlgeschlagen: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Modpack „{name}“ installiert — {n} Mod(s) konnten nicht geladen werden. Drücke SPIELEN.",
         "Imported {n} file(s).": "{n} Datei(en) importiert.",
         "NEW GAME": "NEUES SPIEL",
         "Manage Account": "Konto verwalten",
@@ -557,6 +605,18 @@ _T = {
         "LAUNCH & HOST": "INICIAR E HOSPEDAR", "GAME TO LAUNCH": "JOGO A INICIAR",
         "No game — create one first": "Nenhum jogo — crie um primeiro",
         "＋ IMPORT FILE": "＋ IMPORTAR ARQUIVO", "Import file": "Importar arquivo",
+        "＋ IMPORT PACK": "＋ IMPORTAR PACOTE",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Instala um modpack que você baixou — um .mrpack do Modrinth ou .zip do CurseForge.",
+        "Import modpack": "Importar modpack",
+        "Modpacks (*.mrpack *.zip)": "Modpacks (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Isso não é um modpack do Modrinth (.mrpack) nem do CurseForge (.zip).",
+        "Couldn't read that modpack: {m}": "Não foi possível ler esse modpack: {m}",
+        "Installing modpack '{name}'…": "Instalando modpack '{name}'…",
+        "Modpack install failed: {m}": "Falha ao instalar o modpack: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Modpack '{name}' instalado — não foi possível baixar {n} mod(s). Pressione JOGAR.",
         "Imported {n} file(s).": "{n} arquivo(s) importado(s).",
         "NEW GAME": "NOVO JOGO",
         "Manage Account": "Gerenciar conta",
@@ -677,6 +737,18 @@ _T = {
         "LAUNCH & HOST": "ЗАПУСТИТЬ И ХОСТИТЬ", "GAME TO LAUNCH": "ИГРА ДЛЯ ЗАПУСКА",
         "No game — create one first": "Нет игры — сначала создайте",
         "＋ IMPORT FILE": "＋ ИМПОРТ ФАЙЛА", "Import file": "Импорт файла",
+        "＋ IMPORT PACK": "＋ ИМПОРТ СБОРКИ",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "Установить скачанный модпак — файл .mrpack (Modrinth) или .zip (CurseForge).",
+        "Import modpack": "Импорт модпака",
+        "Modpacks (*.mrpack *.zip)": "Модпаки (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Это не модпак Modrinth (.mrpack) и не CurseForge (.zip).",
+        "Couldn't read that modpack: {m}": "Не удалось прочитать модпак: {m}",
+        "Installing modpack '{name}'…": "Установка модпака «{name}»…",
+        "Modpack install failed: {m}": "Не удалось установить модпак: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Модпак «{name}» установлен — не удалось загрузить {n} мод(ов). Нажмите ИГРАТЬ.",
         "Imported {n} file(s).": "Импортировано файлов: {n}.",
         "NEW GAME": "НОВАЯ ИГРА",
         "Manage Account": "Управление аккаунтом",
@@ -797,6 +869,18 @@ _T = {
         "LAUNCH & HOST": "启动并主持", "GAME TO LAUNCH": "要启动的游戏",
         "No game — create one first": "还没有游戏 — 请先创建一个",
         "＋ IMPORT FILE": "＋ 导入文件", "Import file": "导入文件",
+        "＋ IMPORT PACK": "＋ 导入整合包",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "安装你下载的整合包——Modrinth 的 .mrpack 或 CurseForge 的 .zip 文件。",
+        "Import modpack": "导入整合包",
+        "Modpacks (*.mrpack *.zip)": "整合包 (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "这不是 Modrinth (.mrpack) 或 CurseForge (.zip) 整合包。",
+        "Couldn't read that modpack: {m}": "无法读取该整合包：{m}",
+        "Installing modpack '{name}'…": "正在安装整合包“{name}”…",
+        "Modpack install failed: {m}": "整合包安装失败：{m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "整合包“{name}”已安装——有 {n} 个模组无法下载。按“开始游戏”。",
         "Imported {n} file(s).": "已导入 {n} 个文件。",
         "NEW GAME": "新建游戏",
         "Manage Account": "管理账号",
@@ -917,6 +1001,18 @@ _T = {
         "LAUNCH & HOST": "起動してホスト", "GAME TO LAUNCH": "起動するゲーム",
         "No game — create one first": "ゲームがありません — 先に作成してください",
         "＋ IMPORT FILE": "＋ ファイルをインポート", "Import file": "ファイルをインポート",
+        "＋ IMPORT PACK": "＋ パックをインポート",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "ダウンロードした Modpack をインストール — Modrinth の .mrpack または CurseForge の .zip。",
+        "Import modpack": "Modpack をインポート",
+        "Modpacks (*.mrpack *.zip)": "Modpack (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "これは Modrinth (.mrpack) でも CurseForge (.zip) の Modpack でもありません。",
+        "Couldn't read that modpack: {m}": "その Modpack を読み込めませんでした: {m}",
+        "Installing modpack '{name}'…": "Modpack「{name}」をインストール中…",
+        "Modpack install failed: {m}": "Modpack のインストールに失敗しました: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "Modpack「{name}」をインストールしました — {n} 個の Mod を取得できませんでした。PLAY を押してください。",
         "Imported {n} file(s).": "{n} 個のファイルをインポートしました。",
         "NEW GAME": "新規ゲーム",
         "Manage Account": "アカウント管理",
@@ -1037,6 +1133,18 @@ _T = {
         "LAUNCH & HOST": "실행 후 호스팅", "GAME TO LAUNCH": "실행할 게임",
         "No game — create one first": "게임 없음 — 먼저 하나 만드세요",
         "＋ IMPORT FILE": "＋ 파일 가져오기", "Import file": "파일 가져오기",
+        "＋ IMPORT PACK": "＋ 팩 가져오기",
+        "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
+            "내려받은 모드팩 설치 — Modrinth .mrpack 또는 CurseForge .zip 파일.",
+        "Import modpack": "모드팩 가져오기",
+        "Modpacks (*.mrpack *.zip)": "모드팩 (*.mrpack *.zip)",
+        "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack.":
+            "Modrinth(.mrpack) 또는 CurseForge(.zip) 모드팩이 아닙니다.",
+        "Couldn't read that modpack: {m}": "모드팩을 읽을 수 없습니다: {m}",
+        "Installing modpack '{name}'…": "모드팩 '{name}' 설치 중…",
+        "Modpack install failed: {m}": "모드팩 설치 실패: {m}",
+        "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. Press PLAY.":
+            "모드팩 '{name}' 설치됨 — 모드 {n}개를 받지 못했습니다. PLAY를 누르세요.",
         "Imported {n} file(s).": "{n}개 파일을 가져왔습니다.",
         "NEW GAME": "새 게임",
         "Manage Account": "계정 관리",

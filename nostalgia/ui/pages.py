@@ -146,6 +146,10 @@ class InstallationsPage(Page):
         self.fabric_btn.setToolTip(tr(
             "Install a ready-made bundle of mods someone already put together."))
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
+        self.import_pack_btn = AeroButton("＋ IMPORT PACK", self, height=32, tone="neutral")
+        self.import_pack_btn.setToolTip(tr(
+            "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip."))
+        self.import_pack_btn.clicked.connect(self._import_pack)
         self.logs_btn = AeroButton("LOGS", self, height=32, tone="neutral")
         self.logs_btn.clicked.connect(self.ctl.show_logs)
 
@@ -156,10 +160,20 @@ class InstallationsPage(Page):
         self.ctl.ask_delete_instance(name)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
-        self.list.setGeometry(16, 58, self.width() - 32, self.height() - 116)
-        self.add_btn.setGeometry(self.width() - 196, self.height() - 46, 180, 32)
-        self.fabric_btn.setGeometry(self.width() - 356, self.height() - 46, 150, 32)
-        self.logs_btn.setGeometry(self.width() - 458, self.height() - 46, 92, 32)
+        w, h = self.width(), self.height()
+        self.list.setGeometry(16, 58, w - 32, h - 116)
+        self.add_btn.setGeometry(w - 196, h - 46, 180, 32)
+        self.fabric_btn.setGeometry(w - 356, h - 46, 150, 32)
+        self.import_pack_btn.setGeometry(w - 516, h - 46, 150, 32)
+        self.logs_btn.setGeometry(w - 618, h - 46, 92, 32)
+
+    def _import_pack(self) -> None:
+        """Chọn một file modpack (.mrpack / .zip) rồi cài thành instance mới."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, tr("Import modpack"), "",
+            tr("Modpacks (*.mrpack *.zip)"))
+        if path:
+            self.ctl.import_pack_file(path)
 
     def refresh(self) -> None:
         current = self.ctl.instances.active

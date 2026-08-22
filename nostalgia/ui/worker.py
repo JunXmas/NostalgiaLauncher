@@ -14,7 +14,10 @@ from PySide6.QtCore import QThread, Signal
 from .. import auth, google_auth
 from ..accounts import OFFLINE, AccountStore, StoredAccount, refresh_if_online
 from ..install import Installer
-from ..launch import build_command, ensure_offline_libraries, launch_game_offline, run
+from ..launch import (
+    build_command, ensure_offline_libraries, launch_game_offline, run,
+    terminate_process,
+)
 
 
 class FnWorker(QThread):
@@ -132,9 +135,9 @@ class LaunchWorker(QThread):
         chuẩn bị thì đánh dấu huỷ để KHÔNG bật game lên sau khi tải xong."""
         self._cancelled = True
         self.requestInterruption()
-        proc = self._proc
-        if proc and proc.poll() is None:
-            proc.terminate()
+        # terminate_process: SIGTERM cả nhóm rồi SIGKILL nếu còn sống sau vài giây.
+        # Chỉ proc.terminate() thì nhiều bản Minecraft lờ SIGTERM -> STOP vô tác dụng.
+        terminate_process(self._proc)
 
     def _launch_offline(self, installer: Installer, identity):
         if self._interrupted():

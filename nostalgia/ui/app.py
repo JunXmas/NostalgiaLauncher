@@ -147,8 +147,8 @@ class Controller:
             proc = getattr(worker, "_proc", None)
             if proc is not None:
                 try:
-                    if proc.poll() is None:
-                        proc.terminate()
+                    from ..launch import terminate_process
+                    terminate_process(proc, grace=1.5)   # SIGTERM rồi ép SIGKILL
                 except Exception:
                     pass
             worker.quit()
@@ -566,7 +566,6 @@ class Controller:
 
         def work(on_progress, on_status):
             import tempfile
-            from .. import jre
             from ..install import download
             f = modrinth_mod.best_file(
                 slug, game_versions=[game_version] if game_version else None)
@@ -588,17 +587,7 @@ class Controller:
                 except requests.RequestException:
                     pass
             loader, mc = modpack_mod.loader_and_mc(index)
-            if loader == "quilt":
-                raise RuntimeError("Quilt modpacks aren't supported yet")
-            on_status(f"Installing {loader} {mc}…")
-            java = None
-            if loader in ("forge", "neoforge"):
-                meta = self.installer.install(mc)
-                jre.ensure(self.store_root, meta)
-                java = str(jre.java_binary(self.store_root, jre.component_of(meta)))
-            # on_status -> hiện tiến trình khi chạy Forge/NeoForge installer (chậm vài phút).
-            vid = loaders_mod.install(self.installer, loader, mc, java_binary=java,
-                                      on_status=on_status)
+            vid = self._install_pack_loader(loader, mc, on_status)
             # Bản Optimized: kèm mod Super Resolution (render thấp rồi upscale -> thêm FPS).
             # Client-side, không phụ thuộc; bản nào không có (vd 1.12.2) thì bỏ qua êm.
             if optimized:
@@ -623,6 +612,78 @@ class Controller:
         w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
         self._workers.append(w)
         w.start()
+
+    def _install_pack_loader(self, loader: str, mc: str, on_status) -> str:
+        """Cài mod loader cho một modpack và trả về id phiên bản để chạy."""
+        from .. import jre
+        if loader == "quilt":
+            raise RuntimeError("Quilt modpacks aren't supported yet")
+        on_status(f"Installing {loader} {mc}…")
+        java = None
+        if loader in ("forge", "neoforge"):
+            meta = self.installer.install(mc)
+            jre.ensure(self.store_root, meta)
+            java = str(jre.java_binary(self.store_root, jre.component_of(meta)))
+        # on_status -> hiện tiến trình khi chạy Forge/NeoForge installer (chậm vài phút).
+        return loaders_mod.install(self.installer, loader, mc, java_binary=java,
+                                   on_status=on_status)
+
+    def import_pack_file(self, path: str) -> None:
+        """Cài modpack từ một file trên máy (.mrpack của Modrinth hoặc .zip của
+        CurseForge) thành instance mới. Tự nhận dạng định dạng theo nội dung zip."""
+        from .. import curseforge as cf_mod
+        src = Path(path)
+        try:
+            if modpack_mod.is_mrpack(src):
+                fmt = "modrinth"
+                raw_name = (modpack_mod.read_index(src).get("name") or "").strip()
+            elif cf_mod.is_curseforge(src):
+                fmt = "curseforge"
+                raw_name = (cf_mod.read_manifest(src).get("name") or "").strip()
+            else:
+                self.window.set_status(tr(
+                    "That isn't a Modrinth (.mrpack) or CurseForge (.zip) modpack."))
+                return
+        except (OSError, ValueError) as e:
+            self.window.set_status(tr("Couldn't read that modpack: {m}").format(m=e))
+            return
+
+        title = raw_name or src.stem
+        name = self.instances.unique_name(title)
+        inst_dir = self.store_root / "instances" / instances_mod.slug(name)
+        self.window.set_status(tr("Installing modpack '{name}'…").format(name=title))
+
+        def work(on_progress, on_status):
+            if fmt == "modrinth":
+                index = modpack_mod.install_contents(
+                    src, inst_dir, on_status=on_status, on_progress=on_progress)
+                loader, mc = modpack_mod.loader_and_mc(index)
+                skipped = 0
+            else:
+                manifest = cf_mod.install_contents(
+                    src, inst_dir, on_status=on_status, on_progress=on_progress)
+                loader, mc = cf_mod.loader_and_mc(manifest)
+                skipped = int(manifest.get("_skipped", 0))
+            vid = self._install_pack_loader(loader, mc, on_status)
+            return name, vid, skipped
+
+        w = ProgressWorker(work)
+        w.progress.connect(self._set_progress)
+        w.status.connect(self.window.set_status)
+        w.done.connect(lambda r: self._pack_file_installed(*r))
+        w.failed.connect(lambda m: (self.window.set_progress(None),
+                                    self.window.set_status(
+                                        tr("Modpack install failed: {m}").format(m=m))))
+        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
+        self._workers.append(w)
+        w.start()
+
+    def _pack_file_installed(self, name: str, version: str, skipped: int = 0) -> None:
+        self._modpack_installed(name, version)
+        if skipped:   # vài mod CurseForge không tra/tải được -> nói rõ, không im lặng
+            self.window.set_status(tr(
+                "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. "
+                "Press PLAY.").format(name=name, n=skipped))
 
     def install_optifine(self, inst) -> None:
         """Tải OptiFine từ optifine.net (client-side, giữ quảng cáo, không mirror)

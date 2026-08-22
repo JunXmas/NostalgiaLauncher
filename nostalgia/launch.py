@@ -20,6 +20,11 @@ CLASSPATH_SEP = ";" if os.name == "nt" else ":"
 # game tắt theo. CREATE_NO_WINDOW dẹp nó mà vẫn giữ nguyên đường ống stdout, nên
 # log game vẫn chảy về launcher như thường.
 NO_WINDOW = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+
+# POSIX: cho game một session (nhóm tiến trình) riêng. Nhờ vậy bấm STOP có thể
+# kill CẢ cây tiến trình (java + mọi tiến trình con nó sinh ra) chứ không chỉ
+# tiến trình gốc — và không bao giờ đụng tới chính launcher (nhóm khác).
+NEW_SESSION = {"start_new_session": True} if os.name != "nt" else {}
 from .paths import APP_SLUG, APP_VERSION
 
 LAUNCHER_NAME = APP_SLUG
@@ -330,7 +335,7 @@ def run(cmd: list[str], game_dir: Path, on_start=None, on_line=None) -> int:
     game_dir.mkdir(parents=True, exist_ok=True)
     process = subprocess.Popen(
         cmd, cwd=game_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, errors="replace", **NO_WINDOW,
+        text=True, errors="replace", **NO_WINDOW, **NEW_SESSION,
     )
     if on_start:
         on_start(process)          # để phía gọi giữ handle mà dừng game khi cần
@@ -345,3 +350,45 @@ def run(cmd: list[str], game_dir: Path, on_start=None, on_line=None) -> int:
         # vòng, lấy mã thoát thật ở dưới.
         pass
     return process.wait()
+
+
+def _signal_game(proc, *, force: bool) -> None:
+    """Gửi tín hiệu dừng tới game. Ưu tiên cả nhóm tiến trình (java + con); chỉ
+    làm vậy khi game thực sự là leader nhóm riêng để KHÔNG bao giờ đụng launcher."""
+    if os.name == "nt":
+        proc.kill() if force else proc.terminate()
+        return
+    import signal
+    sig = signal.SIGKILL if force else signal.SIGTERM
+    try:
+        pgid = os.getpgid(proc.pid)
+        if pgid == proc.pid:              # game có session riêng -> kill cả cây
+            os.killpg(pgid, sig)
+        else:                            # không thì chỉ tiến trình game
+            proc.send_signal(sig)
+    except (ProcessLookupError, PermissionError, OSError):
+        try:
+            proc.kill() if force else proc.terminate()
+        except (ProcessLookupError, OSError):
+            pass
+
+
+def terminate_process(proc, *, grace: float = 5.0) -> None:
+    """Dừng game khi bấm STOP: xin thoát nhã (SIGTERM), còn sống sau `grace` giây
+    thì ép chết (SIGKILL — không thể bị bỏ qua nên chắc chắn tắt được).
+
+    Nhiều bản Minecraft/JVM trên Linux lờ SIGTERM khi đang chạy vòng render, nên
+    chỉ terminate() thôi thì nút STOP không có tác dụng. Escalate mới ăn chắc.
+    """
+    if proc is None or proc.poll() is not None:
+        return
+    import threading
+    _signal_game(proc, force=False)
+
+    def _force() -> None:
+        if proc.poll() is None:
+            _signal_game(proc, force=True)
+
+    t = threading.Timer(max(0.0, grace), _force)
+    t.daemon = True
+    t.start()

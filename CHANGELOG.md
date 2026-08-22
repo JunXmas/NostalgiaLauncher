@@ -2,6 +2,21 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.10
+- **STOP now actually closes the game.** Pressing STOP used to leave Minecraft
+  running — some versions ignore the polite shutdown signal while the game is
+  drawing, so only Quit/Alt+F4 worked. STOP now asks the game to quit, then force-
+  closes it (and any child processes) if it doesn't exit within a few seconds. The
+  brief grace period lets a singleplayer world finish saving first. Closing the
+  launcher shuts the game down the same reliable way.
+- **Import a modpack from a file.** A new "＋ Import pack" button on the Games page
+  installs a modpack you already downloaded — either a Modrinth **.mrpack** or a
+  CurseForge **.zip** — as a fresh game. The launcher detects which kind it is,
+  downloads the mods, unpacks the included config, sets up the right mod loader
+  (Fabric/Forge/NeoForge) and turns on Aero UI + shared skins, just like installing
+  a modpack online. For CurseForge packs, any mods that can't be fetched are skipped
+  and counted so you know, instead of failing the whole install.
+
 ## 0.9.9
 - **Import your own mods, resource packs and shaders from a file.** Each of those
   sections now has an "Import file" button on the Installed tab — pick a .jar (mods)
