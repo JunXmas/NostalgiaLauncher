@@ -674,6 +674,21 @@ class Controller:
         mc = optifine.mc_from_version_id(inst.version)
         game_dir = self.instance_dir(inst)
 
+        # Đã có CSL trong instance -> chỉ đảm bảo config trỏ đúng backend (rẻ, cục
+        # bộ), khỏi gọi mạng mỗi lần chạy. Nhờ vậy có thể ensure ở mọi lần launch.
+        mods_dir = game_dir / "mods"
+        have_csl = mods_dir.is_dir() and any(
+            "customskinloader" in p.name.lower() for p in mods_dir.glob("*.jar"))
+        if have_csl:
+            try:
+                skins.write_csl_config(game_dir, self.settings.backend_url)
+            except OSError:
+                pass
+            if not silent:
+                self.window.set_status(
+                    "Shared skins are on — you'll see other players' skins in-game.")
+            return
+
         def work():
             f = mr.best_file(skins.CSL_PROJECT, loaders=[loader],
                              game_versions=[mc] if mc else None)
@@ -1185,7 +1200,7 @@ class Controller:
                 self.pages["skins"].refresh(),
                 self.window.set_status(
                     "Skin changed on your Microsoft account." if was_online else
-                    "Skin saved locally — others will see it once the skin server is set up.")),
+                    "Skin saved — other players with shared skins on will see it in-game.")),
             lambda m: self.window.set_status(f"Couldn't change skin: {m}"))
 
     # ---------- menu tài khoản ----------
@@ -1664,6 +1679,13 @@ class Controller:
         # được bằng Settings (aero_ui=False). Nhẹ nên chạy thẳng.
         if inst is not None and getattr(self.settings, "aero_ui", True):
             self.apply_aero_ui(inst, silent=True)
+
+        # Shared skins: đảm bảo CustomSkinLoader + config trỏ backend trên instance
+        # đang chạy mỗi lần launch (kể cả instance cũ / chơi Play Together) để người
+        # chơi crack nhìn thấy skin của nhau. Idempotent: có CSL rồi thì chỉ ghi lại
+        # config (rẻ), chưa có thì cài nền. Tắt được bằng Settings (shared_skins=False).
+        if inst is not None and getattr(self.settings, "shared_skins", True):
+            self.enable_shared_skins(inst, silent=True)
 
         # Phản hồi tức thì: đổi nút sang STOP ngay khi bấm Play, TRƯỚC cả bước làm
         # mới token (có thể gọi mạng) và tải. Người chơi thấy ngay là 'đang khởi

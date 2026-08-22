@@ -2,6 +2,14 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.7
+- **Cracked players now see each other's skins.** The launcher makes sure
+  CustomSkinLoader (pointed at the built-in skin server) is set up on the game
+  you launch — every launch, including Play Together — so offline players see
+  each other's skins in-game with no setup. Your skin is shared automatically
+  when you change it in the launcher. Checking is instant when it's already
+  installed, and you can turn it off with `shared_skins` in the config.
+
 ## 0.9.6
 - **Pick which game to launch on the Play Together page.** A "Game to launch"
   selector now sits at the top of the page and is used by both sides: Launch &
