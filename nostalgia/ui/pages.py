@@ -6,7 +6,7 @@ import os
 
 from PySide6.QtCore import QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
+from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextBrowser, QWidget
 
 from .. import mods as mods_mgr
 from .. import modrinth
@@ -489,6 +489,8 @@ class ContentLibraryPage(Page):
         self.open_btn = AeroButton("OPEN FOLDER", self, height=32, tone="neutral")
         self.open_btn.clicked.connect(
             lambda: self.ctl.open_path(mods_mgr.folder(self._game_dir(), self.kind)))
+        self.import_file_btn = AeroButton("＋ IMPORT FILE", self, height=32, tone="neutral")
+        self.import_file_btn.clicked.connect(self._import_file)
         self.update_btn = AeroButton("UPDATE ALL", self, height=32)   # xanh
         self.update_btn.clicked.connect(self._update_all)
         self.update_btn.setVisible(False)
@@ -576,7 +578,7 @@ class ContentLibraryPage(Page):
         self.tabs.current = i
         self.tabs.update()
         browse = i == 1
-        for w in (self.installed, self.open_btn, self.inst_search):
+        for w in (self.installed, self.open_btn, self.import_file_btn, self.inst_search):
             w.setVisible(not browse)
         self.update_btn.setVisible((not browse) and bool(self._updates))
         for w in (self.search, self.search_btn, self.results, self.sort_tabs):
@@ -608,7 +610,8 @@ class ContentLibraryPage(Page):
         self.inst_search.setGeometry(16, t + 40, w - 32, 32)
         self.installed.setGeometry(16, t + 80, w - 32, h - (t + 80) - 58)
         self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
-        self.update_btn.setGeometry(w - 356, h - 46, 156, 32)
+        self.import_file_btn.setGeometry(w - 356, h - 46, 156, 32)
+        self.update_btn.setGeometry(w - 522, h - 46, 156, 32)
         # Browse
         self.search.setGeometry(16, t + 40, w - 140, 32)
         self.search_btn.setGeometry(w - 116, t + 40, 100, 32)
@@ -626,6 +629,33 @@ class ContentLibraryPage(Page):
     def _render_installed(self) -> None:
         self._items = mods_mgr.list_installed(self._game_dir(), self.kind)
         self._apply_installed_filter()
+
+    def _import_file(self) -> None:
+        """Nhập file từ máy vào instance đang xem (mods=.jar, RP/shader=.zip).
+        Có sẵn tính năng cài từ Modrinth; đây là cho file bạn tự tải về."""
+        inst = (self._fixed_instance if self.embedded
+                else (self._instance or self.ctl.active_instance()))
+        if inst is None:
+            self.ctl.window.set_status(tr("No game yet — click NEW GAME to make one."))
+            return
+        exts = mods_mgr.KINDS.get(self.kind, ())
+        label = {"mods": tr("Mods"), "resourcepacks": tr("Resource Packs"),
+                 "shaderpacks": tr("Shaders")}.get(self.kind, tr("Files"))
+        patterns = " ".join(f"*{e}" for e in exts)
+        files, _ = QFileDialog.getOpenFileNames(
+            self, tr("Import file"), "", f"{label} ({patterns})")
+        if not files:
+            return
+        game_dir, n = self._game_dir(), 0
+        for f in files:
+            try:
+                mods_mgr.import_local(game_dir, self.kind, f)
+                n += 1
+            except (ValueError, OSError) as e:
+                self.ctl.window.set_status(f"Couldn't import: {e}")
+        if n:
+            self.ctl.window.set_status(tr("Imported {n} file(s).").format(n=n))
+            self.refresh()
 
     def _installed_icon(self, it):
         """Icon rút từ jar/zip (cache theo path+size); None nếu không có."""
@@ -1159,6 +1189,8 @@ class InstancePage(Page):
         self.saves_btn = AeroButton("SAVES FOLDER", self, height=28, tone="neutral")
         self.saves_btn.clicked.connect(
             lambda: self.ctl.open_saves_folder(self.instance) if self.instance else None)
+        self.import_btn.hide()          # chỉ hiện ở tab Worlds (xem _tab)
+        self.saves_btn.hide()
         self.setAcceptDrops(True)
 
         self.tabs = TabBar([c[0] for c in self.CONTENT] + ["Worlds", "Logs"], self)
@@ -1187,7 +1219,7 @@ class InstancePage(Page):
         self._tab(0)
 
     def _relayout_actions(self) -> None:
-        # Xếp các nút hành động từ phải sang; Import World / Saves luôn hiện.
+        # Xếp các nút hành động từ phải sang (chỉ nút đang 'định hiện').
         x = self.width() - 20
         for btn, w in ((self.import_btn, 150), (self.saves_btn, 128),
                        (self.optifine_btn, 128), (self.shared_btn, 128)):
@@ -1213,6 +1245,10 @@ class InstancePage(Page):
         self.content.setVisible(i < n)
         self.worlds.setVisible(is_worlds)
         self.logs.setVisible(is_logs)
+        # Nhập world / mở thư mục saves chỉ thuộc mục Worlds -> chỉ hiện ở tab đó.
+        self.import_btn.setVisible(is_worlds)
+        self.saves_btn.setVisible(is_worlds)
+        self._relayout_actions()
         if is_worlds:
             self.worlds.refresh()
         elif is_logs:

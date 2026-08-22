@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -91,6 +92,28 @@ def folder(game_dir: Path, kind: str) -> Path:
     path = game_dir / kind
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def import_local(game_dir: Path, kind: str, src) -> Path:
+    """Chép một file mod/resourcepack/shader từ máy vào đúng thư mục của instance.
+
+    Chỉ nhận đúng phần mở rộng của loại (mods=.jar, resourcepacks/shaderpacks=.zip);
+    file lạ -> ValueError. Không đè: nếu trùng tên thì thêm hậu tố ' (1)', ' (2)'…
+    """
+    src = Path(src)
+    exts = KINDS.get(kind, ())
+    if not src.name.lower().endswith(exts):
+        raise ValueError(f"{src.name} is not a {'/'.join(exts)} file.")
+    dst_dir = folder(game_dir, kind)
+    dest = dst_dir / src.name
+    if dest.exists():
+        stem, suffix = src.stem, src.suffix
+        i = 1
+        while (dst_dir / f"{stem} ({i}){suffix}").exists():
+            i += 1
+        dest = dst_dir / f"{stem} ({i}){suffix}"
+    shutil.copy2(src, dest)
+    return dest
 
 
 def _display_name(name: str) -> str:

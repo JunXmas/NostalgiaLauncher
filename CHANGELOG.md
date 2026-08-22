@@ -2,6 +2,15 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.9
+- **Import your own mods, resource packs and shaders from a file.** Each of those
+  sections now has an "Import file" button on the Installed tab — pick a .jar (mods)
+  or .zip (resource packs / shaders) you downloaded yourself and it drops into the
+  right folder for the game you're viewing. Duplicates are kept, not overwritten.
+- **Import World and Saves Folder now live only under the Worlds tab.** They used
+  to sit on every tab of a game's page; they belong with worlds, so that's where
+  they are now.
+
 ## 0.9.8
 - Shared skins is now always on — the extra config switch was removed. It stays
   automatic and out of your way.
