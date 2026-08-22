@@ -8,12 +8,14 @@ All notable changes to Nostalgia Launcher, newest first.
   invisible — so "Import ▸ From another launcher…" (and the modpack-file import)
   couldn't be reached. The menu now opens upward and on-screen. (Same off-by anchor
   math also nudged the modpack page's Source/Sort menus; both corrected.)
-- **Browse and search CurseForge modpacks by name, built in.** The CurseForge
-  source on the modpack page now searches by name out of the box — the launcher's
-  backend holds the CurseForge API key, so no one needs their own. Installing by
-  Project ID still works with no setup, and power users can still put their own
-  CurseForge key in Settings ▸ Advanced to bypass the backend. If search is ever
-  unavailable, it falls back to install-by-ID cleanly.
+- **CurseForge everywhere: modpacks, mods, resource packs and shaders.** Every
+  Browse page now has a Modrinth/CurseForge source switch. Search CurseForge by
+  name out of the box — the launcher's backend holds the CurseForge API key, so no
+  one needs their own — and install with one click (required dependencies come
+  along too). Installing works with no key; searching by name uses the backend, or
+  your own CurseForge key from Settings ▸ Advanced. Modpacks can still be installed
+  by Project ID with no setup, and everything falls back cleanly if search is
+  unavailable.
 
 ## 0.9.11
 - **Crash reports you can actually read.** When a game exits with an error, the

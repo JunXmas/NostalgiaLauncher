@@ -504,7 +504,7 @@ class ContentLibraryPage(Page):
         # (Bỏ ô dropdown chọn instance cố định — trước đây dễ cài nhầm vào sai game.
         #  Giờ nút Install trên mỗi card mở modal chọn instance: _ask_install_target.)
 
-        self.tabs = TabBar(["Installed", "Browse Modrinth"], self)
+        self.tabs = TabBar(["Installed", "Browse"], self)
         self.tabs.changed.connect(self._show_tab)
 
         # --- Installed ---
@@ -537,6 +537,10 @@ class ContentLibraryPage(Page):
         self.search.returnPressed.connect(self._load)
         self.search_btn = AeroButton("SEARCH", self, height=32)
         self.search_btn.clicked.connect(self._load)
+
+        self.source = "modrinth"          # nguồn Browse: Modrinth | CurseForge
+        self.src_btn = AeroButton("Source: Modrinth", self, height=32, tone="neutral")
+        self.src_btn.clicked.connect(self._open_source_menu)
 
         # Thanh discover: sort + loader
         self.sort_tabs = TabBar([s[0] for s in self.SORTS], self)
@@ -615,7 +619,7 @@ class ContentLibraryPage(Page):
         for w in (self.installed, self.open_btn, self.import_file_btn, self.inst_search):
             w.setVisible(not browse)
         self.update_btn.setVisible((not browse) and bool(self._updates))
-        for w in (self.search, self.search_btn, self.results, self.sort_tabs):
+        for w in (self.search, self.search_btn, self.src_btn, self.results, self.sort_tabs):
             w.setVisible(browse)
         self.loader_tabs.setVisible(browse and self.is_mod)   # resource pack không có loader
         if browse:
@@ -635,6 +639,21 @@ class ContentLibraryPage(Page):
         self._loader = self.LOADERS[i]
         self._load()
 
+    def _open_source_menu(self) -> None:
+        items = [MenuItem(kind="header", label=tr("Source")),
+                 MenuItem(label="Modrinth", checked=self.source == "modrinth", data="modrinth"),
+                 MenuItem(label="CurseForge", checked=self.source == "curseforge", data="curseforge")]
+        b = self.src_btn
+        origin = b.mapTo(self.window(), b.rect().topLeft())
+        popup(self.window(), items, QRect(origin, b.size()), self._pick_source, width=180)
+
+    def _pick_source(self, key) -> None:
+        if not key or key == self.source:
+            return
+        self.source = key
+        self.src_btn.setText("Source: " + ("CurseForge" if key == "curseforge" else "Modrinth"))
+        self._load()
+
     def resizeEvent(self, event) -> None:  # noqa: N802
         w, h = self.width(), self.height()
         t = self._top
@@ -646,8 +665,9 @@ class ContentLibraryPage(Page):
         self.open_btn.setGeometry(w - 190, h - 46, 174, 32)
         self.import_file_btn.setGeometry(w - 356, h - 46, 156, 32)
         self.update_btn.setGeometry(w - 522, h - 46, 156, 32)
-        # Browse
-        self.search.setGeometry(16, t + 40, w - 140, 32)
+        # Browse: [Source] [search .........] [SEARCH]
+        self.src_btn.setGeometry(16, t + 40, 168, 32)
+        self.search.setGeometry(192, t + 40, w - 192 - 124, 32)
         self.search_btn.setGeometry(w - 116, t + 40, 100, 32)
         self.sort_tabs.setGeometry(16, t + 82, 210, 28)
         self.loader_tabs.setGeometry(238, t + 82, w - 254, 28)
@@ -847,6 +867,9 @@ class ContentLibraryPage(Page):
         """Nạp một trang kết quả: có chữ thì tìm, rỗng thì discover mod hot."""
         if reset:
             self._page = 1
+        if self.source == "curseforge":
+            self._load_curseforge()
+            return
         q = self.search.text().strip()
         self.results.empty_text = "Loading from Modrinth…"
         self.results.set_page([], self._page, 1, {})
@@ -859,6 +882,35 @@ class ContentLibraryPage(Page):
             self._show_results,
             self._search_failed,
         )
+
+    def _load_curseforge(self) -> None:
+        from .. import curseforge as cf
+        q = self.search.text().strip()
+        key = self.ctl.settings.curseforge_key
+        backend = "" if key else getattr(self.ctl.settings, "backend_url", "")
+        if not key and not backend:
+            self.results.empty_text = (
+                "CurseForge search needs a key — add one in Settings ▸ Advanced. "
+                "Modrinth works with no setup.")
+            self.results.set_page([], 1, 1, {})
+            return
+        loaders, gvs = self._target()
+        loader = loaders[0] if (self.is_mod and loaders) else None
+        gv = gvs[0] if gvs else None
+        offset = (self._page - 1) * self.PER_PAGE
+        self.results.empty_text = "Loading from CurseForge…"
+        self.results.set_page([], self._page, 1, {})
+        self.ctl._run(
+            lambda: cf.search_content(q, self.kind, key=key, backend=backend,
+                                      game_version=gv, loader=loader, sort=self._index,
+                                      page_size=self.PER_PAGE, index=offset),
+            self._show_results,
+            lambda m: self._search_failed_cf(m))
+
+    def _search_failed_cf(self, msg: str) -> None:
+        self.results.empty_text = ("CurseForge search isn't available right now "
+                                   f"({msg}). Try Modrinth, or check your key in Settings.")
+        self.results.set_page([], self._page, 1, {})
 
     def _search_failed(self, msg: str) -> None:
         self.results.empty_text = f"Couldn't reach Modrinth: {msg}"
@@ -955,6 +1007,9 @@ class ContentLibraryPage(Page):
         dlg.show()
 
     def _install(self, hit, instance=None) -> None:
+        if hit.get("source") == "curseforge":
+            self._install_curseforge(hit, instance)
+            return
         slug = hit.get("slug") or hit.get("project_id")
         pid = hit.get("project_id")
         # Đã đang tải, đã cài phiên này, hoặc đã có sẵn trên đĩa -> không tải lại.
@@ -1002,6 +1057,56 @@ class ContentLibraryPage(Page):
                 for dep in ver.get("dependencies", []):
                     if dep.get("dependency_type") == "required" and dep.get("project_id"):
                         stack.append((dep["project_id"], depth + 1))
+            return count
+
+        self.ctl._run(work,
+                      lambda n: self._installed(slug, title, n),
+                      lambda msg: self._install_failed(slug, hit, msg))
+
+    def _install_curseforge(self, hit, instance=None) -> None:
+        """Cài một mod/resourcepack/shader từ CurseForge (kèm dependency bắt buộc)."""
+        from .. import curseforge as cf
+        slug = hit.get("slug") or str(hit.get("project_id"))
+        pid = hit.get("project_id")
+        if not pid or slug in self._busy or slug in self._done:
+            return
+        self._busy.add(slug)
+        self._render_results()
+        if instance is not None:
+            mc, loader = instance_target(instance)
+            game_dir = self.ctl.instance_dir(instance)
+            self.ctl.window.set_status(f"Installing {hit.get('title', slug)} → {instance.name}…")
+        else:
+            loaders, gvs = self._target()
+            mc = gvs[0] if gvs else None
+            loader = loaders[0] if loaders else None
+            game_dir = self._game_dir()
+            self.ctl.window.set_status(f"Installing {hit.get('title', slug)}…")
+        kind, title = self.kind, hit.get("title", slug)
+        ld = loader if self.is_mod else None
+        key = self.ctl.settings.curseforge_key
+
+        def work():
+            seen: set = set()
+            count = 0
+            stack = [int(pid)]
+            while stack:
+                mid = stack.pop()
+                if mid in seen or len(seen) > 30:
+                    continue
+                seen.add(mid)
+                f = cf.best_content_file(mid, kind, game_version=mc, loader=ld, key=key)
+                if not f:
+                    if mid == int(pid):
+                        raise RuntimeError("no compatible CurseForge file for your Minecraft/loader")
+                    continue
+                url = cf.file_url(f["id"], f["fileName"], f.get("downloadUrl"))
+                mods_mgr.install_file(game_dir, kind, url=url,
+                                      filename=f["fileName"], sha1=cf.file_sha1(f))
+                count += 1
+                for dep in f.get("dependencies") or []:
+                    if dep.get("relationType") == 3 and dep.get("modId"):  # 3 = required
+                        stack.append(int(dep["modId"]))
             return count
 
         self.ctl._run(work,
