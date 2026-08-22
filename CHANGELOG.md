@@ -2,6 +2,13 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.13
+- **Fixed: games made with NEW GAME had no Aero UI.** Creating a game with NEW GAME
+  didn't apply the Aero UI (glass buttons/menus) or shared skins the way the first-
+  run setup and modpack installs do, so the Aero resource pack/mod was missing until
+  the first launch. New games now get Aero UI + shared skins right away (Aero still
+  respects the toggle in Settings).
+
 ## 0.9.12
 - **Fixed: the Import menu on the Games page did nothing.** Because that button
   sits at the bottom of the window, its menu opened off the bottom edge and was

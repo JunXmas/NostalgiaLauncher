@@ -365,6 +365,12 @@ class Controller:
     def create_instance(self, name: str, version: str):
         inst = self.instances.add(name, version)
         self.set_active_instance(inst.name)
+        # Kèm sẵn Aero UI + shared skins ngay khi tạo, giống onboarding/modpack — nếu
+        # không, game tạo bằng NEW GAME sẽ thiếu mod/resource pack Aero cho tới lần
+        # chạy đầu. Aero tôn trọng toggle aero_ui; shared skins tự bỏ qua nếu vanilla.
+        if getattr(self.settings, "aero_ui", True):
+            self.apply_aero_ui(inst, silent=True)
+        self.enable_shared_skins(inst, silent=True)
         self.window.set_status(f"Created instance '{inst.name}' ({version}).")
         return inst
 
