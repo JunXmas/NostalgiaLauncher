@@ -46,13 +46,43 @@ NAV = [
     ("shaders", "Shaders", "shaders",
      "Fancy lighting and visual effects for a better-looking game."),
     ("skins", "Skin", "skin", "Change how your character looks in the game."),
-    ("playtogether", "Play Together", "servers",
-     "Play with friends without a server — just share a room code."),
     ("panorama", "Theme In-Game", "packs",
      "Pick the animated background shown behind the in-game menu."),
+    ("playtogether", "Play Together", "servers",
+     "Play with friends without a server — just share a room code."),
     ("settings", "Settings", "gear", "Memory, folders, language and updates."),
     ("discord", "Discord", "discord", "Open our community Discord in your browser."),
 ]
+
+# Nhãn nhóm nhỏ chèn TRƯỚC mục tương ứng, để 10 mục nav đỡ rối (gộp theo chức năng).
+NAV_CAPTIONS = {
+    "mods": "Customize",
+    "playtogether": "Multiplayer",
+    "settings": "System",
+}
+
+
+class NavCaption(QWidget):
+    """Nhãn nhóm nhỏ (chữ hoa, mờ, giãn chữ) phân đoạn danh sách nav."""
+
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent)
+        self._text = text
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+    def setText(self, text: str) -> None:
+        self._text = text
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        p = QPainter(self)
+        f = ui_font(7, bold=True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 1.6)
+        p.setFont(f)
+        p.setPen(TEXT_FAINT)
+        p.drawText(self.rect().adjusted(26, 0, -12, -4),
+                   Qt.AlignLeft | Qt.AlignBottom, self._text.upper())
+        p.end()
 
 DISCORD_INVITE = "https://discord.gg/DS6djZ6aN9"
 
@@ -275,6 +305,13 @@ class LauncherWindow(QWidget):
             self.nav[key] = item
         self.nav["home"].setChecked(True)
 
+        # Nhãn nhóm chèn trước một số mục (Customize / Multiplayer / System).
+        self.nav_captions: dict[str, NavCaption] = {}
+        for k, cap in NAV_CAPTIONS.items():
+            c = NavCaption(tr(cap), self.sidebar)
+            c._i18n_key = cap
+            self.nav_captions[k] = c
+
         self.dragbar = TitleDragBar(self)
 
         self.btn_min = CaptionButton("min", self)
@@ -287,6 +324,10 @@ class LauncherWindow(QWidget):
 
     def retranslate(self) -> None:
         """Đổi ngôn ngữ: cập nhật chữ trên nav + nút, rồi vẽ lại toàn bộ."""
+        for cap in getattr(self, "nav_captions", {}).values():
+            k = getattr(cap, "_i18n_key", None)
+            if k:
+                cap.setText(tr(k))
         for item in self.nav.values():
             key = getattr(item, "_i18n_key", None)
             if key:
@@ -380,9 +421,13 @@ class LauncherWindow(QWidget):
         self.statusbar.setGeometry(0, h - STATUSBAR_H, w, STATUSBAR_H)
 
         y = LOGO_H + 14
-        for item in self.nav.values():
+        for key, item in self.nav.items():
+            cap = self.nav_captions.get(key)
+            if cap is not None:                 # nhãn nhóm đứng ngay trước mục
+                cap.setGeometry(0, y, SIDEBAR_W, 24)
+                y += 24
             item.setGeometry(0, y, SIDEBAR_W, 46)
-            y += 50
+            y += 48
 
         # Thanh kéo phủ mép trên, chừa phần sidebar-logo (đã kéo được sẵn) không sao.
         self.dragbar.setGeometry(0, 0, w, 46)

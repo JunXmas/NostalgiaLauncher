@@ -208,6 +208,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Bồi thêm mod tăng FPS cho máy yếu (ModernFix, Dynamic FPS, v.v.).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS cần game có Fabric/Forge.",
+        "Customize": "Tùy biến", "Multiplayer": "Chơi cùng", "System": "Hệ thống",
         "Adding performance mods…": "Đang thêm mod tăng FPS…",
         "Added {n} performance mod(s) — press PLAY.": "Đã thêm {n} mod tăng FPS — bấm CHƠI.",
         "Already fully optimized — nothing to add.": "Đã tối ưu đầy đủ — không cần thêm gì.",
@@ -280,6 +281,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Añade mods de rendimiento para PCs débiles (ModernFix, Dynamic FPS y más).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS necesita un juego con Fabric/Forge.",
+        "Customize": "Personalizar", "Multiplayer": "Multijugador", "System": "Sistema",
         "Adding performance mods…": "Añadiendo mods de rendimiento…",
         "Added {n} performance mod(s) — press PLAY.": "Se añadieron {n} mod(s) de rendimiento — pulsa JUGAR.",
         "Already fully optimized — nothing to add.": "Ya está totalmente optimizado — nada que añadir.",
@@ -450,6 +452,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Ajoute des mods de performance pour PC modestes (ModernFix, Dynamic FPS, etc.).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS nécessite un jeu Fabric/Forge.",
+        "Customize": "Personnaliser", "Multiplayer": "Multijoueur", "System": "Système",
         "Adding performance mods…": "Ajout des mods de performance…",
         "Added {n} performance mod(s) — press PLAY.": "{n} mod(s) de performance ajouté(s) — appuie sur JOUER.",
         "Already fully optimized — nothing to add.": "Déjà entièrement optimisé — rien à ajouter.",
@@ -621,6 +624,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Zusätzliche Performance-Mods für schwache PCs (ModernFix, Dynamic FPS u. a.).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS braucht ein Fabric/Forge-Spiel.",
+        "Customize": "Anpassen", "Multiplayer": "Mehrspieler", "System": "System",
         "Adding performance mods…": "Performance-Mods werden hinzugefügt…",
         "Added {n} performance mod(s) — press PLAY.": "{n} Performance-Mod(s) hinzugefügt — drücke SPIELEN.",
         "Already fully optimized — nothing to add.": "Bereits voll optimiert — nichts hinzuzufügen.",
@@ -791,6 +795,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Adiciona mods de desempenho para PCs fracos (ModernFix, Dynamic FPS e mais).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS precisa de um jogo com Fabric/Forge.",
+        "Customize": "Personalizar", "Multiplayer": "Multijogador", "System": "Sistema",
         "Adding performance mods…": "Adicionando mods de desempenho…",
         "Added {n} performance mod(s) — press PLAY.": "{n} mod(s) de desempenho adicionado(s) — pressione JOGAR.",
         "Already fully optimized — nothing to add.": "Já está totalmente otimizado — nada a adicionar.",
@@ -961,6 +966,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "Добавить моды производительности для слабых ПК (ModernFix, Dynamic FPS и др.).",
         "Boost FPS needs a Fabric/Forge game.": "Для Boost FPS нужна игра с Fabric/Forge.",
+        "Customize": "Настройка", "Multiplayer": "Мультиплеер", "System": "Система",
         "Adding performance mods…": "Добавление модов производительности…",
         "Added {n} performance mod(s) — press PLAY.": "Добавлено модов производительности: {n} — нажмите ИГРАТЬ.",
         "Already fully optimized — nothing to add.": "Уже полностью оптимизировано — добавлять нечего.",
@@ -1129,6 +1135,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "为低配电脑添加额外性能模组（ModernFix、Dynamic FPS 等）。",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS 需要装有 Fabric/Forge 的游戏。",
+        "Customize": "自定义", "Multiplayer": "多人游戏", "System": "系统",
         "Adding performance mods…": "正在添加性能模组…",
         "Added {n} performance mod(s) — press PLAY.": "已添加 {n} 个性能模组——按“开始游戏”。",
         "Already fully optimized — nothing to add.": "已完全优化——无需再添加。",
@@ -1299,6 +1306,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "低スペックPC向けに性能Modを追加（ModernFix、Dynamic FPS など）。",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS には Fabric/Forge のゲームが必要です。",
+        "Customize": "カスタマイズ", "Multiplayer": "マルチプレイ", "System": "システム",
         "Adding performance mods…": "性能Modを追加中…",
         "Added {n} performance mod(s) — press PLAY.": "性能Modを {n} 個追加しました — PLAY を押してください。",
         "Already fully optimized — nothing to add.": "すでに十分に最適化済み — 追加するものはありません。",
@@ -1468,6 +1476,7 @@ _T = {
         "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
             "저사양 PC용 성능 모드 추가(ModernFix, Dynamic FPS 등).",
         "Boost FPS needs a Fabric/Forge game.": "Boost FPS는 Fabric/Forge 게임이 필요합니다.",
+        "Customize": "커스터마이즈", "Multiplayer": "멀티플레이", "System": "시스템",
         "Adding performance mods…": "성능 모드 추가 중…",
         "Added {n} performance mod(s) — press PLAY.": "성능 모드 {n}개를 추가했습니다 — PLAY를 누르세요.",
         "Already fully optimized — nothing to add.": "이미 완전히 최적화됨 — 추가할 것이 없습니다.",

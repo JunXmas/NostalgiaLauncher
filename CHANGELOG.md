@@ -2,6 +2,18 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.16
+- **Cleaner, friendlier interface — still full Aero glass.**
+  - Games now show a **plain-language version** everywhere ("1.21.11 · Fabric",
+    "1.12.2 · Forge") instead of raw ids like "fabric-loader-0.19.3-1.21.11".
+  - The sidebar is **grouped** into Customize / Multiplayer / System so the ten
+    entries are easy to scan.
+  - The **glass buttons got glossier** — a subtle top reflection that brightens on
+    hover, keeping the Aero look and enhancing it.
+  - Removed the duplicate "New Game" button on Home (the ＋ tile stays), added a
+    soft shadow so headings stay readable over the background, and renamed a couple
+    of jargon labels ("Get Modpack" → "Modpacks", "Check Install" → "Check Files").
+
 ## 0.9.15
 - **More FPS for weak PCs.** The Optimized profile now layers extra performance mods
   on top of Fabulously Optimized — **ModernFix** (less RAM, faster startup),

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextBrowser, QWidget
 
 from .. import mods as mods_mgr
 from .. import modrinth
+from ..instances import pretty_version
 from ..i18n import language, language_name, tr
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .dialogs import ConfirmDialog
@@ -142,7 +143,7 @@ class InstallationsPage(Page):
         self.add_btn = AeroButton("NEW GAME", self, height=32, tone="neutral")
         self.add_btn.setToolTip(tr("Set up a fresh copy of the game (pick a name and version)."))
         self.add_btn.clicked.connect(self.ctl.begin_create_instance)
-        self.fabric_btn = AeroButton("GET MODPACK", self, height=32, tone="neutral")
+        self.fabric_btn = AeroButton("MODPACKS", self, height=32, tone="neutral")
         self.fabric_btn.setToolTip(tr(
             "Install a ready-made bundle of mods someone already put together."))
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
@@ -207,7 +208,7 @@ class InstallationsPage(Page):
                 extra += f" · played {h}h {m}m" if h else f" · played {m}m"
             rows.append(Row(
                 title=inst.name,
-                subtitle=f"{inst.version} · {state}{extra}",
+                subtitle=f"{pretty_version(inst.version)} · {state}{extra}",
                 checked=inst.name == current,
                 badge="EDIT",
                 action="delete",
@@ -1995,7 +1996,7 @@ class SettingsPage(Page):
 
         self.open_dir = AeroButton("OPEN GAME FOLDER", self, height=32, tone="neutral")
         self.open_dir.clicked.connect(lambda: self.ctl.open_path(self.ctl.settings.game_path))
-        self.doctor = AeroButton("CHECK INSTALL", self, height=32, tone="neutral")
+        self.doctor = AeroButton("CHECK FILES", self, height=32, tone="neutral")
         self.doctor.clicked.connect(self.ctl.run_doctor)
         self.bg_btn = AeroButton("CHANGE BACKGROUND", self, height=32, tone="neutral")
         self.bg_btn.clicked.connect(self.ctl.pick_background)

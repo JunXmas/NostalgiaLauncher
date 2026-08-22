@@ -382,6 +382,21 @@ class AeroButton(QAbstractButton):
         p.setPen(QPen(edge, 1))
         p.drawRoundedRect(r, 3, 3)
 
+        # Vệt phản chiếu kính LUÔN hiện ở nửa trên — làm mặt nút bóng "ướt" hơn (đặc
+        # trưng Aero); sáng thêm khi hover, mờ đi khi nhấn (như mặt kính lún vào).
+        sheen_a = int((44 + 22 * hov) * (1.0 - pressPos))
+        if sheen_a > 0:
+            p.save()
+            clip = QPainterPath()
+            clip.addRoundedRect(r, 3, 3)
+            p.setClipPath(clip)
+            sheen = QLinearGradient(r.topLeft(), QPointF(r.left(), r.top() + r.height() * 0.5))
+            sheen.setColorAt(0.0, QColor(255, 255, 255, sheen_a))
+            sheen.setColorAt(0.6, QColor(255, 255, 255, int(sheen_a * 0.16)))
+            sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
+            p.fillRect(QRectF(r.left(), r.top(), r.width(), r.height() * 0.5), sheen)
+            p.restore()
+
         # Bóng đổ nội viền khi nhấn: bề mặt kính lún vào trong (dark inset ở đỉnh).
         if press > 0.01:
             p.save()

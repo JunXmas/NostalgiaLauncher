@@ -19,6 +19,23 @@ from .paths import CONFIG_DIR
 INSTANCES_PATH = CONFIG_DIR / "instances.json"
 
 
+def pretty_version(version: str) -> str:
+    """Đổi id phiên bản kỹ thuật thành tên thân thiện cho người phổ thông:
+    'fabric-loader-0.19.3-1.21.11' -> '1.21.11 · Fabric';
+    '1.12.2-forge-14.23.5.2859'    -> '1.12.2 · Forge'; '1.20.1' -> '1.20.1'."""
+    v = (version or "").strip()
+    low = v.lower()
+    loader = next((disp for name, disp in (
+        ("neoforge", "NeoForge"), ("fabric", "Fabric"),
+        ("quilt", "Quilt"), ("forge", "Forge")) if name in low), "")
+    if "fabric-loader" in low or "quilt-loader" in low:
+        mc = v.rsplit("-", 1)[-1]            # mc nằm ở đuôi
+    else:
+        m = re.match(r"^(\d+\.\d+(?:\.\d+)?)", v)   # '1.12.2-forge-…' hoặc '1.20.1'
+        mc = m.group(1) if m else v
+    return f"{mc} · {loader}" if (loader and mc) else (mc or v)
+
+
 def slug(name: str) -> str:
     """Tên thư mục an toàn từ tên hiển thị (giữ chữ/số/gạch, gộp khoảng trắng)."""
     s = re.sub(r"[^\w.-]+", "-", name.strip(), flags=re.UNICODE).strip("-.")

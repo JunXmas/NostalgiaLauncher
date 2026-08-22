@@ -127,8 +127,7 @@ class HomeDashboard(QWidget):
 
         self.play_btn = AeroButton(tr("PLAY"), self, height=58, arrow=True)
         self.play_btn.clicked.connect(self.ctl.toggle_play)
-        self.new_btn = AeroButton(tr("NEW GAME"), self, height=30, tone="neutral")
-        self.new_btn.clicked.connect(self.ctl.begin_create_instance)
+        # (Bỏ nút "NEW GAME" trùng lặp ở dải My Games — đã có thẻ "＋ New Game" trong lưới.)
         self.manage_btn = AeroButton(tr("Manage Account"), self, height=28, tone="neutral")
         self.manage_btn.clicked.connect(self.ctl.open_account_menu_dashboard)
         # Nền menu ngày/đêm/theme giờ chọn ở trang "Panorama" (sidebar), không còn
@@ -136,7 +135,6 @@ class HomeDashboard(QWidget):
 
     def retranslate(self) -> None:
         self.play_btn.setText(tr("PLAY"))
-        self.new_btn.setText(tr("NEW GAME"))
         self.manage_btn.setText(tr("Manage Account"))
         self.update()
 
@@ -208,9 +206,6 @@ class HomeDashboard(QWidget):
         hero = QRect(cx, PAD, self._center_w(), HERO_H)
         # PLAY to trong hero
         self.play_btn.setGeometry(hero.left() + 26, hero.top() + 96, 210, 58)
-        # New Instance nằm ở dải "My Instances"
-        inst_top = hero.bottom() + 20
-        self.new_btn.setGeometry(hero.right() - 150, inst_top - 2, 150, 30)
         # Manage Account trong cột phải
         rx = self.width() - RIGHT_W - PAD
         self.manage_btn.setGeometry(rx + 14, RTOP + 92, RIGHT_W - 28, 28)
@@ -366,6 +361,10 @@ class HomeDashboard(QWidget):
 
     def _paint_instances(self, p, area):
         p.setFont(ui_font(12, bold=True))
+        # Bóng chữ mềm để tiêu đề đọc rõ trên nền ảnh lá (chỗ sáng cũng không chìm).
+        p.setPen(QColor(0, 0, 0, 120))
+        p.drawText(QRect(area.left() + 3, area.top() + 1, 300, 24),
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("My Games"))
         p.setPen(TEXT)
         p.drawText(QRect(area.left() + 2, area.top(), 300, 24),
                    Qt.AlignLeft | Qt.AlignVCenter, tr("My Games"))
@@ -478,9 +477,11 @@ class HomeDashboard(QWidget):
                    p.fontMetrics().elidedText(inst.name, Qt.ElideRight, rect.width() - 20))
         p.setFont(ui_font(8))
         p.setPen(TEXT_DIM)
+        from ..instances import pretty_version
         p.drawText(QRect(rect.left() + 10, rect.top() + 110, rect.width() - 20, 14),
                    Qt.AlignLeft | Qt.AlignVCenter,
-                   p.fontMetrics().elidedText(inst.version, Qt.ElideRight, rect.width() - 20))
+                   p.fontMetrics().elidedText(pretty_version(inst.version),
+                                              Qt.ElideRight, rect.width() - 20))
         p.setPen(TEXT_FAINT)
         p.drawText(QRect(rect.left() + 10, rect.top() + 126, rect.width() - 20, 14),
                    Qt.AlignLeft | Qt.AlignVCenter,

@@ -239,7 +239,7 @@ class Controller:
     def version_display(self) -> str:
         inst = self.active_instance()
         if inst:
-            return f"{inst.name}  ·  {inst.version}"
+            return f"{inst.name}  ·  {instances_mod.pretty_version(inst.version)}"
         return self.settings.selected_version or tr("No game yet")
 
     def open_instance_menu(self, anchor: QRect) -> None:
