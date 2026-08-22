@@ -176,6 +176,33 @@ _T = {
         "No game — create one first": "Chưa có game — hãy tạo một cái trước",
         "＋ IMPORT FILE": "＋ NHẬP FILE", "Import file": "Nhập file",
         "＋ IMPORT PACK": "＋ NHẬP MODPACK",
+        "Import": "Nhập",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Nhập file modpack, hoặc mang một game từ launcher khác sang.",
+        "Modpack file (.mrpack / .zip)…": "File modpack (.mrpack / .zip)…",
+        "From another launcher…": "Từ launcher khác…",
+        "Looking for games from other launchers…": "Đang tìm game từ các launcher khác…",
+        "No games from other launchers were found on this computer.":
+            "Không tìm thấy game từ launcher khác nào trên máy này.",
+        "Found {n} game(s) — pick one to import.": "Tìm thấy {n} game — chọn một để nhập.",
+        "Importing '{name}'…": "Đang nhập '{name}'…",
+        "Copying game files…": "Đang chép file game…",
+        "Imported '{name}' — press PLAY.": "Đã nhập '{name}' — bấm CHƠI.",
+        "Import failed: {m}": "Nhập thất bại: {m}",
+        "Finding modpack on CurseForge…": "Đang tìm modpack trên CurseForge…",
+        "Enter a numeric CurseForge Project ID.": "Nhập Project ID (dạng số) của CurseForge.",
+        "Checking for modpack updates…": "Đang kiểm tra cập nhật modpack…",
+        "Downloading update…": "Đang tải bản cập nhật…",
+        "Backing up before updating…": "Đang sao lưu trước khi cập nhật…",
+        "Applying update…": "Đang áp dụng cập nhật…",
+        "This modpack is already up to date.": "Modpack này đã ở bản mới nhất.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Game này không cài từ modpack online nên không có gì để cập nhật.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Đã cập nhật modpack. Mods/config cũ đã sao lưu ở {dir}/.pack-backups.",
+        "Update failed: {m}": "Cập nhật thất bại: {m}",
+        "Game crashed": "Game bị crash",
+        "Game crashed — {why}": "Game bị crash — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Cài modpack bạn đã tải — file .mrpack (Modrinth) hoặc .zip (CurseForge).",
         "Import modpack": "Nhập modpack",
@@ -210,6 +237,35 @@ _T = {
         "No game — create one first": "No hay juego — crea uno primero",
         "＋ IMPORT FILE": "＋ IMPORTAR ARCHIVO", "Import file": "Importar archivo",
         "＋ IMPORT PACK": "＋ IMPORTAR PACK",
+        "Import": "Importar",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Importa un archivo de modpack o trae un juego desde otro launcher.",
+        "Modpack file (.mrpack / .zip)…": "Archivo de modpack (.mrpack / .zip)…",
+        "From another launcher…": "Desde otro launcher…",
+        "Looking for games from other launchers…": "Buscando juegos de otros launchers…",
+        "No games from other launchers were found on this computer.":
+            "No se encontraron juegos de otros launchers en este equipo.",
+        "Found {n} game(s) — pick one to import.":
+            "Se encontraron {n} juego(s) — elige uno para importar.",
+        "Importing '{name}'…": "Importando '{name}'…",
+        "Copying game files…": "Copiando archivos del juego…",
+        "Imported '{name}' — press PLAY.": "Importado '{name}' — pulsa JUGAR.",
+        "Import failed: {m}": "Fallo al importar: {m}",
+        "Finding modpack on CurseForge…": "Buscando el modpack en CurseForge…",
+        "Enter a numeric CurseForge Project ID.":
+            "Introduce el Project ID numérico de CurseForge.",
+        "Checking for modpack updates…": "Buscando actualizaciones del modpack…",
+        "Downloading update…": "Descargando la actualización…",
+        "Backing up before updating…": "Haciendo copia de seguridad antes de actualizar…",
+        "Applying update…": "Aplicando la actualización…",
+        "This modpack is already up to date.": "Este modpack ya está actualizado.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Este juego no se instaló desde un modpack en línea, así que no hay nada que actualizar.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Modpack actualizado. Los mods/config antiguos se guardaron en {dir}/.pack-backups.",
+        "Update failed: {m}": "Fallo al actualizar: {m}",
+        "Game crashed": "El juego falló",
+        "Game crashed — {why}": "El juego falló — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala un modpack que descargaste — un .mrpack de Modrinth o .zip de CurseForge.",
         "Import modpack": "Importar modpack",
@@ -342,6 +398,35 @@ _T = {
         "No game — create one first": "Aucun jeu — créez-en un d'abord",
         "＋ IMPORT FILE": "＋ IMPORTER UN FICHIER", "Import file": "Importer un fichier",
         "＋ IMPORT PACK": "＋ IMPORTER UN PACK",
+        "Import": "Importer",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Importe un fichier de modpack, ou récupère un jeu depuis un autre launcher.",
+        "Modpack file (.mrpack / .zip)…": "Fichier de modpack (.mrpack / .zip)…",
+        "From another launcher…": "Depuis un autre launcher…",
+        "Looking for games from other launchers…": "Recherche de jeux d'autres launchers…",
+        "No games from other launchers were found on this computer.":
+            "Aucun jeu d'un autre launcher trouvé sur cet ordinateur.",
+        "Found {n} game(s) — pick one to import.":
+            "{n} jeu(x) trouvé(s) — choisis-en un à importer.",
+        "Importing '{name}'…": "Import de « {name} »…",
+        "Copying game files…": "Copie des fichiers du jeu…",
+        "Imported '{name}' — press PLAY.": "« {name} » importé — appuie sur JOUER.",
+        "Import failed: {m}": "Échec de l'import : {m}",
+        "Finding modpack on CurseForge…": "Recherche du modpack sur CurseForge…",
+        "Enter a numeric CurseForge Project ID.":
+            "Saisis l'ID de projet (numérique) CurseForge.",
+        "Checking for modpack updates…": "Recherche de mises à jour du modpack…",
+        "Downloading update…": "Téléchargement de la mise à jour…",
+        "Backing up before updating…": "Sauvegarde avant la mise à jour…",
+        "Applying update…": "Application de la mise à jour…",
+        "This modpack is already up to date.": "Ce modpack est déjà à jour.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Ce jeu n'a pas été installé depuis un modpack en ligne, il n'y a donc rien à mettre à jour.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Modpack mis à jour. Les anciens mods/config ont été sauvegardés dans {dir}/.pack-backups.",
+        "Update failed: {m}": "Échec de la mise à jour : {m}",
+        "Game crashed": "Le jeu a planté",
+        "Game crashed — {why}": "Le jeu a planté — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installe un modpack téléchargé — un .mrpack Modrinth ou un .zip CurseForge.",
         "Import modpack": "Importer un modpack",
@@ -474,6 +559,36 @@ _T = {
         "No game — create one first": "Kein Spiel — erst eines erstellen",
         "＋ IMPORT FILE": "＋ DATEI IMPORTIEREN", "Import file": "Datei importieren",
         "＋ IMPORT PACK": "＋ PACK IMPORTIEREN",
+        "Import": "Importieren",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Importiere eine Modpack-Datei oder hol ein Spiel aus einem anderen Launcher.",
+        "Modpack file (.mrpack / .zip)…": "Modpack-Datei (.mrpack / .zip)…",
+        "From another launcher…": "Von einem anderen Launcher…",
+        "Looking for games from other launchers…":
+            "Suche nach Spielen aus anderen Launchern…",
+        "No games from other launchers were found on this computer.":
+            "Auf diesem Computer wurden keine Spiele aus anderen Launchern gefunden.",
+        "Found {n} game(s) — pick one to import.":
+            "{n} Spiel(e) gefunden — wähle eins zum Importieren.",
+        "Importing '{name}'…": "„{name}“ wird importiert…",
+        "Copying game files…": "Spieldateien werden kopiert…",
+        "Imported '{name}' — press PLAY.": "„{name}“ importiert — drücke SPIELEN.",
+        "Import failed: {m}": "Import fehlgeschlagen: {m}",
+        "Finding modpack on CurseForge…": "Modpack wird auf CurseForge gesucht…",
+        "Enter a numeric CurseForge Project ID.":
+            "Gib die numerische CurseForge-Projekt-ID ein.",
+        "Checking for modpack updates…": "Suche nach Modpack-Updates…",
+        "Downloading update…": "Update wird heruntergeladen…",
+        "Backing up before updating…": "Sicherung vor der Aktualisierung…",
+        "Applying update…": "Aktualisierung wird angewendet…",
+        "This modpack is already up to date.": "Dieses Modpack ist bereits aktuell.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Dieses Spiel wurde nicht aus einem Online-Modpack installiert, daher gibt es nichts zu aktualisieren.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Modpack aktualisiert. Alte Mods/Config wurden in {dir}/.pack-backups gesichert.",
+        "Update failed: {m}": "Aktualisierung fehlgeschlagen: {m}",
+        "Game crashed": "Spiel abgestürzt",
+        "Game crashed — {why}": "Spiel abgestürzt — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installiere ein heruntergeladenes Modpack — eine Modrinth-.mrpack- oder CurseForge-.zip-Datei.",
         "Import modpack": "Modpack importieren",
@@ -606,6 +721,35 @@ _T = {
         "No game — create one first": "Nenhum jogo — crie um primeiro",
         "＋ IMPORT FILE": "＋ IMPORTAR ARQUIVO", "Import file": "Importar arquivo",
         "＋ IMPORT PACK": "＋ IMPORTAR PACOTE",
+        "Import": "Importar",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Importe um arquivo de modpack ou traga um jogo de outro launcher.",
+        "Modpack file (.mrpack / .zip)…": "Arquivo de modpack (.mrpack / .zip)…",
+        "From another launcher…": "De outro launcher…",
+        "Looking for games from other launchers…": "Procurando jogos de outros launchers…",
+        "No games from other launchers were found on this computer.":
+            "Nenhum jogo de outro launcher foi encontrado neste computador.",
+        "Found {n} game(s) — pick one to import.":
+            "{n} jogo(s) encontrado(s) — escolha um para importar.",
+        "Importing '{name}'…": "Importando '{name}'…",
+        "Copying game files…": "Copiando arquivos do jogo…",
+        "Imported '{name}' — press PLAY.": "'{name}' importado — pressione JOGAR.",
+        "Import failed: {m}": "Falha ao importar: {m}",
+        "Finding modpack on CurseForge…": "Procurando o modpack no CurseForge…",
+        "Enter a numeric CurseForge Project ID.":
+            "Digite o Project ID numérico do CurseForge.",
+        "Checking for modpack updates…": "Procurando atualizações do modpack…",
+        "Downloading update…": "Baixando a atualização…",
+        "Backing up before updating…": "Fazendo backup antes de atualizar…",
+        "Applying update…": "Aplicando a atualização…",
+        "This modpack is already up to date.": "Este modpack já está atualizado.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Este jogo não foi instalado a partir de um modpack online, então não há nada para atualizar.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Modpack atualizado. Os mods/config antigos foram salvos em {dir}/.pack-backups.",
+        "Update failed: {m}": "Falha ao atualizar: {m}",
+        "Game crashed": "O jogo travou",
+        "Game crashed — {why}": "O jogo travou — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala um modpack que você baixou — um .mrpack do Modrinth ou .zip do CurseForge.",
         "Import modpack": "Importar modpack",
@@ -738,6 +882,35 @@ _T = {
         "No game — create one first": "Нет игры — сначала создайте",
         "＋ IMPORT FILE": "＋ ИМПОРТ ФАЙЛА", "Import file": "Импорт файла",
         "＋ IMPORT PACK": "＋ ИМПОРТ СБОРКИ",
+        "Import": "Импорт",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Импортируйте файл модпака или перенесите игру из другого лаунчера.",
+        "Modpack file (.mrpack / .zip)…": "Файл модпака (.mrpack / .zip)…",
+        "From another launcher…": "Из другого лаунчера…",
+        "Looking for games from other launchers…": "Поиск игр из других лаунчеров…",
+        "No games from other launchers were found on this computer.":
+            "На этом компьютере не найдено игр из других лаунчеров.",
+        "Found {n} game(s) — pick one to import.":
+            "Найдено игр: {n} — выберите одну для импорта.",
+        "Importing '{name}'…": "Импорт «{name}»…",
+        "Copying game files…": "Копирование файлов игры…",
+        "Imported '{name}' — press PLAY.": "«{name}» импортирована — нажмите ИГРАТЬ.",
+        "Import failed: {m}": "Ошибка импорта: {m}",
+        "Finding modpack on CurseForge…": "Поиск модпака на CurseForge…",
+        "Enter a numeric CurseForge Project ID.":
+            "Введите числовой Project ID из CurseForge.",
+        "Checking for modpack updates…": "Проверка обновлений модпака…",
+        "Downloading update…": "Загрузка обновления…",
+        "Backing up before updating…": "Резервное копирование перед обновлением…",
+        "Applying update…": "Применение обновления…",
+        "This modpack is already up to date.": "Этот модпак уже последней версии.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "Эта игра установлена не из онлайн-модпака, поэтому обновлять нечего.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Модпак обновлён. Старые mods/config сохранены в {dir}/.pack-backups.",
+        "Update failed: {m}": "Ошибка обновления: {m}",
+        "Game crashed": "Игра вылетела",
+        "Game crashed — {why}": "Игра вылетела — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Установить скачанный модпак — файл .mrpack (Modrinth) или .zip (CurseForge).",
         "Import modpack": "Импорт модпака",
@@ -870,6 +1043,33 @@ _T = {
         "No game — create one first": "还没有游戏 — 请先创建一个",
         "＋ IMPORT FILE": "＋ 导入文件", "Import file": "导入文件",
         "＋ IMPORT PACK": "＋ 导入整合包",
+        "Import": "导入",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "导入整合包文件，或从其他启动器带一个游戏过来。",
+        "Modpack file (.mrpack / .zip)…": "整合包文件 (.mrpack / .zip)…",
+        "From another launcher…": "从其他启动器…",
+        "Looking for games from other launchers…": "正在查找其他启动器的游戏…",
+        "No games from other launchers were found on this computer.":
+            "在这台电脑上未找到其他启动器的游戏。",
+        "Found {n} game(s) — pick one to import.": "找到 {n} 个游戏 — 选择一个导入。",
+        "Importing '{name}'…": "正在导入“{name}”…",
+        "Copying game files…": "正在复制游戏文件…",
+        "Imported '{name}' — press PLAY.": "已导入“{name}” — 按“开始游戏”。",
+        "Import failed: {m}": "导入失败：{m}",
+        "Finding modpack on CurseForge…": "正在 CurseForge 上查找整合包…",
+        "Enter a numeric CurseForge Project ID.": "请输入 CurseForge 的数字 Project ID。",
+        "Checking for modpack updates…": "正在检查整合包更新…",
+        "Downloading update…": "正在下载更新…",
+        "Backing up before updating…": "更新前正在备份…",
+        "Applying update…": "正在应用更新…",
+        "This modpack is already up to date.": "这个整合包已是最新版本。",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "这个游戏不是从在线整合包安装的，因此没有可更新的内容。",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "整合包已更新。旧的 mods/config 已备份到 {dir}/.pack-backups。",
+        "Update failed: {m}": "更新失败：{m}",
+        "Game crashed": "游戏崩溃",
+        "Game crashed — {why}": "游戏崩溃 — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "安装你下载的整合包——Modrinth 的 .mrpack 或 CurseForge 的 .zip 文件。",
         "Import modpack": "导入整合包",
@@ -1002,6 +1202,35 @@ _T = {
         "No game — create one first": "ゲームがありません — 先に作成してください",
         "＋ IMPORT FILE": "＋ ファイルをインポート", "Import file": "ファイルをインポート",
         "＋ IMPORT PACK": "＋ パックをインポート",
+        "Import": "インポート",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "Modpack ファイルをインポート、または別のランチャーからゲームを取り込みます。",
+        "Modpack file (.mrpack / .zip)…": "Modpack ファイル (.mrpack / .zip)…",
+        "From another launcher…": "別のランチャーから…",
+        "Looking for games from other launchers…": "他のランチャーのゲームを検索中…",
+        "No games from other launchers were found on this computer.":
+            "このコンピューターで他のランチャーのゲームは見つかりませんでした。",
+        "Found {n} game(s) — pick one to import.":
+            "{n} 個のゲームが見つかりました — インポートするものを選んでください。",
+        "Importing '{name}'…": "「{name}」をインポート中…",
+        "Copying game files…": "ゲームファイルをコピー中…",
+        "Imported '{name}' — press PLAY.": "「{name}」をインポートしました — PLAY を押してください。",
+        "Import failed: {m}": "インポートに失敗しました: {m}",
+        "Finding modpack on CurseForge…": "CurseForge で Modpack を検索中…",
+        "Enter a numeric CurseForge Project ID.":
+            "CurseForge の数値 Project ID を入力してください。",
+        "Checking for modpack updates…": "Modpack の更新を確認中…",
+        "Downloading update…": "更新をダウンロード中…",
+        "Backing up before updating…": "更新前にバックアップ中…",
+        "Applying update…": "更新を適用中…",
+        "This modpack is already up to date.": "この Modpack はすでに最新です。",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "このゲームはオンライン Modpack から入れていないため、更新するものはありません。",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "Modpack を更新しました。古い mods/config は {dir}/.pack-backups にバックアップされました。",
+        "Update failed: {m}": "更新に失敗しました: {m}",
+        "Game crashed": "ゲームがクラッシュしました",
+        "Game crashed — {why}": "ゲームがクラッシュ — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "ダウンロードした Modpack をインストール — Modrinth の .mrpack または CurseForge の .zip。",
         "Import modpack": "Modpack をインポート",
@@ -1134,6 +1363,34 @@ _T = {
         "No game — create one first": "게임 없음 — 먼저 하나 만드세요",
         "＋ IMPORT FILE": "＋ 파일 가져오기", "Import file": "파일 가져오기",
         "＋ IMPORT PACK": "＋ 팩 가져오기",
+        "Import": "가져오기",
+        "Import a modpack file, or bring a game over from another launcher.":
+            "모드팩 파일을 가져오거나 다른 런처의 게임을 가져옵니다.",
+        "Modpack file (.mrpack / .zip)…": "모드팩 파일 (.mrpack / .zip)…",
+        "From another launcher…": "다른 런처에서…",
+        "Looking for games from other launchers…": "다른 런처의 게임을 찾는 중…",
+        "No games from other launchers were found on this computer.":
+            "이 컴퓨터에서 다른 런처의 게임을 찾지 못했습니다.",
+        "Found {n} game(s) — pick one to import.":
+            "게임 {n}개를 찾았습니다 — 가져올 항목을 선택하세요.",
+        "Importing '{name}'…": "'{name}' 가져오는 중…",
+        "Copying game files…": "게임 파일 복사 중…",
+        "Imported '{name}' — press PLAY.": "'{name}' 가져옴 — PLAY를 누르세요.",
+        "Import failed: {m}": "가져오기 실패: {m}",
+        "Finding modpack on CurseForge…": "CurseForge에서 모드팩 찾는 중…",
+        "Enter a numeric CurseForge Project ID.": "CurseForge의 숫자 Project ID를 입력하세요.",
+        "Checking for modpack updates…": "모드팩 업데이트 확인 중…",
+        "Downloading update…": "업데이트 다운로드 중…",
+        "Backing up before updating…": "업데이트 전 백업 중…",
+        "Applying update…": "업데이트 적용 중…",
+        "This modpack is already up to date.": "이 모드팩은 이미 최신입니다.",
+        "This game wasn't installed from an online modpack, so there's nothing to update.":
+            "이 게임은 온라인 모드팩에서 설치한 것이 아니라 업데이트할 것이 없습니다.",
+        "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.":
+            "모드팩을 업데이트했습니다. 이전 mods/config는 {dir}/.pack-backups에 백업되었습니다.",
+        "Update failed: {m}": "업데이트 실패: {m}",
+        "Game crashed": "게임이 충돌했습니다",
+        "Game crashed — {why}": "게임 충돌 — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "내려받은 모드팩 설치 — Modrinth .mrpack 또는 CurseForge .zip 파일.",
         "Import modpack": "모드팩 가져오기",

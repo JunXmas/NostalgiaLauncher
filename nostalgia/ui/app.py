@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -567,13 +568,14 @@ class Controller:
         def work(on_progress, on_status):
             import tempfile
             from ..install import download
-            f = modrinth_mod.best_file(
+            ver = modrinth_mod.best_version(
                 slug, game_versions=[game_version] if game_version else None)
+            f = modrinth_mod.pick_file(ver) if ver else None
             if not f:
                 raise RuntimeError("no downloadable modpack file")
             on_status("Downloading modpack…")
             mrpack = Path(tempfile.mkdtemp()) / f["filename"]
-            download(f["url"], mrpack, f.get("sha1"))
+            download(f["url"], mrpack, f.get("hashes", {}).get("sha1"))
             index = modpack_mod.install_contents(mrpack, inst_dir,
                                                  on_status=on_status, on_progress=on_progress)
             # Lưu icon modpack làm thumbnail cho card ở Home (best-effort).
@@ -588,6 +590,10 @@ class Controller:
                     pass
             loader, mc = modpack_mod.loader_and_mc(index)
             vid = self._install_pack_loader(loader, mc, on_status)
+            # Ghi nguồn gốc để sau này kiểm tra cập nhật (Modrinth: project + version).
+            self._write_pack_provenance(inst_dir, {
+                "source": "modrinth", "project_id": slug, "name": title,
+                "version_id": ver.get("id", ""), "loader": loader, "game_version": mc})
             # Bản Optimized: kèm mod Super Resolution (render thấp rồi upscale -> thêm FPS).
             # Client-side, không phụ thuộc; bản nào không có (vd 1.12.2) thì bỏ qua êm.
             if optimized:
@@ -652,21 +658,56 @@ class Controller:
         name = self.instances.unique_name(title)
         inst_dir = self.store_root / "instances" / instances_mod.slug(name)
         self.window.set_status(tr("Installing modpack '{name}'…").format(name=title))
+        # File local không có project id nên không theo dõi cập nhật được sau này.
+        prov = {"source": "file", "name": title}
 
         def work(on_progress, on_status):
-            if fmt == "modrinth":
-                index = modpack_mod.install_contents(
-                    src, inst_dir, on_status=on_status, on_progress=on_progress)
-                loader, mc = modpack_mod.loader_and_mc(index)
-                skipped = 0
-            else:
-                manifest = cf_mod.install_contents(
-                    src, inst_dir, on_status=on_status, on_progress=on_progress)
-                loader, mc = cf_mod.loader_and_mc(manifest)
-                skipped = int(manifest.get("_skipped", 0))
-            vid = self._install_pack_loader(loader, mc, on_status)
-            return name, vid, skipped
+            return self._pack_install_core(src, inst_dir, name, prov,
+                                           on_progress, on_status)
 
+        self._run_pack_worker(work)
+
+    def _pack_install_core(self, src, inst_dir, name, provenance,
+                           on_progress, on_status):
+        """Cài một file modpack (.mrpack/.zip) vào inst_dir: bung nội dung, cài
+        loader, ghi 'nostalgia-pack.json' để theo dõi cập nhật. Trả (name, vid, skipped)."""
+        from .. import curseforge as cf_mod
+        if modpack_mod.is_mrpack(src):
+            index = modpack_mod.install_contents(
+                src, inst_dir, on_status=on_status, on_progress=on_progress)
+            loader, mc = modpack_mod.loader_and_mc(index)
+            skipped = 0
+        else:
+            manifest = cf_mod.install_contents(
+                src, inst_dir, on_status=on_status, on_progress=on_progress)
+            loader, mc = cf_mod.loader_and_mc(manifest)
+            skipped = int(manifest.get("_skipped", 0))
+        vid = self._install_pack_loader(loader, mc, on_status)
+        if provenance:
+            prov = dict(provenance)
+            prov.update({"loader": loader, "game_version": mc})
+            self._write_pack_provenance(inst_dir, prov)
+        return name, vid, skipped
+
+    @staticmethod
+    def _write_pack_provenance(inst_dir: Path, prov: dict) -> None:
+        try:
+            inst_dir.mkdir(parents=True, exist_ok=True)
+            (inst_dir / "nostalgia-pack.json").write_text(
+                json.dumps(prov, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+    def read_pack_provenance(self, inst) -> dict | None:
+        """Đọc 'nostalgia-pack.json' của instance (None nếu không phải modpack cài qua app)."""
+        try:
+            p = self.instance_dir(inst) / "nostalgia-pack.json"
+            return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+        except (OSError, ValueError):
+            return None
+
+    def _run_pack_worker(self, work) -> None:
+        """Chạy một work() cài modpack (trả name, vid, skipped) trên ProgressWorker."""
         w = ProgressWorker(work)
         w.progress.connect(self._set_progress)
         w.status.connect(self.window.set_status)
@@ -678,12 +719,220 @@ class Controller:
         self._workers.append(w)
         w.start()
 
+    def install_curseforge_by_id(self, project_id, game_version: str | None = None) -> None:
+        """Cài modpack CurseForge theo Project ID (số hiện trên trang CurseForge).
+        Không cần API key — dùng endpoint file công khai + CDN."""
+        from .. import curseforge as cf_mod
+        from ..install import download
+        try:
+            pid = int(str(project_id).strip())
+        except (TypeError, ValueError):
+            self.window.set_status(tr("Enter a numeric CurseForge Project ID."))
+            return
+        key = self.settings.curseforge_key
+        self.window.set_status(tr("Finding modpack on CurseForge…"))
+
+        def work(on_progress, on_status):
+            import tempfile
+            f = cf_mod.best_modpack_file(pid, key=key, game_version=game_version)
+            if not f:
+                raise RuntimeError("No modpack file found for that Project ID.")
+            fname = f["fileName"]
+            title = (f.get("displayName") or fname).rsplit(".zip", 1)[0]
+            name = self.instances.unique_name(title)
+            inst_dir = self.store_root / "instances" / instances_mod.slug(name)
+            on_status(tr("Installing modpack '{name}'…").format(name=title))
+            url = cf_mod.file_url(f["id"], fname, f.get("downloadUrl"))
+            tmp = Path(tempfile.mkdtemp()) / fname
+            download(url, tmp)
+            prov = {"source": "curseforge", "project_id": pid,
+                    "file_id": int(f["id"]), "name": title}
+            return self._pack_install_core(tmp, inst_dir, name, prov,
+                                           on_progress, on_status)
+
+        self._run_pack_worker(work)
+
     def _pack_file_installed(self, name: str, version: str, skipped: int = 0) -> None:
         self._modpack_installed(name, version)
         if skipped:   # vài mod CurseForge không tra/tải được -> nói rõ, không im lặng
             self.window.set_status(tr(
                 "Modpack '{name}' installed — {n} mod(s) couldn't be fetched. "
                 "Press PLAY.").format(name=name, n=skipped))
+
+    # ---------- cập nhật modpack (#5) ----------
+
+    def update_pack(self, inst) -> None:
+        """Kiểm tra & cập nhật modpack của một instance lên bản mới nhất, sao lưu
+        mods/config cũ trước để lùi được. Chỉ dùng được với instance cài từ modpack
+        online (Modrinth/CurseForge) — có 'nostalgia-pack.json'."""
+        if inst is None:
+            return
+        prov = self.read_pack_provenance(inst)
+        if not prov or prov.get("source") not in ("modrinth", "curseforge"):
+            self.window.set_status(tr(
+                "This game wasn't installed from an online modpack, so there's nothing to update."))
+            return
+        game_dir = self.instance_dir(inst)
+        name = inst.name
+        loader = prov.get("loader", "")
+        mc = prov.get("game_version", "")
+        self.window.set_status(tr("Checking for modpack updates…"))
+
+        def work(on_progress, on_status):
+            import tempfile
+            from ..install import download
+            from .. import curseforge as cf_mod
+            if prov["source"] == "modrinth":
+                ver = modrinth_mod.best_version(
+                    prov["project_id"], loaders=[loader] if loader else None,
+                    game_versions=[mc] if mc else None)
+                if not ver:
+                    raise RuntimeError("Couldn't find this modpack on Modrinth.")
+                if ver.get("id") == prov.get("version_id"):
+                    return ("uptodate", name, "")
+                f = modrinth_mod.pick_file(ver)
+                on_status(tr("Downloading update…"))
+                src = Path(tempfile.mkdtemp()) / f["filename"]
+                download(f["url"], src, f.get("hashes", {}).get("sha1"))
+                new_ref = {"version_id": ver.get("id", "")}
+            else:
+                f = cf_mod.best_modpack_file(
+                    prov["project_id"], key=self.settings.curseforge_key,
+                    game_version=mc or None)
+                if not f:
+                    raise RuntimeError("Couldn't find this modpack on CurseForge.")
+                if int(f["id"]) == int(prov.get("file_id", 0)):
+                    return ("uptodate", name, "")
+                on_status(tr("Downloading update…"))
+                src = Path(tempfile.mkdtemp()) / f["fileName"]
+                download(cf_mod.file_url(f["id"], f["fileName"], f.get("downloadUrl")), src)
+                new_ref = {"file_id": int(f["id"])}
+
+            on_status(tr("Backing up before updating…"))
+            self._backup_pack_dir(game_dir)
+            # Gỡ mods cũ (pack quản lý); giữ nguyên saves/ (thế giới của bạn).
+            import shutil
+            shutil.rmtree(game_dir / "mods", ignore_errors=True)
+            on_status(tr("Applying update…"))
+            if prov["source"] == "modrinth":
+                index = modpack_mod.install_contents(
+                    src, game_dir, on_status=on_status, on_progress=on_progress)
+                nl, nmc = modpack_mod.loader_and_mc(index)
+            else:
+                manifest = cf_mod.install_contents(
+                    src, game_dir, on_status=on_status, on_progress=on_progress)
+                nl, nmc = cf_mod.loader_and_mc(manifest)
+            vid = self._install_pack_loader(nl, nmc, on_status)
+            prov2 = dict(prov)
+            prov2.update(new_ref)
+            prov2.update({"loader": nl, "game_version": nmc})
+            self._write_pack_provenance(game_dir, prov2)
+            return ("updated", name, vid)
+
+        w = ProgressWorker(work)
+        w.progress.connect(self._set_progress)
+        w.status.connect(self.window.set_status)
+        w.done.connect(lambda r: self._pack_update_done(*r))
+        w.failed.connect(lambda m: (self.window.set_progress(None),
+                                    self.window.set_status(
+                                        tr("Update failed: {m}").format(m=m))))
+        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
+        self._workers.append(w)
+        w.start()
+
+    def _pack_update_done(self, status: str, name: str, version: str) -> None:
+        self.window.set_progress(None)
+        if status == "uptodate":
+            self.window.set_status(tr("This modpack is already up to date."))
+            return
+        if version:
+            self.instances.set_version(name, version)
+        inst = self.instances.get(name)
+        if inst:
+            self.enable_shared_skins(inst, silent=True)
+            self.apply_aero_ui(inst, silent=True)
+            self.pages["instance"].open(inst)
+        self.pages["installations"].refresh()
+        self.pages["home"].refresh()
+        self.window.set_status(tr(
+            "Modpack updated. Old mods/config were backed up to {dir}/.pack-backups.")
+            .format(dir=self.store_root))
+
+    def _backup_pack_dir(self, game_dir: Path) -> Path:
+        """Sao lưu mods/ và config/ (phần pack quản lý) để lùi được sau khi cập nhật.
+        Không chép saves/ (thế giới) cho nhẹ — cập nhật không đụng tới saves."""
+        import shutil
+        import time
+        backups = self.store_root / ".pack-backups"
+        backups.mkdir(parents=True, exist_ok=True)
+        dest = backups / f"{game_dir.name}-{time.strftime('%Y%m%d-%H%M%S')}"
+        dest.mkdir(parents=True, exist_ok=True)
+        for sub in ("mods", "config"):
+            s = game_dir / sub
+            if s.is_dir():
+                shutil.copytree(s, dest / sub, dirs_exist_ok=True)
+        self._prune_trash(backups, keep=8)   # dùng lại bộ dọn: giữ vài bản gần nhất
+        return dest
+
+    # ---------- nhập instance từ launcher khác (#4) ----------
+
+    def begin_import_external(self) -> None:
+        """Dò các launcher khác trên máy rồi hiện danh sách instance nhập được."""
+        self.window.set_status(tr("Looking for games from other launchers…"))
+
+        def work():
+            from .. import imports
+            return imports.scan()
+
+        self._run(work, self._show_import_dialog,
+                  lambda m: self.window.set_status(f"Error: {m}"))
+
+    def _show_import_dialog(self, found_list) -> None:
+        if not found_list:
+            self.window.set_status(tr(
+                "No games from other launchers were found on this computer."))
+            return
+        from .dialogs import ImportInstancesDialog
+        self.window.set_status(tr("Found {n} game(s) — pick one to import.")
+                               .format(n=len(found_list)))
+        ImportInstancesDialog(self.window, self, found_list).show()
+
+    def import_external(self, found) -> None:
+        """Chép instance của launcher khác thành instance Nostalgia mới + cài loader."""
+        from .. import imports
+        name = self.instances.unique_name(found.name)
+        inst_dir = self.store_root / "instances" / instances_mod.slug(name)
+        self.window.set_status(tr("Importing '{name}'…").format(name=found.name))
+
+        def work(on_progress, on_status):
+            import shutil
+            on_status(tr("Copying game files…"))
+            inst_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(found.game_dir, inst_dir, dirs_exist_ok=True,
+                            ignore=shutil.ignore_patterns(*imports.IGNORE))
+            mc = found.mc
+            if not mc:                       # vanilla .minecraft: không rõ bản -> lấy release mới nhất
+                vs = self.installer.list_versions("release")
+                mc = vs[0] if vs else ""
+                if not mc:
+                    raise RuntimeError("Couldn't determine a Minecraft version to use.")
+            vid = self._install_pack_loader(found.loader or "vanilla", mc, on_status)
+            return name, vid
+
+        w = ProgressWorker(work)
+        w.progress.connect(self._set_progress)
+        w.status.connect(self.window.set_status)
+        w.done.connect(lambda r: self._external_imported(*r))
+        w.failed.connect(lambda m: (self.window.set_progress(None),
+                                    self.window.set_status(
+                                        tr("Import failed: {m}").format(m=m))))
+        w.finished.connect(lambda: self._workers.remove(w) if w in self._workers else None)
+        self._workers.append(w)
+        w.start()
+
+    def _external_imported(self, name: str, version: str) -> None:
+        self._modpack_installed(name, version)
+        self.window.set_status(tr("Imported '{name}' — press PLAY.").format(name=name))
 
     def install_optifine(self, inst) -> None:
         """Tải OptiFine từ optifine.net (client-side, giữ quảng cáo, không mirror)
@@ -1776,7 +2025,7 @@ class Controller:
         worker.game_started.connect(lambda w=worker: setattr(w, "started_ts", time.time()))
         worker.progress.connect(self._on_progress)
         worker.status.connect(self.window.set_status)
-        worker.failed.connect(lambda m: self.window.set_status(f"Error: {m}"))
+        worker.failed.connect(self._launch_failed)
         worker.finished_ok.connect(self._launch_done)
         worker.game_started.connect(self._update_play_button)
         worker.log_line.connect(self._append_log)
@@ -1801,6 +2050,19 @@ class Controller:
         self._log_dialog = dlg
         dlg.closed.connect(lambda: setattr(self, "_log_dialog", None))
         dlg.show()
+
+    def _launch_failed(self, message: str) -> None:
+        """Game (hoặc bước chuẩn bị) lỗi. Nếu game đã chạy rồi thoát lỗi, dịch log
+        thành nguyên nhân + cách sửa và hiện hộp thoại; lỗi chuẩn bị thì báo status."""
+        self.window.set_progress(None)
+        self._update_play_button()
+        if message.startswith("Game exited"):
+            from .. import diagnostics
+            headline, body = diagnostics.report(message, self._log_lines)
+            self.window.set_status(tr("Game crashed — {why}").format(why=headline))
+            ReportDialog(self.window, tr("Game crashed"), body).show()
+        else:
+            self.window.set_status(f"Error: {message}")
 
     def _launch_done(self) -> None:
         self.window.set_status("Everything is up to date!")

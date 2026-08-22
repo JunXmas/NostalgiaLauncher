@@ -2,6 +2,28 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.11
+- **Crash reports you can actually read.** When a game exits with an error, the
+  launcher now reads the log and tells you the likely cause in plain words —
+  wrong Java version, out of memory, a missing required mod (like Fabric API),
+  duplicate mods, a mod conflict, a mod for the wrong version, or a graphics/OpenGL
+  problem — with a suggested fix, plus the relevant log tail to copy for help.
+  No more staring at "exit code 1".
+- **Install CurseForge modpacks without leaving the launcher.** On the modpack
+  page you can switch the source to CurseForge. Paste a pack's numeric Project ID
+  (shown on its CurseForge page) and it installs — no API key needed. Add a free
+  CurseForge API key in Settings → Advanced to search and browse packs by name too.
+- **Bring your games over from another launcher.** Games ▸ Import ▸ "From another
+  launcher…" scans your PC for instances from Prism/MultiMC, the CurseForge app,
+  the Modrinth app, and the vanilla launcher, and imports the one you pick — mods,
+  configs, worlds and all — setting up the right loader automatically.
+- **One-click modpack updates.** Packs installed from Modrinth or CurseForge get an
+  "Update pack" button on the game's page. It checks for a newer version, backs up
+  your current mods/config first (kept under `.pack-backups` so you can roll back),
+  then applies the update. Your worlds are left untouched.
+- The Import button on the Games page is now a small menu (modpack file, or from
+  another launcher) so the row stays tidy.
+
 ## 0.9.10
 - **STOP now actually closes the game.** Pressing STOP used to leave Minecraft
   running — some versions ignore the polite shutdown signal while the game is

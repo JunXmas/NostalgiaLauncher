@@ -115,6 +115,13 @@ class InstanceStore:
             self.active = name
             self._save()
 
+    def set_version(self, name: str, version: str) -> None:
+        """Đổi id phiên bản để chạy của một instance (dùng khi cập nhật modpack)."""
+        inst = self.get(name)
+        if inst and version and inst.version != version:
+            inst.version = version
+            self._save()
+
     def set_settings(self, name: str, *, memory_mb: int, java_path: str) -> None:
         inst = self.get(name)
         if inst:

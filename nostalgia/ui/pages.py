@@ -146,10 +146,10 @@ class InstallationsPage(Page):
         self.fabric_btn.setToolTip(tr(
             "Install a ready-made bundle of mods someone already put together."))
         self.fabric_btn.clicked.connect(self.ctl.begin_browse_modpacks)
-        self.import_pack_btn = AeroButton("＋ IMPORT PACK", self, height=32, tone="neutral")
+        self.import_pack_btn = AeroButton("＋ IMPORT  ▾", self, height=32, tone="neutral")
         self.import_pack_btn.setToolTip(tr(
-            "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip."))
-        self.import_pack_btn.clicked.connect(self._import_pack)
+            "Import a modpack file, or bring a game over from another launcher."))
+        self.import_pack_btn.clicked.connect(self._import_menu)
         self.logs_btn = AeroButton("LOGS", self, height=32, tone="neutral")
         self.logs_btn.clicked.connect(self.ctl.show_logs)
 
@@ -166,6 +166,24 @@ class InstallationsPage(Page):
         self.fabric_btn.setGeometry(w - 356, h - 46, 150, 32)
         self.import_pack_btn.setGeometry(w - 516, h - 46, 150, 32)
         self.logs_btn.setGeometry(w - 618, h - 46, 92, 32)
+
+    def _import_menu(self) -> None:
+        """Menu nhập: từ file modpack, hoặc từ một launcher khác trên máy."""
+        items = [
+            MenuItem(kind="header", label=tr("Import")),
+            MenuItem(label=tr("Modpack file (.mrpack / .zip)…"), data="file"),
+            MenuItem(label=tr("From another launcher…"), data="launcher"),
+        ]
+        g = self.import_pack_btn.geometry()
+        origin = self.import_pack_btn.mapTo(self.window(), g.topLeft())
+        popup(self.window(), items,
+              QRect(origin, g.size()), self._on_import_pick, width=260)
+
+    def _on_import_pick(self, key) -> None:
+        if key == "file":
+            self._import_pack()
+        elif key == "launcher":
+            self.ctl.begin_import_external()
 
     def _import_pack(self) -> None:
         """Chọn một file modpack (.mrpack / .zip) rồi cài thành instance mới."""
@@ -1195,6 +1213,12 @@ class InstancePage(Page):
             lambda: self.ctl.enable_shared_skins(self.instance) if self.instance else None)
         self.shared_btn.hide()
 
+        # Cập nhật modpack — chỉ hiện với instance cài từ modpack online (có provenance).
+        self.update_pack_btn = AeroButton("↻ UPDATE PACK", self, height=28, tone="neutral")
+        self.update_pack_btn.clicked.connect(
+            lambda: self.ctl.update_pack(self.instance) if self.instance else None)
+        self.update_pack_btn.hide()
+
         # Nhập world: chọn file .zip, hoặc mở thư mục saves để kéo-thả (cũng kéo-thả
         # .zip thẳng vào trang này được — xem dropEvent).
         self.import_btn = AeroButton("＋ IMPORT WORLD", self, height=28, tone="neutral")
@@ -1228,6 +1252,9 @@ class InstancePage(Page):
             optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
         v = (instance.version or "").lower()
         self.shared_btn.setVisible(any(k in v for k in ("fabric", "forge", "neoforge")))
+        prov = self.ctl.read_pack_provenance(instance)
+        self.update_pack_btn.setVisible(
+            bool(prov) and prov.get("source") in ("modrinth", "curseforge"))
         self._relayout_actions()
         self.tabs.current = 0
         self._tab(0)
@@ -1236,7 +1263,8 @@ class InstancePage(Page):
         # Xếp các nút hành động từ phải sang (chỉ nút đang 'định hiện').
         x = self.width() - 20
         for btn, w in ((self.import_btn, 150), (self.saves_btn, 128),
-                       (self.optifine_btn, 128), (self.shared_btn, 128)):
+                       (self.update_pack_btn, 150), (self.optifine_btn, 128),
+                       (self.shared_btn, 128)):
             if not btn.isHidden():          # ý định hiện (không phụ thuộc parent đã show)
                 x -= w
                 btn.setGeometry(x, 101, w, 28)
@@ -1822,6 +1850,15 @@ class SettingsPage(Page):
             "Advanced: leave empty and the launcher picks the right Java for you."))
         self.java.editingFinished.connect(self._set_java)
 
+        self.cf_key = QLineEdit(s.curseforge_key, self)
+        self.cf_key.setPlaceholderText("optional — to browse/search CurseForge modpacks")
+        self.cf_key.setStyleSheet(INPUT_QSS)
+        self.cf_key.setFont(ui_font(9))
+        self.cf_key.setToolTip(tr(
+            "Optional: a free CurseForge API key (console.curseforge.com) lets you browse "
+            "and search CurseForge modpacks. You can install by Project ID without one."))
+        self.cf_key.editingFinished.connect(self._set_cf_key)
+
         # Đăng nhập Microsoft luôn dùng client ID của launcher (đã duyệt) — người
         # chơi không cần và không được đổi, nên không có ô nhập ở đây nữa.
         self.snapshots = AeroToggle(s.show_snapshots, self)
@@ -1917,6 +1954,10 @@ class SettingsPage(Page):
     def _set_dir(self) -> None:
         self.ctl.set_game_dir(self.game_dir.text().strip())
 
+    def _set_cf_key(self) -> None:
+        self.ctl.settings.curseforge_key = self.cf_key.text().strip()
+        self.ctl.settings.save()
+
     def _set_java(self) -> None:
         self.ctl.settings.java_path = self.java.text().strip()
         self.ctl.settings.save()
@@ -1937,6 +1978,7 @@ class SettingsPage(Page):
     # bên không lệch. Khối "Advanced" (game folder + Java) chỉ chiếm chỗ khi mở.
     Y_MEM, Y_SNAP, Y_CLOSE, Y_UPD = 60, 126, 166, 206
     Y_LANG, Y_ADV, Y_DIR, Y_JAVA = 246, 292, 358, 428
+    Y_CF = 498
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         self._relayout()
@@ -1952,9 +1994,11 @@ class SettingsPage(Page):
         adv = self._advanced
         self.game_dir.setVisible(adv)
         self.java.setVisible(adv)
+        self.cf_key.setVisible(adv)
         if adv:
             self.game_dir.setGeometry(26, self.Y_DIR, w, 32)
             self.java.setGeometry(26, self.Y_JAVA, w, 32)
+            self.cf_key.setGeometry(26, self.Y_CF, w, 32)
         self.open_dir.setGeometry(26, self.height() - 52, 190, 32)
         self.doctor.setGeometry(224, self.height() - 52, 170, 32)
         self.bg_btn.setGeometry(402, self.height() - 52, 210, 32)
@@ -1987,4 +2031,5 @@ class SettingsPage(Page):
         if self._advanced:
             label(self.Y_DIR - 22, tr("Game folder"))
             label(self.Y_JAVA - 22, tr("Java path"))
+            label(self.Y_CF - 22, tr("CurseForge API key"))
         p.end()

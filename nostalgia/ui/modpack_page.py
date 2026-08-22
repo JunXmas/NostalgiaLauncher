@@ -287,8 +287,13 @@ class ModpackBrowsePage(Page):
         self._cat_rects: list[tuple[QRect, str]] = []
         self._icon_wanted: set = set()
 
+        self.source = "modrinth"          # nguồn modpack đang xem
+
         self.back_btn = AeroButton("‹  BACK", self, height=30, tone="neutral")
         self.back_btn.clicked.connect(lambda: self.ctl.go("installations"))
+
+        self.source_btn = AeroButton("Source: Modrinth", self, height=30, tone="neutral")
+        self.source_btn.clicked.connect(self._open_source)
 
         self.search = QLineEdit(self)
         self.search.setPlaceholderText("Search modpacks…")
@@ -319,7 +324,10 @@ class ModpackBrowsePage(Page):
         self.back_btn.setGeometry(24, 52, 92, 30)
         content_x = 24 + SIDEBAR_W + 20
         content_w = w - content_x - 24
-        self.search.setGeometry(content_x, PANEL_TOP, content_w - 200, 32)
+        src_w = 168
+        self.source_btn.setGeometry(content_x, PANEL_TOP, src_w, 32)
+        self.search.setGeometry(content_x + src_w + 10, PANEL_TOP,
+                                content_w - 200 - src_w - 10, 32)
         self.sort_btn.setGeometry(content_x + content_w - 190, PANEL_TOP, 190, 32)
         self._place_filters()
         self.cards.setGeometry(content_x, PANEL_TOP + 42, content_w,
@@ -332,7 +340,31 @@ class ModpackBrowsePage(Page):
 
     # ---------- tải dữ liệu ----------
 
+    def _open_source(self) -> None:
+        items = [MenuItem(kind="header", label="Source"),
+                 MenuItem(label="Modrinth", checked=self.source == "modrinth", data="modrinth"),
+                 MenuItem(label="CurseForge", checked=self.source == "curseforge", data="curseforge")]
+        g = self.source_btn.geometry()
+        origin = self.source_btn.mapTo(self.window(), g.topLeft())
+        popup(self.window(), items, QRect(origin, g.size()), self._pick_source, width=180)
+
+    def _pick_source(self, key) -> None:
+        if not key or key == self.source:
+            return
+        self.source = key
+        self.source_btn.setText("Source: " + ("CurseForge" if key == "curseforge" else "Modrinth"))
+        self.sort_btn.setVisible(key == "modrinth")   # sort chỉ có ở Modrinth
+        self.search.setPlaceholderText(
+            "Search CurseForge…  (or paste a numeric Project ID)" if key == "curseforge"
+            else "Search modpacks…")
+        self.cards.set_hits([])
+        self._count = 0
+        self._load()
+
     def _load(self) -> None:
+        if self.source == "curseforge":
+            self._load_curseforge()
+            return
         q = self.search.text().strip()
         gv = self.version.text().strip()
         cats = sorted(self._selected_cats)
@@ -344,6 +376,31 @@ class ModpackBrowsePage(Page):
                 loaders=cats or None,
                 game_versions=[gv] if gv else None,
                 index=self._sort, limit=40),
+            self._show,
+            lambda m: self._fail(m))
+
+    def _load_curseforge(self) -> None:
+        from .. import curseforge as cf
+        q = self.search.text().strip()
+        gv = self.version.text().strip()
+        key = self.ctl.settings.curseforge_key
+        if not key:
+            # Không có key -> không tìm được (Cloudflare chặn), nhưng cài theo Project ID
+            # thì luôn được. Nếu người dùng gõ một số, coi đó là Project ID và cài luôn.
+            if q.isdigit():
+                self.ctl.install_curseforge_by_id(q, game_version=gv or None)
+                self.cards.empty_text = "Installing from CurseForge…"
+            else:
+                self.cards.empty_text = (
+                    "Type a CurseForge modpack's numeric Project ID and press Enter to "
+                    "install it (the number is shown in the right column of its CurseForge "
+                    "page).\n\nWant to search by name? Add a free CurseForge API key in Settings.")
+            self.cards.set_hits([])
+            return
+        self.cards.empty_text = "Loading from CurseForge…"
+        self.cards.set_hits([])
+        self.ctl._run(
+            lambda: cf.search_modpacks(q, key=key, game_version=gv or None, page_size=40),
             self._show,
             lambda m: self._fail(m))
 
@@ -374,6 +431,10 @@ class ModpackBrowsePage(Page):
 
     def _open_detail(self, hit) -> None:
         """Bấm một modpack -> mở cửa sổ mô tả (icon, tác giả, mô tả đầy đủ) rồi mới cài."""
+        if hit.get("source") == "curseforge":
+            # CurseForge: cài thẳng theo Project ID (không có endpoint mô tả keyless).
+            self.ctl.install_curseforge_by_id(hit.get("project_id"))
+            return
         from .dialogs import ModpackDetailDialog
         ModpackDetailDialog(self.window(), self.ctl, hit).show()
 

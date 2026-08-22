@@ -30,6 +30,93 @@ _LOADER_PREFIX = [
 
 _FILE_API = "https://www.curseforge.com/api/v1/mods/{mod}/files/{file}"
 
+# Hai đường vào CurseForge:
+#  - _WWW: endpoint công khai của trang web, KHÔNG cần key, nhưng /search bị
+#    Cloudflare chặn. Dùng được /mods/{id}/files (liệt kê file của 1 project).
+#  - _API: API chính thức, CẦN key (x-api-key). Chỉ dùng khi người dùng tự thêm
+#    key miễn phí ở Cài đặt — khi đó mới duyệt/tìm modpack được.
+_WWW = "https://www.curseforge.com/api/v1"
+_API = "https://api.curseforge.com/v1"
+_GAME_ID = 432          # Minecraft
+_CLASS_MODPACK = 4471   # phân loại "Modpacks"
+_UA = "Mozilla/5.0 (compatible; NostalgiaLauncher)"
+
+
+def _headers(key: str = "") -> dict:
+    h = {"User-Agent": _UA, "Accept": "application/json"}
+    if key:
+        h["x-api-key"] = key
+    return h
+
+
+def mod_files(project_id, *, key: str = "", game_version: str | None = None,
+              page_size: int = 50, session: requests.Session | None = None) -> list[dict]:
+    """Danh sách file của một project (mới nhất trước). Có key thì qua API chính
+    thức, không thì qua endpoint web công khai (vẫn chạy)."""
+    sess = session or requests
+    params = {"pageSize": page_size, "index": 0}
+    if game_version:
+        params["gameVersion"] = game_version
+    base = _API if key else _WWW
+    r = sess.get(f"{base}/mods/{project_id}/files", params=params,
+                 headers=_headers(key), timeout=25)
+    r.raise_for_status()
+    return (r.json() or {}).get("data") or []
+
+
+def best_modpack_file(project_id, *, key: str = "",
+                      game_version: str | None = None) -> dict | None:
+    """File modpack (.zip) phù hợp nhất: ưu tiên bản release, mới nhất trước."""
+    files = mod_files(project_id, key=key, game_version=game_version)
+    zips = [f for f in files if str(f.get("fileName", "")).lower().endswith(".zip")]
+    if game_version:
+        matched = [f for f in zips if game_version in (f.get("gameVersions") or [])]
+        zips = matched or zips
+    if not zips:
+        return None
+    # releaseType 1 = release; xếp release lên trước, rồi theo id (mới hơn = lớn hơn).
+    zips.sort(key=lambda f: (f.get("releaseType", 9) == 1, int(f.get("id", 0))),
+              reverse=True)
+    return zips[0]
+
+
+def file_url(file_id, file_name: str, download_url: str | None = None) -> str:
+    """URL tải: dùng downloadUrl nếu có (bản API có key), không thì dựng CDN."""
+    return download_url or _cdn_url(int(file_id), file_name)
+
+
+def search_modpacks(query: str, *, key: str, game_version: str | None = None,
+                    page_size: int = 40, index: int = 0) -> list[dict]:
+    """Tìm modpack trên CurseForge (CẦN key). Trả về dạng 'hit' giống Modrinth để
+    tái dùng UI thẻ: title/author/description/downloads/icon_url/project_id..."""
+    params = {
+        "gameId": _GAME_ID, "classId": _CLASS_MODPACK,
+        "searchFilter": query, "pageSize": page_size, "index": index,
+        "sortField": 2, "sortOrder": "desc",   # 2 = Popularity
+    }
+    if game_version:
+        params["gameVersion"] = game_version
+    r = requests.get(f"{_API}/mods/search", params=params,
+                     headers=_headers(key), timeout=25)
+    r.raise_for_status()
+    out = []
+    for m in (r.json() or {}).get("data") or []:
+        authors = m.get("authors") or []
+        out.append({
+            "project_id": m.get("id"),
+            "title": m.get("name", "?"),
+            "author": (authors[0].get("name") if authors else ""),
+            "description": m.get("summary", ""),
+            "downloads": m.get("downloadCount", 0),
+            "follows": m.get("thumbsUpCount", 0),
+            "icon_url": (m.get("logo") or {}).get("url", ""),
+            "featured_gallery": ((m.get("screenshots") or [{}])[0] or {}).get("url", ""),
+            "date_modified": m.get("dateModified", ""),
+            "categories": [c.get("name", "") for c in (m.get("categories") or [])],
+            "source": "curseforge",
+        })
+    return out
+
 
 def read_manifest(zip_path: Path) -> dict:
     with zipfile.ZipFile(zip_path) as z:

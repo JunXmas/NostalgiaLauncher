@@ -592,6 +592,40 @@ class ModpackDialog(GlassDialog):
         self.dismiss()
 
 
+class ImportInstancesDialog(GlassDialog):
+    """Liệt kê instance tìm thấy từ launcher khác; bấm một dòng để nhập."""
+
+    def __init__(self, parent, ctl, found):
+        super().__init__(parent, "Import a game from another launcher",
+                         width=min(660, parent.width() - 60),
+                         height=min(480, parent.height() - 80))
+        self.ctl = ctl
+        self.results = ListView(self, empty_text="No games found.")
+        self.results.activated.connect(self._pick)
+        self.results.badge_clicked.connect(self._pick)
+        self.close_btn = AeroButton("CLOSE", self, height=30, tone="neutral")
+        self.close_btn.clicked.connect(self.dismiss)
+        rows = []
+        for f in found:
+            bits = [f.launcher]
+            if f.mc:
+                bits.append(f.mc)
+            bits.append(f.loader or "vanilla")
+            rows.append(Row(title=f.name, subtitle=" · ".join(bits),
+                            badge="IMPORT", badge_on=True, data=f))
+        self.results.set_rows(rows)
+        self.place()
+
+    def place(self) -> None:
+        c = self.card
+        self.results.setGeometry(c.left() + 20, c.top() + 52, c.width() - 40, c.height() - 116)
+        self.close_btn.setGeometry(c.right() - 118, c.bottom() - 46, 98, 30)
+
+    def _pick(self, found) -> None:
+        self.ctl.import_external(found)
+        self.dismiss()
+
+
 # ---------- chọn phiên bản Minecraft ----------
 
 class VersionPickerDialog(GlassDialog):
