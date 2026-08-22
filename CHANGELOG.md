@@ -2,6 +2,21 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.5
+- **Fixed: the window could freeze for a moment when you pressed PLAY.** For
+  Microsoft accounts the launcher refreshed your login on the UI thread before
+  starting; on a slow connection the whole window locked up until it finished.
+  That refresh now runs in the background, so PLAY responds instantly.
+- **Fixed: a genuine game crash could be reported as a clean exit.** The button
+  watchdog added in 0.9.4 could mask a non-zero exit code; crashes now surface
+  their error again, while Stop / Alt+F4 stay quiet as before.
+- **Fixed: Play Together could show "Live" even when the relay was unreachable.**
+  Hosting now waits for the relay connection before saying friends can join, and
+  reports an error instead of failing silently if the connection drops.
+- **Fixed: some buttons stayed in English on other languages.** The PLAY/STOP
+  button and every button on the Play Together page now follow your chosen
+  language, and Vietnamese picked up eight labels it was still missing.
+
 ## 0.9.4
 - **Fixed: PLAY button stuck on STOP after closing the game.** When Minecraft was
   closed with Alt+F4 (or Stop hit an error), the button could stay on STOP and

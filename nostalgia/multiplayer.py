@@ -381,8 +381,14 @@ class HostRelay:
             except Exception:
                 pass
 
+    async def connect(self) -> None:
+        """Nối WS tới relay TRƯỚC khi báo 'Live'. Tách khỏi _run để lỗi relay (sập,
+        TLS, mất mạng) ném ra chỗ gọi await được, thay vì chết lặng trong task nền."""
+        if self._ws is None:
+            self._ws = await _WSDuplex.connect(self._url)
+
     async def _run(self) -> None:
-        self._ws = await _WSDuplex.connect(self._url)
+        await self.connect()
         try:
             while (msg := await self._ws.recv()):
                 if len(msg) < 5:

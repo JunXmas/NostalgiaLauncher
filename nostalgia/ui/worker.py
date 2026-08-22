@@ -12,7 +12,7 @@ import requests
 from PySide6.QtCore import QThread, Signal
 
 from .. import auth, google_auth
-from ..accounts import OFFLINE, AccountStore, StoredAccount
+from ..accounts import OFFLINE, AccountStore, StoredAccount, refresh_if_online
 from ..install import Installer
 from ..launch import build_command, ensure_offline_libraries, launch_game_offline, run
 
@@ -108,10 +108,11 @@ class LaunchWorker(QThread):
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
                  offline: bool = False, store_root: Path | None = None,
-                 quick_play: dict | None = None, parent=None):
+                 quick_play: dict | None = None, client_id: str = "", parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
+        self.client_id = client_id        # có -> làm mới token MSA ở luồng nền
         self.version = version
         self.game_dir = game_dir          # thư mục game của instance (mods/saves)
         self.store_root = store_root or game_dir   # kho versions/libraries/assets/runtime dùng chung
@@ -183,6 +184,10 @@ class LaunchWorker(QThread):
 
     def run(self) -> None:  # noqa: D102
         try:
+            # Làm mới token MSA ở đây (luồng nền), không ở GUI thread: mạng chậm
+            # không còn treo cửa sổ. refresh_if_online tự bỏ qua tài khoản offline.
+            if self.client_id:
+                self.account = refresh_if_online(self.store, self.account, self.client_id)
             identity = self.store.resolve_identity(self.account)
             installer = Installer(self.game_dir, on_progress=self.progress.emit,
                                   store_root=self.store_root)

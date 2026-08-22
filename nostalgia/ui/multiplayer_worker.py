@@ -78,11 +78,21 @@ class MultiplayerService(QThread):
                 return
             world_port, _motd = res
             hr = mp.HostRelay(self._relay, code, world_port)
+            await hr.connect()          # nối relay TRƯỚC khi báo Live -> lỗi hiện ngay
             hr.start()
             self._objs.append(hr)
+            # Relay rớt về sau (task nền ném lỗi) -> báo failed thay vì chết lặng.
+            hr._task.add_done_callback(self._on_host_task_done)
             self.hosting_live.emit(code)
         except Exception as e:                       # noqa: BLE001
             self.failed.emit(str(e))
+
+    def _on_host_task_done(self, task) -> None:
+        if self._stopping or task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            self.failed.emit(str(exc))
 
     # ── join ─────────────────────────────────────────────────────────────────
     def join(self, code: str) -> None:

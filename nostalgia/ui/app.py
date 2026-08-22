@@ -1597,13 +1597,12 @@ class Controller:
 
     def _poll_launches(self) -> None:
         """Chạy mỗi giây: game có thể đã thoát mà không signal nào bắn (thread kẹt
-        đọc stdout do tiến trình con giữ ống). Cập nhật nút Play/Stop theo tiến
-        trình THẬT nên nút về PLAY dù thread chưa nhả. KHÔNG tự đóng stdout ở đây —
-        làm từ GUI thread có thể chờ khóa buffer của reader và treo cả app."""
-        for w in list(self._launches):
-            proc = getattr(w, "_proc", None)
-            if proc is not None and proc.poll() is not None and w.isRunning():
-                w._cancelled = True   # nếu thread nhả sau này, thoát khác 0 là bình thường
+        đọc stdout do tiến trình con giữ ống). Chỉ cập nhật nút Play/Stop theo tiến
+        trình THẬT (`_launch_active` đọc `proc.poll()`) nên nút về PLAY dù thread
+        chưa nhả — KHÔNG gán `_cancelled` ở đây, nếu không một lần game CRASH (thoát
+        khác 0) sẽ bị nuốt và báo thành công. Chỉ khi người dùng bấm STOP thì
+        `stop()` mới đặt `_cancelled`. Cũng KHÔNG tự đóng stdout ở GUI thread — có
+        thể chờ khóa buffer của reader và treo cả app."""
         self._update_play_button()
 
     def _update_play_button(self) -> None:
@@ -1611,7 +1610,7 @@ class Controller:
         for key in ("home", "instance"):
             btn = getattr(self.pages.get(key), "play_btn", None)
             if btn is not None:
-                btn.setText("STOP" if active else "PLAY")
+                btn.setText(tr("STOP") if active else tr("PLAY"))
                 btn.arrow = not active
                 btn.tone = "danger" if active else "green"
                 btn.update()
@@ -1660,10 +1659,10 @@ class Controller:
         self.window.set_status("Starting…")
         self._update_play_button()
 
-        if account.kind == accounts.MSA:
-            client_id = resolve_client_id("microsoft", "MC_CLIENT_ID")
-            if client_id:
-                account = accounts.refresh_if_online(self.store, account, client_id)
+        # Làm mới token MSA đã dời vào worker (luồng nền): gọi thẳng ở GUI thread
+        # khiến cả cửa sổ treo suốt vòng auth (MS→XBL→XSTS→MC) khi mạng chậm.
+        client_id = (resolve_client_id("microsoft", "MC_CLIENT_ID")
+                     if account.kind == accounts.MSA else "")
 
         if self.running_count:
             self.window.set_status(f"Launching another game (#{self.running_count + 1})…")
@@ -1674,7 +1673,7 @@ class Controller:
         worker = LaunchWorker(
             self.store, account, version, game_dir,
             memory_mb=memory, java_path=java, store_root=self.store_root,
-            quick_play=quick_play,
+            quick_play=quick_play, client_id=client_id,
         )
         worker.instance_name = inst.name if inst else ""
         worker.started_ts = 0.0

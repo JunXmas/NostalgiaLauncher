@@ -41,9 +41,9 @@ class PlayTogetherPage(Page):
             app.aboutToQuit.connect(self.svc.shutdown)
 
         # HOST
-        self.host_btn = AeroButton("HOST MY WORLD", self, height=40, tone="green")
+        self.host_btn = AeroButton(tr("HOST MY WORLD"), self, height=40, tone="green")
         self.host_btn.clicked.connect(self._on_host)
-        self.host_stop = AeroButton("STOP HOSTING", self, height=32, tone="danger")
+        self.host_stop = AeroButton(tr("STOP HOSTING"), self, height=32, tone="danger")
         self.host_stop.clicked.connect(self._reset)
         self.host_stop.hide()
 
@@ -53,12 +53,12 @@ class PlayTogetherPage(Page):
         self.code_in.setPlaceholderText(tr("Enter your friend's room code"))
         self.code_in.setMaxLength(12)
         self.code_in.returnPressed.connect(self._on_join)
-        self.join_btn = AeroButton("JOIN", self, height=40, tone="neutral")
+        self.join_btn = AeroButton(tr("JOIN"), self, height=40, tone="neutral")
         self.join_btn.clicked.connect(self._on_join)
-        self.launch_join = AeroButton("LAUNCH & JOIN", self, height=40, tone="green")
+        self.launch_join = AeroButton(tr("LAUNCH & JOIN"), self, height=40, tone="green")
         self.launch_join.clicked.connect(self._on_launch_join)
         self.launch_join.hide()
-        self.join_stop = AeroButton("LEAVE", self, height=32, tone="danger")
+        self.join_stop = AeroButton(tr("LEAVE"), self, height=32, tone="danger")
         self.join_stop.clicked.connect(self._reset)
         self.join_stop.hide()
 
