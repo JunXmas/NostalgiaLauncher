@@ -174,10 +174,12 @@ class InstallationsPage(Page):
             MenuItem(label=tr("Modpack file (.mrpack / .zip)…"), data="file"),
             MenuItem(label=tr("From another launcher…"), data="launcher"),
         ]
-        g = self.import_pack_btn.geometry()
-        origin = self.import_pack_btn.mapTo(self.window(), g.topLeft())
+        b = self.import_pack_btn
+        # mapTo với rect().topLeft() (gốc của CHÍNH nút) để ra đúng toạ độ cửa sổ,
+        # kể cả khi trang lệch theo sidebar. Nút ở ĐÁY -> menu bung LÊN (above).
+        origin = b.mapTo(self.window(), b.rect().topLeft())
         popup(self.window(), items,
-              QRect(origin, g.size()), self._on_import_pick, width=260)
+              QRect(origin, b.size()), self._on_import_pick, width=260, above=True)
 
     def _on_import_pick(self, key) -> None:
         if key == "file":

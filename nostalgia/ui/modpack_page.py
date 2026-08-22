@@ -344,9 +344,9 @@ class ModpackBrowsePage(Page):
         items = [MenuItem(kind="header", label="Source"),
                  MenuItem(label="Modrinth", checked=self.source == "modrinth", data="modrinth"),
                  MenuItem(label="CurseForge", checked=self.source == "curseforge", data="curseforge")]
-        g = self.source_btn.geometry()
-        origin = self.source_btn.mapTo(self.window(), g.topLeft())
-        popup(self.window(), items, QRect(origin, g.size()), self._pick_source, width=180)
+        b = self.source_btn
+        origin = b.mapTo(self.window(), b.rect().topLeft())
+        popup(self.window(), items, QRect(origin, b.size()), self._pick_source, width=180)
 
     def _pick_source(self, key) -> None:
         if not key or key == self.source:
@@ -456,9 +456,9 @@ class ModpackBrowsePage(Page):
         items = [MenuItem(kind="header", label="Sort by")]
         for label, key in SORTS:
             items.append(MenuItem(label=label, checked=key == self._sort, data=key))
-        g = self.sort_btn.geometry()
-        origin = self.sort_btn.mapTo(self.window(), g.topLeft())
-        popup(self.window(), items, QRect(origin, g.size()), self._pick_sort, width=190)
+        b = self.sort_btn
+        origin = b.mapTo(self.window(), b.rect().topLeft())
+        popup(self.window(), items, QRect(origin, b.size()), self._pick_sort, width=190)
 
     def _pick_sort(self, key) -> None:
         if not key:

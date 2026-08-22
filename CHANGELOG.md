@@ -3,6 +3,11 @@
 All notable changes to Nostalgia Launcher, newest first.
 
 ## 0.9.12
+- **Fixed: the Import menu on the Games page did nothing.** Because that button
+  sits at the bottom of the window, its menu opened off the bottom edge and was
+  invisible — so "Import ▸ From another launcher…" (and the modpack-file import)
+  couldn't be reached. The menu now opens upward and on-screen. (Same off-by anchor
+  math also nudged the modpack page's Source/Sort menus; both corrected.)
 - **Browse and search CurseForge modpacks by name, built in.** The CurseForge
   source on the modpack page now searches by name out of the box — the launcher's
   backend holds the CurseForge API key, so no one needs their own. Installing by
