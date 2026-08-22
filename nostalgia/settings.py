@@ -78,7 +78,6 @@ class Settings:
     close_on_launch: bool = False
     check_updates: bool = True    # tự tìm bản mới trên GitHub khi khởi động
     aero_ui: bool = True          # lắp & khoá resource pack Aero UI mỗi lần chạy
-    shared_skins: bool = True     # tự cài CustomSkinLoader để offline nhìn skin nhau
     seen_welcome: bool = False    # đã hiện onboarding lần đầu chưa (khỏi hiện lại)
     menu_dark: bool = False       # panorama menu: False=ngày (light), True=đêm (dark)
     panorama_theme: str = ""      # id theme panorama đã chọn (rỗng = day/night theo menu_dark)

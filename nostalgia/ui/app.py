@@ -1682,9 +1682,9 @@ class Controller:
 
         # Shared skins: đảm bảo CustomSkinLoader + config trỏ backend trên instance
         # đang chạy mỗi lần launch (kể cả instance cũ / chơi Play Together) để người
-        # chơi crack nhìn thấy skin của nhau. Idempotent: có CSL rồi thì chỉ ghi lại
-        # config (rẻ), chưa có thì cài nền. Tắt được bằng Settings (shared_skins=False).
-        if inst is not None and getattr(self.settings, "shared_skins", True):
+        # chơi crack nhìn thấy skin của nhau. Luôn bật. Idempotent: có CSL rồi thì
+        # chỉ ghi lại config (rẻ), chưa có thì cài nền.
+        if inst is not None:
             self.enable_shared_skins(inst, silent=True)
 
         # Phản hồi tức thì: đổi nút sang STOP ngay khi bấm Play, TRƯỚC cả bước làm
