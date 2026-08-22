@@ -1739,6 +1739,14 @@ class SkinsPage(Page):
             p.setPen(TEXT_DIM)
             p.drawText(QRect(rx, self.height() - 70, self.width() - rx - 24, 40),
                        Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.note)
+        # Nhắc: skin này tự hiện cho bạn bè trong game (qua shared skins) khi chơi
+        # bản có mod loader — không cần thao tác gì thêm.
+        p.setFont(ui_font(8))
+        p.setPen(TEXT_FAINT)
+        p.drawText(QRect(rx, self.height() - 26, self.width() - rx - 24, 18),
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   tr("Friends see this skin in-game on modded (Fabric/Forge) games — "
+                      "no extra setup."))
         p.end()
 
     def _paint_cape_tile(self, p, rect: QRect, cape, active: bool, hovered: bool):

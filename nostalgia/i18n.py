@@ -202,6 +202,8 @@ _T = {
             "Đã cập nhật modpack. Mods/config cũ đã sao lưu ở {dir}/.pack-backups.",
         "Update failed: {m}": "Cập nhật thất bại: {m}",
         "Game crashed": "Game bị crash",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Bạn bè sẽ thấy skin này trong game khi chơi bản có mod (Fabric/Forge) — không cần cài gì thêm.",
         "Game crashed — {why}": "Game bị crash — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Cài modpack bạn đã tải — file .mrpack (Modrinth) hoặc .zip (CurseForge).",
@@ -265,6 +267,8 @@ _T = {
             "Modpack actualizado. Los mods/config antiguos se guardaron en {dir}/.pack-backups.",
         "Update failed: {m}": "Fallo al actualizar: {m}",
         "Game crashed": "El juego falló",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Tus amigos ven esta skin en el juego en versiones con mods (Fabric/Forge) — sin configurar nada.",
         "Game crashed — {why}": "El juego falló — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala un modpack que descargaste — un .mrpack de Modrinth o .zip de CurseForge.",
@@ -426,6 +430,8 @@ _T = {
             "Modpack mis à jour. Les anciens mods/config ont été sauvegardés dans {dir}/.pack-backups.",
         "Update failed: {m}": "Échec de la mise à jour : {m}",
         "Game crashed": "Le jeu a planté",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Tes amis voient cette skin en jeu sur les versions moddées (Fabric/Forge) — rien à configurer.",
         "Game crashed — {why}": "Le jeu a planté — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installe un modpack téléchargé — un .mrpack Modrinth ou un .zip CurseForge.",
@@ -588,6 +594,8 @@ _T = {
             "Modpack aktualisiert. Alte Mods/Config wurden in {dir}/.pack-backups gesichert.",
         "Update failed: {m}": "Aktualisierung fehlgeschlagen: {m}",
         "Game crashed": "Spiel abgestürzt",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Freunde sehen diesen Skin im Spiel bei gemoddeten Versionen (Fabric/Forge) — ohne weitere Einrichtung.",
         "Game crashed — {why}": "Spiel abgestürzt — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installiere ein heruntergeladenes Modpack — eine Modrinth-.mrpack- oder CurseForge-.zip-Datei.",
@@ -749,6 +757,8 @@ _T = {
             "Modpack atualizado. Os mods/config antigos foram salvos em {dir}/.pack-backups.",
         "Update failed: {m}": "Falha ao atualizar: {m}",
         "Game crashed": "O jogo travou",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Seus amigos veem esta skin no jogo em versões com mods (Fabric/Forge) — sem configurar nada.",
         "Game crashed — {why}": "O jogo travou — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala um modpack que você baixou — um .mrpack do Modrinth ou .zip do CurseForge.",
@@ -910,6 +920,8 @@ _T = {
             "Модпак обновлён. Старые mods/config сохранены в {dir}/.pack-backups.",
         "Update failed: {m}": "Ошибка обновления: {m}",
         "Game crashed": "Игра вылетела",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Друзья видят этот скин в игре на версиях с модами (Fabric/Forge) — без настройки.",
         "Game crashed — {why}": "Игра вылетела — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Установить скачанный модпак — файл .mrpack (Modrinth) или .zip (CurseForge).",
@@ -1069,6 +1081,8 @@ _T = {
             "整合包已更新。旧的 mods/config 已备份到 {dir}/.pack-backups。",
         "Update failed: {m}": "更新失败：{m}",
         "Game crashed": "游戏崩溃",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "在装了模组的版本（Fabric/Forge）里，好友能在游戏中看到这个皮肤——无需额外设置。",
         "Game crashed — {why}": "游戏崩溃 — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "安装你下载的整合包——Modrinth 的 .mrpack 或 CurseForge 的 .zip 文件。",
@@ -1230,6 +1244,8 @@ _T = {
             "Modpack を更新しました。古い mods/config は {dir}/.pack-backups にバックアップされました。",
         "Update failed: {m}": "更新に失敗しました: {m}",
         "Game crashed": "ゲームがクラッシュしました",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "Mod入りのバージョン（Fabric/Forge）では、フレンドがゲーム内でこのスキンを見られます — 追加設定は不要です。",
         "Game crashed — {why}": "ゲームがクラッシュ — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "ダウンロードした Modpack をインストール — Modrinth の .mrpack または CurseForge の .zip。",
@@ -1390,6 +1406,8 @@ _T = {
             "모드팩을 업데이트했습니다. 이전 mods/config는 {dir}/.pack-backups에 백업되었습니다.",
         "Update failed: {m}": "업데이트 실패: {m}",
         "Game crashed": "게임이 충돌했습니다",
+        "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
+            "모드가 있는 버전(Fabric/Forge)에서는 친구가 게임 안에서 이 스킨을 봅니다 — 추가 설정 불필요.",
         "Game crashed — {why}": "게임 충돌 — {why}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "내려받은 모드팩 설치 — Modrinth .mrpack 또는 CurseForge .zip 파일.",

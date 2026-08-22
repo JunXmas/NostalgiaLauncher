@@ -2,6 +2,11 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.14
+- **Skins page now explains shared skins.** A small line at the bottom notes that
+  friends see your skin in-game on modded (Fabric/Forge) games, with no extra setup —
+  so it's clear the skin you pick is what others will see.
+
 ## 0.9.13
 - **Fixed: games made with NEW GAME had no Aero UI.** Creating a game with NEW GAME
   didn't apply the Aero UI (glass buttons/menus) or shared skins the way the first-
