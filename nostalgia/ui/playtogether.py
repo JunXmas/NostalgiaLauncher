@@ -15,7 +15,7 @@ from .theme import ACCENT, CONNECTED, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, glos
 from .widgets import AeroButton
 
 _GAP = 20
-_PANEL_TOP = 64
+_PANEL_TOP = 116        # chừa chỗ trên cùng cho hàng chọn instance
 
 
 class PlayTogetherPage(Page):
@@ -29,6 +29,11 @@ class PlayTogetherPage(Page):
         self._code = ""
         self._join_port = 0
         self._error = ""
+        self._instance_name = ""      # game sẽ launch (rỗng = dùng instance đang chọn)
+
+        # Chọn game để launch cho CẢ host lẫn join, ngay trên trang này.
+        self.inst_btn = AeroButton("", self, height=34, tone="neutral")
+        self.inst_btn.clicked.connect(self._open_instance_picker)
 
         self.svc = MultiplayerService(parent=self)
         self.svc.waiting_world.connect(self._on_waiting)
@@ -43,6 +48,9 @@ class PlayTogetherPage(Page):
         # HOST
         self.host_btn = AeroButton(tr("HOST MY WORLD"), self, height=40, tone="green")
         self.host_btn.clicked.connect(self._on_host)
+        self.launch_host = AeroButton(tr("LAUNCH & HOST"), self, height=40, tone="green")
+        self.launch_host.clicked.connect(self._on_launch_host)
+        self.launch_host.hide()
         self.host_stop = AeroButton(tr("STOP HOSTING"), self, height=32, tone="danger")
         self.host_stop.clicked.connect(self._reset)
         self.host_stop.hide()
@@ -62,6 +70,8 @@ class PlayTogetherPage(Page):
         self.join_stop.clicked.connect(self._reset)
         self.join_stop.hide()
 
+        self._refresh_instance_label()
+
     # ── hình học ─────────────────────────────────────────────────────────────
     def _panels(self):
         pw = (self.width() - 52 - _GAP) // 2
@@ -69,8 +79,12 @@ class PlayTogetherPage(Page):
         return QRect(26, _PANEL_TOP, pw, ph), QRect(26 + pw + _GAP, _PANEL_TOP, pw, ph)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
+        # Hàng chọn game ở trên cùng (dùng cho cả host lẫn join).
+        self.inst_btn.setGeometry(26, 74, min(380, self.width() - 52), 34)
+
         host, join = self._panels()
         self.host_btn.setGeometry(host.x() + 20, host.bottom() - 56, host.width() - 40, 40)
+        self.launch_host.setGeometry(host.x() + 20, host.bottom() - 104, host.width() - 40, 40)
         self.host_stop.setGeometry(host.x() + 20, host.bottom() - 56, host.width() - 40, 32)
 
         self.code_in.setGeometry(join.x() + 20, join.y() + 116, join.width() - 40, 34)
@@ -119,7 +133,34 @@ class PlayTogetherPage(Page):
     def _on_launch_join(self) -> None:
         if self._join_port:
             self.ctl.start_launch({"type": "multiplayer",
-                                   "target": f"127.0.0.1:{self._join_port}"})
+                                   "target": f"127.0.0.1:{self._join_port}"},
+                                  instance=self._instance())
+
+    def _on_launch_host(self) -> None:
+        # Host chạy game bình thường (không quick_play) rồi Esc → Open to LAN.
+        self.ctl.start_launch(instance=self._instance())
+
+    # ── chọn game để launch ────────────────────────────────────────────────────
+    def _instance(self):
+        """Instance sẽ launch: cái người dùng chọn ở trang này, nếu không thì cái
+        đang active trong launcher."""
+        inst = self.ctl.instances.get(self._instance_name) if self._instance_name else None
+        return inst or self.ctl.active_instance()
+
+    def _open_instance_picker(self) -> None:
+        r = self.inst_btn.geometry()
+        origin = self.mapTo(self.window(), r.topLeft())
+        self.ctl.pick_instance_menu(QRect(origin, r.size()), self._pick_instance,
+                                    current=self._instance_name)
+
+    def _pick_instance(self, name: str) -> None:
+        self._instance_name = name
+        self._refresh_instance_label()
+
+    def _refresh_instance_label(self) -> None:
+        inst = self._instance()
+        self.inst_btn.setText((inst.name if inst else tr("No game — create one first")) + "   ▾")
+        self.inst_btn.update()
 
     # ── chung ────────────────────────────────────────────────────────────────
     def _on_failed(self, msg: str) -> None:
@@ -141,6 +182,7 @@ class PlayTogetherPage(Page):
         hosting = self._host_state != "idle"
         joining = self._join_state != "idle"
         self.host_btn.setVisible(not hosting)
+        self.launch_host.setVisible(hosting)
         self.host_stop.setVisible(hosting)
         self.join_btn.setVisible(not joining)
         self.launch_join.setVisible(self._join_state == "ready")
@@ -149,6 +191,7 @@ class PlayTogetherPage(Page):
         self.update()
 
     def refresh(self) -> None:
+        self._refresh_instance_label()
         self._sync()
 
     # ── vẽ ───────────────────────────────────────────────────────────────────
@@ -180,6 +223,12 @@ class PlayTogetherPage(Page):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         host, join = self._panels()
+
+        # ── hàng chọn game để launch ──
+        f = ui_font(9, bold=True); f.setLetterSpacing(QFont.AbsoluteSpacing, 1.0)
+        p.setFont(f); p.setPen(TEXT_FAINT)
+        p.drawText(QRect(26, 52, self.width() - 52, 16),
+                   Qt.AlignLeft | Qt.AlignVCenter, tr("GAME TO LAUNCH"))
 
         # ── HOST ──
         self._panel(p, host, tr("HOST — OPEN A ROOM"), ACCENT)

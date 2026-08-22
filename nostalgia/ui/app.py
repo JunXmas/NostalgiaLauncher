@@ -255,6 +255,19 @@ class Controller:
                               data="\x00optimized"))
         popup(self.window, items, anchor, self._instance_menu_chosen, width=260)
 
+    def pick_instance_menu(self, anchor: QRect, on_pick, current: str = "") -> None:
+        """Popup chọn instance dùng ngoài Home (vd trang Play Together). Gọi
+        on_pick(name) với tên instance đã chọn; không tự đổi instance active."""
+        items = [MenuItem(kind="header", label="Instance")]
+        for inst in self.instances.all():
+            items.append(MenuItem(label=inst.name, sublabel=inst.version,
+                                  checked=inst.name == (current or self.instances.active),
+                                  data=inst.name))
+        if not self.instances.all():
+            items.append(MenuItem(label="(none — create a game first)", enabled=False))
+        popup(self.window, items, anchor,
+              lambda d: on_pick(d) if d else None, width=260)
+
     def _instance_menu_chosen(self, data) -> None:
         if data == "\x00optimized":
             self.begin_optimized_instance()
@@ -1630,14 +1643,14 @@ class Controller:
         self.window.set_status("Stopping…")
         self._update_play_button()
 
-    def start_launch(self, quick_play: dict | None = None) -> None:
+    def start_launch(self, quick_play: dict | None = None, instance=None) -> None:
         account = self.current_account()
         if account is None:
             self.window.set_status("No account — click the name at the top left to add one.")
             return
-        # Chạy instance đang chọn (thư mục game riêng); nếu chưa có instance thì
-        # lùi về kho chung với phiên bản đã chọn.
-        inst = self.active_instance()
+        # Chạy instance được chỉ định (vd. từ trang Play Together), nếu không thì
+        # instance đang chọn; chưa có thì lùi về kho chung với phiên bản đã chọn.
+        inst = instance if instance is not None else self.active_instance()
         if inst is not None:
             version, game_dir = inst.version, self.instance_dir(inst)
         else:

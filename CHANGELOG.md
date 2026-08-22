@@ -2,6 +2,13 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.6
+- **Pick which game to launch on the Play Together page.** A "Game to launch"
+  selector now sits at the top of the page and is used by both sides: Launch &
+  Join starts the game you chose into your friend's room, and a new Launch & Host
+  button lets you start the host game right from the page (then Esc → Open to LAN)
+  — no need to go back to Home first. The selector defaults to your current game.
+
 ## 0.9.5
 - **Fixed: the window could freeze for a moment when you pressed PLAY.** For
   Microsoft accounts the launcher refreshed your login on the UI thread before
