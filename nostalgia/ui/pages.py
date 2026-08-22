@@ -1326,6 +1326,14 @@ class InstancePage(Page):
             lambda: self.ctl.update_pack(self.instance) if self.instance else None)
         self.update_pack_btn.hide()
 
+        # Bồi mod tăng FPS cho máy yếu — chỉ instance có loader.
+        self.boost_btn = AeroButton("⚡ Boost FPS", self, height=28, tone="neutral")
+        self.boost_btn.setToolTip(tr(
+            "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more)."))
+        self.boost_btn.clicked.connect(
+            lambda: self.ctl.boost_fps(self.instance) if self.instance else None)
+        self.boost_btn.hide()
+
         # Nhập world: chọn file .zip, hoặc mở thư mục saves để kéo-thả (cũng kéo-thả
         # .zip thẳng vào trang này được — xem dropEvent).
         self.import_btn = AeroButton("＋ IMPORT WORLD", self, height=28, tone="neutral")
@@ -1358,7 +1366,9 @@ class InstancePage(Page):
         self.optifine_btn.setVisible(
             optifine.is_legacy(optifine.mc_from_version_id(instance.version)))
         v = (instance.version or "").lower()
-        self.shared_btn.setVisible(any(k in v for k in ("fabric", "forge", "neoforge")))
+        has_loader = any(k in v for k in ("fabric", "forge", "neoforge"))
+        self.shared_btn.setVisible(has_loader)
+        self.boost_btn.setVisible(has_loader)
         prov = self.ctl.read_pack_provenance(instance)
         self.update_pack_btn.setVisible(
             bool(prov) and prov.get("source") in ("modrinth", "curseforge"))
@@ -1370,8 +1380,8 @@ class InstancePage(Page):
         # Xếp các nút hành động từ phải sang (chỉ nút đang 'định hiện').
         x = self.width() - 20
         for btn, w in ((self.import_btn, 150), (self.saves_btn, 128),
-                       (self.update_pack_btn, 150), (self.optifine_btn, 128),
-                       (self.shared_btn, 128)):
+                       (self.update_pack_btn, 150), (self.boost_btn, 120),
+                       (self.optifine_btn, 128), (self.shared_btn, 128)):
             if not btn.isHidden():          # ý định hiện (không phụ thuộc parent đã show)
                 x -= w
                 btn.setGeometry(x, 101, w, 28)

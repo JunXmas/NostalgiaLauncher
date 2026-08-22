@@ -2,6 +2,15 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.15
+- **More FPS for weak PCs.** The Optimized profile now layers extra performance mods
+  on top of Fabulously Optimized — **ModernFix** (less RAM, faster startup),
+  **Dynamic FPS**, **BadOptimizations**, **Noisium** (faster world generation) and
+  **Super Resolution** — for maximum frames on low-end machines.
+- **New "⚡ Boost FPS" button** on any Fabric/Forge game's page adds that same set of
+  performance mods to a game you already have. It only pulls what's missing and
+  compatible with your version, so it's safe to press anytime.
+
 ## 0.9.14
 - **Skins page now explains shared skins.** A small line at the bottom notes that
   friends see your skin in-game on modded (Fabric/Forge) games, with no extra setup —

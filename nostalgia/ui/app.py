@@ -563,6 +563,77 @@ class Controller:
 
     SUPER_RES_SLUG = "superresolution"   # mod render-low-then-upscale (kèm bản Optimized)
 
+    # Bộ mod tăng FPS bồi thêm cho máy yếu — những cái Fabulously Optimized CHƯA có
+    # (FO đã kèm Sodium/Lithium/FerriteCore/EntityCulling/ImmediatelyFast/Krypton).
+    # (slug Modrinth, marker để nhận đã cài). fabric-api để đầu làm dep chung.
+    FPS_MODS = (
+        ("fabric-api", "fabric-api"),
+        ("modernfix", "modernfix"),            # ít RAM + khởi động nhanh
+        ("dynamic-fps", "dynamic-fps"),        # hạ FPS khi cửa sổ nền -> đỡ nóng máy
+        ("badoptimizations", "badoptimizations"),
+        ("noisium", "noisium"),                # sinh chunk nhanh hơn (CPU yếu)
+        ("superresolution", "superresolution"),  # render thấp rồi upscale
+    )
+
+    def _install_fps_mods(self, game_dir, loader: str, mc: str,
+                          on_status=None) -> int:
+        """Cài bộ mod tăng FPS vào game_dir (idempotent, best-effort). Mod nào không
+        có build hợp cho (loader, mc) hoặc đã có sẵn thì bỏ qua êm. Trả số mod đã thêm."""
+        from .. import mods as mods_mgr
+        mods_dir = game_dir / "mods"
+        present = ({p.name.lower() for p in mods_dir.glob("*.jar")}
+                   if mods_dir.exists() else set())
+
+        def has(marker: str) -> bool:
+            keys = (marker, marker.replace("-", ""), marker.replace("-", "_"))
+            return any(any(k in n for k in keys) for n in present)
+
+        if on_status:
+            on_status("Adding performance mods…")
+        added = 0
+        for slug, marker in self.FPS_MODS:
+            if has(marker):
+                continue
+            try:
+                f = modrinth_mod.best_file(slug, loaders=[loader] if loader else None,
+                                           game_versions=[mc] if mc else None)
+            except Exception:  # noqa: BLE001 - lỗi mạng/slug -> bỏ qua mod đó
+                f = None
+            if not f:
+                continue
+            try:
+                mods_mgr.install_file(game_dir, "mods", url=f["url"],
+                                      filename=f["filename"], sha1=f.get("sha1"))
+                present.add(f["filename"].lower())
+                added += 1
+            except Exception:  # noqa: BLE001
+                pass
+        return added
+
+    def boost_fps(self, inst) -> None:
+        """Bồi bộ mod tăng FPS vào một instance đang có (cho máy yếu). Cần loader
+        (Fabric/Forge/NeoForge). Chạy nền, idempotent."""
+        if inst is None:
+            return
+        v = (inst.version or "").lower()
+        loader = ("fabric" if "fabric" in v else "neoforge" if "neoforge" in v
+                  else "forge" if "forge" in v else "")
+        if not loader:
+            self.window.set_status(tr("Boost FPS needs a Fabric/Forge game."))
+            return
+        from .. import optifine
+        mc = optifine.mc_from_version_id(inst.version) or (
+            (inst.version or "").rsplit("-", 1)[-1] if "fabric-loader" in v else "")
+        game_dir = self.instance_dir(inst)
+        self.window.set_status(tr("Adding performance mods…"))
+        self._run(
+            lambda: self._install_fps_mods(game_dir, loader, mc),
+            lambda n: (self.window.set_status(
+                tr("Added {n} performance mod(s) — press PLAY.").format(n=n) if n
+                else tr("Already fully optimized — nothing to add.")),
+                self.pages["instance"].refresh()),
+            lambda m: self.window.set_status(tr("Couldn't add performance mods: {m}").format(m=m)))
+
     def install_modpack(self, hit, game_version: str | None = None,
                         optimized: bool = False) -> None:
         slug = hit.get("slug") or hit.get("project_id")
@@ -600,17 +671,12 @@ class Controller:
             self._write_pack_provenance(inst_dir, {
                 "source": "modrinth", "project_id": slug, "name": title,
                 "version_id": ver.get("id", ""), "loader": loader, "game_version": mc})
-            # Bản Optimized: kèm mod Super Resolution (render thấp rồi upscale -> thêm FPS).
-            # Client-side, không phụ thuộc; bản nào không có (vd 1.12.2) thì bỏ qua êm.
+            # Bản Optimized: bồi thêm bộ mod tăng FPS lên trên Fabulously Optimized
+            # (ModernFix, Dynamic FPS, BadOptimizations, Noisium, Super Resolution).
+            # Best-effort: bản nào không có build hợp lệ (vd 1.12.2) thì bỏ qua êm.
             if optimized:
-                on_status("Adding Super Resolution…")
                 try:
-                    from .. import mods as mods_mgr
-                    sr = modrinth_mod.best_file(self.SUPER_RES_SLUG, loaders=[loader],
-                                                game_versions=[mc] if mc else None)
-                    if sr:
-                        mods_mgr.install_file(inst_dir, "mods", url=sr["url"],
-                                              filename=sr["filename"], sha1=sr.get("sha1"))
+                    self._install_fps_mods(inst_dir, loader, mc, on_status=on_status)
                 except Exception:  # noqa: BLE001 - không chặn tạo instance nếu mod lỗi
                     pass
             return name, vid

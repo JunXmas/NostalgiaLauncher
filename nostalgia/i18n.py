@@ -205,6 +205,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Bạn bè sẽ thấy skin này trong game khi chơi bản có mod (Fabric/Forge) — không cần cài gì thêm.",
         "Game crashed — {why}": "Game bị crash — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Bồi thêm mod tăng FPS cho máy yếu (ModernFix, Dynamic FPS, v.v.).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS cần game có Fabric/Forge.",
+        "Adding performance mods…": "Đang thêm mod tăng FPS…",
+        "Added {n} performance mod(s) — press PLAY.": "Đã thêm {n} mod tăng FPS — bấm CHƠI.",
+        "Already fully optimized — nothing to add.": "Đã tối ưu đầy đủ — không cần thêm gì.",
+        "Couldn't add performance mods: {m}": "Không thêm được mod tăng FPS: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Cài modpack bạn đã tải — file .mrpack (Modrinth) hoặc .zip (CurseForge).",
         "Import modpack": "Nhập modpack",
@@ -270,6 +277,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Tus amigos ven esta skin en el juego en versiones con mods (Fabric/Forge) — sin configurar nada.",
         "Game crashed — {why}": "El juego falló — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Añade mods de rendimiento para PCs débiles (ModernFix, Dynamic FPS y más).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS necesita un juego con Fabric/Forge.",
+        "Adding performance mods…": "Añadiendo mods de rendimiento…",
+        "Added {n} performance mod(s) — press PLAY.": "Se añadieron {n} mod(s) de rendimiento — pulsa JUGAR.",
+        "Already fully optimized — nothing to add.": "Ya está totalmente optimizado — nada que añadir.",
+        "Couldn't add performance mods: {m}": "No se pudieron añadir mods de rendimiento: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala un modpack que descargaste — un .mrpack de Modrinth o .zip de CurseForge.",
         "Import modpack": "Importar modpack",
@@ -433,6 +447,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Tes amis voient cette skin en jeu sur les versions moddées (Fabric/Forge) — rien à configurer.",
         "Game crashed — {why}": "Le jeu a planté — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Ajoute des mods de performance pour PC modestes (ModernFix, Dynamic FPS, etc.).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS nécessite un jeu Fabric/Forge.",
+        "Adding performance mods…": "Ajout des mods de performance…",
+        "Added {n} performance mod(s) — press PLAY.": "{n} mod(s) de performance ajouté(s) — appuie sur JOUER.",
+        "Already fully optimized — nothing to add.": "Déjà entièrement optimisé — rien à ajouter.",
+        "Couldn't add performance mods: {m}": "Impossible d'ajouter les mods de performance : {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installe un modpack téléchargé — un .mrpack Modrinth ou un .zip CurseForge.",
         "Import modpack": "Importer un modpack",
@@ -597,6 +618,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Freunde sehen diesen Skin im Spiel bei gemoddeten Versionen (Fabric/Forge) — ohne weitere Einrichtung.",
         "Game crashed — {why}": "Spiel abgestürzt — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Zusätzliche Performance-Mods für schwache PCs (ModernFix, Dynamic FPS u. a.).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS braucht ein Fabric/Forge-Spiel.",
+        "Adding performance mods…": "Performance-Mods werden hinzugefügt…",
+        "Added {n} performance mod(s) — press PLAY.": "{n} Performance-Mod(s) hinzugefügt — drücke SPIELEN.",
+        "Already fully optimized — nothing to add.": "Bereits voll optimiert — nichts hinzuzufügen.",
+        "Couldn't add performance mods: {m}": "Performance-Mods konnten nicht hinzugefügt werden: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Installiere ein heruntergeladenes Modpack — eine Modrinth-.mrpack- oder CurseForge-.zip-Datei.",
         "Import modpack": "Modpack importieren",
@@ -760,6 +788,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Seus amigos veem esta skin no jogo em versões com mods (Fabric/Forge) — sem configurar nada.",
         "Game crashed — {why}": "O jogo travou — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Adiciona mods de desempenho para PCs fracos (ModernFix, Dynamic FPS e mais).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS precisa de um jogo com Fabric/Forge.",
+        "Adding performance mods…": "Adicionando mods de desempenho…",
+        "Added {n} performance mod(s) — press PLAY.": "{n} mod(s) de desempenho adicionado(s) — pressione JOGAR.",
+        "Already fully optimized — nothing to add.": "Já está totalmente otimizado — nada a adicionar.",
+        "Couldn't add performance mods: {m}": "Não foi possível adicionar mods de desempenho: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Instala um modpack que você baixou — um .mrpack do Modrinth ou .zip do CurseForge.",
         "Import modpack": "Importar modpack",
@@ -923,6 +958,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Друзья видят этот скин в игре на версиях с модами (Fabric/Forge) — без настройки.",
         "Game crashed — {why}": "Игра вылетела — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "Добавить моды производительности для слабых ПК (ModernFix, Dynamic FPS и др.).",
+        "Boost FPS needs a Fabric/Forge game.": "Для Boost FPS нужна игра с Fabric/Forge.",
+        "Adding performance mods…": "Добавление модов производительности…",
+        "Added {n} performance mod(s) — press PLAY.": "Добавлено модов производительности: {n} — нажмите ИГРАТЬ.",
+        "Already fully optimized — nothing to add.": "Уже полностью оптимизировано — добавлять нечего.",
+        "Couldn't add performance mods: {m}": "Не удалось добавить моды производительности: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "Установить скачанный модпак — файл .mrpack (Modrinth) или .zip (CurseForge).",
         "Import modpack": "Импорт модпака",
@@ -1084,6 +1126,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "在装了模组的版本（Fabric/Forge）里，好友能在游戏中看到这个皮肤——无需额外设置。",
         "Game crashed — {why}": "游戏崩溃 — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "为低配电脑添加额外性能模组（ModernFix、Dynamic FPS 等）。",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS 需要装有 Fabric/Forge 的游戏。",
+        "Adding performance mods…": "正在添加性能模组…",
+        "Added {n} performance mod(s) — press PLAY.": "已添加 {n} 个性能模组——按“开始游戏”。",
+        "Already fully optimized — nothing to add.": "已完全优化——无需再添加。",
+        "Couldn't add performance mods: {m}": "无法添加性能模组：{m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "安装你下载的整合包——Modrinth 的 .mrpack 或 CurseForge 的 .zip 文件。",
         "Import modpack": "导入整合包",
@@ -1247,6 +1296,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "Mod入りのバージョン（Fabric/Forge）では、フレンドがゲーム内でこのスキンを見られます — 追加設定は不要です。",
         "Game crashed — {why}": "ゲームがクラッシュ — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "低スペックPC向けに性能Modを追加（ModernFix、Dynamic FPS など）。",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS には Fabric/Forge のゲームが必要です。",
+        "Adding performance mods…": "性能Modを追加中…",
+        "Added {n} performance mod(s) — press PLAY.": "性能Modを {n} 個追加しました — PLAY を押してください。",
+        "Already fully optimized — nothing to add.": "すでに十分に最適化済み — 追加するものはありません。",
+        "Couldn't add performance mods: {m}": "性能Modを追加できませんでした: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "ダウンロードした Modpack をインストール — Modrinth の .mrpack または CurseForge の .zip。",
         "Import modpack": "Modpack をインポート",
@@ -1409,6 +1465,13 @@ _T = {
         "Friends see this skin in-game on modded (Fabric/Forge) games — no extra setup.":
             "모드가 있는 버전(Fabric/Forge)에서는 친구가 게임 안에서 이 스킨을 봅니다 — 추가 설정 불필요.",
         "Game crashed — {why}": "게임 충돌 — {why}",
+        "Add extra performance mods for weak PCs (ModernFix, Dynamic FPS, and more).":
+            "저사양 PC용 성능 모드 추가(ModernFix, Dynamic FPS 등).",
+        "Boost FPS needs a Fabric/Forge game.": "Boost FPS는 Fabric/Forge 게임이 필요합니다.",
+        "Adding performance mods…": "성능 모드 추가 중…",
+        "Added {n} performance mod(s) — press PLAY.": "성능 모드 {n}개를 추가했습니다 — PLAY를 누르세요.",
+        "Already fully optimized — nothing to add.": "이미 완전히 최적화됨 — 추가할 것이 없습니다.",
+        "Couldn't add performance mods: {m}": "성능 모드를 추가하지 못했습니다: {m}",
         "Install a modpack you downloaded — a Modrinth .mrpack or CurseForge .zip.":
             "내려받은 모드팩 설치 — Modrinth .mrpack 또는 CurseForge .zip 파일.",
         "Import modpack": "모드팩 가져오기",
