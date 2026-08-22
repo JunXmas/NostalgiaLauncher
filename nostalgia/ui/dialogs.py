@@ -9,6 +9,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QLineEdit, QTextBrowser, QWidget
 
 from .. import modrinth
+from ..i18n import tr
 from .controls import AeroSlider, AeroToggle, ListView, Row
 from .theme import ACCENT, DEGRADED, TEXT, TEXT_DIM, TEXT_FAINT, gloss_gradient, ui_font
 from .widgets import AeroButton
@@ -170,6 +171,43 @@ class ConfirmDialog(GlassDialog):
         p.setPen(TEXT_DIM)
         p.drawText(QRect(c.left() + 22, c.top() + 54, c.width() - 44, 66),
                    Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, self.message)
+
+
+# ---------- chào mừng lần đầu (onboarding) ----------
+
+class WelcomeDialog(GlassDialog):
+    """Màn chào lần đầu: một hành động chính rõ ràng (Fitts) dẫn người mới tới
+    lần chơi đầu tiên, cộng hai lối phụ. Chỉ hiện khi chưa có game nào."""
+
+    setup = Signal()    # tạo game mặc định 1-click
+    browse = Signal()   # mở kho modpack dựng sẵn
+
+    BODY = ("Let’s get your first game running. One click sets up a ready-to-play "
+            "copy of Minecraft with the Aero glass look — no setup, no jargon.\n\n"
+            "After that, three easy moves make it yours:  play once  ·  add a skin  ·  add a mod.")
+
+    def __init__(self, parent):
+        super().__init__(parent, tr("Welcome to Nostalgia Launcher"), width=520, height=312)
+        self.primary = AeroButton(tr("SET UP MY FIRST GAME"), self, height=42, tone="green")
+        self.primary.clicked.connect(lambda: (self.setup.emit(), self.dismiss()))
+        self.browse_btn = AeroButton(tr("BROWSE READY-MADE PACKS"), self, height=32, tone="neutral")
+        self.browse_btn.clicked.connect(lambda: (self.browse.emit(), self.dismiss()))
+        self.skip = AeroButton(tr("SKIP FOR NOW"), self, height=32, tone="neutral")
+        self.skip.clicked.connect(self.dismiss)
+        self.place()
+
+    def place(self) -> None:
+        c = self.card
+        self.browse_btn.setGeometry(c.left() + 22, c.bottom() - 104, c.width() - 232, 32)
+        self.skip.setGeometry(c.right() - 182, c.bottom() - 104, 160, 32)
+        self.primary.setGeometry(c.left() + 22, c.bottom() - 60, c.width() - 44, 42)
+
+    def paint_body(self, p: QPainter) -> None:
+        c = self.card
+        p.setFont(ui_font(9))
+        p.setPen(TEXT_DIM)
+        p.drawText(QRect(c.left() + 22, c.top() + 52, c.width() - 44, 96),
+                   Qt.AlignLeft | Qt.AlignTop | Qt.TextWordWrap, tr(self.BODY))
 
 
 # ---------- chọn loader ----------
@@ -396,14 +434,81 @@ class ReportDialog(GlassDialog):
         self.close_btn.setGeometry(c.right() - 122, c.bottom() - 48, 100, 32)
 
 
-# ---------- duyệt & cài modpack Modrinth ----------
-
 def _compact(n: int) -> str:
     for div, suf in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
         if n >= div:
             return f"{n / div:.1f}{suf}"
     return str(n)
 
+
+class ModpackDetailDialog(GlassDialog):
+    """Xem mô tả đầy đủ của một modpack rồi mới quyết định cài."""
+
+    def __init__(self, parent, ctl, hit):
+        super().__init__(parent, hit.get("title", "Modpack"),
+                         width=min(700, parent.width() - 70),
+                         height=min(520, parent.height() - 80))
+        self.ctl = ctl
+        self.hit = hit
+        self._icon = None
+        self.view = QTextBrowser(self)
+        self.view.setStyleSheet(REPORT_QSS)
+        self.view.setFont(ui_font(9))
+        self.view.setOpenExternalLinks(True)
+        self.view.setMarkdown((hit.get("description") or "").strip() or "Loading…")
+        self.install_btn = AeroButton("INSTALL", self, height=34, tone="green")
+        self.install_btn.clicked.connect(self._install)
+        self.close_btn = AeroButton("CLOSE", self, height=34, tone="neutral")
+        self.close_btn.clicked.connect(self.dismiss)
+        self.place()
+        slug = hit.get("slug") or hit.get("project_id")
+        if slug:
+            ctl._run(lambda: modrinth.project(slug), self._got_project, lambda _m: None)
+        url = hit.get("icon_url")
+        if url:
+            ctl._run(lambda: modrinth.fetch_icon(url), self._got_icon, lambda _m: None)
+
+    def _got_project(self, proj) -> None:
+        body = (proj.get("body") or "").strip()
+        if body:
+            self.view.setMarkdown(body)
+
+    def _got_icon(self, data) -> None:
+        pm = QPixmap()
+        if pm.loadFromData(data):
+            self._icon = pm
+            self.update()
+
+    def _install(self) -> None:
+        self.ctl.install_modpack(self.hit)
+        self.dismiss()
+
+    def place(self) -> None:
+        c = self.card
+        self.view.setGeometry(c.left() + 20, c.top() + 100, c.width() - 40, c.height() - 164)
+        self.install_btn.setGeometry(c.right() - 254, c.bottom() - 48, 124, 34)
+        self.close_btn.setGeometry(c.right() - 122, c.bottom() - 48, 100, 34)
+
+    def paint_body(self, p: QPainter) -> None:
+        c = self.card
+        ic = QRect(c.left() + 22, c.top() + 46, 46, 46)
+        if self._icon is not None:
+            p.fillRect(ic, QColor(28, 40, 60, 120))
+            s = self._icon.scaled(46, 46, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            p.drawPixmap(ic.left() + (46 - s.width()) // 2, ic.top() + (46 - s.height()) // 2, s)
+        else:
+            p.fillRect(ic, QColor(40, 60, 90, 160))
+        p.setPen(QColor(255, 255, 255, 40)); p.setBrush(Qt.NoBrush); p.drawRect(ic)
+        h = self.hit
+        p.setFont(ui_font(10, bold=True)); p.setPen(TEXT)
+        p.drawText(ic.right() + 14, c.top() + 62, f"by {h.get('author', '?')}")
+        p.setFont(ui_font(9)); p.setPen(TEXT_DIM)
+        p.drawText(QRect(ic.right() + 14, c.top() + 70, c.width() - 120, 18),
+                   Qt.AlignLeft | Qt.AlignVCenter,
+                   f"⬇ {_compact(h.get('downloads', 0))}    ♥ {_compact(h.get('follows', 0))}")
+
+
+# ---------- duyệt & cài modpack Modrinth ----------
 
 class ModpackDialog(GlassDialog):
     """Tìm modpack trên Modrinth và cài thẳng thành một instance mới."""
@@ -487,6 +592,40 @@ class ModpackDialog(GlassDialog):
         self.dismiss()
 
 
+class ImportInstancesDialog(GlassDialog):
+    """Liệt kê instance tìm thấy từ launcher khác; bấm một dòng để nhập."""
+
+    def __init__(self, parent, ctl, found):
+        super().__init__(parent, "Import a game from another launcher",
+                         width=min(660, parent.width() - 60),
+                         height=min(480, parent.height() - 80))
+        self.ctl = ctl
+        self.results = ListView(self, empty_text="No games found.")
+        self.results.activated.connect(self._pick)
+        self.results.badge_clicked.connect(self._pick)
+        self.close_btn = AeroButton("CLOSE", self, height=30, tone="neutral")
+        self.close_btn.clicked.connect(self.dismiss)
+        rows = []
+        for f in found:
+            bits = [f.launcher]
+            if f.mc:
+                bits.append(f.mc)
+            bits.append(f.loader or "vanilla")
+            rows.append(Row(title=f.name, subtitle=" · ".join(bits),
+                            badge="IMPORT", badge_on=True, data=f))
+        self.results.set_rows(rows)
+        self.place()
+
+    def place(self) -> None:
+        c = self.card
+        self.results.setGeometry(c.left() + 20, c.top() + 52, c.width() - 40, c.height() - 116)
+        self.close_btn.setGeometry(c.right() - 118, c.bottom() - 46, 98, 30)
+
+    def _pick(self, found) -> None:
+        self.ctl.import_external(found)
+        self.dismiss()
+
+
 # ---------- chọn phiên bản Minecraft ----------
 
 class VersionPickerDialog(GlassDialog):
@@ -563,8 +702,10 @@ class InstanceSettingsDialog(GlassDialog):
     repair = Signal()
     set_icon = Signal()
     reset_icon = Signal()
+    aero_toggled = Signal(bool)     # bật/tắt Aero UI cho instance này
 
-    def __init__(self, parent, inst, *, default_memory: int, max_memory: int):
+    def __init__(self, parent, inst, *, default_memory: int, max_memory: int,
+                 aero_on: bool = False):
         super().__init__(parent, f"Instance settings", width=480, height=392)
         self.old_name = inst.name
         self.name = QLineEdit(inst.name, self)
@@ -588,7 +729,21 @@ class InstanceSettingsDialog(GlassDialog):
         self.icon_btn.clicked.connect(self.set_icon.emit)
         self.icon_reset = AeroButton("RESET", self, height=30, tone="neutral")
         self.icon_reset.clicked.connect(self.reset_icon.emit)
+        self.aero_on = aero_on
+        self.aero_btn = AeroButton(self._aero_label(), self, height=30,
+                                   tone="green" if aero_on else "neutral")
+        self.aero_btn.clicked.connect(self._toggle_aero)
         self.place()
+
+    def _aero_label(self) -> str:
+        return "AERO UI: ON" if self.aero_on else "AERO UI: OFF"
+
+    def _toggle_aero(self) -> None:
+        self.aero_on = not self.aero_on
+        self.aero_btn.setText(self._aero_label())
+        self.aero_btn.tone = "green" if self.aero_on else "neutral"
+        self.aero_btn.update()
+        self.aero_toggled.emit(self.aero_on)
 
     def _save(self) -> None:
         self.saved.emit(self.name.text().strip() or self.old_name,
@@ -602,6 +757,7 @@ class InstanceSettingsDialog(GlassDialog):
         self.java.setGeometry(c.left() + 22, c.top() + 222, c.width() - 44, 32)
         self.icon_btn.setGeometry(c.left() + 22, c.top() + 292, 120, 30)
         self.icon_reset.setGeometry(c.left() + 150, c.top() + 292, 84, 30)
+        self.aero_btn.setGeometry(c.left() + 244, c.top() + 292, 194, 30)
         self.dup.setGeometry(c.left() + 22, c.bottom() - 46, 108, 30)
         self.rep.setGeometry(c.left() + 138, c.bottom() - 46, 92, 30)
         self.ok.setGeometry(c.right() - 128, c.bottom() - 46, 106, 30)

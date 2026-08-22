@@ -1,0 +1,10 @@
+{
+  "pack": {
+    "pack_format": 3,
+    "supported_formats": {
+      "min_inclusive": 3,
+      "max_inclusive": 99
+    },
+    "description": "\u00a7bAero glass UI \u00a77\u2014 Nostalgia Launcher"
+  }
+}

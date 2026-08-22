@@ -12,9 +12,12 @@ import requests
 from PySide6.QtCore import QThread, Signal
 
 from .. import auth, google_auth
-from ..accounts import OFFLINE, AccountStore, StoredAccount
+from ..accounts import OFFLINE, AccountStore, StoredAccount, refresh_if_online
 from ..install import Installer
-from ..launch import build_command, ensure_offline_libraries, launch_game_offline, run
+from ..launch import (
+    build_command, ensure_offline_libraries, launch_game_offline, run,
+    terminate_process,
+)
 
 
 class FnWorker(QThread):
@@ -108,10 +111,11 @@ class LaunchWorker(QThread):
     def __init__(self, store: AccountStore, account: StoredAccount, version: str,
                  game_dir: Path, memory_mb: int = 2048, java_path: str = "",
                  offline: bool = False, store_root: Path | None = None,
-                 quick_play: dict | None = None, parent=None):
+                 quick_play: dict | None = None, client_id: str = "", parent=None):
         super().__init__(parent)
         self.store = store
         self.account = account
+        self.client_id = client_id        # có -> làm mới token MSA ở luồng nền
         self.version = version
         self.game_dir = game_dir          # thư mục game của instance (mods/saves)
         self.store_root = store_root or game_dir   # kho versions/libraries/assets/runtime dùng chung
@@ -120,18 +124,24 @@ class LaunchWorker(QThread):
         self.offline = offline
         self.quick_play = quick_play      # vào thẳng server/thế giới (Quick Play)
         self._proc = None            # tiến trình game, để dừng khi bấm STOP
+        self._cancelled = False      # bấm STOP khi còn đang tải/chuẩn bị
 
     def _capture(self, proc) -> None:
         self._proc = proc
         self.game_started.emit()
 
     def stop(self) -> None:
-        """Dừng game đang chạy (bấm STOP)."""
-        proc = self._proc
-        if proc and proc.poll() is None:
-            proc.terminate()
+        """Bấm STOP: nếu game đã chạy thì kết thúc tiến trình; nếu còn đang tải/
+        chuẩn bị thì đánh dấu huỷ để KHÔNG bật game lên sau khi tải xong."""
+        self._cancelled = True
+        self.requestInterruption()
+        # terminate_process: SIGTERM cả nhóm rồi SIGKILL nếu còn sống sau vài giây.
+        # Chỉ proc.terminate() thì nhiều bản Minecraft lờ SIGTERM -> STOP vô tác dụng.
+        terminate_process(self._proc)
 
-    def _launch_offline(self, installer: Installer, identity) -> int:
+    def _launch_offline(self, installer: Installer, identity):
+        if self._interrupted():
+            return None
         return launch_game_offline(
             self.version, installer, identity,
             java=self.java_path or None,
@@ -142,9 +152,18 @@ class LaunchWorker(QThread):
             quick_play=self.quick_play,
         )
 
-    def _launch_online(self, installer: Installer, identity) -> int:
+    def _interrupted(self) -> bool:
+        """Đã bấm STOP trong lúc chuẩn bị? Nếu có, báo và bỏ, đừng bật game."""
+        if self._cancelled or self.isInterruptionRequested():
+            self.status.emit("Stopped.")
+            return True
+        return False
+
+    def _launch_online(self, installer: Installer, identity):
         self.status.emit(f"Preparing {self.version}…")
         meta = installer.install(self.version)
+        if self._interrupted():
+            return None
 
         # Tự tải JRE Mojang nếu người dùng chưa đặt đường dẫn Java và máy chưa có.
         if not self.java_path:
@@ -157,6 +176,9 @@ class LaunchWorker(QThread):
             for warning in ensure_offline_libraries(meta, installer):
                 self.status.emit(warning)
 
+        if self._interrupted():   # có thể vừa bấm STOP trong lúc tải JRE
+            return None
+
         cmd = build_command(meta, installer, identity,
                             java=self.java_path or None, max_memory_mb=self.memory_mb,
                             quick_play=self.quick_play)
@@ -165,6 +187,10 @@ class LaunchWorker(QThread):
 
     def run(self) -> None:  # noqa: D102
         try:
+            # Làm mới token MSA ở đây (luồng nền), không ở GUI thread: mạng chậm
+            # không còn treo cửa sổ. refresh_if_online tự bỏ qua tài khoản offline.
+            if self.client_id:
+                self.account = refresh_if_online(self.store, self.account, self.client_id)
             identity = self.store.resolve_identity(self.account)
             installer = Installer(self.game_dir, on_progress=self.progress.emit,
                                   store_root=self.store_root)
@@ -179,7 +205,11 @@ class LaunchWorker(QThread):
                     self.status.emit("No connection — using what is already downloaded…")
                     code = self._launch_offline(installer, identity)
 
-            if code != 0:
+            if code is None:      # đã bấm STOP khi đang tải/chuẩn bị → huỷ lặng lẽ
+                return
+            # Bấm STOP hoặc bị reap (kill/đóng stdout) thì mã thoát khác 0 là bình
+            # thường — đừng báo lỗi.
+            if code != 0 and not self._cancelled:
                 self.failed.emit(f"Game exited with code {code}")
                 return
             self.finished_ok.emit()

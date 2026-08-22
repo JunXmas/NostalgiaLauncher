@@ -241,18 +241,46 @@ class Installer:
         jar_id = meta.get("jar", meta["id"])
         return self.versions_dir / jar_id / f"{jar_id}.jar"
 
+    @staticmethod
+    def _lib_coord(name: str) -> str | None:
+        """Toạ độ 'group:artifact(:classifier)' từ tên maven, BỎ version.
+
+        Dùng để nhận ra hai bản khác version của cùng một thư viện."""
+        parts = name.split(":")
+        if len(parts) < 2:
+            return None
+        coord = f"{parts[0]}:{parts[1]}"
+        if len(parts) >= 4:            # có classifier -> giữ để không gộp nhầm natives
+            coord += f":{parts[3]}"
+        return coord
+
     def library_paths(self, meta: dict) -> list[Path]:
-        """Các jar cần đưa vào classpath (đã lọc theo OS), giữ nguyên thứ tự khai báo."""
-        paths, seen = [], set()
+        """Các jar cần đưa vào classpath (đã lọc theo OS), giữ nguyên thứ tự khai báo.
+
+        Dedupe theo TOẠ ĐỘ group:artifact, không chỉ theo đường dẫn: một instance
+        Fabric trộn thư viện của loader với của vanilla, và hai bên có thể khai
+        cùng một thư viện ở hai version (vd org.ow2.asm:asm 9.10.1 của Fabric và
+        9.6 của vanilla). Để cả hai trên classpath làm Fabric Loader ném
+        "duplicate ... classes found on classpath" và game không chạy. Giữ bản
+        ĐẦU tiên — sau khi trộn, thư viện của loader đứng trước vanilla nên loader
+        thắng, đúng như launcher chính thức.
+        """
+        paths, seen_path, seen_coord = [], set(), set()
         for lib in meta["libraries"]:
             if not rules_allow(lib.get("rules")):
                 continue
             if "natives" in lib:
                 continue  # jar natives không nằm trên classpath
             entry = self._artifact_of(lib)
-            if entry and entry[1] not in seen:
-                seen.add(entry[1])
-                paths.append(entry[1])
+            if not entry or entry[1] in seen_path:
+                continue
+            coord = self._lib_coord(lib.get("name", ""))
+            if coord and coord in seen_coord:
+                continue              # đã có bản khác của thư viện này -> bỏ
+            seen_path.add(entry[1])
+            if coord:
+                seen_coord.add(coord)
+            paths.append(entry[1])
         return paths
 
     def _install_libraries(self, meta: dict) -> None:

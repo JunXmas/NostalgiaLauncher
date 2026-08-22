@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from PySide6.QtCore import (
-    QEasingCurve, QRect, QRectF, Qt, QVariantAnimation, Signal,
+    QEasingCurve, QRect, QRectF, Qt, QTimer, QVariantAnimation, Signal,
 )
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import (
@@ -72,7 +72,11 @@ class ModpackCards(QWidget):
         self.hits: list = []
         self.icons: dict = {}
         self.empty_text = "Loading modpacks…"
-        self.scroll = 0
+        self.scroll = 0.0
+        self._scroll_target = 0.0
+        self._scroll_anim = QTimer(self)
+        self._scroll_anim.setInterval(15)
+        self._scroll_anim.timeout.connect(self._scroll_tick)
         self._hover = -1
         self._hover_amt = 0.0
         self._anim = QVariantAnimation(self)
@@ -86,7 +90,8 @@ class ModpackCards(QWidget):
 
     def set_hits(self, hits) -> None:
         self.hits = hits
-        self.scroll = 0
+        self.scroll = self._scroll_target = 0.0
+        self._scroll_anim.stop()
         self.update()
 
     def _cw(self) -> float:
@@ -137,8 +142,18 @@ class ModpackCards(QWidget):
     def wheelEvent(self, e):  # noqa: N802
         overflow = self._content_h() - self.height()
         if overflow > 0:
-            self.scroll = max(0, min(overflow, self.scroll - e.angleDelta().y()))
-            self.update()
+            self._scroll_target = max(0.0, min(overflow, self._scroll_target - e.angleDelta().y()))
+            if not self._scroll_anim.isActive():
+                self._scroll_anim.start()
+
+    def _scroll_tick(self) -> None:
+        d = self._scroll_target - self.scroll
+        if abs(d) < 0.6:
+            self.scroll = self._scroll_target
+            self._scroll_anim.stop()
+        else:
+            self.scroll += d * 0.28
+        self.update()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
@@ -272,8 +287,13 @@ class ModpackBrowsePage(Page):
         self._cat_rects: list[tuple[QRect, str]] = []
         self._icon_wanted: set = set()
 
+        self.source = "modrinth"          # nguồn modpack đang xem
+
         self.back_btn = AeroButton("‹  BACK", self, height=30, tone="neutral")
         self.back_btn.clicked.connect(lambda: self.ctl.go("installations"))
+
+        self.source_btn = AeroButton("Source: Modrinth", self, height=30, tone="neutral")
+        self.source_btn.clicked.connect(self._open_source)
 
         self.search = QLineEdit(self)
         self.search.setPlaceholderText("Search modpacks…")
@@ -291,7 +311,7 @@ class ModpackBrowsePage(Page):
         self.version.returnPressed.connect(self._load)
 
         self.cards = ModpackCards(self)
-        self.cards.activated.connect(self._install)
+        self.cards.activated.connect(self._open_detail)
 
     # ---------- vòng đời ----------
 
@@ -304,7 +324,10 @@ class ModpackBrowsePage(Page):
         self.back_btn.setGeometry(24, 52, 92, 30)
         content_x = 24 + SIDEBAR_W + 20
         content_w = w - content_x - 24
-        self.search.setGeometry(content_x, PANEL_TOP, content_w - 200, 32)
+        src_w = 168
+        self.source_btn.setGeometry(content_x, PANEL_TOP, src_w, 32)
+        self.search.setGeometry(content_x + src_w + 10, PANEL_TOP,
+                                content_w - 200 - src_w - 10, 32)
         self.sort_btn.setGeometry(content_x + content_w - 190, PANEL_TOP, 190, 32)
         self._place_filters()
         self.cards.setGeometry(content_x, PANEL_TOP + 42, content_w,
@@ -317,7 +340,31 @@ class ModpackBrowsePage(Page):
 
     # ---------- tải dữ liệu ----------
 
+    def _open_source(self) -> None:
+        items = [MenuItem(kind="header", label="Source"),
+                 MenuItem(label="Modrinth", checked=self.source == "modrinth", data="modrinth"),
+                 MenuItem(label="CurseForge", checked=self.source == "curseforge", data="curseforge")]
+        b = self.source_btn
+        origin = b.mapTo(self.window(), b.rect().topLeft())
+        popup(self.window(), items, QRect(origin, b.size()), self._pick_source, width=180)
+
+    def _pick_source(self, key) -> None:
+        if not key or key == self.source:
+            return
+        self.source = key
+        self.source_btn.setText("Source: " + ("CurseForge" if key == "curseforge" else "Modrinth"))
+        self.sort_btn.setVisible(key == "modrinth")   # sort chỉ có ở Modrinth
+        self.search.setPlaceholderText(
+            "Search CurseForge…  (or paste a numeric Project ID)" if key == "curseforge"
+            else "Search modpacks…")
+        self.cards.set_hits([])
+        self._count = 0
+        self._load()
+
     def _load(self) -> None:
+        if self.source == "curseforge":
+            self._load_curseforge()
+            return
         q = self.search.text().strip()
         gv = self.version.text().strip()
         cats = sorted(self._selected_cats)
@@ -331,6 +378,43 @@ class ModpackBrowsePage(Page):
                 index=self._sort, limit=40),
             self._show,
             lambda m: self._fail(m))
+
+    def _load_curseforge(self) -> None:
+        from .. import curseforge as cf
+        q = self.search.text().strip()
+        gv = self.version.text().strip()
+        key = self.ctl.settings.curseforge_key
+        backend = "" if key else getattr(self.ctl.settings, "backend_url", "")
+        # Một con số = Project ID -> cài thẳng, không cần tìm (luôn chạy, không cần key).
+        if not key and q.isdigit():
+            self.ctl.install_curseforge_by_id(q, game_version=gv or None)
+            self.cards.empty_text = "Installing from CurseForge…"
+            self.cards.set_hits([])
+            return
+        if not key and not backend:
+            self.cards.empty_text = self._CF_BY_ID_HINT
+            self.cards.set_hits([])
+            return
+        # Có key riêng, hoặc qua backend của launcher: tìm theo tên.
+        self.cards.empty_text = "Loading from CurseForge…"
+        self.cards.set_hits([])
+        self.ctl._run(
+            lambda: cf.search_modpacks(q, key=key, backend=backend,
+                                       game_version=gv or None, page_size=40),
+            self._show,
+            self._fail_curseforge)
+
+    _CF_BY_ID_HINT = (
+        "Type a CurseForge modpack's numeric Project ID and press Enter to install it "
+        "(the number is shown in the right column of its CurseForge page).\n\n"
+        "Want to search by name? Add a free CurseForge API key in Settings.")
+
+    def _fail_curseforge(self, msg: str) -> None:
+        # Backend chưa cấu hình key (503) hoặc lỗi mạng -> vẫn cài theo Project ID được.
+        self.cards.empty_text = ("CurseForge search isn't available right now — you can "
+                                 "still install by Project ID.\n\n" + self._CF_BY_ID_HINT)
+        self.cards.set_hits([])
+        self.update()
 
     def _fail(self, msg: str) -> None:
         self.cards.empty_text = f"Couldn't reach Modrinth: {msg}"
@@ -357,9 +441,14 @@ class ModpackBrowsePage(Page):
             self.cards.icons[url] = pm
             self.cards.update()
 
-    def _install(self, hit) -> None:
-        self.ctl.install_modpack(hit)
-        self.ctl.go("installations")
+    def _open_detail(self, hit) -> None:
+        """Bấm một modpack -> mở cửa sổ mô tả (icon, tác giả, mô tả đầy đủ) rồi mới cài."""
+        if hit.get("source") == "curseforge":
+            # CurseForge: cài thẳng theo Project ID (không có endpoint mô tả keyless).
+            self.ctl.install_curseforge_by_id(hit.get("project_id"))
+            return
+        from .dialogs import ModpackDetailDialog
+        ModpackDetailDialog(self.window(), self.ctl, hit).show()
 
     # ---------- sort + lọc ----------
 
@@ -367,9 +456,9 @@ class ModpackBrowsePage(Page):
         items = [MenuItem(kind="header", label="Sort by")]
         for label, key in SORTS:
             items.append(MenuItem(label=label, checked=key == self._sort, data=key))
-        g = self.sort_btn.geometry()
-        origin = self.sort_btn.mapTo(self.window(), g.topLeft())
-        popup(self.window(), items, QRect(origin, g.size()), self._pick_sort, width=190)
+        b = self.sort_btn
+        origin = b.mapTo(self.window(), b.rect().topLeft())
+        popup(self.window(), items, QRect(origin, b.size()), self._pick_sort, width=190)
 
     def _pick_sort(self, key) -> None:
         if not key:

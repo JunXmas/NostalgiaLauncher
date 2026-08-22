@@ -2,6 +2,248 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.16
+- **Cleaner, friendlier interface — still full Aero glass.**
+  - Games now show a **plain-language version** everywhere ("1.21.11 · Fabric",
+    "1.12.2 · Forge") instead of raw ids like "fabric-loader-0.19.3-1.21.11".
+  - The sidebar is **grouped** into Customize / Multiplayer / System so the ten
+    entries are easy to scan.
+  - The **glass buttons got glossier** — a subtle top reflection that brightens on
+    hover, keeping the Aero look and enhancing it.
+  - Removed the duplicate "New Game" button on Home (the ＋ tile stays), added a
+    soft shadow so headings stay readable over the background, and renamed a couple
+    of jargon labels ("Get Modpack" → "Modpacks", "Check Install" → "Check Files").
+
+## 0.9.15
+- **More FPS for weak PCs.** The Optimized profile now layers extra performance mods
+  on top of Fabulously Optimized — **ModernFix** (less RAM, faster startup),
+  **Dynamic FPS**, **BadOptimizations**, **Noisium** (faster world generation) and
+  **Super Resolution** — for maximum frames on low-end machines.
+- **New "⚡ Boost FPS" button** on any Fabric/Forge game's page adds that same set of
+  performance mods to a game you already have. It only pulls what's missing and
+  compatible with your version, so it's safe to press anytime.
+
+## 0.9.14
+- **Skins page now explains shared skins.** A small line at the bottom notes that
+  friends see your skin in-game on modded (Fabric/Forge) games, with no extra setup —
+  so it's clear the skin you pick is what others will see.
+
+## 0.9.13
+- **Fixed: games made with NEW GAME had no Aero UI.** Creating a game with NEW GAME
+  didn't apply the Aero UI (glass buttons/menus) or shared skins the way the first-
+  run setup and modpack installs do, so the Aero resource pack/mod was missing until
+  the first launch. New games now get Aero UI + shared skins right away (Aero still
+  respects the toggle in Settings).
+
+## 0.9.12
+- **Fixed: the Import menu on the Games page did nothing.** Because that button
+  sits at the bottom of the window, its menu opened off the bottom edge and was
+  invisible — so "Import ▸ From another launcher…" (and the modpack-file import)
+  couldn't be reached. The menu now opens upward and on-screen. (Same off-by anchor
+  math also nudged the modpack page's Source/Sort menus; both corrected.)
+- **CurseForge everywhere: modpacks, mods, resource packs and shaders.** Every
+  Browse page now has a Modrinth/CurseForge source switch. Search CurseForge by
+  name out of the box — the launcher's backend holds the CurseForge API key, so no
+  one needs their own — and install with one click (required dependencies come
+  along too). Installing works with no key; searching by name uses the backend, or
+  your own CurseForge key from Settings ▸ Advanced. Modpacks can still be installed
+  by Project ID with no setup, and everything falls back cleanly if search is
+  unavailable.
+
+## 0.9.11
+- **Crash reports you can actually read.** When a game exits with an error, the
+  launcher now reads the log and tells you the likely cause in plain words —
+  wrong Java version, out of memory, a missing required mod (like Fabric API),
+  duplicate mods, a mod conflict, a mod for the wrong version, or a graphics/OpenGL
+  problem — with a suggested fix, plus the relevant log tail to copy for help.
+  No more staring at "exit code 1".
+- **Install CurseForge modpacks without leaving the launcher.** On the modpack
+  page you can switch the source to CurseForge. Paste a pack's numeric Project ID
+  (shown on its CurseForge page) and it installs — no API key needed. Add a free
+  CurseForge API key in Settings → Advanced to search and browse packs by name too.
+- **Bring your games over from another launcher.** Games ▸ Import ▸ "From another
+  launcher…" scans your PC for instances from Prism/MultiMC, the CurseForge app,
+  the Modrinth app, and the vanilla launcher, and imports the one you pick — mods,
+  configs, worlds and all — setting up the right loader automatically.
+- **One-click modpack updates.** Packs installed from Modrinth or CurseForge get an
+  "Update pack" button on the game's page. It checks for a newer version, backs up
+  your current mods/config first (kept under `.pack-backups` so you can roll back),
+  then applies the update. Your worlds are left untouched.
+- The Import button on the Games page is now a small menu (modpack file, or from
+  another launcher) so the row stays tidy.
+
+## 0.9.10
+- **STOP now actually closes the game.** Pressing STOP used to leave Minecraft
+  running — some versions ignore the polite shutdown signal while the game is
+  drawing, so only Quit/Alt+F4 worked. STOP now asks the game to quit, then force-
+  closes it (and any child processes) if it doesn't exit within a few seconds. The
+  brief grace period lets a singleplayer world finish saving first. Closing the
+  launcher shuts the game down the same reliable way.
+- **Import a modpack from a file.** A new "＋ Import pack" button on the Games page
+  installs a modpack you already downloaded — either a Modrinth **.mrpack** or a
+  CurseForge **.zip** — as a fresh game. The launcher detects which kind it is,
+  downloads the mods, unpacks the included config, sets up the right mod loader
+  (Fabric/Forge/NeoForge) and turns on Aero UI + shared skins, just like installing
+  a modpack online. For CurseForge packs, any mods that can't be fetched are skipped
+  and counted so you know, instead of failing the whole install.
+
+## 0.9.9
+- **Import your own mods, resource packs and shaders from a file.** Each of those
+  sections now has an "Import file" button on the Installed tab — pick a .jar (mods)
+  or .zip (resource packs / shaders) you downloaded yourself and it drops into the
+  right folder for the game you're viewing. Duplicates are kept, not overwritten.
+- **Import World and Saves Folder now live only under the Worlds tab.** They used
+  to sit on every tab of a game's page; they belong with worlds, so that's where
+  they are now.
+
+## 0.9.8
+- Shared skins is now always on — the extra config switch was removed. It stays
+  automatic and out of your way.
+
+## 0.9.7
+- **Cracked players now see each other's skins.** The launcher makes sure
+  CustomSkinLoader (pointed at the built-in skin server) is set up on the game
+  you launch — every launch, including Play Together — so offline players see
+  each other's skins in-game with no setup. Your skin is shared automatically
+  when you change it in the launcher. Checking is instant when it's already
+  installed.
+
+## 0.9.6
+- **Pick which game to launch on the Play Together page.** A "Game to launch"
+  selector now sits at the top of the page and is used by both sides: Launch &
+  Join starts the game you chose into your friend's room, and a new Launch & Host
+  button lets you start the host game right from the page (then Esc → Open to LAN)
+  — no need to go back to Home first. The selector defaults to your current game.
+
+## 0.9.5
+- **Fixed: the window could freeze for a moment when you pressed PLAY.** For
+  Microsoft accounts the launcher refreshed your login on the UI thread before
+  starting; on a slow connection the whole window locked up until it finished.
+  That refresh now runs in the background, so PLAY responds instantly.
+- **Fixed: a genuine game crash could be reported as a clean exit.** The button
+  watchdog added in 0.9.4 could mask a non-zero exit code; crashes now surface
+  their error again, while Stop / Alt+F4 stay quiet as before.
+- **Fixed: Play Together could show "Live" even when the relay was unreachable.**
+  Hosting now waits for the relay connection before saying friends can join, and
+  reports an error instead of failing silently if the connection drops.
+- **Fixed: some buttons stayed in English on other languages.** The PLAY/STOP
+  button and every button on the Play Together page now follow your chosen
+  language, and Vietnamese picked up eight labels it was still missing.
+
+## 0.9.4
+- **Fixed: PLAY button stuck on STOP after closing the game.** When Minecraft was
+  closed with Alt+F4 (or Stop hit an error), the button could stay on STOP and
+  never flip back to PLAY. The button now tracks the real game process, and a
+  watchdog resets it within a second even if the log reader is still winding down.
+
+## 0.9.3
+- **Fixed: couldn't install resource packs or shaders from Browse Modrinth.**
+  When installing into a chosen game, the launcher wrongly filtered by the mod
+  loader (Fabric/Forge) — but resource packs and shaders aren't tied to a loader,
+  so nothing matched and you got "no compatible version". They install correctly
+  now.
+
+## 0.9.2
+- **Full translations for eight more languages.** Spanish, French, German,
+  Portuguese, Russian, Chinese, Japanese and Korean now cover the whole
+  interface — menus, pages, dialogs and the new Play Together page — instead of
+  just a handful of labels. Pick your language in Settings.
+
+## 0.9.1
+- **Five built-in menu backgrounds.** TUT 11 Sunrise, TUT11 sunset, TUT1
+  panorama, DanTDM Labs and TUT1 Village now ship with the launcher — pick any of
+  them on the Theme In-Game page, no importing needed.
+- The Play Together page now shows in your chosen language (its text was
+  English-only before).
+
+## 0.9.0
+- **Play together — no server, no setup.** A new **Play Together** page lets you
+  host your world or join a friend's with just a short room code. The host opens
+  their world to LAN, shares the code, and the friend's world shows up right in
+  Minecraft's LAN list — no dedicated server, no mods, no port-forwarding, and it
+  works even when the two of you are on different networks.
+- **The Aero look locks in across far more versions.** The launcher auto-picks a
+  real hard-lock for Fabric **1.16.5, 1.17.1, 1.18.2, 1.19.4, 1.20.6 and
+  1.21.11**, the newest **26.x** builds, and **Forge 1.12.2** — there the Aero
+  pack can't be turned off *or* overridden by another pack. Every other version
+  keeps the re-applied pack, so the theme still shows everywhere (down to 1.8.9).
+- **Pick your in-game background.** The new **Theme In-Game** page shows your menu
+  backgrounds as a card grid with a gently rotating live preview; click one to set
+  it. Comes with distinct Day and Night scenes plus any you add, and backgrounds
+  can be renamed.
+- **Install to the right game, every time.** Installing a mod or resource pack now
+  opens a modal to pick which game it goes into — incompatible games are dimmed
+  with the reason — so nothing lands in the wrong place. The easy-to-miss corner
+  dropdown is gone.
+- Removed the redundant "Dark menu background" toggle from Settings (the Theme
+  In-Game page covers it now).
+
+## 0.9.0-beta.2
+- **The Aero look now locks in across far more versions.** The launcher
+  auto-picks a real hard-lock for Fabric **1.16.5, 1.17.1, 1.18.2, 1.19.4,
+  1.20.6 and 1.21.11**, the newest **26.x** builds, and **Forge 1.12.2** — on
+  those the Aero pack can't be turned off *or* overridden by another pack. Every
+  other version keeps the re-applied pack, so the theme still shows everywhere
+  (including 1.8.9).
+- **Panorama page polish.** Backgrounds can be renamed, the Day and Night scenes
+  are now distinct, and the old Home "Theme: Day/Night" button is gone — the
+  Panorama page covers day, night and every custom background.
+
+## 0.9.0-beta.1
+- **Panorama backgrounds you can pick.** A new **Panorama** page shows your
+  menu backgrounds as a card grid — a live preview, name, tags and an Active
+  badge. Click one to set it; the launcher rebuilds the Aero pack for every
+  game so the title-screen background changes on next launch (or press
+  **F3+T** in-game to see it live). Comes with Day, Night and a few Aero
+  panorama themes.
+- **The Aero look now locks in on more versions.** The launcher picks the right
+  hard-lock automatically per game: the Aero pack can't be turned off *or*
+  overridden on 1.21.11 and on the newest 26.x builds, and simply shows as a
+  normal (re-applied) pack everywhere else from 1.16.5 up.
+- **The Aero pack loads cleanly on every version.** Its pack format is now
+  matched to each game, so newer versions no longer drop it as "incompatible".
+- Refreshed the built-in Day and Night title-screen panoramas.
+
+## 0.8.0-beta.3
+- **Day/night menu, one click from Home.** A "Menu: Day/Night" button on the
+  dashboard flips the title-screen panorama between the daytime and nighttime
+  scenes. It applies on next launch — or, in a running game, press **F3+T** at
+  the title screen to see it switch live, no restart needed.
+- **The Windows 7 look.** The interface now ships with Selawik (an open-source
+  stand-in for Segoe UI, the Aero-era font) and a larger, easier-to-read sidebar.
+- **Browse knows what you already have.** Mods already installed show an
+  "Installed" tag when browsing, and won't be downloaded again.
+- **Mods, Resource Packs and Shaders are back in the sidebar** (and still inside
+  each game's tabs), so you can browse them either way.
+- Removed the bundled FancyMenu mod (it added nothing on this version); the
+  animated menu blur (Blur+) stays. Updated the Discord link.
+
+## 0.8.0-beta.2
+- **Fixed: some game versions wouldn't launch at all** (e.g. 1.21.4, 1.20.6),
+  while others (like 1.21.11) worked. A Fabric game's own libraries and the
+  base game's libraries could include the same library at two versions, and both
+  ended up loaded at once — which the mod loader refuses, so the game quit before
+  it even opened, with no error. The launcher now keeps a single version of each
+  library (the loader's), matching the official launcher.
+
+## 0.8.0-beta.1
+_Beta — a big ease-of-use and looks upgrade. Please report anything odd._
+
+- **Easier for newcomers.** A first-run welcome sets up a ready-to-play game in
+  one click; menus speak plain language ("Games" instead of "Instances", with
+  hover tips everywhere); the sidebar is trimmed to five task-first entries
+  (mods, resource packs and shaders now live inside each game); and rarely-used
+  settings (game folder, Java path) hide behind an "Advanced" toggle.
+- **Safer to explore.** Removing a game now moves it to a `.trash` folder you can
+  restore from, instead of deleting it outright.
+- **Aero glass menus.** A frosted-glass Aero look across in-game menus (with the
+  world softly blurred behind), and the animated **title-screen panorama** now
+  ships in **Day** and **Night** themes — switch them under Settings.
+- **Extras bundled for modern Fabric games.** Blur+ (animated menu blur) and
+  FancyMenu (menu customization) install and lock in automatically alongside the
+  Aero pack.
+- **Fully translatable UI**, with Vietnamese included for all the new screens.
+
 ## 0.7.6
 - **Fixed: "Open folder", links and the installer opener did nothing in the
   installed app.** In the packaged build, the buttons that open a folder (Mods,

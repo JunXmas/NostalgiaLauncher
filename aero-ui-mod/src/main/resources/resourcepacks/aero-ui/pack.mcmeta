@@ -1,0 +1,8 @@
+{
+  "pack": {
+    "pack_format": ${packFormat},
+    "min_format": ${packFormat},
+    "max_format": ${packFormat},
+    "description": "§bAero glass UI §7— Nostalgia Launcher"
+  }
+}

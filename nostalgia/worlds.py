@@ -10,11 +10,52 @@ from __future__ import annotations
 import base64
 import gzip
 import json
+import re
+import shutil
 import socket
 import struct
+import zipfile
 from pathlib import Path
 
 from .instances import slug
+
+
+def _safe_world_name(name: str) -> str:
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", name).strip().strip(".")
+    return name[:64] or "World"
+
+
+def import_world_zip(zip_path: Path, saves_dir: Path) -> str:
+    """Giải nén một world Minecraft từ file .zip vào <instance>/saves/<tên>.
+
+    Tự nhận diện thư mục world (thư mục chứa level.dat, nông nhất) dù zip gói world
+    ở gốc hay trong một thư mục con. Trả về tên world đã thêm.
+    """
+    zip_path, saves_dir = Path(zip_path), Path(saves_dir)
+    with zipfile.ZipFile(zip_path) as z:
+        names = [n for n in z.namelist() if not n.endswith("/")]
+        levels = [n for n in names if n.rsplit("/", 1)[-1] == "level.dat"]
+        if not levels:
+            raise ValueError("This zip has no level.dat — it isn't a Minecraft world.")
+        levels.sort(key=lambda n: n.count("/"))
+        root = levels[0][: -len("level.dat")]        # "" hoặc "MyWorld/"
+        base = root.rstrip("/").rsplit("/", 1)[-1] if root else zip_path.stem
+        dest = saves_dir / _safe_world_name(base)
+        n = 2
+        while dest.exists():                          # không đè world sẵn có
+            dest = saves_dir / f"{_safe_world_name(base)} ({n})"; n += 1
+        dest.mkdir(parents=True)
+        for member in names:
+            if root and not member.startswith(root):
+                continue
+            rel = member[len(root):] if root else member
+            target = (dest / rel).resolve()
+            if not str(target).startswith(str(dest.resolve())):
+                continue                              # chặn zip-slip (../)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(member) as src, open(target, "wb") as out:
+                shutil.copyfileobj(src, out)
+    return dest.name
 
 # Mã tag NBT
 _TAG_END = 0
@@ -128,6 +169,61 @@ def recent_worlds(store, game_root: Path, limit: int = 8) -> list[dict]:
                         "instance": inst.name, "last": last})
     out.sort(key=lambda w: w["last"], reverse=True)
     return out[:limit]
+
+
+_GAME_MODE = {0: "Survival", 1: "Creative", 2: "Adventure", 3: "Spectator"}
+
+
+def _dir_size(path: Path) -> int:
+    total = 0
+    for p in path.rglob("*"):
+        try:
+            if p.is_file():
+                total += p.stat().st_size
+        except OSError:
+            pass
+    return total
+
+
+def list_worlds(saves_dir: Path) -> list[dict]:
+    """Liệt kê world trong một thư mục saves, kèm icon + thông tin từ level.dat.
+
+    Mỗi phần tử: {folder, title, last(ms), icon(bytes|None), size, mode, version,
+    hardcore}. Sắp theo lần chơi gần nhất (mới nhất trước).
+    """
+    saves_dir = Path(saves_dir)
+    out: list[dict] = []
+    if not saves_dir.is_dir():
+        return out
+    for wd in saves_dir.iterdir():
+        lvl = wd / "level.dat"
+        if not (wd.is_dir() and lvl.is_file()):
+            continue
+        info = {"folder": wd.name, "title": wd.name, "icon": None,
+                "last": int(lvl.stat().st_mtime * 1000), "size": _dir_size(wd),
+                "mode": "", "version": "", "hardcore": False}
+        try:
+            data = parse_nbt(lvl.read_bytes()).get("Data", {})
+            info["title"] = str(data.get("LevelName") or wd.name)
+            lp = data.get("LastPlayed")
+            if isinstance(lp, int) and lp > 0:
+                info["last"] = lp
+            info["mode"] = _GAME_MODE.get(data.get("GameType"), "")
+            info["hardcore"] = bool(data.get("hardcore"))
+            ver = data.get("Version")
+            if isinstance(ver, dict):
+                info["version"] = str(ver.get("Name", ""))
+        except Exception:  # noqa: BLE001 — hỏng thì dùng tên thư mục + mtime
+            pass
+        icon = wd / "icon.png"
+        if icon.is_file():
+            try:
+                info["icon"] = icon.read_bytes()
+            except OSError:
+                pass
+        out.append(info)
+    out.sort(key=lambda w: w["last"], reverse=True)
+    return out
 
 
 def recent_servers(store, game_root: Path, limit: int = 8) -> list[dict]:

@@ -382,6 +382,21 @@ class AeroButton(QAbstractButton):
         p.setPen(QPen(edge, 1))
         p.drawRoundedRect(r, 3, 3)
 
+        # Vệt phản chiếu kính LUÔN hiện ở nửa trên — làm mặt nút bóng "ướt" hơn (đặc
+        # trưng Aero); sáng thêm khi hover, mờ đi khi nhấn (như mặt kính lún vào).
+        sheen_a = int((44 + 22 * hov) * (1.0 - pressPos))
+        if sheen_a > 0:
+            p.save()
+            clip = QPainterPath()
+            clip.addRoundedRect(r, 3, 3)
+            p.setClipPath(clip)
+            sheen = QLinearGradient(r.topLeft(), QPointF(r.left(), r.top() + r.height() * 0.5))
+            sheen.setColorAt(0.0, QColor(255, 255, 255, sheen_a))
+            sheen.setColorAt(0.6, QColor(255, 255, 255, int(sheen_a * 0.16)))
+            sheen.setColorAt(1.0, QColor(255, 255, 255, 0))
+            p.fillRect(QRectF(r.left(), r.top(), r.width(), r.height() * 0.5), sheen)
+            p.restore()
+
         # Bóng đổ nội viền khi nhấn: bề mặt kính lún vào trong (dark inset ở đỉnh).
         if press > 0.01:
             p.save()
@@ -550,12 +565,12 @@ class SidebarItem(QAbstractButton):
         dx = 0.0 if checked else hov * 4.0
         # Màu icon/chữ chuyển mượt từ mờ -> rõ theo hover.
         base = TEXT if checked else _mix(TEXT_DIM, TEXT, hov)
-        icon_rect = QRectF(r.left() + 16 + dx, r.center().y() - 9, 18, 18)
+        icon_rect = QRectF(r.left() + 16 + dx, r.center().y() - 10, 20, 20)
         # Mục đang chọn: icon nhuốm xanh accent cho nổi bật.
         color = _mix(TEXT, GREEN_GLOW, 0.55) if checked else base
         _draw_nav_icon(p, self.icon_kind, icon_rect, color)
 
-        text_left = int(r.left() + 44 + dx)
+        text_left = int(r.left() + 46 + dx)
         if self.subtitle:
             f = ui_font(7)
             f.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
@@ -568,9 +583,9 @@ class SidebarItem(QAbstractButton):
             p.drawText(QRect(text_left, int(r.top() + 24), self.width() - 50, 18),
                        Qt.AlignLeft | Qt.AlignTop, self.subtitle)
         else:
-            p.setFont(ui_font(9, bold=checked))
+            p.setFont(ui_font(11, bold=checked))
             p.setPen(TEXT if checked else color)
-            p.drawText(QRect(text_left, int(r.top()), self.width() - 50, int(r.height())),
+            p.drawText(QRect(text_left, int(r.top()), self.width() - 52, int(r.height())),
                        Qt.AlignLeft | Qt.AlignVCenter, self.text())
         p.end()
 

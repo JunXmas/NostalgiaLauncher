@@ -6,7 +6,11 @@
 ; Kết quả: dist\installer\NostalgiaLauncher-<phiên bản>-Setup.exe
 
 #define AppName "Nostalgia Launcher"
-#define AppVersion "0.7.6"
+; Phiên bản truyền vào từ CI qua /DAppVersion=... (đọc nostalgia/__init__.py).
+; Fallback khi biên dịch tay không truyền.
+#ifndef AppVersion
+  #define AppVersion "0.0.0"
+#endif
 #define AppPublisher "Nostalgia Launcher"
 #define AppURL "https://github.com/jun/nostalgia-launcher"
 #define AppExeName "Nostalgia Launcher.exe"

@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "aero-ui",
+	"version": "${version}",
+	"name": "Aero UI",
+	"description": "Hard-locks the Nostalgia Launcher's Aero glass UI resource pack: always enabled AND forced to top priority so no other pack can override it.",
+	"authors": ["Nostalgia Launcher"],
+	"contact": {
+		"homepage": "https://github.com/JunXmas/NostalgiaLauncher"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/aero-ui/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.nostalgia.aeroui.AeroUiClient"]
+	},
+	"mixins": [
+		{
+			"config": "aero-ui.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.0",
+		"fabric-resource-loader-v0": "*",
+		"minecraft": "${mcDep}",
+		"java": "${javaDep}"
+	}
+}

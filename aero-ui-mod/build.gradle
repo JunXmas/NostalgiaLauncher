@@ -1,0 +1,146 @@
+// Build đa phiên bản từ MỘT source (AeroUiClient + PackRepositoryMixin). Chọn era
+// bằng -PaeroTarget=<key> (mặc định 121). Mỗi era một toolchain vì ranh giới
+// obfuscate của Minecraft:
+//   • 121: 1.21.x CÒN obfuscate  -> plugin fabric-loom-remap + officialMojangMappings
+//          -> jar được remap sang INTERMEDIARY (chạy runtime intermediary).
+//   • 26x: 26.x KHÔNG obfuscate   -> plugin fabric-loom (thường), không mappings
+//          -> jar giữ tên Mojang (chạy runtime Mojang-native).
+// Loom jar đăng ký CẢ hai plugin id nên nạp qua buildscript rồi apply theo era.
+buildscript {
+	repositories {
+		maven { url = 'https://maven.fabricmc.net/' }
+		gradlePluginPortal()
+		mavenCentral()
+	}
+	dependencies {
+		classpath "net.fabricmc:fabric-loom:${loom_version}"
+	}
+}
+
+ext.aeroTarget = (project.findProperty('aeroTarget') ?: '121').toString()
+ext.TARGETS = [
+	// packFormat = resource_major của bản (version.json) -> pack.mcmeta khớp đúng,
+	// kẻo game GỠ pack vì "incompatible" (1.21.11=75, 26.2=88, 1.20.6=32).
+	// era = biến thể source của AeroUiClient (modern=Identifier / legacy=ResourceLocation).
+	// release = phiên bản bytecode: phải ≤ Java runtime của game (1.20.x chạy Java 17).
+	'121': [mc: '1.21.11', api: '0.141.6+1.21.11', plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 75, era: 'modern', release: 21, mcDep: '>=1.21'],
+	'26x': [mc: '26.2',    api: '0.157.0+26.2',    plugin: 'net.fabricmc.fabric-loom',       mojmap: false, packFormat: 88, era: 'modern', release: 21, mcDep: '>=1.21'],
+	'20x': [mc: '1.20.6',  api: '0.100.8+1.20.6',  plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 32, era: 'legacy', release: 17, mcDep: '>=1.20 <1.21'],
+	'194': [mc: '1.19.4',  api: '0.87.2+1.19.4',   plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 13, era: 'legacy', release: 17, mcDep: '>=1.19 <1.20'],
+	'182': [mc: '1.18.2',  api: '0.77.0+1.18.2',   plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 8,  era: 'legacy', release: 17, mcDep: '>=1.18 <1.19'],
+	// 1.17.1/1.16.5 KHÔNG có bundled server jar -> không split env source set được
+	// (split chỉ từ 1.18). Dùng merged jar: split=false -> code client dồn vào main.
+	'171': [mc: '1.17.1',  api: '0.46.1+1.17',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 7,  era: 'legacy', release: 16, mcDep: '>=1.17 <1.18', split: false],
+	'165': [mc: '1.16.5',  api: '0.42.0+1.16',     plugin: 'net.fabricmc.fabric-loom-remap', mojmap: true,  packFormat: 6,  era: 'legacy', release: 8,  mcDep: '>=1.16.5 <1.17', split: false],
+]
+def T = TARGETS[aeroTarget]
+if (T == null) throw new GradleException("Unknown aeroTarget '${aeroTarget}' (use one of ${TARGETS.keySet()})")
+
+apply plugin: T.plugin
+apply plugin: 'maven-publish'
+
+base {
+	// jar riêng cho từng era: aero-ui-121-1.0.0.jar / aero-ui-26x-1.0.0.jar
+	archivesName = "aero-ui-${aeroTarget}"
+}
+
+repositories {
+}
+
+def useSplit = (T.split != false)   // mặc định split (client sourceSet riêng)
+
+loom {
+	if (useSplit) {
+		splitEnvironmentSourceSets()
+	}
+	mods {
+		"aero-ui" {
+			sourceSet sourceSets.main
+			if (useSplit) {
+				sourceSet sourceSets.client
+			}
+		}
+	}
+}
+
+// AeroUiClient khác nhau theo era (Identifier vs ResourceLocation). Mixin nằm ở
+// src/client/java dùng chung. Split: code client ở sourceSet 'client'. Merged (bản
+// cũ không split được): dồn cả Mixin + AeroUiClient + mixins.json vào 'main'.
+if (useSplit) {
+	sourceSets.client.java.srcDir "src/client-${T.era}/java"
+} else {
+	sourceSets.main.java.srcDir "src/client/java"
+	sourceSets.main.java.srcDir "src/client-${T.era}/java"
+	sourceSets.main.resources.srcDir "src/client/resources"
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${T.mc}"
+	// Bản obfuscate: dev map = official Mojang (source giữ tên Identifier/PackRepository),
+	// loom remap jar sang intermediary. Bản không obfuscate: MC đã là tên Mojang -> khỏi.
+	if (T.mojmap) {
+		mappings loom.officialMojangMappings()
+	}
+	// Bản obfuscate cần remap dep mod -> modImplementation. Bản không obfuscate
+	// (fabric-loom thường) KHÔNG có cấu hình modImplementation vì chẳng remap gì,
+	// nên dùng implementation. Chọn động theo era.
+	def modDep = T.mojmap ? 'modImplementation' : 'implementation'
+	add(modDep, "net.fabricmc:fabric-loader:${project.loader_version}")
+	add(modDep, "net.fabricmc.fabric-api:fabric-api:${T.api}")
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+	inputs.property "packFormat", T.packFormat
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version, "mcDep": T.mcDep, "javaDep": ">=${T.release}".toString()
+	}
+	// pack.mcmeta có ${packFormat} -> thay bằng format của era đang build.
+	filesMatching("resourcepacks/aero-ui/pack.mcmeta") {
+		expand "packFormat": T.packFormat
+	}
+}
+
+// mixins.json: compatibilityLevel phải khớp bytecode release để Mixin set được
+// trên đúng JRE (1.16.5 chạy Java 8 KHÔNG set nổi JAVA_21 -> crash lúc load).
+// File nằm ở client resources (split) hoặc main resources (merged) -> phủ mọi task
+// ProcessResources. JAVA_8/JAVA_16/JAVA_17/JAVA_21 theo T.release.
+def mixinCompat = "JAVA_${T.release}".toString()
+tasks.withType(ProcessResources).configureEach {
+	filesMatching("aero-ui.mixins.json") {
+		expand "mixinCompat": mixinCompat
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = T.release   // bytecode ≤ Java runtime của game theo era
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.toVersion(T.release)
+	targetCompatibility = JavaVersion.toVersion(T.release)
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+
+	repositories {
+	}
+}

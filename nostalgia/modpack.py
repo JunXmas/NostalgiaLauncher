@@ -29,6 +29,15 @@ def read_index(mrpack_path: Path) -> dict:
         return json.loads(z.read("modrinth.index.json"))
 
 
+def is_mrpack(path: Path) -> bool:
+    """File này có phải .mrpack (zip chứa modrinth.index.json) không?"""
+    try:
+        with zipfile.ZipFile(path) as z:
+            return "modrinth.index.json" in z.namelist()
+    except (OSError, zipfile.BadZipFile):
+        return False
+
+
 def loader_and_mc(index: dict) -> tuple[str, str]:
     """(loader, phiên_bản_minecraft) từ dependencies của pack."""
     deps = index.get("dependencies", {})
