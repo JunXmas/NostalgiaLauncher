@@ -384,25 +384,37 @@ class ModpackBrowsePage(Page):
         q = self.search.text().strip()
         gv = self.version.text().strip()
         key = self.ctl.settings.curseforge_key
-        if not key:
-            # Không có key -> không tìm được (Cloudflare chặn), nhưng cài theo Project ID
-            # thì luôn được. Nếu người dùng gõ một số, coi đó là Project ID và cài luôn.
-            if q.isdigit():
-                self.ctl.install_curseforge_by_id(q, game_version=gv or None)
-                self.cards.empty_text = "Installing from CurseForge…"
-            else:
-                self.cards.empty_text = (
-                    "Type a CurseForge modpack's numeric Project ID and press Enter to "
-                    "install it (the number is shown in the right column of its CurseForge "
-                    "page).\n\nWant to search by name? Add a free CurseForge API key in Settings.")
+        backend = "" if key else getattr(self.ctl.settings, "backend_url", "")
+        # Một con số = Project ID -> cài thẳng, không cần tìm (luôn chạy, không cần key).
+        if not key and q.isdigit():
+            self.ctl.install_curseforge_by_id(q, game_version=gv or None)
+            self.cards.empty_text = "Installing from CurseForge…"
             self.cards.set_hits([])
             return
+        if not key and not backend:
+            self.cards.empty_text = self._CF_BY_ID_HINT
+            self.cards.set_hits([])
+            return
+        # Có key riêng, hoặc qua backend của launcher: tìm theo tên.
         self.cards.empty_text = "Loading from CurseForge…"
         self.cards.set_hits([])
         self.ctl._run(
-            lambda: cf.search_modpacks(q, key=key, game_version=gv or None, page_size=40),
+            lambda: cf.search_modpacks(q, key=key, backend=backend,
+                                       game_version=gv or None, page_size=40),
             self._show,
-            lambda m: self._fail(m))
+            self._fail_curseforge)
+
+    _CF_BY_ID_HINT = (
+        "Type a CurseForge modpack's numeric Project ID and press Enter to install it "
+        "(the number is shown in the right column of its CurseForge page).\n\n"
+        "Want to search by name? Add a free CurseForge API key in Settings.")
+
+    def _fail_curseforge(self, msg: str) -> None:
+        # Backend chưa cấu hình key (503) hoặc lỗi mạng -> vẫn cài theo Project ID được.
+        self.cards.empty_text = ("CurseForge search isn't available right now — you can "
+                                 "still install by Project ID.\n\n" + self._CF_BY_ID_HINT)
+        self.cards.set_hits([])
+        self.update()
 
     def _fail(self, msg: str) -> None:
         self.cards.empty_text = f"Couldn't reach Modrinth: {msg}"

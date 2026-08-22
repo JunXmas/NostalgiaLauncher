@@ -2,6 +2,14 @@
 
 All notable changes to Nostalgia Launcher, newest first.
 
+## 0.9.12
+- **Browse and search CurseForge modpacks by name, built in.** The CurseForge
+  source on the modpack page now searches by name out of the box — the launcher's
+  backend holds the CurseForge API key, so no one needs their own. Installing by
+  Project ID still works with no setup, and power users can still put their own
+  CurseForge key in Settings ▸ Advanced to bypass the backend. If search is ever
+  unavailable, it falls back to install-by-ID cleanly.
+
 ## 0.9.11
 - **Crash reports you can actually read.** When a game exits with an error, the
   launcher now reads the log and tells you the likely cause in plain words —

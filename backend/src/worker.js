@@ -42,6 +42,8 @@ export default {
         return await getIdentity(path.slice("identity/".length), env);
       if (request.method === "PUT" && path.startsWith("identity/"))
         return await putIdentity(path.slice("identity/".length), request, env);
+      if (request.method === "GET" && path.startsWith("cf/"))
+        return await curseforgeProxy(path.slice("cf/".length), url.search, env);
       return json({ error: "not found" }, 404);
     } catch (e) {
       return json({ error: String(e && e.message || e) }, 500);
@@ -109,6 +111,33 @@ async function verifyOwner(username, request, env) {
   const claimed = await env.META.get(`owner:${username.toLowerCase()}`);
   if (claimed === "premium") return { ok: false, reason: "name owned by a premium account" };
   return { ok: true };
+}
+
+// ---------- proxy CurseForge ----------
+//
+// API tìm/duyệt của CurseForge (api.curseforge.com) BẮT BUỘC có API key, và endpoint
+// công khai của trang web thì bị Cloudflare chặn. Để mọi người dùng CF ngay mà không
+// ai phải tự xin key, ta giữ MỘT key ở đây (secret CURSEFORGE_KEY, đặt bằng
+// `wrangler secret put CURSEFORGE_KEY`) rồi chuyển tiếp yêu cầu. Key không bao giờ
+// rời server. Chỉ cho phép các đường dẫn đọc an toàn dưới `mods` (search + files).
+
+const CF_API = "https://api.curseforge.com/v1/";
+
+async function curseforgeProxy(rest, search, env) {
+  if (!env.CURSEFORGE_KEY)
+    return json({ error: "CurseForge is not configured on this backend" }, 503);
+  // Chỉ mở các đường dẫn đọc cần thiết, tránh biến Worker thành proxy mở.
+  if (!/^mods(\/|$)/.test(rest))
+    return json({ error: "forbidden path" }, 403);
+  const r = await fetch(`${CF_API}${rest}${search}`, {
+    headers: { "x-api-key": env.CURSEFORGE_KEY, Accept: "application/json" },
+  });
+  const body = await r.text();
+  return new Response(body, {
+    status: r.status,
+    headers: { ...CORS, "Content-Type": "application/json",
+               "Cache-Control": "public, max-age=300" },
+  });
 }
 
 // ---------- danh tính ----------

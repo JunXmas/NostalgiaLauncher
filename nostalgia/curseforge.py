@@ -85,10 +85,14 @@ def file_url(file_id, file_name: str, download_url: str | None = None) -> str:
     return download_url or _cdn_url(int(file_id), file_name)
 
 
-def search_modpacks(query: str, *, key: str, game_version: str | None = None,
+def search_modpacks(query: str, *, key: str = "", backend: str = "",
+                    game_version: str | None = None,
                     page_size: int = 40, index: int = 0) -> list[dict]:
-    """Tìm modpack trên CurseForge (CẦN key). Trả về dạng 'hit' giống Modrinth để
-    tái dùng UI thẻ: title/author/description/downloads/icon_url/project_id..."""
+    """Tìm modpack trên CurseForge. Cần MỘT trong hai đường:
+      - key: API key của chính người dùng -> gọi thẳng api.curseforge.com;
+      - backend: URL Worker của launcher -> gọi {backend}/cf/mods/search (key nằm
+        ở server, nên mọi người dùng được ngay mà không cần tự xin key).
+    Trả về 'hit' giống Modrinth để tái dùng UI thẻ."""
     params = {
         "gameId": _GAME_ID, "classId": _CLASS_MODPACK,
         "searchFilter": query, "pageSize": page_size, "index": index,
@@ -96,8 +100,14 @@ def search_modpacks(query: str, *, key: str, game_version: str | None = None,
     }
     if game_version:
         params["gameVersion"] = game_version
-    r = requests.get(f"{_API}/mods/search", params=params,
-                     headers=_headers(key), timeout=25)
+    if key:
+        r = requests.get(f"{_API}/mods/search", params=params,
+                         headers=_headers(key), timeout=25)
+    elif backend:
+        r = requests.get(f"{backend.rstrip('/')}/cf/mods/search", params=params,
+                         headers={"Accept": "application/json"}, timeout=25)
+    else:
+        raise RuntimeError("CurseForge search needs an API key or a backend.")
     r.raise_for_status()
     out = []
     for m in (r.json() or {}).get("data") or []:
