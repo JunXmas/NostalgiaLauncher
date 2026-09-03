@@ -27,6 +27,14 @@ class DataFileError(McCoreError):
     """File dữ liệu trên đĩa thiếu, hỏng, hoặc sai cấu trúc."""
 
 
+class NetworkError(McCoreError):
+    """Không lấy được dữ liệu qua mạng: kết nối lỗi, mã trả về lạ, hoặc hết thời gian."""
+
+
+class IntegrityError(McCoreError):
+    """File tải về không khớp kích thước hoặc sha1 mà máy chủ công bố."""
+
+
 class UnsupportedPlatformError(McCoreError):
     """Hệ điều hành không nằm trong ba hệ mà Mojang phát hành cho."""
 

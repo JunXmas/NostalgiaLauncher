@@ -247,10 +247,13 @@ Một luồng thì riêng phần asset đã là 3.575 ÷ ~9 ≈ **6,6 phút**.
 1. **Mặc định 16 luồng**, cho phép chỉnh. Không vượt 32 nếu chưa đo lại (mục 3.1).
 2. **Giữ kết nối sống.** Mỗi luồng một `http.client.HTTPSConnection` bền, dùng lại cho
    nhiều request, dựng lại khi phía kia đóng. Không mở kết nối mới cho từng file (2,4×).
-3. **Nạp lười mọi thứ nặng.** Ở tầng lõi, không module nào được import ở mức module:
-   `http.client`, `logging`, `zipfile`, `concurrent.futures`, `subprocess`. Chỉ stdlib nhẹ
-   (`pathlib`, `dataclasses`, `typing`, `json`, `hashlib`) được nạp sẵn. CLI phải phân giải
-   lệnh con **sau khi** parse đối số, không import sẵn mọi lệnh.
+3. **Gói `net/` độc quyền giữ kiến thức về HTTP, và đường nhanh của CLI không chạm `net/`.**
+   Bản đầu của luật này viết là "không module nào ở tầng lõi được import `http.client`" —
+   nhưng chính `net/http.py` buộc phải import nó, nên luật đó không đúng theo mặt chữ. Luật
+   kiểm được: `http.client` và `ssl` chỉ xuất hiện trong `net/`; và sau khi chạy
+   `mccore --version` thì `sys.modules` không được có `http.client`, `ssl`, `zipfile`,
+   `concurrent.futures`, `subprocess`, `logging`. CLI phải phân giải lệnh con **sau khi**
+   parse đối số, không import sẵn mọi lệnh. Cả hai nửa đều có test gác.
 4. **Xác minh mặc định bằng kích thước**, sha1 chỉ khi có cờ hoặc khi file đã lộ ra là hỏng.
 5. **Băm sha1 *trong lúc* tải.** Byte đang nằm trong RAM; sha1 chạy 620 MB/s còn mạng
    17–25 MB/s, nên băm khi ghi tốn dưới 5% một lõi — gần như miễn phí. Nhờ đó luật 4 trở

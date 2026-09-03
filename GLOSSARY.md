@@ -150,9 +150,10 @@ mặc định.
 | `test_core_never_prints` | `print(` ngoài `cli/` | `src/` |
 | `test_naming_follows_the_glossary` | Tiền tố hàm bị cấm, hoặc tên trong cột "CẤM dùng" của §2 | **cả kho** |
 | `test_files_stay_short` | File vượt 200 dòng **code** | **cả kho** |
+| `test_only_the_net_package_touches_http_and_tls` | Module ngoài `net/` import `http.client` hoặc `ssl` | `src/` |
 | `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
 
-Cả chín đã được kiểm bằng cách **cố tình vi phạm từng luật một** — 12 ca vi phạm, bắt đủ 12,
+Cả mười đã được kiểm bằng cách **cố tình vi phạm từng luật một** — 15 ca vi phạm, bắt đủ 15,
 gồm cả chuỗi import sâu 300 tầng (không tràn stack) và module tự import chính nó. Một test
 gác chưa từng thấy rớt là một test gác chưa biết có hoạt động không.
 

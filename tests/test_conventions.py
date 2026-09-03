@@ -12,6 +12,14 @@ MAX_CODE_LINES = 200
 
 FORBIDDEN_PREFIXES = ("get_", "do_", "handle_", "process_", "manage_")
 
+# Miễn trừ TƯỜNG MINH, mỗi cái một lý do. Không nới lỏng luật bằng mẫu chung: một mẫu như
+# `do_[A-Z]+` sẽ mở cửa cho mọi `do_Something` tự đặt.
+NAMES_REQUIRED_BY_STDLIB = frozenset(
+    {
+        "do_GET",  # http.server.BaseHTTPRequestHandler định tuyến theo đúng tên này
+    }
+)
+
 # Những tên đã gây ra lỗi thật ở launcher tiền nhiệm, hoặc bị GLOSSARY §2 cấm thẳng.
 FORBIDDEN_NAMES = frozenset(
     {
@@ -94,7 +102,10 @@ def test_naming_follows_the_glossary() -> None:
     for path in ALL_FILES:
         for node in ast.walk(parse(path)):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                if node.name.startswith(FORBIDDEN_PREFIXES):
+                if (
+                    node.name.startswith(FORBIDDEN_PREFIXES)
+                    and node.name not in NAMES_REQUIRED_BY_STDLIB
+                ):
                     problems.append(f"{path.name}:{node.lineno}: hàm {node.name}()")
                 problems.extend(
                     f"{path.name}:{node.lineno}: tham số {argument.arg}"
@@ -114,6 +125,32 @@ def test_files_stay_short() -> None:
         if (count := code_line_count(path)) > MAX_CODE_LINES
     ]
     assert not problems, f"quá {MAX_CODE_LINES} dòng code:\n" + "\n".join(problems)
+
+
+def test_only_the_net_package_touches_http_and_tls() -> None:
+    """`http.client` và `ssl` chỉ được xuất hiện trong `net/`.
+
+    Đây là phiên bản kiểm được của luật 3 ở docs/PERFORMANCE.md. Bản đầu viết là "không
+    module nào ở tầng lõi được import `http.client`" — nhưng chính `net/http.py` buộc phải
+    import nó, nên luật đó không thể đúng theo mặt chữ. Luật thật: gói `net/` độc quyền giữ
+    kiến thức về HTTP, và không gì trên đường nhanh của CLI được chạm vào `net/`.
+    """
+    network_modules = {"http", "http.client", "ssl"}
+    problems: list[str] = []
+    for path in SOURCE_FILES:
+        name = module_name(path)
+        if name.startswith("net"):
+            continue
+        for node in ast.walk(parse(path)):
+            if isinstance(node, ast.Import):
+                problems.extend(
+                    f"{name}:{node.lineno}: import {alias.name}"
+                    for alias in node.names
+                    if alias.name in network_modules
+                )
+            elif isinstance(node, ast.ImportFrom) and node.module in network_modules:
+                problems.append(f"{name}:{node.lineno}: from {node.module} import ...")
+    assert not problems, "chỉ net/ được biết về HTTP và TLS:\n" + "\n".join(problems)
 
 
 def test_fast_path_does_not_load_heavy_modules() -> None:
