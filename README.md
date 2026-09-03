@@ -46,5 +46,8 @@ uv run pytest -m "not network" -q   # test offline
 uv run pytest -m network -q         # test cần Internet
 ```
 
+Đọc [docs/PERFORMANCE.md](docs/PERFORMANCE.md) để biết ngân sách hiệu năng và bảy luật
+thiết kế rút ra từ số đo thật (độ song song, tái dùng kết nối, nạp `requests` lười).
+
 Đọc [GLOSSARY.md](GLOSSARY.md) trước khi viết dòng code đầu tiên — quy ước đặt tên ở đó là
 luật, và có test gác. Quy trình đóng góp xem [CONTRIBUTING.md](CONTRIBUTING.md).

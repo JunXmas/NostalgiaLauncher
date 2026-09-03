@@ -22,6 +22,12 @@ khái niệm mới thì thêm vào từ điển trong cùng PR đó, đừng t�
 
 Cả ba đều có test gác trong CI từ bước 2.
 
+## Hiệu năng là ràng buộc, không phải chuyện tính sau
+
+`docs/PERFORMANCE.md` có ngân sách đo được và bảy luật thiết kế. Ba luật hay bị vi phạm nhất:
+mặc định **16 luồng** tải (32 chậm hơn 16), **một `Session` dùng chung** cho cả đợt (tái dùng
+kết nối đáng giá 2–5×), và **nạp `requests` lười** (nó tốn ~200 ms mỗi lần gõ lệnh).
+
 ## Cách kiểm
 
 Không báo xong khi chưa chạy thật:
