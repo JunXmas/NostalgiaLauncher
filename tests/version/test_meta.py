@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from mccore.model.json_value import as_list
+from mccore.storage.paths import DataPaths
 from mccore.system.platform_info import Platform
 from mccore.version.meta import VersionMeta, parse_version_meta
 from mccore.version.rules import rules_allow
@@ -80,19 +84,45 @@ def test_loader_versions_declare_no_java_runtime() -> None:
     assert meta.inherits_from == "1.21.4"
 
 
-def test_asset_index_path_is_relative_to_the_assets_directory() -> None:
+def test_asset_index_keeps_only_what_the_server_declared() -> None:
+    """Mojang KHÔNG khai đường dẫn cho chỉ mục asset, nên `meta` không được tự dựng nó."""
     meta = parsed("1.20.1")
     assert meta.asset_index is not None
     assert meta.asset_index.asset_index_id == "5"
-    assert meta.asset_index.artifact.relative_path == "indexes/5.json"
-    assert meta.asset_index.total_size
+    assert meta.asset_index.remote.url.startswith("https://")
+    assert meta.asset_index.remote.sha1 and meta.asset_index.total_size
 
 
-def test_client_jar_path_is_relative_to_the_versions_directory() -> None:
+def test_client_jar_keeps_only_what_the_server_declared() -> None:
     meta = parsed("1.20.1")
     assert meta.client is not None
-    assert meta.client.relative_path == "1.20.1/1.20.1.jar"
+    assert meta.client.url.startswith("https://")
     assert meta.client.sha1 and meta.client.size
+
+
+def test_data_paths_is_the_only_place_that_knows_the_layout(tmp_path: Path) -> None:
+    """Trước refactor, `storage/paths.py` và `version/meta.py` cùng biết `indexes/<id>.json`,
+    và `DataPaths.asset_index_json` thành hàm không ai gọi. Nay chỉ còn một nguồn."""
+    meta = parsed("1.20.1")
+    paths = DataPaths.for_root(tmp_path)
+    assert meta.asset_index is not None
+    assert meta.client is not None
+
+    index_task = meta.asset_index.remote.to_task(
+        paths.asset_index_json(meta.asset_index.asset_index_id)
+    )
+    jar_task = meta.client.to_task(paths.version_jar(meta.jar_owner_id))
+    assert index_task.destination == paths.assets_dir / "indexes" / "5.json"
+    assert jar_task.destination == paths.versions_dir / "1.20.1" / "1.20.1.jar"
+
+
+def test_libraries_without_a_name_are_skipped() -> None:
+    """Trước đây chỗ này truyền `":::"` vào bộ phân tích để khỏi nổ, và một thư viện rỗng
+    lọt vào danh sách. Thà thiếu một mục còn hơn mang theo một mục vô nghĩa."""
+    raw = load_fixture("1.20.1")
+    good = len(parse_version_meta(raw).libraries)
+    raw["libraries"] = [*as_list(raw.get("libraries")), {"downloads": {}}, "khong phai dict"]
+    assert len(parse_version_meta(raw).libraries) == good
 
 
 def test_legacy_natives_are_declared_with_a_classifier_map() -> None:

@@ -19,13 +19,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from mccore.model.download import Artifact
+from mccore.model.download import Artifact, RemoteFile
 from mccore.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
 from mccore.version.maven import MavenCoordinate
 from mccore.version.rules import Rule, parse_rules
-
-# Đường dẫn tương đối của chỉ mục asset, tính từ thư mục `assets/`.
-ASSET_INDEX_DIRECTORY = "indexes"
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,10 +56,15 @@ class Library:
 
 @dataclass(frozen=True, slots=True)
 class AssetIndexRef:
-    """Trỏ tới chỉ mục asset. `total_size` là tổng dung lượng mọi object, dùng để báo tiến độ."""
+    """Trỏ tới chỉ mục asset.
+
+    Giữ `RemoteFile` chứ không phải `Artifact`: Mojang không khai đường dẫn cho chỉ mục, nơi
+    lưu nó do `DataPaths.asset_index_json` quyết định. `total_size` là tổng dung lượng mọi
+    object, dùng để báo tiến độ trước khi tải.
+    """
 
     asset_index_id: str
-    artifact: Artifact
+    remote: RemoteFile
     total_size: int | None = None
 
 
@@ -86,7 +88,7 @@ class VersionMeta:
     assets_id: str | None = None
     asset_index: AssetIndexRef | None = None
     java_runtime: JavaRuntimeRef | None = None
-    client: Artifact | None = None
+    client: RemoteFile | None = None
     libraries: tuple[Library, ...] = ()
     minecraft_arguments: str | None = None
     game_arguments: tuple[ArgumentSpec, ...] = ()
@@ -121,10 +123,8 @@ def parse_version_meta(version_dict: dict[str, JsonValue]) -> VersionMeta:
         assets_id=as_string(version_dict.get("assets")),
         asset_index=_parse_asset_index(as_mapping(version_dict.get("assetIndex"))),
         java_runtime=_parse_java_runtime(as_mapping(version_dict.get("javaVersion"))),
-        client=_parse_client(as_mapping(downloads.get("client")), version_dict),
-        libraries=tuple(
-            _parse_library(as_mapping(entry)) for entry in as_list(version_dict.get("libraries"))
-        ),
+        client=_parse_remote_file(as_mapping(downloads.get("client"))),
+        libraries=_parse_libraries(as_list(version_dict.get("libraries"))),
         minecraft_arguments=as_string(version_dict.get("minecraftArguments")),
         game_arguments=_parse_arguments(arguments.get("game")),
         jvm_arguments=_parse_arguments(arguments.get("jvm")),
@@ -151,7 +151,24 @@ def _parse_arguments(raw_arguments: JsonValue) -> tuple[ArgumentSpec, ...]:
     return tuple(specs)
 
 
-def _parse_library(entry: dict[str, JsonValue]) -> Library:
+def _parse_libraries(raw_libraries: list[JsonValue]) -> tuple[Library, ...]:
+    """Bỏ qua mục không khai `name`.
+
+    Trước đây chỗ này truyền `":::"` vào bộ phân tích toạ độ để khỏi nổ, và kết quả là một
+    thư viện có group/artifact/version rỗng lọt vào danh sách. Bỏ qua thì thà thiếu một mục
+    còn hơn mang theo một mục vô nghĩa mà tầng trên phải tự phát hiện.
+    """
+    libraries = []
+    for entry in raw_libraries:
+        fields = as_mapping(entry)
+        name = as_string(fields.get("name"))
+        if name is None:
+            continue
+        libraries.append(_parse_library(fields, MavenCoordinate.parse(name)))
+    return tuple(libraries)
+
+
+def _parse_library(entry: dict[str, JsonValue], coordinate: MavenCoordinate) -> Library:
     downloads = as_mapping(entry.get("downloads"))
     classifiers = {
         name: artifact
@@ -160,7 +177,7 @@ def _parse_library(entry: dict[str, JsonValue]) -> Library:
     }
     extract = as_mapping(entry.get("extract"))
     return Library(
-        coordinate=MavenCoordinate.parse(as_string(entry.get("name")) or ":::"),
+        coordinate=coordinate,
         rules=parse_rules(entry.get("rules")),
         artifact=_parse_artifact(as_mapping(downloads.get("artifact"))),
         classifier_artifacts=classifiers,
@@ -175,35 +192,21 @@ def _parse_library(entry: dict[str, JsonValue]) -> Library:
     )
 
 
-def _parse_artifact(raw: dict[str, JsonValue]) -> Artifact | None:
-    url = as_string(raw.get("url"))
-    path = as_string(raw.get("path"))
-    if url is None or path is None:
-        return None
-    return Artifact(
-        url=url,
-        relative_path=path,
-        sha1=as_string(raw.get("sha1")),
-        size=as_integer(raw.get("size")),
-    )
-
-
-def _parse_client(raw: dict[str, JsonValue], version_dict: dict[str, JsonValue]) -> Artifact | None:
-    """`downloads.client` không có `path`; đích của nó là `versions/<id>/<id>.jar`.
-
-    Nên đường dẫn tương đối ở đây tính từ thư mục `versions/`, khớp với
-    `DataPaths.version_jar`.
-    """
+def _parse_remote_file(raw: dict[str, JsonValue]) -> RemoteFile | None:
+    """Phân tích khối `{url, sha1, size}`. Không có `url` thì không có gì để tải."""
     url = as_string(raw.get("url"))
     if url is None:
         return None
-    version_id = as_string(version_dict.get("jar")) or as_string(version_dict.get("id")) or ""
-    return Artifact(
-        url=url,
-        relative_path=f"{version_id}/{version_id}.jar",
-        sha1=as_string(raw.get("sha1")),
-        size=as_integer(raw.get("size")),
-    )
+    return RemoteFile(url=url, sha1=as_string(raw.get("sha1")), size=as_integer(raw.get("size")))
+
+
+def _parse_artifact(raw: dict[str, JsonValue]) -> Artifact | None:
+    """Như trên, nhưng máy chủ có khai `path` — bắt buộc, vì đó là điều phân biệt hai kiểu."""
+    remote = _parse_remote_file(raw)
+    path = as_string(raw.get("path"))
+    if remote is None or path is None:
+        return None
+    return Artifact(remote=remote, relative_path=path)
 
 
 def _parse_asset_index(raw: dict[str, JsonValue]) -> AssetIndexRef | None:
@@ -213,11 +216,8 @@ def _parse_asset_index(raw: dict[str, JsonValue]) -> AssetIndexRef | None:
         return None
     return AssetIndexRef(
         asset_index_id=asset_index_id,
-        artifact=Artifact(
-            url=url,
-            relative_path=f"{ASSET_INDEX_DIRECTORY}/{asset_index_id}.json",
-            sha1=as_string(raw.get("sha1")),
-            size=as_integer(raw.get("size")),
+        remote=RemoteFile(
+            url=url, sha1=as_string(raw.get("sha1")), size=as_integer(raw.get("size"))
         ),
         total_size=as_integer(raw.get("totalSize")),
     )

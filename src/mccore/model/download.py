@@ -1,10 +1,15 @@
-"""Hai kiểu mô tả một file cần tải, tách rời có chủ ý.
+"""Ba kiểu mô tả một file cần tải, tách nhau theo đúng thứ mà máy chủ có khai hay không.
 
-`Artifact` là thứ máy chủ **khai báo**: đường dẫn tương đối, đúng như JSON của Mojang viết.
-`DownloadTask` là thứ ta **sẽ làm**: đường dẫn đích tuyệt đối, đã phân giải qua `DataPaths`.
+- `RemoteFile`: url và các số để xác minh. **Chưa biết sẽ lưu ở đâu.**
+- `Artifact`: `RemoteFile` mà máy chủ **có** khai đường dẫn tương đối (thư viện, asset).
+- `DownloadTask`: việc cụ thể, đích **tuyệt đối** đã phân giải qua `DataPaths`.
 
-Hai kiểu có trường gần giống nhau nên rất dễ nhập một — đừng. Gộp lại là mất chỗ duy nhất
-biết cách đổi đường dẫn tương đối thành đích thật, và tầng thuần sẽ phải biết về đĩa.
+Vì sao phải có `RemoteFile` riêng: `downloads.client` và `assetIndex` của Mojang **không**
+khai đường dẫn — nơi lưu chúng do bố trí thư mục của launcher quyết định
+(`versions/<id>/<id>.jar`, `assets/indexes/<id>.json`). Nếu nhét chúng vào `Artifact` thì
+`version/` phải tự dựng chuỗi `"indexes/..."`, và bố trí thư mục có **hai** chỗ định nghĩa.
+Đã từng như vậy: `storage/paths.py` và `version/meta.py` cùng biết `indexes/`, và
+`DataPaths.asset_index_json` thành hàm không ai gọi. Nay `DataPaths` là nguồn duy nhất.
 """
 
 from __future__ import annotations
@@ -16,26 +21,32 @@ from mccore.storage.files import resolve_within
 
 
 @dataclass(frozen=True, slots=True)
-class Artifact:
-    """Một file tải được, theo khai báo của máy chủ.
-
-    `sha1` và `size` có thể thiếu: một số nguồn không công bố. Khi thiếu, việc xác minh chỉ
-    còn dựa vào sự tồn tại của file, nên hãy coi đó là trường hợp kém tin cậy hơn.
-    """
+class RemoteFile:
+    """Một file trên máy chủ. `sha1` và `size` có thể thiếu — khi đó xác minh yếu hơn."""
 
     url: str
-    relative_path: str
     sha1: str | None = None
     size: int | None = None
 
+    def to_task(self, destination: Path) -> DownloadTask:
+        """Gắn với một đích tuyệt đối do người gọi chọn."""
+        return DownloadTask(url=self.url, destination=destination, sha1=self.sha1, size=self.size)
+
+
+@dataclass(frozen=True, slots=True)
+class Artifact:
+    """Một file kèm đường dẫn tương đối **do máy chủ khai**.
+
+    `relative_path` luôn dùng `/` vì nó đến từ JSON; việc đổi sang đường dẫn của hệ thống là
+    việc của `resolve_within`, và hàm đó cũng từ chối mọi đường thoát ra ngoài.
+    """
+
+    remote: RemoteFile
+    relative_path: str
+
     def to_task(self, root: Path) -> DownloadTask:
         """Phân giải thành việc tải cụ thể dưới một thư mục gốc."""
-        return DownloadTask(
-            url=self.url,
-            destination=resolve_within(root, self.relative_path),
-            sha1=self.sha1,
-            size=self.size,
-        )
+        return self.remote.to_task(resolve_within(root, self.relative_path))
 
 
 @dataclass(frozen=True, slots=True)
