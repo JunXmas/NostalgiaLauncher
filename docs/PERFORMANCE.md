@@ -127,12 +127,27 @@ Cùng 16 luồng: giữ kết nối **113,8 file/s** so với mở mới mỗi f
 **2,9×**. Các lượt khác cho 2,1×–4,8×. Hệ số dao động theo mạng nhưng **chưa lần nào đi
 ngược** — đây là kết luận chắc chắn nhất trong cả tài liệu, chắc hơn cả con số độ song song.
 
-### 3.4 Xác minh: `stat` so với `sha1`
+### 3.4 Xác minh: `stat` so với `sha1`, và kích thước khối đọc
 
 3.575 file, 649 MB: `stat` **104 ms**, `sha1` toàn bộ **1,05 s** (620 MB/s) → chênh **10×**.
 
 Con số `stat` là trên cache metadata **đã nóng**; lần chạy đầu sau khi bật máy sẽ chậm hơn.
 Không đo được số nguội vì `drop_caches` cần quyền root.
+
+Kích thước khối đọc **gần như không ảnh hưởng tốc độ** — đo trên 400 file thật:
+
+| Khối | MB/s |
+|---|---:|
+| 64 KiB | 500 |
+| 256 KiB | 510 |
+| 1 MiB | 511 |
+| 4 MiB | 504 |
+| 16 MiB | 503 |
+| `hashlib.file_digest` | **470** |
+
+Nên chọn **256 KiB**: cùng tốc độ nhưng khi băm song song 16 luồng chỉ tốn 4 MiB bộ đệm thay
+vì 16 MiB. Và `hashlib.file_digest` (có sẵn từ Python 3.11) **chậm hơn** với nhiều file nhỏ —
+ghi lại để không ai "hiện đại hoá" sang nó rồi thành tụt hiệu năng.
 
 ### 3.5 Khởi động CLI (bội số của Python trần, đo xen kẽ 15 lượt)
 
@@ -156,11 +171,56 @@ cả `logging` + `zipfile` + `concurrent.futures` cộng lại**. Bỏ `requests
 xong vấn đề — nó chỉ đổi tên kẻ thủ phạm. Luật phải là *nạp lười mọi thứ nặng*, không phải
 *nạp lười một thư viện cụ thể*.
 
+### 3.6 Ghép đường dẫn an toàn: 177 µs xuống 6,5 µs
+
+`resolve_within` được gọi một lần cho **mỗi entry** khi giải nén natives, JRE hay modpack.
+Bản đầu dùng `Path.resolve()` hai lần mỗi lần gọi:
+
+| Thành phần | µs/lần |
+|---|---:|
+| `base.resolve()` | 35,4 |
+| `(base / relative).resolve()` | 78,9 |
+| `PureWindowsPath(relative).root` / `.drive` | 3,7 |
+| **tổng bản cũ** | **176,7** |
+| kiểm bằng chuỗi thuần | 0,7 |
+| `base.joinpath(*parts)` | 3,1 |
+| **tổng bản mới** | **6,5** |
+
+Với một modpack 3.500 file: **618 ms xuống 23 ms**, nhanh hơn 27 lần — chỉ để kiểm tên file.
+
+Bản mới còn **kiểm chặt hơn**: `resolve()` chỉ so đích cuối cùng nên `a/../b.txt` được cho
+qua, còn bản chuỗi từ chối mọi thành phần `..`. Không entry archive lành mạnh nào cần `..`.
+
+Đánh đổi: hàm không còn phát hiện symlink đã có sẵn *bên trong* thư mục đích. Bất biến người
+gọi phải giữ: **không bao giờ tạo symlink từ nội dung archive** — khi mọi thư mục đều do ta
+tạo, không có symlink nào tồn tại để đi qua. Có test ghi rõ giới hạn này.
+
 ## 4. Ngân sách
+
+### Vì sao ngân sách phải chia theo loại lệnh
+
+`dataclasses` — thứ GLOSSARY bắt buộc dùng cho mọi kiểu dữ liệu — là import **đắt nhất** đo
+được, hơn cả `http.client`:
+
+| Phép đo | Bội số nền |
+|---|---:|
+| `import dataclasses` | 1,97× |
+| định nghĩa 8 dataclass | **2,34×** |
+| định nghĩa 8 NamedTuple | 1,58× |
+| định nghĩa 8 class thường có `__slots__` | **1,04×** |
+
+Riêng việc khai tám dataclass đã vượt mốc 2,0×. Nhưng đổi sang class viết tay để tiết kiệm
+30 ms là đánh đổi sai: mất `frozen`, mất `__eq__`/`__repr__` tự động, và đổi lấy hàng trăm
+dòng lặp lại — trong khi 30 ms chỉ đáng kể với lệnh không làm gì cả.
+
+Nên **giữ dataclass**, và chia ngân sách theo loại lệnh. Đường nhanh (`--version`, `--help`)
+không chạm tới model nên vẫn giữ được 1,80×; điều đó có test gác.
 
 | Thao tác | Ngân sách |
 |---|---|
-| `mccore <lệnh không chạm mạng>` | **≤ 2,0× thời gian khởi động Python trần** (hiện 1,80×) |
+| `mccore --version` / `--help` (không chạm model, không I/O) | **≤ 2,0× khởi động Python trần** (hiện 1,80×) |
+| Lệnh chỉ đọc đĩa (`doctor`, liệt kê bản đã cài) | ≤ 4,0× |
+| Lệnh chạm mạng | không đặt ngân sách khởi động — mạng chi phối hoàn toàn |
 | Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms |
 | Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** |
 | Cài lại khi đã đủ file | **0 request mạng** |

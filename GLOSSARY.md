@@ -115,7 +115,7 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Số major của Java | `java_major` | `int` | `java_version` |
 | File thực thi java | `java_binary` | `Path` | `java`, `java_path`, `jvm` |
 | Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
-| Yêu cầu dừng | `cancel: CancelToken` | | closure `should_cancel` |
+| Yêu cầu dừng | `cancel_token` : `CancelToken` | | `cancel`, `token`, closure `should_cancel` |
 | Tiến trình game đang chạy | `game_process` : `GameProcess` | | `proc`, `p`, `process` trần |
 
 ## 3. Năm cặp dễ lẫn nhất
@@ -132,24 +132,34 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 
 ## 4. Test gác
 
-Các test dưới đây **chỉ áp lên `src/mccore/`** — `bench/` và `tests/` được miễn, vì bench cần
-in ra màn hình và cần hằng đường dẫn mặc định.
+Luật viết trong tài liệu mà không ai kiểm thì chỉ là mong muốn. Các test dưới đây soi mã
+nguồn bằng `ast`.
 
-| Test | Chặn điều gì | Có từ bước |
+**Phạm vi khác nhau theo từng luật:** luật **đặt tên** và **độ dài file** áp cho **cả kho**
+(một khái niệm phải mang một tên ở mọi nơi, và luật không chừa cả chính file test). Các luật
+còn lại chỉ áp lên `src/mccore/`, vì `bench/` buộc phải in ra màn hình và phải có đường dẫn
+mặc định.
+
+| Test | Chặn điều gì | Phạm vi |
 |---|---|---|
-| `test_no_module_level_path_constants` | Gán mức module chứa `Path.home()`, `os.environ`, `expanduser`. Nguyên nhân gốc lỗi mất instance kho cũ: `CONFIG_DIR, CACHE_DIR, DEFAULT_GAME_DIR = _dirs()` tính **ngay lúc import**. | 2 |
-| `test_layer_imports` | Import ngược tầng, **và** chu trình import trong cùng tầng | 2 |
-| `test_core_never_prints` | `print(` ngoài `cli/` | 2 |
-| `test_version_package_is_pure` | `version/` import bất cứ thứ gì ngoài stdlib thuần + L0, hoặc dùng `open`/`Path.read_*`/`Path.write_*` | 2 |
-| `test_lazy_imports` | Sau khi chạy `mccore --version`, `sys.modules` chứa `http.client`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | 2 |
-| `test_naming_conventions` | Hàm dùng tiền tố bị cấm (`get_`, `do_`, `handle_`, `process_`, `manage_`), hoặc tên biến nằm trong cột "CẤM dùng" của §2 | 2 |
-| `test_file_length` | File vượt 200 dòng code (không tính docstring/chú thích/dòng trống) | 2 |
+| `test_every_module_has_a_declared_layer` | Module không có tầng trong sơ đồ | `src/` |
+| `test_layer_imports_only_go_down_or_sideways` | Tầng dưới import tầng trên | `src/` |
+| `test_imports_have_no_cycles` | Chu trình import, kể cả module tự import chính nó | `src/` |
+| `test_version_package_stays_pure` | `version/` import `net/`, hoặc gọi `open`/`read_text`/`write_text`/`mkdir` | `src/version/` |
+| `test_no_module_level_path_constants` | Gán mức module chứa `Path.home()`, `expanduser`, `os.environ`, `getenv` | `src/` |
+| `test_core_never_prints` | `print(` ngoài `cli/` | `src/` |
+| `test_naming_follows_the_glossary` | Tiền tố hàm bị cấm, hoặc tên trong cột "CẤM dùng" của §2 | **cả kho** |
+| `test_files_stay_short` | File vượt 200 dòng **code** | **cả kho** |
+| `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
 
-Cộng thêm `conftest.py` **cấm** mọi test chạm home thật (không chỉ chuyển hướng nó).
+Cả chín đã được kiểm bằng cách **cố tình vi phạm từng luật một** — 12 ca vi phạm, bắt đủ 12,
+gồm cả chuỗi import sâu 300 tầng (không tràn stack) và module tự import chính nó. Một test
+gác chưa từng thấy rớt là một test gác chưa biết có hoạt động không.
 
-Lưu ý vì sao cần *cả hai* lớp: lệnh import chạy lúc pytest **thu thập** test, tức trước khi
-fixture kịp vá `Path.home`. Nên lưới lúc chạy về nguyên tắc **không thể** bắt được hằng
-`Path.home()` ở mức module — đã kiểm bằng đột biến và đúng là lọt. Chỉ test AST bắt được nó.
+Lưu ý vì sao cần *cả hai* lớp bảo vệ đường dẫn: lệnh import chạy lúc pytest **thu thập**
+test, tức trước khi fixture kịp vá `Path.home`. Nên lưới lúc chạy trong `conftest.py` về
+nguyên tắc **không thể** bắt được hằng `Path.home()` ở mức module — đã kiểm bằng đột biến và
+đúng là lọt. Chỉ test đọc mã nguồn bắt được nó.
 
 ## 5. Kiến trúc bảy tầng
 
@@ -157,21 +167,39 @@ Phụ thuộc **chỉ đi xuống hoặc ngang**. Tầng N import được tần
 tầng**, nhưng đồ thị import phải **phi chu trình** — `test_layer_imports` kiểm cả hai.
 
 ```
-L0  errors · platform_info · paths · fsio · progress · cancel · model
-        model = mọi dataclass dùng chung (Artifact, DownloadTask, Library, ...): ZERO import
-L1  net/http · net/download
-L2  version/  rules · maven · meta · inherit · arguments · classpath
-    java/component        <- ánh xạ THUẦN version_meta -> java_component, không I/O
-        ^ THUẦN: không mạng, không đọc/ghi file
-L3  repo/ manifest · version_repo
-    install/ client · library · natives · assets · plan
-    java/ mojang_jre · detect
-L4  account/ offline · profile · store
-    launch/ command · tuning · game_process · runner
-    doctor
-L5  api            <- façade duy nhất: gom use-case, sở hữu điều phối
-L6  cli/ · config  <- tầng DUY NHẤT được print(); config chỉ tầng này được đọc
+src/mccore/
+  errors.py                      L0  từ vựng lỗi — ở gốc vì mọi tầng đều dùng
+  storage/                       L0  đĩa
+    paths.py                         DataPaths: cái gì nằm ở đâu
+    files.py                         đọc/ghi an toàn, ghi nguyên tử, chống zip-slip
+  system/                        L0  máy đang chạy
+    platform_info.py                 nhận diện OS và kiến trúc theo từ vựng Mojang
+  operations/                    L0  điều khiển thao tác dài
+    progress.py                      báo tiến độ
+    cancellation.py                  yêu cầu dừng
+  model/                         L0  dataclass dùng chung (bước 3)
+  net/                           L1  http, download
+  version/                       L2  rules, maven, meta, inherit, arguments, classpath
+    ^ THUẦN: không mạng, không đọc/ghi file
+  java/component.py              L2  ánh xạ thuần version_meta -> java_component
+  repo/                          L3  manifest, version_repo
+  install/                       L3  client, library, natives, assets, plan
+  java/                          L3  mojang_jre, detect
+  account/                       L4  offline, profile, store
+  launch/                        L4  command, tuning, game_process, runner
+  doctor.py                      L4  soi mắt xích hỏng
+  api.py                         L5  façade duy nhất cho giao diện
+  cli/                           L6  tầng DUY NHẤT được print()
+  config.py                      L6  chỉ cli/ được đọc
 ```
+
+Tên folder nói **chức năng**, tên file nói **thứ cụ thể**. Không viết tắt: `fsio` đã đổi
+thành `storage/files.py`, `cancel` thành `operations/cancellation.py` — người kế thừa dự án
+đọc tên là hiểu, không phải đoán.
+
+`tests/` soi gương cây trên: `tests/storage/test_paths.py`, `tests/operations/
+test_cancellation.py`. Riêng các test soi cả kho (`test_architecture.py`,
+`test_conventions.py`) nằm ở gốc `tests/` cùng `source_tree.py` mà chúng dùng chung.
 
 Bảy quyết định đằng sau sơ đồ này:
 
@@ -188,7 +216,7 @@ Bảy quyết định đằng sau sơ đồ này:
    `net/download`, giải nén, ghi kết quả) thuộc `api` ở L5. Nhờ đó toàn bộ logic cài đặt test
    được offline: kiểm *danh sách task sinh ra* thay vì phải tải thật.
 4. **`api` là một tầng riêng, không phải một file trong `cli/`.** Giao diện tương lai chỉ
-   được import `mccore.api`, `mccore.errors`, `mccore.progress` và các dataclass ở `model`.
+   được import `mccore.api`, `mccore.errors`, `mccore.operations` và các dataclass ở `model`.
    Nếu để `cli/` gọi thẳng L4 thì khi dựng GUI sẽ phát hiện toàn bộ logic điều phối nằm
    trong `cli/` và phải viết lại.
 5. **`config` chỉ `cli/` được đọc**, rồi truyền xuống dưới dạng dataclass — giống hệt cách
