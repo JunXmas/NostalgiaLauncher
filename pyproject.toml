@@ -38,7 +38,8 @@ line-length = 100
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "UP", "B", "ANN", "RUF", "PTH", "SIM", "C4"]
+# ARG bắt tham số chết — đã tìm ra hai fixture pytest nhận rồi không dùng.
+select = ["E", "W", "F", "I", "UP", "B", "ANN", "ARG", "RUF", "PTH", "SIM", "C4"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]

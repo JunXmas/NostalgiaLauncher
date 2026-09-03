@@ -12,7 +12,7 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 |---|---|:--:|
 | 1 | Khung dự án, từ điển tên, CI | ✅ |
 | 2 | `DataPaths`, cách ly đường dẫn, chín test gác | ✅ |
-| 3 | Bộ tải file có xác minh sha1 | |
+| 3 | Bộ tải file có xác minh sha1 | ✅ |
 | 4 | Mô hình phiên bản (rules, kế thừa) — thuần | |
 | 5 | Kho phiên bản (manifest, đọc đĩa trước) | |
 | 6 | client.jar + thư viện + classpath | |
@@ -35,6 +35,8 @@ src/mccore/
   storage/             đĩa: paths.py (cái gì ở đâu) + files.py (đọc/ghi an toàn)
   system/              nhận diện máy: platform_info.py
   operations/          thao tác dài: progress.py + cancellation.py
+  model/               dataclass dùng chung: download.py (Artifact, DownloadTask)
+  net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
 bench/                 script đo hiệu năng, không phải test

@@ -125,7 +125,7 @@ def atomic_write_json(path: Path, data: JsonValue, *, private: bool = False) -> 
             os.fsync(handle.fileno())
         temporary_path.chmod(PRIVATE_FILE_MODE if private else DEFAULT_FILE_MODE)
         temporary_path.replace(path)
-        _sync_directory(path.parent)
+        sync_directory(path.parent)
     except BaseException:
         # Kể cả khi bị Ctrl-C: không để lại file tạm nằm rác cạnh file thật.
         temporary_path.unlink(missing_ok=True)
@@ -154,7 +154,7 @@ def set_executable(path: Path) -> None:
     path.chmod(mode | executable)
 
 
-def _sync_directory(directory: Path) -> None:
+def sync_directory(directory: Path) -> None:
     """Đẩy thay đổi tên file xuống đĩa thật.
 
     `os.replace` là nguyên tử, nhưng bản thân việc đổi tên vẫn nằm trong cache của hệ điều

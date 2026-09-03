@@ -13,9 +13,19 @@ Test nào thật sự cần home thì đánh `@pytest.mark.allow_home`.
 from __future__ import annotations
 
 import os
+import ssl
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+
+from local_https_server import (
+    LocalHttpsServer,
+    ServerState,
+    make_certificate,
+    openssl_available,
+)
+from mccore.net.http import HttpClient
 
 # Mọi biến môi trường có thể dẫn code về dữ liệu thật của người dùng.
 PATH_ENV_VARS = (
@@ -70,3 +80,35 @@ def isolated_home(
         monkeypatch.setattr(os.path, "expanduser", forbidden)
 
     return home
+
+
+@pytest.fixture(scope="session")
+def certificate_pair(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
+    if not openssl_available():
+        pytest.skip("cần openssl để dựng chứng chỉ tự ký cho máy chủ test")
+    return make_certificate(tmp_path_factory.mktemp("tls"))
+
+
+@pytest.fixture
+def server_state() -> ServerState:
+    return ServerState()
+
+
+@pytest.fixture
+def server(
+    server_state: ServerState, certificate_pair: tuple[Path, Path]
+) -> Iterator[LocalHttpsServer]:
+    certificate, key = certificate_pair
+    with LocalHttpsServer(server_state, certificate, key) as running:
+        yield running
+
+
+@pytest.fixture
+def client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
+    certificate, _key = certificate_pair
+    trusting = ssl.create_default_context(cafile=str(certificate))
+    http_client = HttpClient(timeout_seconds=5.0, tls_context=trusting)
+    try:
+        yield http_client
+    finally:
+        http_client.close()
