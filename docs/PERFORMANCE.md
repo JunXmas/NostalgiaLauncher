@@ -158,9 +158,30 @@ xong vấn đề — nó chỉ đổi tên kẻ thủ phạm. Luật phải là 
 
 ## 4. Ngân sách
 
+### Vì sao ngân sách phải chia theo loại lệnh
+
+`dataclasses` — thứ GLOSSARY bắt buộc dùng cho mọi kiểu dữ liệu — là import **đắt nhất** đo
+được, hơn cả `http.client`:
+
+| Phép đo | Bội số nền |
+|---|---:|
+| `import dataclasses` | 1,97× |
+| định nghĩa 8 dataclass | **2,34×** |
+| định nghĩa 8 NamedTuple | 1,58× |
+| định nghĩa 8 class thường có `__slots__` | **1,04×** |
+
+Riêng việc khai tám dataclass đã vượt mốc 2,0×. Nhưng đổi sang class viết tay để tiết kiệm
+30 ms là đánh đổi sai: mất `frozen`, mất `__eq__`/`__repr__` tự động, và đổi lấy hàng trăm
+dòng lặp lại — trong khi 30 ms chỉ đáng kể với lệnh không làm gì cả.
+
+Nên **giữ dataclass**, và chia ngân sách theo loại lệnh. Đường nhanh (`--version`, `--help`)
+không chạm tới model nên vẫn giữ được 1,80×; điều đó có test gác.
+
 | Thao tác | Ngân sách |
 |---|---|
-| `mccore <lệnh không chạm mạng>` | **≤ 2,0× thời gian khởi động Python trần** (hiện 1,80×) |
+| `mccore --version` / `--help` (không chạm model, không I/O) | **≤ 2,0× khởi động Python trần** (hiện 1,80×) |
+| Lệnh chỉ đọc đĩa (`doctor`, liệt kê bản đã cài) | ≤ 4,0× |
+| Lệnh chạm mạng | không đặt ngân sách khởi động — mạng chi phối hoàn toàn |
 | Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms |
 | Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** |
 | Cài lại khi đã đủ file | **0 request mạng** |

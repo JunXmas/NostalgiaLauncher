@@ -128,6 +128,6 @@ def test_home_access_is_forbidden() -> None:
 
 
 @pytest.mark.allow_home
-def test_home_is_redirected_when_allowed(tmp_path: Path) -> None:
-    """Với test được phép chạm home, home vẫn phải nằm trong thư mục tạm."""
-    assert Path.home().is_relative_to(tmp_path)
+def test_home_is_redirected_when_allowed(isolated_home: Path) -> None:
+    """Với test được phép chạm home, home vẫn phải là thư mục tạm mà fixture dựng."""
+    assert Path.home() == isolated_home

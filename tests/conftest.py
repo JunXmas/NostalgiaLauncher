@@ -33,11 +33,16 @@ PATH_ENV_VARS = (
 
 @pytest.fixture(autouse=True)
 def isolated_home(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
 ) -> Path:
-    """Ép mọi đường dẫn vào tmp_path, và cấm mọi lối đi vòng qua home."""
-    home = tmp_path / "home"
-    home.mkdir()
+    """Ép mọi đường dẫn vào thư mục tạm, và cấm mọi lối đi vòng qua home.
+
+    Dùng `tmp_path_factory` chứ không phải `tmp_path`: nếu tạo home giả ngay trong `tmp_path`
+    thì mọi test liệt kê nội dung `tmp_path` sẽ thấy thêm một thư mục lạ. Đã trả giá một lần.
+    """
+    home = tmp_path_factory.mktemp("home")
 
     for name in PATH_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
@@ -50,7 +55,7 @@ def isolated_home(
     monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local" / "share"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(home / ".cache"))
-    monkeypatch.setenv("MCCORE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MCCORE_DATA_DIR", str(home / "data"))
 
     if request.node.get_closest_marker("allow_home") is None:
         message = (

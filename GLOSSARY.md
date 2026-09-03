@@ -135,15 +135,20 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 Các test dưới đây **chỉ áp lên `src/mccore/`** — `bench/` và `tests/` được miễn, vì bench cần
 in ra màn hình và cần hằng đường dẫn mặc định.
 
-| Test | Chặn điều gì | Có từ bước |
-|---|---|---|
-| `test_no_module_level_path_constants` | Gán mức module chứa `Path.home()`, `os.environ`, `expanduser`. Nguyên nhân gốc lỗi mất instance kho cũ: `CONFIG_DIR, CACHE_DIR, DEFAULT_GAME_DIR = _dirs()` tính **ngay lúc import**. | 2 |
-| `test_layer_imports` | Import ngược tầng, **và** chu trình import trong cùng tầng | 2 |
-| `test_core_never_prints` | `print(` ngoài `cli/` | 2 |
-| `test_version_package_is_pure` | `version/` import bất cứ thứ gì ngoài stdlib thuần + L0, hoặc dùng `open`/`Path.read_*`/`Path.write_*` | 2 |
-| `test_lazy_imports` | Sau khi chạy `mccore --version`, `sys.modules` chứa `http.client`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | 2 |
-| `test_naming_conventions` | Hàm dùng tiền tố bị cấm (`get_`, `do_`, `handle_`, `process_`, `manage_`), hoặc tên biến nằm trong cột "CẤM dùng" của §2 | 2 |
-| `test_file_length` | File vượt 200 dòng code (không tính docstring/chú thích/dòng trống) | 2 |
+| Test | Chặn điều gì |
+|---|---|
+| `test_every_module_has_a_declared_layer` | Module không có tầng trong sơ đồ — luật phụ thuộc không áp được lên nó |
+| `test_no_module_level_path_constants` | Gán mức module chứa `Path.home()`, `expanduser`, `os.environ`, `getenv`. Nguyên nhân gốc lỗi mất instance kho cũ: `CONFIG_DIR, CACHE_DIR, DEFAULT_GAME_DIR = _dirs()` tính **ngay lúc import** |
+| `test_layer_imports_only_go_down_or_sideways` | Tầng dưới import tầng trên |
+| `test_imports_have_no_cycles` | Chu trình import (cùng tầng được phép import nhau, nhưng phải phi chu trình) |
+| `test_core_never_prints` | `print(` ngoài `cli/` |
+| `test_version_package_is_pure` | `version/` import `net/`, hoặc gọi `open`/`read_text`/`write_text`/`mkdir` |
+| `test_naming_follows_the_glossary` | Hàm dùng tiền tố bị cấm, hoặc tên nằm trong cột "CẤM dùng" của §2 |
+| `test_files_stay_short` | File vượt 200 dòng **code** (không tính docstring, chú thích, dòng trống) |
+| `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` |
+
+Cả chín đã được kiểm bằng cách **cố tình vi phạm từng luật một** — mười một ca vi phạm, bắt
+đủ mười một. Một test gác chưa từng thấy rớt là một test gác chưa biết có hoạt động không.
 
 Cộng thêm `conftest.py` **cấm** mọi test chạm home thật (không chỉ chuyển hướng nó).
 
