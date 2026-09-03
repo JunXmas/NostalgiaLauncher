@@ -11,6 +11,9 @@ Bảy trong chín luật ở docs/PERFORMANCE.md §5 được thi hành ở đâ
   chỉ là đánh đổi rủi ro.
 - **Xác minh mặc định bằng kích thước** khi quyết định có bỏ qua file đã có hay không.
 - **Ghi nguyên tử**: ra file tạm, `fsync`, rồi `os.replace`, rồi `fsync` thư mục.
+- **Trần kích thước và kiểm cờ huỷ sau mỗi khối** — do `HttpClient.stream` thi hành. Không
+  có hai thứ đó thì một máy chủ gửi mãi sẽ ghi tới khi hết đĩa, và nút dừng thành vô dụng
+  với bản cài 649 MB (đã đo cả hai, xem test trong tests/net/).
 - **Dedupe theo đích** trước khi chạy, để hai luồng không cùng ghi vào một file.
 - **Bỏ qua file đã đúng** — lần cài thứ hai gần như không phát request nào.
 """
@@ -90,7 +93,7 @@ def download_one(
         cancel_token.raise_if_cancelled()
     ensure_dir(task.destination.parent)
     return retry(
-        lambda: _fetch_and_commit(client, task),
+        lambda: _fetch_and_commit(client, task, cancel_token),
         policy=retry_policy,
         cancel_token=cancel_token,
     )
@@ -110,8 +113,8 @@ def download_all(
         message = f"số luồng phải >= 1, nhận được {workers}"
         raise ValueError(message)
 
-    unique = _deduplicate(tasks)
-    total = len(unique)
+    unique_tasks = _deduplicate(tasks)
+    total = len(unique_tasks)
     counter = _ProgressCounter(total, on_progress)
     failures: list[DownloadFailure] = []
     downloaded = skipped = written_total = 0
@@ -133,7 +136,7 @@ def download_all(
 
     counter.report()
     with ThreadPoolExecutor(max_workers=min(workers, total or 1)) as pool:
-        for written in pool.map(run, unique):
+        for written in pool.map(run, unique_tasks):
             if written < 0:
                 continue
             written_total += written
@@ -178,16 +181,18 @@ def _deduplicate(tasks: list[DownloadTask]) -> list[DownloadTask]:
     mục asset của 1.20.1 có 23 mục trùng hash.
     """
     seen: set[Path] = set()
-    unique = []
+    unique_tasks = []
     for task in tasks:
         if task.destination in seen:
             continue
         seen.add(task.destination)
-        unique.append(task)
-    return unique
+        unique_tasks.append(task)
+    return unique_tasks
 
 
-def _fetch_and_commit(client: HttpClient, task: DownloadTask) -> int:
+def _fetch_and_commit(
+    client: HttpClient, task: DownloadTask, cancel_token: CancelToken | None
+) -> int:
     """Tải vào file tạm, băm trong lúc ghi, xác minh, rồi đổi tên nguyên tử.
 
     File tạm dùng `mkstemp` trong cùng thư mục đích: tên chắc chắn không trùng giữa các
@@ -205,7 +210,12 @@ def _fetch_and_commit(client: HttpClient, task: DownloadTask) -> int:
                 digest.update(chunk)
                 handle.write(chunk)
 
-            written = client.stream(task.url, write)
+            written = client.stream(
+                task.url,
+                write,
+                expected_size=task.size,
+                cancel_token=cancel_token,
+            )
             handle.flush()
             os.fsync(handle.fileno())
 

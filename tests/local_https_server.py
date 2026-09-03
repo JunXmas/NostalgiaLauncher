@@ -12,6 +12,7 @@ import shutil
 import ssl
 import subprocess
 import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -20,13 +21,21 @@ from pathlib import Path
 class Route:
     """Một đường dẫn và cách máy chủ trả lời nó.
 
-    `fail_first` cho phép dựng tình huống "CDN lỗi vài lần rồi mới được" — thứ xảy ra thật
-    và là lý do bộ tải phải có retry.
+    `fail_first` dựng tình huống "CDN lỗi vài lần rồi mới được" — xảy ra thật, và là lý do
+    bộ tải phải có retry.
+
+    `declare_length` cho phép nói dối: gửi nhiều hơn `Content-Length` đã công bố, hoặc không
+    công bố gì cả. Cần để kiểm cái trần kích thước — không có trần thì một máy chủ như vậy
+    khiến ta ghi tới khi hết đĩa.
+
+    `chunk_delay_seconds` làm máy chủ nhỏ giọt, để kiểm việc huỷ giữa lúc đang tải.
     """
 
     body: bytes
     status: int = 200
     fail_first: int = 0
+    declare_length: int | None = None
+    chunk_delay_seconds: float = 0.0
     requests: int = 0
     failures_served: int = 0
 
@@ -36,9 +45,24 @@ class ServerState:
     routes: dict[str, Route] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
-    def add(self, path: str, body: bytes, *, status: int = 200, fail_first: int = 0) -> str:
+    def add(
+        self,
+        path: str,
+        body: bytes,
+        *,
+        status: int = 200,
+        fail_first: int = 0,
+        declare_length: int | None = None,
+        chunk_delay_seconds: float = 0.0,
+    ) -> str:
         with self.lock:
-            self.routes[path] = Route(body=body, status=status, fail_first=fail_first)
+            self.routes[path] = Route(
+                body=body,
+                status=status,
+                fail_first=fail_first,
+                declare_length=declare_length,
+                chunk_delay_seconds=chunk_delay_seconds,
+            )
         return path
 
     def request_count(self, path: str) -> int:
@@ -79,13 +103,20 @@ def openssl_available() -> bool:
     return shutil.which("openssl") is not None
 
 
+class _QuietServer(http.server.ThreadingHTTPServer):
+    """Không in traceback: phía kia ngắt giữa lúc gửi là điều nhiều test CỐ Ý gây ra."""
+
+    def handle_error(self, *_args: object) -> None:
+        return
+
+
 class LocalHttpsServer:
     """Máy chủ chạy trong luồng riêng, tự dừng khi ra khỏi khối `with`."""
 
     def __init__(self, state: ServerState, certificate: Path, key: Path) -> None:
         self._state = state
         handler = _make_handler(state)
-        self._server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self._server = _QuietServer(("127.0.0.1", 0), handler)
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(certificate, key)
         self._server.socket = context.wrap_socket(self._server.socket, server_side=True)
@@ -125,10 +156,24 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
                     self.send_error(503)
                     return
                 body, status = route.body, route.status
+                declared = route.declare_length
+                delay = route.chunk_delay_seconds
             self.send_response(status)
-            self.send_header("Content-Length", str(len(body)))
+            if declared is None:
+                self.send_header("Content-Length", str(len(body)))
+            elif declared >= 0:
+                self.send_header("Content-Length", str(declared))
             self.end_headers()
-            self.wfile.write(body)
+            if delay <= 0:
+                self.wfile.write(body)
+                return
+            for start in range(0, len(body), 16384):
+                try:
+                    self.wfile.write(body[start : start + 16384])
+                    self.wfile.flush()
+                except OSError:
+                    return  # phía kia đã ngắt: đúng điều test mong đợi
+                time.sleep(delay)
 
         def log_message(self, *_args: object) -> None:
             """Im lặng: log của máy chủ test chỉ làm rối kết quả pytest."""

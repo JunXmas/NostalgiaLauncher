@@ -26,6 +26,11 @@ from mccore.operations.cancellation import CancelToken
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
 STREAM_CHUNK_SIZE = 64 * 1024
 
+# Trần cho phản hồi nạp trọn vào bộ nhớ. Manifest lớn nhất của Mojang khoảng 1,3 MB, nên
+# 32 MiB là rất thoáng; điều quan trọng là CÓ trần. Không có trần thì một máy chủ hỏng (hoặc
+# bị chiếm) gửi mãi không dừng sẽ làm hết bộ nhớ.
+DEFAULT_MAX_RESPONSE_BYTES = 32 * 1024 * 1024
+
 
 @dataclass(frozen=True, slots=True)
 class RetryPolicy:
@@ -69,13 +74,29 @@ class HttpClient:
         self._connections: list[http.client.HTTPSConnection] = []
         self._lock = threading.Lock()
 
-    def stream(self, url: str, write: Callable[[bytes], None]) -> int:
+    def stream(
+        self,
+        url: str,
+        write: Callable[[bytes], None],
+        *,
+        expected_size: int | None = None,
+        max_bytes: int | None = None,
+        cancel_token: CancelToken | None = None,
+    ) -> int:
         """Tải `url`, đẩy từng khối qua `write`, trả về số byte đã đẩy.
 
         Không trả về đối tượng response: để nó lọt ra ngoài là buộc mọi tầng trên phải biết
         về `http.client`. Một lần gọi là MỘT lần thử — việc thử lại do `retry` lo, vì chỉ
         người gọi biết cách bỏ đi phần đã ghi dở.
+
+        `expected_size` và `max_bytes` đặt **trần cứng**, và trần là bắt buộc về nguyên tắc:
+        đã đo, một máy chủ không công bố `Content-Length` mà gửi mãi khiến ta ghi 26 MB
+        trong 10 giây rồi chỉ dừng vì timeout — tức là ghi tới khi hết đĩa.
+
+        `cancel_token` được kiểm sau MỖI khối. Không kiểm trong vòng này thì nút dừng vô
+        dụng: đã đo, huỷ giữa lúc tải bốn file 4 MB không dừng được file nào.
         """
+        limit = expected_size if expected_size is not None else max_bytes
         host, path = _split(url)
         connection = self._connection_for(host)
         try:
@@ -87,31 +108,40 @@ class HttpClient:
             raise NetworkError(message) from exc
 
         with response:
-            if 300 <= response.status < 400:
-                # Mojang và Fabric không chuyển hướng (đã dò thật). CurseForge, OptiFine và
-                # GitHub thì có — khi nào chạm tới chúng thì thêm xử lý 3xx ở đây, đừng để
-                # thân của trang chuyển hướng bị lưu thành file.
-                message = f"{url} trả về chuyển hướng {response.status}, chưa hỗ trợ"
-                raise NetworkError(message)
-            if response.status != 200:
-                message = f"{url} trả về mã {response.status}"
-                raise NetworkError(message)
-
+            _check_status(url, response.status)
             written = 0
             try:
                 while chunk := response.read(STREAM_CHUNK_SIZE):
-                    write(chunk)
+                    if cancel_token is not None and cancel_token.is_cancelled():
+                        self._discard(host)
+                        raise Cancelled
                     written += len(chunk)
+                    if limit is not None and written > limit:
+                        self._discard(host)
+                        message = f"{url}: gửi hơn {limit} byte đã công bố, đã ngắt"
+                        raise NetworkError(message)
+                    write(chunk)
             except (http.client.HTTPException, OSError) as exc:
                 self._discard(host)
                 message = f"mất kết nối khi đang tải {url}: {exc}"
                 raise NetworkError(message) from exc
+
+            if response.length:
+                # Còn thân phản hồi chưa đọc: dùng lại kết nối này thì request sau sẽ đọc
+                # phần còn sót và hỏng theo cách rất khó truy. Bỏ kết nối, mở lại lần sau.
+                self._discard(host)
         return written
 
-    def fetch_bytes(self, url: str) -> bytes:
+    def fetch_bytes(
+        self,
+        url: str,
+        *,
+        max_bytes: int = DEFAULT_MAX_RESPONSE_BYTES,
+        cancel_token: CancelToken | None = None,
+    ) -> bytes:
         """Tải trọn nội dung vào bộ nhớ. Chỉ dùng cho file nhỏ như manifest JSON."""
         chunks: list[bytes] = []
-        self.stream(url, chunks.append)
+        self.stream(url, chunks.append, max_bytes=max_bytes, cancel_token=cancel_token)
         return b"".join(chunks)
 
     def close(self) -> None:
@@ -181,11 +211,29 @@ def retry[T](
     raise NetworkError(message) from last_error
 
 
+def _check_status(url: str, status: int) -> None:
+    if 300 <= status < 400:
+        # Mojang và Fabric không chuyển hướng (đã dò thật). CurseForge, OptiFine và GitHub
+        # thì có — khi nào chạm tới chúng thì thêm xử lý 3xx ở đây, đừng để thân của trang
+        # chuyển hướng bị lưu thành file.
+        message = f"{url} trả về chuyển hướng {status}, chưa hỗ trợ"
+        raise NetworkError(message)
+    if status != 200:
+        message = f"{url} trả về mã {status}"
+        raise NetworkError(message)
+
+
 def _split(url: str) -> tuple[str, str]:
-    """Tách URL thành (host, đường dẫn kèm truy vấn). Chỉ nhận https."""
+    """Tách URL thành (host, đường dẫn kèm truy vấn). Chỉ nhận https, không nhận userinfo."""
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.netloc:
         message = f"chỉ hỗ trợ https với host rõ ràng: {url!r}"
+        raise NetworkError(message)
+    if "@" in parts.netloc:
+        # `https://ai-do:mat-khau@host/` là mẫu lừa đảo kinh điển: mắt người đọc phần trước
+        # dấu @ tưởng là tên máy. Từ chối thẳng, kèm lý do, thay vì để nó hỏng ở tầng DNS
+        # với một thông điệp không ai hiểu.
+        message = f"URL không được chứa tên đăng nhập: {url!r}"
         raise NetworkError(message)
     path = parts.path or "/"
     return parts.netloc, f"{path}?{parts.query}" if parts.query else path
