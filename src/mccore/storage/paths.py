@@ -16,6 +16,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from mccore.storage.files import resolve_child
+
 APP_NAME = "mc-core"
 
 # Hai biến này cho người dùng và cho test đè lên vị trí mặc định.
@@ -81,23 +83,28 @@ class DataPaths:
         return self.data_dir / "runtime"
 
     def version_dir(self, version_id: str) -> Path:
-        return self.versions_dir / version_id
+        """Mã phiên bản đến từ dòng lệnh, nên phải kiểm trước khi ghép vào đường dẫn."""
+        return resolve_child(self.versions_dir, version_id)
 
     def version_json(self, version_id: str) -> Path:
-        return self.version_dir(version_id) / f"{version_id}.json"
+        return resolve_child(self.version_dir(version_id), f"{version_id}.json")
 
     def version_jar(self, version_id: str) -> Path:
-        return self.version_dir(version_id) / f"{version_id}.jar"
+        return resolve_child(self.version_dir(version_id), f"{version_id}.jar")
 
     def natives_dir(self, version_id: str) -> Path:
         return self.version_dir(version_id) / "natives"
 
     def asset_index_json(self, asset_index_id: str) -> Path:
-        return self.asset_indexes_dir / f"{asset_index_id}.json"
+        return resolve_child(self.asset_indexes_dir, f"{asset_index_id}.json")
 
     def asset_object(self, asset_hash: str) -> Path:
-        """Mojang lưu object theo hai ký tự đầu của hash — một chỗ duy nhất biết luật này."""
-        return self.asset_objects_dir / asset_hash[:2] / asset_hash
+        """Mojang lưu object theo hai ký tự đầu của hash — một chỗ duy nhất biết luật này.
+
+        Hash đến từ chỉ mục asset, tức từ JSON tải về, nên cũng không tin được.
+        """
+        bucket = resolve_child(self.asset_objects_dir, asset_hash[:2])
+        return resolve_child(bucket, asset_hash)
 
 
 def _default_roots(platform_name: str, environment: Mapping[str, str]) -> tuple[Path, Path]:
