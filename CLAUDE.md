@@ -28,16 +28,38 @@ Cả ba đều có test gác trong CI từ bước 2.
 mặc định **16 luồng** tải (32 chậm hơn 16), **một `Session` dùng chung** cho cả đợt (tái dùng
 kết nối đáng giá 2–5×), và **nạp `requests` lười** (nó tốn ~200 ms mỗi lần gõ lệnh).
 
-## Cách kiểm
+## Cách kiểm — một lượt xanh không đủ
 
-Không báo xong khi chưa chạy thật:
+Trước **mỗi** lần báo xong, chạy đủ năm việc dưới đây và **nói rõ đã kiểm cái gì**. Một lượt
+chạy xanh không chứng minh được gì; lượt quét đầu tiên ở kho này bắt được ba lỗi thật trong
+code vừa viết xong và tưởng đã sạch.
 
-```bash
-uv run ruff check . && uv run ruff format --check . && uv run pytest -m "not network" -q
-```
+1. **Kiểm cơ bản**
+   ```bash
+   uv run ruff check . && uv run ruff format --check . && uv run pytest -m "not network" -q
+   ```
+2. **Quét rác.**
+   ```bash
+   git ls-files                                        # có file thừa lọt vào không
+   grep -rnE 'TODO|FIXME|XXX' $(git ls-files '*.py')   # chỉ soi file nguồn, không soi tài liệu
+   uv run ruff check --select F401,F841,ARG,ERA .      # code chết, import thừa, biến bỏ không
+   ```
+   Rồi soi tay
+   code vừa viết tìm **nhánh không bao giờ chạy tới** và **test không thể rớt**
+   (kinh điển: bọc `try/except SystemExit` rồi không khẳng định gì).
+3. **Chạy lặp.** Bộ test chạy 10–20 lượt, không phải một lượt.
+4. **Dựng lại từ đầu.** Clone sạch vào thư mục trắng rồi `uv sync` + test, để bắt thứ chỉ
+   chạy được nhờ trạng thái cục bộ.
+5. **Đọc log CI thật**, chắc từng bước có chạy chứ không bị bỏ qua.
+
+Số đo hiệu năng phải đo nhiều lượt và ghi thành **khoảng kèm lý do dao động** — không chọn
+lần đo đẹp nhất.
 
 Bước nào đụng tới game thật thì phải chạy game và **nhìn bằng mắt** (hoặc chụp ảnh), không
 chỉ đọc code.
+
+> Bẫy đã dính: `awk length` đếm **byte** nên dòng tiếng Việt có dấu bị báo quá độ dài sai.
+> Đếm ký tự bằng Python.
 
 ## Dữ liệu có sẵn trên máy này
 

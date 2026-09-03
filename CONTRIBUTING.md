@@ -21,6 +21,11 @@ uv run pytest -m "not network" -q
 
 Cả ba phải xanh. CI chạy đúng ba lệnh này trên mọi PR.
 
+Nhưng **một lượt xanh chưa đủ**. Trước khi mở PR còn phải: quét rác (`git ls-files` tìm file
+thừa, `ruff check --select F401,F841,ARG,ERA .` bắt code chết, soi tay tìm nhánh không bao
+giờ chạy tới và test không thể rớt), chạy bộ test **lặp 10–20 lượt**, và dựng lại từ một bản
+clone sạch. Chi tiết ở mục "Cách kiểm" trong [CLAUDE.md](CLAUDE.md).
+
 ## Mô tả PR phải có
 
 1. **Mục tiêu** — một câu.
