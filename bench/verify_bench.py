@@ -1,4 +1,4 @@
-"""So chi phí xác minh bản cài bằng kích thước với bằng sha1.
+"""So chi phí xác minh bản cài bằng kích thước với bằng sha1, và in phân bố kích thước.
 
 Không phải test: script in số đo để so với ngân sách trong docs/PERFORMANCE.md.
 Không cần mạng, nhưng cần asset đã tải sẵn trên đĩa.
@@ -8,89 +8,109 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import statistics
 import time
 from pathlib import Path
 
-DEFAULT_ROOT = Path.home() / ".nostalgia-launcher" / "assets"
-CHUNK = 1 << 20
+from asset_index import (
+    BANDS,
+    DEFAULT_ASSETS_DIR,
+    DEFAULT_INDEX_ID,
+    AssetEntry,
+    in_band,
+    index_path_for,
+    load_entries,
+    total_bytes,
+)
+
+READ_CHUNK = 1 << 20
 
 
 def sha1_of_file(path: Path) -> tuple[str, int]:
-    """Trả về (sha1, số byte đọc thật). Đếm byte thật để MB/s không sai khi file cụt.
+    """Trả về (sha1, số byte đọc thật).
 
-    sha1 ở đây không phải lựa chọn về bảo mật mà là ràng buộc giao thức: manifest của
-    Mojang công bố sha1, nên muốn đối chiếu thì phải dùng đúng sha1. Bộ soi mã sẽ gắn cờ
-    "hàm băm không an toàn" — đừng đổi sang sha256, sẽ không đối chiếu được với gì cả.
+    Đếm byte thật chứ không lấy kích thước theo chỉ mục, để MB/s không bị thổi lên khi gặp
+    file cụt.
+
+    sha1 ở đây là ràng buộc giao thức, không phải lựa chọn bảo mật: manifest của Mojang công
+    bố sha1 nên muốn đối chiếu thì phải dùng đúng sha1. Bộ soi mã sẽ gắn cờ "hàm băm không
+    an toàn" — đừng đổi sang sha256, sẽ không đối chiếu được với gì cả.
     """
     digest = hashlib.sha1()
     read_bytes = 0
     with path.open("rb") as handle:
-        while chunk := handle.read(CHUNK):
+        while chunk := handle.read(READ_CHUNK):
             digest.update(chunk)
             read_bytes += len(chunk)
     return digest.hexdigest(), read_bytes
 
 
+def print_distribution(entries: list[AssetEntry], raw_count: int) -> None:
+    sizes = sorted(entry.size for entry in entries)
+    print(f"chỉ mục: {raw_count} mục, {len(entries)} hash duy nhất")
+    print(f"  -> {raw_count - len(entries)} mục trùng hash bị loại khi dedupe")
+    megabytes = total_bytes(entries) / 1e6
+    median_kb = statistics.median(sizes) / 1024
+    print(f"  tổng {megabytes:.0f} MB, trung vị {median_kb:.1f} KB")
+    for band in BANDS:
+        chosen = in_band(entries, band)
+        print(f"  {band:<16}: {len(chosen):5d} file, {total_bytes(chosen) / 1e6:6.1f} MB")
+
+
+def measure_stat(entries: list[AssetEntry], objects_dir: Path) -> tuple[float, int, int]:
+    """Xác minh bằng kích thước.
+
+    KHÔNG lọc trước bằng `.exists()`: làm thế là stat sẵn toàn bộ file, hâm nóng cache
+    metadata, và phép đo sẽ luôn ra số của đĩa nóng. Việc kiểm tồn tại nằm trong chính
+    vòng đo.
+    """
+    started = time.perf_counter()
+    matched = missing = 0
+    for entry in entries:
+        try:
+            if (objects_dir / entry.object_path).stat().st_size == entry.size:
+                matched += 1
+        except FileNotFoundError:
+            missing += 1
+    return time.perf_counter() - started, matched, missing
+
+
+def measure_sha1(entries: list[AssetEntry], objects_dir: Path) -> tuple[float, int]:
+    started = time.perf_counter()
+    hashed_bytes = 0
+    for entry in entries:
+        path = objects_dir / entry.object_path
+        if path.exists():
+            _digest, read_bytes = sha1_of_file(path)
+            hashed_bytes += read_bytes
+    return time.perf_counter() - started, hashed_bytes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--assets", type=Path, default=DEFAULT_ROOT)
-    parser.add_argument("--index-id", default="5")
+    parser.add_argument("--assets", type=Path, default=DEFAULT_ASSETS_DIR)
+    parser.add_argument("--index-id", default=DEFAULT_INDEX_ID)
     args = parser.parse_args()
 
-    index_path = args.assets / "indexes" / f"{args.index_id}.json"
-    objects_dir = args.assets / "objects"
+    index_path = index_path_for(args.assets, args.index_id)
     if not index_path.exists():
         print(f"không tìm thấy chỉ mục: {index_path}")
         return 1
 
-    objects = json.loads(index_path.read_text(encoding="utf-8"))["objects"]
-    unique = {v["hash"]: v["size"] for v in objects.values()}
-    print(f"chỉ mục {args.index_id}: {len(objects)} mục, {len(unique)} hash duy nhất")
-    print(f"  -> {len(objects) - len(unique)} mục trùng hash bị loại khi dedupe")
+    entries, raw_count = load_entries(index_path)
+    print_distribution(entries, raw_count)
 
-    sizes = sorted(unique.values())
-    total = sum(sizes)
-    print(f"  tổng {total / 1e6:.0f} MB, trung vị {statistics.median(sizes) / 1024:.1f} KB")
-    bands = [
-        ("< 16 KB", 0, 16 * 1024),
-        ("16-64 KB", 16 * 1024, 64 * 1024),
-        (">= 64 KB", 64 * 1024, 1 << 40),
-    ]
-    for label, low, high in bands:
-        chosen = [s for s in sizes if low <= s < high]
-        print(f"  {label:<9}: {len(chosen):5d} file, {sum(chosen) / 1e6:6.1f} MB")
-
-    # KHÔNG lọc trước bằng .exists(): làm thế là stat sẵn toàn bộ file, hâm nóng cache
-    # metadata, và phép đo bên dưới sẽ luôn ra số của đĩa nóng. Gộp việc kiểm tồn tại
-    # vào chính vòng đo.
-    started = time.perf_counter()
-    matched = missing = 0
-    for asset_hash, size in unique.items():
-        try:
-            if (objects_dir / asset_hash[:2] / asset_hash).stat().st_size == size:
-                matched += 1
-        except FileNotFoundError:
-            missing += 1
-    stat_seconds = time.perf_counter() - started
-    print(f"chỉ stat  : {stat_seconds * 1000:8.1f} ms ({matched} khớp, {missing} thiếu)")
+    objects_dir = args.assets / "objects"
+    stat_seconds, matched, missing = measure_stat(entries, objects_dir)
+    print(f"chỉ stat    : {stat_seconds * 1000:8.1f} ms ({matched} khớp, {missing} thiếu)")
     print("  (lượt đầu sau khi bật máy sẽ chậm hơn: đây là số trên cache metadata đã nóng)")
 
-    present = [(h, s) for h, s in unique.items() if (objects_dir / h[:2] / h).exists()]
-    if not present:
+    sha1_seconds, hashed_bytes = measure_sha1(entries, objects_dir)
+    if not hashed_bytes:
+        print("không có file nào trên đĩa để băm")
         return 1
-
-    started = time.perf_counter()
-    hashed_bytes = 0
-    for asset_hash, _size in present:
-        _digest, read_bytes = sha1_of_file(objects_dir / asset_hash[:2] / asset_hash)
-        hashed_bytes += read_bytes
-    sha1_seconds = time.perf_counter() - started
-    print(
-        f"sha1 toàn bộ: {sha1_seconds:6.2f} s "
-        f"({hashed_bytes / 1e6:.0f} MB, {hashed_bytes / 1e6 / sha1_seconds:.0f} MB/s)"
-    )
+    speed = hashed_bytes / 1e6 / sha1_seconds
+    print(f"sha1 toàn bộ: {sha1_seconds:8.2f} s ({hashed_bytes / 1e6:.0f} MB, {speed:.0f} MB/s)")
     print(f"=> sha1 chậm hơn stat {sha1_seconds / stat_seconds:.0f} lần")
     return 0
 

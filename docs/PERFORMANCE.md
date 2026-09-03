@@ -87,37 +87,45 @@ cứu được.** Trần nằm trong đường xử lý của `requests`, không
 
 ### 3.1 Độ song song (dải < 16 KB, 120 file, hâm nóng trước, thứ tự ngẫu nhiên, trung vị 3 lượt)
 
-| Luồng | file/s |
-|---:|---:|
-| 1 | 8,9 |
-| 4 | 33,4 |
-| 8 | 65,0 |
-| 16 | 92,4 |
-| 24 | 122,1 |
-| 32 | 100,2 |
-| 48 | 143,5 |
+Hai lượt chạy đầy đủ, cách nhau vài chục phút trên cùng máy và cùng đường truyền:
 
-Đọc đúng bảng này: **từ 1 lên 16 luồng là mười lần, không bàn cãi.** Từ 16 trở lên, các số
-(92 → 122 → 100 → 143) **không đơn điệu và nằm trong nhiễu** — phép đo này *không* đủ để nói
-24 tốt hơn 32 hay 48 tốt hơn 24. Một lượt quét khác trên cùng máy cho 16→120, 24→120, 32→123,
-48→98, 64→73. Điểm chung của cả hai lượt: tăng mạnh tới ~16, sau đó bình nguyên nhiễu, và
-suy giảm khi lên rất cao.
+| Luồng | lượt A (file/s) | lượt B (file/s) |
+|---:|---:|---:|
+| 1 | 8,9 | 9,2 |
+| 4 | 33,4 | 34,7 |
+| 8 | 65,0 | 62,8 |
+| 16 | 92,4 | 86,6 |
+| 24 | 122,1 | **152,3** |
+| 32 | 100,2 | **78,0** |
+| 48 | 143,5 | **174,6** |
 
-Vì vậy **không chốt một con số "tối ưu"**. Chốt: mặc định 16, cho phép chỉnh, và **không
-vượt 32 nếu chưa đo lại trên đường truyền cụ thể**.
+Đọc đúng bảng này: **từ 1 lên 16 luồng là mười lần, không bàn cãi** — hai lượt khớp nhau
+trong vòng 7%. Từ 16 trở lên, hai lượt **mâu thuẫn nhau**: 32 luồng lúc thì 100 lúc thì 78,
+còn 48 luồng lúc 143 lúc 175. Một lượt quét thứ ba cho 16→120, 24→120, 32→123, 48→98, 64→73.
 
-### 3.2 Hai dải còn lại (24 luồng)
+Ba lượt, ba hình dạng khác nhau ở vùng trên. Kết luận trung thực duy nhất rút ra được:
+**tăng mạnh tới ~16 luồng, sau đó là nhiễu, và suy giảm khi lên rất cao.** Phép đo này
+*không* đủ để nói 24 tốt hơn 32 hay 48 tốt hơn 24 — ai khẳng định thế là đọc quá dữ liệu.
 
-| Dải | file/s | MB/s |
-|---|---:|---:|
-| 16–64 KB (60 file) | 74,2 | 2,2 |
-| ≥ 64 KB (24 file) | 25,3 | 17,5 |
+Vì vậy **không chốt một con số "tối ưu"**. Chốt: mặc định 16 (điểm cuối cùng còn đo được
+chắc chắn), cho phép chỉnh, và **không vượt 32 nếu chưa đo lại trên đường truyền cụ thể**.
+
+### 3.2 Hai dải còn lại
+
+| Dải | 8 luồng | 16 luồng | 24 luồng |
+|---|---:|---:|---:|
+| 16–64 KB (60 file, 1,6 MB) | 46,3 file/s | 17,1 file/s | 70,3 file/s |
+| ≥ 64 KB (24 file, 39,1 MB) | 28,1 MB/s | 31,1 MB/s | 33,2 MB/s |
+
+Dải giữa cũng nhiễu như dải nhỏ (con số 17,1 ở 16 luồng là một lượt tậm tịt, không phải quy
+luật). Dải lớn thì ổn định và bão hoà băng thông từ 8 luồng — băng thông đo được dao động
+17–33 MB/s giữa các phiên tuỳ chất lượng đường truyền.
 
 ### 3.3 Tái dùng kết nối
 
-Cùng 16 luồng: giữ kết nối **86,4 file/s** so với mở mới mỗi file **35,6 file/s** →
-**2,4×**. Ba cặp đo xen kẽ ở lượt khác cho 2,1×–4,8×. Hệ số dao động theo mạng nhưng chưa
-lần nào đi ngược.
+Cùng 16 luồng: giữ kết nối **113,8 file/s** so với mở mới mỗi file **39,4 file/s** →
+**2,9×**. Các lượt khác cho 2,1×–4,8×. Hệ số dao động theo mạng nhưng **chưa lần nào đi
+ngược** — đây là kết luận chắc chắn nhất trong cả tài liệu, chắc hơn cả con số độ song song.
 
 ### 3.4 Xác minh: `stat` so với `sha1`
 
@@ -159,17 +167,20 @@ xong vấn đề — nó chỉ đổi tên kẻ thủ phạm. Luật phải là 
 | Cài nguội trọn vẹn 1.20.1 | ≤ 2 phút trên đường truyền ~20 MB/s |
 | Từ `play` tới lúc tiến trình java được sinh | ≤ 3× khởi động Python trần |
 
-Ước tính cài nguội, cộng theo **từng dải đã đo riêng** (24 luồng):
+Ước tính cài nguội, cộng theo **từng dải đã đo riêng**, dùng số thận trọng của 16–24 luồng:
 
 | Phần | Cách tính | Giây |
 |---|---|---:|
-| asset < 16 KB | 1.347 ÷ 122 file/s | 11 |
-| asset 16–64 KB | 1.737 ÷ 74 file/s | 23 |
-| asset ≥ 64 KB | 585,8 MB ÷ 17,5 MB/s | 33 |
-| thư viện + client.jar + JRE | ~185 MB ÷ 17,5 MB/s, cộng ~220 vòng request | 13 |
-| | **tổng** | **≈ 80** |
+| asset < 16 KB | 1.347 ÷ ~100 file/s | 13 |
+| asset 16–64 KB | 1.737 ÷ ~70 file/s | 25 |
+| asset ≥ 64 KB | 585,8 MB ÷ ~25 MB/s | 23 |
+| thư viện + client.jar + JRE | ~185 MB ÷ ~25 MB/s, cộng ~220 vòng request | 9 |
+| | **tổng** | **≈ 70** |
 
-Một luồng thì riêng phần asset đã là 3.575 ÷ 8,9 ≈ **6,7 phút**.
+Băng thông dao động 17–33 MB/s giữa các phiên, nên khoảng thật là **65–95 giây**. Ngân sách
+đặt ở 2 phút để còn chỗ cho đường truyền kém hơn.
+
+Một luồng thì riêng phần asset đã là 3.575 ÷ ~9 ≈ **6,6 phút**.
 
 ## 5. Chín luật thiết kế
 
