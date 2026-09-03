@@ -189,7 +189,10 @@ src/mccore/
     inherit.py                       trộn inheritsFrom, chặn vòng tròn
     arguments.py, classpath.py       (bước 6 và 11)
   java/component.py              L2  ánh xạ thuần version_meta -> java_component
-  repo/                          L3  manifest, version_repo
+  repo/                          L3  kho phiên bản
+    endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
+    manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
+    version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
   install/                       L3  client, library, natives, assets, plan
   java/                          L3  mojang_jre, detect
   account/                       L4  offline, profile, store

@@ -69,6 +69,23 @@ def resolve_within(base: Path, relative: str) -> Path:
     return base.joinpath(*parts)
 
 
+def resolve_child(base: Path, name: str) -> Path:
+    """Ghép MỘT thành phần tên vào `base`. Từ chối mọi thứ không phải một cái tên đơn.
+
+    Khác `resolve_within` ở chỗ không cho đường dẫn nhiều tầng: dùng cho những chỗ mà giá
+    trị *phải* là một cái tên, như mã phiên bản hay hash asset. Đã đo trước khi vá:
+    `version_id = "/tuyet-doi"` cho ra `/tuyet-doi.json` — thoát hẳn khỏi thư mục dữ liệu,
+    và mã phiên bản thì đến từ dòng lệnh nên là dữ liệu không tin được.
+    """
+    if not name or name in {".", ".."} or "/" in name or "\\" in name:
+        message = f"tên phải là một thành phần đơn, không rỗng: {name!r}"
+        raise UnsafePathError(message)
+    if len(name) > 1 and name[1] == ":":
+        message = f"tên không được chứa tên ổ đĩa: {name!r}"
+        raise UnsafePathError(message)
+    return base / name
+
+
 def sha1_of_file(path: Path) -> str:
     """Băm sha1 của một file, đọc theo khối để không nạp cả file vào bộ nhớ.
 

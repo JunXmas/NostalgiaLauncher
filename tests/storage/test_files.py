@@ -14,6 +14,7 @@ from mccore.storage.files import (
     atomic_write_json,
     ensure_dir,
     read_json,
+    resolve_child,
     resolve_within,
     set_executable,
     sha1_of_file,
@@ -178,3 +179,35 @@ def test_set_executable_keeps_existing_permissions(tmp_path: Path) -> None:
     mode = stat.S_IMODE(path.stat().st_mode)
     assert mode & stat.S_IXUSR
     assert mode & stat.S_IRUSR and mode & stat.S_IWUSR
+
+
+ESCAPING_NAMES = [
+    "",
+    ".",
+    "..",
+    "a/b",
+    "a\\b",
+    "/tuyet-doi",
+    "..\\thoat",
+    "C:x",
+]
+
+
+@pytest.mark.parametrize("name", ESCAPING_NAMES)
+def test_resolve_child_rejects_anything_that_is_not_a_single_name(
+    tmp_path: Path, name: str
+) -> None:
+    """Dùng cho mã phiên bản và hash asset — cả hai đều là dữ liệu không tin được.
+
+    Đo trước khi vá: `version_json("/tuyet-doi")` cho ra `/tuyet-doi.json`, tức ghi hẳn ra
+    ngoài thư mục dữ liệu.
+    """
+    with pytest.raises(UnsafePathError):
+        resolve_child(tmp_path, name)
+
+
+@pytest.mark.parametrize(
+    "name", ["1.20.1", "1.20.1-forge-47.4.10", "fabric-loader-0.19.3-1.21.4", "a.b_c-d"]
+)
+def test_resolve_child_allows_real_version_identifiers(tmp_path: Path, name: str) -> None:
+    assert resolve_child(tmp_path, name) == tmp_path / name
