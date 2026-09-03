@@ -15,11 +15,7 @@ import tempfile
 from pathlib import Path
 
 from mccore.errors import DataFileError, UnsafePathError
-
-# JSON đọc từ đĩa hay từ mạng là dữ liệu KHÔNG tin được, nên kiểu của nó phải nói đúng điều
-# đó. Dùng `Any` sẽ khiến bộ kiểm kiểu im lặng ở mọi chỗ dùng sau này; kiểu đệ quy này buộc
-# người gọi phải thu hẹp kiểu trước khi dùng.
-type JsonValue = bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"] | None
+from mccore.model.json_value import JsonValue
 
 # 256 KiB. Đo trên 400 file thật: tốc độ sha1 gần như không đổi từ 64 KiB tới 16 MiB
 # (500-511 MB/s), nên chọn khối nhỏ để khi băm song song 16 luồng chỉ tốn 4 MiB bộ đệm thay

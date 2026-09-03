@@ -1,0 +1,369 @@
+{
+ "arguments": {
+  "game": [
+   "--username",
+   "${auth_player_name}",
+   "--version",
+   "${version_name}",
+   "--gameDir",
+   "${game_directory}",
+   "--assetsDir",
+   "${assets_root}",
+   "--assetIndex",
+   "${assets_index_name}",
+   "--uuid",
+   "${auth_uuid}",
+   "--accessToken",
+   "${auth_access_token}",
+   "--clientId",
+   "${clientid}",
+   "--xuid",
+   "${auth_xuid}",
+   "--userType",
+   "${user_type}",
+   "--versionType",
+   "${version_type}",
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "is_demo_user": true
+      }
+     }
+    ],
+    "value": "--demo"
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "has_custom_resolution": true
+      }
+     }
+    ],
+    "value": [
+     "--width",
+     "${resolution_width}",
+     "--height",
+     "${resolution_height}"
+    ]
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "has_quick_plays_support": true
+      }
+     }
+    ],
+    "value": [
+     "--quickPlayPath",
+     "${quickPlayPath}"
+    ]
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "is_quick_play_singleplayer": true
+      }
+     }
+    ],
+    "value": [
+     "--quickPlaySingleplayer",
+     "${quickPlaySingleplayer}"
+    ]
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "is_quick_play_multiplayer": true
+      }
+     }
+    ],
+    "value": [
+     "--quickPlayMultiplayer",
+     "${quickPlayMultiplayer}"
+    ]
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "features": {
+       "is_quick_play_realms": true
+      }
+     }
+    ],
+    "value": [
+     "--quickPlayRealms",
+     "${quickPlayRealms}"
+    ]
+   }
+  ],
+  "jvm": [
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "os": {
+       "name": "osx"
+      }
+     }
+    ],
+    "value": [
+     "-XstartOnFirstThread"
+    ]
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "os": {
+       "name": "windows"
+      }
+     }
+    ],
+    "value": "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"
+   },
+   {
+    "rules": [
+     {
+      "action": "allow",
+      "os": {
+       "arch": "x86"
+      }
+     }
+    ],
+    "value": "-Xss1M"
+   },
+   "-Djava.library.path=${natives_directory}",
+   "-Djna.tmpdir=${natives_directory}",
+   "-Dorg.lwjgl.system.SharedLibraryExtractPath=${natives_directory}",
+   "-Dio.netty.native.workdir=${natives_directory}",
+   "-Dminecraft.launcher.brand=${launcher_name}",
+   "-Dminecraft.launcher.version=${launcher_version}",
+   "-cp",
+   "${classpath}"
+  ]
+ },
+ "assetIndex": {
+  "id": "19",
+  "sha1": "39a8f50b6ea870e97afe9b4400d7429542d017b2",
+  "size": 464718,
+  "totalSize": 420207823,
+  "url": "https://piston-meta.mojang.com/v1/packages/39a8f50b6ea870e97afe9b4400d7429542d017b2/19.json"
+ },
+ "assets": "19",
+ "downloads": {
+  "client": {
+   "sha1": "a7e5a6024bfd3cd614625aa05629adf760020304",
+   "size": 28335587,
+   "url": "https://piston-data.mojang.com/v1/objects/a7e5a6024bfd3cd614625aa05629adf760020304/client.jar"
+  },
+  "client_mappings": {
+   "sha1": "0cf2a0b7f056da1a5a5dd99fc6dc752f33987150",
+   "size": 10323161,
+   "url": "https://piston-data.mojang.com/v1/objects/0cf2a0b7f056da1a5a5dd99fc6dc752f33987150/client.txt"
+  },
+  "server": {
+   "sha1": "4707d00eb834b446575d89a61a11b5d548d8c001",
+   "size": 56880250,
+   "url": "https://piston-data.mojang.com/v1/objects/4707d00eb834b446575d89a61a11b5d548d8c001/server.jar"
+  },
+  "server_mappings": {
+   "sha1": "0b1e60cc509cfb0172573ae56b436c29febbc187",
+   "size": 7753825,
+   "url": "https://piston-data.mojang.com/v1/objects/0b1e60cc509cfb0172573ae56b436c29febbc187/server.txt"
+  }
+ },
+ "id": "1.21.4",
+ "javaVersion": {
+  "component": "java-runtime-delta",
+  "majorVersion": 21
+ },
+ "libraries": [
+  {
+   "downloads": {
+    "artifact": {
+     "path": "ca/weblite/java-objc-bridge/1.1/java-objc-bridge-1.1.jar",
+     "sha1": "1227f9e0666314f9de41477e3ec277e542ed7f7b",
+     "size": 1330045,
+     "url": "https://libraries.minecraft.net/ca/weblite/java-objc-bridge/1.1/java-objc-bridge-1.1.jar"
+    }
+   },
+   "name": "ca.weblite:java-objc-bridge:1.1",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "osx"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-linux.jar",
+     "sha1": "f43b6fa5cd0ecf8e6a33bc30a24b117cd0ebbfa1",
+     "size": 187868,
+     "url": "https://libraries.minecraft.net/com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-linux.jar"
+    }
+   },
+   "name": "com.mojang:jtracy:1.0.29:natives-linux",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "linux"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-macos.jar",
+     "sha1": "d620e5b94ca81783b409d50c48b73e0ee7fdcb7d",
+     "size": 176408,
+     "url": "https://libraries.minecraft.net/com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-macos.jar"
+    }
+   },
+   "name": "com.mojang:jtracy:1.0.29:natives-macos",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "osx"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-windows.jar",
+     "sha1": "e05332cb31c7ae582dc8d8bd1bffd47c2ff7636f",
+     "size": 46164,
+     "url": "https://libraries.minecraft.net/com/mojang/jtracy/1.0.29/jtracy-1.0.29-natives-windows.jar"
+    }
+   },
+   "name": "com.mojang:jtracy:1.0.29:natives-windows",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "windows"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "io/netty/netty-transport-native-epoll/4.1.115.Final/netty-transport-native-epoll-4.1.115.Final-linux-aarch_64.jar",
+     "sha1": "a80b32f98ceb4e27958c0ceaf22ddad9ea6c0d4e",
+     "size": 42291,
+     "url": "https://libraries.minecraft.net/io/netty/netty-transport-native-epoll/4.1.115.Final/netty-transport-native-epoll-4.1.115.Final-linux-aarch_64.jar"
+    }
+   },
+   "name": "io.netty:netty-transport-native-epoll:4.1.115.Final:linux-aarch_64",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "linux"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "io/netty/netty-transport-native-epoll/4.1.115.Final/netty-transport-native-epoll-4.1.115.Final-linux-x86_64.jar",
+     "sha1": "a6cc58c4a259bad159cbb06120cea9b3474e86a0",
+     "size": 40595,
+     "url": "https://libraries.minecraft.net/io/netty/netty-transport-native-epoll/4.1.115.Final/netty-transport-native-epoll-4.1.115.Final-linux-x86_64.jar"
+    }
+   },
+   "name": "io.netty:netty-transport-native-epoll:4.1.115.Final:linux-x86_64",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "linux"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-linux.jar",
+     "sha1": "149070a5480900347071b7074779531f25a6e3dc",
+     "size": 1245129,
+     "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-linux.jar"
+    }
+   },
+   "name": "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "linux"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-macos-arm64.jar",
+     "sha1": "b0a8c9baa9d1f54ac61e1ab9640c7659e7fa700c",
+     "size": 1040981,
+     "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-macos-arm64.jar"
+    }
+   },
+   "name": "org.lwjgl:lwjgl-freetype:3.3.3:natives-macos-arm64",
+   "rules": [
+    {
+     "action": "allow",
+     "os": {
+      "name": "osx"
+     }
+    }
+   ]
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "com/fasterxml/jackson/core/jackson-annotations/2.13.4/jackson-annotations-2.13.4.jar",
+     "sha1": "858c6cc78e1f08a885b1613e1d817c829df70a6e",
+     "size": 75717,
+     "url": "https://libraries.minecraft.net/com/fasterxml/jackson/core/jackson-annotations/2.13.4/jackson-annotations-2.13.4.jar"
+    }
+   },
+   "name": "com.fasterxml.jackson.core:jackson-annotations:2.13.4"
+  },
+  {
+   "downloads": {
+    "artifact": {
+     "path": "com/fasterxml/jackson/core/jackson-core/2.13.4/jackson-core-2.13.4.jar",
+     "sha1": "0cf934c681294b97ef6d80082faeefbe1edadf56",
+     "size": 374895,
+     "url": "https://libraries.minecraft.net/com/fasterxml/jackson/core/jackson-core/2.13.4/jackson-core-2.13.4.jar"
+    }
+   },
+   "name": "com.fasterxml.jackson.core:jackson-core:2.13.4"
+  }
+ ],
+ "mainClass": "net.minecraft.client.main.Main",
+ "type": "release"
+}
