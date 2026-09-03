@@ -95,6 +95,7 @@ def measure(sample: list[tuple[str, int]], workers: int, *, reuse: bool) -> floa
 
 
 def median_of(sample: list[tuple[str, int]], workers: int, *, reuse: bool, runs: int) -> float:
+    """Trung vị chứ không phải trung bình: một lượt mạng tậm tịt không được kéo lệch cả số đo."""
     return statistics.median(measure(sample, workers, reuse=reuse) for _ in range(runs))
 
 
@@ -125,6 +126,10 @@ def main() -> int:
     if not args.index.exists():
         print(f"không tìm thấy chỉ mục asset: {args.index}")
         return 1
+    if args.count < 1 or args.runs < 1:
+        # Mẫu rỗng vẫn chạy trót lọt và in ra 0,0 file/s — số vô nghĩa mà trông như số đo.
+        print("--count và --runs phải >= 1")
+        return 2
 
     small = load_sample(args.index, args.count, "nhỏ (<16 KB)")
     print(f"mẫu file nhỏ: {len(small)} file, {sum(s for _, s in small) / 1024:.0f} KB")

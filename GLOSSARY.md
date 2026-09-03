@@ -147,6 +147,10 @@ in ra màn hình và cần hằng đường dẫn mặc định.
 
 Cộng thêm `conftest.py` **cấm** mọi test chạm home thật (không chỉ chuyển hướng nó).
 
+Lưu ý vì sao cần *cả hai* lớp: lệnh import chạy lúc pytest **thu thập** test, tức trước khi
+fixture kịp vá `Path.home`. Nên lưới lúc chạy về nguyên tắc **không thể** bắt được hằng
+`Path.home()` ở mức module — đã kiểm bằng đột biến và đúng là lọt. Chỉ test AST bắt được nó.
+
 ## 5. Kiến trúc bảy tầng
 
 Phụ thuộc **chỉ đi xuống hoặc ngang**. Tầng N import được tầng < N và **được import cùng

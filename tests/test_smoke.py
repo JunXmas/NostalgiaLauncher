@@ -73,20 +73,50 @@ def test_cli_rejects_unknown_argument() -> None:
     assert exit_info.value.code != 0
 
 
-def test_installed_console_script_runs() -> None:
-    """Chạy đúng đường người dùng đi: entry point trong pyproject, qua một tiến trình thật.
+def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
+    """Chạy CLI qua đúng đường người dùng đi: main() trong một tiến trình thật."""
+    code = f"from mccore.cli.main import main; raise SystemExit(main({list(args)!r}))"
+    return subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
 
-    Các test trên chỉ gọi hàm; test này gác luôn [project.scripts] và cấu hình đóng gói.
+
+def test_main_propagates_argparse_exit_code() -> None:
+    """main() KHÔNG được nuốt SystemExit của argparse.
+
+    Test `test_cli_rejects_unknown_argument` ở trên gọi thẳng parse_args, tức đi vòng qua
+    main(). Nếu ai đó bọc main bằng `try/except SystemExit: return 0` thì đối số sai sẽ trả
+    mã 0 mà bộ test vẫn xanh — đã kiểm bằng đột biến và đúng là lọt. Test này bịt lỗ đó.
     """
-    code = "from mccore.cli.main import main; raise SystemExit(main(['--version']))"
-    result = subprocess.run(
-        [sys.executable, "-c", code],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_cli("--khong-ton-tai")
+    assert result.returncode != 0
+    assert "khong-ton-tai" in result.stderr
+
+
+def test_installed_console_script_runs() -> None:
+    """Chạy đúng đường người dùng đi: entry point trong pyproject, qua một tiến trình thật."""
+    result = _run_cli("--version")
     assert result.returncode == 0, result.stderr
     assert mccore.__version__ in result.stdout
+
+
+def test_cli_stays_light() -> None:
+    """Lệnh không chạm mạng không được kéo theo module nặng.
+
+    Ngân sách khởi động ở docs/PERFORMANCE.md phụ thuộc hoàn toàn vào điều này, và thủ phạm
+    đắt nhất là http.client chứ không phải thư viện ngoài nào.
+    """
+    heavy = ("http.client", "ssl", "zipfile", "concurrent.futures", "subprocess", "logging")
+    code = (
+        "import sys, io, contextlib\n"
+        "from mccore.cli.main import main\n"
+        "with contextlib.redirect_stdout(io.StringIO()):\n"
+        "    try: main(['--version'])\n"
+        "    except SystemExit: pass\n"
+        f"sys.stderr.write(','.join(m for m in {heavy!r} if m in sys.modules))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stderr == "", f"module nặng bị nạp sẵn: {result.stderr}"
 
 
 def test_home_access_is_forbidden() -> None:

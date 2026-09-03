@@ -18,7 +18,12 @@ CHUNK = 1 << 20
 
 
 def sha1_of_file(path: Path) -> tuple[str, int]:
-    """Trả về (sha1, số byte đọc thật). Đếm byte thật để MB/s không sai khi file cụt."""
+    """Trả về (sha1, số byte đọc thật). Đếm byte thật để MB/s không sai khi file cụt.
+
+    sha1 ở đây không phải lựa chọn về bảo mật mà là ràng buộc giao thức: manifest của
+    Mojang công bố sha1, nên muốn đối chiếu thì phải dùng đúng sha1. Bộ soi mã sẽ gắn cờ
+    "hàm băm không an toàn" — đừng đổi sang sha256, sẽ không đối chiếu được với gì cả.
+    """
     digest = hashlib.sha1()
     read_bytes = 0
     with path.open("rb") as handle:
