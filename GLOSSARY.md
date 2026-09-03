@@ -178,10 +178,16 @@ src/mccore/
   operations/                    L0  điều khiển thao tác dài
     progress.py                      báo tiến độ
     cancellation.py                  yêu cầu dừng
-  model/                         L0  dataclass dùng chung (bước 3)
+  model/                         L0  dataclass dùng chung: ZERO import của mccore
+    download.py                      Artifact (tương đối) và DownloadTask (tuyệt đối)
+    json_value.py                    kiểu cho JSON chưa tin được, kèm hàm thu hẹp kiểu
   net/                           L1  http, download
-  version/                       L2  rules, maven, meta, inherit, arguments, classpath
-    ^ THUẦN: không mạng, không đọc/ghi file
+  version/                       L2  THUẦN: không mạng, không đọc/ghi file
+    rules.py                         luật theo OS/arch/feature; luật sau ghi đè luật trước
+    maven.py                         toạ độ và đường dẫn trong libraries/
+    meta.py                          phân tích JSON phiên bản của mọi đời
+    inherit.py                       trộn inheritsFrom, chặn vòng tròn
+    arguments.py, classpath.py       (bước 6 và 11)
   java/component.py              L2  ánh xạ thuần version_meta -> java_component
   repo/                          L3  manifest, version_repo
   install/                       L3  client, library, natives, assets, plan

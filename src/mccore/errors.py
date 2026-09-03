@@ -35,6 +35,10 @@ class IntegrityError(McCoreError):
     """File tải về không khớp kích thước hoặc sha1 mà máy chủ công bố."""
 
 
+class VersionError(McCoreError):
+    """JSON phiên bản sai cấu trúc, thiếu, hoặc kế thừa thành vòng tròn."""
+
+
 class UnsupportedPlatformError(McCoreError):
     """Hệ điều hành không nằm trong ba hệ mà Mojang phát hành cho."""
 

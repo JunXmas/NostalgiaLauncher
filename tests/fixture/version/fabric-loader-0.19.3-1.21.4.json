@@ -1,0 +1,32 @@
+{
+ "id": "fabric-loader-0.19.3-1.21.4",
+ "inheritsFrom": "1.21.4",
+ "type": "release",
+ "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+ "arguments": {
+  "game": [],
+  "jvm": [
+   "-DFabricMcEmu= net.minecraft.client.main.Main "
+  ]
+ },
+ "libraries": [
+  {
+   "name": "org.ow2.asm:asm:9.10.1",
+   "url": "https://maven.fabricmc.net/",
+   "md5": "9cb72080438acf27f2607002e1444a7b",
+   "sha1": "ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236",
+   "sha256": "ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb",
+   "sha512": "8db6efa37d4d569bf2b95d90931b8064f87ed928d20bbf8d8e7fa6182e9a11d32e6a2cc034a3d173a38ee70ce2ea9f20f52f9d8730d9401d2bc6060674c18928",
+   "size": 126151
+  },
+  {
+   "name": "org.ow2.asm:asm-analysis:9.10.1",
+   "url": "https://maven.fabricmc.net/",
+   "md5": "6dd9011ec87f65e4b2e14e938c4118e4",
+   "sha1": "8d49f14d51f632cb1d87c88d1ceaf50db0d8af1b",
+   "sha256": "dede75a21306b65974ecd8f87114ff6970f09fb794157a4ca09ab25c888c2bfc",
+   "sha512": "0542a90be38f81e39ef43a9253630a2d59f82c17c24492f005c67619561308afbbd23bf8504d3e83b1d4cebe5746126da76037473ddac3071b028c2ae279296b",
+   "size": 35140
+  }
+ ]
+}
