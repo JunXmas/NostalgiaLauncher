@@ -9,7 +9,7 @@ import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
 from mccore.errors import Cancelled
-from mccore.model.download import Artifact, DownloadTask
+from mccore.model.download import Artifact, DownloadTask, RemoteFile
 from mccore.net.download import download_all
 from mccore.net.http import HttpClient, RetryPolicy
 from mccore.operations.cancellation import CancelToken
@@ -141,15 +141,27 @@ def test_empty_batch_is_fine(client: HttpClient) -> None:
 
 def test_artifact_resolves_to_a_task_under_the_root(tmp_path: Path) -> None:
     """`Artifact` khai đường dẫn TƯƠNG ĐỐI; `DownloadTask` mới có đích tuyệt đối."""
-    artifact = Artifact(url="https://x/a.jar", relative_path="com/x/a.jar", sha1="ab", size=3)
-    task = artifact.to_task(tmp_path)
+    remote = RemoteFile(url="https://x/a.jar", sha1="ab", size=3)
+    task = Artifact(remote=remote, relative_path="com/x/a.jar").to_task(tmp_path)
     assert task.destination == tmp_path / "com" / "x" / "a.jar"
-    assert (task.url, task.sha1, task.size) == (artifact.url, artifact.sha1, artifact.size)
+    assert (task.url, task.sha1, task.size) == (remote.url, remote.sha1, remote.size)
+
+
+def test_remote_file_takes_a_destination_chosen_by_the_caller(tmp_path: Path) -> None:
+    """Máy chủ không khai đường dẫn cho client.jar và cho chỉ mục asset.
+
+    Nơi lưu chúng do bố trí thư mục của launcher quyết định, nên `RemoteFile` nhận thẳng
+    đích tuyệt đối — không có chỗ nào phải tự dựng chuỗi đường dẫn lần thứ hai.
+    """
+    destination = tmp_path / "versions" / "1.20.1" / "1.20.1.jar"
+    task = RemoteFile(url="https://x/client.jar", size=9).to_task(destination)
+    assert task.destination == destination
+    assert task.size == 9
 
 
 def test_artifact_refuses_a_relative_path_that_escapes(tmp_path: Path) -> None:
     from mccore.errors import UnsafePathError
 
-    artifact = Artifact(url="https://x/a", relative_path="../../thoat.jar")
+    artifact = Artifact(remote=RemoteFile(url="https://x/a"), relative_path="../../thoat.jar")
     with pytest.raises(UnsafePathError):
         artifact.to_task(tmp_path)

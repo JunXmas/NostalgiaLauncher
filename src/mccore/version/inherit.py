@@ -22,8 +22,8 @@ from mccore.model.json_value import JsonValue, as_list, as_mapping, as_string
 # có thể tạo chuỗi dài hoặc vòng tròn, và vòng tròn thì phải hỏng RÕ RÀNG chứ không treo.
 MAX_INHERITANCE_DEPTH = 8
 
-# Khoá là danh sách và phải NỐI chứ không ghi đè. Giá trị cho biết bản con đứng trước hay sau.
-CHILD_FIRST_LISTS = ("libraries",)
+# Hai nhóm khoá là danh sách và phải NỐI chứ không ghi đè, và thứ tự nối NGƯỢC nhau — xem
+# docstring của `merge_inherited`.
 PARENT_FIRST_ARGUMENT_GROUPS = ("game", "jvm")
 
 LoadRawVersion = Callable[[str], JsonValue]
@@ -83,9 +83,8 @@ def merge_inherited(
     merged: dict[str, JsonValue] = dict(parent)
     merged.update({key: value for key, value in child.items() if key != "arguments"})
 
-    for key in CHILD_FIRST_LISTS:
-        if key in child or key in parent:
-            merged[key] = [*as_list(child.get(key)), *as_list(parent.get(key))]
+    if "libraries" in child or "libraries" in parent:
+        merged["libraries"] = [*as_list(child.get("libraries")), *as_list(parent.get("libraries"))]
 
     child_arguments = as_mapping(child.get("arguments"))
     parent_arguments = as_mapping(parent.get("arguments"))
