@@ -38,7 +38,7 @@ line-length = 100
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "ANN", "RUF", "PTH", "SIM", "C4"]
+select = ["E", "W", "F", "I", "UP", "B", "ANN", "RUF", "PTH", "SIM", "C4"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]

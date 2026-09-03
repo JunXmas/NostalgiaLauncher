@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mccore.paths import CONFIG_DIR_ENV, DATA_DIR_ENV, DataPaths
+from mccore.storage.paths import CONFIG_DIR_ENV, DATA_DIR_ENV, DataPaths
 
 LINUX_ENV = {"HOME": "/nha/jun"}
 

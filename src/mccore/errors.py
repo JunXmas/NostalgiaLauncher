@@ -27,5 +27,9 @@ class DataFileError(McCoreError):
     """File dữ liệu trên đĩa thiếu, hỏng, hoặc sai cấu trúc."""
 
 
+class UnsupportedPlatformError(McCoreError):
+    """Hệ điều hành không nằm trong ba hệ mà Mojang phát hành cho."""
+
+
 class Cancelled(McCoreError):
     """Người dùng yêu cầu dừng giữa chừng."""

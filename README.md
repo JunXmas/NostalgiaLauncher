@@ -25,6 +25,24 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 | 13 | `doctor` — soi mắt xích hỏng | |
 | 14 | Khởi động game thật | |
 
+## Cây thư mục
+
+Tên folder nói **chức năng**, tên file nói **thứ cụ thể**. Không viết tắt.
+
+```
+src/mccore/
+  errors.py            từ vựng lỗi — ở gốc vì mọi tầng đều dùng
+  storage/             đĩa: paths.py (cái gì ở đâu) + files.py (đọc/ghi an toàn)
+  system/              nhận diện máy: platform_info.py
+  operations/          thao tác dài: progress.py + cancellation.py
+  cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
+tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
+bench/                 script đo hiệu năng, không phải test
+docs/                  PERFORMANCE.md — ngân sách hiệu năng đo được
+```
+
+Sơ đồ đầy đủ bảy tầng và luật phụ thuộc: [GLOSSARY.md](GLOSSARY.md) §5.
+
 ## Yêu cầu
 
 Python 3.12 trở lên và [uv](https://docs.astral.sh/uv/). **Không có phụ thuộc runtime nào** —

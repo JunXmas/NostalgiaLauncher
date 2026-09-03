@@ -47,10 +47,10 @@ class DataPaths:
         Nhận `environ` làm đối số thay vì đọc thẳng `os.environ`, để test dựng được mọi
         tình huống mà không phải vá biến môi trường toàn cục.
         """
-        env = os.environ if environ is None else environ
-        data_dir = env.get(DATA_DIR_ENV)
-        config_dir = env.get(CONFIG_DIR_ENV)
-        default_data, default_config = _default_roots(platform_name, env)
+        environment = os.environ if environ is None else environ
+        data_dir = environment.get(DATA_DIR_ENV)
+        config_dir = environment.get(CONFIG_DIR_ENV)
+        default_data, default_config = _default_roots(platform_name, environment)
         return cls(
             data_dir=Path(data_dir) if data_dir else default_data,
             config_dir=Path(config_dir) if config_dir else default_config,
@@ -100,15 +100,15 @@ class DataPaths:
         return self.asset_objects_dir / asset_hash[:2] / asset_hash
 
 
-def _default_roots(platform_name: str, env: Mapping[str, str]) -> tuple[Path, Path]:
+def _default_roots(platform_name: str, environment: Mapping[str, str]) -> tuple[Path, Path]:
     """Vị trí mặc định khi người dùng không đặt biến môi trường nào."""
-    home = Path(env.get("HOME") or env.get("USERPROFILE") or ".")
+    home = Path(environment.get("HOME") or environment.get("USERPROFILE") or ".")
     if platform_name == "windows":
-        base = Path(env.get("APPDATA") or home / "AppData" / "Roaming")
+        base = Path(environment.get("APPDATA") or home / "AppData" / "Roaming")
         return base / APP_NAME / "data", base / APP_NAME / "config"
     if platform_name == "osx":
         support = home / "Library" / "Application Support" / APP_NAME
         return support / "data", support / "config"
-    data_home = Path(env.get("XDG_DATA_HOME") or home / ".local" / "share")
-    config_home = Path(env.get("XDG_CONFIG_HOME") or home / ".config")
+    data_home = Path(environment.get("XDG_DATA_HOME") or home / ".local" / "share")
+    config_home = Path(environment.get("XDG_CONFIG_HOME") or home / ".config")
     return data_home / APP_NAME, config_home / APP_NAME

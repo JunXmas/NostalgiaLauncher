@@ -20,10 +20,14 @@ class Progress:
 
     @property
     def fraction(self) -> float:
-        """Tỉ lệ hoàn thành trong khoảng 0..1; trả 0 khi chưa biết tổng."""
+        """Tỉ lệ hoàn thành, luôn nằm trong 0..1; trả 0 khi chưa biết tổng.
+
+        Kẹp cả hai đầu chứ không chỉ đầu trên: `done` âm là có thật khi người gọi trừ đi
+        phần đã bỏ qua, và một thanh tiến trình nhận -0,5 sẽ vẽ ra thứ vô nghĩa.
+        """
         if self.total <= 0:
             return 0.0
-        return min(1.0, self.done / self.total)
+        return min(1.0, max(0.0, self.done / self.total))
 
 
 ProgressFn = Callable[[Progress], None]

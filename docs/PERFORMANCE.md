@@ -127,12 +127,27 @@ Cùng 16 luồng: giữ kết nối **113,8 file/s** so với mở mới mỗi f
 **2,9×**. Các lượt khác cho 2,1×–4,8×. Hệ số dao động theo mạng nhưng **chưa lần nào đi
 ngược** — đây là kết luận chắc chắn nhất trong cả tài liệu, chắc hơn cả con số độ song song.
 
-### 3.4 Xác minh: `stat` so với `sha1`
+### 3.4 Xác minh: `stat` so với `sha1`, và kích thước khối đọc
 
 3.575 file, 649 MB: `stat` **104 ms**, `sha1` toàn bộ **1,05 s** (620 MB/s) → chênh **10×**.
 
 Con số `stat` là trên cache metadata **đã nóng**; lần chạy đầu sau khi bật máy sẽ chậm hơn.
 Không đo được số nguội vì `drop_caches` cần quyền root.
+
+Kích thước khối đọc **gần như không ảnh hưởng tốc độ** — đo trên 400 file thật:
+
+| Khối | MB/s |
+|---|---:|
+| 64 KiB | 500 |
+| 256 KiB | 510 |
+| 1 MiB | 511 |
+| 4 MiB | 504 |
+| 16 MiB | 503 |
+| `hashlib.file_digest` | **470** |
+
+Nên chọn **256 KiB**: cùng tốc độ nhưng khi băm song song 16 luồng chỉ tốn 4 MiB bộ đệm thay
+vì 16 MiB. Và `hashlib.file_digest` (có sẵn từ Python 3.11) **chậm hơn** với nhiều file nhỏ —
+ghi lại để không ai "hiện đại hoá" sang nó rồi thành tụt hiệu năng.
 
 ### 3.5 Khởi động CLI (bội số của Python trần, đo xen kẽ 15 lượt)
 
@@ -155,6 +170,30 @@ Không đo được số nguội vì `drop_caches` cần quyền root.
 cả `logging` + `zipfile` + `concurrent.futures` cộng lại**. Bỏ `requests` không giải quyết
 xong vấn đề — nó chỉ đổi tên kẻ thủ phạm. Luật phải là *nạp lười mọi thứ nặng*, không phải
 *nạp lười một thư viện cụ thể*.
+
+### 3.6 Ghép đường dẫn an toàn: 177 µs xuống 6,5 µs
+
+`resolve_within` được gọi một lần cho **mỗi entry** khi giải nén natives, JRE hay modpack.
+Bản đầu dùng `Path.resolve()` hai lần mỗi lần gọi:
+
+| Thành phần | µs/lần |
+|---|---:|
+| `base.resolve()` | 35,4 |
+| `(base / relative).resolve()` | 78,9 |
+| `PureWindowsPath(relative).root` / `.drive` | 3,7 |
+| **tổng bản cũ** | **176,7** |
+| kiểm bằng chuỗi thuần | 0,7 |
+| `base.joinpath(*parts)` | 3,1 |
+| **tổng bản mới** | **6,5** |
+
+Với một modpack 3.500 file: **618 ms xuống 23 ms**, nhanh hơn 27 lần — chỉ để kiểm tên file.
+
+Bản mới còn **kiểm chặt hơn**: `resolve()` chỉ so đích cuối cùng nên `a/../b.txt` được cho
+qua, còn bản chuỗi từ chối mọi thành phần `..`. Không entry archive lành mạnh nào cần `..`.
+
+Đánh đổi: hàm không còn phát hiện symlink đã có sẵn *bên trong* thư mục đích. Bất biến người
+gọi phải giữ: **không bao giờ tạo symlink từ nội dung archive** — khi mọi thư mục đều do ta
+tạo, không có symlink nào tồn tại để đi qua. Có test ghi rõ giới hạn này.
 
 ## 4. Ngân sách
 
