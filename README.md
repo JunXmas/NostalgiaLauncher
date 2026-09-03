@@ -27,7 +27,8 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 
 ## Yêu cầu
 
-Python 3.12 trở lên và [uv](https://docs.astral.sh/uv/). Không cần cài Java: launcher tự tải
+Python 3.12 trở lên và [uv](https://docs.astral.sh/uv/). **Không có phụ thuộc runtime nào** —
+mọi thứ HTTP dùng `http.client` của thư viện chuẩn. Cũng không cần cài Java: launcher tự tải
 JRE của Mojang theo đúng phiên bản game.
 
 ## Chạy thử
@@ -42,12 +43,14 @@ uv run mccore --version
 ```bash
 uv run ruff check .
 uv run ruff format --check .
+uv run mypy                        # kiểm kiểu, strict
 uv run pytest -m "not network" -q   # test offline
 uv run pytest -m network -q         # test cần Internet
 ```
 
 Đọc [docs/PERFORMANCE.md](docs/PERFORMANCE.md) để biết ngân sách hiệu năng và bảy luật
-thiết kế rút ra từ số đo thật (độ song song, tái dùng kết nối, nạp `requests` lười).
+thiết kế rút ra từ số đo thật (độ song song, giữ kết nối sống, nạp lười mọi thứ nặng).
 
-Đọc [GLOSSARY.md](GLOSSARY.md) trước khi viết dòng code đầu tiên — quy ước đặt tên ở đó là
-luật, và có test gác. Quy trình đóng góp xem [CONTRIBUTING.md](CONTRIBUTING.md).
+Đọc [GLOSSARY.md](GLOSSARY.md) trước khi viết dòng code đầu tiên. Quy ước đặt tên ở đó là
+luật; bảy test gác được liệt kê ở §4 của file đó, tất cả sẽ có từ bước 2 trở đi —
+hiện tại (bước 1) chưa test nào tồn tại. Quy trình đóng góp xem [CONTRIBUTING.md](CONTRIBUTING.md).

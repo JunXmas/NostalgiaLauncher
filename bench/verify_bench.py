@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import statistics
 import time
 from pathlib import Path
 
@@ -16,12 +17,15 @@ DEFAULT_ROOT = Path.home() / ".nostalgia-launcher" / "assets"
 CHUNK = 1 << 20
 
 
-def sha1_of_file(path: Path) -> str:
+def sha1_of_file(path: Path) -> tuple[str, int]:
+    """Trả về (sha1, số byte đọc thật). Đếm byte thật để MB/s không sai khi file cụt."""
     digest = hashlib.sha1()
+    read_bytes = 0
     with path.open("rb") as handle:
         while chunk := handle.read(CHUNK):
             digest.update(chunk)
-    return digest.hexdigest()
+            read_bytes += len(chunk)
+    return digest.hexdigest(), read_bytes
 
 
 def main() -> int:
@@ -41,21 +45,42 @@ def main() -> int:
     print(f"chỉ mục {args.index_id}: {len(objects)} mục, {len(unique)} hash duy nhất")
     print(f"  -> {len(objects) - len(unique)} mục trùng hash bị loại khi dedupe")
 
+    sizes = sorted(unique.values())
+    total = sum(sizes)
+    print(f"  tổng {total / 1e6:.0f} MB, trung vị {statistics.median(sizes) / 1024:.1f} KB")
+    bands = [
+        ("< 16 KB", 0, 16 * 1024),
+        ("16-64 KB", 16 * 1024, 64 * 1024),
+        (">= 64 KB", 64 * 1024, 1 << 40),
+    ]
+    for label, low, high in bands:
+        chosen = [s for s in sizes if low <= s < high]
+        print(f"  {label:<9}: {len(chosen):5d} file, {sum(chosen) / 1e6:6.1f} MB")
+
+    # KHÔNG lọc trước bằng .exists(): làm thế là stat sẵn toàn bộ file, hâm nóng cache
+    # metadata, và phép đo bên dưới sẽ luôn ra số của đĩa nóng. Gộp việc kiểm tồn tại
+    # vào chính vòng đo.
+    started = time.perf_counter()
+    matched = missing = 0
+    for asset_hash, size in unique.items():
+        try:
+            if (objects_dir / asset_hash[:2] / asset_hash).stat().st_size == size:
+                matched += 1
+        except FileNotFoundError:
+            missing += 1
+    stat_seconds = time.perf_counter() - started
+    print(f"chỉ stat  : {stat_seconds * 1000:8.1f} ms ({matched} khớp, {missing} thiếu)")
+    print("  (lượt đầu sau khi bật máy sẽ chậm hơn: đây là số trên cache metadata đã nóng)")
+
     present = [(h, s) for h, s in unique.items() if (objects_dir / h[:2] / h).exists()]
-    print(f"có mặt trên đĩa: {len(present)}/{len(unique)}")
     if not present:
         return 1
 
     started = time.perf_counter()
-    matched = sum(1 for h, s in present if (objects_dir / h[:2] / h).stat().st_size == s)
-    stat_seconds = time.perf_counter() - started
-    print(f"chỉ stat  : {stat_seconds * 1000:8.1f} ms ({matched} file khớp kích thước)")
-
-    started = time.perf_counter()
     hashed_bytes = 0
-    for asset_hash, size in present:
-        sha1_of_file(objects_dir / asset_hash[:2] / asset_hash)
-        hashed_bytes += size
+    for asset_hash, _size in present:
+        _digest, read_bytes = sha1_of_file(objects_dir / asset_hash[:2] / asset_hash)
+        hashed_bytes += read_bytes
     sha1_seconds = time.perf_counter() - started
     print(
         f"sha1 toàn bộ: {sha1_seconds:6.2f} s "

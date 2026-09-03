@@ -1,130 +1,208 @@
 # Ngân sách hiệu năng
 
 Tài liệu này là **ràng buộc thiết kế**, viết trước khi có code lõi, vì các lựa chọn dưới đây
-sửa sau rất đắt. Mọi con số đều đo thật trên máy phát triển (Linux Mint 22.3, SSD, đường
-truyền ~24 MB/s), bằng hai script trong `bench/`. Chạy lại được.
+sửa sau rất đắt. Mọi con số đều do ba script trong `bench/` in ra trên máy phát triển
+(Linux Mint 22.3, SSD, đường truyền gia đình). Chạy lại được — mục 6 ghi lệnh cụ thể.
+
+## 0. Hai bẫy đo lường đã trả giá
+
+Đọc mục này trước, nếu không sẽ hiểu sai mọi con số bên dưới.
+
+**Xung nhịp CPU làm số tuyệt đối vô nghĩa.** Cùng một phép đo `python -c pass` cho **34 ms
+khi máy rảnh** và **22 ms khi máy đang bận** — bộ điều tần giữ xung thấp lúc nhàn rỗi rồi
+boost lên khi có tải, nên máy càng bận đo càng nhanh, ngược hẳn trực giác. Dao động tới 3
+lần. Vì vậy ngân sách khởi động ở đây đặt theo **bội số của thời gian khởi động Python
+trần**, đo xen kẽ trong cùng một lượt; bội số ổn định (1,75–1,80) trong khi số tuyệt đối
+nhảy loạn.
+
+**Cache biên CDN thiên vị cấu hình chạy đầu tiên.** Quét số luồng mà không hâm nóng thì cấu
+hình đầu (thường là 1 luồng) chịu toàn bộ cache miss, làm mọi cấu hình sau trông tốt hơn
+thực tế. `download_bench.py` hâm nóng một lượt không tính giờ, rồi chạy các cấu hình theo
+**thứ tự ngẫu nhiên**.
 
 ## 1. Công việc thật lớn cỡ nào
 
-Đo trên `assets/indexes/5.json` — chỉ mục asset của Minecraft 1.20.1:
+`verify_bench.py` in ra, trên `assets/indexes/5.json` (Minecraft 1.20.1):
 
 | Số liệu | Giá trị |
 |---|---|
 | Số mục trong index | 3.598 |
-| Số hash **duy nhất** | 3.575 (→ 23 mục trùng hash) |
+| Số hash **duy nhất** | 3.575 (23 mục trùng hash) |
 | Tổng dung lượng | 649 MB |
-| Kích thước trung vị | 19,2 KB |
-| File < 64 KB | **3.107 file (86%) nhưng chỉ chiếm 63 MB** |
-| File ≥ 64 KB | 468 file, chiếm 586 MB |
+| Kích thước trung vị | 19,3 KB |
 
-**Kết luận quan trọng nhất:** phần lớn công việc là **hàng nghìn file nhỏ**. Nút thắt là **số
-vòng request**, không phải băng thông. Mọi tối ưu phải nhắm vào đó.
+Phân bố theo ba dải, đếm **sau dedupe** (1.347 + 1.737 + 491 = 3.575):
 
-## 2. Đo được gì
+| Dải | Số file | Dung lượng |
+|---|---:|---:|
+| < 16 KB | 1.347 | 13,4 MB |
+| 16–64 KB | **1.737** | 49,8 MB |
+| ≥ 64 KB | 491 | 585,8 MB |
 
-### 2.1 Tải: độ song song và tái dùng kết nối
+**Kết luận quan trọng nhất:** 3.084 file (86%) nhỏ hơn 64 KB nhưng cộng lại chỉ 63 MB. Nút
+thắt là **số vòng request**, không phải băng thông. Dải giữa 16–64 KB là dải đông nhất theo
+số file nên được đo riêng — không ngoại suy từ dải nhỏ.
 
-120 file nhỏ (<16 KB, tổng 1,2 MB) từ `resources.download.minecraft.net`, hai lượt đo:
+## 2. Vì sao dùng `http.client` chứ không phải `requests`
 
-| Cấu hình | Tốc độ | So với 1 luồng |
+Kho này **không có phụ thuộc runtime nào**. Đó không phải chủ nghĩa khổ hạnh, mà là kết quả
+đo.
+
+### 2.1 `requests` chạm trần khi chạy song song
+
+Đo xen kẽ, cùng mẫu, cùng CDN:
+
+| Độ song song | `requests` (Session dùng chung) | `http.client` (stdlib) |
 |---|---|---|
-| 1 luồng | 8,9–9,4 file/s | 1,0× |
-| 4 luồng | 29,4–34,9 file/s | ~3,5× |
-| 8 luồng | 58,2–63,5 file/s | ~6,6× |
-| **16 luồng** | **77,3–81,2 file/s** | **~8,7×** |
-| 32 luồng | 58,6–70,0 file/s | ~7× — **chậm hơn 16** |
+| 8 luồng | 49,5 file/s | 56,7 file/s |
+| 16 luồng | 60,8 file/s | 93,5 file/s |
+| 24 luồng | 57,5 file/s | 99,7 file/s |
 
-Tất cả các dòng trên đều dùng lại kết nối. **16 luồng là điểm tối ưu; 32 luồng *chậm hơn*
-16** ở cả hai lượt đo — thêm luồng nữa là hại, không phải lợi.
+`requests` **chững lại rồi đi xuống sau 16 luồng**; `http.client` vẫn tăng.
 
-Về tái dùng kết nối, đo riêng bằng 3 cặp xen kẽ (để loại nhiễu mạng theo thời điểm), 60 file,
-cùng 16 luồng:
+Nguyên nhân, xác định bằng phép đo tuần tự trên một kết nối đã hâm nóng: **102,5 so với
+102,4 ms mỗi request** — hai bên **bằng nhau**. Vậy `requests` không hề đắt hơn mỗi request;
+mạng che hết. Chênh lệch chỉ xuất hiện khi song song, tức là phần việc Python nặng hơn của
+`requests` ở mỗi request bị **dồn vào GIL** và tạo trần cứng.
 
-| Cặp | Dùng lại kết nối | Kết nối mới mỗi file | Nhanh hơn |
-|---|---|---|---|
-| 1 | 34,9 file/s | 7,3 file/s | 4,8× |
-| 2 | 50,6 file/s | 24,6 file/s | 2,1× |
-| 3 | 53,9 file/s | 24,5 file/s | 2,2× |
+Đã thử cách cứu hiển nhiên — **mỗi luồng một `Session` riêng** để tránh tranh chấp pool
+dùng chung: 71,0 so với 65,1 file/s ở 16 luồng, và 65,4 so với 63,3 ở 24 luồng. **Không
+cứu được.** Trần nằm trong đường xử lý của `requests`, không nằm ở pool.
 
-**Tái dùng kết nối đáng giá 2–5×** ở cùng độ song song; hệ số dao động theo chất lượng mạng
-nhưng chưa lần nào đi ngược. Dùng một `requests.Session` với `HTTPAdapter(pool_maxsize=workers)`
-cho cả đợt tải, không tạo mới từng file.
+### 2.2 Các phương án khác cũng thua
 
-File lớn (24 file, 41,9 MB) bão hoà băng thông từ 8 luồng: 22,2 → 25,8 → 23,6 MB/s tương ứng
-4 → 8 → 16 luồng. Nghĩa là 16 luồng an toàn cho cả hai loại.
+- **HTTP/2 ghép kênh** (`httpx`, một kết nối): 99,8–111,8 file/s, kém `http.client`, dao
+  động mạnh (một lượt 1,07 s, lượt sau 6,81 s), lại thêm hai phụ thuộc. Cả ba host của
+  Mojang **đều bật h2** nên phương án này khả thi về kỹ thuật — chỉ là không đáng.
+- Giữ `requests`: trả thêm ~1,5× thời gian tải và ~1,5× thời gian khởi động, đổi lấy
+  chuyển hướng và retry sẵn có. Đã dò thật: **không host nào của Mojang hay Fabric chuyển
+  hướng hoặc nén** (`resources.download`, `launchermeta`, `piston-meta`, `piston-data`,
+  `meta.fabricmc.net` — tất cả trả 200/404 thẳng, `Content-Encoding` rỗng). Phần phải tự
+  viết vì thế nhỏ.
 
-### 2.2 Xác minh: `stat` so với `sha1`
+> Cảnh báo cho các bước sau M1: CurseForge, OptiFine và GitHub **có** chuyển hướng. Khi
+> chạm tới chúng, `net/http.py` phải có xử lý 3xx — đừng giả định như với Mojang.
 
-3.575 file asset đã có trên đĩa (649 MB), 4 lượt đo:
+## 3. Đo được gì
 
-| Cách | Thời gian |
+### 3.1 Độ song song (dải < 16 KB, 120 file, hâm nóng trước, thứ tự ngẫu nhiên, trung vị 3 lượt)
+
+| Luồng | file/s |
+|---:|---:|
+| 1 | 8,9 |
+| 4 | 33,4 |
+| 8 | 65,0 |
+| 16 | 92,4 |
+| 24 | 122,1 |
+| 32 | 100,2 |
+| 48 | 143,5 |
+
+Đọc đúng bảng này: **từ 1 lên 16 luồng là mười lần, không bàn cãi.** Từ 16 trở lên, các số
+(92 → 122 → 100 → 143) **không đơn điệu và nằm trong nhiễu** — phép đo này *không* đủ để nói
+24 tốt hơn 32 hay 48 tốt hơn 24. Một lượt quét khác trên cùng máy cho 16→120, 24→120, 32→123,
+48→98, 64→73. Điểm chung của cả hai lượt: tăng mạnh tới ~16, sau đó bình nguyên nhiễu, và
+suy giảm khi lên rất cao.
+
+Vì vậy **không chốt một con số "tối ưu"**. Chốt: mặc định 16, cho phép chỉnh, và **không
+vượt 32 nếu chưa đo lại trên đường truyền cụ thể**.
+
+### 3.2 Hai dải còn lại (24 luồng)
+
+| Dải | file/s | MB/s |
+|---|---:|---:|
+| 16–64 KB (60 file) | 74,2 | 2,2 |
+| ≥ 64 KB (24 file) | 25,3 | 17,5 |
+
+### 3.3 Tái dùng kết nối
+
+Cùng 16 luồng: giữ kết nối **86,4 file/s** so với mở mới mỗi file **35,6 file/s** →
+**2,4×**. Ba cặp đo xen kẽ ở lượt khác cho 2,1×–4,8×. Hệ số dao động theo mạng nhưng chưa
+lần nào đi ngược.
+
+### 3.4 Xác minh: `stat` so với `sha1`
+
+3.575 file, 649 MB: `stat` **104 ms**, `sha1` toàn bộ **1,05 s** (620 MB/s) → chênh **10×**.
+
+Con số `stat` là trên cache metadata **đã nóng**; lần chạy đầu sau khi bật máy sẽ chậm hơn.
+Không đo được số nguội vì `drop_caches` cần quyền root.
+
+### 3.5 Khởi động CLI (bội số của Python trần, đo xen kẽ 15 lượt)
+
+| Phép đo | Bội số |
+|---|---:|
+| `python -c pass` | 1,00× |
+| `import mccore` | **1,01×** |
+| `import mccore.cli.main` | 1,41× |
+| **`mccore --version` trọn vẹn** | **1,80×** |
+| + `http.client` | **2,89×** |
+| + `zipfile` | 2,12× |
+| + `concurrent.futures` | 2,03× |
+| + `logging` | 1,97× |
+| + `subprocess` | 1,73× |
+| + tất cả những thứ trên | **3,89×** |
+
+`import mccore` gần như miễn phí (1,01×) — giữ được điều đó là mục tiêu, không phải may mắn.
+
+**Điều quan trọng hơn:** kẻ đắt nhất là `http.client` (+1,48× so với `cli.main`), **đắt hơn
+cả `logging` + `zipfile` + `concurrent.futures` cộng lại**. Bỏ `requests` không giải quyết
+xong vấn đề — nó chỉ đổi tên kẻ thủ phạm. Luật phải là *nạp lười mọi thứ nặng*, không phải
+*nạp lười một thư viện cụ thể*.
+
+## 4. Ngân sách
+
+| Thao tác | Ngân sách |
 |---|---|
-| Chỉ `stat` (so kích thước) | **~61 ms** (dao động 60–103 ms) |
-| `sha1` toàn bộ | **~1,3 s** (dao động 1,23–1,37 s; 473–527 MB/s) |
+| `mccore <lệnh không chạm mạng>` | **≤ 2,0× thời gian khởi động Python trần** (hiện 1,80×) |
+| Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms |
+| Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** |
+| Cài lại khi đã đủ file | **0 request mạng** |
+| Cài nguội trọn vẹn 1.20.1 | ≤ 2 phút trên đường truyền ~20 MB/s |
+| Từ `play` tới lúc tiến trình java được sinh | ≤ 3× khởi động Python trần |
 
-Chênh khoảng **20 lần**. Khoảng dao động là do bộ đệm trang của hệ điều hành — lượt đo trên
-đĩa nguội chậm hơn rõ rệt, nên con số thật khi người dùng mới bật máy còn tệ hơn.
+Ước tính cài nguội, cộng theo **từng dải đã đo riêng** (24 luồng):
 
-Nên: mặc định xác minh bằng kích thước; chỉ băm sha1 khi người dùng yêu cầu
-(`--verify-hashes`) hoặc khi file đã lộ ra là hỏng.
+| Phần | Cách tính | Giây |
+|---|---|---:|
+| asset < 16 KB | 1.347 ÷ 122 file/s | 11 |
+| asset 16–64 KB | 1.737 ÷ 74 file/s | 23 |
+| asset ≥ 64 KB | 585,8 MB ÷ 17,5 MB/s | 33 |
+| thư viện + client.jar + JRE | ~185 MB ÷ 17,5 MB/s, cộng ~220 vòng request | 13 |
+| | **tổng** | **≈ 80** |
 
-### 2.3 Khởi động CLI
+Một luồng thì riêng phần asset đã là 3.575 ÷ 8,9 ≈ **6,7 phút**.
 
-Trung vị của 7 lượt, đo trọn tiến trình con (kể cả thời gian khởi động thông dịch — đúng
-thứ người dùng phải chờ):
+## 5. Chín luật thiết kế
 
-| Phép đo | Thời gian |
-|---|---|
-| Python trần (`python -c pass`) | 34 ms |
-| `import mccore` | 35 ms |
-| `import mccore.cli.main` | 49 ms |
-| **`import requests`** | **272 ms** (riêng phần nạp thư viện: trung vị 198 ms, dao động 166–209 ms) |
-| `mccore --version` trọn vẹn, chưa có `requests` | **62 ms** |
-| CLI lõi cũ (`nostalgia --help`), có nạp `requests` | 190–280 ms |
-
-**Phần lớn độ trễ khởi động CLI là do nạp `requests`** — kể cả với những lệnh không hề chạm
-mạng (`doctor`, `account list`, `play --offline`, liệt kê bản đã cài). Khung CLI hiện tại của
-mc-core chạy trong 62 ms chính vì chưa đụng tới `requests`; giữ được điều đó là một mục tiêu,
-không phải may mắn.
-
-## 3. Ngân sách — mục tiêu của mc-core
-
-| Thao tác | Ngân sách | Lõi cũ hiện tại |
-|---|---|---|
-| Khởi động CLI cho lệnh **không chạm mạng** | ≤ 80 ms | 190–280 ms |
-| Xác minh bản cài đầy đủ (theo kích thước) | ≤ 150 ms | — |
-| Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** | — |
-| Cài lại khi đã đủ file (không-làm-gì) | ≤ 300 ms và **0 request mạng** | — |
-| Cài nguội trọn vẹn 1.20.1 trên đường 24 MB/s | ≤ 2 phút | — |
-| Từ lệnh `play` tới lúc tiến trình java được sinh | ≤ 400 ms (không tính JVM tự khởi động) | — |
-
-Ước tính cài nguội theo số đo: 3.107 file nhỏ ÷ ~79 file/s ≈ 39 s, cộng 586 MB ÷ ~25 MB/s
-≈ 23 s, cộng thư viện, client.jar và JRE ≈ 15 s → **khoảng 80 giây**. Thiết kế một luồng sẽ
-mất khoảng **7 phút** cho đúng công việc đó — chậm hơn hơn **5 lần**, và đó là trước khi tính
-tới việc không tái dùng kết nối.
-
-## 4. Bảy luật thiết kế rút ra
-
-1. **Mặc định 16 luồng tải**, cho phép chỉnh. Không vượt quá 16 nếu chưa đo lại — 32 chậm hơn.
-2. **Một `Session` dùng chung cho cả đợt**, `HTTPAdapter(pool_connections=workers,
-   pool_maxsize=workers)`. Tuyệt đối không `requests.get()` trần trong vòng lặp.
-3. **Nạp `requests` lười.** `net/http.py` chỉ được import khi thật sự chạm mạng. Không module
-   nào ngoài `net/` được import `requests` — luật này đã có test gác, và nó vừa giữ kiến trúc
-   sạch vừa cắt 170 ms khỏi mỗi lần gõ lệnh.
+1. **Mặc định 16 luồng**, cho phép chỉnh. Không vượt 32 nếu chưa đo lại (mục 3.1).
+2. **Giữ kết nối sống.** Mỗi luồng một `http.client.HTTPSConnection` bền, dùng lại cho
+   nhiều request, dựng lại khi phía kia đóng. Không mở kết nối mới cho từng file (2,4×).
+3. **Nạp lười mọi thứ nặng.** Ở tầng lõi, không module nào được import ở mức module:
+   `http.client`, `logging`, `zipfile`, `concurrent.futures`, `subprocess`. Chỉ stdlib nhẹ
+   (`pathlib`, `dataclasses`, `typing`, `json`, `hashlib`) được nạp sẵn. CLI phải phân giải
+   lệnh con **sau khi** parse đối số, không import sẵn mọi lệnh.
 4. **Xác minh mặc định bằng kích thước**, sha1 chỉ khi có cờ hoặc khi file đã lộ ra là hỏng.
-5. **Dedupe theo hash trước khi lập danh sách tải.** Index 1.20.1 có 23 mục trùng; ngoài
-   việc tiết kiệm, nó còn chặn hai luồng cùng ghi vào một file đích.
-6. **Bỏ qua file đã đúng.** Lần cài thứ hai phải gần như không phát request nào.
-7. **Stream file lớn** (`iter_content`), không `r.content` — 586 MB không được nạp vào RAM.
+5. **Băm sha1 *trong lúc* tải.** Byte đang nằm trong RAM; sha1 chạy 620 MB/s còn mạng
+   17–25 MB/s, nên băm khi ghi tốn dưới 5% một lõi — gần như miễn phí. Nhờ đó luật 4 trở
+   nên **đúng đắn về mặt logic** (mọi file đã được băm đúng một lần lúc sinh ra) chứ không
+   chỉ là đánh đổi rủi ro.
+6. **Ghi nguyên tử.** Tải ra `.part`, `fsync`, rồi `os.replace`. Không có nó, một lần Ctrl-C
+   để lại file cụt mà luật 4 không phải lúc nào cũng bắt được.
+7. **Dedupe theo hash trước khi lập danh sách tải.** 23 mục trùng ở index 1.20.1; quan
+   trọng hơn là nó chặn hai luồng cùng ghi vào một đích.
+8. **Bỏ qua file đã đúng.** Lần cài thứ hai phải không phát request nào.
+9. **Retry có backoff và deadline tổng.** CDN trả 5xx và reset kết nối là chuyện thường.
+   `timeout` của socket không phải deadline cho cả request — phải có deadline riêng, và
+   phải tôn trọng `CancelToken`.
 
-## 5. Cách đo lại
+## 6. Cách đo lại
 
 ```bash
-uv run python bench/download_bench.py    # cần mạng
-uv run python bench/verify_bench.py      # cần dữ liệu asset có sẵn trên đĩa
-uv run python bench/startup_bench.py     # đo độ trễ khởi động CLI
+uv run python bench/verify_bench.py       # phân bố kích thước + chi phí xác minh (không cần mạng)
+uv run python bench/startup_bench.py      # bội số khởi động CLI (không cần mạng)
+uv run python bench/download_bench.py     # độ song song, ba dải, tái dùng kết nối (cần mạng)
+uv run python bench/download_bench.py --count 60 --runs 5   # mẫu nhỏ hơn, nhiều lượt hơn
 ```
 
-Các script không phải là test: chúng in số đo để người đọc so, không tự khẳng định đậu/rớt.
-Ngân sách ở mục 3 sẽ được biến thành test thật khi các bước tương ứng có code (bước 3 cho
-tải, bước 13 cho xác minh, bước 14 cho khởi động).
+Các script không phải test: chúng in số đo để người đọc so, không tự khẳng định đậu/rớt.
+Ngân sách ở mục 4 sẽ thành test thật khi các bước tương ứng có code — bước 3 cho tải, bước
+13 cho xác minh, bước 14 cho khởi động.

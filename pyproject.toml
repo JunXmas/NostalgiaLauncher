@@ -2,8 +2,11 @@
 name = "mccore"
 version = "0.1.0"
 description = "Lõi launcher Minecraft: cài đặt và khởi động game. Không giao diện."
+readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["requests>=2.31"]
+# Không phụ thuộc runtime. Mọi thứ HTTP dùng http.client của thư viện chuẩn — xem
+# docs/PERFORMANCE.md §2 để biết vì sao (nhanh hơn requests 1,5x khi song song, nạp rẻ hơn).
+dependencies = []
 
 [project.scripts]
 mccore = "mccore.cli.main:main"
@@ -14,16 +17,20 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mccore"]
+# py.typed: báo cho bộ kiểm kiểu của người dùng biết gói này có chú kiểu. Không có nó,
+# giao diện tương lai gọi mccore.api sẽ không thấy kiểu nào cả.
+artifacts = ["src/mccore/py.typed"]
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not network'"
+addopts = "-m 'not network' --strict-markers --strict-config"
 markers = [
     "network: cần Internet thật; mặc định bị bỏ qua",
     "slow: chạy lâu (tải file lớn, khởi động game)",
+    "allow_home: được phép gọi Path.home(); mặc định mọi test đều bị cấm",
 ]
 
 [tool.ruff]
@@ -35,3 +42,11 @@ select = ["E", "F", "I", "UP", "B", "ANN", "RUF", "PTH", "SIM", "C4"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]
+
+[tool.mypy]
+# Chú kiểu mà không kiểm kiểu thì chỉ tốn công. GLOSSARY.md dành hẳn hai mục nói về kiểu
+# (Path vs str, dataclass frozen), nên phần lớn từ điển chỉ có giá trị khi có bộ kiểm kiểu.
+files = ["src", "tests", "bench"]
+python_version = "3.12"
+strict = true
+warn_unreachable = true

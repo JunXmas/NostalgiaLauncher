@@ -24,9 +24,19 @@ Cả ba đều có test gác trong CI từ bước 2.
 
 ## Hiệu năng là ràng buộc, không phải chuyện tính sau
 
-`docs/PERFORMANCE.md` có ngân sách đo được và bảy luật thiết kế. Ba luật hay bị vi phạm nhất:
-mặc định **16 luồng** tải (32 chậm hơn 16), **một `Session` dùng chung** cho cả đợt (tái dùng
-kết nối đáng giá 2–5×), và **nạp `requests` lười** (nó tốn ~200 ms mỗi lần gõ lệnh).
+`docs/PERFORMANCE.md` có ngân sách đo được và chín luật thiết kế. Bốn điều hay bị vi phạm nhất:
+
+- **Không phụ thuộc runtime.** HTTP dùng `http.client` của thư viện chuẩn. `requests` chạm
+  trần ~65 file/s khi chạy song song (phần việc Python của nó dồn vào GIL) trong khi
+  `http.client` đạt ~120 file/s và còn tăng theo số luồng.
+- **Mặc định 16 luồng**, mỗi luồng một kết nối giữ sống. Không vượt 32 nếu chưa đo lại.
+- **Nạp lười mọi thứ nặng** ở tầng lõi: `http.client`, `logging`, `zipfile`,
+  `concurrent.futures`, `subprocess`. Riêng `http.client` đắt hơn cả ba thứ sau cộng lại.
+- **Băm sha1 trong lúc tải.** sha1 chạy 620 MB/s, mạng 17–25 MB/s — băm khi ghi gần như
+  miễn phí, và nhờ đó việc xác minh lần sau bằng kích thước mới đúng đắn về logic.
+
+Đo hiệu năng thì **đừng tin mili-giây tuyệt đối**: máy này chạy `python -c pass` mất 34 ms
+khi rảnh và 22 ms khi bận (bộ điều tần CPU). Dùng bội số so với Python trần.
 
 ## Cách kiểm — một lượt xanh không đủ
 
