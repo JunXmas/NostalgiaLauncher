@@ -1,0 +1,200 @@
+# Từ điển thuật ngữ — luật đặt tên của kho này
+
+Đây là **luật**, không phải gợi ý. PR đặt tên trái từ điển sẽ bị trả lại.
+
+Lý do có file này: kho tiền nhiệm gọi *thư mục game* bằng bốn tên khác nhau
+(`game_dir`, `game_root`, `mc_dir`, `store_root`) và gọi *phiên bản Minecraft* bằng bốn tên
+khác nữa (`mc`, `mc_version`, `game_version`, `version_id`). Một khái niệm phải có đúng một tên.
+
+## 1. Quy ước chung
+
+### 1.1 Đường dẫn luôn là `Path`
+
+Mọi thứ **chạm hệ thống file** là `pathlib.Path`. Đường dẫn được phép ở dạng `str` chỉ tại ba
+biên: đối số nhận từ dòng lệnh, giá trị trong JSON, và `argv` truyền cho `subprocess`.
+Chuyển đổi ngay tại biên, không đẩy sâu vào trong. **Không có tham số kiểu `str | Path`.**
+
+Luật này nói về **đường dẫn**. Các khái niệm khác dùng `str` là bình thường — xem cột "Kiểu"
+ở bảng §2.
+
+### 1.2 Tiền tố tên hàm — nhìn tên phải biết hàm làm loại việc gì
+
+| Tiền tố | Nghĩa | Chạm mạng? |
+|---|---|---|
+| `resolve_*` | Tính thuần từ dữ liệu đã có | không, và không cả I/O |
+| `load_*` | Đọc từ đĩa | không |
+| `write_*` / `save_*` | Ghi xuống đĩa | không |
+| `plan_*` | Trả về danh sách việc cần làm, **không tự làm** | không |
+| `build_*` | Dựng cấu trúc trong bộ nhớ | không |
+| `fetch_*` | Lấy qua mạng | **có** |
+| `ensure_*` | Idempotent, **chỉ đụng đĩa**: thiếu thì tạo | không |
+| `sync_*` | Idempotent, **được phép tải**: thiếu thì lấy về | **có** |
+| `extract_*` | Giải nén archive vào thư mục đích | không |
+| `start_*` | Khởi chạy tiến trình con | không |
+| `remove_*` | Xoá file hoặc thư mục | không |
+| `list_*` / `iter_*` | Liệt kê | tuỳ, phải ghi trong docstring |
+| `is_*` / `has_*` | Trả `bool` | không |
+| `verify_*` | Kiểm tra, trả danh sách lỗi | không |
+
+**Cấm:** `get_*`, `do_*`, `handle_*`, `process_*`, `manage_*`. Chúng không nói lên điều gì.
+
+`ensure_*` và `sync_*` tách đôi có chủ ý. Kho cũ có sáu cách gọi cùng một hành động
+(`install`, `ensure`, `install_file`, `install_to_mods`, `install_contents`,
+`apply_to_instance`); bảng trên tồn tại để chặn đúng chuyện đó, và việc tách `ensure`/`sync`
+giữ được lời hứa "nhìn tên biết có chạm mạng không" — lời hứa mà một `ensure_*` biết tải sẽ
+phá vỡ.
+
+### 1.3 Kiểu dữ liệu
+
+- Mọi dữ liệu đi **giữa các module** là `@dataclass(frozen=True, slots=True)`. **Không có
+  ngoại lệ** — cột "Kiểu" ở §2 ghi "dataclass" là viết tắt của đúng dòng này.
+- `dict` thô **không bao giờ đi qua biên module**. Module nào parse JSON thì tự chuyển sang
+  dataclass ngay trong hàm `load_*`/`fetch_*` của nó. (Nhiều module phải parse JSON:
+  `repo/manifest`, `install/assets`, `account/store`, `java/mojang_jre` — luật là về *biên*,
+  không phải về *nơi được phép có dict*.)
+- Không trả `tuple` vô danh nhiều phần tử — đặt tên nó thành dataclass.
+
+### 1.4 Trạng thái
+
+- **Không trạng thái toàn cục**, không singleton.
+- **Không hằng `Path` mức module**, và không cache thứ gì phụ thuộc đường dẫn hoặc I/O.
+  Đường dẫn luôn nằm trong `DataPaths` được truyền vào. Đây là luật số một, sinh ra từ lỗi
+  mất dữ liệu của kho cũ (§4).
+- `@lru_cache` trên **hàm thuần không nhận đường dẫn** thì được phép (ví dụ phân tích toạ độ
+  maven, đánh giá `rules`).
+- Hằng mức module chỉ được là literal: URL, timeout, tên hệ điều hành.
+
+### 1.5 Tên file và module
+
+- Danh từ số ít. Không `utils.py`, `helpers.py`, `common.py`, `misc.py`, `core.py`.
+- Không lặp tên gói: `install/install.py` ❌.
+- **Tối đa 200 dòng *code*** (không tính docstring, chú thích, dòng trống). Vượt 250 dòng
+  tổng thì phải giải trình trong mô tả PR. Đếm bằng test viết bằng Python — `ruff` không có
+  luật giới hạn số dòng mỗi file, và `awk` đếm byte nên sai với tiếng Việt có dấu.
+
+### 1.6 Ngôn ngữ
+
+Định danh, tên file, thông điệp lỗi kỹ thuật: **tiếng Anh**. Docstring và chú thích:
+**tiếng Việt**. Không trộn hai kiểu trong cùng một loại.
+
+## 2. Bảng thuật ngữ cốt lõi
+
+Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
+
+| Khái niệm | Tên chuẩn | Kiểu | CẤM dùng |
+|---|---|---|---|
+| Kho chung của launcher (versions, libraries, assets, runtime) | `data_dir` | `Path` | `store_root`, `root`, `base_dir`, `mc_dir` |
+| Bộ đường dẫn dẫn xuất từ `data_dir` | `paths` : `DataPaths` | dataclass | truyền lẻ từng `Path` |
+| Thư mục game chạy trong đó (`--gameDir`) | `game_dir` | `Path` | `minecraft_dir`, `run_dir`, `instance_dir` |
+| Mã phiên bản | `version_id` | `str` | `version`, `ver`, `vid`, `mcver`, `mc` |
+| Phiên bản game nền, khi `version_id` là của loader | `game_version` | `str` | `mc_version`, `base_version` |
+| Phiên bản cha được kế thừa | `inherits_from` | `str \| None` | `parent`, `base` |
+| Metadata phiên bản đã trộn kế thừa xong | `version_meta` : `VersionMeta` | dataclass | `meta`, `data`, `json`, `profile` |
+| Một bản ghi trong manifest của Mojang | `manifest_entry` : `ManifestEntry` | dataclass | `entry`, `item` |
+| Thư viện | `library` / `libraries` : `Library` | dataclass | `lib`, `libs` |
+| Toạ độ maven `group:artifact:version[:classifier]` | `coordinate` : `MavenCoordinate` | dataclass | `coord`, `gav` |
+| **Khai báo một file tải được, do JSON của Mojang mô tả** (url, sha1, size, đường dẫn *tương đối*) | `artifact` : `Artifact` | dataclass | `download`, `dl` |
+| **Một việc tải cụ thể**: `Artifact` đã phân giải qua `DataPaths` thành đường dẫn đích *tuyệt đối* | `task` : `DownloadTask` | dataclass | `job`, tuple |
+| Thư mục natives đã giải nén | `natives_dir` | `Path` | `natives`, `nat_dir` |
+| Classpath dạng danh sách | `classpath` | `list[Path]` | `cp` |
+| Classpath đã nối thành chuỗi | `classpath_arg` | `str` | dùng lại tên `classpath` cho cả hai nghĩa |
+| Mã asset index (`"5"`, `"legacy"`) | `asset_index_id` | `str` | `index`, `assets` |
+| Asset index đã phân tích | `asset_index` : `AssetIndex` | dataclass | `idx`, `index_json` |
+| Một object asset | `asset_object` : `AssetObject` | dataclass | `obj`, `asset` |
+| Tài khoản lưu trên đĩa | `account` : `Account` | dataclass | `acc`, `user` |
+| Khoá định danh tài khoản | `account_id` | `str` | `label`, `key` |
+| Loại tài khoản | `account_kind` : `Literal["offline", "microsoft"]` | | `type`, `kind` trần |
+| Danh tính dùng để dựng lệnh chạy (không ghi đĩa) | `player_profile` : `PlayerProfile` | dataclass | `identity`, `session` |
+| Tên hiển thị trong game | `player_name` | `str` | `username`, `name`, `nick` |
+| **UUID người chơi** — giữ cả hai dạng, tránh trộn nhầm hai chuỗi hợp lệ | `player_uuid` : `PlayerUuid` (`.dashed` / `.undashed`) | dataclass | `uuid` (đụng tên module), `id`, và **`str` trần** |
+| Vé đăng nhập | `access_token` | `str` | `token`, `tk` |
+| Bản cài riêng (thư mục game riêng, kho chung) | `instance` : `Instance` | dataclass | `profile`, `pack` |
+| Slug thư mục của bản cài | `instance_id` | `str` | `slug`, `dirname` |
+| Loại và phiên bản mod loader | `loader_kind`, `loader_version` | `Literal[...]`, `str` | `modloader`, `loader` trần |
+| Component JRE của Mojang | `java_component` | `str` | `jre`, `runtime`, `component` trần |
+| Số major của Java | `java_major` | `int` | `java_version` |
+| File thực thi java | `java_binary` | `Path` | `java`, `java_path`, `jvm` |
+| Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
+| Yêu cầu dừng | `cancel: CancelToken` | | closure `should_cancel` |
+| Tiến trình game đang chạy | `game_process` : `GameProcess` | | `proc`, `p`, `process` trần |
+
+## 3. Năm cặp dễ lẫn nhất
+
+1. **`data_dir` ≠ `game_dir`.** `data_dir` là kho chung do launcher sở hữu. `game_dir` là nơi
+   game chạy, do người chơi sở hữu. Kho cũ gọi cả hai là `game_dir` rồi vá bằng `store_root`.
+2. **`Artifact` ≠ `DownloadTask`.** `Artifact` là thứ Mojang *khai báo* (đường dẫn tương
+   đối); `DownloadTask` là thứ ta *sẽ làm* (đường dẫn đích tuyệt đối, đã qua `DataPaths`).
+   Hai kiểu có trường gần giống nhau nên rất dễ nhập một — đừng.
+3. **`version_id` ≠ `version_meta` ≠ file `version.json`.**
+4. **`account` ≠ `player_profile`.** `account` lưu lâu dài và chứa bí mật; `player_profile`
+   dẫn xuất, chỉ để dựng lệnh chạy, **không bao giờ ghi xuống đĩa**.
+5. **`asset_index_id` ≠ `asset_index` ≠ `assets_dir`.**
+
+## 4. Test gác
+
+Các test dưới đây **chỉ áp lên `src/mccore/`** — `bench/` và `tests/` được miễn, vì bench cần
+in ra màn hình và cần hằng đường dẫn mặc định.
+
+| Test | Chặn điều gì | Có từ bước |
+|---|---|---|
+| `test_no_module_level_path_constants` | Gán mức module chứa `Path.home()`, `os.environ`, `expanduser`. Nguyên nhân gốc lỗi mất instance kho cũ: `CONFIG_DIR, CACHE_DIR, DEFAULT_GAME_DIR = _dirs()` tính **ngay lúc import**. | 2 |
+| `test_layer_imports` | Import ngược tầng, **và** chu trình import trong cùng tầng | 2 |
+| `test_core_never_prints` | `print(` ngoài `cli/` | 2 |
+| `test_version_package_is_pure` | `version/` import bất cứ thứ gì ngoài stdlib thuần + L0, hoặc dùng `open`/`Path.read_*`/`Path.write_*` | 2 |
+| `test_lazy_imports` | Sau khi chạy `mccore --version`, `sys.modules` chứa `http.client`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | 2 |
+| `test_naming_conventions` | Hàm dùng tiền tố bị cấm (`get_`, `do_`, `handle_`, `process_`, `manage_`), hoặc tên biến nằm trong cột "CẤM dùng" của §2 | 2 |
+| `test_file_length` | File vượt 200 dòng code (không tính docstring/chú thích/dòng trống) | 2 |
+
+Cộng thêm `conftest.py` **cấm** mọi test chạm home thật (không chỉ chuyển hướng nó).
+
+Lưu ý vì sao cần *cả hai* lớp: lệnh import chạy lúc pytest **thu thập** test, tức trước khi
+fixture kịp vá `Path.home`. Nên lưới lúc chạy về nguyên tắc **không thể** bắt được hằng
+`Path.home()` ở mức module — đã kiểm bằng đột biến và đúng là lọt. Chỉ test AST bắt được nó.
+
+## 5. Kiến trúc bảy tầng
+
+Phụ thuộc **chỉ đi xuống hoặc ngang**. Tầng N import được tầng < N và **được import cùng
+tầng**, nhưng đồ thị import phải **phi chu trình** — `test_layer_imports` kiểm cả hai.
+
+```
+L0  errors · platform_info · paths · fsio · progress · cancel · model
+        model = mọi dataclass dùng chung (Artifact, DownloadTask, Library, ...): ZERO import
+L1  net/http · net/download
+L2  version/  rules · maven · meta · inherit · arguments · classpath
+    java/component        <- ánh xạ THUẦN version_meta -> java_component, không I/O
+        ^ THUẦN: không mạng, không đọc/ghi file
+L3  repo/ manifest · version_repo
+    install/ client · library · natives · assets · plan
+    java/ mojang_jre · detect
+L4  account/ offline · profile · store
+    launch/ command · tuning · game_process · runner
+    doctor
+L5  api            <- façade duy nhất: gom use-case, sở hữu điều phối
+L6  cli/ · config  <- tầng DUY NHẤT được print(); config chỉ tầng này được đọc
+```
+
+Bảy quyết định đằng sau sơ đồ này:
+
+1. **`version/` (L2) không chạm mạng và không đọc/ghi file.** Đây là nơi chứa phần lớn độ
+   khó của một launcher (kế thừa, rules, thay thế tham số). Tách thuần ra thì test chạy
+   offline, chạy trong mili-giây, và kiểm được hành vi trên Windows/macOS ngay khi đang ngồi
+   trên Linux — vì tên hệ điều hành là **đối số của hàm**, không phải trạng thái toàn cục.
+   Luật tầng *không* đủ để bảo vệ điều này (L2 vẫn được import L1), nên có test riêng.
+2. **`model` nằm ở L0.** `net/download` (L1) phải nhận `DownloadTask`, còn `install/` (L3)
+   là nơi sinh ra chúng. Nếu kiểu đó định nghĩa trong `install/` thì L1 phải import L3 — vi
+   phạm luật vàng ngay ở bước 3. Đặt mọi dataclass dùng chung ở L0 để không ai phải nhìn lên.
+3. **`install/` chỉ lập kế hoạch, không tải.** Mỗi module trả `list[DownloadTask]`; module
+   gom kế hoạch tên là `plan.py`, không phải `installer.py`. Việc *thực thi* kế hoạch (gọi
+   `net/download`, giải nén, ghi kết quả) thuộc `api` ở L5. Nhờ đó toàn bộ logic cài đặt test
+   được offline: kiểm *danh sách task sinh ra* thay vì phải tải thật.
+4. **`api` là một tầng riêng, không phải một file trong `cli/`.** Giao diện tương lai chỉ
+   được import `mccore.api`, `mccore.errors`, `mccore.progress` và các dataclass ở `model`.
+   Nếu để `cli/` gọi thẳng L4 thì khi dựng GUI sẽ phát hiện toàn bộ logic điều phối nằm
+   trong `cli/` và phải viết lại.
+5. **`config` chỉ `cli/` được đọc**, rồi truyền xuống dưới dạng dataclass — giống hệt cách
+   `DataPaths` được xử lý. Nếu để tầng dưới đọc `config`, nó thành cửa hậu cho trạng thái
+   toàn cục, đúng thứ §1.4 cấm.
+6. **`java/component` ở L2, `java/mojang_jre` ở L3.** Chọn component là ánh xạ thuần từ
+   `version_meta`; chỉ việc tải JRE mới cần mạng. Gộp chung thì mất quyền test ở tầng thuần.
+7. **`launch/game_process`** chứ không phải `launch/process`, để không đụng với tiền tố hàm
+   bị cấm `process_*` và tên biến bị cấm `process`.

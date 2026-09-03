@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      # --locked: nếu pyproject đổi mà uv.lock chưa cập nhật thì FAIL, thay vì âm thầm
+      # re-resolve và test một thứ khác với thứ được commit.
+      - run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Kiểm kiểu
+        run: uv run mypy
+      - name: Test (không cần mạng)
+        run: uv run pytest -m "not network" -q
+      - name: Đóng gói thử
+        run: uv build
