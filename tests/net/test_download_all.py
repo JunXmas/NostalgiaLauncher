@@ -40,11 +40,11 @@ def tasks_for(server: LocalHttpsServer, target: Path, count: int) -> list[Downlo
 
 
 def test_downloads_everything_in_parallel(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     seed(server_state, 24)
     report = download_all(
-        client, tasks_for(server, tmp_path, 24), workers=8, retry_policy=FAST_RETRY
+        http_client, tasks_for(server, tmp_path, 24), workers=8, retry_policy=FAST_RETRY
     )
     assert report.ok
     assert report.downloaded == 24
@@ -53,35 +53,35 @@ def test_downloads_everything_in_parallel(
 
 
 def test_second_pass_downloads_nothing(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     seed(server_state, 6)
     tasks = tasks_for(server, tmp_path, 6)
-    download_all(client, tasks, workers=4, retry_policy=FAST_RETRY)
-    report = download_all(client, tasks, workers=4, retry_policy=FAST_RETRY)
+    download_all(http_client, tasks, workers=4, retry_policy=FAST_RETRY)
+    report = download_all(http_client, tasks, workers=4, retry_policy=FAST_RETRY)
     assert report.skipped == 6
     assert report.downloaded == 0
     assert report.bytes_written == 0
 
 
 def test_duplicate_destinations_are_downloaded_once(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Hai luồng cùng ghi vào một đích là điều kiện đua thật — chỉ mục 1.20.1 có 23 mục trùng."""
     seed(server_state, 1)
     task = tasks_for(server, tmp_path, 1)[0]
-    report = download_all(client, [task, task, task], workers=4, retry_policy=FAST_RETRY)
+    report = download_all(http_client, [task, task, task], workers=4, retry_policy=FAST_RETRY)
     assert report.downloaded == 1
     assert server_state.request_count("/f0") == 1
 
 
 def test_progress_is_monotonic_and_reaches_the_total(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     seed(server_state, 12)
     seen: list[Progress] = []
     download_all(
-        client,
+        http_client,
         tasks_for(server, tmp_path, 12),
         workers=4,
         retry_policy=FAST_RETRY,
@@ -96,7 +96,7 @@ def test_progress_is_monotonic_and_reaches_the_total(
 
 
 def test_one_failure_does_not_sink_the_whole_batch(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """`doctor` cần biết TẤT CẢ những gì thiếu, và một lỗi không nên xoá công của phần còn lại."""
     seed(server_state, 4)
@@ -104,7 +104,7 @@ def test_one_failure_does_not_sink_the_whole_batch(
     tasks.append(
         DownloadTask(url=server.url("/khong-co"), destination=tmp_path / "thieu.bin", size=1)
     )
-    report = download_all(client, tasks, workers=4, retry_policy=FAST_RETRY)
+    report = download_all(http_client, tasks, workers=4, retry_policy=FAST_RETRY)
     assert not report.ok
     assert report.downloaded == 4
     assert len(report.failures) == 1
@@ -113,14 +113,14 @@ def test_one_failure_does_not_sink_the_whole_batch(
 
 
 def test_cancellation_stops_the_batch(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     seed(server_state, 30)
     cancel_token = CancelToken()
     cancel_token.cancel()
     with pytest.raises(Cancelled):
         download_all(
-            client,
+            http_client,
             tasks_for(server, tmp_path, 30),
             workers=4,
             retry_policy=FAST_RETRY,
@@ -128,13 +128,13 @@ def test_cancellation_stops_the_batch(
         )
 
 
-def test_worker_count_must_be_positive(client: HttpClient) -> None:
+def test_worker_count_must_be_positive(http_client: HttpClient) -> None:
     with pytest.raises(ValueError, match="số luồng"):
-        download_all(client, [], workers=0)
+        download_all(http_client, [], workers=0)
 
 
-def test_empty_batch_is_fine(client: HttpClient) -> None:
-    report = download_all(client, [])
+def test_empty_batch_is_fine(http_client: HttpClient) -> None:
+    report = download_all(http_client, [])
     assert report.ok
     assert (report.downloaded, report.skipped, report.bytes_written) == (0, 0, 0)
 

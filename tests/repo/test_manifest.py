@@ -88,17 +88,17 @@ def test_duplicate_identifiers_keep_the_first() -> None:
 
 
 def test_fetch_rejects_a_body_that_is_not_json(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     server_state.add("/mc/game/version_manifest_v2.json", b"<html>loi</html>")
     with pytest.raises((DataFileError, NetworkError)):
-        fetch_manifest(client, url=server.url("/mc/game/version_manifest_v2.json"))
+        fetch_manifest(http_client, url=server.url("/mc/game/version_manifest_v2.json"))
 
 
 def test_fetch_rejects_an_empty_manifest(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     """Danh mục rỗng nghĩa là máy chủ trả thứ không dùng được — hỏng ngay, đừng đi tiếp."""
     server_state.add("/mc/game/version_manifest_v2.json", b'{"versions": []}')
     with pytest.raises(DataFileError, match="rỗng"):
-        fetch_manifest(client, url=server.url("/mc/game/version_manifest_v2.json"))
+        fetch_manifest(http_client, url=server.url("/mc/game/version_manifest_v2.json"))

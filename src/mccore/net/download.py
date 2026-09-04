@@ -80,7 +80,7 @@ def is_already_correct(task: DownloadTask) -> bool:
 
 
 def download_one(
-    client: HttpClient,
+    http_client: HttpClient,
     task: DownloadTask,
     *,
     retry_policy: RetryPolicy = DEFAULT_RETRY_POLICY,
@@ -93,14 +93,14 @@ def download_one(
         cancel_token.raise_if_cancelled()
     ensure_dir(task.destination.parent)
     return retry(
-        lambda: _fetch_and_commit(client, task, cancel_token),
+        lambda: _fetch_and_commit(http_client, task, cancel_token),
         policy=retry_policy,
         cancel_token=cancel_token,
     )
 
 
 def download_all(
-    client: HttpClient,
+    http_client: HttpClient,
     tasks: list[DownloadTask],
     *,
     workers: int = DEFAULT_WORKERS,
@@ -122,7 +122,9 @@ def download_all(
 
     def run(task: DownloadTask) -> int:
         try:
-            return download_one(client, task, retry_policy=retry_policy, cancel_token=cancel_token)
+            return download_one(
+                http_client, task, retry_policy=retry_policy, cancel_token=cancel_token
+            )
         except Cancelled:
             raise
         # Bắt rộng có chủ ý: một file lỗi không được làm sập cả đợt 3.500 file. Riêng
@@ -191,7 +193,7 @@ def _deduplicate(tasks: list[DownloadTask]) -> list[DownloadTask]:
 
 
 def _fetch_and_commit(
-    client: HttpClient, task: DownloadTask, cancel_token: CancelToken | None
+    http_client: HttpClient, task: DownloadTask, cancel_token: CancelToken | None
 ) -> int:
     """Tải vào file tạm, băm trong lúc ghi, xác minh, rồi đổi tên nguyên tử.
 
@@ -210,7 +212,7 @@ def _fetch_and_commit(
                 digest.update(chunk)
                 handle.write(chunk)
 
-            written = client.stream(
+            written = http_client.stream(
                 task.url,
                 write,
                 expected_size=task.size,

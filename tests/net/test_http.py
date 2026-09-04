@@ -13,29 +13,29 @@ FAST_RETRY = RetryPolicy(attempts=3, initial_backoff_seconds=0.01, total_deadlin
 
 
 @pytest.mark.parametrize("url", ["http://localhost/a", "ftp://x/a", "https:///a", "khong-phai-url"])
-def test_only_https_with_a_host_is_accepted(client: HttpClient, url: str) -> None:
+def test_only_https_with_a_host_is_accepted(http_client: HttpClient, url: str) -> None:
     """Chỉ nhận https: một launcher tải mã thực thi thì không được đi qua kênh không mã hoá."""
     with pytest.raises(NetworkError, match="https"):
-        client.fetch_bytes(url)
+        http_client.fetch_bytes(url)
 
 
 def test_body_is_returned(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     server_state.add("/a", b"xin chao")
-    assert client.fetch_bytes(server.url("/a")) == b"xin chao"
+    assert http_client.fetch_bytes(server.url("/a")) == b"xin chao"
 
 
 def test_missing_path_becomes_network_error(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     server_state.add("/co", b"x")
     with pytest.raises(NetworkError, match="404"):
-        client.fetch_bytes(server.url("/khong-co"))
+        http_client.fetch_bytes(server.url("/khong-co"))
 
 
 def test_redirect_is_refused_loudly(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     """Mojang không chuyển hướng, nhưng CurseForge thì có.
 
@@ -44,26 +44,26 @@ def test_redirect_is_refused_loudly(
     """
     server_state.add("/di-cho-khac", b"", status=302)
     with pytest.raises(NetworkError, match="chuyển hướng"):
-        client.fetch_bytes(server.url("/di-cho-khac"))
+        http_client.fetch_bytes(server.url("/di-cho-khac"))
 
 
 def test_connection_is_reused_across_requests(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     """Tái dùng kết nối đo được nhanh hơn 2-5 lần; test này gác việc nó thật sự xảy ra."""
     server_state.add("/a", b"1")
     for _ in range(5):
-        assert client.fetch_bytes(server.url("/a")) == b"1"
+        assert http_client.fetch_bytes(server.url("/a")) == b"1"
     assert server_state.request_count("/a") == 5
 
 
 def test_stream_reports_bytes_written(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     payload = b"n" * 200_000  # nhiều khối, để chắc vòng đọc lặp thật
     server_state.add("/to", payload)
     received = bytearray()
-    written = client.stream(server.url("/to"), received.extend)
+    written = http_client.stream(server.url("/to"), received.extend)
     assert written == len(payload)
     assert bytes(received) == payload
 
