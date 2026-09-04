@@ -28,7 +28,7 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 | 7 | Natives | ✅ |
 | 8 | Assets | ✅ |
 | 9 | Tải JRE của Mojang | ✅ |
-| 10 | Tài khoản offline | |
+| 10 | Tài khoản offline | ✅ |
 | 11 | Dựng lệnh java | |
 | 12 | Chạy và dừng tiến trình game | |
 | 13 | `doctor` — soi mắt xích hỏng | |
@@ -49,6 +49,7 @@ src/nostalgia/
   repo/                kho phiên bản: manifest.py + version_repo.py (đĩa trước, mạng sau)
   install/             client/library/assets lập kế hoạch; natives.py giải nén
   java/                bản Java của Mojang: chọn, tải bản nén, bung, dựng liên kết
+  account/             tài khoản lưu trên đĩa + danh tính rút ra để dựng lệnh
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/

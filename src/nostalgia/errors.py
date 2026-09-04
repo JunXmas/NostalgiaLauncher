@@ -45,3 +45,7 @@ class UnsupportedPlatformError(NostalgiaError):
 
 class Cancelled(NostalgiaError):
     """Người dùng yêu cầu dừng giữa chừng."""
+
+
+class AccountError(NostalgiaError):
+    """Tài khoản không hợp lệ, không tìm thấy, hoặc kho tài khoản hỏng."""
