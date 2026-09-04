@@ -9,15 +9,15 @@ import pytest
 from asset_fixtures import load_asset_index
 from nostalgia.errors import Cancelled
 from nostalgia.install.assets import (
-    ASSET_OBJECT_BASE_URL,
     RESOURCES_DIRECTORY,
     build_name_tree,
     plan_asset_index_task,
     plan_asset_tasks,
 )
-from nostalgia.model.asset_index import AssetIndex, parse_asset_index
+from nostalgia.model.asset_index import AssetIndex, AssetObject, parse_asset_index
 from nostalgia.model.download import RemoteFile
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.repo.endpoints import ASSET_OBJECT_BASE_URL
 from nostalgia.storage.paths import DataPaths
 from nostalgia.version.meta import AssetIndexRef
 
@@ -177,3 +177,14 @@ def test_the_two_legacy_flags_are_never_both_set() -> None:
     for asset_index_id in (VIRTUAL, RESOURCES):
         asset_index = index_for(asset_index_id)
         assert asset_index.is_virtual != asset_index.map_to_resources
+
+
+def test_the_object_host_can_be_pointed_elsewhere() -> None:
+    """Không tiêm được địa chỉ này thì test "offline" sẽ lặng lẽ gọi ra Mojang thật."""
+    asset_index = AssetIndex(objects_by_name={"a": AssetObject(asset_hash="ab" * 20, size=1)})
+    paths = DataPaths(data_dir=Path("/kho/data"), config_dir=Path("/kho/config"))
+
+    task = plan_asset_tasks(asset_index, paths, base_url="https://noi-khac")[0]
+
+    assert task.url.startswith("https://noi-khac/ab/")
+    assert plan_asset_tasks(asset_index, paths)[0].url.startswith(ASSET_OBJECT_BASE_URL)
