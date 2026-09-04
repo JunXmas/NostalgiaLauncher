@@ -60,7 +60,7 @@ def test_natives_extraction_list_is_a_subset_of_the_download_plan(tmp_path: Path
         version_meta = parse_version_meta(load_fixture(version_id))
         plan = plan_libraries(version_meta, LINUX, paths)
         downloads = {task.destination for task in plan.downloads}
-        native_destinations = {task.destination for task in plan.natives_to_extract}
+        native_destinations = {archive.archive_path for archive in plan.natives_to_extract}
         assert native_destinations, version_id
         assert native_destinations <= downloads, version_id
 
@@ -68,8 +68,8 @@ def test_natives_extraction_list_is_a_subset_of_the_download_plan(tmp_path: Path
 def test_only_native_libraries_are_extracted(tmp_path: Path) -> None:
     paths = DataPaths.for_root(tmp_path)
     version_meta = parse_version_meta(load_fixture("1.20.1"))
-    for task in plan_libraries(version_meta, LINUX, paths).natives_to_extract:
-        assert "natives" in task.destination.name
+    for archive in plan_libraries(version_meta, LINUX, paths).natives_to_extract:
+        assert "natives" in archive.archive_path.name
 
 
 def test_a_version_with_no_libraries_plans_nothing(tmp_path: Path) -> None:
