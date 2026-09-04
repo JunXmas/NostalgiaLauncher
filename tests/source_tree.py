@@ -12,9 +12,9 @@ import re
 from functools import cache
 from pathlib import Path
 
-import mccore
+import nostalgia
 
-PACKAGE_ROOT = Path(mccore.__path__[0])
+PACKAGE_ROOT = Path(nostalgia.__path__[0])
 REPOSITORY_ROOT = PACKAGE_ROOT.parents[1]
 
 SOURCE_FILES = sorted(PACKAGE_ROOT.rglob("*.py"))
@@ -27,7 +27,7 @@ ALL_FILES = SOURCE_FILES + sorted(
 
 # Tầng của từng module, theo sơ đồ ở GLOSSARY.md §5. Khoá là đường dẫn trong gói.
 LAYERS: dict[str, int] = {
-    "": 0,  # chính `mccore/__init__.py`: không được import gì của gói
+    "": 0,  # chính `nostalgia/__init__.py`: không được import gì của gói
     "errors": 0,  # từ vựng lỗi, mọi tầng đều dùng nên cố tình để ở gốc
     "storage": 0,  # đĩa: paths (cái gì ở đâu) + files (đọc/ghi an toàn)
     "system": 0,  # nhận diện máy
@@ -122,13 +122,13 @@ def module_name(path: Path) -> str:
 
 
 def as_package_path(dotted: str) -> str:
-    """Đổi `mccore.cli.main` thành `cli/main`, và `mccore` thành chuỗi rỗng.
+    """Đổi `nostalgia.cli.main` thành `cli/main`, và `nostalgia` thành chuỗi rỗng.
 
-    Chuỗi rỗng là tên của chính `mccore/__init__.py` trong `LAYERS`. Không quy về cùng một
-    tên thì cạnh `from mccore import __version__` trỏ tới một node không tồn tại, và luật
+    Chuỗi rỗng là tên của chính `nostalgia/__init__.py` trong `LAYERS`. Không quy về cùng một
+    tên thì cạnh `from nostalgia import __version__` trỏ tới một node không tồn tại, và luật
     tầng lặng lẽ bỏ qua nó.
     """
-    return dotted.removeprefix("mccore").removeprefix(".").replace(".", "/")
+    return dotted.removeprefix("nostalgia").removeprefix(".").replace(".", "/")
 
 
 def layer_of(name: str) -> int | None:
@@ -140,16 +140,16 @@ def layer_of(name: str) -> int | None:
 
 
 def imported_modules(path: Path) -> list[str]:
-    """Các module *của mccore* mà file này import, dưới dạng đường dẫn trong gói."""
+    """Các module *của nostalgia* mà file này import, dưới dạng đường dẫn trong gói."""
     found = []
     for node in ast.walk(parse(path)):
-        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("mccore"):
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("nostalgia"):
             found.append(as_package_path(node.module))
         elif isinstance(node, ast.Import):
             found.extend(
                 as_package_path(alias.name)
                 for alias in node.names
-                if alias.name == "mccore" or alias.name.startswith("mccore.")
+                if alias.name == "nostalgia" or alias.name.startswith("nostalgia.")
             )
     return found
 

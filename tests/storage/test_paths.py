@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mccore.storage.paths import CONFIG_DIR_ENV, DATA_DIR_ENV, DataPaths
+from nostalgia.storage.paths import CONFIG_DIR_ENV, DATA_DIR_ENV, DataPaths
 
 LINUX_ENV = {"HOME": "/nha/jun"}
 
@@ -30,13 +30,13 @@ def test_data_and_config_are_independent(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("platform_name", "env", "expected_data"),
     [
-        ("linux", LINUX_ENV, Path("/nha/jun/.local/share/mc-core")),
-        ("linux", {**LINUX_ENV, "XDG_DATA_HOME": "/xdg"}, Path("/xdg/mc-core")),
-        ("osx", LINUX_ENV, Path("/nha/jun/Library/Application Support/mc-core/data")),
+        ("linux", LINUX_ENV, Path("/nha/jun/.local/share/nostalgia")),
+        ("linux", {**LINUX_ENV, "XDG_DATA_HOME": "/xdg"}, Path("/xdg/nostalgia")),
+        ("osx", LINUX_ENV, Path("/nha/jun/Library/Application Support/nostalgia/data")),
         (
             "windows",
             {"USERPROFILE": r"C:\Users\jun", "APPDATA": r"C:\Users\jun\AppData\Roaming"},
-            Path(r"C:\Users\jun\AppData\Roaming") / "mc-core" / "data",
+            Path(r"C:\Users\jun\AppData\Roaming") / "nostalgia" / "data",
         ),
     ],
 )
@@ -56,7 +56,7 @@ def test_env_override_wins() -> None:
 def test_from_env_reads_the_mapping_it_is_given_not_the_process() -> None:
     """Nhận `environ` làm đối số nên test không phải vá biến môi trường toàn cục."""
     paths = DataPaths.from_env("linux", {"HOME": "/khong/co/that"})
-    assert paths.data_dir == Path("/khong/co/that/.local/share/mc-core")
+    assert paths.data_dir == Path("/khong/co/that/.local/share/nostalgia")
 
 
 def test_derived_paths(tmp_path: Path) -> None:

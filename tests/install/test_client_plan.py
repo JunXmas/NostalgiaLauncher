@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mccore.install.client import plan_client_task
-from mccore.storage.paths import DataPaths
-from mccore.version.inherit import resolve_inheritance
-from mccore.version.meta import parse_version_meta
+from nostalgia.install.client import plan_client_task
+from nostalgia.storage.paths import DataPaths
+from nostalgia.version.inherit import resolve_inheritance
+from nostalgia.version.meta import parse_version_meta
 from version_fixtures import load_fixture
 
 FABRIC_ID = "fabric-loader-0.19.3-1.21.4"

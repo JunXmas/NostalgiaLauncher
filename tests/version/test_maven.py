@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from mccore.version.maven import MavenCoordinate
+from nostalgia.version.maven import MavenCoordinate
 
 
 def test_parses_three_parts() -> None:

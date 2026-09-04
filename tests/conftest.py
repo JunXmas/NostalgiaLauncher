@@ -25,7 +25,7 @@ from local_https_server import (
     make_certificate,
     openssl_available,
 )
-from mccore.net.http import HttpClient
+from nostalgia.net.http import HttpClient
 
 # Mọi biến môi trường có thể dẫn code về dữ liệu thật của người dùng.
 PATH_ENV_VARS = (
@@ -57,7 +57,7 @@ def isolated_home(
     for name in PATH_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
     # Xoá cả biến của chính dự án, kể cả biến thêm về sau.
-    for name in [n for n in os.environ if n.startswith("MCCORE_")]:
+    for name in [n for n in os.environ if n.startswith("NOSTALGIA_")]:
         monkeypatch.delenv(name, raising=False)
 
     monkeypatch.setenv("HOME", str(home))
@@ -65,11 +65,11 @@ def isolated_home(
     monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local" / "share"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(home / ".cache"))
-    monkeypatch.setenv("MCCORE_DATA_DIR", str(home / "data"))
+    monkeypatch.setenv("NOSTALGIA_DATA_DIR", str(home / "data"))
 
     if request.node.get_closest_marker("allow_home") is None:
         message = (
-            "Code trong mccore không được gọi Path.home() hay expanduser(). "
+            "Code trong nostalgia không được gọi Path.home() hay expanduser(). "
             "Đường dẫn phải đến từ DataPaths được truyền vào — xem GLOSSARY.md §1.4."
         )
 

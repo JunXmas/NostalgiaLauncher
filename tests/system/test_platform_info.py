@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from mccore.errors import UnsupportedPlatformError
-from mccore.system.platform_info import Platform, classpath_separator, current_platform
+from nostalgia.errors import UnsupportedPlatformError
+from nostalgia.system.platform_info import Platform, classpath_separator, current_platform
 
 
 def test_current_platform_uses_mojang_vocabulary() -> None:

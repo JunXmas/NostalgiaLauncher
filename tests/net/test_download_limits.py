@@ -14,11 +14,11 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import Cancelled, NetworkError
-from mccore.model.download import DownloadTask
-from mccore.net.download import download_all, download_one
-from mccore.net.http import HttpClient, RetryPolicy
-from mccore.operations.cancellation import CancelToken
+from nostalgia.errors import Cancelled, NetworkError
+from nostalgia.model.download import DownloadTask
+from nostalgia.net.download import download_all, download_one
+from nostalgia.net.http import HttpClient, RetryPolicy
+from nostalgia.operations.cancellation import CancelToken
 
 ONE_ATTEMPT = RetryPolicy(attempts=1, initial_backoff_seconds=0.01, total_deadline_seconds=10.0)
 BIG_BODY = b"z" * 400_000

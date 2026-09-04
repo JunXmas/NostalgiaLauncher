@@ -1,7 +1,7 @@
 [project]
-name = "mccore"
+name = "nostalgia"
 version = "0.1.0"
-description = "Lõi launcher Minecraft: cài đặt và khởi động game. Không giao diện."
+description = "Nostalgia Launcher — lõi trình khởi động Minecraft: cài đặt và khởi động game. Không giao diện."
 readme = "README.md"
 requires-python = ">=3.12"
 # Không phụ thuộc runtime. Mọi thứ HTTP dùng http.client của thư viện chuẩn — xem
@@ -9,17 +9,17 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
-mccore = "mccore.cli.main:main"
+nostalgia = "nostalgia.cli.main:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mccore"]
+packages = ["src/nostalgia"]
 # py.typed: báo cho bộ kiểm kiểu của người dùng biết gói này có chú kiểu. Không có nó,
-# giao diện tương lai gọi mccore.api sẽ không thấy kiểu nào cả.
-artifacts = ["src/mccore/py.typed"]
+# giao diện tương lai gọi nostalgia.api sẽ không thấy kiểu nào cả.
+artifacts = ["src/nostalgia/py.typed"]
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]

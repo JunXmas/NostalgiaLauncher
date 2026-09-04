@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mccore.install.library import plan_libraries
-from mccore.model.download import DownloadTask
-from mccore.model.json_value import JsonValue
-from mccore.storage.paths import DataPaths
-from mccore.system.platform_info import Platform
-from mccore.version.meta import parse_version_meta
+from nostalgia.install.library import plan_libraries
+from nostalgia.model.download import DownloadTask
+from nostalgia.model.json_value import JsonValue
+from nostalgia.storage.paths import DataPaths
+from nostalgia.system.platform_info import Platform
+from nostalgia.version.meta import parse_version_meta
 from version_fixtures import load_fixture
 
 LINUX = Platform(os_name="linux", os_arch="x64", os_version="6.8.0")

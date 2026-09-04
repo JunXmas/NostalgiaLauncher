@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from mccore.errors import Cancelled, IntegrityError
-from mccore.java.runtime_plan import CompressedFile, RuntimeLink
-from mccore.java.unpack import (
+from nostalgia.errors import Cancelled, IntegrityError
+from nostalgia.java.runtime_plan import CompressedFile, RuntimeLink
+from nostalgia.java.unpack import (
     CHUNK_BYTES,
     LZMA_FORMAT,
     apply_executable_bits,
@@ -19,8 +19,8 @@ from mccore.java.unpack import (
     create_links,
     decode_compressed,
 )
-from mccore.operations.cancellation import CancelToken
-from mccore.operations.progress import Progress
+from nostalgia.operations.cancellation import CancelToken
+from nostalgia.operations.progress import Progress
 
 CONTENT = b"noi dung that cua mot file trong ban Java\n" * 64
 

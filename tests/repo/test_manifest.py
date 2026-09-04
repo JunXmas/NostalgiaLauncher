@@ -8,10 +8,10 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import DataFileError, NetworkError
-from mccore.model.json_value import JsonValue, as_list, as_mapping, as_string
-from mccore.net.http import HttpClient
-from mccore.repo.manifest import RELEASE, fetch_manifest, parse_manifest
+from nostalgia.errors import DataFileError, NetworkError
+from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
+from nostalgia.net.http import HttpClient
+from nostalgia.repo.manifest import RELEASE, fetch_manifest, parse_manifest
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixture" / "repo" / "version_manifest_v2.json"
 

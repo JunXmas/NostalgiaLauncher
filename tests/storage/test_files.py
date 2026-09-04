@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from mccore.errors import DataFileError, UnsafePathError
-from mccore.storage.files import (
+from nostalgia.errors import DataFileError, UnsafePathError
+from nostalgia.storage.files import (
     atomic_write_json,
     ensure_dir,
     read_json,

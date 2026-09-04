@@ -11,15 +11,15 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import DataFileError, NetworkError, UnsupportedPlatformError
-from mccore.java.mojang_jre import ensure_java_runtime, select_runtime_release
-from mccore.java.runtime_manifest import parse_runtime_catalog
-from mccore.java.unpack import LZMA_FORMAT
-from mccore.net.http import HttpClient
-from mccore.operations.progress import Progress
-from mccore.storage.paths import DataPaths
-from mccore.system.platform_info import Platform
-from mccore.version.meta import JavaRuntimeRef, VersionMeta
+from nostalgia.errors import DataFileError, NetworkError, UnsupportedPlatformError
+from nostalgia.java.mojang_jre import ensure_java_runtime, select_runtime_release
+from nostalgia.java.runtime_manifest import parse_runtime_catalog
+from nostalgia.java.unpack import LZMA_FORMAT
+from nostalgia.net.http import HttpClient
+from nostalgia.operations.progress import Progress
+from nostalgia.storage.paths import DataPaths
+from nostalgia.system.platform_info import Platform
+from nostalgia.version.meta import JavaRuntimeRef, VersionMeta
 
 LINUX = Platform(os_name="linux", os_arch="x64", os_version="6.0")
 JAVA_BODY = b"#!/bin/sh\necho openjdk version 1.8.0\n"

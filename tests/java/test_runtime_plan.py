@@ -7,10 +7,10 @@ from pathlib import Path
 import pytest
 
 from java_fixtures import load_layout_document
-from mccore.errors import UnsafePathError
-from mccore.java.runtime_manifest import RuntimeFile, RuntimeLayout, parse_runtime_layout
-from mccore.java.runtime_plan import ARCHIVE_SUFFIX, plan_runtime
-from mccore.model.download import RemoteFile
+from nostalgia.errors import UnsafePathError
+from nostalgia.java.runtime_manifest import RuntimeFile, RuntimeLayout, parse_runtime_layout
+from nostalgia.java.runtime_plan import ARCHIVE_SUFFIX, plan_runtime
+from nostalgia.model.download import RemoteFile
 
 
 def make_layout(*files: RuntimeFile, links: dict[str, str] | None = None) -> RuntimeLayout:
