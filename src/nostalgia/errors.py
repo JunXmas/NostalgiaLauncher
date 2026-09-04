@@ -49,3 +49,7 @@ class Cancelled(NostalgiaError):
 
 class AccountError(NostalgiaError):
     """Tài khoản không hợp lệ, không tìm thấy, hoặc kho tài khoản hỏng."""
+
+
+class AuthError(NostalgiaError):
+    """Đăng nhập thất bại: máy chủ từ chối, hết hạn, hoặc cần người dùng làm một việc gì đó."""
