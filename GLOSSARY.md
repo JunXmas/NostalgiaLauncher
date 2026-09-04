@@ -121,6 +121,10 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Một file trong bản Java | `runtime_file` : `RuntimeFile` | dataclass | `jre_file` |
 | Thư mục gốc của một bản Java đã bung | `runtime_root` | `Path` | `jre_dir`, `java_home` |
 | Phản hồi HTTP đã đọc trọn (có mã trạng thái) | `response` : `HttpResponse` | dataclass | `resp`, `r` |
+| Mã người dùng nhập trên microsoft.com/link | `device_code` : `DeviceCode` | dataclass | `msa_code`, `login_code` |
+| Vé Microsoft (access + refresh) | `tokens` : `MicrosoftTokens` | dataclass | `ms_token` |
+| Vé Xbox kèm user hash | `ticket` : `XboxTicket` | dataclass | `xbl` |
+| Phiên Minecraft sau đăng nhập | `minecraft_session` : `MinecraftSession` | dataclass | `mc_session` |
 | Lệnh khởi động đã dựng xong | `command` : `LaunchCommand` | dataclass | `cmd` |
 | Lựa chọn cho một lần khởi động | `options` : `LaunchOptions` | dataclass | `opts` |
 | Cờ bộ nhớ máy ảo Java | `tuning` : `JvmTuning` | dataclass | `memory`, `jvm_opts` |
@@ -237,6 +241,13 @@ src/nostalgia/
     arguments.py                     (bước 11)
   java/component.py              L2  THUẦN: version_meta -> java_component, khoá OS, chỗ đặt java
   java/runtime_manifest.py       L2  THUẦN: phân tích hai tầng manifest bản Java
+  auth/                          L3  đăng nhập Microsoft (bốn máy chủ, hai công ty)
+    endpoints.py                     sáu địa chỉ; KHÔNG chứa mã ứng dụng nào
+    transport.py                     ba kiểu request mà OAuth cần
+    device_code.py                   xin mã, chờ có hạn, làm mới vé
+    xbox.py                          Xbox Live + XSTS, dịch XErr sang việc phải làm
+    minecraft.py                     đổi vé, đọc hồ sơ; 404 = chưa mua game
+    microsoft.py                     ghép bốn chặng
   repo/                          L3  kho phiên bản
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính

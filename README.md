@@ -45,6 +45,21 @@ sau 0,35 giây và chạy lại tiếp tục được; Ctrl+C lúc đang chơi �
 | 13 | `doctor` — soi mắt xích hỏng | ✅ |
 | 14 | Khởi động game thật | ✅ |
 
+Sau M1, đang làm **M2 — đăng nhập Microsoft**:
+
+| Bước | Nội dung | Xong |
+|---|---|:--:|
+| 15 | `HttpClient` gửi được POST, đọc được thân phản hồi lỗi | ✅ |
+| 16 | Bốn chặng đăng nhập: device code → Xbox Live → XSTS → Minecraft | ✅ |
+| 17 | Lưu vé làm mới, tự làm mới khi hết hạn | |
+| 18 | `account add-microsoft` và `play` với tài khoản thật | |
+
+> **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
+> Đăng ký app ở [portal.azure.com](https://portal.azure.com) (App registrations → *Personal
+> Microsoft accounts only* → bật *Allow public client flows*), xin duyệt Minecraft API ở
+> [aka.ms/mce-reviewappid](https://aka.ms/mce-reviewappid), rồi đặt
+> `NOSTALGIA_MSA_CLIENT_ID=<mã ứng dụng>`.
+
 ## Cây thư mục
 
 Tên folder nói **chức năng**, tên file nói **thứ cụ thể**. Không viết tắt.
@@ -63,8 +78,10 @@ src/nostalgia/
   account/             tài khoản lưu trên đĩa + danh tính rút ra để dựng lệnh
   launch/              dựng lệnh java + chạy/dừng tiến trình game
   doctor.py            soi bản cài bằng chính kế hoạch của install/
+  auth/                đăng nhập Microsoft: bốn chặng, không nhúng mã ứng dụng nào
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
   net/                 mạng: http.py (http.client) + download.py (tải song song)
+  auth/                đăng nhập Microsoft: bốn chặng, không nhúng mã ứng dụng nào
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
 bench/                 script đo hiệu năng, không phải test
