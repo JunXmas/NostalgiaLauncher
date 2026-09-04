@@ -64,6 +64,9 @@ class DataPaths:
     asset_indexes_dir: Path = field(init=False)
     asset_objects_dir: Path = field(init=False)
     runtime_dir: Path = field(init=False)
+    # Kho tài khoản nằm ở `config_dir`, KHÔNG ở `data_dir`: xoá dữ liệu game để lấy chỗ
+    # trống thì không được mất tài khoản theo.
+    accounts_json: Path = field(init=False)
 
     def __post_init__(self) -> None:
         """Tính sẵn các thư mục dẫn xuất một lần, thay vì mỗi lần truy cập.
@@ -81,6 +84,7 @@ class DataPaths:
             ("asset_indexes_dir", assets_dir / "indexes"),
             ("asset_objects_dir", assets_dir / "objects"),
             ("runtime_dir", self.data_dir / "runtime"),
+            ("accounts_json", self.config_dir / "accounts.json"),
         ):
             object.__setattr__(self, name, value)
 

@@ -241,7 +241,10 @@ src/nostalgia/
     unpack.py                        bung lzma song song, liên kết, cờ thực thi
     mojang_jre.py                    ghép lại: tải hai tầng manifest -> InstalledRuntime
     detect.py                        (sau M1: dùng Java sẵn có trên máy)
-  account/                       L4  offline, profile, store
+  account/                       L4  tài khoản
+    model.py                         Account (trên đĩa) ≠ PlayerProfile (để dựng lệnh)
+    offline.py                       UUID v3 của "OfflinePlayer:<tên>" — khớp máy chủ từng bit
+    store.py                         một file JSON 0600, ghi nguyên tử, chịu được bản ghi hỏng
   launch/                        L4  command, tuning, game_process, runner
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
