@@ -18,7 +18,7 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 **Mốc M1 đã xong**: gõ một lệnh là khởi động được Minecraft vanilla với tài khoản offline.
 
 ```bash
-uv run nostalgia account add-offline Jun
+uv run nostalgia account add-offline Jun     # hoặc: account add-microsoft
 uv run nostalgia install 1.20.1          # 3.629 file, 732 MB, 50 giây
 uv run nostalgia doctor  1.20.1          # đủ (3.648 mục đã soi)
 uv run nostalgia play    1.20.1 --account Jun
@@ -52,7 +52,7 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 | 15 | `HttpClient` gửi được POST, đọc được thân phản hồi lỗi | ✅ |
 | 16 | Bốn chặng đăng nhập: device code → Xbox Live → XSTS → Minecraft | ✅ |
 | 17 | Lưu vé làm mới, tự làm mới khi hết hạn | ✅ |
-| 18 | `account add-microsoft` và `play` với tài khoản thật | |
+| 18 | `account add-microsoft` và `play` với tài khoản thật | ✅ |
 
 > **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
 > Đăng ký app ở [portal.azure.com](https://portal.azure.com) (App registrations → *Personal

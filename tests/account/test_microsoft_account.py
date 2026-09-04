@@ -215,3 +215,22 @@ def test_a_demo_account_keeps_its_saved_name_after_refreshing(
 
     assert refreshed.player_name == "TenDaDat"
     assert refreshed.refresh_token == REFRESH_TOKEN
+
+
+def test_a_demo_account_gets_a_uuid_so_the_store_can_read_it_back(
+    server: LocalHttpsServer, server_state: ServerState, http_client: HttpClient, tmp_path: Path
+) -> None:
+    """Không có UUID thì kho từ chối chính bản ghi vừa lưu — lưu được mà đọc lại là mất.
+
+    Lệnh khởi động cũng cần một UUID, kể cả ở bản dùng thử.
+    """
+    endpoints = publish(server, server_state)
+    server_state.add("/mc-profile", b"", status=404)
+    login = sign_in(http_client, CLIENT_ID, endpoints=endpoints, sleep_seconds=0.0)
+
+    account = build_microsoft_account(login, now=NOW)
+    path = tmp_path / "accounts.json"
+    save_accounts(path, (account,))
+
+    assert account.player_uuid, "tài khoản demo vẫn phải có UUID"
+    assert load_accounts(path) == (account,), "phải đọc lại được đúng bản đã lưu"

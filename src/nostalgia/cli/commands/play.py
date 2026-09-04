@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from nostalgia.account.model import Account
     from nostalgia.cli.context import CliContext
     from nostalgia.launch.command import LaunchCommand
     from nostalgia.version.meta import VersionMeta
@@ -56,6 +57,7 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
     if account is None:
         fail(f"không có tài khoản {arguments.account!r} — xem `nostalgia account list`")
         return 1
+    account = _refresh_if_needed(account, context)
 
     repository = VersionRepository(context.paths)
     version_id = arguments.version_id
@@ -132,6 +134,46 @@ def _run_game(
     say("đang dừng game...")
     game.stop()
     return CANCELLED_EXIT_CODE
+
+
+def _refresh_if_needed(account: Account, context: CliContext) -> Account:
+    """Làm mới vé Microsoft trước khi chạy, và phân biệt hai kiểu hỏng.
+
+    - Vé làm mới đã chết (`AuthError`): dứt khoát, phải đăng nhập lại. Để nguyên vé cũ mà
+      chạy chỉ đẩy lỗi sang cho Minecraft báo bằng thông báo khó hiểu hơn nhiều.
+    - Không có mạng (`NetworkError`): chưa chắc vé đã hỏng. Cảnh báo rồi chạy tiếp bằng vé
+      đang có — chơi một mình thì thường vẫn vào được.
+    """
+    import os
+    import time
+
+    from nostalgia.account.microsoft import needs_refresh, refresh_account
+    from nostalgia.account.store import load_accounts, save_accounts, upsert_account
+    from nostalgia.auth.microsoft import resolve_client_id
+    from nostalgia.cli.output import say, warn
+    from nostalgia.errors import NetworkError
+    from nostalgia.net.http import HttpClient
+
+    if not needs_refresh(account, now=time.time()):
+        return account
+
+    say(f"vé của {account.player_name} đã cũ, đang làm mới...")
+    try:
+        with HttpClient() as http_client:
+            refreshed = refresh_account(
+                http_client,
+                resolve_client_id(os.environ),
+                account,
+                now=time.time(),
+                cancel_token=context.cancel_token,
+            )
+    except NetworkError as error:
+        warn(f"không làm mới được vé ({error}); thử chạy bằng vé đang có")
+        return account
+
+    accounts = load_accounts(context.paths.accounts_json)
+    save_accounts(context.paths.accounts_json, upsert_account(accounts, refreshed))
+    return refreshed
 
 
 def _drop(_line: str) -> None:
