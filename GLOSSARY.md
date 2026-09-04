@@ -253,7 +253,7 @@ src/nostalgia/
     variables.py                     bảng 18 biến ${...} Mojang chờ
     tuning.py                        chỉ cờ bộ nhớ — cờ GC chép trên diễn đàn là mê tín
     command.py                       dựng lệnh; chặn lệnh còn biến chưa thay
-    game_process.py                  (bước 12)
+    game_process.py                  chạy/dừng game; killpg CHỈ khi pgid == pid
     runner.py                        (bước 14)
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
