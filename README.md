@@ -15,7 +15,18 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 
 ## Trạng thái
 
-Đang xây tới mốc **M1**: gõ một lệnh là khởi động được Minecraft vanilla với tài khoản offline.
+**Mốc M1 đã xong**: gõ một lệnh là khởi động được Minecraft vanilla với tài khoản offline.
+
+```bash
+uv run nostalgia account add-offline Jun
+uv run nostalgia install 1.20.1          # 3.629 file, 732 MB, 50 giây
+uv run nostalgia doctor  1.20.1          # đủ (3.648 mục đã soi)
+uv run nostalgia play    1.20.1 --account Jun
+```
+
+Đã chạy thật, không phải mô phỏng: cửa sổ Minecraft 1.20.1 và 1.8.9 đều hiện lên (ảnh chụp
+trong nhật ký bàn giao). Cài lại lần hai không phát request nào. Ctrl+C giữa lúc tải dừng
+sau 0,35 giây và chạy lại tiếp tục được; Ctrl+C lúc đang chơi để lại **0** tiến trình java.
 
 | Bước | Nội dung | Xong |
 |---|---|:--:|
@@ -32,7 +43,7 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 | 11 | Dựng lệnh java | ✅ |
 | 12 | Chạy và dừng tiến trình game | ✅ |
 | 13 | `doctor` — soi mắt xích hỏng | ✅ |
-| 14 | Khởi động game thật | |
+| 14 | Khởi động game thật | ✅ |
 
 ## Cây thư mục
 
@@ -52,6 +63,7 @@ src/nostalgia/
   account/             tài khoản lưu trên đĩa + danh tính rút ra để dựng lệnh
   launch/              dựng lệnh java + chạy/dừng tiến trình game
   doctor.py            soi bản cài bằng chính kế hoạch của install/
+  cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/

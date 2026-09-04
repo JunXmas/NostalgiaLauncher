@@ -7,6 +7,8 @@ nhưng chỉ nên có một chỗ để sửa.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 VERSION_MANIFEST_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
 # Danh mục bản Java. Đoạn băm trong đường dẫn là của chính danh mục, không phải của phiên
@@ -16,3 +18,24 @@ JAVA_RUNTIME_MANIFEST_URL = (
     "https://piston-meta.mojang.com/v1/products/java-runtime/"
     "2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
 )
+
+# Object asset nằm trên một host khác hẳn manifest, và chỉ mục KHÔNG khai URL — địa chỉ được
+# suy ra từ chính hash. Vì thế nó phải nằm ở đây chứ không nằm cạnh chỗ suy ra.
+ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
+
+
+@dataclass(frozen=True, slots=True)
+class Endpoints:
+    """Ba địa chỉ gốc, gói lại để truyền xuống một lần.
+
+    Truyền ba tham số URL rời qua từng tầng là cách chắc chắn để một ngày có tầng quên
+    chuyển tiếp một cái, và test "offline" lặng lẽ đi ra Internet thật. Đã xảy ra: URL asset
+    từng bị ghi cứng, và một bộ test tưởng là offline mất 46 giây vì gọi ra Mojang.
+    """
+
+    version_manifest: str = VERSION_MANIFEST_URL
+    java_catalog: str = JAVA_RUNTIME_MANIFEST_URL
+    asset_objects: str = ASSET_OBJECT_BASE_URL
+
+
+DEFAULT_ENDPOINTS = Endpoints()

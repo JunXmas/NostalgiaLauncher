@@ -256,7 +256,7 @@ src/nostalgia/
     tuning.py                        chỉ cờ bộ nhớ — cờ GC chép trên diễn đàn là mê tín
     command.py                       dựng lệnh; chặn lệnh còn biến chưa thay
     game_process.py                  chạy/dừng game; killpg CHỈ khi pgid == pid
-    runner.py                        (bước 14)
+    runner.py                        nối các mảnh: cài đủ rồi tìm java đã cài
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
   cli/                           L6  tầng DUY NHẤT được print()

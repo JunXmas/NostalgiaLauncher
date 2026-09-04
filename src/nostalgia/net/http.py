@@ -146,6 +146,17 @@ class HttpClient:
         self.stream(url, chunks.append, max_bytes=max_bytes, cancel_token=cancel_token)
         return b"".join(chunks)
 
+    def __enter__(self) -> HttpClient:
+        return self
+
+    def __exit__(self, *_exception: object) -> None:
+        """Đóng mọi kết nối bền khi ra khỏi khối `with`.
+
+        Không đóng thì socket còn treo tới khi bộ thu gom rác chạy, và trong một tiến trình
+        ngắn như lệnh CLI thì điều đó nghĩa là để lại kết nối nửa mở cho máy chủ Mojang.
+        """
+        self.close()
+
     def close(self) -> None:
         with self._lock:
             connections = list(self._connections)

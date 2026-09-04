@@ -37,6 +37,7 @@ LAYERS: dict[str, int] = {
     "version": 2,
     "java/component": 2,
     "java/runtime_manifest": 2,  # cũng thuần: chỉ phân tích JSON
+    "repo/endpoints": 0,  # chỉ là hằng địa chỉ, không import gì — mọi tầng đều được dùng
     "repo": 3,
     "install": 3,
     "java": 3,

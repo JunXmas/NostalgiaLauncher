@@ -17,15 +17,15 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from nostalgia.model.asset_index import AssetIndex
+from nostalgia.model.asset_index import AssetIndex, parse_asset_index
 from nostalgia.model.download import DownloadTask, RemoteFile
 from nostalgia.operations.cancellation import CancelToken
-from nostalgia.storage.files import ensure_dir, resolve_within
+from nostalgia.repo.endpoints import ASSET_OBJECT_BASE_URL
+from nostalgia.storage.files import ensure_dir, read_json, resolve_within
 from nostalgia.storage.paths import DataPaths
-from nostalgia.version.meta import AssetIndexRef
+from nostalgia.version.meta import AssetIndexRef, VersionMeta
 
 # CDN riêng cho object asset — khác host với thư viện và với manifest.
-ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
 
 # Thư mục mà game đời <=1.5 tự đọc, nằm trong thư mục game chứ không trong kho.
 RESOURCES_DIRECTORY = "resources"
@@ -41,12 +41,28 @@ class NameTreeReport:
     missing_objects: int
 
 
+def load_installed_asset_index(version_meta: VersionMeta, paths: DataPaths) -> AssetIndex | None:
+    """Đọc chỉ mục asset ĐÃ TẢI VỀ. `None` khi bản game không khai asset, hoặc chưa tải.
+
+    Ba nơi cần đúng việc này — lập kế hoạch cài, soi bản cài, và dựng lệnh cho đời cũ — nên
+    nó nằm ở đây thay vì được viết lại ba lần với ba cách xử lý "chưa có file" khác nhau.
+    """
+    if version_meta.asset_index is None:
+        return None
+    path = paths.asset_index_json(version_meta.asset_index.asset_index_id)
+    if not path.is_file():
+        return None
+    return parse_asset_index(read_json(path))
+
+
 def plan_asset_index_task(reference: AssetIndexRef, paths: DataPaths) -> DownloadTask:
     """Chỉ mục lưu ở `assets/indexes/<id>.json` — đường dẫn do `DataPaths` quyết định."""
     return reference.remote.to_task(paths.asset_index_json(reference.asset_index_id))
 
 
-def plan_asset_tasks(asset_index: AssetIndex, paths: DataPaths) -> list[DownloadTask]:
+def plan_asset_tasks(
+    asset_index: AssetIndex, paths: DataPaths, *, base_url: str = ASSET_OBJECT_BASE_URL
+) -> list[DownloadTask]:
     """Mỗi hash đúng một việc tải.
 
     URL suy ra từ chính hash: `<hai ký tự đầu>/<hash>`. Chỉ mục không khai URL, nên đây là
@@ -55,7 +71,7 @@ def plan_asset_tasks(asset_index: AssetIndex, paths: DataPaths) -> list[Download
     """
     return [
         RemoteFile(
-            url=f"{ASSET_OBJECT_BASE_URL}/{asset_object.asset_hash[:2]}/{asset_object.asset_hash}",
+            url=f"{base_url}/{asset_object.asset_hash[:2]}/{asset_object.asset_hash}",
             sha1=asset_object.asset_hash,
             size=asset_object.size,
         ).to_task(paths.asset_object(asset_object.asset_hash))
