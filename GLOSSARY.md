@@ -114,6 +114,13 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Component JRE của Mojang | `java_component` | `str` | `jre`, `runtime`, `component` trần |
 | Số major của Java | `java_major` | `int` | `java_version` |
 | File thực thi java | `java_binary` | `Path` | `java`, `java_path`, `jvm` |
+| Khoá hệ điều hành trong manifest bản Java (`linux`, `mac-os-arm64`) | `runtime_os_key` | `str` | `os_key`, `platform_key` |
+| Danh mục bản Java (`all.json`) | `runtime_catalog` : `RuntimeCatalog` | dataclass | `runtimes`, `java_manifest` |
+| Một bản phát hành trong danh mục đó | `release` : `RuntimeRelease` | dataclass | `runtime`, `jre` |
+| Manifest chi tiết một bản Java (391 mục) | `layout` : `RuntimeLayout` | dataclass | `manifest` cho khái niệm này |
+| Một file trong bản Java | `runtime_file` : `RuntimeFile` | dataclass | `jre_file` |
+| Thư mục gốc của một bản Java đã bung | `runtime_root` | `Path` | `jre_dir`, `java_home` |
+| Bản Java đã cài xong (kết quả, có `java_binary`) | `installed_runtime` : `InstalledRuntime` | dataclass | `java_runtime` (đó là KHAI BÁO trong version JSON, không phải kết quả) |
 | Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
 | Yêu cầu dừng | `cancel_token` : `CancelToken` | | `cancel`, `token`, closure `should_cancel` |
 | Tiến trình game đang chạy | `game_process` : `GameProcess` | | `proc`, `p`, `process` trần |
@@ -218,7 +225,8 @@ src/mccore/
     inherit.py                       trộn inheritsFrom, chặn vòng tròn
     classpath.py                     lọc rules, bỏ natives, gộp trùng giữ bản đầu
     arguments.py                     (bước 11)
-  java/component.py              L2  ánh xạ thuần version_meta -> java_component
+  java/component.py              L2  THUẦN: version_meta -> java_component, khoá OS, chỗ đặt java
+  java/runtime_manifest.py       L2  THUẦN: phân tích hai tầng manifest bản Java
   repo/                          L3  kho phiên bản
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
@@ -228,7 +236,11 @@ src/mccore/
     natives.py                       giải nén, LÀM PHẲNG vì JVM không tìm đệ quy
     assets.py                        gộp trùng hash; cây tên cho đời <=1.6
     plan.py                          (bước 13)
-  java/                          L3  mojang_jre, detect
+  java/                          L3  bản Java của Mojang
+    runtime_plan.py                  chọn bản nén, bỏ file đã đúng, chặn liên kết thoát ra
+    unpack.py                        bung lzma song song, liên kết, cờ thực thi
+    mojang_jre.py                    ghép lại: tải hai tầng manifest -> InstalledRuntime
+    detect.py                        (sau M1: dùng Java sẵn có trên máy)
   account/                       L4  offline, profile, store
   launch/                        L4  command, tuning, game_process, runner
   doctor.py                      L4  soi mắt xích hỏng

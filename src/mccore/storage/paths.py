@@ -100,6 +100,14 @@ class DataPaths:
     def asset_index_json(self, asset_index_id: str) -> Path:
         return resolve_child(self.asset_indexes_dir, f"{asset_index_id}.json")
 
+    def java_runtime_dir(self, java_component: str, runtime_os_key: str) -> Path:
+        """Bố trí `runtime/<component>/<khoá hệ điều hành>`, theo đúng cách Mojang chia.
+
+        Tách theo khoá hệ điều hành vì cùng một máy có thể giữ cả bản arm64 lẫn bản x64 lùi
+        về — bản Apple Silicon không có `jre-legacy` nên phải dùng bản x64 cho 1.8.9.
+        """
+        return resolve_child(resolve_child(self.runtime_dir, java_component), runtime_os_key)
+
     def virtual_assets_dir(self, asset_index_id: str) -> Path:
         """Cây asset theo TÊN cho đời 1.6 — nằm trong kho, dùng chung giữa các bản cài."""
         return resolve_child(self.assets_dir / "virtual", asset_index_id)

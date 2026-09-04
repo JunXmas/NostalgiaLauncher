@@ -13,6 +13,7 @@ với mở kết nối mới mỗi file.
 from __future__ import annotations
 
 import http.client
+import json
 import ssl
 import threading
 import time
@@ -20,7 +21,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
-from mccore.errors import Cancelled, IntegrityError, NetworkError
+from mccore.errors import Cancelled, DataFileError, IntegrityError, NetworkError
+from mccore.model.json_value import JsonValue
 from mccore.operations.cancellation import CancelToken
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
@@ -237,3 +239,20 @@ def _split(url: str) -> tuple[str, str]:
         raise NetworkError(message)
     path = parts.path or "/"
     return parts.netloc, f"{path}?{parts.query}" if parts.query else path
+
+
+def fetch_json(http_client: HttpClient, url: str, *, what: str) -> JsonValue:
+    """Tải một tài liệu JSON và nêu rõ *tài liệu nào* hỏng khi nó hỏng.
+
+    `JSONDecodeError` trần chỉ nói dòng và cột; với ba nguồn JSON khác nhau (danh mục phiên
+    bản, JSON phiên bản, hai tầng manifest bản Java) thì thông báo đó không đủ để lần ra.
+    """
+    payload = http_client.fetch_bytes(url)
+    try:
+        # json.loads khai trả `Any`; ép về JsonValue ngay tại biên để cái `Any` đó không
+        # lan ra khắp nơi dùng sau.
+        document: JsonValue = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        message = f"{what} không phải JSON hợp lệ: {exc}"
+        raise DataFileError(message) from exc
+    return document
