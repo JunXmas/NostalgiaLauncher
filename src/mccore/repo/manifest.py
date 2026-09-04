@@ -7,14 +7,13 @@ nhưng bảng tra khiến chi phí không phụ thuộc số phiên bản — v�
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 
 from mccore.errors import DataFileError
 from mccore.model.download import RemoteFile
 from mccore.model.json_value import JsonValue, as_list, as_mapping, as_string
-from mccore.net.http import HttpClient
+from mccore.net.http import HttpClient, fetch_json
 from mccore.repo.endpoints import VERSION_MANIFEST_URL
 
 RELEASE = "release"
@@ -82,13 +81,7 @@ def fetch_manifest(http_client: HttpClient, *, url: str = VERSION_MANIFEST_URL) 
     ở mức module, và giá trị đã sửa còn nguyên cho mọi test chạy sau — đúng loại trạng thái
     dùng chung mà kho này cấm.
     """
-    payload = http_client.fetch_bytes(url)
-    try:
-        document = json.loads(payload)
-    except json.JSONDecodeError as exc:
-        message = f"danh mục phiên bản không phải JSON hợp lệ: {exc}"
-        raise DataFileError(message) from exc
-    manifest = parse_manifest(document)
+    manifest = parse_manifest(fetch_json(http_client, url, what="danh mục phiên bản"))
     if not manifest.entries_by_id:
         message = "danh mục phiên bản rỗng — máy chủ trả về thứ không dùng được"
         raise DataFileError(message)
