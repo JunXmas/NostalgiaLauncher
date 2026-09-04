@@ -124,6 +124,8 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Lựa chọn cho một lần khởi động | `options` : `LaunchOptions` | dataclass | `opts` |
 | Cờ bộ nhớ máy ảo Java | `tuning` : `JvmTuning` | dataclass | `memory`, `jvm_opts` |
 | Bảng thay `${...}` | `variables` | `dict[str, str]` | `vars`, `subs` |
+| Một thứ không ổn khi soi bản cài | `finding` : `Finding` | dataclass | `issue`, `defect` |
+| Kết quả soi cả bản cài | `diagnosis` : `Diagnosis` | dataclass | `health`, `checkup` |
 | Bản Java đã cài xong (kết quả, có `java_binary`) | `installed_runtime` : `InstalledRuntime` | dataclass | `java_runtime` (đó là KHAI BÁO trong version JSON, không phải kết quả) |
 | Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
 | Yêu cầu dừng | `cancel_token` : `CancelToken` | | `cancel`, `token`, closure `should_cancel` |
