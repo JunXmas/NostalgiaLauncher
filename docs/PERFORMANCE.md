@@ -210,8 +210,9 @@ Con số 1,80× ghi ở bước 1 là của một CLI **chưa có lệnh con nà
 | `import argparse` | ~13 ms | Không cắt được nếu còn dùng argparse |
 | Dựng 5 lệnh con | 4,2 ms, trong đó 2,1 ms là bộ máy của chính argparse | Không cắt được |
 
-Còn **2,23×**. Phần dư là chi phí của chính argparse, nên ngân sách được đặt lại ở 2,5× —
-nới có chủ đích kèm số đo, không phải nới để test khỏi đỏ. Hai test gác vẫn chặn việc
+Còn **1,70×–2,23×** — đo hai lần trên cùng mã nguồn, khác nhau vì bộ điều tốc CPU (xem §mở
+đầu: cùng phép đo cho 34 ms lúc máy rỗi và 22 ms lúc máy bận). Ngân sách đặt ở 2,5× để bao
+được cả đầu xấu của dải đó — nới có chủ đích kèm số đo, không phải nới để test khỏi đỏ. Hai test gác vẫn chặn việc
 `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hay `logging` lọt vào
 đường nhanh, vì đó mới là thứ dễ tái phát.
 
@@ -239,10 +240,10 @@ không chạm tới model nên vẫn giữ được 1,80×; điều đó có tes
 | `nostalgia --version` / `--help` (không chạm model, không I/O) | **≤ 2,5× khởi động Python trần** (hiện 2,23×) |
 | Lệnh chỉ đọc đĩa (`doctor`, liệt kê bản đã cài) | ≤ 4,0× |
 | Lệnh chạm mạng | không đặt ngân sách khởi động — mạng chi phối hoàn toàn |
-| Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms |
-| Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** |
-| Cài lại khi đã đủ file | **0 request mạng** |
-| Cài nguội trọn vẹn 1.20.1 | ≤ 2 phút trên đường truyền ~20 MB/s |
+| Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms — **đo thật: 37 ms cho 4.522 file / 1.105 MB** |
+| Xác minh sâu (sha1 649 MB) | ≤ 2 s, **chỉ khi có cờ** — **đo thật: `doctor --verify-hashes` 1,64 s cho 734 MB** |
+| Cài lại khi đã đủ file | **0 request mạng** — đo thật: 0 request, 1,5 s |
+| Cài nguội trọn vẹn 1.20.1 | ≤ 2 phút trên đường truyền ~20 MB/s — **đo thật: 50 s cho 3.629 file / 732 MB** |
 | Từ `play` tới lúc tiến trình java được sinh | ≤ 3× khởi động Python trần |
 
 Ước tính cài nguội, cộng theo **từng dải đã đo riêng**, dùng số thận trọng của 16–24 luồng:
