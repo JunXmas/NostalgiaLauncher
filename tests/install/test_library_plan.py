@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mccore.install.library import plan_library_tasks, plan_native_extractions
+from mccore.install.library import plan_libraries
 from mccore.model.download import DownloadTask
 from mccore.model.json_value import JsonValue
 from mccore.storage.paths import DataPaths
@@ -19,7 +19,7 @@ MACOS = Platform(os_name="osx", os_arch="arm64", os_version="23.5.0")
 
 def plan_for(version_id: str, platform: Platform, tmp_path: Path) -> list[DownloadTask]:
     version_meta = parse_version_meta(load_fixture(version_id))
-    return plan_library_tasks(version_meta, platform, DataPaths.for_root(tmp_path))
+    return list(plan_libraries(version_meta, platform, DataPaths.for_root(tmp_path)).downloads)
 
 
 def test_every_task_lands_under_the_libraries_directory(tmp_path: Path) -> None:
@@ -58,10 +58,9 @@ def test_natives_extraction_list_is_a_subset_of_the_download_plan(tmp_path: Path
     paths = DataPaths.for_root(tmp_path)
     for version_id in ("1.8.9", "1.20.1"):
         version_meta = parse_version_meta(load_fixture(version_id))
-        downloads = {task.destination for task in plan_library_tasks(version_meta, LINUX, paths)}
-        native_destinations = {
-            task.destination for task in plan_native_extractions(version_meta, LINUX, paths)
-        }
+        plan = plan_libraries(version_meta, LINUX, paths)
+        downloads = {task.destination for task in plan.downloads}
+        native_destinations = {task.destination for task in plan.natives_to_extract}
         assert native_destinations, version_id
         assert native_destinations <= downloads, version_id
 
@@ -69,13 +68,13 @@ def test_natives_extraction_list_is_a_subset_of_the_download_plan(tmp_path: Path
 def test_only_native_libraries_are_extracted(tmp_path: Path) -> None:
     paths = DataPaths.for_root(tmp_path)
     version_meta = parse_version_meta(load_fixture("1.20.1"))
-    for task in plan_native_extractions(version_meta, LINUX, paths):
+    for task in plan_libraries(version_meta, LINUX, paths).natives_to_extract:
         assert "natives" in task.destination.name
 
 
 def test_a_version_with_no_libraries_plans_nothing(tmp_path: Path) -> None:
     version_meta = parse_version_meta({"id": "trong", "mainClass": "x"})
-    assert plan_library_tasks(version_meta, LINUX, DataPaths.for_root(tmp_path)) == []
+    assert plan_libraries(version_meta, LINUX, DataPaths.for_root(tmp_path)).downloads == ()
 
 
 def test_two_libraries_pointing_at_the_same_file_are_downloaded_once(tmp_path: Path) -> None:
@@ -100,5 +99,38 @@ def test_two_libraries_pointing_at_the_same_file_are_downloaded_once(tmp_path: P
             ],
         }
     )
-    tasks = plan_library_tasks(version_meta, LINUX, DataPaths.for_root(tmp_path))
-    assert len(tasks) == 1
+    plan = plan_libraries(version_meta, LINUX, DataPaths.for_root(tmp_path))
+    assert len(plan.downloads) == 1
+
+
+def test_the_same_native_file_is_extracted_only_once(tmp_path: Path) -> None:
+    """Bản trước có hai hàm duyệt riêng: hàm tải gộp trùng đích, hàm natives thì KHÔNG.
+
+    Hai thư viện khác toạ độ trỏ cùng một file sẽ bị xếp giải nén hai lần. Nay một lượt
+    duyệt duy nhất nên hai danh sách không thể lệch nhau.
+    """
+    shared: dict[str, JsonValue] = {
+        "path": "org/lwjgl/lwjgl-3.3.1-natives-linux.jar",
+        "url": "https://x/n.jar",
+        "sha1": "ab" * 20,
+        "size": 5,
+    }
+    version_meta = parse_version_meta(
+        {
+            "id": "x",
+            "mainClass": "y",
+            "libraries": [
+                {
+                    "name": "org.lwjgl:lwjgl:3.3.1:natives-linux",
+                    "downloads": {"artifact": dict(shared)},
+                },
+                {
+                    "name": "org.lwjgl:lwjgl-glfw:3.3.1:natives-linux",
+                    "downloads": {"artifact": dict(shared)},
+                },
+            ],
+        }
+    )
+    plan = plan_libraries(version_meta, LINUX, DataPaths.for_root(tmp_path))
+    assert len(plan.downloads) == 1
+    assert len(plan.natives_to_extract) == 1
