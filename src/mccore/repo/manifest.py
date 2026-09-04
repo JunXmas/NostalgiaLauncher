@@ -75,14 +75,14 @@ def parse_manifest(document: JsonValue) -> VersionManifest:
     )
 
 
-def fetch_manifest(client: HttpClient, *, url: str = VERSION_MANIFEST_URL) -> VersionManifest:
+def fetch_manifest(http_client: HttpClient, *, url: str = VERSION_MANIFEST_URL) -> VersionManifest:
     """Tải danh mục từ Mojang. Chạm mạng — tên hàm nói đúng điều đó.
 
     `url` là tham số để test trỏ sang máy chủ cục bộ. Không có nó, test buộc phải sửa hằng
     ở mức module, và giá trị đã sửa còn nguyên cho mọi test chạy sau — đúng loại trạng thái
     dùng chung mà kho này cấm.
     """
-    payload = client.fetch_bytes(url)
+    payload = http_client.fetch_bytes(url)
     try:
         document = json.loads(payload)
     except json.JSONDecodeError as exc:

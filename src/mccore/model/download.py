@@ -4,7 +4,7 @@
 - `Artifact`: `RemoteFile` mà máy chủ **có** khai đường dẫn tương đối (thư viện, asset).
 - `DownloadTask`: việc cụ thể, đích **tuyệt đối** đã phân giải qua `DataPaths`.
 
-Vì sao phải có `RemoteFile` riêng: `downloads.client` và `assetIndex` của Mojang **không**
+Vì sao phải có `RemoteFile` riêng: `downloads.http_client` và `assetIndex` của Mojang **không**
 khai đường dẫn — nơi lưu chúng do bố trí thư mục của launcher quyết định
 (`versions/<id>/<id>.jar`, `assets/indexes/<id>.json`). Nếu nhét chúng vào `Artifact` thì
 `version/` phải tự dựng chuỗi `"indexes/..."`, và bố trí thư mục có **hai** chỗ định nghĩa.

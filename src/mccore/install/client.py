@@ -14,6 +14,6 @@ def plan_client_task(version_meta: VersionMeta, paths: DataPaths) -> DownloadTas
     lỗi "không tìm thấy client.jar" rất khó truy, vì thư mục của bản Fabric vẫn tồn tại và
     chỉ thiếu đúng một file.
     """
-    if version_meta.client is None:
+    if version_meta.client_jar is None:
         return None
-    return version_meta.client.to_task(paths.version_jar(version_meta.jar_owner_id))
+    return version_meta.client_jar.to_task(paths.version_jar(version_meta.jar_owner_id))

@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from mccore.install.client import plan_client_task
 from mccore.model.json_value import JsonValue
+from mccore.storage.paths import DataPaths
 from mccore.system.platform_info import Platform
 from mccore.version.classpath import join_classpath, resolve_classpath, resolve_classpath_libraries
+from mccore.version.inherit import resolve_inheritance
 from mccore.version.meta import VersionMeta, parse_version_meta
 from version_fixtures import load_fixture
 
@@ -111,16 +114,29 @@ def test_order_follows_the_declaration() -> None:
 def test_client_jar_goes_last(tmp_path: Path) -> None:
     """Loader cần lớp của mình được tìm thấy trước lớp của vanilla."""
     version_meta = meta_for("1.20.1")
-    client_jar = tmp_path / "1.20.1.jar"
-    classpath = resolve_classpath(version_meta, LINUX, tmp_path / "libraries", client_jar)
-    assert classpath[-1] == client_jar
+    paths = DataPaths.for_root(tmp_path)
+    classpath = resolve_classpath(version_meta, LINUX, paths)
+    assert classpath[-1] == paths.version_jar("1.20.1")
     assert len(classpath) == len(resolve_classpath_libraries(version_meta, LINUX)) + 1
+
+
+def test_the_classpath_jar_is_the_one_the_downloader_fetches(tmp_path: Path) -> None:
+    """Hai chỗ từng tính đường dẫn jar độc lập, và lệch nhau với bản của loader.
+
+    Người gọi rất dễ truyền theo `version_id` vì đó là thứ họ đang cầm, trong khi bản Fabric
+    dùng jar của bản gốc. Kết quả: game chạy với classpath trỏ vào file chưa từng được tải.
+    """
+    paths = DataPaths.for_root(tmp_path)
+    version_meta = parse_version_meta(resolve_inheritance(FABRIC_ID, load_fixture))
+    downloaded = plan_client_task(version_meta, paths)
+    assert downloaded is not None
+    assert resolve_classpath(version_meta, LINUX, paths)[-1] == downloaded.destination
 
 
 def test_paths_follow_the_maven_layout(tmp_path: Path) -> None:
     version_meta = meta_for("1.20.1")
-    libraries_dir = tmp_path / "libraries"
-    classpath = resolve_classpath(version_meta, LINUX, libraries_dir, tmp_path / "a.jar")
+    libraries_dir = DataPaths.for_root(tmp_path).libraries_dir
+    classpath = resolve_classpath(version_meta, LINUX, DataPaths.for_root(tmp_path))
     for path in classpath[:-1]:
         assert path.is_relative_to(libraries_dir)
         assert path.suffix == ".jar"

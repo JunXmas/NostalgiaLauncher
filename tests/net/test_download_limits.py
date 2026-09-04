@@ -25,7 +25,7 @@ BIG_BODY = b"z" * 400_000
 
 
 def test_truncation_by_a_lying_server_is_caught_by_sha1(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Máy chủ công bố ÍT hơn nó gửi: `http.client` cắt ở số đã công bố, nên ta nhận một
     file bị hụt mà kích thước vẫn "khớp". Chỉ sha1 bắt được — đó là lý do luật 5 bắt băm
@@ -38,7 +38,7 @@ def test_truncation_by_a_lying_server_is_caught_by_sha1(
         size=100,
     )
     with pytest.raises(Exception, match="sha1"):
-        download_one(client, task, retry_policy=ONE_ATTEMPT)
+        download_one(http_client, task, retry_policy=ONE_ATTEMPT)
     assert list(tmp_path.iterdir()) == [], "không được để lại file tạm"
 
 
@@ -50,7 +50,7 @@ def test_server_declaring_more_than_it_sends_is_an_error(
 ) -> None:
     """Chiều ngược lại: công bố NHIỀU hơn gửi. Phải thành lỗi, không thành file hụt.
 
-    Dùng client timeout RẤT ngắn: một máy chủ giao thiếu sẽ khiến ta chờ hết timeout ổ cắm,
+    Dùng http_client timeout RẤT ngắn: một máy chủ giao thiếu sẽ khiến ta chờ hết timeout ổ cắm,
     và đó chính là lý do `RetryPolicy` phải có `total_deadline_seconds` — bốn lần thử với
     timeout 30 giây là hai phút cho một file.
     """
@@ -71,16 +71,16 @@ def test_server_declaring_more_than_it_sends_is_an_error(
 
 
 def test_fetch_bytes_has_a_ceiling(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     """Nạp trọn vào bộ nhớ thì luôn phải có trần, kể cả khi máy chủ tử tế."""
     server_state.add("/to", BIG_BODY)
     with pytest.raises(NetworkError, match="hơn 1000 byte"):
-        client.fetch_bytes(server.url("/to"), max_bytes=1000)
+        http_client.fetch_bytes(server.url("/to"), max_bytes=1000)
 
 
 def test_cancelling_mid_download_stops_quickly(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Trước khi vá, huỷ giữa lúc tải KHÔNG dừng được file nào: vòng đọc không kiểm cờ.
 
@@ -101,7 +101,9 @@ def test_cancelling_mid_download_stops_quickly(
     threading.Timer(0.2, cancel_token.cancel).start()
     started = time.perf_counter()
     with pytest.raises(Cancelled):
-        download_all(client, tasks, workers=4, retry_policy=ONE_ATTEMPT, cancel_token=cancel_token)
+        download_all(
+            http_client, tasks, workers=4, retry_policy=ONE_ATTEMPT, cancel_token=cancel_token
+        )
     elapsed = time.perf_counter() - started
     assert elapsed < 3.0, f"dừng quá chậm: {elapsed:.2f}s"
     assert not any(path.suffix == ".bin" for path in tmp_path.iterdir())
@@ -114,17 +116,17 @@ def test_cancelling_mid_download_stops_quickly(
         "https://nguoi-dung@localhost/x",
     ],
 )
-def test_urls_with_credentials_are_refused(client: HttpClient, url: str) -> None:
+def test_urls_with_credentials_are_refused(http_client: HttpClient, url: str) -> None:
     """`https://ai-do:mat-khau@host/` là mẫu lừa đảo kinh điển: mắt người đọc phần trước
     dấu @ tưởng là tên máy. Trước khi vá, nó chỉ hỏng ở tầng DNS với thông điệp vô nghĩa."""
     with pytest.raises(NetworkError, match="tên đăng nhập"):
-        client.fetch_bytes(url)
+        http_client.fetch_bytes(url)
 
 
 def test_missing_content_length_still_has_a_ceiling(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
 ) -> None:
     """Máy chủ không công bố gì cả: trần vẫn phải áp, nếu không thì không có gì chặn."""
     server_state.add("/khong-cong-bo", BIG_BODY, declare_length=-1)
     with pytest.raises(NetworkError, match="hơn 5000 byte"):
-        client.fetch_bytes(server.url("/khong-cong-bo"), max_bytes=5000)
+        http_client.fetch_bytes(server.url("/khong-cong-bo"), max_bytes=5000)

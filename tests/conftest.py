@@ -104,7 +104,7 @@ def server(
 
 
 @pytest.fixture
-def client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
+def http_client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
     certificate, _key = certificate_pair
     trusting = ssl.create_default_context(cafile=str(certificate))
     http_client = HttpClient(timeout_seconds=5.0, tls_context=trusting)

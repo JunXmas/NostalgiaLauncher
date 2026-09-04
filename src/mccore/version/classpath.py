@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from mccore.storage.paths import DataPaths
 from mccore.system.platform_info import Platform, classpath_separator
 from mccore.version.meta import Library, VersionMeta
 from mccore.version.rules import rules_allow
@@ -39,21 +40,24 @@ def resolve_classpath_libraries(
 
 
 def resolve_classpath(
-    version_meta: VersionMeta,
-    platform: Platform,
-    libraries_dir: Path,
-    client_jar: Path,
+    version_meta: VersionMeta, platform: Platform, paths: DataPaths
 ) -> tuple[Path, ...]:
     """Đường dẫn đầy đủ, thư viện trước rồi client.jar cuối.
 
     client.jar đứng cuối vì loader cần các lớp của mình được tìm thấy trước lớp của vanilla.
+
+    Nhận `DataPaths` chứ không nhận sẵn đường dẫn jar: bản trước để người gọi tự truyền, và
+    người gọi rất dễ truyền theo `version_id` vì đó là thứ họ đang cầm — trong khi bản của
+    loader dùng jar của bản gốc. Đã dựng ca chứng minh: classpath trỏ tới
+    `fabric-loader-....jar` còn bộ tải lại tải về `1.21.4.jar`, và không gì trong code chặn.
+    Nay chỉ một chỗ biết luật đó.
     """
-    paths = [
-        libraries_dir / library.coordinate.relative_path
+    entries = [
+        paths.libraries_dir / library.coordinate.relative_path
         for library in resolve_classpath_libraries(version_meta, platform)
     ]
-    paths.append(client_jar)
-    return tuple(paths)
+    entries.append(paths.version_jar(version_meta.jar_owner_id))
+    return tuple(entries)
 
 
 def join_classpath(classpath: tuple[Path, ...], os_name: str) -> str:

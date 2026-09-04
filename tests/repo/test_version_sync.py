@@ -53,12 +53,12 @@ def offline_repository(tmp_path: Path) -> VersionRepository:
 
 
 def test_sync_downloads_verifies_and_caches(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     serve_manifest(server_state, [serve_version(server_state, server, "1.20.1")])
     paths = DataPaths.for_root(tmp_path)
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
 
     version_meta = repository.sync_version_meta("1.20.1")
@@ -71,7 +71,7 @@ def test_sync_downloads_verifies_and_caches(
 
 
 def test_sync_fetches_every_ancestor(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     serve_manifest(
         server_state,
@@ -82,19 +82,19 @@ def test_sync_fetches_every_ancestor(
     )
     paths = DataPaths.for_root(tmp_path)
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
     assert repository.sync_version_meta(FABRIC_ID).jar_owner_id == "1.21.4"
     assert paths.version_json("1.21.4").is_file()
 
 
 def test_a_version_missing_from_the_manifest_says_so(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     serve_manifest(server_state, [serve_version(server_state, server, "1.20.1")])
     repository = VersionRepository(
         DataPaths.for_root(tmp_path),
-        client,
+        http_client,
         manifest_url=server.url(MANIFEST_PATH),
         retry_policy=FAST_RETRY,
     )
@@ -103,7 +103,7 @@ def test_a_version_missing_from_the_manifest_says_so(
 
 
 def test_a_truncated_file_on_disk_is_replaced(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Một lần Ctrl-C có thể để lại JSON cụt. Giữ nó thì mọi lần chạy sau đều hỏng."""
     serve_manifest(server_state, [serve_version(server_state, server, "1.20.1")])
@@ -111,14 +111,14 @@ def test_a_truncated_file_on_disk_is_replaced(
     atomic_write_json(paths.version_json("1.20.1"), {"id": "1.20.1"})  # thiếu mainClass
 
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
     assert repository.sync_version_meta("1.20.1").main_class
     assert server_state.request_count("/versions/1.20.1.json") == 1
 
 
 def test_unparseable_json_on_disk_is_replaced(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     serve_manifest(server_state, [serve_version(server_state, server, "1.20.1")])
     paths = DataPaths.for_root(tmp_path)
@@ -127,13 +127,13 @@ def test_unparseable_json_on_disk_is_replaced(
     path.write_text("{ khong phai json", encoding="utf-8")
 
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
     assert repository.sync_version_meta("1.20.1").main_class
 
 
 def test_a_version_json_that_fails_its_published_sha1_is_refused(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Danh mục công bố sha1 của từng file JSON — chính là để chống file hỏng hoặc bị đổi.
 
@@ -146,7 +146,7 @@ def test_a_version_json_that_fails_its_published_sha1_is_refused(
 
     paths = DataPaths.for_root(tmp_path)
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
     with pytest.raises(Exception, match="sha1"):
         repository.sync_raw_version("1.20.1")
@@ -154,7 +154,7 @@ def test_a_version_json_that_fails_its_published_sha1_is_refused(
 
 
 def test_the_retry_policy_actually_reaches_the_downloader(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Một tham số bị bỏ qua âm thầm là lỗi vô hình nếu không có gì khẳng định về nó.
 
@@ -169,7 +169,7 @@ def test_the_retry_policy_actually_reaches_the_downloader(
 
     repository = VersionRepository(
         paths,
-        client,
+        http_client,
         manifest_url=server.url(MANIFEST_PATH),
         retry_policy=RetryPolicy(attempts=1, initial_backoff_seconds=0.01),
     )
@@ -180,7 +180,7 @@ def test_the_retry_policy_actually_reaches_the_downloader(
     server_state.add("/versions/1.20.1.json", b"khong phai json", fail_first=99)
     repository = VersionRepository(
         paths,
-        client,
+        http_client,
         manifest_url=server.url(MANIFEST_PATH),
         retry_policy=RetryPolicy(attempts=3, initial_backoff_seconds=0.01),
     )
@@ -190,7 +190,7 @@ def test_the_retry_policy_actually_reaches_the_downloader(
 
 
 def test_the_manifest_is_fetched_once_per_repository(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     """Danh mục nặng 268 KB và mất gần một giây; một chuỗi kế thừa tra nhiều bản.
 
@@ -206,7 +206,7 @@ def test_the_manifest_is_fetched_once_per_repository(
     )
     repository = VersionRepository(
         DataPaths.for_root(tmp_path),
-        client,
+        http_client,
         manifest_url=server.url(MANIFEST_PATH),
         retry_policy=FAST_RETRY,
     )
@@ -215,12 +215,12 @@ def test_the_manifest_is_fetched_once_per_repository(
 
 
 def test_cancelling_a_sync_leaves_nothing_behind(
-    client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState, tmp_path: Path
 ) -> None:
     serve_manifest(server_state, [serve_version(server_state, server, "1.20.1")])
     paths = DataPaths.for_root(tmp_path)
     repository = VersionRepository(
-        paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
+        paths, http_client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
     cancel_token = CancelToken()
     cancel_token.cancel()

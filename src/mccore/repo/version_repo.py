@@ -41,13 +41,13 @@ class VersionRepository:
     def __init__(
         self,
         paths: DataPaths,
-        client: HttpClient | None = None,
+        http_client: HttpClient | None = None,
         *,
         manifest_url: str = VERSION_MANIFEST_URL,
         retry_policy: RetryPolicy = DEFAULT_RETRY_POLICY,
     ) -> None:
         self._paths = paths
-        self._client = client
+        self._client = http_client
         self._manifest_url = manifest_url
         self._retry_policy = retry_policy
         self._manifest: VersionManifest | None = None

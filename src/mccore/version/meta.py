@@ -102,7 +102,7 @@ class VersionMeta:
     assets_id: str | None = None
     asset_index: AssetIndexRef | None = None
     java_runtime: JavaRuntimeRef | None = None
-    client: RemoteFile | None = None
+    client_jar: RemoteFile | None = None
     libraries: tuple[Library, ...] = ()
     minecraft_arguments: str | None = None
     game_arguments: tuple[ArgumentSpec, ...] = ()
@@ -137,7 +137,7 @@ def parse_version_meta(version_dict: dict[str, JsonValue]) -> VersionMeta:
         assets_id=as_string(version_dict.get("assets")),
         asset_index=_parse_asset_index(as_mapping(version_dict.get("assetIndex"))),
         java_runtime=_parse_java_runtime(as_mapping(version_dict.get("javaVersion"))),
-        client=_parse_remote_file(as_mapping(downloads.get("client"))),
+        client_jar=_parse_remote_file(as_mapping(downloads.get("client"))),
         libraries=_parse_libraries(as_list(version_dict.get("libraries"))),
         minecraft_arguments=as_string(version_dict.get("minecraftArguments")),
         game_arguments=_parse_arguments(arguments.get("game")),

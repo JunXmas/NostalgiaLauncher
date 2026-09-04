@@ -95,9 +95,9 @@ def test_asset_index_keeps_only_what_the_server_declared() -> None:
 
 def test_client_jar_keeps_only_what_the_server_declared() -> None:
     version_meta = parsed("1.20.1")
-    assert version_meta.client is not None
-    assert version_meta.client.url.startswith("https://")
-    assert version_meta.client.sha1 and version_meta.client.size
+    assert version_meta.client_jar is not None
+    assert version_meta.client_jar.url.startswith("https://")
+    assert version_meta.client_jar.sha1 and version_meta.client_jar.size
 
 
 def test_data_paths_is_the_only_place_that_knows_the_layout(tmp_path: Path) -> None:
@@ -106,12 +106,12 @@ def test_data_paths_is_the_only_place_that_knows_the_layout(tmp_path: Path) -> N
     version_meta = parsed("1.20.1")
     paths = DataPaths.for_root(tmp_path)
     assert version_meta.asset_index is not None
-    assert version_meta.client is not None
+    assert version_meta.client_jar is not None
 
     index_task = version_meta.asset_index.remote.to_task(
         paths.asset_index_json(version_meta.asset_index.asset_index_id)
     )
-    jar_task = version_meta.client.to_task(paths.version_jar(version_meta.jar_owner_id))
+    jar_task = version_meta.client_jar.to_task(paths.version_jar(version_meta.jar_owner_id))
     assert index_task.destination == paths.assets_dir / "indexes" / "5.json"
     assert jar_task.destination == paths.versions_dir / "1.20.1" / "1.20.1.jar"
 

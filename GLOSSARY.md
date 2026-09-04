@@ -99,7 +99,7 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Classpath dạng danh sách | `classpath` | `list[Path]` | `cp` |
 | Classpath đã nối thành chuỗi | `classpath_arg` | `str` | dùng lại tên `classpath` cho cả hai nghĩa |
 | Mã asset index (`"5"`, `"legacy"`) | `asset_index_id` | `str` | `index`, `assets` |
-| Asset index đã phân tích | `asset_index` : `AssetIndex` | dataclass | `idx`, `index_json` |
+| **Nội dung** chỉ mục asset đã phân tích | `asset_index` : `AssetIndex` | dataclass | `idx`, `index_json`, `asset_index_ref` |
 | Một object asset | `asset_object` : `AssetObject` | dataclass | `obj`, `asset` |
 | Tài khoản lưu trên đĩa | `account` : `Account` | dataclass | `acc`, `user` |
 | Khoá định danh tài khoản | `account_id` | `str` | `label`, `key` |
@@ -117,18 +117,33 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
 | Yêu cầu dừng | `cancel_token` : `CancelToken` | | `cancel`, `token`, closure `should_cancel` |
 | Tiến trình game đang chạy | `game_process` : `GameProcess` | | `proc`, `p`, `process` trần |
+| Nền tảng đang chạy (hoặc giả lập để kiểm) | `platform` : `Platform` | dataclass | `os_info` |
+| Một mốc tiến độ | `progress` : `Progress` | dataclass | `pct`, `percent` |
+| Một luật `rules` đã phân tích | `rule` / `rules` : `Rule` | dataclass | `cond` |
+| Một nhóm tham số kèm điều kiện | `argument_spec` : `ArgumentSpec` | dataclass | `arg` |
+| **Trỏ tới** chỉ mục asset (url + sha1, chưa có nội dung) | `asset_index_ref` : `AssetIndexRef` | dataclass | `asset_index` (đó là nội dung, không phải con trỏ) |
+| Bản Java mà phiên bản chỉ định | `java_runtime` : `JavaRuntimeRef` | dataclass | `jre_ref` |
+| Kết quả lập kế hoạch thư viện | `library_plan` : `LibraryPlan` | dataclass | |
+| Một jar cần giải nén | `native_archive` : `NativeArchive` | dataclass | |
+| Danh mục phiên bản của Mojang | `manifest` : `VersionManifest` | dataclass | `catalog` |
+| Chính sách thử lại | `retry_policy` : `RetryPolicy` | dataclass | `retries` |
+| Máy khách HTTP | `http_client` : `HttpClient` | | `client` (đụng nghĩa với `client.jar`), `session`, `conn` |
+| File trên máy chủ, chưa biết lưu ở đâu | `remote` : `RemoteFile` | dataclass | `file`, `download` |
+| `RemoteFile` của `client.jar` | `client_jar` | | `client` trần |
 
-## 3. Năm cặp dễ lẫn nhất
+## 3. Sáu cặp dễ lẫn nhất
 
 1. **`data_dir` ≠ `game_dir`.** `data_dir` là kho chung do launcher sở hữu. `game_dir` là nơi
    game chạy, do người chơi sở hữu. Kho cũ gọi cả hai là `game_dir` rồi vá bằng `store_root`.
 2. **`Artifact` ≠ `DownloadTask`.** `Artifact` là thứ Mojang *khai báo* (đường dẫn tương
    đối); `DownloadTask` là thứ ta *sẽ làm* (đường dẫn đích tuyệt đối, đã qua `DataPaths`).
    Hai kiểu có trường gần giống nhau nên rất dễ nhập một — đừng.
-3. **`version_id` ≠ `version_meta` ≠ file `version.json`.**
-4. **`account` ≠ `player_profile`.** `account` lưu lâu dài và chứa bí mật; `player_profile`
+3. **`http_client` ≠ `client_jar`.** Từ `client` từng mang cả hai nghĩa trong kho này —
+   máy khách HTTP, và file jar của game. Đã tách hẳn; `client` trần bị cấm.
+4. **`version_id` ≠ `version_meta` ≠ file `version.json`.**
+5. **`account` ≠ `player_profile`.** `account` lưu lâu dài và chứa bí mật; `player_profile`
    dẫn xuất, chỉ để dựng lệnh chạy, **không bao giờ ghi xuống đĩa**.
-5. **`asset_index_id` ≠ `asset_index` ≠ `assets_dir`.**
+6. **`asset_index_id` ≠ `asset_index` ≠ `assets_dir`.**
 
 ## 4. Test gác
 
@@ -152,6 +167,10 @@ mặc định.
 | `test_files_stay_short` | File vượt 200 dòng **code** | **cả kho** |
 | `test_only_the_net_package_touches_http_and_tls` | Module ngoài `net/` import `http.client` hoặc `ssl` | `src/` |
 | `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
+
+Cột "CẤM dùng" chỉ liệt kê **bí danh gây nhầm cho đúng khái niệm đó**, không liệt kê từ
+tiếng Anh chung chung. Cấm `archive` hay `state` sẽ chặn cả những chỗ dùng hợp lệ ở nghĩa
+khác — và một luật chặn nhầm sẽ bị nới ra, rồi mất hiệu lực cả bảng.
 
 **Danh sách tên cấm đọc THẲNG từ bảng §2 ở trên, không chép tay.** Chép tay thì tài liệu và
 test trôi khỏi nhau — và đã trôi thật: có lúc GLOSSARY cấm 70 tên trong khi test chỉ gác 32,
