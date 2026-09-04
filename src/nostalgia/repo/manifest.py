@@ -13,7 +13,8 @@ from dataclasses import dataclass
 from nostalgia.errors import DataFileError
 from nostalgia.model.download import RemoteFile
 from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
-from nostalgia.net.http import HttpClient, fetch_json
+from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import fetch_json
 from nostalgia.repo.endpoints import VERSION_MANIFEST_URL
 
 RELEASE = "release"

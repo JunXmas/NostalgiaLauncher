@@ -31,7 +31,8 @@ from nostalgia.java.unpack import (
     decode_compressed,
 )
 from nostalgia.net.download import DEFAULT_WORKERS, download_all
-from nostalgia.net.http import HttpClient, fetch_json
+from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import fetch_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.repo.endpoints import JAVA_RUNTIME_MANIFEST_URL
