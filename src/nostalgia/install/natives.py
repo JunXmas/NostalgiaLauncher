@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import stat
 import zipfile
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -41,6 +42,23 @@ class ExtractionReport:
     extracted: tuple[Path, ...]
     skipped_unchanged: int
     total_bytes: int
+
+
+def iter_native_targets(archives: tuple[NativeArchive, ...]) -> Iterator[tuple[str, int]]:
+    """Những file mà việc giải nén SẼ tạo ra: (tên đã làm phẳng, kích thước).
+
+    Có mặt để `doctor` biết phải tìm gì mà không phải chép lại luật lọc và luật làm phẳng.
+    Chép lại là cách chắc chắn để một ngày nào đó hai chỗ hiểu khác nhau và `doctor` báo
+    thiếu một file vốn không bao giờ được tạo ra.
+    """
+    for archive in archives:
+        with zipfile.ZipFile(archive.archive_path) as opened:
+            for member in opened.infolist():
+                if not _should_extract(member, (*ALWAYS_EXCLUDED, *archive.excludes)):
+                    continue
+                name = Path(member.filename).name
+                if name:
+                    yield name, member.file_size
 
 
 def extract_natives(

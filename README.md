@@ -31,7 +31,7 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 | 10 | Tài khoản offline | ✅ |
 | 11 | Dựng lệnh java | ✅ |
 | 12 | Chạy và dừng tiến trình game | ✅ |
-| 13 | `doctor` — soi mắt xích hỏng | |
+| 13 | `doctor` — soi mắt xích hỏng | ✅ |
 | 14 | Khởi động game thật | |
 
 ## Cây thư mục
@@ -51,6 +51,7 @@ src/nostalgia/
   java/                bản Java của Mojang: chọn, tải bản nén, bung, dựng liên kết
   account/             tài khoản lưu trên đĩa + danh tính rút ra để dựng lệnh
   launch/              dựng lệnh java + chạy/dừng tiến trình game
+  doctor.py            soi bản cài bằng chính kế hoạch của install/
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
