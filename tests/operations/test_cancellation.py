@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from mccore.errors import Cancelled
-from mccore.operations.cancellation import CancelToken
+from nostalgia.errors import Cancelled
+from nostalgia.operations.cancellation import CancelToken
 
 
 def test_starts_not_cancelled() -> None:

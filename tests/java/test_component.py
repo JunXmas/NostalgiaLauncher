@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mccore.java.component import (
+from nostalgia.java.component import (
     DEFAULT_JAVA_COMPONENT,
     resolve_java_binary,
     resolve_java_component,
     resolve_runtime_os_keys,
 )
-from mccore.system.platform_info import Platform
-from mccore.version.meta import JavaRuntimeRef, VersionMeta
+from nostalgia.system.platform_info import Platform
+from nostalgia.version.meta import JavaRuntimeRef, VersionMeta
 
 
 def make_version_meta(java_runtime: JavaRuntimeRef | None) -> VersionMeta:

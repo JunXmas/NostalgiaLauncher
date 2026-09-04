@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from java_fixtures import load_catalog_document, load_layout_document
-from mccore.java.runtime_manifest import (
+from nostalgia.java.runtime_manifest import (
     parse_runtime_catalog,
     parse_runtime_layout,
 )

@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import Cancelled, IntegrityError, NetworkError
-from mccore.net.http import HttpClient, RetryPolicy, retry
-from mccore.operations.cancellation import CancelToken
+from nostalgia.errors import Cancelled, IntegrityError, NetworkError
+from nostalgia.net.http import HttpClient, RetryPolicy, retry
+from nostalgia.operations.cancellation import CancelToken
 
 FAST_RETRY = RetryPolicy(attempts=3, initial_backoff_seconds=0.01, total_deadline_seconds=5.0)
 

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from mccore.system.platform_info import Platform
-from mccore.version.rules import Rule, parse_rules, rules_allow
+from nostalgia.system.platform_info import Platform
+from nostalgia.version.rules import Rule, parse_rules, rules_allow
 
 LINUX = Platform(os_name="linux", os_arch="x64", os_version="6.8.0-generic")
 MACOS = Platform(os_name="osx", os_arch="arm64", os_version="23.5.0")

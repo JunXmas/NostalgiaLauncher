@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from mccore.operations.progress import Progress, ignore_progress
+from nostalgia.operations.progress import Progress, ignore_progress
 
 
 @pytest.mark.parametrize(

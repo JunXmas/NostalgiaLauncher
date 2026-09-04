@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import Cancelled
-from mccore.model.download import Artifact, DownloadTask, RemoteFile
-from mccore.net.download import download_all
-from mccore.net.http import HttpClient, RetryPolicy
-from mccore.operations.cancellation import CancelToken
-from mccore.operations.progress import Progress
+from nostalgia.errors import Cancelled
+from nostalgia.model.download import Artifact, DownloadTask, RemoteFile
+from nostalgia.net.download import download_all
+from nostalgia.net.http import HttpClient, RetryPolicy
+from nostalgia.operations.cancellation import CancelToken
+from nostalgia.operations.progress import Progress
 
 FAST_RETRY = RetryPolicy(attempts=2, initial_backoff_seconds=0.01, total_deadline_seconds=5.0)
 
@@ -160,7 +160,7 @@ def test_remote_file_takes_a_destination_chosen_by_the_caller(tmp_path: Path) ->
 
 
 def test_artifact_refuses_a_relative_path_that_escapes(tmp_path: Path) -> None:
-    from mccore.errors import UnsafePathError
+    from nostalgia.errors import UnsafePathError
 
     artifact = Artifact(remote=RemoteFile(url="https://x/a"), relative_path="../../thoat.jar")
     with pytest.raises(UnsafePathError):

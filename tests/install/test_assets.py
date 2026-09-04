@@ -7,19 +7,19 @@ from pathlib import Path
 import pytest
 
 from asset_fixtures import load_asset_index
-from mccore.errors import Cancelled
-from mccore.install.assets import (
+from nostalgia.errors import Cancelled
+from nostalgia.install.assets import (
     ASSET_OBJECT_BASE_URL,
     RESOURCES_DIRECTORY,
     build_name_tree,
     plan_asset_index_task,
     plan_asset_tasks,
 )
-from mccore.model.asset_index import AssetIndex, parse_asset_index
-from mccore.model.download import RemoteFile
-from mccore.operations.cancellation import CancelToken
-from mccore.storage.paths import DataPaths
-from mccore.version.meta import AssetIndexRef
+from nostalgia.model.asset_index import AssetIndex, parse_asset_index
+from nostalgia.model.download import RemoteFile
+from nostalgia.operations.cancellation import CancelToken
+from nostalgia.storage.paths import DataPaths
+from nostalgia.version.meta import AssetIndexRef
 
 MODERN = "5"
 VIRTUAL = "legacy"

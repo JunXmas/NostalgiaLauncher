@@ -9,12 +9,12 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.errors import UnsafePathError, VersionError
-from mccore.model.json_value import JsonValue
-from mccore.net.http import RetryPolicy
-from mccore.repo.version_repo import VersionRepository, is_version_document
-from mccore.storage.files import atomic_write_json
-from mccore.storage.paths import DataPaths
+from nostalgia.errors import UnsafePathError, VersionError
+from nostalgia.model.json_value import JsonValue
+from nostalgia.net.http import RetryPolicy
+from nostalgia.repo.version_repo import VersionRepository, is_version_document
+from nostalgia.storage.files import atomic_write_json
+from nostalgia.storage.paths import DataPaths
 from version_fixtures import load_fixture
 
 MANIFEST_PATH = "/mc/game/version_manifest_v2.json"

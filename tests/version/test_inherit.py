@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from mccore.errors import VersionError
-from mccore.model.json_value import JsonValue, as_list, as_mapping, as_string
-from mccore.version.inherit import MAX_INHERITANCE_DEPTH, merge_inherited, resolve_inheritance
-from mccore.version.meta import parse_version_meta
+from nostalgia.errors import VersionError
+from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
+from nostalgia.version.inherit import MAX_INHERITANCE_DEPTH, merge_inherited, resolve_inheritance
+from nostalgia.version.meta import parse_version_meta
 from version_fixtures import load_fixture
 
 FABRIC_ID = "fabric-loader-0.19.3-1.21.4"

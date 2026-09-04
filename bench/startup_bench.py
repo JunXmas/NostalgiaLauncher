@@ -21,16 +21,16 @@ REPEAT = 15
 BASELINE = "pass"
 PROBES = {
     "python trần": BASELINE,
-    "import mccore": "import mccore",
-    "import mccore.cli.main": "import mccore.cli.main",
-    "mccore --version (trọn vẹn)": "from mccore.cli.main import main; main(['--version'])",
-    "+ http.client": "import mccore.cli.main, http.client",
-    "+ logging": "import mccore.cli.main, logging",
-    "+ zipfile": "import mccore.cli.main, zipfile",
-    "+ concurrent.futures": "import mccore.cli.main, concurrent.futures",
-    "+ subprocess": "import mccore.cli.main, subprocess",
+    "import nostalgia": "import nostalgia",
+    "import nostalgia.cli.main": "import nostalgia.cli.main",
+    "nostalgia --version (trọn vẹn)": "from nostalgia.cli.main import main; main(['--version'])",
+    "+ http.client": "import nostalgia.cli.main, http.client",
+    "+ logging": "import nostalgia.cli.main, logging",
+    "+ zipfile": "import nostalgia.cli.main, zipfile",
+    "+ concurrent.futures": "import nostalgia.cli.main, concurrent.futures",
+    "+ subprocess": "import nostalgia.cli.main, subprocess",
     "+ tất cả thứ nặng": (
-        "import mccore.cli.main, http.client, logging, zipfile, concurrent.futures, subprocess"
+        "import nostalgia.cli.main, http.client, logging, zipfile, concurrent.futures, subprocess"
     ),
 }
 

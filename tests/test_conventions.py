@@ -131,14 +131,14 @@ def test_only_the_net_package_touches_http_and_tls() -> None:
 
 
 def test_fast_path_does_not_load_heavy_modules() -> None:
-    """`mccore --version` không được kéo theo module nặng.
+    """`nostalgia --version` không được kéo theo module nặng.
 
     Ngân sách khởi động phụ thuộc hoàn toàn vào điều này, và thủ phạm đắt nhất là
     `http.client` chứ không phải thư viện ngoài nào — xem docs/PERFORMANCE.md §3.5.
     """
     code = (
         "import sys, io, contextlib\n"
-        "from mccore.cli.main import main\n"
+        "from nostalgia.cli.main import main\n"
         "with contextlib.redirect_stdout(io.StringIO()):\n"
         "    try: main(['--version'])\n"
         "    except SystemExit: pass\n"

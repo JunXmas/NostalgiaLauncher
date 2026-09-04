@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-import mccore
-from mccore.cli.main import build_parser, main
+import nostalgia
+from nostalgia.cli.main import build_parser, main
 
-PACKAGE_ROOT = Path(mccore.__path__[0])
+PACKAGE_ROOT = Path(nostalgia.__path__[0])
 
 
 def _module_names_on_disk() -> set[str]:
@@ -24,8 +24,8 @@ def _module_names_on_disk() -> set[str]:
         parts = path.relative_to(PACKAGE_ROOT).with_suffix("").parts
         if parts[-1] == "__init__":
             parts = parts[:-1]
-        names.add(".".join(("mccore", *parts)))
-    names.discard("mccore")
+        names.add(".".join(("nostalgia", *parts)))
+    names.discard("nostalgia")
     return names
 
 
@@ -41,12 +41,12 @@ def test_no_module_is_invisible_to_pkgutil() -> None:
     So tập module mà pkgutil thấy với tập file .py thật trên đĩa; lệch nghĩa là có gói con
     quên __init__.py — nó vẫn được đóng gói và vẫn gãy lúc chạy, chỉ là CI không biết.
     """
-    walked = {info.name for info in pkgutil.walk_packages(mccore.__path__, prefix="mccore.")}
+    walked = {info.name for info in pkgutil.walk_packages(nostalgia.__path__, prefix="nostalgia.")}
     assert walked == _module_names_on_disk()
 
 
 def test_version_is_declared() -> None:
-    assert mccore.__version__
+    assert nostalgia.__version__
 
 
 def test_cli_without_arguments_prints_help_and_returns_zero(
@@ -54,7 +54,7 @@ def test_cli_without_arguments_prints_help_and_returns_zero(
 ) -> None:
     assert main([]) == 0
     captured = capsys.readouterr()
-    assert captured.out.startswith("usage: mccore")
+    assert captured.out.startswith("usage: nostalgia")
     assert captured.err == ""
 
 
@@ -64,7 +64,7 @@ def test_cli_version_flag_prints_version_and_exits_zero(
     with pytest.raises(SystemExit) as exit_info:
         build_parser().parse_args(["--version"])
     assert exit_info.value.code == 0
-    assert mccore.__version__ in capsys.readouterr().out
+    assert nostalgia.__version__ in capsys.readouterr().out
 
 
 def test_cli_rejects_unknown_argument() -> None:
@@ -75,7 +75,7 @@ def test_cli_rejects_unknown_argument() -> None:
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     """Chạy CLI qua đúng đường người dùng đi: main() trong một tiến trình thật."""
-    code = f"from mccore.cli.main import main; raise SystemExit(main({list(args)!r}))"
+    code = f"from nostalgia.cli.main import main; raise SystemExit(main({list(args)!r}))"
     return subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
 
 
@@ -95,7 +95,7 @@ def test_installed_console_script_runs() -> None:
     """Chạy đúng đường người dùng đi: entry point trong pyproject, qua một tiến trình thật."""
     result = _run_cli("--version")
     assert result.returncode == 0, result.stderr
-    assert mccore.__version__ in result.stdout
+    assert nostalgia.__version__ in result.stdout
 
 
 def test_cli_stays_light() -> None:
@@ -107,7 +107,7 @@ def test_cli_stays_light() -> None:
     heavy = ("http.client", "ssl", "zipfile", "concurrent.futures", "subprocess", "logging")
     code = (
         "import sys, io, contextlib\n"
-        "from mccore.cli.main import main\n"
+        "from nostalgia.cli.main import main\n"
         "with contextlib.redirect_stdout(io.StringIO()):\n"
         "    try: main(['--version'])\n"
         "    except SystemExit: pass\n"

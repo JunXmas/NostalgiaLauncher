@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from mccore.model.json_value import JsonValue
+from nostalgia.model.json_value import JsonValue
 
 FIXTURE_DIRECTORY = Path(__file__).resolve().parent / "fixture" / "assets"
 

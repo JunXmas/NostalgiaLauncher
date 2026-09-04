@@ -1,8 +1,17 @@
-# mccore
+# Nostalgia Launcher
 
-Lõi launcher Minecraft viết bằng Python. Cài đặt và khởi động game từ dòng lệnh — không giao diện.
+Trình khởi động Minecraft viết bằng Python. Kho này là **phần lõi**: cài đặt và khởi động game
+từ dòng lệnh, không giao diện.
 
-Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ gọi qua façade `mccore.api`.
+Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ gọi qua façade `nostalgia.api`.
+
+Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một thứ:
+
+| Chỗ dùng | Tên |
+|---|---|
+| Sản phẩm | Nostalgia Launcher |
+| Gói Python (`import`) | `nostalgia` |
+| Lệnh trên dòng lệnh | `nostalgia` |
 
 ## Trạng thái
 
@@ -18,7 +27,7 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 | 6 | client.jar + thư viện + classpath | ✅ |
 | 7 | Natives | ✅ |
 | 8 | Assets | ✅ |
-| 9 | Tải JRE của Mojang | |
+| 9 | Tải JRE của Mojang | ✅ |
 | 10 | Tài khoản offline | |
 | 11 | Dựng lệnh java | |
 | 12 | Chạy và dừng tiến trình game | |
@@ -30,7 +39,7 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 Tên folder nói **chức năng**, tên file nói **thứ cụ thể**. Không viết tắt.
 
 ```
-src/mccore/
+src/nostalgia/
   errors.py            từ vựng lỗi — ở gốc vì mọi tầng đều dùng
   storage/             đĩa: paths.py (cái gì ở đâu) + files.py (đọc/ghi an toàn)
   system/              nhận diện máy: platform_info.py
@@ -39,6 +48,7 @@ src/mccore/
   version/             THUẦN: rules, maven, meta, inherit — không mạng, không file
   repo/                kho phiên bản: manifest.py + version_repo.py (đĩa trước, mạng sau)
   install/             client/library/assets lập kế hoạch; natives.py giải nén
+  java/                bản Java của Mojang: chọn, tải bản nén, bung, dựng liên kết
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
@@ -58,7 +68,7 @@ JRE của Mojang theo đúng phiên bản game.
 
 ```bash
 uv sync
-uv run mccore --version
+uv run nostalgia --version
 ```
 
 ## Phát triển

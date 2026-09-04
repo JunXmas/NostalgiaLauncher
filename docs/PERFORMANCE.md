@@ -154,9 +154,9 @@ ghi lại để không ai "hiện đại hoá" sang nó rồi thành tụt hiệ
 | Phép đo | Bội số |
 |---|---:|
 | `python -c pass` | 1,00× |
-| `import mccore` | **1,01×** |
-| `import mccore.cli.main` | 1,41× |
-| **`mccore --version` trọn vẹn** | **1,80×** |
+| `import nostalgia` | **1,01×** |
+| `import nostalgia.cli.main` | 1,41× |
+| **`nostalgia --version` trọn vẹn** | **1,80×** |
 | + `http.client` | **2,89×** |
 | + `zipfile` | 2,12× |
 | + `concurrent.futures` | 2,03× |
@@ -164,7 +164,7 @@ ghi lại để không ai "hiện đại hoá" sang nó rồi thành tụt hiệ
 | + `subprocess` | 1,73× |
 | + tất cả những thứ trên | **3,89×** |
 
-`import mccore` gần như miễn phí (1,01×) — giữ được điều đó là mục tiêu, không phải may mắn.
+`import nostalgia` gần như miễn phí (1,01×) — giữ được điều đó là mục tiêu, không phải may mắn.
 
 **Điều quan trọng hơn:** kẻ đắt nhất là `http.client` (+1,48× so với `cli.main`), **đắt hơn
 cả `logging` + `zipfile` + `concurrent.futures` cộng lại**. Bỏ `requests` không giải quyết
@@ -218,7 +218,7 @@ không chạm tới model nên vẫn giữ được 1,80×; điều đó có tes
 
 | Thao tác | Ngân sách |
 |---|---|
-| `mccore --version` / `--help` (không chạm model, không I/O) | **≤ 2,0× khởi động Python trần** (hiện 1,80×) |
+| `nostalgia --version` / `--help` (không chạm model, không I/O) | **≤ 2,0× khởi động Python trần** (hiện 1,80×) |
 | Lệnh chỉ đọc đĩa (`doctor`, liệt kê bản đã cài) | ≤ 4,0× |
 | Lệnh chạm mạng | không đặt ngân sách khởi động — mạng chi phối hoàn toàn |
 | Xác minh bản cài đầy đủ (theo kích thước) | ≤ 2× số đo `stat` hiện tại, tức ≈ 200 ms |
@@ -251,7 +251,7 @@ Một luồng thì riêng phần asset đã là 3.575 ÷ ~9 ≈ **6,6 phút**.
    Bản đầu của luật này viết là "không module nào ở tầng lõi được import `http.client`" —
    nhưng chính `net/http.py` buộc phải import nó, nên luật đó không đúng theo mặt chữ. Luật
    kiểm được: `http.client` và `ssl` chỉ xuất hiện trong `net/`; và sau khi chạy
-   `mccore --version` thì `sys.modules` không được có `http.client`, `ssl`, `zipfile`,
+   `nostalgia --version` thì `sys.modules` không được có `http.client`, `ssl`, `zipfile`,
    `concurrent.futures`, `subprocess`, `logging`. CLI phải phân giải lệnh con **sau khi**
    parse đối số, không import sẵn mọi lệnh. Cả hai nửa đều có test gác.
 4. **Xác minh mặc định bằng kích thước**, sha1 chỉ khi có cờ hoặc khi file đã lộ ra là hỏng.

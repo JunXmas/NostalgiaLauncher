@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from mccore.errors import Cancelled, IntegrityError
-from mccore.install.library import NativeArchive
-from mccore.install.natives import extract_natives
-from mccore.operations.cancellation import CancelToken
+from nostalgia.errors import Cancelled, IntegrityError
+from nostalgia.install.library import NativeArchive
+from nostalgia.install.natives import extract_natives
+from nostalgia.operations.cancellation import CancelToken
 
 LIBRARY_BYTES = b"\x7fELF" + b"n" * 500
 

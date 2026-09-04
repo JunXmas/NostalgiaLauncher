@@ -159,7 +159,7 @@ nguồn bằng `ast`.
 
 **Phạm vi khác nhau theo từng luật:** luật **đặt tên** và **độ dài file** áp cho **cả kho**
 (một khái niệm phải mang một tên ở mọi nơi, và luật không chừa cả chính file test). Các luật
-còn lại chỉ áp lên `src/mccore/`, vì `bench/` buộc phải in ra màn hình và phải có đường dẫn
+còn lại chỉ áp lên `src/nostalgia/`, vì `bench/` buộc phải in ra màn hình và phải có đường dẫn
 mặc định.
 
 | Test | Chặn điều gì | Phạm vi |
@@ -173,7 +173,7 @@ mặc định.
 | `test_naming_follows_the_glossary` | Tiền tố hàm bị cấm, hoặc tên trong cột "CẤM dùng" của §2 | **cả kho** |
 | `test_files_stay_short` | File vượt 200 dòng **code** | **cả kho** |
 | `test_only_the_net_package_touches_http_and_tls` | Module ngoài `net/` import `http.client` hoặc `ssl` | `src/` |
-| `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
+| `test_fast_path_does_not_load_heavy_modules` | `nostalgia --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
 
 Cột "CẤM dùng" chỉ liệt kê **bí danh gây nhầm cho đúng khái niệm đó**, không liệt kê từ
 tiếng Anh chung chung. Cấm `archive` hay `state` sẽ chặn cả những chỗ dùng hợp lệ ở nghĩa
@@ -204,7 +204,7 @@ Phụ thuộc **chỉ đi xuống hoặc ngang**. Tầng N import được tần
 tầng**, nhưng đồ thị import phải **phi chu trình** — `test_layer_imports` kiểm cả hai.
 
 ```
-src/mccore/
+src/nostalgia/
   errors.py                      L0  từ vựng lỗi — ở gốc vì mọi tầng đều dùng
   storage/                       L0  đĩa
     paths.py                         DataPaths: cái gì nằm ở đâu
@@ -214,7 +214,7 @@ src/mccore/
   operations/                    L0  điều khiển thao tác dài
     progress.py                      báo tiến độ
     cancellation.py                  yêu cầu dừng
-  model/                         L0  dataclass dùng chung: ZERO import của mccore
+  model/                         L0  dataclass dùng chung: ZERO import của nostalgia
     download.py                      Artifact (tương đối) và DownloadTask (tuyệt đối)
     json_value.py                    kiểu cho JSON chưa tin được, kèm hàm thu hẹp kiểu
   net/                           L1  http, download
@@ -272,7 +272,7 @@ Bảy quyết định đằng sau sơ đồ này:
    `net/download`, giải nén, ghi kết quả) thuộc `api` ở L5. Nhờ đó toàn bộ logic cài đặt test
    được offline: kiểm *danh sách task sinh ra* thay vì phải tải thật.
 4. **`api` là một tầng riêng, không phải một file trong `cli/`.** Giao diện tương lai chỉ
-   được import `mccore.api`, `mccore.errors`, `mccore.operations` và các dataclass ở `model`.
+   được import `nostalgia.api`, `nostalgia.errors`, `nostalgia.operations` và các dataclass ở `model`.
    Nếu để `cli/` gọi thẳng L4 thì khi dựng GUI sẽ phát hiện toàn bộ logic điều phối nằm
    trong `cli/` và phải viết lại.
 5. **`config` chỉ `cli/` được đọc**, rồi truyền xuống dưới dạng dataclass — giống hệt cách

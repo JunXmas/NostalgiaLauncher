@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
-from mccore.model.download import DownloadTask
-from mccore.net.download import download_one, is_already_correct
-from mccore.net.http import HttpClient, RetryPolicy
+from nostalgia.model.download import DownloadTask
+from nostalgia.net.download import download_one, is_already_correct
+from nostalgia.net.http import HttpClient, RetryPolicy
 
 FAST_RETRY = RetryPolicy(attempts=3, initial_backoff_seconds=0.01, total_deadline_seconds=5.0)
 PAYLOAD = b"noi dung that"
