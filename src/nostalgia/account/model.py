@@ -29,13 +29,23 @@ class Account:
     player_uuid: str
     account_kind: str
     access_token: str = ""
+    # Chỉ tài khoản Microsoft mới có. `refresh_token` là thứ giữ cho lần chơi sau khỏi phải
+    # nhập lại mã; `expires_at` là mốc epoch mà `access_token` hết hiệu lực (0 = không biết).
+    refresh_token: str = ""
+    expires_at: float = 0.0
 
     def __repr__(self) -> str:
-        """Che vé đăng nhập. `repr` hay rơi vào log và vào thông báo lỗi."""
-        masked = "***" if self.access_token else ""
+        """Che CẢ HAI vé. `repr` hay rơi vào log và vào thông báo lỗi.
+
+        Vé làm mới còn nguy hiểm hơn vé thường: nó sống hàng tháng và đổi được vé mới bất cứ
+        lúc nào, nên lộ nó là mất tài khoản chứ không chỉ mất một phiên.
+        """
         return (
             f"Account(player_name={self.player_name!r}, player_uuid={self.player_uuid!r}, "
-            f"account_kind={self.account_kind!r}, access_token={masked!r})"
+            f"account_kind={self.account_kind!r}, "
+            f"access_token={'***' if self.access_token else ''!r}, "
+            f"refresh_token={'***' if self.refresh_token else ''!r}, "
+            f"expires_at={self.expires_at!r})"
         )
 
 

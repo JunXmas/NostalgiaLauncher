@@ -266,6 +266,7 @@ src/nostalgia/
     model.py                         Account (trên đĩa) ≠ PlayerProfile (để dựng lệnh)
     offline.py                       UUID v3 của "OfflinePlayer:<tên>" — khớp máy chủ từng bit
     store.py                         một file JSON 0600, ghi nguyên tử, chịu được bản ghi hỏng
+    microsoft.py                     cầu nối auth/ và kho: dựng, xét hạn, làm mới
   launch/                        L4  dựng lệnh và chạy game
     variables.py                     bảng 18 biến ${...} Mojang chờ
     tuning.py                        chỉ cờ bộ nhớ — cờ GC chép trên diễn đàn là mê tín

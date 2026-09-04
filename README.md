@@ -51,7 +51,7 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 |---|---|:--:|
 | 15 | `HttpClient` gửi được POST, đọc được thân phản hồi lỗi | ✅ |
 | 16 | Bốn chặng đăng nhập: device code → Xbox Live → XSTS → Minecraft | ✅ |
-| 17 | Lưu vé làm mới, tự làm mới khi hết hạn | |
+| 17 | Lưu vé làm mới, tự làm mới khi hết hạn | ✅ |
 | 18 | `account add-microsoft` và `play` với tài khoản thật | |
 
 > **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
