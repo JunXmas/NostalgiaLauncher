@@ -197,13 +197,16 @@ src/mccore/
     maven.py                         toạ độ và đường dẫn trong libraries/
     meta.py                          phân tích JSON phiên bản của mọi đời
     inherit.py                       trộn inheritsFrom, chặn vòng tròn
-    arguments.py, classpath.py       (bước 6 và 11)
+    classpath.py                     lọc rules, bỏ natives, gộp trùng giữ bản đầu
+    arguments.py                     (bước 11)
   java/component.py              L2  ánh xạ thuần version_meta -> java_component
   repo/                          L3  kho phiên bản
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
     version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
-  install/                       L3  client, library, natives, assets, plan
+  install/                       L3  CHỈ lập kế hoạch, không tự tải
+    client.py, library.py            (bước 6)
+    natives.py, assets.py, plan.py   (bước 7 và 8)
   java/                          L3  mojang_jre, detect
   account/                       L4  offline, profile, store
   launch/                        L4  command, tuning, game_process, runner

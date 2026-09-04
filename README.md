@@ -15,7 +15,7 @@ Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ g�
 | 3 | Bộ tải file có xác minh sha1 | ✅ |
 | 4 | Mô hình phiên bản (rules, kế thừa) — thuần | ✅ |
 | 5 | Kho phiên bản (manifest, đọc đĩa trước) | ✅ |
-| 6 | client.jar + thư viện + classpath | |
+| 6 | client.jar + thư viện + classpath | ✅ |
 | 7 | Natives | |
 | 8 | Assets | |
 | 9 | Tải JRE của Mojang | |
@@ -38,6 +38,7 @@ src/mccore/
   model/               dataclass dùng chung: download.py, json_value.py
   version/             THUẦN: rules, maven, meta, inherit — không mạng, không file
   repo/                kho phiên bản: manifest.py + version_repo.py (đĩa trước, mạng sau)
+  install/             CHỈ lập kế hoạch tải: client.py + library.py, không tự tải
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
