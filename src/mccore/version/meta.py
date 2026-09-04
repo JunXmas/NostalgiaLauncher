@@ -50,8 +50,22 @@ class Library:
 
     @property
     def is_native_bundle(self) -> bool:
-        """Thư viện chỉ chứa natives (kiểu cũ): không vào classpath, chỉ để giải nén."""
+        """Thư viện natives kiểu CŨ (≤1.18): khai `natives: {linux: ...}` + `classifiers`."""
         return bool(self.natives_classifier_by_os)
+
+    @property
+    def is_natives_jar(self) -> bool:
+        """Thư viện natives kiểu MỚI (≥1.19): một thư viện riêng, phân biệt bằng classifier.
+
+        Cả hai kiểu đều chỉ chứa `.so`/`.dll`/`.dylib` để giải nén — đưa chúng vào classpath
+        là vô nghĩa, và với kiểu cũ thì còn sai vì mỗi hệ điều hành một file khác nhau.
+        """
+        classifier = self.coordinate.classifier
+        return classifier is not None and classifier.startswith("natives-")
+
+    @property
+    def is_classpath_entry(self) -> bool:
+        return not self.is_native_bundle and not self.is_natives_jar
 
 
 @dataclass(frozen=True, slots=True)
