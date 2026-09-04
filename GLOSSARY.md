@@ -120,6 +120,10 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Manifest chi tiết một bản Java (391 mục) | `layout` : `RuntimeLayout` | dataclass | `manifest` cho khái niệm này |
 | Một file trong bản Java | `runtime_file` : `RuntimeFile` | dataclass | `jre_file` |
 | Thư mục gốc của một bản Java đã bung | `runtime_root` | `Path` | `jre_dir`, `java_home` |
+| Lệnh khởi động đã dựng xong | `command` : `LaunchCommand` | dataclass | `cmd` |
+| Lựa chọn cho một lần khởi động | `options` : `LaunchOptions` | dataclass | `opts` |
+| Cờ bộ nhớ máy ảo Java | `tuning` : `JvmTuning` | dataclass | `memory`, `jvm_opts` |
+| Bảng thay `${...}` | `variables` | `dict[str, str]` | `vars`, `subs` |
 | Bản Java đã cài xong (kết quả, có `java_binary`) | `installed_runtime` : `InstalledRuntime` | dataclass | `java_runtime` (đó là KHAI BÁO trong version JSON, không phải kết quả) |
 | Báo tiến độ | `on_progress: Callable[[Progress], None]` | | ba đối số rời |
 | Yêu cầu dừng | `cancel_token` : `CancelToken` | | `cancel`, `token`, closure `should_cancel` |
@@ -245,7 +249,12 @@ src/nostalgia/
     model.py                         Account (trên đĩa) ≠ PlayerProfile (để dựng lệnh)
     offline.py                       UUID v3 của "OfflinePlayer:<tên>" — khớp máy chủ từng bit
     store.py                         một file JSON 0600, ghi nguyên tử, chịu được bản ghi hỏng
-  launch/                        L4  command, tuning, game_process, runner
+  launch/                        L4  dựng lệnh và chạy game
+    variables.py                     bảng 18 biến ${...} Mojang chờ
+    tuning.py                        chỉ cờ bộ nhớ — cờ GC chép trên diễn đàn là mê tín
+    command.py                       dựng lệnh; chặn lệnh còn biến chưa thay
+    game_process.py                  (bước 12)
+    runner.py                        (bước 14)
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
   cli/                           L6  tầng DUY NHẤT được print()
