@@ -9,7 +9,7 @@ from mccore.version.maven import MavenCoordinate
 
 def test_parses_three_parts() -> None:
     coordinate = MavenCoordinate.parse("com.google.guava:guava:32.1.2-jre")
-    assert (coordinate.group, coordinate.artifact, coordinate.version) == (
+    assert (coordinate.group, coordinate.artifact, coordinate.artifact_version) == (
         "com.google.guava",
         "guava",
         "32.1.2-jre",

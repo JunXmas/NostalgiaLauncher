@@ -41,8 +41,8 @@ def serve_version(
     }
 
 
-def serve_manifest(state: ServerState, entries: list[dict[str, JsonValue]]) -> None:
-    versions: list[JsonValue] = list(entries)
+def serve_manifest(state: ServerState, manifest_entries: list[dict[str, JsonValue]]) -> None:
+    versions: list[JsonValue] = list(manifest_entries)
     document: JsonValue = {"latest": {"release": "1.21.4"}, "versions": versions}
     state.add(MANIFEST_PATH, json.dumps(document).encode("utf-8"))
 
@@ -75,9 +75,9 @@ def test_missing_version_names_the_exact_path(tmp_path: Path) -> None:
 def test_loading_works_fully_offline(tmp_path: Path) -> None:
     paths = DataPaths.for_root(tmp_path)
     write_version(paths, "1.20.1")
-    meta = offline_repository(tmp_path).load_version_meta("1.20.1")
-    assert meta.version_id == "1.20.1"
-    assert meta.java_runtime is not None
+    version_meta = offline_repository(tmp_path).load_version_meta("1.20.1")
+    assert version_meta.version_id == "1.20.1"
+    assert version_meta.java_runtime is not None
 
 
 def test_offline_inheritance_needs_every_ancestor_on_disk(tmp_path: Path) -> None:

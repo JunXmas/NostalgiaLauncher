@@ -38,9 +38,9 @@ class DataPaths:
     config_dir: Path
 
     @classmethod
-    def for_root(cls, root: Path) -> DataPaths:
+    def for_root(cls, root_dir: Path) -> DataPaths:
         """Đặt cả hai gốc dưới một thư mục — dùng cho test và cho chế độ chạy di động."""
-        return cls(data_dir=root / "data", config_dir=root / "config")
+        return cls(data_dir=root_dir / "data", config_dir=root_dir / "config")
 
     @classmethod
     def from_env(cls, platform_name: str, environ: Mapping[str, str] | None = None) -> DataPaths:

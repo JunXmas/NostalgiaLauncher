@@ -44,9 +44,9 @@ class Artifact:
     remote: RemoteFile
     relative_path: str
 
-    def to_task(self, root: Path) -> DownloadTask:
-        """Phân giải thành việc tải cụ thể dưới một thư mục gốc."""
-        return self.remote.to_task(resolve_within(root, self.relative_path))
+    def to_task(self, parent_dir: Path) -> DownloadTask:
+        """Phân giải thành việc tải cụ thể dưới một thư mục cha."""
+        return self.remote.to_task(resolve_within(parent_dir, self.relative_path))
 
 
 @dataclass(frozen=True, slots=True)

@@ -22,10 +22,10 @@ from pathlib import Path
 from asset_index import (
     DEFAULT_ASSETS_DIR,
     DEFAULT_INDEX_ID,
-    AssetEntry,
+    AssetObject,
     in_band,
     index_path_for,
-    load_entries,
+    load_objects,
     total_bytes,
 )
 
@@ -34,14 +34,14 @@ TLS = ssl.create_default_context()
 WORKER_COUNTS = (1, 4, 8, 16, 24, 32, 48)
 
 
-def take_sample(entries: list[AssetEntry], band: str, count: int, seed: int) -> list[AssetEntry]:
+def take_sample(objects: list[AssetObject], band: str, count: int, seed: int) -> list[AssetObject]:
     """Lấy mẫu ngẫu nhiên nhưng XÁC ĐỊNH trong một dải, để các lượt đo so được với nhau."""
-    chosen = in_band(entries, band)
+    chosen = in_band(objects, band)
     random.Random(seed).shuffle(chosen)
     return chosen[:count]
 
 
-def measure(sample: list[AssetEntry], workers: int, *, reuse: bool) -> float:
+def measure(sample: list[AssetObject], workers: int, *, reuse: bool) -> float:
     """Tải cả mẫu, trả về số giây. `reuse=False` mở kết nối mới cho từng file."""
     local = threading.local()
     opened: list[http.client.HTTPSConnection] = []
@@ -53,8 +53,8 @@ def measure(sample: list[AssetEntry], workers: int, *, reuse: bool) -> float:
             opened.append(connection)
         return connection
 
-    def fetch(entry: AssetEntry) -> None:
-        path = f"/{entry.object_path.as_posix()}"
+    def fetch(asset_object: AssetObject) -> None:
+        path = f"/{asset_object.object_path.as_posix()}"
         if not reuse:
             connection = connect()
             try:
@@ -85,12 +85,12 @@ def measure(sample: list[AssetEntry], workers: int, *, reuse: bool) -> float:
     return elapsed
 
 
-def median_seconds(sample: list[AssetEntry], workers: int, *, reuse: bool, runs: int) -> float:
+def median_seconds(sample: list[AssetObject], workers: int, *, reuse: bool, runs: int) -> float:
     """Trung vị chứ không phải trung bình: một lượt mạng tậm tịt không được kéo lệch số đo."""
     return statistics.median(measure(sample, workers, reuse=reuse) for _ in range(runs))
 
 
-def warm_up(sample: list[AssetEntry]) -> None:
+def warm_up(sample: list[AssetObject]) -> None:
     """Tải một lượt không tính giờ.
 
     CDN có cache biên: cấu hình chạy ĐẦU TIÊN sẽ chịu toàn bộ cache miss và trông chậm hơn
@@ -99,14 +99,14 @@ def warm_up(sample: list[AssetEntry]) -> None:
     measure(sample, 16, reuse=True)
 
 
-def sweep_workers(sample: list[AssetEntry], runs: int) -> dict[int, float]:
+def sweep_workers(sample: list[AssetObject], runs: int) -> dict[int, float]:
     """Quét số luồng theo thứ tự NGẪU NHIÊN, để thứ tự chạy không thiên vị cấu hình nào."""
     order = list(WORKER_COUNTS)
     random.Random().shuffle(order)
     return {workers: median_seconds(sample, workers, reuse=True, runs=runs) for workers in order}
 
 
-def report_sweep(sample: list[AssetEntry], runs: int) -> None:
+def report_sweep(sample: list[AssetObject], runs: int) -> None:
     print(f"{'độ song song':<16} {'giây':>7} {'file/giây':>11}")
     results = sweep_workers(sample, runs)
     for workers in sorted(results):
@@ -114,7 +114,7 @@ def report_sweep(sample: list[AssetEntry], runs: int) -> None:
         print(f"{workers:>3} luồng      {elapsed:7.2f} {len(sample) / elapsed:11.1f}")
 
 
-def report_reuse(sample: list[AssetEntry], runs: int) -> None:
+def report_reuse(sample: list[AssetObject], runs: int) -> None:
     kept = median_seconds(sample, 16, reuse=True, runs=runs)
     fresh = median_seconds(sample, 16, reuse=False, runs=runs)
     print("\ntái dùng kết nối so với mở mới mỗi file, cùng 16 luồng:")
@@ -123,8 +123,8 @@ def report_reuse(sample: list[AssetEntry], runs: int) -> None:
     print(f"  => giữ kết nối nhanh hơn {fresh / kept:.1f}x")
 
 
-def report_band(entries: list[AssetEntry], band: str, count: int, seed: int, runs: int) -> None:
-    sample = take_sample(entries, band, count, seed)
+def report_band(objects: list[AssetObject], band: str, count: int, seed: int, runs: int) -> None:
+    sample = take_sample(objects, band, count, seed)
     megabytes = total_bytes(sample) / 1e6
     print(f"\nmẫu {band}: {len(sample)} file, {megabytes:.1f} MB")
     warm_up(sample)
@@ -152,16 +152,16 @@ def main() -> int:
         print("--count và --runs phải >= 1")
         return 2
 
-    entries, _raw_count = load_entries(index_path)
-    small = take_sample(entries, "nhỏ (<16 KB)", args.count, seed=7)
+    objects, _raw_count = load_objects(index_path)
+    small = take_sample(objects, "nhỏ (<16 KB)", args.count, seed=7)
     print(f"mẫu file nhỏ: {len(small)} file, {total_bytes(small) / 1024:.0f} KB")
     print(f"hâm nóng CDN một lượt, rồi trung vị {args.runs} lượt mỗi cấu hình\n")
 
     warm_up(small)
     report_sweep(small, args.runs)
     report_reuse(small, args.runs)
-    report_band(entries, "vừa (16-64 KB)", count=60, seed=11, runs=max(1, args.runs - 1))
-    report_band(entries, "lớn (>=64 KB)", count=24, seed=13, runs=max(1, args.runs - 1))
+    report_band(objects, "vừa (16-64 KB)", count=60, seed=11, runs=max(1, args.runs - 1))
+    report_band(objects, "lớn (>=64 KB)", count=24, seed=13, runs=max(1, args.runs - 1))
     return 0
 
 

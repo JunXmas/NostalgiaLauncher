@@ -61,14 +61,14 @@ def test_from_env_reads_the_mapping_it_is_given_not_the_process() -> None:
 
 def test_derived_paths(tmp_path: Path) -> None:
     paths = DataPaths.for_root(tmp_path)
-    data = tmp_path / "data"
-    assert paths.versions_dir == data / "versions"
-    assert paths.libraries_dir == data / "libraries"
-    assert paths.runtime_dir == data / "runtime"
-    assert paths.asset_indexes_dir == data / "assets" / "indexes"
-    assert paths.version_json("1.20.1") == data / "versions" / "1.20.1" / "1.20.1.json"
-    assert paths.version_jar("1.20.1") == data / "versions" / "1.20.1" / "1.20.1.jar"
-    assert paths.natives_dir("1.20.1") == data / "versions" / "1.20.1" / "natives"
+    data_root = tmp_path / "data"
+    assert paths.versions_dir == data_root / "versions"
+    assert paths.libraries_dir == data_root / "libraries"
+    assert paths.runtime_dir == data_root / "runtime"
+    assert paths.asset_indexes_dir == data_root / "assets" / "indexes"
+    assert paths.version_json("1.20.1") == data_root / "versions" / "1.20.1" / "1.20.1.json"
+    assert paths.version_jar("1.20.1") == data_root / "versions" / "1.20.1" / "1.20.1.jar"
+    assert paths.natives_dir("1.20.1") == data_root / "versions" / "1.20.1" / "natives"
 
 
 def test_asset_object_uses_first_two_hash_characters(tmp_path: Path) -> None:

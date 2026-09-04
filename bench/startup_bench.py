@@ -43,17 +43,18 @@ def time_process(code: str) -> float:
 
 
 def main() -> int:
-    samples: dict[str, list[float]] = {label: [] for label in PROBES}
+    samples: dict[str, list[float]] = {probe_name: [] for probe_name in PROBES}
     for _ in range(REPEAT):  # xen kẽ: một lượt chạy hết mọi probe rồi mới lặp
-        for label, code in PROBES.items():
-            samples[label].append(time_process(code))
+        for probe_name, code in PROBES.items():
+            samples[probe_name].append(time_process(code))
 
-    medians = {label: statistics.median(values) for label, values in samples.items()}
+    medians = {probe_name: statistics.median(values) for probe_name, values in samples.items()}
     baseline = medians["python trần"]
     print(f"tải hệ thống lúc đo: {os.getloadavg()[0]:.2f}")
     print(f"{'phép đo':<30} {'trung vị':>10} {'bội số nền':>12}")
-    for label in PROBES:
-        print(f"{label:<30} {medians[label]:8.1f} ms {medians[label] / baseline:11.2f}x")
+    for probe_name in PROBES:
+        median = medians[probe_name]
+        print(f"{probe_name:<30} {median:8.1f} ms {median / baseline:11.2f}x")
     print("\nsố tuyệt đối phụ thuộc xung nhịp CPU; chỉ bội số mới so sánh được giữa các lần đo")
     return 0
 

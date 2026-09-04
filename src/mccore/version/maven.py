@@ -17,23 +17,30 @@ class MavenCoordinate:
 
     group: str
     artifact: str
-    version: str
+    artifact_version: str
     classifier: str | None = None
 
     @classmethod
-    def parse(cls, name: str) -> MavenCoordinate:
+    def parse(cls, coordinate_text: str) -> MavenCoordinate:
         """Phân tích `org.lwjgl:lwjgl-glfw:3.3.1:natives-linux`.
 
         Forge dùng thêm hậu tố kiểu `@zip` để đổi phần mở rộng; vanilla và Fabric thì không,
         nên chưa xử lý — sẽ thêm ở bước làm Forge, kèm test riêng.
         """
-        parts = name.split(":")
+        parts = coordinate_text.split(":")
         if len(parts) < 3:
-            message = f"toạ độ maven phải có ít nhất group:artifact:version, nhận {name!r}"
+            message = (
+                f"toạ độ maven phải có ít nhất group:artifact:version, nhận {coordinate_text!r}"
+            )
             raise ValueError(message)
-        group, artifact, version = parts[0], parts[1], parts[2]
+        group, artifact, artifact_version = parts[0], parts[1], parts[2]
         classifier = parts[3] if len(parts) > 3 and parts[3] else None
-        return cls(group=group, artifact=artifact, version=version, classifier=classifier)
+        return cls(
+            group=group,
+            artifact=artifact,
+            artifact_version=artifact_version,
+            classifier=classifier,
+        )
 
     @property
     def relative_path(self) -> str:
@@ -43,8 +50,8 @@ class MavenCoordinate:
         dẫn của hệ thống là việc của `resolve_within`.
         """
         suffix = f"-{self.classifier}" if self.classifier else ""
-        file_name = f"{self.artifact}-{self.version}{suffix}.{JAR_EXTENSION}"
-        return f"{self.group.replace('.', '/')}/{self.artifact}/{self.version}/{file_name}"
+        file_name = f"{self.artifact}-{self.artifact_version}{suffix}.{JAR_EXTENSION}"
+        return f"{self.group.replace('.', '/')}/{self.artifact}/{self.artifact_version}/{file_name}"
 
     @property
     def dedupe_key(self) -> str:
@@ -59,4 +66,4 @@ class MavenCoordinate:
 
     def __str__(self) -> str:
         suffix = f":{self.classifier}" if self.classifier else ""
-        return f"{self.group}:{self.artifact}:{self.version}{suffix}"
+        return f"{self.group}:{self.artifact}:{self.artifact_version}{suffix}"

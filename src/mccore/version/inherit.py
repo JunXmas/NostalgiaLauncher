@@ -81,7 +81,7 @@ def merge_inherited(
       vì bản con (Fabric) không có jar riêng.
     """
     merged: dict[str, JsonValue] = dict(parent)
-    merged.update({key: value for key, value in child.items() if key != "arguments"})
+    merged.update({field: value for field, value in child.items() if field != "arguments"})
 
     if "libraries" in child or "libraries" in parent:
         merged["libraries"] = [*as_list(child.get("libraries")), *as_list(parent.get("libraries"))]

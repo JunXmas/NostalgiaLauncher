@@ -63,9 +63,9 @@ class VersionRepository:
             return ()
         installed = []
         with os.scandir(versions_dir) as entries:
-            for entry in entries:
-                if entry.is_dir() and Path(entry.path, f"{entry.name}.json").is_file():
-                    installed.append(entry.name)
+            for child in entries:
+                if child.is_dir() and Path(child.path, f"{child.name}.json").is_file():
+                    installed.append(child.name)
         return tuple(sorted(installed))
 
     def is_installed(self, version_id: str) -> bool:
@@ -104,13 +104,13 @@ class VersionRepository:
         if existing is not None:
             return existing
 
-        entry = self.fetch_manifest().find(version_id)
-        if entry is None:
+        manifest_entry = self.fetch_manifest().find(version_id)
+        if manifest_entry is None:
             message = f"không có phiên bản {version_id!r} trong danh mục của Mojang"
             raise VersionError(message)
         download_one(
             self._require_client(),
-            entry.remote.to_task(path),
+            manifest_entry.remote.to_task(path),
             retry_policy=self._retry_policy,
             cancel_token=cancel_token,
         )

@@ -30,7 +30,7 @@ BANDS: dict[str, tuple[int, int]] = {
 
 
 @dataclass(frozen=True, slots=True)
-class AssetEntry:
+class AssetObject:
     """Một object asset: hash sha1 và kích thước theo chỉ mục."""
 
     asset_hash: str
@@ -46,22 +46,22 @@ def index_path_for(assets_dir: Path, index_id: str) -> Path:
     return assets_dir / "indexes" / f"{index_id}.json"
 
 
-def load_entries(index_path: Path) -> tuple[list[AssetEntry], int]:
+def load_objects(index_path: Path) -> tuple[list[AssetObject], int]:
     """Trả về (danh sách hash duy nhất, số mục thô trong chỉ mục).
 
     Chỉ mục liệt kê theo *tên file trong game*, nên nhiều tên có thể trỏ cùng một hash.
     Dedupe không chỉ để tiết kiệm: không dedupe thì hai luồng sẽ cùng ghi vào một đích.
     """
     objects = json.loads(index_path.read_text(encoding="utf-8"))["objects"]
-    by_hash = {entry["hash"]: entry["size"] for entry in objects.values()}
-    entries = [AssetEntry(asset_hash, size) for asset_hash, size in sorted(by_hash.items())]
-    return entries, len(objects)
+    by_hash = {asset_object["hash"]: asset_object["size"] for asset_object in objects.values()}
+    objects = [AssetObject(asset_hash, size) for asset_hash, size in sorted(by_hash.items())]
+    return objects, len(objects)
 
 
-def in_band(entries: list[AssetEntry], band: str) -> list[AssetEntry]:
+def in_band(objects: list[AssetObject], band: str) -> list[AssetObject]:
     low, high = BANDS[band]
-    return [entry for entry in entries if low <= entry.size < high]
+    return [asset_object for asset_object in objects if low <= asset_object.size < high]
 
 
-def total_bytes(entries: list[AssetEntry]) -> int:
-    return sum(entry.size for entry in entries)
+def total_bytes(objects: list[AssetObject]) -> int:
+    return sum(asset_object.size for asset_object in objects)

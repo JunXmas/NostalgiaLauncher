@@ -72,7 +72,7 @@ class AssetIndexRef:
 class JavaRuntimeRef:
     """Bản Java mà Mojang chỉ định. `component` mới là thứ để tra, không phải `major_version`."""
 
-    component: str
+    java_component: str
     major_version: int | None = None
 
 
@@ -134,20 +134,20 @@ def parse_version_meta(version_dict: dict[str, JsonValue]) -> VersionMeta:
 def _parse_arguments(raw_arguments: JsonValue) -> tuple[ArgumentSpec, ...]:
     """Mỗi phần tử là chuỗi trần, hoặc `{rules, value}` với `value` là chuỗi hay danh sách."""
     specs = []
-    for entry in as_list(raw_arguments):
-        if isinstance(entry, str):
-            specs.append(ArgumentSpec(values=(entry,)))
+    for argument in as_list(raw_arguments):
+        if isinstance(argument, str):
+            specs.append(ArgumentSpec(values=(argument,)))
             continue
-        if not isinstance(entry, dict):
+        if not isinstance(argument, dict):
             continue
-        raw_value = entry.get("value")
+        raw_value = argument.get("value")
         values = (
             (raw_value,)
             if isinstance(raw_value, str)
-            else tuple(item for item in as_list(raw_value) if isinstance(item, str))
+            else tuple(value for value in as_list(raw_value) if isinstance(value, str))
         )
         if values:
-            specs.append(ArgumentSpec(values=values, rules=parse_rules(entry.get("rules"))))
+            specs.append(ArgumentSpec(values=values, rules=parse_rules(argument.get("rules"))))
     return tuple(specs)
 
 
@@ -159,35 +159,35 @@ def _parse_libraries(raw_libraries: list[JsonValue]) -> tuple[Library, ...]:
     còn hơn mang theo một mục vô nghĩa mà tầng trên phải tự phát hiện.
     """
     libraries = []
-    for entry in raw_libraries:
-        fields = as_mapping(entry)
-        name = as_string(fields.get("name"))
-        if name is None:
+    for raw_library in raw_libraries:
+        library_fields = as_mapping(raw_library)
+        coordinate_text = as_string(library_fields.get("name"))
+        if coordinate_text is None:
             continue
-        libraries.append(_parse_library(fields, MavenCoordinate.parse(name)))
+        libraries.append(_parse_library(library_fields, MavenCoordinate.parse(coordinate_text)))
     return tuple(libraries)
 
 
-def _parse_library(entry: dict[str, JsonValue], coordinate: MavenCoordinate) -> Library:
-    downloads = as_mapping(entry.get("downloads"))
+def _parse_library(library_fields: dict[str, JsonValue], coordinate: MavenCoordinate) -> Library:
+    downloads = as_mapping(library_fields.get("downloads"))
     classifiers = {
         name: artifact
         for name, raw in as_mapping(downloads.get("classifiers")).items()
         if (artifact := _parse_artifact(as_mapping(raw))) is not None
     }
-    extract = as_mapping(entry.get("extract"))
+    extract = as_mapping(library_fields.get("extract"))
     return Library(
         coordinate=coordinate,
-        rules=parse_rules(entry.get("rules")),
+        rules=parse_rules(library_fields.get("rules")),
         artifact=_parse_artifact(as_mapping(downloads.get("artifact"))),
         classifier_artifacts=classifiers,
         natives_classifier_by_os={
             name: value
-            for name, raw in as_mapping(entry.get("natives")).items()
+            for name, raw in as_mapping(library_fields.get("natives")).items()
             if (value := as_string(raw)) is not None
         },
         extract_excludes=tuple(
-            item for item in as_list(extract.get("exclude")) if isinstance(item, str)
+            pattern for pattern in as_list(extract.get("exclude")) if isinstance(pattern, str)
         ),
     )
 
@@ -224,7 +224,9 @@ def _parse_asset_index(raw: dict[str, JsonValue]) -> AssetIndexRef | None:
 
 
 def _parse_java_runtime(raw: dict[str, JsonValue]) -> JavaRuntimeRef | None:
-    component = as_string(raw.get("component"))
-    if component is None:
+    java_component = as_string(raw.get("component"))
+    if java_component is None:
         return None
-    return JavaRuntimeRef(component=component, major_version=as_integer(raw.get("majorVersion")))
+    return JavaRuntimeRef(
+        java_component=java_component, major_version=as_integer(raw.get("majorVersion"))
+    )

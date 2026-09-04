@@ -6,7 +6,15 @@ import ast
 import subprocess
 import sys
 
-from source_tree import ALL_FILES, SOURCE_FILES, code_line_count, module_name, parse
+from source_tree import (
+    ALL_FILES,
+    SOURCE_FILES,
+    banned_names_from_glossary,
+    code_line_count,
+    imported_symbols,
+    module_name,
+    parse,
+)
 
 MAX_CODE_LINES = 200
 
@@ -18,44 +26,6 @@ NAMES_REQUIRED_BY_STDLIB = frozenset(
     {
         "do_GET",  # http.server.BaseHTTPRequestHandler định tuyến theo đúng tên này
         "handle_error",  # socketserver.BaseServer gọi đúng tên này khi xử lý request lỗi
-    }
-)
-
-# Những tên đã gây ra lỗi thật ở launcher tiền nhiệm, hoặc bị GLOSSARY §2 cấm thẳng.
-FORBIDDEN_NAMES = frozenset(
-    {
-        "store_root",
-        "game_root",
-        "mc_dir",
-        "minecraft_dir",
-        "run_dir",
-        "base_dir",
-        "mc",
-        "mcver",
-        "vid",
-        "ver",
-        "mc_version",
-        "base_version",
-        "lib",
-        "libs",
-        "coord",
-        "gav",
-        "cp",
-        "cp_list",
-        "cp_str",
-        "idx",
-        "index_json",
-        "obj",
-        "acc",
-        "username",
-        "nick",
-        "token",
-        "tk",
-        "java_path",
-        "jvm",
-        "jre",
-        "proc",
-        "job",
     }
 )
 
@@ -98,9 +68,15 @@ def test_core_never_prints() -> None:
 
 
 def test_naming_follows_the_glossary() -> None:
-    """Áp cho cả `tests/` và `bench/`: một khái niệm phải mang một tên ở mọi nơi trong kho."""
+    """Áp cho cả `tests/` và `bench/`: một khái niệm phải mang một tên ở mọi nơi trong kho.
+
+    Danh sách cấm đọc THẲNG từ GLOSSARY.md §2, không chép tay: chép tay thì tài liệu và test
+    trôi khỏi nhau, và đã trôi thật — GLOSSARY cấm 70 tên trong khi test chỉ gác 32.
+    """
+    forbidden_names = banned_names_from_glossary()
     problems = []
     for path in ALL_FILES:
+        allowed_here = forbidden_names - imported_symbols(path)
         for node in ast.walk(parse(path)):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if (
@@ -111,9 +87,9 @@ def test_naming_follows_the_glossary() -> None:
                 problems.extend(
                     f"{path.name}:{node.lineno}: tham số {argument.arg}"
                     for argument in node.args.args + node.args.kwonlyargs
-                    if argument.arg in FORBIDDEN_NAMES
+                    if argument.arg in allowed_here
                 )
-            elif isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
+            elif isinstance(node, ast.Name) and node.id in allowed_here:
                 problems.append(f"{path.name}:{node.lineno}: tên {node.id}")
     assert not problems, "trái GLOSSARY.md §2:\n" + "\n".join(problems)
 

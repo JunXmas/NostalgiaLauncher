@@ -52,7 +52,7 @@ def parse_rules(raw_rules: JsonValue) -> tuple[Rule, ...]:
     """Phân tích danh sách luật thô. Khoá lạ bị bỏ qua để Mojang thêm khoá mới không làm nổ."""
     if not isinstance(raw_rules, list):
         return ()
-    return tuple(_parse_rule(entry) for entry in raw_rules if isinstance(entry, dict))
+    return tuple(_parse_rule(raw) for raw in raw_rules if isinstance(raw, dict))
 
 
 def rules_allow(
@@ -75,11 +75,13 @@ def rules_allow(
     return allowed
 
 
-def _parse_rule(entry: dict[str, JsonValue]) -> Rule:
-    operating_system = as_mapping(entry.get("os"))
-    features = {name: bool(value) for name, value in as_mapping(entry.get("features")).items()}
+def _parse_rule(rule_fields: dict[str, JsonValue]) -> Rule:
+    operating_system = as_mapping(rule_fields.get("os"))
+    features = {
+        name: bool(value) for name, value in as_mapping(rule_fields.get("features")).items()
+    }
     return Rule(
-        action=as_string(entry.get("action")) or DISALLOW,
+        action=as_string(rule_fields.get("action")) or DISALLOW,
         os_name=as_string(operating_system.get("name")),
         os_arch=as_string(operating_system.get("arch")),
         os_version_pattern=as_string(operating_system.get("version")),
