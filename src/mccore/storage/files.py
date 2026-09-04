@@ -34,8 +34,8 @@ def ensure_dir(path: Path) -> Path:
     return path
 
 
-def resolve_within(base: Path, relative: str) -> Path:
-    """Ghép `relative` vào trong `base`, từ chối mọi đường thoát ra ngoài. Thuần chuỗi.
+def resolve_within(parent_dir: Path, relative_path: str) -> Path:
+    """Ghép `relative_path` vào trong `parent_dir`, từ chối mọi đường thoát ra ngoài. Thuần chuỗi.
 
     Dùng cho mọi đường dẫn đến từ bên ngoài: tên entry trong zip natives, tên file trong
     modpack, đường dẫn trong manifest JRE. Kiểu tấn công kinh điển là một entry tên
@@ -46,44 +46,44 @@ def resolve_within(base: Path, relative: str) -> Path:
     618 ms chỉ để kiểm tên. Bản này tốn khoảng 4 µs, nhanh hơn 44 lần, và kiểm chặt hơn:
     `resolve()` chỉ so đích cuối cùng, còn ở đây mọi thành phần `..` đều bị từ chối thẳng.
 
-    Bù lại, hàm không phát hiện được symlink đã có sẵn *bên trong* `base` trỏ ra ngoài.
+    Bù lại, hàm không phát hiện được symlink đã có sẵn *bên trong* `parent_dir` trỏ ra ngoài.
     Bất biến mà người gọi phải giữ: **không bao giờ tạo symlink từ nội dung archive.** Khi
     mọi thư mục trong `base` đều do chính ta tạo, không symlink nào tồn tại để đi qua.
     """
-    normalised = relative.replace("\\", "/")
+    normalised = relative_path.replace("\\", "/")
     if not normalised or normalised.startswith("/"):
         # Sau khi đổi `\` thành `/`, cả `\tuyet-doi` lẫn `\\may-chu\o` đều thành dạng này.
-        message = f"đường dẫn tuyệt đối hoặc rỗng không được chấp nhận: {relative!r}"
+        message = f"đường dẫn tuyệt đối hoặc rỗng không được chấp nhận: {relative_path!r}"
         raise UnsafePathError(message)
     if len(normalised) > 1 and normalised[1] == ":":
-        message = f"đường dẫn có tên ổ đĩa không được chấp nhận: {relative!r}"
+        message = f"đường dẫn có tên ổ đĩa không được chấp nhận: {relative_path!r}"
         raise UnsafePathError(message)
 
     parts = [part for part in normalised.split("/") if part not in {"", "."}]
     if any(part == ".." for part in parts):
-        message = f"đường dẫn thoát ra ngoài bằng '..': {relative!r}"
+        message = f"đường dẫn thoát ra ngoài bằng '..': {relative_path!r}"
         raise UnsafePathError(message)
     if not parts:
-        message = f"đường dẫn không trỏ tới file nào: {relative!r}"
+        message = f"đường dẫn không trỏ tới file nào: {relative_path!r}"
         raise UnsafePathError(message)
-    return base.joinpath(*parts)
+    return parent_dir.joinpath(*parts)
 
 
-def resolve_child(base: Path, name: str) -> Path:
-    """Ghép MỘT thành phần tên vào `base`. Từ chối mọi thứ không phải một cái tên đơn.
+def resolve_child(parent_dir: Path, child_name: str) -> Path:
+    """Ghép MỘT thành phần tên vào `parent_dir`. Từ chối mọi thứ không phải một cái tên đơn.
 
     Khác `resolve_within` ở chỗ không cho đường dẫn nhiều tầng: dùng cho những chỗ mà giá
     trị *phải* là một cái tên, như mã phiên bản hay hash asset. Đã đo trước khi vá:
     `version_id = "/tuyet-doi"` cho ra `/tuyet-doi.json` — thoát hẳn khỏi thư mục dữ liệu,
     và mã phiên bản thì đến từ dòng lệnh nên là dữ liệu không tin được.
     """
-    if not name or name in {".", ".."} or "/" in name or "\\" in name:
-        message = f"tên phải là một thành phần đơn, không rỗng: {name!r}"
+    if not child_name or child_name in {".", ".."} or "/" in child_name or "\\" in child_name:
+        message = f"tên phải là một thành phần đơn, không rỗng: {child_name!r}"
         raise UnsafePathError(message)
-    if len(name) > 1 and name[1] == ":":
-        message = f"tên không được chứa tên ổ đĩa: {name!r}"
+    if len(child_name) > 1 and child_name[1] == ":":
+        message = f"tên không được chứa tên ổ đĩa: {child_name!r}"
         raise UnsafePathError(message)
-    return base / name
+    return parent_dir / child_name
 
 
 def sha1_of_file(path: Path) -> str:
@@ -119,7 +119,7 @@ def read_json(path: Path) -> JsonValue:
     return parsed
 
 
-def atomic_write_json(path: Path, data: JsonValue, *, private: bool = False) -> None:
+def atomic_write_json(path: Path, document: JsonValue, *, private: bool = False) -> None:
     """Ghi JSON theo kiểu hoặc-được-hoặc-không: file cũ chỉ biến mất khi file mới đã xong.
 
     Ghi ra file tạm cùng thư mục, `fsync`, rồi `os.replace` — `replace` là nguyên tử trên
@@ -133,7 +133,7 @@ def atomic_write_json(path: Path, data: JsonValue, *, private: bool = False) -> 
     temporary_path = Path(temporary_name)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, ensure_ascii=False, indent=2)
+            json.dump(document, handle, ensure_ascii=False, indent=2)
             handle.flush()
             os.fsync(handle.fileno())
         temporary_path.chmod(PRIVATE_FILE_MODE if private else DEFAULT_FILE_MODE)

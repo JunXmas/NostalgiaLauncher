@@ -16,10 +16,10 @@ from asset_index import (
     BANDS,
     DEFAULT_ASSETS_DIR,
     DEFAULT_INDEX_ID,
-    AssetEntry,
+    AssetObject,
     in_band,
     index_path_for,
-    load_entries,
+    load_objects,
     total_bytes,
 )
 
@@ -45,19 +45,19 @@ def sha1_of_file(path: Path) -> tuple[str, int]:
     return digest.hexdigest(), read_bytes
 
 
-def print_distribution(entries: list[AssetEntry], raw_count: int) -> None:
-    sizes = sorted(entry.size for entry in entries)
-    print(f"chỉ mục: {raw_count} mục, {len(entries)} hash duy nhất")
-    print(f"  -> {raw_count - len(entries)} mục trùng hash bị loại khi dedupe")
-    megabytes = total_bytes(entries) / 1e6
+def print_distribution(objects: list[AssetObject], raw_count: int) -> None:
+    sizes = sorted(asset_object.size for asset_object in objects)
+    print(f"chỉ mục: {raw_count} mục, {len(objects)} hash duy nhất")
+    print(f"  -> {raw_count - len(objects)} mục trùng hash bị loại khi dedupe")
+    megabytes = total_bytes(objects) / 1e6
     median_kb = statistics.median(sizes) / 1024
     print(f"  tổng {megabytes:.0f} MB, trung vị {median_kb:.1f} KB")
     for band in BANDS:
-        chosen = in_band(entries, band)
+        chosen = in_band(objects, band)
         print(f"  {band:<16}: {len(chosen):5d} file, {total_bytes(chosen) / 1e6:6.1f} MB")
 
 
-def measure_stat(entries: list[AssetEntry], objects_dir: Path) -> tuple[float, int, int]:
+def measure_stat(objects: list[AssetObject], objects_dir: Path) -> tuple[float, int, int]:
     """Xác minh bằng kích thước.
 
     KHÔNG lọc trước bằng `.exists()`: làm thế là stat sẵn toàn bộ file, hâm nóng cache
@@ -66,20 +66,20 @@ def measure_stat(entries: list[AssetEntry], objects_dir: Path) -> tuple[float, i
     """
     started = time.perf_counter()
     matched = missing = 0
-    for entry in entries:
+    for asset_object in objects:
         try:
-            if (objects_dir / entry.object_path).stat().st_size == entry.size:
+            if (objects_dir / asset_object.object_path).stat().st_size == asset_object.size:
                 matched += 1
         except FileNotFoundError:
             missing += 1
     return time.perf_counter() - started, matched, missing
 
 
-def measure_sha1(entries: list[AssetEntry], objects_dir: Path) -> tuple[float, int]:
+def measure_sha1(objects: list[AssetObject], objects_dir: Path) -> tuple[float, int]:
     started = time.perf_counter()
     hashed_bytes = 0
-    for entry in entries:
-        path = objects_dir / entry.object_path
+    for asset_object in objects:
+        path = objects_dir / asset_object.object_path
         if path.exists():
             _digest, read_bytes = sha1_of_file(path)
             hashed_bytes += read_bytes
@@ -97,15 +97,15 @@ def main() -> int:
         print(f"không tìm thấy chỉ mục: {index_path}")
         return 1
 
-    entries, raw_count = load_entries(index_path)
-    print_distribution(entries, raw_count)
+    objects, raw_count = load_objects(index_path)
+    print_distribution(objects, raw_count)
 
     objects_dir = args.assets / "objects"
-    stat_seconds, matched, missing = measure_stat(entries, objects_dir)
+    stat_seconds, matched, missing = measure_stat(objects, objects_dir)
     print(f"chỉ stat    : {stat_seconds * 1000:8.1f} ms ({matched} khớp, {missing} thiếu)")
     print("  (lượt đầu sau khi bật máy sẽ chậm hơn: đây là số trên cache metadata đã nóng)")
 
-    sha1_seconds, hashed_bytes = measure_sha1(entries, objects_dir)
+    sha1_seconds, hashed_bytes = measure_sha1(objects, objects_dir)
     if not hashed_bytes:
         print("không có file nào trên đĩa để băm")
         return 1

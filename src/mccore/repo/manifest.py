@@ -45,17 +45,19 @@ class VersionManifest:
     def released(self) -> tuple[ManifestEntry, ...]:
         """Chỉ bản chính thức, bỏ snapshot và các bản thử nghiệm cũ."""
         return tuple(
-            entry for entry in self.entries_by_id.values() if entry.release_type == RELEASE
+            manifest_entry
+            for manifest_entry in self.entries_by_id.values()
+            if manifest_entry.release_type == RELEASE
         )
 
 
 def parse_manifest(document: JsonValue) -> VersionManifest:
     """Phân tích danh mục. Mục thiếu `id` hoặc `url` bị bỏ qua thay vì làm hỏng cả danh mục."""
-    root = as_mapping(document)
-    latest = as_mapping(root.get("latest"))
+    document_fields = as_mapping(document)
+    latest = as_mapping(document_fields.get("latest"))
     entries: dict[str, ManifestEntry] = {}
-    for raw in as_list(root.get("versions")):
-        fields = as_mapping(raw)
+    for raw_entry in as_list(document_fields.get("versions")):
+        fields = as_mapping(raw_entry)
         version_id = as_string(fields.get("id"))
         url = as_string(fields.get("url"))
         if version_id is None or url is None or version_id in entries:

@@ -153,6 +153,16 @@ mặc định.
 | `test_only_the_net_package_touches_http_and_tls` | Module ngoài `net/` import `http.client` hoặc `ssl` | `src/` |
 | `test_fast_path_does_not_load_heavy_modules` | `mccore --version` kéo theo `http.client`, `ssl`, `zipfile`, `concurrent.futures`, `subprocess` hoặc `logging` | `src/` |
 
+**Danh sách tên cấm đọc THẲNG từ bảng §2 ở trên, không chép tay.** Chép tay thì tài liệu và
+test trôi khỏi nhau — và đã trôi thật: có lúc GLOSSARY cấm 70 tên trong khi test chỉ gác 32,
+tức hơn một nửa luật không được kiểm. Nay thêm một tên vào cột "CẤM dùng" là nó có hiệu lực
+ngay, không phải sửa test. Chỉ định danh nằm trong dấu backtick mới được tính, nên văn xuôi
+trong ô đó không biến thành tên cấm; tên do `import` đưa vào cũng được bỏ qua (nếu không,
+`import json` bị báo vi phạm vì `json` là bí danh bị cấm của `version_meta`).
+
+Có một danh sách miễn trừ ngắn cho những tên Python ép ta phải dùng (`name`, `id`, `type`,
+`key`, `index`, `str`, `process`) — mỗi mục kèm lý do, và danh sách đó phải luôn ngắn.
+
 Cả mười đã được kiểm bằng cách **cố tình vi phạm từng luật một** — 15 ca vi phạm, bắt đủ 15,
 gồm cả chuỗi import sâu 300 tầng (không tràn stack) và module tự import chính nó. Một test
 gác chưa từng thấy rớt là một test gác chưa biết có hoạt động không.

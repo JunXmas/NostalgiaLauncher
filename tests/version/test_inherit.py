@@ -19,18 +19,18 @@ def fixture_loader(version_id: str) -> JsonValue:
 
 def test_fabric_inherits_everything_it_does_not_declare() -> None:
     merged = resolve_inheritance(FABRIC_ID, fixture_loader)
-    meta = parse_version_meta(merged)
-    assert meta.version_id == FABRIC_ID, "id của bản con thắng"
-    assert meta.main_class.startswith("net.fabricmc"), "mainClass của bản con thắng"
-    assert meta.java_runtime is not None, "javaVersion lấy từ bản gốc"
-    assert meta.asset_index is not None, "assetIndex lấy từ bản gốc"
-    assert meta.inherits_from is None, "đã giải quyết xong thì không còn khoá này"
+    version_meta = parse_version_meta(merged)
+    assert version_meta.version_id == FABRIC_ID, "id của bản con thắng"
+    assert version_meta.main_class.startswith("net.fabricmc"), "mainClass của bản con thắng"
+    assert version_meta.java_runtime is not None, "javaVersion lấy từ bản gốc"
+    assert version_meta.asset_index is not None, "assetIndex lấy từ bản gốc"
+    assert version_meta.inherits_from is None, "đã giải quyết xong thì không còn khoá này"
 
 
 def test_the_jar_belongs_to_the_parent() -> None:
     """Bản Fabric không có jar riêng. Trỏ sai chỗ này là lỗi "không tìm thấy client.jar"."""
-    meta = parse_version_meta(resolve_inheritance(FABRIC_ID, fixture_loader))
-    assert meta.jar_owner_id == "1.21.4"
+    version_meta = parse_version_meta(resolve_inheritance(FABRIC_ID, fixture_loader))
+    assert version_meta.jar_owner_id == "1.21.4"
 
 
 def test_loader_libraries_come_before_the_parent_ones() -> None:
@@ -41,11 +41,13 @@ def test_loader_libraries_come_before_the_parent_ones() -> None:
     child_libraries = as_list(load_fixture(FABRIC_ID).get("libraries"))
     child_names = {
         name
-        for entry in child_libraries
-        if (name := as_string(as_mapping(entry).get("name"))) is not None
+        for raw_library in child_libraries
+        if (name := as_string(as_mapping(raw_library).get("name"))) is not None
     }
-    meta = parse_version_meta(resolve_inheritance(FABRIC_ID, fixture_loader))
-    leading = {str(library.coordinate) for library in meta.libraries[: len(child_libraries)]}
+    version_meta = parse_version_meta(resolve_inheritance(FABRIC_ID, fixture_loader))
+    leading = {
+        str(library.coordinate) for library in version_meta.libraries[: len(child_libraries)]
+    }
     assert leading == child_names
 
 

@@ -30,11 +30,13 @@ def test_parses_the_real_manifest_shape() -> None:
 
 def test_lookup_is_by_identifier() -> None:
     manifest = parse_manifest(load_document())
-    entry = manifest.find("1.20.1")
-    assert entry is not None
-    assert entry.release_type == RELEASE
-    assert entry.remote.url.startswith("https://")
-    assert entry.remote.sha1, "danh mục công bố sha1 của từng file JSON — phải giữ để xác minh"
+    manifest_entry = manifest.find("1.20.1")
+    assert manifest_entry is not None
+    assert manifest_entry.release_type == RELEASE
+    assert manifest_entry.remote.url.startswith("https://")
+    assert manifest_entry.remote.sha1, (
+        "danh mục công bố sha1 của từng file JSON — phải giữ để xác minh"
+    )
     assert manifest.find("khong-co") is None
 
 
@@ -42,7 +44,7 @@ def test_released_filters_out_snapshots() -> None:
     manifest = parse_manifest(load_document())
     released = manifest.released()
     assert released
-    assert all(entry.release_type == RELEASE for entry in released)
+    assert all(manifest_entry.release_type == RELEASE for manifest_entry in released)
     assert len(released) < len(manifest.entries_by_id)
 
 
@@ -50,8 +52,8 @@ def test_order_from_the_server_is_kept() -> None:
     """Máy chủ xếp mới nhất trước; giao diện sau này sẽ dựa vào thứ tự đó."""
     document = load_document()
     ids_from_document = [
-        as_string(as_mapping(entry).get("id"))
-        for entry in as_list(as_mapping(document).get("versions"))
+        as_string(as_mapping(manifest_entry).get("id"))
+        for manifest_entry in as_list(as_mapping(document).get("versions"))
     ]
     manifest = parse_manifest(document)
     assert list(manifest.entries_by_id) == ids_from_document
@@ -80,9 +82,9 @@ def test_duplicate_identifiers_keep_the_first() -> None:
         ]
     }
     manifest = parse_manifest(document)
-    entry = manifest.find("a")
-    assert entry is not None
-    assert entry.remote.url.endswith("1.json")
+    manifest_entry = manifest.find("a")
+    assert manifest_entry is not None
+    assert manifest_entry.remote.url.endswith("1.json")
 
 
 def test_fetch_rejects_a_body_that_is_not_json(

@@ -42,8 +42,8 @@ def serve_version(
     }
 
 
-def serve_manifest(state: ServerState, entries: list[dict[str, JsonValue]]) -> None:
-    versions: list[JsonValue] = list(entries)
+def serve_manifest(state: ServerState, manifest_entries: list[dict[str, JsonValue]]) -> None:
+    versions: list[JsonValue] = list(manifest_entries)
     document: JsonValue = {"latest": {"release": "1.21.4"}, "versions": versions}
     state.add(MANIFEST_PATH, json.dumps(document).encode("utf-8"))
 
@@ -61,8 +61,8 @@ def test_sync_downloads_verifies_and_caches(
         paths, client, manifest_url=server.url(MANIFEST_PATH), retry_policy=FAST_RETRY
     )
 
-    meta = repository.sync_version_meta("1.20.1")
-    assert meta.version_id == "1.20.1"
+    version_meta = repository.sync_version_meta("1.20.1")
+    assert version_meta.version_id == "1.20.1"
     assert paths.version_json("1.20.1").is_file()
 
     requests_after_first = server_state.request_count("/versions/1.20.1.json")
@@ -140,9 +140,9 @@ def test_a_version_json_that_fails_its_published_sha1_is_refused(
     Không xác minh thì một file sai nằm lại trên đĩa và mọi lần chạy sau đều hỏng theo cách
     khó truy. Đã kiểm bằng đột biến: bỏ xác minh thì trước đây KHÔNG test nào bắt được.
     """
-    entry = serve_version(server_state, server, "1.20.1")
+    manifest_entry = serve_version(server_state, server, "1.20.1")
     server_state.add("/versions/1.20.1.json", b'{"id": "1.20.1", "mainClass": "gia-mao"}')
-    serve_manifest(server_state, [entry])
+    serve_manifest(server_state, [manifest_entry])
 
     paths = DataPaths.for_root(tmp_path)
     repository = VersionRepository(
@@ -162,9 +162,9 @@ def test_the_retry_policy_actually_reaches_the_downloader(
     `download_one`, nên mọi lần tải dùng chính sách mặc định. Chỉ lộ ra khi đo thời gian —
     một test chỉ kiểm "có ném lỗi không" thì vẫn xanh.
     """
-    entry = serve_version(server_state, server, "1.20.1")
+    manifest_entry = serve_version(server_state, server, "1.20.1")
     server_state.add("/versions/1.20.1.json", b"khong phai json", fail_first=99)
-    serve_manifest(server_state, [entry])
+    serve_manifest(server_state, [manifest_entry])
     paths = DataPaths.for_root(tmp_path)
 
     repository = VersionRepository(

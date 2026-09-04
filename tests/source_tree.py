@@ -8,6 +8,7 @@ mà nó đi kiểm.
 from __future__ import annotations
 
 import ast
+import re
 from functools import cache
 from pathlib import Path
 
@@ -45,6 +46,59 @@ LAYERS: dict[str, int] = {
     "cli": 6,
     "config": 6,
 }
+
+
+# Tên bị GLOSSARY cấm nhưng KHÔNG thể cấm trong code Python, mỗi cái một lý do. Danh sách
+# này phải ngắn: mỗi mục là một chỗ luật phải nhượng bộ thực tế.
+NAMES_PYTHON_FORCES_ON_US = frozenset(
+    {
+        "name",  # `entry.name`, `path.name`, `alias.name` — thuộc tính của stdlib
+        "id",  # `node.id` của ast, và khoá "id" trong JSON của Mojang
+        "type",  # khoá "type" trong JSON của Mojang
+        "key",  # khoá của dict nói chung
+        "index",  # chỉ số vòng lặp
+        "str",  # tên kiểu dựng sẵn
+        "p",  # không xuất hiện, nhưng cấm nó sẽ chặn cả `p` trong biểu thức chính quy
+        "process",  # `multiprocessing`/`subprocess` dùng từ này trong API của chúng
+    }
+)
+
+
+@cache
+def banned_names_from_glossary() -> frozenset[str]:
+    """Đọc cột "CẤM dùng" của GLOSSARY.md §2 làm nguồn DUY NHẤT cho luật đặt tên.
+
+    Trước đây danh sách cấm được chép tay vào file test, và hai bên đã trôi khỏi nhau:
+    GLOSSARY cấm 70 tên trong khi test chỉ gác 32. Một luật chỉ được kiểm một nửa thì
+    không phải luật.
+
+    Chỉ định danh nằm trong dấu backtick mới được tính, nên phần văn xuôi trong ô đó không
+    biến thành tên cấm.
+    """
+    text = (REPOSITORY_ROOT / "GLOSSARY.md").read_text(encoding="utf-8")
+    section = text[text.index("## 2. Bảng thuật ngữ") : text.index("## 3.")]
+    banned: set[str] = set()
+    canonical: set[str] = set()
+    for line in section.splitlines():
+        cells = [cell.strip() for cell in line.split("|")]
+        if len(cells) < 6 or cells[1].startswith(("Khái niệm", "---")):
+            continue
+        canonical.update(_identifiers(cells[2], first_only=True))
+        banned.update(_identifiers(cells[4]))
+    # Tên vừa là chuẩn vừa bị nhắc trong ô cấm (do văn xuôi) thì không phải tên cấm.
+    return frozenset(banned - canonical - NAMES_PYTHON_FORCES_ON_US)
+
+
+def _identifiers(cell: str, *, first_only: bool = False) -> set[str]:
+    found: set[str] = set()
+    for backticked in re.findall(r"`([^`]+)`", cell):
+        for piece in re.split(r"[,/]| hoặc ", backticked):
+            candidate = piece.strip().split(":")[0].strip().rstrip("()")
+            if re.fullmatch(r"[a-z_][a-z0-9_]*", candidate):
+                found.add(candidate)
+                if first_only:
+                    return found
+    return found
 
 
 @cache
@@ -97,6 +151,19 @@ def imported_modules(path: Path) -> list[str]:
                 if alias.name == "mccore" or alias.name.startswith("mccore.")
             )
     return found
+
+
+def imported_symbols(path: Path) -> set[str]:
+    """Tên do `import` đưa vào file. Không phải biến của ta nên luật đặt tên không áp.
+
+    Không có bước này thì `import json` bị báo vi phạm vì GLOSSARY cấm `json` làm bí danh
+    của `version_meta` — một báo động giả che mất vi phạm thật.
+    """
+    names: set[str] = set()
+    for node in ast.walk(parse(path)):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
+    return names
 
 
 def code_line_count(path: Path) -> int:
