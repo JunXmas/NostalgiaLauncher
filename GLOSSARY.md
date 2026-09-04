@@ -207,7 +207,8 @@ src/mccore/
   install/                       L3  CHỈ lập kế hoạch, không tự tải
     client.py, library.py            (bước 6)
     natives.py                       giải nén, LÀM PHẲNG vì JVM không tìm đệ quy
-    assets.py, plan.py               (bước 8)
+    assets.py                        gộp trùng hash; cây tên cho đời <=1.6
+    plan.py                          (bước 13)
   java/                          L3  mojang_jre, detect
   account/                       L4  offline, profile, store
   launch/                        L4  command, tuning, game_process, runner

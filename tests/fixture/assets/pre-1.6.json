@@ -1,0 +1,213 @@
+{
+ "map_to_resources": true,
+ "objects": {
+  "newsound/ambient/cave/cave1.ogg": {
+   "hash": "29d4dccf3353334c7aa2a49cb6fed3780a51a1ba",
+   "size": 33948
+  },
+  "sound3/ambient/cave/cave1.ogg": {
+   "hash": "29d4dccf3353334c7aa2a49cb6fed3780a51a1ba",
+   "size": 33948
+  },
+  "newsound/ambient/cave/cave10.ogg": {
+   "hash": "79a5b53bf22cca182ddff2a670942c49867663ec",
+   "size": 22725
+  },
+  "sound3/ambient/cave/cave10.ogg": {
+   "hash": "79a5b53bf22cca182ddff2a670942c49867663ec",
+   "size": 22725
+  },
+  "newsound/ambient/cave/cave11.ogg": {
+   "hash": "e367d1dfa1ce07374e0aeaecbfb1526142a0dcc1",
+   "size": 36963
+  },
+  "sound3/ambient/cave/cave11.ogg": {
+   "hash": "e367d1dfa1ce07374e0aeaecbfb1526142a0dcc1",
+   "size": 36963
+  },
+  "newsound/ambient/cave/cave12.ogg": {
+   "hash": "a720e85e35be0dc3186d01cc599121b87e7ee9f7",
+   "size": 21193
+  },
+  "sound3/ambient/cave/cave12.ogg": {
+   "hash": "a720e85e35be0dc3186d01cc599121b87e7ee9f7",
+   "size": 21193
+  },
+  "newsound/ambient/cave/cave13.ogg": {
+   "hash": "63bbe3921abd75b9f6cd1e20330360d164da169b",
+   "size": 29512
+  },
+  "sound3/ambient/cave/cave13.ogg": {
+   "hash": "63bbe3921abd75b9f6cd1e20330360d164da169b",
+   "size": 29512
+  },
+  "newsound/ambient/cave/cave2.ogg": {
+   "hash": "5680749048457f5772ec95a73d856ad792fa1717",
+   "size": 48741
+  },
+  "sound3/ambient/cave/cave2.ogg": {
+   "hash": "5680749048457f5772ec95a73d856ad792fa1717",
+   "size": 48741
+  },
+  "READ_ME_I_AM_VERY_IMPORTANT": {
+   "hash": "0d000710b71ca9aafabd8f587768431d0b560b32",
+   "size": 546
+  },
+  "icons/icon_16x16.png": {
+   "hash": "bdf48ef6b5d0d23bbb02e17d04865216179f510a",
+   "size": 3665
+  },
+  "icons/icon_32x32.png": {
+   "hash": "92750c5f93c312ba9ab413d546f32190c56d6f1f",
+   "size": 5362
+  },
+  "icons/minecraft.icns": {
+   "hash": "991b421dfd401f115241601b2b373140a8d78572",
+   "size": 114786
+  },
+  "music/calm1.ogg": {
+   "hash": "50a59a4f56e4046701b758ddbb1c1587efa4cadf",
+   "size": 2530812
+  },
+  "music/calm2.ogg": {
+   "hash": "74da65c99aa578486efa7b69983d3533e14c0d6e",
+   "size": 1976731
+  },
+  "music/calm3.ogg": {
+   "hash": "14ae57a6bce3d4254daa8be2b098c2d99743cc3f",
+   "size": 2232651
+  },
+  "newmusic/hal1.ogg": {
+   "hash": "df1ff11b79757432c5c3f279e5ecde7b63ceda64",
+   "size": 1972217
+  },
+  "newmusic/hal2.ogg": {
+   "hash": "ceaaaa1d57dfdfbb0bd4da5ea39628b42897a687",
+   "size": 1754429
+  },
+  "newmusic/hal3.ogg": {
+   "hash": "dd85fb564e96ee2dbd4754f711ae9deb08a169f9",
+   "size": 1923269
+  },
+  "newmusic/hal4.ogg": {
+   "hash": "5e7d63e75c6e042f452bc5e151276911ef92fed8",
+   "size": 2558252
+  },
+  "newmusic/nuance1.ogg": {
+   "hash": "cc1a80b6becfc6d6489c069f053d0a8adc71c339",
+   "size": 156322
+  },
+  "newmusic/nuance2.ogg": {
+   "hash": "78152dc42b036e0de7616e6e669ce5a81d17f82a",
+   "size": 219029
+  },
+  "newmusic/piano1.ogg": {
+   "hash": "0f374764aafba398f4ba90dba05a53a9e6166138",
+   "size": 542805
+  },
+  "newmusic/piano2.ogg": {
+   "hash": "98a918eb2694defd19726436d4b9dca9e7dd6a65",
+   "size": 824333
+  },
+  "newmusic/piano3.ogg": {
+   "hash": "9528b6a76e7bac64ca1145cc682e8a8448cc04e5",
+   "size": 2665984
+  },
+  "newsound/damage/fallbig1.ogg": {
+   "hash": "f76d4efd860b599200e96401b2485cc83c1ec21e",
+   "size": 11207
+  },
+  "newsound/damage/fallbig2.ogg": {
+   "hash": "c7c9e86e3ccc55ea2312a498aef861def771d8cf",
+   "size": 8766
+  },
+  "newsound/damage/fallsmall.ogg": {
+   "hash": "6094b6620f2d1f2d19869a2e6498a52b1a265738",
+   "size": 7640
+  },
+  "newsound/damage/hurtflesh1.ogg": {
+   "hash": "e40695b47209c3b4bbdc3496b38959d097c6afbc",
+   "size": 8981
+  },
+  "newsound/damage/hurtflesh2.ogg": {
+   "hash": "4e1651a728b394e054aaa24e3070e7dae849f14d",
+   "size": 9818
+  },
+  "newsound/damage/hurtflesh3.ogg": {
+   "hash": "4b49dd9329b254e38f17166b7daa51a758a25f94",
+   "size": 10390
+  },
+  "newsound/fire/ignite.ogg": {
+   "hash": "19c729c3ceb753a824246b494bce5fa5c802f0f0",
+   "size": 7000
+  },
+  "newsound/liquid/lava.ogg": {
+   "hash": "17e66efe64256142c55ef6f35060f277f127bb44",
+   "size": 45349
+  },
+  "newsound/mob/cow1.ogg": {
+   "hash": "1298f4526580c8f10812253e7d9130ce4afc3a1e",
+   "size": 13214
+  },
+  "newsound/mob/cow2.ogg": {
+   "hash": "00b1a23c84bc7f7377de973040b2dd336670bb8f",
+   "size": 13372
+  },
+  "newsound/mob/cow3.ogg": {
+   "hash": "f75617763129506ae7220ed16cdff7a8084eebb3",
+   "size": 16616
+  },
+  "newsound/mob/cow4.ogg": {
+   "hash": "e0bba792682878ee208a54184df9e2e8044f2815",
+   "size": 12233
+  },
+  "newsound/mob/cowhurt1.ogg": {
+   "hash": "2c849f4b6ec1cf084ac84d57ec90779266b23ae8",
+   "size": 6616
+  },
+  "newsound/mob/cowhurt2.ogg": {
+   "hash": "be0be76687eab152334a35fdb76e6ab4455bfaef",
+   "size": 6542
+  },
+  "newsound/mob/cowhurt3.ogg": {
+   "hash": "87eceaa08df660cd1d4dadf7d1c64a6f7125dacb",
+   "size": 6739
+  },
+  "newsound/mob/skeletondeath.ogg": {
+   "hash": "a795e9a7721927282befc085e4e397a6379e3004",
+   "size": 8264
+  },
+  "newsound/mob/skeletonhurt1.ogg": {
+   "hash": "f7e8ae3a771d50ed827772b75c50958393b621e1",
+   "size": 7180
+  },
+  "newsound/mob/skeletonhurt2.ogg": {
+   "hash": "a12f98ac001492ff596b5da9e6297b3be98f9149",
+   "size": 7414
+  },
+  "newsound/mob/skeletonhurt3.ogg": {
+   "hash": "647c46f5704b3be0b7159961e1bc51721a33dfd5",
+   "size": 8046
+  },
+  "newsound/mob/skeletonhurt4.ogg": {
+   "hash": "0f3a7e5a20119853986d2cfae22ca3a46926ac76",
+   "size": 7758
+  },
+  "newsound/mob/slime1.ogg": {
+   "hash": "d49ab3ceb3f6212d64580f0d906fa9880a674c6d",
+   "size": 6281
+  },
+  "newsound/mob/slime2.ogg": {
+   "hash": "525700bc06b6f0f8afc3fb542977cef617196ccf",
+   "size": 5506
+  },
+  "newsound/mob/slime3.ogg": {
+   "hash": "087e5fa84e7c961778397a0d938bde1e49dd3beb",
+   "size": 5335
+  },
+  "newsound/mob/slime4.ogg": {
+   "hash": "ca1b7de8bb9ce92f2f044c6a98c99d7bf92b7184",
+   "size": 5408
+  }
+ }
+}
