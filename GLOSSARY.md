@@ -206,7 +206,8 @@ src/mccore/
     version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
   install/                       L3  CHỈ lập kế hoạch, không tự tải
     client.py, library.py            (bước 6)
-    natives.py, assets.py, plan.py   (bước 7 và 8)
+    natives.py                       giải nén, LÀM PHẲNG vì JVM không tìm đệ quy
+    assets.py, plan.py               (bước 8)
   java/                          L3  mojang_jre, detect
   account/                       L4  offline, profile, store
   launch/                        L4  command, tuning, game_process, runner

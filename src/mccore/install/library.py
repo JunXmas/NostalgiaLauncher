@@ -12,6 +12,7 @@ natives thì không, nên hai thư viện khác toạ độ trỏ cùng một fi
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from mccore.model.download import Artifact, DownloadTask
 from mccore.storage.paths import DataPaths
@@ -21,21 +22,35 @@ from mccore.version.rules import rules_allow
 
 
 @dataclass(frozen=True, slots=True)
+class NativeArchive:
+    """Một jar cần giải nén, kèm danh sách tiền tố phải bỏ qua.
+
+    `excludes` đến từ khoá `extract.exclude` của từng thư viện, gần như luôn là `META-INF/`.
+    Không bỏ nó thì chữ ký số trong `META-INF` lọt vào thư mục natives; vô hại nhưng là rác,
+    và Mojang khai ra để ta tôn trọng.
+    """
+
+    archive_path: Path
+    excludes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class LibraryPlan:
     """Kết quả một lượt duyệt: tải những gì, và trong đó cái nào còn phải giải nén.
 
-    `natives_to_extract` luôn là tập con của `downloads`, và cả hai đều đã gộp trùng theo
-    đích — hai luồng cùng ghi một file, hay giải nén một file hai lần, đều là lỗi thật.
+    Mọi `archive_path` trong `natives_to_extract` đều nằm trong đích của `downloads`, và cả
+    hai dùng chung một tập gộp trùng — hai luồng cùng ghi một file, hay giải nén một file
+    hai lần, đều là lỗi thật.
     """
 
     downloads: tuple[DownloadTask, ...]
-    natives_to_extract: tuple[DownloadTask, ...]
+    natives_to_extract: tuple[NativeArchive, ...]
 
 
 def plan_libraries(version_meta: VersionMeta, platform: Platform, paths: DataPaths) -> LibraryPlan:
     """Mọi thư viện cần cho nền tảng này, tách sẵn phần cần giải nén."""
     downloads: list[DownloadTask] = []
-    natives_to_extract: list[DownloadTask] = []
+    natives_to_extract: list[NativeArchive] = []
     seen: set[str] = set()
 
     for library in version_meta.libraries:
@@ -49,7 +64,9 @@ def plan_libraries(version_meta: VersionMeta, platform: Platform, paths: DataPat
             task = artifact.to_task(paths.libraries_dir)
             downloads.append(task)
             if needs_extracting:
-                natives_to_extract.append(task)
+                natives_to_extract.append(
+                    NativeArchive(archive_path=task.destination, excludes=library.extract_excludes)
+                )
 
     return LibraryPlan(downloads=tuple(downloads), natives_to_extract=tuple(natives_to_extract))
 
