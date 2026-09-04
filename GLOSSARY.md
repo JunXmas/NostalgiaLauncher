@@ -120,6 +120,7 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Manifest chi tiết một bản Java (391 mục) | `layout` : `RuntimeLayout` | dataclass | `manifest` cho khái niệm này |
 | Một file trong bản Java | `runtime_file` : `RuntimeFile` | dataclass | `jre_file` |
 | Thư mục gốc của một bản Java đã bung | `runtime_root` | `Path` | `jre_dir`, `java_home` |
+| Phản hồi HTTP đã đọc trọn (có mã trạng thái) | `response` : `HttpResponse` | dataclass | `resp`, `r` |
 | Lệnh khởi động đã dựng xong | `command` : `LaunchCommand` | dataclass | `cmd` |
 | Lựa chọn cho một lần khởi động | `options` : `LaunchOptions` | dataclass | `opts` |
 | Cờ bộ nhớ máy ảo Java | `tuning` : `JvmTuning` | dataclass | `memory`, `jvm_opts` |
@@ -223,7 +224,10 @@ src/nostalgia/
   model/                         L0  dataclass dùng chung: ZERO import của nostalgia
     download.py                      Artifact (tương đối) và DownloadTask (tuyệt đối)
     json_value.py                    kiểu cho JSON chưa tin được, kèm hàm thu hẹp kiểu
-  net/                           L1  http, download
+  net/                           L1  mạng
+    http.py                          truyền tải: stream, fetch_bytes, send (POST/GET có header)
+    payload.py                       giải mã: bytes -> JsonValue, nêu đúng tài liệu nào hỏng
+    download.py                      tải song song, xác minh, tự chữa
   version/                       L2  THUẦN: không mạng, không đọc/ghi file
     rules.py                         luật theo OS/arch/feature; luật sau ghi đè luật trước
     maven.py                         toạ độ và đường dẫn trong libraries/

@@ -13,16 +13,14 @@ với mở kết nối mới mỗi file.
 from __future__ import annotations
 
 import http.client
-import json
 import ssl
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
-from nostalgia.errors import Cancelled, DataFileError, IntegrityError, NetworkError
-from nostalgia.model.json_value import JsonValue
+from nostalgia.errors import Cancelled, IntegrityError, NetworkError
 from nostalgia.operations.cancellation import CancelToken
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
@@ -52,6 +50,22 @@ class RetryPolicy:
 DEFAULT_RETRY_POLICY = RetryPolicy()
 
 
+@dataclass(frozen=True, slots=True)
+class HttpResponse:
+    """Một phản hồi đã đọc trọn, kèm mã trạng thái.
+
+    Chỉ `send` trả về kiểu này. Các đường tải file không trả response ra ngoài, vì để nó
+    lọt ra là buộc mọi tầng trên phải biết về `http.client`.
+    """
+
+    status: int
+    body: bytes
+
+    @property
+    def is_ok(self) -> bool:
+        return 200 <= self.status < 300
+
+
 class HttpClient:
     """Kết nối bền theo từng luồng. Dùng chung được giữa các luồng của một pool tải."""
 
@@ -75,6 +89,53 @@ class HttpClient:
         # Giữ danh sách mọi kết nối đã mở để `close()` đóng được cả kết nối của luồng khác.
         self._connections: list[http.client.HTTPSConnection] = []
         self._lock = threading.Lock()
+
+    def send(
+        self,
+        method: str,
+        url: str,
+        *,
+        body: bytes | None = None,
+        headers: Mapping[str, str] | None = None,
+        max_bytes: int = DEFAULT_MAX_RESPONSE_BYTES,
+        cancel_token: CancelToken | None = None,
+    ) -> HttpResponse:
+        """Gửi một request và đọc trọn phản hồi, **không ném lỗi khi mã trả về là 4xx**.
+
+        Đây là khác biệt cố ý so với `stream` và `fetch_bytes`. Với đăng nhập Microsoft,
+        **thân của phản hồi lỗi mới là dữ liệu**: 400 kèm `AADSTS70002` nghĩa là app Azure
+        chưa bật public client, 401 kèm `XErr=2148916233` nghĩa là tài khoản chưa có hồ sơ
+        Xbox, 403 nghĩa là app chưa được Microsoft duyệt, 404 nghĩa là tài khoản chưa mua
+        game. Ném lỗi ở đây là vứt đi đúng thứ cần đọc, và người dùng nhận một thông báo
+        vô nghĩa thay vì việc họ phải làm.
+
+        Lỗi ĐƯỜNG TRUYỀN thì vẫn ném `NetworkError` — đó là hỏng thật, không phải dữ liệu.
+
+        Không cần tự bỏ kết nối khi thân chưa đọc hết: khác `stream`, ở đây phản hồi được
+        đọc một lần rồi đóng ngay trong khối `with`, và `http.client` tự lo phần còn lại.
+        Đã thử tay: chặn `_discard` rồi gọi tiếp một request khác trên cùng kết nối vẫn ra
+        kết quả đúng.
+        """
+        if cancel_token is not None:
+            cancel_token.raise_if_cancelled()
+        host, path = _split(url)
+        connection = self._connection_for(host)
+        request_headers = {"Accept-Encoding": "identity", **(headers or {})}
+        try:
+            connection.request(method, path, body=body, headers=request_headers)
+            with connection.getresponse() as response:
+                # Đọc dư một byte để phân biệt "vừa đúng trần" với "vượt trần".
+                payload = response.read(max_bytes + 1)
+                status = response.status
+        except (http.client.HTTPException, OSError) as exc:
+            self._discard(host)
+            message = f"không gọi được {url}: {exc}"
+            raise NetworkError(message) from exc
+
+        if len(payload) > max_bytes:
+            message = f"{url}: phản hồi vượt {max_bytes} byte, đã ngắt"
+            raise NetworkError(message)
+        return HttpResponse(status=status, body=payload)
 
     def stream(
         self,
@@ -250,20 +311,3 @@ def _split(url: str) -> tuple[str, str]:
         raise NetworkError(message)
     path = parts.path or "/"
     return parts.netloc, f"{path}?{parts.query}" if parts.query else path
-
-
-def fetch_json(http_client: HttpClient, url: str, *, what: str) -> JsonValue:
-    """Tải một tài liệu JSON và nêu rõ *tài liệu nào* hỏng khi nó hỏng.
-
-    `JSONDecodeError` trần chỉ nói dòng và cột; với ba nguồn JSON khác nhau (danh mục phiên
-    bản, JSON phiên bản, hai tầng manifest bản Java) thì thông báo đó không đủ để lần ra.
-    """
-    payload = http_client.fetch_bytes(url)
-    try:
-        # json.loads khai trả `Any`; ép về JsonValue ngay tại biên để cái `Any` đó không
-        # lan ra khắp nơi dùng sau.
-        document: JsonValue = json.loads(payload)
-    except json.JSONDecodeError as exc:
-        message = f"{what} không phải JSON hợp lệ: {exc}"
-        raise DataFileError(message) from exc
-    return document

@@ -25,6 +25,7 @@ FORBIDDEN_PREFIXES = ("get_", "do_", "handle_", "process_", "manage_")
 NAMES_REQUIRED_BY_STDLIB = frozenset(
     {
         "do_GET",  # http.server.BaseHTTPRequestHandler định tuyến theo đúng tên này
+        "do_POST",  # cùng lý do: tên phương thức chính là tên HTTP method
         "handle_error",  # socketserver.BaseServer gọi đúng tên này khi xử lý request lỗi
     }
 )

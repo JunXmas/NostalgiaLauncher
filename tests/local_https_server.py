@@ -38,6 +38,10 @@ class Route:
     chunk_delay_seconds: float = 0.0
     requests: int = 0
     failures_served: int = 0
+    # Những gì máy chủ NHẬN ĐƯỢC ở lần gọi gần nhất. Cần để kiểm phía gửi: một luồng đăng
+    # nhập sai một trường trong thân request sẽ hỏng theo cách chỉ máy chủ thật mới thấy.
+    received_body: bytes = b""
+    received_headers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -68,6 +72,15 @@ class ServerState:
     def request_count(self, path: str) -> int:
         with self.lock:
             return self.routes[path].requests
+
+    def received_body(self, path: str) -> bytes:
+        """Thân request mà máy chủ nhận được ở lần gọi gần nhất."""
+        with self.lock:
+            return self.routes[path].received_body
+
+    def received_header(self, path: str, name: str) -> str:
+        with self.lock:
+            return self.routes[path].received_headers.get(name, "")
 
 
 def make_certificate(directory: Path) -> tuple[Path, Path]:
@@ -144,9 +157,19 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
+        def do_POST(self) -> None:
+            length = int(self.headers.get("Content-Length") or 0)
+            self._received = self.rfile.read(length) if length else b""
+            self.do_GET()
+
         def do_GET(self) -> None:
             with state.lock:
                 route = state.routes.get(self.path)
+                if route is not None:
+                    # Ghi lại cho MỌI phương thức: header `Authorization` đi kèm GET, còn
+                    # thân đi kèm POST — kiểm phía gửi cần cả hai.
+                    route.received_body = getattr(self, "_received", b"")
+                    route.received_headers = dict(self.headers)
                 if route is None:
                     self.send_error(404)
                     return
