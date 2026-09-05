@@ -125,6 +125,7 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Vé Microsoft (access + refresh) | `tokens` : `MicrosoftTokens` | dataclass | `ms_token` |
 | Vé Xbox kèm user hash | `ticket` : `XboxTicket` | dataclass | `xbl` |
 | Phiên Minecraft sau đăng nhập | `minecraft_session` : `MinecraftSession` | dataclass | `mc_session` |
+| Façade cho giao diện | `launcher` : `Launcher` | dataclass | `app`, `core`, `facade` |
 | Một bản chơi có thư mục riêng | `instance` : `Instance` | dataclass | `profile` (đó là danh tính người chơi) |
 | Mã của bản chơi (một đoạn đường dẫn) | `instance_id` | `str` | `name` trần, `slug` |
 | Lệnh khởi động đã dựng xong | `command` : `LaunchCommand` | dataclass | `cmd` |
