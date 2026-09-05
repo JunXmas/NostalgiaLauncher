@@ -3,7 +3,20 @@
 Trình khởi động Minecraft viết bằng Python. Kho này là **phần lõi**: cài đặt và khởi động game
 từ dòng lệnh, không giao diện.
 
-Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và chỉ gọi qua façade `nostalgia.api`.
+Giao diện sẽ được dựng sau, khi lõi đã đứng vững, và **chỉ** gọi qua façade `nostalgia.api`:
+
+```python
+from nostalgia.api import Launcher
+
+launcher = Launcher.for_environment()
+launcher.install_version("1.20.1", on_progress=print)
+launcher.add_offline_account("Jun")
+game = launcher.launch_instance("vui-ve", "Jun")
+```
+
+Ranh giới đó có **bốn test gác**: façade không được trả `dict` hay đối tượng của thư viện
+chuẩn, mọi cửa vào phải khai kiểu, và khi gói `ui/` xuất hiện thì nó chỉ được import façade
+cùng các dataclass mô hình.
 
 Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một thứ:
 
@@ -61,7 +74,7 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 |---|---|:--:|
 | 19 | Mô hình + kho instance trên đĩa | ✅ |
 | 20 | `instance create/list/remove`, `play <bản chơi>` | ✅ |
-| 21 | Façade `nostalgia/api.py` — ranh giới lõi ↔ giao diện | |
+| 21 | Façade `nostalgia/api.py` — ranh giới lõi ↔ giao diện | ✅ |
 
 > **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
 > Đăng ký app ở [portal.azure.com](https://portal.azure.com) (App registrations → *Personal
