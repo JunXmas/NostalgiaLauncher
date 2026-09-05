@@ -21,6 +21,7 @@ và các dataclass mô hình. Có test gác ở `tests/test_api_boundary.py`.
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -37,7 +38,12 @@ from nostalgia.account.store import (
     upsert_account,
 )
 from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
-from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, sign_in
+from nostalgia.auth.microsoft import (
+    DeviceCodeFn,
+    ignore_device_code,
+    resolve_client_id,
+    sign_in,
+)
 from nostalgia.doctor import Diagnosis, diagnose
 from nostalgia.errors import AccountError, InstanceError
 from nostalgia.install.assets import load_installed_asset_index
@@ -161,16 +167,20 @@ class Launcher:
 
     def add_microsoft_account(
         self,
-        client_id: str,
         *,
+        client_id: str = "",
         on_device_code: DeviceCodeFn = ignore_device_code,
         cancel_token: CancelToken | None = None,
     ) -> Account:
-        """Đăng nhập Microsoft. CHẠM MẠNG, và chờ người dùng nhập mã trên trang của họ."""
+        """Đăng nhập Microsoft. CHẠM MẠNG, và chờ người dùng nhập mã trên trang của họ.
+
+        Không truyền `client_id` thì dùng app đã duyệt của launcher — giao diện không cần
+        biết khái niệm này tồn tại.
+        """
         with self.make_http_client() as http_client:
             login = sign_in(
                 http_client,
-                client_id,
+                client_id or resolve_client_id(os.environ),
                 on_device_code,
                 endpoints=self.auth_endpoints,
                 cancel_token=cancel_token,
@@ -237,7 +247,7 @@ class Launcher:
         with self.make_http_client() as http_client:
             refreshed = refresh_account(
                 http_client,
-                client_id,
+                client_id or resolve_client_id(os.environ),
                 account,
                 now=time.time(),
                 endpoints=self.auth_endpoints,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import time
+import uuid
 
 import pytest
 
@@ -23,7 +24,7 @@ from nostalgia.auth.device_code import (
     poll_for_tokens,
     request_device_code,
 )
-from nostalgia.auth.endpoints import CLIENT_ID_ENV
+from nostalgia.auth.endpoints import CLIENT_ID_ENV, DEFAULT_CLIENT_ID
 from nostalgia.auth.microsoft import resolve_client_id, sign_in, sign_in_again
 from nostalgia.errors import AuthError, Cancelled
 from nostalgia.net.http import HttpClient
@@ -242,9 +243,22 @@ def test_the_device_code_never_shows_up_in_repr() -> None:
     assert USER_CODE in repr(code), "mã người dùng phải đọc được — đó là thứ họ gõ vào"
 
 
-def test_the_missing_client_id_message_says_exactly_what_to_do() -> None:
-    with pytest.raises(AuthError, match=r"portal\.azure\.com"):
-        resolve_client_id({})
-    with pytest.raises(AuthError, match="mce-reviewappid"):
-        resolve_client_id({CLIENT_ID_ENV: "   "})
-    assert resolve_client_id({CLIENT_ID_ENV: " ma-that "}) == "ma-that"
+def test_the_launcher_ships_with_its_own_approved_app() -> None:
+    """Người chơi không phải đăng ký gì cả — đó là điểm của việc nhúng mã ứng dụng.
+
+    Bắt mỗi người tự đăng ký app nghĩa là họ phải chờ Microsoft duyệt tới 24 giờ mới đăng
+    nhập được lần đầu.
+    """
+    assert resolve_client_id({}) == DEFAULT_CLIENT_ID
+    assert uuid.UUID(DEFAULT_CLIENT_ID), "mã ứng dụng phải là UUID hợp lệ"
+
+
+def test_a_fork_can_point_at_its_own_azure_app() -> None:
+    assert resolve_client_id({CLIENT_ID_ENV: "ma-cua-fork"}) == "ma-cua-fork"
+    assert resolve_client_id({CLIENT_ID_ENV: "  ma-co-khoang-trang  "}) == "ma-co-khoang-trang"
+
+
+def test_an_empty_override_falls_back_to_the_built_in_app() -> None:
+    """Biến môi trường đặt rỗng (hay chỉ có khoảng trắng) không được làm hỏng đăng nhập."""
+    assert resolve_client_id({CLIENT_ID_ENV: ""}) == DEFAULT_CLIENT_ID
+    assert resolve_client_id({CLIENT_ID_ENV: "   "}) == DEFAULT_CLIENT_ID

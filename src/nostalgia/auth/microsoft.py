@@ -16,10 +16,14 @@ from nostalgia.auth.device_code import (
     refresh_tokens,
     request_device_code,
 )
-from nostalgia.auth.endpoints import CLIENT_ID_ENV, DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
+from nostalgia.auth.endpoints import (
+    CLIENT_ID_ENV,
+    DEFAULT_AUTH_ENDPOINTS,
+    DEFAULT_CLIENT_ID,
+    AuthEndpoints,
+)
 from nostalgia.auth.minecraft import MinecraftSession, fetch_session, login_with_xbox
 from nostalgia.auth.xbox import XboxTicket, authenticate_xbox_live, authorize_xsts
-from nostalgia.errors import AuthError
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 
@@ -28,14 +32,6 @@ type DeviceCodeFn = Callable[[DeviceCode], None]
 
 def ignore_device_code(_device_code: DeviceCode) -> None:
     """Mặc định: không hiển thị gì. Người gọi nào muốn thấy mã thì truyền hàm của mình vào."""
-
-
-MISSING_CLIENT_ID = (
-    f"chưa có mã ứng dụng Azure. Đăng ký một app ở portal.azure.com "
-    f"(App registrations → Personal Microsoft accounts only → bật Allow public client "
-    f"flows), xin duyệt Minecraft API ở https://aka.ms/mce-reviewappid, rồi đặt biến môi "
-    f"trường {CLIENT_ID_ENV}=<mã ứng dụng>."
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,11 +43,12 @@ class MicrosoftLogin:
 
 
 def resolve_client_id(environ: Mapping[str, str]) -> str:
-    """Lấy mã ứng dụng từ môi trường. Không có thì nói rõ phải làm gì, không nói 'thiếu key'."""
-    client_id = environ.get(CLIENT_ID_ENV, "").strip()
-    if not client_id:
-        raise AuthError(MISSING_CLIENT_ID)
-    return client_id
+    """Mã ứng dụng dùng để đăng nhập.
+
+    Mặc định là app đã duyệt của chính launcher này, nên người chơi **không phải làm gì cả**.
+    Biến môi trường chỉ để ai fork mà muốn dùng app Azure riêng của họ.
+    """
+    return environ.get(CLIENT_ID_ENV, "").strip() or DEFAULT_CLIENT_ID
 
 
 def exchange_for_session(

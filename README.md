@@ -76,11 +76,11 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 | 20 | `instance create/list/remove`, `play <bản chơi>` | ✅ |
 | 21 | Façade `nostalgia/api.py` — ranh giới lõi ↔ giao diện | ✅ |
 
-> **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
-> Đăng ký app ở [portal.azure.com](https://portal.azure.com) (App registrations → *Personal
-> Microsoft accounts only* → bật *Allow public client flows*), xin duyệt Minecraft API ở
-> [aka.ms/mce-reviewappid](https://aka.ms/mce-reviewappid), rồi đặt
-> `NOSTALGIA_MSA_CLIENT_ID=<mã ứng dụng>`.
+> **Đăng nhập Microsoft chạy được ngay, không phải đăng ký gì.** Launcher mang sẵn app Azure
+> đã được Microsoft duyệt. Mã ứng dụng nằm thẳng trong mã nguồn và điều đó đúng chuẩn: luồng
+> device-code dùng *public client*, theo thiết kế **không có client secret**, nên mã ứng dụng
+> là định danh công khai chứ không phải bí mật (PrismLauncher, MultiMC cũng nhúng như vậy).
+> Ai fork mà muốn dùng app riêng thì đặt `NOSTALGIA_MSA_CLIENT_ID`.
 
 ## Cây thư mục
 
