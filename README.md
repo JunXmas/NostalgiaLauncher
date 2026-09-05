@@ -19,9 +19,10 @@ Một cái tên, ba chỗ dùng — không có tên thứ hai cho cùng một th
 
 ```bash
 uv run nostalgia account add-offline Jun     # hoặc: account add-microsoft
-uv run nostalgia install 1.20.1          # 3.629 file, 732 MB, 50 giây
-uv run nostalgia doctor  1.20.1          # đủ (3.648 mục đã soi)
-uv run nostalgia play    1.20.1 --account Jun
+uv run nostalgia install 1.20.1                      # 3.629 file, 732 MB, 50 giây
+uv run nostalgia doctor  1.20.1                      # đủ (3.648 mục đã soi)
+uv run nostalgia instance create vui-ve --version 1.20.1
+uv run nostalgia play vui-ve --account Jun
 ```
 
 Đã chạy thật, không phải mô phỏng: cửa sổ Minecraft 1.20.1 và 1.8.9 đều hiện lên (ảnh chụp
@@ -54,6 +55,14 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 | 17 | Lưu vé làm mới, tự làm mới khi hết hạn | ✅ |
 | 18 | `account add-microsoft` và `play` với tài khoản thật | ✅ |
 
+**M3 — bản chơi (instance)**:
+
+| Bước | Nội dung | Xong |
+|---|---|:--:|
+| 19 | Mô hình + kho instance trên đĩa | ✅ |
+| 20 | `instance create/list/remove`, `play <bản chơi>` | ✅ |
+| 21 | Façade `nostalgia/api.py` — ranh giới lõi ↔ giao diện | |
+
 > **Đăng nhập Microsoft cần mã ứng dụng Azure của riêng bạn.** Kho này không nhúng mã nào.
 > Đăng ký app ở [portal.azure.com](https://portal.azure.com) (App registrations → *Personal
 > Microsoft accounts only* → bật *Allow public client flows*), xin duyệt Minecraft API ở
@@ -79,9 +88,11 @@ src/nostalgia/
   launch/              dựng lệnh java + chạy/dừng tiến trình game
   doctor.py            soi bản cài bằng chính kế hoạch của install/
   auth/                đăng nhập Microsoft: bốn chặng, không nhúng mã ứng dụng nào
+  instance/            bản chơi: thư mục riêng, kho tải dùng chung
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
   net/                 mạng: http.py (http.client) + download.py (tải song song)
   auth/                đăng nhập Microsoft: bốn chặng, không nhúng mã ứng dụng nào
+  instance/            bản chơi: thư mục riêng, kho tải dùng chung
   cli/                 dòng lệnh — tầng duy nhất được in ra màn hình
 tests/                 soi gương cây trên; test soi cả kho nằm ở gốc tests/
 bench/                 script đo hiệu năng, không phải test

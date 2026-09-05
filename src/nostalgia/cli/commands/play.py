@@ -13,7 +13,9 @@ if TYPE_CHECKING:
 
     from nostalgia.account.model import Account
     from nostalgia.cli.context import CliContext
+    from nostalgia.instance.model import Instance
     from nostalgia.launch.command import LaunchCommand
+    from nostalgia.launch.tuning import JvmTuning
     from nostalgia.version.meta import VersionMeta
 
 
@@ -24,11 +26,13 @@ WAIT_TICK_SECONDS = 0.2
 
 
 def add_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    parser = subparsers.add_parser("play", help="khởi động game")
-    parser.add_argument("version_id", help="mã phiên bản, ví dụ 1.20.1")
+    parser = subparsers.add_parser("play", help="khởi động một bản chơi")
+    parser.add_argument("instance_id", help="mã bản chơi, xem `nostalgia instance list`")
     parser.add_argument("--account", required=True, help="tên tài khoản đã lưu")
-    parser.add_argument("--game-dir", help="thư mục chạy game (mặc định: <data>/game/<bản>)")
-    parser.add_argument("--max-memory", type=int, default=None, help="bộ nhớ tối đa, tính bằng MB")
+    parser.add_argument("--game-dir", help="thư mục chạy game (mặc định: thư mục của bản chơi)")
+    parser.add_argument(
+        "--max-memory", type=int, default=None, help="bộ nhớ tối đa, tính MB (đè lên bản chơi)"
+    )
     parser.add_argument("--width", type=int, default=None, help="chiều rộng cửa sổ")
     parser.add_argument("--height", type=int, default=None, help="chiều cao cửa sổ")
     parser.add_argument("--demo", action="store_true", help="chạy chế độ dùng thử")
@@ -50,7 +54,6 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
     from nostalgia.install.assets import load_installed_asset_index
     from nostalgia.launch.command import LaunchOptions, build_launch_command
     from nostalgia.launch.runner import resolve_installed_java_binary
-    from nostalgia.launch.tuning import JvmTuning
     from nostalgia.repo.version_repo import VersionRepository
 
     account = find_account(load_accounts(context.paths.accounts_json), arguments.account)
@@ -59,10 +62,16 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
         return 1
     account = _refresh_if_needed(account, context)
 
+    instance = _load_instance(arguments.instance_id, context)
+    if instance is None:
+        return 1
+    version_id = instance.version_id
+
     repository = VersionRepository(context.paths)
-    version_id = arguments.version_id
     if not repository.is_installed(version_id):
-        fail(f"chưa cài {version_id} — chạy `nostalgia install {version_id}`")
+        fail(
+            f"bản chơi {instance.label!r} cần {version_id} — chạy `nostalgia install {version_id}`"
+        )
         return 1
     version_meta = repository.load_version_meta(version_id)
 
@@ -85,7 +94,9 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
         return 1
 
     game_dir = (
-        Path(arguments.game_dir) if arguments.game_dir else _default_game_dir(context, version_id)
+        Path(arguments.game_dir)
+        if arguments.game_dir
+        else context.paths.instance_dir(instance.instance_id)
     )
     command = build_launch_command(
         version_meta,
@@ -95,11 +106,12 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
         java_binary,
         LaunchOptions(
             game_dir=game_dir,
-            window_width=arguments.width,
-            window_height=arguments.height,
+            # Cờ dòng lệnh đè lên cấu hình bản chơi: người dùng gõ nó cho ĐÚNG lần chạy này.
+            window_width=arguments.width or instance.window_width,
+            window_height=arguments.height or instance.window_height,
             is_demo=arguments.demo,
         ),
-        tuning=JvmTuning(max_heap_megabytes=arguments.max_memory) if arguments.max_memory else None,
+        tuning=_resolve_tuning(arguments, instance),
         virtual_assets_dir=_virtual_assets_dir(version_meta, context),
     )
 
@@ -107,7 +119,7 @@ def run(arguments: argparse.Namespace, context: CliContext) -> int:
         say(" ".join(command.masked_argv()))
         return 0
 
-    return _run_game(command, context, account.player_name, version_id)
+    return _run_game(command, context, account.player_name, instance.label)
 
 
 def _run_game(
@@ -134,6 +146,35 @@ def _run_game(
     say("đang dừng game...")
     game.stop()
     return CANCELLED_EXIT_CODE
+
+
+def _load_instance(instance_id: str, context: CliContext) -> Instance | None:
+    """Đọc bản chơi, và khi không có thì đoán xem người dùng đang nhầm điều gì."""
+    from nostalgia.cli.output import fail
+    from nostalgia.errors import InstanceError
+    from nostalgia.instance.store import load_instance
+    from nostalgia.repo.version_repo import VersionRepository
+
+    try:
+        return load_instance(context.paths, instance_id)
+    except InstanceError as error:
+        fail(str(error))
+        # Người quen mốc M1 hay gõ thẳng mã phiên bản. Nói đúng lệnh cần gõ thay vì bắt họ
+        # đi tìm trong trợ giúp.
+        if VersionRepository(context.paths).is_installed(instance_id):
+            fail(
+                f"{instance_id!r} là một phiên bản đã cài, không phải bản chơi. Tạo bằng: "
+                f"nostalgia instance create {instance_id} --version {instance_id}"
+            )
+        return None
+
+
+def _resolve_tuning(arguments: argparse.Namespace, instance: Instance) -> JvmTuning | None:
+    """Cờ dòng lệnh đè lên cấu hình bản chơi; không có cái nào thì để mặc định của lõi."""
+    from nostalgia.launch.tuning import JvmTuning
+
+    max_heap = arguments.max_memory or instance.max_heap_megabytes
+    return JvmTuning(max_heap_megabytes=max_heap) if max_heap else None
 
 
 def _refresh_if_needed(account: Account, context: CliContext) -> Account:
@@ -178,11 +219,6 @@ def _refresh_if_needed(account: Account, context: CliContext) -> Account:
 
 def _drop(_line: str) -> None:
     """Chế độ im lặng: vẫn phải đọc ống, nếu không game sẽ nghẽn khi bộ đệm đầy."""
-
-
-def _default_game_dir(context: CliContext, version_id: str) -> Path:
-    """Mỗi phiên bản một thư mục chạy riêng: trộn chung là bản mới ăn thế giới của bản cũ."""
-    return context.paths.data_dir / "game" / version_id
 
 
 def _virtual_assets_dir(version_meta: VersionMeta, context: CliContext) -> Path | None:

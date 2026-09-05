@@ -11,8 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from cli_fixture import install_fake_version, make_paths, roots
-from fake_mojang import VERSION_ID
+from cli_fixture import INSTANCE_ID, install_and_create_instance, make_paths, roots
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import MICROSOFT, Account
 from nostalgia.account.store import find_account, load_accounts, save_accounts
@@ -128,7 +127,7 @@ def test_playing_refreshes_a_stale_token_and_saves_the_new_one(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    install_fake_version(server, server_state, http_client, tmp_path)
+    install_and_create_instance(server, server_state, http_client, tmp_path)
     save_stale_account(tmp_path)
     monkeypatch.setenv(CLIENT_ID_ENV, "ma-ung-dung")
 
@@ -154,7 +153,7 @@ def test_playing_refreshes_a_stale_token_and_saves_the_new_one(
     monkeypatch.setattr(account_microsoft, "refresh_account", fake_refresh)
     capsys.readouterr()
 
-    assert main([*roots(tmp_path), "play", VERSION_ID, "--account", "Notch"]) == 0
+    assert main([*roots(tmp_path), "play", INSTANCE_ID, "--account", "Notch"]) == 0
 
     assert "đang làm mới" in capsys.readouterr().out
     saved = find_account(load_accounts(make_paths(tmp_path).accounts_json), "Notch")
@@ -172,7 +171,7 @@ def test_playing_without_network_warns_but_still_tries(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Mất mạng chưa chắc vé đã hỏng — chơi một mình thì thường vẫn vào được."""
-    install_fake_version(server, server_state, http_client, tmp_path)
+    install_and_create_instance(server, server_state, http_client, tmp_path)
     save_stale_account(tmp_path)
     monkeypatch.setenv(CLIENT_ID_ENV, "ma-ung-dung")
 
@@ -185,7 +184,7 @@ def test_playing_without_network_warns_but_still_tries(
     monkeypatch.setattr(account_microsoft, "refresh_account", explode)
     capsys.readouterr()
 
-    assert main([*roots(tmp_path), "play", VERSION_ID, "--account", "Notch"]) == 0
+    assert main([*roots(tmp_path), "play", INSTANCE_ID, "--account", "Notch"]) == 0
 
     assert "không làm mới được vé" in capsys.readouterr().err
 
@@ -199,7 +198,7 @@ def test_a_dead_refresh_token_stops_the_launch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Khác hẳn mất mạng: vé chết là dứt khoát, để Minecraft báo hộ thì khó hiểu hơn nhiều."""
-    install_fake_version(server, server_state, http_client, tmp_path)
+    install_and_create_instance(server, server_state, http_client, tmp_path)
     save_stale_account(tmp_path)
     monkeypatch.setenv(CLIENT_ID_ENV, "ma-ung-dung")
 
@@ -214,7 +213,7 @@ def test_a_dead_refresh_token_stops_the_launch(
     monkeypatch.setattr(account_microsoft, "refresh_account", explode)
     capsys.readouterr()
 
-    assert main([*roots(tmp_path), "play", VERSION_ID, "--account", "Notch"]) == 1
+    assert main([*roots(tmp_path), "play", INSTANCE_ID, "--account", "Notch"]) == 1
     assert "đăng nhập lại" in capsys.readouterr().err
 
 
@@ -225,9 +224,9 @@ def test_an_offline_account_never_triggers_a_refresh(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    install_fake_version(server, server_state, http_client, tmp_path)
+    install_and_create_instance(server, server_state, http_client, tmp_path)
     main([*roots(tmp_path), "account", "add-offline", "Jun"])
     capsys.readouterr()
 
-    assert main([*roots(tmp_path), "play", VERSION_ID, "--account", "Jun"]) == 0
+    assert main([*roots(tmp_path), "play", INSTANCE_ID, "--account", "Jun"]) == 0
     assert "làm mới" not in capsys.readouterr().out

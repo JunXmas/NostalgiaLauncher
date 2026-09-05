@@ -10,6 +10,8 @@ from pathlib import Path
 
 from fake_mojang import VERSION_ID, publish
 from local_https_server import LocalHttpsServer, ServerState
+from nostalgia.instance.model import Instance
+from nostalgia.instance.store import create_instance
 from nostalgia.launch.runner import install_version
 from nostalgia.net.http import HttpClient
 from nostalgia.storage.paths import DataPaths
@@ -37,6 +39,21 @@ def install_fake_version(
         LINUX,
         endpoints=publish(server, server_state),
     )
+
+
+INSTANCE_ID = "ban-thu"
+
+
+def create_fake_instance(tmp_path: Path, instance_id: str = INSTANCE_ID) -> None:
+    """Tạo bản chơi trỏ vào phiên bản giả — `play` nay nhận bản chơi, không nhận phiên bản."""
+    create_instance(make_paths(tmp_path), Instance(instance_id=instance_id, version_id=VERSION_ID))
+
+
+def install_and_create_instance(
+    server: LocalHttpsServer, server_state: ServerState, http_client: HttpClient, tmp_path: Path
+) -> None:
+    install_fake_version(server, server_state, http_client, tmp_path)
+    create_fake_instance(tmp_path)
 
 
 def fake_java_binary(tmp_path: Path) -> Path:
