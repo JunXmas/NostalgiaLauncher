@@ -19,7 +19,7 @@ from nostalgia.account.store import find_account, load_accounts, save_accounts
 from nostalgia.auth import microsoft as auth_microsoft
 from nostalgia.auth.device_code import DeviceCode, MicrosoftTokens
 from nostalgia.auth.endpoints import CLIENT_ID_ENV
-from nostalgia.auth.microsoft import MicrosoftLogin
+from nostalgia.auth.microsoft import DeviceCodeFn, MicrosoftLogin, ignore_device_code
 from nostalgia.auth.minecraft import MinecraftSession
 from nostalgia.cli.main import main
 from nostalgia.errors import NetworkError
@@ -60,15 +60,19 @@ def test_signing_in_shows_the_code_and_saves_the_account(
     monkeypatch.setenv(CLIENT_ID_ENV, "ma-ung-dung")
     shown: list[DeviceCode] = []
 
-    def fake_sign_in(_client, _client_id, on_device_code=None, **_kwargs):
+    def fake_sign_in(
+        _http_client: HttpClient,
+        _client_id: str,
+        on_device_code: DeviceCodeFn = ignore_device_code,
+        **_kwargs: object,
+    ) -> MicrosoftLogin:
         device_code = DeviceCode(
             user_code="ABCD-EFGH",
             verification_url="https://microsoft.com/link",
             device_code="bi-mat",
         )
         shown.append(device_code)
-        if on_device_code is not None:
-            on_device_code(device_code)
+        on_device_code(device_code)
         return make_login()
 
     monkeypatch.setattr(auth_microsoft, "sign_in", fake_sign_in)
@@ -128,7 +132,14 @@ def test_playing_refreshes_a_stale_token_and_saves_the_new_one(
     save_stale_account(tmp_path)
     monkeypatch.setenv(CLIENT_ID_ENV, "ma-ung-dung")
 
-    def fake_refresh(_client, _client_id, account, *, now, **_kwargs):
+    def fake_refresh(
+        _http_client: HttpClient,
+        _client_id: str,
+        account: Account,
+        *,
+        now: float,
+        **_kwargs: object,
+    ) -> Account:
         return Account(
             player_name=account.player_name,
             player_uuid=account.player_uuid,
