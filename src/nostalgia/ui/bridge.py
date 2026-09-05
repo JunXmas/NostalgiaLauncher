@@ -63,6 +63,11 @@ class LauncherBridge(QObject):
             for account in self._launcher.list_accounts()
         ]
 
+    @Property(list, notify=instancesChanged)
+    def installedVersions(self) -> list[str]:
+        """Các phiên bản đã tải về máy. Đọc đĩa, không chạm mạng."""
+        return list(self._launcher.list_installed_versions())
+
     @Property(bool, notify=busyChanged)
     def busy(self) -> bool:
         return self._busy

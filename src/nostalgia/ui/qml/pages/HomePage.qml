@@ -7,6 +7,7 @@ Item {
     id: page
     property bool gameRunning: false
     property string search: ""
+    signal navigate(int pageIndex)
 
     function visibleInstances() {
         if (!page.search) return bridge.instances;
@@ -35,9 +36,11 @@ Item {
 
             HeroPanel {
                 width: parent.width
-                height: 300
+                height: 430
                 instanceCount: bridge.instances.length
+                versionCount: bridge.installedVersions.length
                 gameRunning: page.gameRunning
+                onNavigate: function (pageIndex) { page.navigate(pageIndex); }
 
                 Column {
                     anchors { left: parent.left; bottom: playRow.top; margins: 28; bottomMargin: 20 }

@@ -14,6 +14,7 @@ Item {
 
     Sidebar {
         id: sidebar
+        objectName: "sidebar"
         width: 232
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.accounts.length > 0 ? bridge.accounts[0].playerName : ""
@@ -31,6 +32,13 @@ Item {
             source: content.pageFor(sidebar.currentIndex)
             opacity: 0
             onLoaded: fadeIn.restart()
+
+            // Thẻ trên hero bấm được: chúng đổi trang y như bấm ở thanh bên.
+            Connections {
+                target: pageLoader.item
+                ignoreUnknownSignals: true
+                function onNavigate(pageIndex) { sidebar.currentIndex = pageIndex; }
+            }
 
             NumberAnimation on opacity {
                 id: fadeIn

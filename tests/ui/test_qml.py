@@ -88,3 +88,43 @@ def test_nothing_is_busy_before_anything_starts(tmp_path: Path) -> None:
 
     assert bridge.busy is False
     assert bridge.progressFraction == 0.0
+
+
+def find_hero_cards(view: QQuickView) -> list[object]:
+    from PySide6.QtCore import QObject
+
+    root_item = view.rootObject()
+    assert root_item is not None
+    return list(root_item.findChildren(QObject, "heroCard"))
+
+
+def test_every_card_on_the_hero_points_at_a_real_page(tmp_path: Path) -> None:
+    """Các thẻ nổi phải bấm được thật, và mỗi thẻ phải dẫn tới ĐÚNG trang của nó.
+
+    Chỉ kiểm "bấm xong có gì đó xảy ra" là chưa đủ: một thẻ dẫn nhầm trang vẫn qua được kiểu
+    kiểm đó. Ở đây đọc thẳng đích của từng thẻ.
+    """
+    view, _bridge = build_view(make_launcher(tmp_path))
+    cards = find_hero_cards(view)
+
+    assert len(cards) == 6, "bản mẫu có sáu thẻ nổi"
+    targets = sorted(card.property("pageIndex") for card in cards)
+    assert targets == [1, 2, 3, 4, 5, 6], "sáu thẻ phải dẫn tới sáu trang khác nhau"
+    assert all(card.property("title") for card in cards), "thẻ nào cũng phải có nhãn"
+
+
+def test_activating_a_card_actually_changes_the_page(tmp_path: Path) -> None:
+    """Bấm thẻ phải đổi trang y như bấm ở thanh bên — nếu không thì nó chỉ là hình trang trí."""
+    from PySide6.QtCore import QObject
+
+    view, _bridge = build_view(make_launcher(tmp_path))
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None, "không tìm thấy thanh bên"
+
+    cards = find_hero_cards(view)
+    multiplayer = next(card for card in cards if card.property("pageIndex") == 5)
+    multiplayer.activated.emit()
+
+    assert sidebar.property("currentIndex") == 5
