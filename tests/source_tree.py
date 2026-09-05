@@ -41,6 +41,7 @@ LAYERS: dict[str, int] = {
     "auth": 3,  # giao thức đăng nhập: cần net/, chưa biết gì về kho tài khoản
     "repo": 3,
     "install": 3,
+    "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
     "account": 4,
     "launch": 4,

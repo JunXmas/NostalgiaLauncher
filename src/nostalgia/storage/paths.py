@@ -64,6 +64,7 @@ class DataPaths:
     asset_indexes_dir: Path = field(init=False)
     asset_objects_dir: Path = field(init=False)
     runtime_dir: Path = field(init=False)
+    instances_dir: Path = field(init=False)
     # Kho tài khoản nằm ở `config_dir`, KHÔNG ở `data_dir`: xoá dữ liệu game để lấy chỗ
     # trống thì không được mất tài khoản theo.
     accounts_json: Path = field(init=False)
@@ -84,6 +85,7 @@ class DataPaths:
             ("asset_indexes_dir", assets_dir / "indexes"),
             ("asset_objects_dir", assets_dir / "objects"),
             ("runtime_dir", self.data_dir / "runtime"),
+            ("instances_dir", self.data_dir / "instances"),
             ("accounts_json", self.config_dir / "accounts.json"),
         ):
             object.__setattr__(self, name, value)
@@ -97,6 +99,19 @@ class DataPaths:
 
     def version_jar(self, version_id: str) -> Path:
         return resolve_child(self.version_dir(version_id), f"{version_id}.jar")
+
+    def instance_dir(self, instance_id: str) -> Path:
+        """Thư mục chơi của một instance. Mã instance do người dùng gõ nên phải kiểm.
+
+        Nằm trong `data_dir` chứ không nằm cạnh kho tải: thế giới, tuỳ chọn và ảnh chụp là
+        dữ liệu của người chơi, còn `versions/`, `libraries/`, `assets/`, `runtime/` là kho
+        dùng chung mà mọi instance chia nhau — chép chúng cho từng instance là nhân 700 MB
+        lên theo số bản chơi.
+        """
+        return resolve_child(self.instances_dir, instance_id)
+
+    def instance_json(self, instance_id: str) -> Path:
+        return resolve_child(self.instance_dir(instance_id), "instance.json")
 
     def natives_dir(self, version_id: str) -> Path:
         return self.version_dir(version_id) / "natives"
