@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from nostalgia.operations.cancellation import CancelToken
 
 from nostalgia import __version__
-from nostalgia.cli.commands import account, doctor, install, play, version
+from nostalgia.cli.commands import account, doctor, install, instance, play, version
 
 if TYPE_CHECKING:
     pass
@@ -45,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-q", "--quiet", action="store_true", help="không in tiến độ và log game")
 
     subparsers = parser.add_subparsers(dest="command")
-    for module in (version, install, doctor, account, play):
+    for module in (version, install, doctor, account, instance, play):
         module.add_parser(subparsers)
     return parser
 

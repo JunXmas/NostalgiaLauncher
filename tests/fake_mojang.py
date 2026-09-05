@@ -66,7 +66,21 @@ def publish(server: LocalHttpsServer, state: ServerState) -> Endpoints:
         "type": "release",
         "mainClass": "net.minecraft.client.main.Main",
         "assets": "kt",
-        "minecraftArguments": "--username ${auth_player_name} --gameDir ${game_directory}",
+        # Dùng định dạng tham số ĐỜI MỚI, kèm khối phụ thuộc cờ tính năng đúng như Mojang
+        # khai ở 1.20.1 — nhờ vậy đường "chỉ thêm --width khi người dùng đặt kích thước" được
+        # đi qua thật, chứ không chỉ được kiểm bằng fixture tĩnh.
+        "arguments": {
+            "game": [
+                "--username",
+                "${auth_player_name}",
+                "--gameDir",
+                "${game_directory}",
+                {
+                    "rules": [{"action": "allow", "features": {"has_custom_resolution": True}}],
+                    "value": ["--width", "${resolution_width}", "--height", "${resolution_height}"],
+                },
+            ]
+        },
         "javaVersion": {"component": JAVA_COMPONENT, "majorVersion": 8},
         "assetIndex": {"id": "kt", **remote(server.url("/objects/asset-index"), asset_index_body)},
         "downloads": {"client": remote(server.url("/objects/client"), CLIENT_BODY)},
