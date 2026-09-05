@@ -61,7 +61,10 @@ def test_core_never_prints() -> None:
     problems = [
         f"{module_name(path)}:{node.lineno}"
         for path in SOURCE_FILES
-        if not module_name(path).startswith("cli")
+        # `ui/app.py` cũng được: khi QML không nạp nổi, cửa sổ không mở ra, và stderr là
+        # kênh duy nhất còn lại để nói cho người dùng biết vì sao. Chỉ ĐÚNG file điểm vào,
+        # không phải cả gói ui/ — một `print` lạc trong phần vẽ vẫn là lỗi.
+        if module_name(path) not in {"ui/app"} and not module_name(path).startswith("cli")
         for node in ast.walk(parse(path))
         if isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)

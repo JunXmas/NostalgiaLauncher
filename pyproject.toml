@@ -8,8 +8,15 @@ requires-python = ">=3.12"
 # docs/PERFORMANCE.md §2 để biết vì sao (nhanh hơn requests 1,5x khi song song, nạp rẻ hơn).
 dependencies = []
 
+# Giao diện là TUỲ CHỌN. Lõi và dòng lệnh vẫn chạy với đúng thư viện chuẩn; ai muốn cửa sổ
+# thì `uv sync --extra ui`. Giữ như vậy để tính chất "không phụ thuộc runtime" của lõi không
+# bị một thư viện 100 MB xoá sổ chỉ vì có thêm giao diện.
+[project.optional-dependencies]
+ui = ["PySide6-Essentials>=6.7"]
+
 [project.scripts]
 nostalgia = "nostalgia.cli.main:main"
+nostalgia-ui = "nostalgia.ui.app:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -51,3 +58,11 @@ files = ["src", "tests", "bench"]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
+
+# Nhượng bộ DUY NHẤT, và có lý do cụ thể: decorator `@Property` của PySide6 trả về một đối
+# tượng `Property` chứ không phải giá trị, nên mypy đọc `bridge.instances` thành `Property`
+# thay vì `list`. Đây là hạn chế của phần khai kiểu PySide6, không phải chỗ ta viết ẩu — nên
+# chỉ tắt đúng những mã lỗi phát sinh từ nó, và chỉ ở test của tầng giao diện.
+[[tool.mypy.overrides]]
+module = "test_qml"
+disable_error_code = ["comparison-overlap", "attr-defined", "index", "unreachable", "return-value"]

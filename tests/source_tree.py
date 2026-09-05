@@ -48,6 +48,7 @@ LAYERS: dict[str, int] = {
     "doctor": 4,
     "api": 5,
     "cli": 6,
+    "ui": 6,  # cùng tầng trình bày với cli/, và chỉ được đi qua api.py
     "config": 6,
 }
 

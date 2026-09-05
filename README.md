@@ -68,6 +68,17 @@ Sau M1, đang làm **M2 — đăng nhập Microsoft**:
 | 17 | Lưu vé làm mới, tự làm mới khi hết hạn | ✅ |
 | 18 | `account add-microsoft` và `play` với tài khoản thật | ✅ |
 
+**M6 — giao diện** (đang làm, theo bản mẫu chủ dự án đưa):
+
+| Bước | Nội dung | Xong |
+|---|---|:--:|
+| 23 | Khung Qt/QML: thanh bên, hệ màu, trang chủ, hoạt ảnh | ✅ |
+| 24 | Trang Bản chơi, Cài đặt, Tài khoản | |
+| 25 | Chơi chung (thiết kế bảo mật trước) | |
+
+Giao diện là **phụ thuộc tuỳ chọn** — `uv sync --extra ui` rồi `uv run nostalgia-ui`. Lõi và
+dòng lệnh vẫn chạy với đúng thư viện chuẩn.
+
 **M3 — bản chơi (instance)**:
 
 | Bước | Nội dung | Xong |

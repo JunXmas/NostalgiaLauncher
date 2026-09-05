@@ -281,6 +281,10 @@ src/nostalgia/
     runner.py                        nối các mảnh: cài đủ rồi tìm java đã cài
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
+  ui/                            L6  giao diện Qt/QML
+    bridge.py                        FILE DUY NHẤT trong ui/ chạm vào api.py
+    app.py                           điểm vào, cố tình mỏng
+    qml/                             cách vẽ; Theme.qml giữ toàn bộ màu và nhịp hoạt ảnh
   cli/                           L6  tầng DUY NHẤT được print()
   config.py                      L6  chỉ cli/ được đọc
 ```

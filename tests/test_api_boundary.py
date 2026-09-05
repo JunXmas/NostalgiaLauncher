@@ -12,8 +12,10 @@ import pytest
 
 from source_tree import SOURCE_FILES, imported_modules, module_name, parse
 
-# Giao diện chỉ được đi qua đúng những cửa này.
+# Giao diện chỉ được đi qua đúng những cửa này. Ý định của luật là chặn giao diện thò tay
+# vào RUỘT của lõi — nên module của chính nó và số phiên bản của gói thì đương nhiên được.
 ALLOWED_FOR_USER_INTERFACE = (
+    "nostalgia.ui",
     "nostalgia.api",
     "nostalgia.errors",
     "nostalgia.operations.progress",
@@ -77,7 +79,7 @@ def test_a_future_user_interface_may_only_import_the_facade() -> None:
     problems = []
     for path in ui_files:
         for imported in imported_modules(path):
-            dotted = "nostalgia." + imported.replace("/", ".")
-            if not dotted.startswith(ALLOWED_FOR_USER_INTERFACE):
+            dotted = "nostalgia." + imported.replace("/", ".") if imported else "nostalgia"
+            if dotted != "nostalgia" and not dotted.startswith(ALLOWED_FOR_USER_INTERFACE):
                 problems.append(f"{module_name(path)} import {dotted}")
     assert not problems, "giao diện chỉ được import façade và mô hình:\n" + "\n".join(problems)
