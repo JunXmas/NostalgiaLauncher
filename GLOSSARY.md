@@ -125,6 +125,8 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Vé Microsoft (access + refresh) | `tokens` : `MicrosoftTokens` | dataclass | `ms_token` |
 | Vé Xbox kèm user hash | `ticket` : `XboxTicket` | dataclass | `xbl` |
 | Phiên Minecraft sau đăng nhập | `minecraft_session` : `MinecraftSession` | dataclass | `mc_session` |
+| Một bản chơi có thư mục riêng | `instance` : `Instance` | dataclass | `profile` (đó là danh tính người chơi) |
+| Mã của bản chơi (một đoạn đường dẫn) | `instance_id` | `str` | `name` trần, `slug` |
 | Lệnh khởi động đã dựng xong | `command` : `LaunchCommand` | dataclass | `cmd` |
 | Lựa chọn cho một lần khởi động | `options` : `LaunchOptions` | dataclass | `opts` |
 | Cờ bộ nhớ máy ảo Java | `tuning` : `JvmTuning` | dataclass | `memory`, `jvm_opts` |
@@ -252,6 +254,9 @@ src/nostalgia/
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
     version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
+  instance/                      L3  bản chơi: thư mục riêng, kho tải dùng chung
+    model.py                         Instance + luật đặt mã (một đoạn đường dẫn)
+    store.py                         mỗi bản chơi một instance.json trong thư mục của nó
   install/                       L3  CHỈ lập kế hoạch, không tự tải
     client.py, library.py            (bước 6)
     natives.py                       giải nén, LÀM PHẲNG vì JVM không tìm đệ quy

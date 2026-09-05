@@ -53,3 +53,7 @@ class AccountError(NostalgiaError):
 
 class AuthError(NostalgiaError):
     """Đăng nhập thất bại: máy chủ từ chối, hết hạn, hoặc cần người dùng làm một việc gì đó."""
+
+
+class InstanceError(NostalgiaError):
+    """Instance không hợp lệ, không tìm thấy, hoặc đã tồn tại."""

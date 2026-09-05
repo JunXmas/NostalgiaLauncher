@@ -5,9 +5,11 @@ from __future__ import annotations
 import ast
 import subprocess
 import sys
+from pathlib import Path
 
 from source_tree import (
     ALL_FILES,
+    REPOSITORY_ROOT,
     SOURCE_FILES,
     banned_names_from_glossary,
     code_line_count,
@@ -93,6 +95,23 @@ def test_naming_follows_the_glossary() -> None:
             elif isinstance(node, ast.Name) and node.id in allowed_here:
                 problems.append(f"{path.name}:{node.lineno}: tên {node.id}")
     assert not problems, "trái GLOSSARY.md §2:\n" + "\n".join(problems)
+
+
+def test_no_two_test_files_share_a_basename() -> None:
+    """pytest không thu thập được hai file test trùng tên cơ sở khi không có `__init__.py`.
+
+    Nó báo "import file mismatch" và **dừng toàn bộ lượt chạy**, nên một file mới đặt trùng
+    tên sẽ làm CI đỏ theo cách chẳng liên quan gì tới nội dung file đó. Đã trả giá với
+    `tests/account/test_store.py` và `tests/instance/test_store.py`.
+    """
+    seen: dict[str, Path] = {}
+    clashes = []
+    for path in sorted(REPOSITORY_ROOT.glob("tests/**/test_*.py")):
+        earlier = seen.get(path.name)
+        if earlier is not None:
+            clashes.append(f"{earlier} và {path}")
+        seen[path.name] = path
+    assert not clashes, "hai file test trùng tên cơ sở:\n" + "\n".join(clashes)
 
 
 def test_files_stay_short() -> None:
