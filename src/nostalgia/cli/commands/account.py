@@ -20,6 +20,11 @@ def add_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) 
     add_offline.add_argument("player_name", help="tên trong game, 3-16 ký tự")
     add_offline.set_defaults(run=run_add_offline)
 
+    add_microsoft = actions.add_parser(
+        "add-microsoft", help="đăng nhập bằng tài khoản Microsoft (cần mã ứng dụng Azure)"
+    )
+    add_microsoft.set_defaults(run=run_add_microsoft)
+
     actions.add_parser("list", help="liệt kê tài khoản đã lưu").set_defaults(run=run_list)
 
     remove = actions.add_parser("remove", help="xoá một tài khoản")
@@ -38,6 +43,37 @@ def run_add_offline(arguments: argparse.Namespace, context: CliContext) -> int:
     accounts = load_accounts(context.paths.accounts_json)
     save_accounts(context.paths.accounts_json, upsert_account(accounts, account))
     say(f"đã thêm {account.player_name} ({account.player_uuid})")
+    return 0
+
+
+def run_add_microsoft(_arguments: argparse.Namespace, context: CliContext) -> int:
+    """Đăng nhập bằng device code: in mã ra rồi chờ người dùng nhập trên trang của Microsoft."""
+    import os
+    import time
+
+    from nostalgia.account.microsoft import build_microsoft_account
+    from nostalgia.account.store import load_accounts, save_accounts, upsert_account
+    from nostalgia.auth.device_code import DeviceCode
+    from nostalgia.auth.microsoft import resolve_client_id, sign_in
+    from nostalgia.cli.output import say
+    from nostalgia.net.http import HttpClient
+
+    client_id = resolve_client_id(os.environ)
+
+    def show(device_code: DeviceCode) -> None:
+        say(f"Mở {device_code.verification_url} rồi nhập mã: {device_code.user_code}")
+        say("Đang chờ bạn đăng nhập... (Ctrl+C để dừng)")
+
+    with HttpClient() as http_client:
+        login = sign_in(http_client, client_id, show, cancel_token=context.cancel_token)
+    account = build_microsoft_account(login, now=time.time())
+
+    accounts = load_accounts(context.paths.accounts_json)
+    save_accounts(context.paths.accounts_json, upsert_account(accounts, account))
+    if not login.minecraft_session.owns_game:
+        say(f"đã thêm {account.player_name} — tài khoản này CHƯA MUA game, chỉ chơi được bản thử")
+    else:
+        say(f"đã thêm {account.player_name} ({account.player_uuid})")
     return 0
 
 

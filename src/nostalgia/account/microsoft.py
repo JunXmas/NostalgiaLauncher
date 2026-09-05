@@ -11,6 +11,7 @@ chỉ kiểm được bằng cách vá đồng hồ toàn cục — thứ để 
 from __future__ import annotations
 
 from nostalgia.account.model import MICROSOFT, Account
+from nostalgia.account.offline import offline_uuid
 from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
 from nostalgia.auth.microsoft import MicrosoftLogin, sign_in_again
 from nostalgia.errors import AuthError
@@ -29,11 +30,18 @@ def build_microsoft_account(login: MicrosoftLogin, *, now: float) -> Account:
 
     Tài khoản chưa mua game vẫn lưu được: người chơi vẫn vào được bản dùng thử, và lần sau
     họ không phải đăng nhập lại chỉ để biết mình vẫn chưa mua.
+
+    Tài khoản demo **không có hồ sơ Minecraft**, tức không có UUID. Nhưng lệnh khởi động vẫn
+    cần một UUID, và kho tài khoản từ chối bản ghi không có — lưu được mà đọc lại thì mất.
+    Nên ở đây sinh UUID theo đúng công thức offline: ổn định qua các lần chạy, và hợp lệ.
+    Hệ quả đã biết: hai tài khoản demo khác nhau trên cùng một máy sẽ trùng chỗ; chuyện đó
+    chờ tới khi có ai thật sự cần.
     """
     minecraft_session = login.minecraft_session
+    player_name = minecraft_session.player_name or DEMO_PLAYER_NAME
     return Account(
-        player_name=minecraft_session.player_name or DEMO_PLAYER_NAME,
-        player_uuid=minecraft_session.player_uuid,
+        player_name=player_name,
+        player_uuid=minecraft_session.player_uuid or offline_uuid(player_name),
         account_kind=MICROSOFT,
         access_token=minecraft_session.access_token,
         refresh_token=login.tokens.refresh_token,
