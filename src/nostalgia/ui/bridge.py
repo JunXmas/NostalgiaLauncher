@@ -223,6 +223,19 @@ class LauncherBridge(WorkerBridge):
         player_name = str(self.activePlayerName)
 
         def work() -> None:
+            # Bù phần thiếu TRƯỚC khi chạy: bản cài hụt một jar thì JVM chết ngay với mã 1 và
+            # không để lại log nào (đã xảy ra với Fabric thiếu fabric-loader). Đủ rồi thì bước
+            # này chỉ mất ~1 giây soi kích thước file.
+            version_id = next(
+                (
+                    i.version_id
+                    for i in self._launcher.list_instances()
+                    if i.instance_id == instance_id
+                ),
+                "",
+            )
+            if version_id:
+                self._launcher.install_version(version_id, on_progress=self.report_progress)
             # Giữ đuôi output để khi game chết còn nói được vì sao, thay vì im lặng về "Sẵn sàng".
             tail: deque[str] = deque(maxlen=GAME_LOG_TAIL_LINES)
             game = self._launcher.launch_instance(instance_id, player_name, on_output=tail.append)

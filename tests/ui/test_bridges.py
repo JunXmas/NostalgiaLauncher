@@ -123,9 +123,15 @@ def test_play_flags_game_running_and_clears_it_when_the_game_exits(
     main_bridge.gameStarted.connect(lambda instance_id: seen.append(f"started={instance_id}"))
     main_bridge.gameStopped.connect(lambda code: seen.append(f"stopped={code}"))
 
+    # Bản cài hụt một thư viện (như Fabric thiếu fabric-loader ngoài đời): nút CHƠI phải tự bù
+    # trước khi khởi động, thay vì để JVM chết với mã 1 không log.
+    missing_library = next(launcher.paths.libraries_dir.rglob("*.jar"))
+    missing_library.unlink()
+
     main_bridge.play("van")
     wait_until(lambda: len(seen) == 2 and not main_bridge.busy)
 
+    assert missing_library.is_file(), "thư viện thiếu phải được tải lại trước khi chạy"
     assert seen == ["started=van", "stopped=0"]
     assert main_bridge.gameRunning is False
     assert main_bridge.activity.startswith("Khởi động")
