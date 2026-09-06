@@ -61,3 +61,7 @@ class InstanceError(NostalgiaError):
 
 class ContentError(NostalgiaError):
     """Mod, gói tài nguyên, shader: không tìm thấy bản tương thích, hoặc file đã cài hỏng."""
+
+
+class MultiplayerError(NostalgiaError):
+    """Chơi chung: mã phòng sai, relay không nối được, không thấy world "Open to LAN"."""
