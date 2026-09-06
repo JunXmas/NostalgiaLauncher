@@ -129,3 +129,41 @@ def test_slugify_is_safe_and_unique() -> None:
     assert slugify("...", set()) == "ban-choi"
     assert slugify("-bat-dau-gach", set()) == "bat-dau-gach"
     assert slugify("日本語", set()) == "ban-choi"
+
+
+def test_microsoft_sign_in_hands_qml_the_device_code_and_activates_the_account(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Mã thiết bị đi ra tín hiệu, tài khoản mới thành tài khoản hoạt động, và play dùng nó."""
+    from dataclasses import replace
+
+    import fake_microsoft
+
+    launcher = replace(
+        make_content_launcher(server, server_state, tmp_path, certificate_pair),
+        auth_endpoints=fake_microsoft.publish(server, server_state),
+    )
+    main_bridge = LauncherBridge(launcher)
+    codes: list[tuple[str, str]] = []
+    finished: list[str] = []
+    main_bridge.deviceCodeReady.connect(lambda code, url: codes.append((code, url)))
+    main_bridge.signInFinished.connect(finished.append)
+
+    main_bridge.signInMicrosoft()
+    wait_until(lambda: bool(finished))
+
+    assert codes == [(fake_microsoft.USER_CODE, fake_microsoft.VERIFICATION_URL)]
+    assert main_bridge.activePlayerName == finished[0]
+    assert [account["accountKind"] for account in main_bridge.accounts] == ["microsoft"]
+
+    main_bridge.addOfflineAccount("Khach")
+    wait_until(lambda: len(main_bridge.accounts) == 2)
+    assert main_bridge.activePlayerName == "Khach"
+    main_bridge.setActiveAccount(finished[0])
+    assert main_bridge.activePlayerName == finished[0]
+    main_bridge.removeAccount(finished[0])
+    wait_until(lambda: len(main_bridge.accounts) == 1)
+    assert main_bridge.activePlayerName == "Khach"

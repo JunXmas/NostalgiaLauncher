@@ -50,11 +50,8 @@ Item {
                     label: modelData.label
                     versionId: modelData.versionId
                     removable: true
-                    playable: bridge.accounts.length > 0 && !bridge.busy
-                    onPlayRequested: {
-                        if (bridge.accounts.length > 0)
-                            bridge.play(modelData.instanceId, bridge.accounts[0].playerName);
-                    }
+                    playable: bridge.activePlayerName.length > 0 && !bridge.busy
+                    onPlayRequested: bridge.play(modelData.instanceId)
                     onRemoveRequested: bridge.removeInstance(modelData.instanceId)
                 }
             }

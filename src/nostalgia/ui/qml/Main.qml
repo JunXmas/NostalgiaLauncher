@@ -17,8 +17,11 @@ Item {
         objectName: "sidebar"
         width: 232
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
-        playerName: bridge.accounts.length > 0 ? bridge.accounts[0].playerName : ""
-        accountKind: bridge.accounts.length > 0 ? bridge.accounts[0].accountKind : ""
+        playerName: bridge.activePlayerName
+        accountKind: {
+            var chosen = bridge.accounts.find(function (account) { return account.playerName === bridge.activePlayerName; });
+            return chosen ? chosen.accountKind : "";
+        }
     }
 
     // Đổi trang bằng mờ dần chứ không nhảy phắt: mắt bám được chỗ mình vừa bấm.
@@ -90,4 +93,14 @@ Item {
         target: bridge
         function onFailed(message) { banner.message = message; hideBanner.restart(); }
     }
+    Connections {
+        target: contentBridge
+        function onFailed(message) { banner.message = message; hideBanner.restart(); }
+    }
+    Connections {
+        target: catalogBridge
+        function onFailed(message) { banner.message = message; hideBanner.restart(); }
+    }
+
+    SignInDialog { anchors.fill: parent }
 }

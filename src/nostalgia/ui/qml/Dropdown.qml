@@ -9,6 +9,8 @@ Item {
     readonly property string currentText: currentIndex >= 0 && currentIndex < model.length
                                           ? model[currentIndex] : ""
     property bool open: false
+    // Mở lên trên khi hộp nằm sát mép dưới của một vùng có clip (vd dưới nút CHƠI trên hero).
+    property bool dropUp: false
     signal activated(int index)
 
     height: 34
@@ -33,7 +35,7 @@ Item {
             id: arrow
             anchors { right: parent.right; rightMargin: 11; verticalCenter: parent.verticalCenter }
             text: "⌄"; color: Theme.textMuted; font.pixelSize: 14
-            rotation: root.open ? 180 : 0
+            rotation: (root.open !== root.dropUp) ? 180 : 0
             Behavior on rotation { NumberAnimation { duration: Theme.quick } }
         }
         HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
@@ -41,7 +43,10 @@ Item {
     }
 
     Rectangle {
-        anchors { top: head.bottom; topMargin: 4; left: parent.left; right: parent.right }
+        id: popup
+        objectName: "dropdownPopup"
+        width: parent.width
+        y: root.dropUp ? -height - 4 : head.height + 4
         height: root.open ? Math.min(root.model.length, 8) * 32 + 8 : 0
         visible: height > 0
         clip: true

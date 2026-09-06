@@ -8,7 +8,9 @@ Item {
     property string search: ""
     signal navigate(int pageIndex)
 
-    readonly property var chosen: bridge.instances.length > 0 ? bridge.instances[0] : null
+    property int chosenIndex: 0
+    readonly property var chosen: bridge.instances.length > 0
+                                  ? bridge.instances[Math.min(chosenIndex, bridge.instances.length - 1)] : null
 
     function visibleInstances() {
         if (!page.search) return bridge.instances;
@@ -20,8 +22,7 @@ Item {
     }
 
     function playChosen() {
-        if (page.chosen && bridge.accounts.length > 0)
-            bridge.play(page.chosen.instanceId, bridge.accounts[0].playerName);
+        if (page.chosen && bridge.activePlayerName) bridge.play(page.chosen.instanceId);
     }
 
     Connections {
@@ -39,11 +40,13 @@ Item {
 
         ProfileCard {
             width: parent.width
-            height: bridge.accounts.length > 0 ? 150 : 190
-            playerName: bridge.accounts.length > 0 ? bridge.accounts[0].playerName : ""
-            accountKind: bridge.accounts.length > 0 ? bridge.accounts[0].accountKind : ""
-            playerUuid: bridge.accounts.length > 0 ? bridge.accounts[0].playerUuid : ""
+            height: 150 + Math.max(1, bridge.accounts.length) * 48
+            accounts: bridge.accounts
+            activePlayerName: bridge.activePlayerName
             onAddAccountRequested: function (name) { if (name) bridge.addOfflineAccount(name); }
+            onMicrosoftSignInRequested: bridge.signInMicrosoft()
+            onAccountChosen: function (name) { bridge.setActiveAccount(name); }
+            onRemoveRequested: function (name) { bridge.removeAccount(name); }
         }
         VersionsCard {
             width: parent.width
@@ -122,12 +125,13 @@ Item {
 
                 PlayButton {
                     anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 20 }
-                    playable: page.chosen !== null && bridge.accounts.length > 0
+                    playable: page.chosen !== null && bridge.activePlayerName.length > 0
                               && !bridge.busy && !page.gameRunning
-                    instanceLabel: page.chosen ? page.chosen.label : "chưa có bản chơi"
-                    versionId: page.chosen ? page.chosen.versionId : ""
+                    instances: bridge.instances
+                    chosenIndex: page.chosenIndex
                     onClicked: page.playChosen()
-                    onPickRequested: page.navigate(1)
+                    onPicked: function (index) { page.chosenIndex = index; }
+                    onCreateRequested: page.navigate(1)
                 }
             }
 
@@ -187,11 +191,8 @@ Item {
                                 height: grid.cardHeight
                                 label: modelData.label
                                 versionId: modelData.versionId
-                                playable: bridge.accounts.length > 0 && !bridge.busy && !page.gameRunning
-                                onPlayRequested: {
-                                    if (bridge.accounts.length > 0)
-                                        bridge.play(modelData.instanceId, bridge.accounts[0].playerName);
-                                }
+                                playable: bridge.activePlayerName.length > 0 && !bridge.busy && !page.gameRunning
+                                onPlayRequested: bridge.play(modelData.instanceId)
                             }
                         }
                     }

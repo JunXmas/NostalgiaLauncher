@@ -99,7 +99,7 @@ def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.M
 
     real_connect = socket.socket.connect
 
-    def guarded_connect(self: socket.socket, address: object) -> None:
+    def guarded_connect(self: socket.socket, address: tuple[object, ...] | str) -> None:
         host = address[0] if isinstance(address, tuple) else ""
         if host in {"127.0.0.1", "::1", "localhost"}:
             real_connect(self, address)

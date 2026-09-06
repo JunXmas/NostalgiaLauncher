@@ -7,8 +7,14 @@ Rectangle {
     property string versionId: ""
     property bool playable: true
     property bool removable: false
+    property bool confirmingRemove: false
     signal playRequested()
     signal removeRequested()
+
+    // Suy loader từ mã phiên bản: "fabric-loader-…", "1.20.1-forge-…", "neoforge-…".
+    readonly property string loaderLabel: versionId.indexOf("fabric") >= 0 ? "Fabric"
+                                        : versionId.indexOf("neoforge") >= 0 ? "NeoForge"
+                                        : versionId.indexOf("forge") >= 0 ? "Forge" : "Vanilla"
 
     implicitWidth: 230
     implicitHeight: 168
@@ -68,16 +74,28 @@ Rectangle {
         }
     }
 
-    // Nút gỡ, chỉ hiện khi trỏ vào và khi trang cho phép.
-    Text {
-        anchors { right: parent.right; top: thumb.bottom; margins: 12 }
+    // Gỡ hai bước: bấm thùng rác thì hiện "Gỡ?", bấm lần nữa mới gỡ thật. Rời chuột là huỷ.
+    Rectangle {
+        anchors { right: parent.right; top: thumb.bottom; margins: 10 }
         visible: root.removable
         opacity: hover.hovered ? 1 : 0
-        text: "🗑"; font.pixelSize: 13
-        color: trashHover.hovered ? Theme.danger : Theme.textMuted
+        width: removeText.width + 16; height: 24; radius: 6
+        color: root.confirmingRemove ? Theme.danger : "transparent"
         Behavior on opacity { NumberAnimation { duration: Theme.quick } }
+        Text {
+            id: removeText
+            anchors.centerIn: parent
+            text: root.confirmingRemove ? "Gỡ?" : "🗑"
+            font.pixelSize: 12; font.bold: root.confirmingRemove
+            color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
+        }
         HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: root.removeRequested() }
+        TapHandler {
+            onTapped: {
+                if (root.confirmingRemove) { root.confirmingRemove = false; root.removeRequested(); }
+                else root.confirmingRemove = true;
+            }
+        }
     }
 
     Column {
@@ -87,8 +105,12 @@ Rectangle {
             text: root.label; color: Theme.text; font.pixelSize: 14; font.bold: true
             width: parent.width; elide: Text.ElideRight
         }
-        Text { text: root.versionId; color: Theme.textMuted; font.pixelSize: 11 }
+        Text {
+            text: root.loaderLabel + "  ·  " + root.versionId
+            width: parent.width; elide: Text.ElideRight
+            color: Theme.textMuted; font.pixelSize: 11
+        }
     }
 
-    HoverHandler { id: hover }
+    HoverHandler { id: hover; onHoveredChanged: if (!hovered) root.confirmingRemove = false }
 }

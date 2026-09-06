@@ -45,6 +45,7 @@ Item {
     // ----- hàng đầu: tiêu đề + chọn bản chơi -----
     Item {
         id: header
+        z: 10
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 66
         Column {

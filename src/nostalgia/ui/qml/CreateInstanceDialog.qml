@@ -19,10 +19,11 @@ Item {
     readonly property var loaderChoices: [
         { key: "vanilla",  label: "Vanilla",  ready: true },
         { key: "fabric",   label: "Fabric",   ready: true },
-        { key: "forge",    label: "Forge",    ready: false },
-        { key: "neoforge", label: "NeoForge", ready: false }
+        { key: "forge",    label: "Forge",    ready: true },
+        { key: "neoforge", label: "NeoForge", ready: true }
     ]
-    readonly property bool needsLoaderStep: loaderKind === "fabric"
+    readonly property bool needsLoaderStep: loaderKind !== "vanilla"
+    readonly property string loaderLabel: loaderChoices.find(function (c) { return c.key === dialog.loaderKind; }).label
     readonly property bool canCreate: gameVersion.length > 0 && nameField.text.trim().length > 0
                                       && (!needsLoaderStep || loaderVersion.length > 0) && !bridge.busy
     readonly property var majors: {
@@ -46,7 +47,7 @@ Item {
     function pickGameVersion(versionId) {
         dialog.gameVersion = versionId;
         dialog.loaderVersion = "";
-        if (dialog.needsLoaderStep) catalogBridge.loadFabricLoaders(versionId);
+        if (dialog.needsLoaderStep) catalogBridge.loadLoaderVersions(dialog.loaderKind, versionId);
     }
 
     Connections {
@@ -85,7 +86,7 @@ Item {
                 spacing: 4
                 Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: 20; font.bold: true }
                 Text {
-                    text: dialog.loaderChoices.find(function (c) { return c.key === dialog.loaderKind; }).label
+                    text: dialog.loaderLabel
                           + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
                           + (dialog.loaderVersion ? "  ·  loader " + dialog.loaderVersion : "")
                     color: Theme.accent; font.pixelSize: 12
@@ -131,7 +132,8 @@ Item {
                                 onTapped: {
                                     dialog.loaderKind = modelData.key;
                                     dialog.loaderVersion = "";
-                                    if (dialog.needsLoaderStep && dialog.gameVersion) catalogBridge.loadFabricLoaders(dialog.gameVersion);
+                                    if (dialog.needsLoaderStep && dialog.gameVersion)
+                                        catalogBridge.loadLoaderVersions(dialog.loaderKind, dialog.gameVersion);
                                 }
                             }
                         }
@@ -156,6 +158,12 @@ Item {
                                                   dialog.loaderVersion, parseInt(heapField.text) || 0)
             }
             Text {
+                visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
+                width: parent.width
+                text: "Forge/NeoForge cài bằng installer chính thức chạy ngầm; có thể mất vài phút."
+                color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
+            }
+            Text {
                 visible: bridge.busy
                 width: parent.width
                 text: bridge.progressText
@@ -177,7 +185,7 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: dialog.needsLoaderStep && dialog.gameVersion
-                          ? "② Chọn phiên bản Fabric loader" : "① Chọn phiên bản Minecraft"
+                          ? "② Chọn phiên bản " + dialog.loaderLabel : "① Chọn phiên bản Minecraft"
                     color: Theme.text; font.pixelSize: 13; font.bold: true
                 }
                 ActionButton {
@@ -254,20 +262,20 @@ Item {
                 }
             }
 
-            // Bước 2: danh sách loader Fabric, bản ổn định đánh dấu.
+            // Bước 2: danh sách bản loader; bản ổn định / recommended được đánh dấu.
             Item {
                 anchors { top: pickHeader.bottom; topMargin: 14; left: parent.left; right: parent.right; bottom: parent.bottom }
                 visible: dialog.needsLoaderStep && dialog.gameVersion
 
                 Text {
-                    visible: catalogBridge.fabricLoaders.length === 0
-                    text: catalogBridge.busy ? "Đang hỏi meta.fabricmc.net..." : "Không có bản loader cho phiên bản này."
+                    visible: catalogBridge.loaderVersions.length === 0
+                    text: catalogBridge.busy ? "Đang lấy danh sách bản loader..." : "Không có bản loader cho phiên bản này."
                     color: Theme.textMuted; font.pixelSize: 12
                 }
                 ListView {
                     anchors.fill: parent
                     clip: true; spacing: 6
-                    model: catalogBridge.fabricLoaders
+                    model: catalogBridge.loaderVersions
                     delegate: Rectangle {
                         readonly property bool selected: modelData.loaderVersion === dialog.loaderVersion
                         width: ListView.view.width; height: 38; radius: 7

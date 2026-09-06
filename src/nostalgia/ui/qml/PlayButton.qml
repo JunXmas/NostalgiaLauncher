@@ -1,13 +1,14 @@
 import QtQuick
 
-/* Nút chơi lớn, kèm dải chọn bản chơi bên dưới — đúng bố cục bản mẫu. */
+/* Nút chơi lớn, kèm hộp chọn bản chơi dính liền bên dưới — đúng bố cục bản mẫu. */
 Column {
     id: root
-    property string instanceLabel: ""
-    property string versionId: ""
+    property var instances: []
+    property int chosenIndex: 0
     property bool playable: true
     signal clicked()
-    signal pickRequested()
+    signal picked(int index)
+    signal createRequested()
 
     spacing: 0
     width: 300
@@ -32,35 +33,30 @@ Column {
         TapHandler { id: press; enabled: root.playable; onTapped: root.clicked() }
     }
 
-    // Dải chọn bản chơi: cùng bề ngang, dính liền dưới nút.
+    // Có bản chơi: hộp chọn. Chưa có: một dòng dẫn sang trang tạo.
+    Dropdown {
+        objectName: "homeInstancePicker"
+        visible: root.instances.length > 0
+        dropUp: true
+        width: parent.width
+        height: 40
+        model: root.instances.map(function (instance) { return instance.label + "  (" + instance.versionId + ")"; })
+        currentIndex: root.chosenIndex
+        onActivated: function (index) { root.picked(index); }
+    }
     Rectangle {
+        visible: root.instances.length === 0
         width: parent.width
         height: 40
         radius: Theme.radiusSmall
-        color: pickHover.hovered ? Theme.surfaceHigh : "#d9111713"
+        color: createHover.hovered ? Theme.surfaceHigh : "#d9111713"
         border.color: Theme.border
-        border.width: 1
-        Behavior on color { ColorAnimation { duration: Theme.quick } }
-
-        Row {
-            anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-            spacing: 9
-            Rectangle {
-                width: 18; height: 18; radius: 4; color: Theme.accentDeep
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.instanceLabel + (root.versionId ? "  (" + root.versionId + ")" : "")
-                color: Theme.text; font.pixelSize: 12
-            }
-        }
         Text {
-            anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
-            text: "⌄"; color: Theme.textMuted; font.pixelSize: 14
+            anchors.centerIn: parent
+            text: "Chưa có bản chơi — bấm để tạo"
+            color: Theme.textMuted; font.pixelSize: 12
         }
-
-        HoverHandler { id: pickHover; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: root.pickRequested() }
+        HoverHandler { id: createHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { onTapped: root.createRequested() }
     }
 }
