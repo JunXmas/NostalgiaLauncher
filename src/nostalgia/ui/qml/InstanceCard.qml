@@ -48,6 +48,7 @@ Rectangle {
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: 1 }
         height: 92
         radius: Theme.radius
+        clip: true  // MicaBackdrop có lề âm: không clip là nền tràn ra ngoài thẻ, đè cả tiêu đề
         gradient: Gradient {
             GradientStop { position: 0.0; color: "#243a2c" }
             GradientStop { position: 1.0; color: "#16211a" }
