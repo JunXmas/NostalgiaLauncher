@@ -5,10 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-ContentKind = Literal["mod", "resourcepack", "shader"]
-CONTENT_KINDS: tuple[ContentKind, ...] = ("mod", "resourcepack", "shader")
+ContentKind = Literal["mod", "resourcepack", "shader", "modpack"]
+CONTENT_KINDS: tuple[ContentKind, ...] = ("mod", "resourcepack", "shader", "modpack")
+
+# Nguồn nội dung. CurseForge cần khoá API của chính người dùng (xem settings/).
+ContentSource = Literal["modrinth", "curseforge"]
 
 # Thư mục đích trong thư mục bản chơi, theo quy ước của chính game và của Iris/OptiFine.
+# Modpack không có thư mục: nó thành một bản chơi mới (xem content/mrpack.py).
 FOLDER_BY_KIND: dict[ContentKind, str] = {
     "mod": "mods",
     "resourcepack": "resourcepacks",
@@ -36,6 +40,7 @@ class Project:
     downloads: int
     follows: int
     loaders: tuple[str, ...]
+    source: ContentSource = "modrinth"
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +80,7 @@ class ProjectVersion:
         phiên bản game — loader của chúng (iris, optifine, minecraft) không liên quan."""
         if game_version not in self.game_versions:
             return False
-        return content_kind != "mod" or loader_kind in self.loaders
+        return content_kind not in ("mod", "modpack") or loader_kind in self.loaders
 
 
 @dataclass(frozen=True, slots=True)

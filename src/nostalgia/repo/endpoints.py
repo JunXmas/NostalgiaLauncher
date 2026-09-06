@@ -34,6 +34,13 @@ FABRIC_META_URL = "https://meta.fabricmc.net/v2"
 # Modrinth: nguồn mod / gói tài nguyên / shader. Không cần khoá API; chỉ cần User-Agent tử tế.
 MODRINTH_API_URL = "https://api.modrinth.com/v2"
 
+# CurseForge: mặc định đi qua Worker của dự án (khoá API nằm ở máy chủ, launcher không mang
+# khoá); ai có khoá riêng thì dán ở CÀI ĐẶT để gọi thẳng api.curseforge.com. File nào API
+# không trả downloadUrl thì dựng từ CDN theo công thức files/<id//1000>/<id%1000>/<tên>.
+CURSEFORGE_PROXY_URL = "https://nostalgia-backend.junbob.workers.dev/cf"
+CURSEFORGE_DIRECT_URL = "https://api.curseforge.com/v1"
+CURSEFORGE_CDN_URL = "https://mediafilez.forgecdn.net/files"
+
 # Forge và NeoForge: danh sách bản lấy từ maven-metadata.xml; installer jar cùng kho maven.
 # Forge còn có promotions_slim.json để biết bản "recommended" cho từng phiên bản game.
 FORGE_MAVEN_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge"
@@ -57,6 +64,9 @@ class Endpoints:
     asset_objects: str = ASSET_OBJECT_BASE_URL
     fabric_meta: str = FABRIC_META_URL
     modrinth_api: str = MODRINTH_API_URL
+    curseforge_proxy: str = CURSEFORGE_PROXY_URL
+    curseforge_direct: str = CURSEFORGE_DIRECT_URL
+    curseforge_cdn: str = CURSEFORGE_CDN_URL
     forge_maven: str = FORGE_MAVEN_URL
     forge_promotions: str = FORGE_PROMOTIONS_URL
     neoforge_maven: str = NEOFORGE_MAVEN_URL

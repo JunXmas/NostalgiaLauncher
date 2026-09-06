@@ -2,49 +2,18 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+from fabric_fixture import FABRIC_VERSION_ID, LOADER_VERSION, publish_fabric
 from fake_mojang import VERSION_ID
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Launcher
 from nostalgia.errors import VersionError
 from nostalgia.repo.version_repo import VersionRepository
 from test_api import make_launcher
-
-LOADER_VERSION = "0.16.9"
-FABRIC_VERSION_ID = f"fabric-loader-{LOADER_VERSION}-{VERSION_ID}"
-
-
-def publish_fabric(state: ServerState) -> None:
-    state.add(
-        f"/fabric/versions/loader/{VERSION_ID}",
-        json.dumps(
-            [
-                {"loader": {"version": "0.17.0-beta.1", "stable": False}},
-                {"loader": {"version": LOADER_VERSION, "stable": True}},
-            ]
-        ).encode(),
-    )
-    state.add(
-        f"/fabric/versions/loader/{VERSION_ID}/{LOADER_VERSION}/profile/json",
-        json.dumps(
-            {
-                "id": FABRIC_VERSION_ID,
-                "inheritsFrom": VERSION_ID,
-                "type": "release",
-                "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
-                "arguments": {
-                    "game": [],
-                    "jvm": ["-DFabricMcEmu= net.minecraft.client.main.Main"],
-                },
-                "libraries": [],
-            }
-        ).encode(),
-    )
 
 
 def make_fabric_launcher(

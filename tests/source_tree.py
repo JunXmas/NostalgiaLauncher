@@ -34,6 +34,7 @@ LAYERS: dict[str, int] = {
     "operations": 0,  # báo tiến độ, yêu cầu dừng
     "model": 0,  # dataclass dùng chung (thêm ở bước 3)
     "net": 1,
+    "settings": 1,  # cấu hình người dùng trên đĩa; content/ đọc khoá API từ đây
     "version": 2,
     "java/component": 2,
     "java/runtime_manifest": 2,  # cũng thuần: chỉ phân tích JSON

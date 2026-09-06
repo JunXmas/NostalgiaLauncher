@@ -7,24 +7,28 @@ không bao giờ dừng.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 from nostalgia.content.installed import LedgerEntry, content_dir, load_ledger, save_ledger
 from nostalgia.content.model import LoaderKind, Project, ProjectVersion
-from nostalgia.content.modrinth import choose_version, fetch_project_versions
+from nostalgia.content.modrinth import choose_version
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.model.download import DownloadTask
 from nostalgia.net.download import download_all
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
-from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 from nostalgia.storage.files import resolve_child
 
 MAX_DEPENDENCY_DEPTH = 3
 # Mod là file nhỏ và Modrinth có hạn mức request; 4 luồng là đủ và lịch sự.
 CONTENT_WORKERS = 4
+
+
+# Cách lấy danh sách bản của một dự án theo id — Modrinth hay CurseForge tuỳ nguồn của dự án.
+FetchVersionsFn = Callable[[str], tuple[ProjectVersion, ...]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,22 +42,23 @@ def install_project(
     http_client: HttpClient,
     project: Project,
     game_dir: Path,
+    fetch_versions: FetchVersionsFn,
     *,
     game_version: str,
     loader_kind: LoaderKind,
-    endpoints: Endpoints = DEFAULT_ENDPOINTS,
     on_progress: ProgressFn = ignore_progress,
     cancel_token: CancelToken | None = None,
 ) -> ContentInstallReport:
     """Cài `project` và mọi phụ thuộc bắt buộc còn thiếu. CHẠM MẠNG."""
+    if project.content_kind == "modpack":
+        message = "modpack không cài vào bản chơi có sẵn; nó thành một bản chơi mới"
+        raise ContentError(message)
     if project.content_kind == "mod" and loader_kind == "vanilla":
         message = f"bản chơi không có mod loader, không cài được mod {project.title!r}"
         raise ContentError(message)
     directory = content_dir(game_dir, project.content_kind)
     ledger = load_ledger(directory)
-    chosen = _resolve_with_dependencies(
-        http_client, project, ledger, game_version, loader_kind, endpoints, cancel_token
-    )
+    chosen = _resolve_with_dependencies(project, ledger, fetch_versions, game_version, loader_kind)
     tasks = [
         DownloadTask(
             url=project_version.file_url,
@@ -88,22 +93,18 @@ def install_project(
 
 
 def _resolve_with_dependencies(
-    http_client: HttpClient,
     project: Project,
     ledger: dict[str, LedgerEntry],
+    fetch_versions: FetchVersionsFn,
     game_version: str,
     loader_kind: LoaderKind,
-    endpoints: Endpoints,
-    cancel_token: CancelToken | None,
 ) -> list[ProjectVersion]:
     chosen: list[ProjectVersion] = []
     visited: set[str] = {project.project_id}
     frontier: list[tuple[str, int]] = [(project.project_id, 0)]
     while frontier:
         project_id, depth = frontier.pop(0)
-        versions = fetch_project_versions(
-            http_client, project_id, endpoints=endpoints, cancel_token=cancel_token
-        )
+        versions = fetch_versions(project_id)
         project_version = choose_version(
             versions,
             game_version=game_version,
