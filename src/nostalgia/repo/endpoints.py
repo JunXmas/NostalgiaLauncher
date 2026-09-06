@@ -51,6 +51,9 @@ FORGE_PROMOTIONS_URL = (
 )
 NEOFORGE_MAVEN_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
 
+# Relay chơi chung (Cloudflare Worker + Durable Object). Mã ở cloudflare/multiplayer-relay/.
+MULTIPLAYER_RELAY_URL = "wss://nostalgia-multiplayer-relay.junbob.workers.dev"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -73,6 +76,7 @@ class Endpoints:
     forge_maven: str = FORGE_MAVEN_URL
     forge_promotions: str = FORGE_PROMOTIONS_URL
     neoforge_maven: str = NEOFORGE_MAVEN_URL
+    multiplayer_relay: str = MULTIPLAYER_RELAY_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()
