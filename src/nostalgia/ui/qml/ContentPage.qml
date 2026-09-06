@@ -187,12 +187,12 @@ Item {
                         visible: page.gridMode
                         clip: true
                         cellWidth: Math.floor(width / 2); cellHeight: 128
-                        model: contentBridge.results
+                        model: contentBridge.resultsModel
                         delegate: Item {
                             width: GridView.view.cellWidth; height: 128
                             ProjectCard {
                                 anchors { fill: parent; rightMargin: 10; bottomMargin: 10 }
-                                project: modelData
+                                project: model
                                 installable: page.hasInstance && !page.modsBlocked
                                 onInstallRequested: function (projectId) { contentBridge.install(projectId); }
                             }
@@ -204,10 +204,10 @@ Item {
                         anchors.topMargin: page.modsBlocked ? 22 : 0
                         visible: !page.gridMode
                         clip: true; spacing: 8
-                        model: contentBridge.results
+                        model: contentBridge.resultsModel
                         delegate: ProjectRow {
                             width: ListView.view.width
-                            project: modelData
+                            project: model
                             installable: page.hasInstance && !page.modsBlocked
                             onInstallRequested: function (projectId) { contentBridge.install(projectId); }
                         }

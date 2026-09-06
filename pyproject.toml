@@ -64,5 +64,5 @@ warn_unreachable = true
 # thay vì `list`. Đây là hạn chế của phần khai kiểu PySide6, không phải chỗ ta viết ẩu — nên
 # chỉ tắt đúng những mã lỗi phát sinh từ nó, và chỉ ở test của tầng giao diện.
 [[tool.mypy.overrides]]
-module = ["test_qml", "test_bridges"]
+module = ["test_qml", "test_bridges", "test_content_bridge"]
 disable_error_code = ["comparison-overlap", "attr-defined", "index", "unreachable", "return-value", "arg-type"]
