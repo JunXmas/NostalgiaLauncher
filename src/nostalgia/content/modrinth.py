@@ -36,21 +36,23 @@ def search_projects(
     *,
     content_kind: ContentKind,
     query: str = "",
-    game_version: str = "",
-    loader_kind: LoaderKind = "vanilla",
+    game_versions: tuple[str, ...] = (),
+    loaders: tuple[str, ...] = (),
     sort: SortOrder = "relevance",
     offset: int = 0,
     limit: int = PAGE_SIZE,
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
     cancel_token: CancelToken | None = None,
 ) -> SearchPage:
-    """Một trang kết quả. Mod lọc theo cả game_version lẫn loader; thứ khác chỉ theo game.
-    CHẠM MẠNG."""
+    """Một trang kết quả. Facets của Modrinth: các mảng con là AND, phần tử trong một mảng là
+    OR — nên nhiều phiên bản / nhiều loader cùng lúc là một mảng. Loader chỉ áp cho mod;
+    gói tài nguyên và shader không có loader theo nghĩa này. CHẠM MẠNG."""
     facets: list[list[str]] = [[f"project_type:{content_kind}"]]
-    if game_version:
-        facets.append([f"versions:{game_version}"])
-    if content_kind == "mod" and loader_kind != "vanilla":
-        facets.append([f"categories:{loader_kind}"])
+    if game_versions:
+        facets.append([f"versions:{game_version}" for game_version in game_versions])
+    mod_loaders = [loader_name for loader_name in loaders if loader_name != "vanilla"]
+    if content_kind == "mod" and mod_loaders:
+        facets.append([f"categories:{loader_name}" for loader_name in mod_loaders])
     parameters = {
         "query": query,
         "facets": json.dumps(facets, separators=(",", ":")),

@@ -58,23 +58,30 @@ class ContentOperations(LauncherContext):
 
     def search_content(
         self,
-        target: ContentTarget,
+        target: ContentTarget | None,
         content_kind: ContentKind,
         *,
         query: str = "",
         sort: SortOrder = "relevance",
         offset: int = 0,
         limit: int = PAGE_SIZE,
+        game_versions: tuple[str, ...] | None = None,
+        loaders: tuple[str, ...] | None = None,
         cancel_token: CancelToken | None = None,
     ) -> SearchPage:
-        """Tìm trên Modrinth những thứ tương thích với bản chơi. CHẠM MẠNG."""
+        """Tìm trên Modrinth. Mặc định lọc theo bản chơi đích; giao diện có thể nới bộ lọc
+        (nhiều phiên bản, nhiều loader) — khi đó `game_versions` / `loaders` đè lên. CHẠM MẠNG."""
+        if game_versions is None:
+            game_versions = (target.game_version,) if target else ()
+        if loaders is None:
+            loaders = (target.loader_kind,) if target else ()
         with self.make_http_client() as http_client:
             return search_projects(
                 http_client,
                 content_kind=content_kind,
                 query=query,
-                game_version=target.game_version,
-                loader_kind=target.loader_kind,
+                game_versions=game_versions,
+                loaders=loaders,
                 sort=sort,
                 offset=offset,
                 limit=limit,

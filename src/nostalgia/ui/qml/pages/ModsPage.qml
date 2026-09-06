@@ -1,4 +1,4 @@
 import QtQuick
 import "../"
 
-ContentPage { title: "Mod"; kinds: ["mod"] }
+ContentPage { title: "Thư viện"; kinds: ["mod", "shader", "resourcepack"] }

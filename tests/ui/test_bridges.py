@@ -195,3 +195,41 @@ def test_play_flags_game_running_and_clears_it_when_the_game_exits(
     assert seen == ["started=van", "stopped=0"]
     assert main_bridge.gameRunning is False
     assert main_bridge.activity.startswith("Khởi động")
+
+
+def test_filters_follow_the_instance_then_widen_when_the_user_asks(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Chọn bản chơi Fabric 1.99.9 -> bộ lọc = fabric + 1.99.9; tick thêm Forge và một phiên
+    bản khác -> facets gửi đi là mảng OR; bỏ hết phiên bản -> không gửi facet versions."""
+    import json
+    from urllib.parse import parse_qs, urlparse
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    target = fabric_target(launcher)
+    content_bridge = ContentBridge(launcher, LauncherBridge(launcher))
+    content_bridge.selectInstance(target.instance_id)
+    assert content_bridge.selectedLoaders == ["fabric"]
+    assert content_bridge.selectedGameVersions == [VERSION_ID]
+
+    content_bridge.setLoaderSelected("forge", True)
+    content_bridge.setGameVersionSelected("1.20.1", True)
+    content_bridge.search("mod", "", "downloads")
+    wait_until(lambda: not content_bridge.searching)
+    query = parse_qs(urlparse(server_state.received_path("/modrinth/search")).query)
+    assert json.loads(query["facets"][0]) == [
+        ["project_type:mod"],
+        [f"versions:{VERSION_ID}", "versions:1.20.1"],
+        ["categories:fabric", "categories:forge"],
+    ]
+
+    content_bridge.clearGameVersions()
+    content_bridge.setLoaderSelected("fabric", False)
+    content_bridge.setLoaderSelected("forge", False)
+    content_bridge.search("mod", "", "downloads")
+    wait_until(lambda: not content_bridge.searching)
+    query = parse_qs(urlparse(server_state.received_path("/modrinth/search")).query)
+    assert json.loads(query["facets"][0]) == [["project_type:mod"]]

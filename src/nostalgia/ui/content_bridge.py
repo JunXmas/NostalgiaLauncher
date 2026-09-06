@@ -1,4 +1,5 @@
-"""Cầu nối cho trang MOD và TÀI NGUYÊN: tìm trên Modrinth, cài, và quản lý file đã cài.
+"""Cầu nối cho trang MOD và TÀI NGUYÊN: bộ lọc, tìm trên Modrinth, cài. Phần "đã cài" ở
+`installed_bridge.py`.
 
 Kết quả tìm kiếm có thế hệ: gõ nhanh hai từ khoá thì chỉ kết quả của từ khoá sau được hiện,
 dù mạng trả kết quả của từ khoá trước muộn hơn.
@@ -11,33 +12,35 @@ from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import ContentTarget, Launcher
+from nostalgia.api import Launcher
 from nostalgia.content.model import ContentKind, Project, SortOrder
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.worker import WorkerBridge
+from nostalgia.ui.installed_bridge import InstalledContentBridge
 
 
-class ContentBridge(WorkerBridge):
+class ContentBridge(InstalledContentBridge):
     targetChanged = Signal()
+    filtersChanged = Signal()
     resultsChanged = Signal()
-    installedChanged = Signal()
     searchingChanged = Signal()
     installFinished = Signal(str)
 
     def __init__(
         self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
     ) -> None:
-        super().__init__(parent)
-        self._launcher = launcher
+        super().__init__(launcher, parent)
         self._main_bridge = main_bridge
-        self._target: ContentTarget | None = None
+        # Cờ "đã cài" trên thẻ kết quả suy từ danh sách đã cài, nên đổi bên này thì vẽ lại bên kia.
+        self.installedChanged.connect(self.resultsChanged)
         self._results: list[Project] = []
         self._total_hits = 0
         self._searching = False
-        self._installed: list[dict[str, Any]] = []
         self._installing: set[str] = set()
         self._results_lock = threading.Lock()
         self._last_query: tuple[ContentKind, str, SortOrder] = ("mod", "", "relevance")
+        # Bộ lọc của cột trái. Rỗng nghĩa là không lọc theo tiêu chí đó.
+        self._loaders: list[str] = []
+        self._game_versions: list[str] = []
 
     # ----- bản chơi đang chọn -----
 
@@ -55,13 +58,44 @@ class ContentBridge(WorkerBridge):
 
     @Slot(str)
     def selectInstance(self, instance_id: str) -> None:
-        """Đọc đĩa (nhanh) nên làm ngay; xoá kết quả cũ vì chúng thuộc bản chơi khác."""
+        """Đọc đĩa (nhanh) nên làm ngay; bộ lọc nhảy về loader + phiên bản của bản chơi đó."""
         self._target = self._launcher.describe_content_target(instance_id) if instance_id else None
         self._results, self._total_hits = [], 0
         self._installed = []
+        if self._target is not None:
+            self._loaders = (
+                [self._target.loader_kind] if self._target.loader_kind != "vanilla" else []
+            )
+            self._game_versions = [self._target.game_version]
         self.targetChanged.emit()
+        self.filtersChanged.emit()
         self.resultsChanged.emit()
         self.installedChanged.emit()
+
+    # ----- bộ lọc -----
+
+    @Property(list, notify=filtersChanged)
+    def selectedLoaders(self) -> list[str]:
+        return list(self._loaders)
+
+    @Property(list, notify=filtersChanged)
+    def selectedGameVersions(self) -> list[str]:
+        return list(self._game_versions)
+
+    @Slot(str, bool)
+    def setLoaderSelected(self, loader_name: str, selected: bool) -> None:
+        self._loaders = _toggle(self._loaders, loader_name, selected)
+        self.filtersChanged.emit()
+
+    @Slot(str, bool)
+    def setGameVersionSelected(self, game_version: str, selected: bool) -> None:
+        self._game_versions = _toggle(self._game_versions, game_version, selected)
+        self.filtersChanged.emit()
+
+    @Slot()
+    def clearGameVersions(self) -> None:
+        self._game_versions = []
+        self.filtersChanged.emit()
 
     # ----- tìm kiếm -----
 
@@ -111,17 +145,23 @@ class ContentBridge(WorkerBridge):
             self._fetch_page(offset=len(self._results))
 
     def _fetch_page(self, *, offset: int) -> None:
+        """Duyệt được cả khi chưa có bản chơi; chỉ lúc cài mới cần một bản chơi đích."""
         target = self._target
-        if target is None:
-            return
         content_kind, query, sort = self._last_query
+        loaders, game_versions = tuple(self._loaders), tuple(self._game_versions)
         generation = self.next_generation()
         self._set_searching(True)
 
         def work() -> None:
             try:
                 page = self._launcher.search_content(
-                    target, content_kind, query=query, sort=sort, offset=offset
+                    target,
+                    content_kind,
+                    query=query,
+                    sort=sort,
+                    offset=offset,
+                    game_versions=game_versions,
+                    loaders=loaders,
                 )
                 if not self.is_current(generation):
                     return
@@ -168,45 +208,7 @@ class ContentBridge(WorkerBridge):
         kind_label = {"mod": "mod", "resourcepack": "gói tài nguyên", "shader": "shader"}
         self.run_in_background(work, f"Cài {kind_label[project.content_kind]} {project.title}")
 
-    @Property(list, notify=installedChanged)
-    def installed(self) -> list[dict[str, Any]]:
-        return self._installed
 
-    @Slot(str)
-    def refreshInstalled(self, content_kind: str) -> None:
-        """Đọc đĩa, không chạm mạng — làm ngay, không cần luồng nền."""
-        self._reload_installed(cast(ContentKind, content_kind))
-
-    @Slot(str, str, bool)
-    def setEnabled(self, content_kind: str, file_name: str, enabled: bool) -> None:
-        if self._target is None:
-            return
-        chosen_kind = cast(ContentKind, content_kind)
-        self._launcher.set_content_enabled(self._target, chosen_kind, file_name, enabled)
-        self._reload_installed(chosen_kind)
-
-    @Slot(str, str)
-    def remove(self, content_kind: str, file_name: str) -> None:
-        if self._target is None:
-            return
-        chosen_kind = cast(ContentKind, content_kind)
-        self._launcher.remove_content(self._target, chosen_kind, file_name)
-        self._reload_installed(chosen_kind)
-        self.resultsChanged.emit()
-
-    def _reload_installed(self, content_kind: ContentKind) -> None:
-        if self._target is None:
-            return
-        self._installed = [
-            {
-                "fileName": installed.file_name,
-                "label": installed.label,
-                "fileSize": installed.file_size,
-                "enabled": installed.enabled,
-                "projectId": installed.project_id,
-                "versionNumber": installed.version_number,
-                "contentKind": installed.content_kind,
-            }
-            for installed in self._launcher.list_installed_content(self._target, content_kind)
-        ]
-        self.installedChanged.emit()
+def _toggle(values: list[str], value: str, selected: bool) -> list[str]:
+    without = [existing for existing in values if existing != value]
+    return [*without, value] if selected else without
