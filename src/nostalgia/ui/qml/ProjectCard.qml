@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 
 /* Thẻ lưới của thư viện: icon phóng to làm nền mờ bên phải, tên, mô tả hai dòng, nhãn loader,
    số tải / theo dõi, và nút cài. */
@@ -20,30 +19,27 @@ Rectangle {
     scale: hover.hovered ? 1.01 : 1.0
     Behavior on scale { NumberAnimation { duration: Theme.quick } }
 
-    // Nền: chính icon mod, phóng to, làm nhoè, neo phải, phủ gradient tối từ trái sang.
+    // Nền kiểu mica: chính icon mod, tải ở cỡ 10×10 rồi phóng to có nội suy — ra một mảng màu
+    // mờ mà không cần shader (MultiEffect blur không vẽ được trên GL phần mềm, đã thử).
     Image {
-        id: backdrop
         source: project.iconUrl || ""
         anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-        width: parent.width * 0.6
+        width: parent.width * 0.7
+        sourceSize: Qt.size(10, 10)
+        smooth: true
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
-        visible: false
-    }
-    MultiEffect {
-        anchors.fill: backdrop
-        source: backdrop
-        visible: backdrop.status === Image.Ready
-        blurEnabled: true; blur: 1.0; blurMax: 40
-        opacity: 0.35
+        opacity: status === Image.Ready ? 0.8 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.slow } }
     }
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: Theme.surface }
-            GradientStop { position: 0.55; color: "#cc111713" }
-            GradientStop { position: 1.0; color: "#40111713" }
+            GradientStop { position: 0.35; color: "#e6111713" }
+            GradientStop { position: 0.7; color: "#80111713" }
+            GradientStop { position: 1.0; color: "#26111713" }
         }
     }
 
