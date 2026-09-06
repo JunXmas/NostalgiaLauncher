@@ -23,6 +23,10 @@ JAVA_RUNTIME_MANIFEST_URL = (
 # suy ra từ chính hash. Vì thế nó phải nằm ở đây chứ không nằm cạnh chỗ suy ra.
 ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
 
+# Kho thư viện Mojang: thư viện khai kiểu maven (chỉ `name`, không `downloads`) mà không nói
+# `url` thì lấy ở đây — quy ước của launcher chính thức và của Forge đời cũ.
+MOJANG_LIBRARIES_URL = "https://libraries.minecraft.net/"
+
 # Meta của Fabric: một request trả về đúng file version JSON có `inheritsFrom`, phần còn lại
 # đi qua kho `repo/` và bộ cài `install/` y như một bản Mojang.
 FABRIC_META_URL = "https://meta.fabricmc.net/v2"

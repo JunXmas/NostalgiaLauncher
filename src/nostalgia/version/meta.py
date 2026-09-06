@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 from nostalgia.model.download import Artifact, RemoteFile
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
+from nostalgia.repo.endpoints import MOJANG_LIBRARIES_URL
 from nostalgia.version.maven import MavenCoordinate
 from nostalgia.version.rules import Rule, parse_rules
 
@@ -190,10 +191,13 @@ def _parse_library(library_fields: dict[str, JsonValue], coordinate: MavenCoordi
         if (artifact := _parse_artifact(as_mapping(raw))) is not None
     }
     extract = as_mapping(library_fields.get("extract"))
+    artifact = _parse_artifact(as_mapping(downloads.get("artifact")))
+    if artifact is None and "classifiers" not in downloads:
+        artifact = _maven_artifact(library_fields, coordinate)
     return Library(
         coordinate=coordinate,
         rules=parse_rules(library_fields.get("rules")),
-        artifact=_parse_artifact(as_mapping(downloads.get("artifact"))),
+        artifact=artifact,
         classifier_artifacts=classifiers,
         natives_classifier_by_os={
             name: value
@@ -204,6 +208,19 @@ def _parse_library(library_fields: dict[str, JsonValue], coordinate: MavenCoordi
             pattern for pattern in as_list(extract.get("exclude")) if isinstance(pattern, str)
         ),
     )
+
+
+def _maven_artifact(library_fields: dict[str, JsonValue], coordinate: MavenCoordinate) -> Artifact:
+    """Thư viện khai kiểu maven — Fabric, Forge đời cũ: chỉ có `name`, `url` gốc và (có thể)
+    `sha1`/`size` ở ngoài. Đường dẫn suy từ toạ độ; bỏ qua chúng là mất chính jar của loader,
+    và game chết với "Could not find or load main class ...KnotClient" (đã gặp thật)."""
+    base_url = (as_string(library_fields.get("url")) or MOJANG_LIBRARIES_URL).rstrip("/")
+    remote = RemoteFile(
+        url=f"{base_url}/{coordinate.relative_path}",
+        sha1=as_string(library_fields.get("sha1")),
+        size=as_integer(library_fields.get("size")),
+    )
+    return Artifact(remote=remote, relative_path=coordinate.relative_path)
 
 
 def _parse_remote_file(raw: dict[str, JsonValue]) -> RemoteFile | None:
