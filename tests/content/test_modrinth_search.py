@@ -6,13 +6,13 @@ import json
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from fake_mojang import VERSION_ID
+from local_https_server import LocalHttpsServer, ServerState
 from modrinth_fixture import (
     fabric_target,
     make_content_launcher,
 )
-
-from fake_mojang import VERSION_ID
-from local_https_server import LocalHttpsServer, ServerState
+from nostalgia.api import Instance
 from nostalgia.content.model import ProjectVersion
 from nostalgia.content.modrinth import choose_version
 
@@ -104,3 +104,40 @@ def test_choose_version_rules() -> None:
         )
         is shader
     )
+
+
+def test_target_loader_is_read_from_the_version_id_for_every_loader(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Lỗi thật đã gặp: bản Forge bị coi là vanilla nên thư viện chặn cài mod. Giờ mọi loader
+    đều nhận ra từ mã bản, và bản Quilt tìm mod với facets fabric + quilt."""
+    from nostalgia.storage.files import atomic_write_json
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher.install_version(VERSION_ID)
+    for version_id, main_class in (
+        (f"{VERSION_ID}-forge-47.4.10", "cpw.mods.bootstraplauncher.BootstrapLauncher"),
+        (f"neoforge-{VERSION_ID}", "cpw.mods.bootstraplauncher.BootstrapLauncher"),
+        (f"quilt-loader-0.29.1-{VERSION_ID}", "org.quiltmc.loader.impl.launch.knot.KnotClient"),
+    ):
+        atomic_write_json(
+            launcher.paths.version_json(version_id),
+            {"id": version_id, "inheritsFrom": VERSION_ID, "mainClass": main_class},
+        )
+        launcher.create_instance(Instance(instance_id=version_id[:8], version_id=version_id))
+
+    forge = launcher.describe_content_target(f"{VERSION_ID}-forge-47.4.10"[:8])
+    neoforge = launcher.describe_content_target(f"neoforge-{VERSION_ID}"[:8])
+    quilt = launcher.describe_content_target("quilt-lo")
+    assert (forge.loader_kind, neoforge.loader_kind, quilt.loader_kind) == (
+        "forge",
+        "neoforge",
+        "quilt",
+    )
+
+    launcher.search_content(quilt, "mod")
+    query = parse_qs(urlparse(server_state.received_path("/modrinth/search")).query)
+    assert json.loads(query["facets"][0])[2] == ["categories:quilt", "categories:fabric"]

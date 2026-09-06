@@ -1,7 +1,9 @@
-"""Fabric: hỏi meta.fabricmc.net lấy danh sách loader và file profile JSON của một cặp
+"""Fabric và Quilt: hỏi meta lấy danh sách loader và file profile JSON của một cặp
 `game_version` + `loader_version`, rồi lưu profile vào kho version.
 
-Profile Fabric có `inheritsFrom` trỏ về bản Mojang; kho `repo/` đã biết trộn kế thừa, nên
+Hai loader dùng chung mã vì API cùng hình dạng (meta.fabricmc.net/v2 và meta.quiltmc.org/v3);
+chỉ khác địa chỉ và cách đánh dấu bản ổn định (Quilt không có cờ `stable`, nhìn hậu tố
+`-beta`). Profile có `inheritsFrom` trỏ về bản Mojang; kho `repo/` đã biết trộn kế thừa, nên
 sau bước này `install_version(version_id)` và `launch` chạy y như bản thường.
 """
 
@@ -30,19 +32,26 @@ def fetch_fabric_loader_versions(
     *,
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
     cancel_token: CancelToken | None = None,
+    meta_url: str = "",
+    loader_label: str = "Fabric",
 ) -> tuple[LoaderVersion, ...]:
-    """Các bản loader dùng được với `game_version`, mới nhất đứng đầu. CHẠM MẠNG."""
-    url = f"{endpoints.fabric_meta}/versions/loader/{game_version}"
+    """Các bản loader dùng được với `game_version`, mới nhất đứng đầu. CHẠM MẠNG.
+
+    `meta_url` trống là Fabric; Quilt truyền `endpoints.quilt_meta` và nhãn của mình.
+    """
+    url = f"{meta_url or endpoints.fabric_meta}/versions/loader/{game_version}"
     document = _fetch_json(http_client, url, cancel_token)
     versions: list[LoaderVersion] = []
     for candidate in as_list(document):
         loader_fields = as_mapping(as_mapping(candidate).get("loader"))
         loader_version = as_string(loader_fields.get("version"))
         if loader_version:
-            stable = loader_fields.get("stable") is True
+            stable = loader_fields.get("stable") is True or (
+                "stable" not in loader_fields and "-" not in loader_version
+            )
             versions.append(LoaderVersion(loader_version=loader_version, stable=stable))
     if not versions:
-        message = f"Fabric không có bản loader nào cho Minecraft {game_version!r}"
+        message = f"{loader_label} không có bản loader nào cho Minecraft {game_version!r}"
         raise VersionError(message)
     return tuple(versions)
 
@@ -55,19 +64,24 @@ def install_fabric_profile(
     *,
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
     cancel_token: CancelToken | None = None,
+    meta_url: str = "",
+    loader_label: str = "Fabric",
 ) -> str:
-    """Lưu profile Fabric vào kho version và trả về `version_id` của nó. CHẠM MẠNG.
+    """Lưu profile vào kho version và trả về `version_id` của nó. CHẠM MẠNG.
 
     Không tải thư viện ở đây: đó là việc của `install_version(version_id)` — gọi ngay sau.
     """
-    url = f"{endpoints.fabric_meta}/versions/loader/{game_version}/{loader_version}/profile/json"
+    base = meta_url or endpoints.fabric_meta
+    url = f"{base}/versions/loader/{game_version}/{loader_version}/profile/json"
     document = _fetch_json(http_client, url, cancel_token)
     if not is_version_document(document):
-        message = f"profile Fabric cho {game_version} / {loader_version} không phải version JSON"
+        message = (
+            f"profile {loader_label} cho {game_version} / {loader_version} không phải version JSON"
+        )
         raise VersionError(message)
     version_id = as_string(as_mapping(document).get("id"))
     if not version_id:
-        message = "profile Fabric thiếu trường `id`"
+        message = f"profile {loader_label} thiếu trường `id`"
         raise VersionError(message)
     atomic_write_json(paths.version_json(version_id), document)
     return version_id

@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 from nostalgia.account.model import Account, PlayerProfile
 from nostalgia.doctor import Diagnosis
-from nostalgia.facade.content import ContentOperations, ContentTarget
+from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.modpacks import ModpackOperations
 from nostalgia.facade.play import PlayOperations
@@ -36,7 +36,7 @@ from nostalgia.operations.progress import Progress
 
 
 @dataclass(frozen=True, slots=True)
-class Launcher(ModpackOperations, InstanceOperations, ContentOperations, PlayOperations):
+class Launcher(ModpackOperations, InstanceOperations, PlayOperations):
     """Toàn bộ khả năng của lõi, gói sau một đối tượng dựng một lần rồi dùng lại.
 
     Thân của từng nhóm thao tác nằm ở `nostalgia/facade/`, tách theo miền; ở đây chỉ ghép

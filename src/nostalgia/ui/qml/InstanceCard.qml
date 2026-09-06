@@ -12,7 +12,8 @@ Rectangle {
     signal removeRequested()
 
     // Suy loader từ mã phiên bản: "fabric-loader-…", "1.20.1-forge-…", "neoforge-…".
-    readonly property string loaderLabel: versionId.indexOf("fabric") >= 0 ? "Fabric"
+    readonly property string loaderLabel: versionId.indexOf("fabric-loader-") === 0 ? "Fabric"
+                                        : versionId.indexOf("quilt-loader-") === 0 ? "Quilt"
                                         : versionId.indexOf("neoforge") >= 0 ? "NeoForge"
                                         : versionId.indexOf("forge") >= 0 ? "Forge" : "Vanilla"
 

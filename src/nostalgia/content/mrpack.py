@@ -28,6 +28,7 @@ OVERRIDE_PREFIXES = ("overrides/", "client-overrides/")
 ALLOWED_HOSTS = ("cdn.modrinth.com", "github.com", "raw.githubusercontent.com", "gitlab.com")
 LOADER_DEPENDENCY_KEYS: tuple[tuple[str, LoaderKind], ...] = (
     ("fabric-loader", "fabric"),
+    ("quilt-loader", "quilt"),
     ("forge", "forge"),
     ("neoforge", "neoforge"),
 )
@@ -76,9 +77,6 @@ def read_index(
             loader_kind = candidate
             loader_version = as_string(dependencies.get(key)) or ""
             break
-    if "quilt-loader" in dependencies:
-        message = "modpack này cần Quilt, launcher chưa hỗ trợ"
-        raise ContentError(message)
     files = tuple(
         parsed
         for raw in as_list(fields.get("files"))

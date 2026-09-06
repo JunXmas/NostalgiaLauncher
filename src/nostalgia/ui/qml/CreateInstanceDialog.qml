@@ -19,6 +19,7 @@ Item {
     readonly property var loaderChoices: [
         { key: "vanilla",  label: "Vanilla",  ready: true },
         { key: "fabric",   label: "Fabric",   ready: true },
+        { key: "quilt",    label: "Quilt",    ready: true },
         { key: "forge",    label: "Forge",    ready: true },
         { key: "neoforge", label: "NeoForge", ready: true }
     ]
@@ -118,7 +119,7 @@ Item {
                         model: dialog.loaderChoices
                         Rectangle {
                             readonly property bool selected: modelData.key === dialog.loaderKind
-                            width: 76; height: 56; radius: Theme.radiusSmall
+                            width: 60; height: 56; radius: Theme.radiusSmall
                             color: selected ? Theme.accentSoft : Theme.surfaceHigh
                             border.color: selected ? Theme.accent : Theme.border
                             border.width: 1

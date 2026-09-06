@@ -5,7 +5,8 @@ và tải thư viện vào đúng cây `libraries/` của ta — sau đó `insta
 lại và bù phần thiếu, rồi launch đi đường quen. Không tự viết lại bộ `processors` của Forge:
 đó là hàng nghìn dòng dễ sai, và installer chính thức đã làm đúng.
 
-Forge quá cũ (installer chưa có `--installClient`, ≤ 1.12.1) bị từ chối với lỗi nói rõ.
+Forge đời cũ (installer chưa có `--installClient`, ≤ 1.12.1) đi đường `forge_legacy.py`: không
+cần chạy Java, chỉ ghi JSON và jar universal từ chính installer.
 """
 
 from __future__ import annotations
@@ -13,12 +14,12 @@ from __future__ import annotations
 import json
 import re
 import time
-import zipfile
 from pathlib import Path
 
 from nostalgia.errors import VersionError
 from nostalgia.model.download import DownloadTask
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
+from nostalgia.modloader.forge_legacy import install_legacy_forge, is_legacy_installer
 from nostalgia.modloader.model import LoaderVersion
 from nostalgia.net.download import download_one
 from nostalgia.net.http import HttpClient
@@ -51,15 +52,26 @@ def fetch_forge_versions(
         as_mapping(_fetch_json(http_client, endpoints.forge_promotions, cancel_token)).get("promos")
     )
     recommended = as_string(promotions.get(f"{game_version}-recommended")) or ""
-    found = [
-        LoaderVersion(
-            loader_version=name,
-            stable=name == f"{game_version}-{recommended}",
-            installer_url=f"{endpoints.forge_maven}/{name}/forge-{name}-installer.jar",
-        )
-        for name in reversed(names)
-        if name.startswith(f"{game_version}-")
-    ]
+    prefix = f"{game_version}-"
+    # maven-metadata.xml KHÔNG xếp theo thời gian với các bản cũ (1.7.10 có hàng trăm build
+    # xen kẽ), nên sắp theo số hiệu build. Bản recommended khớp cả tên có hậu tố
+    # (`1.7.10-10.13.4.1614-1.7.10`) lẫn không (`1.20.1-47.4.10`).
+    found = sorted(
+        (
+            LoaderVersion(
+                loader_version=name,
+                stable=bool(recommended)
+                and (
+                    name == f"{prefix}{recommended}" or name.startswith(f"{prefix}{recommended}-")
+                ),
+                installer_url=f"{endpoints.forge_maven}/{name}/forge-{name}-installer.jar",
+            )
+            for name in names
+            if name.startswith(prefix)
+        ),
+        key=lambda candidate: forge_build_number(candidate.loader_version, prefix),
+        reverse=True,
+    )
     if not found:
         message = f"Forge không có bản nào cho Minecraft {game_version!r}"
         raise VersionError(message)
@@ -96,6 +108,18 @@ def fetch_neoforge_versions(
     return tuple(found)
 
 
+def _is_recommended(name: str, prefix: str, recommended: str) -> bool:
+    if not recommended:
+        return False
+    return name == f"{prefix}{recommended}" or name.startswith(f"{prefix}{recommended}-")
+
+
+def forge_build_number(name: str, prefix: str) -> tuple[int, ...]:
+    """`1.7.10-10.13.4.1614-1.7.10` -> (10, 13, 4, 1614): phần sau tiền tố game, trước hậu tố."""
+    build = name[len(prefix) :].split("-", 1)[0]
+    return tuple(int(part) if part.isdigit() else 0 for part in build.split("."))
+
+
 def neoforge_prefix(game_version: str) -> str:
     parts = game_version.split(".")
     minor = parts[1] if len(parts) > 1 else game_version
@@ -107,6 +131,7 @@ def run_installer(
     http_client: HttpClient,
     data_dir: Path,
     versions_dir: Path,
+    libraries_dir: Path,
     java_binary: Path,
     installer_url: str,
     *,
@@ -126,10 +151,11 @@ def run_installer(
         DownloadTask(url=installer_url, destination=jar_path),
         cancel_token=cancel_token,
     )
-    if _is_legacy_forge_installer(jar_path):
-        jar_path.unlink(missing_ok=True)
-        message = "installer Forge này quá cũ (không có --installClient); chỉ hỗ trợ 1.12.2 trở lên"
-        raise VersionError(message)
+    if is_legacy_installer(jar_path):
+        try:
+            return install_legacy_forge(jar_path, versions_dir, libraries_dir)
+        finally:
+            jar_path.unlink(missing_ok=True)
 
     profiles_path = data_dir / "launcher_profiles.json"
     if not profiles_path.is_file():
@@ -179,15 +205,6 @@ def _version_dirs(versions_dir: Path) -> set[str]:
     if not versions_dir.is_dir():
         return set()
     return {child.name for child in versions_dir.iterdir() if child.is_dir()}
-
-
-def _is_legacy_forge_installer(jar_path: Path) -> bool:
-    try:
-        with zipfile.ZipFile(jar_path) as archive:
-            install_profile = json.loads(archive.read("install_profile.json"))
-    except (KeyError, OSError, zipfile.BadZipFile, ValueError):
-        return False
-    return isinstance(install_profile, dict) and "versionInfo" in install_profile
 
 
 def _maven_versions(

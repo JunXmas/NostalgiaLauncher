@@ -15,8 +15,16 @@ from nostalgia.modloader.model import LoaderKind, LoaderVersion
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress, ProgressFn, ignore_progress
+from nostalgia.repo.endpoints import Endpoints
 
 INSTALLER_STAGE = "chạy installer"
+
+
+def _fabric_like(endpoints: Endpoints, loader_kind: LoaderKind) -> dict[str, str]:
+    """Quilt đi qua đúng mã của Fabric, chỉ đổi địa chỉ meta và nhãn."""
+    if loader_kind == "quilt":
+        return {"meta_url": endpoints.quilt_meta, "loader_label": "Quilt"}
+    return {}
 
 
 class LoaderOperations(VersionOperations):
@@ -49,7 +57,7 @@ class LoaderOperations(VersionOperations):
                 http_client, loader_kind, game_version, cancel_token
             )
             chosen = self._pick(candidates, loader_version)
-            if loader_kind == "fabric":
+            if loader_kind in ("fabric", "quilt"):
                 version_id = install_fabric_profile(
                     http_client,
                     self.paths,
@@ -57,6 +65,7 @@ class LoaderOperations(VersionOperations):
                     chosen.loader_version,
                     endpoints=self.endpoints,
                     cancel_token=cancel_token,
+                    **_fabric_like(self.endpoints, loader_kind),
                 )
             else:
                 # Installer cần Java: cài bản gốc trước, JRE Mojang đi kèm theo đó.
@@ -74,6 +83,7 @@ class LoaderOperations(VersionOperations):
                     http_client,
                     self.paths.data_dir,
                     self.paths.versions_dir,
+                    self.paths.libraries_dir,
                     java_binary,
                     chosen.installer_url,
                     cancel_token=cancel_token,
@@ -87,9 +97,13 @@ class LoaderOperations(VersionOperations):
         game_version: str,
         cancel_token: CancelToken | None,
     ) -> tuple[LoaderVersion, ...]:
-        if loader_kind == "fabric":
+        if loader_kind in ("fabric", "quilt"):
             return fetch_fabric_loader_versions(
-                http_client, game_version, endpoints=self.endpoints, cancel_token=cancel_token
+                http_client,
+                game_version,
+                endpoints=self.endpoints,
+                cancel_token=cancel_token,
+                **_fabric_like(self.endpoints, loader_kind),
             )
         if loader_kind == "forge":
             return fetch_forge_versions(

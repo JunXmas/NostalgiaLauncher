@@ -108,12 +108,14 @@ def test_overrides_are_copied_and_client_overrides_win(tmp_path: Path) -> None:
     assert (game_dir / "options.txt").read_bytes() == b"x"
 
 
-def test_quilt_and_broken_archives_are_clear_errors(tmp_path: Path) -> None:
+def test_quilt_packs_are_supported_and_broken_archives_are_clear_errors(tmp_path: Path) -> None:
     quilt = make_mrpack(
-        tmp_path / "q.mrpack", files=[], dependencies={"minecraft": "1.20.1", "quilt-loader": "0.2"}
+        tmp_path / "q.mrpack",
+        files=[],
+        dependencies={"minecraft": "1.20.1", "quilt-loader": "0.29.1"},
     )
-    with pytest.raises(ContentError, match="Quilt"):
-        read_index(quilt)
+    index = read_index(quilt)
+    assert (index.loader_kind, index.loader_version) == ("quilt", "0.29.1")
     broken = tmp_path / "hong.mrpack"
     broken.write_bytes(b"khong phai zip")
     with pytest.raises(ContentError, match=r"không phải file \.mrpack"):

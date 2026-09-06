@@ -20,13 +20,12 @@ from nostalgia.content.model import (
 )
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.store import load_instance
+from nostalgia.modloader.model import COMPATIBLE_LOADERS, detect_loader_kind
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.settings.store import Settings, load_settings, save_settings
-
-FABRIC_MAIN_CLASS_PREFIX = "net.fabricmc."
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,21 +52,19 @@ class ContentOperations(LauncherContext):
     # ----- bản chơi đích -----
 
     def describe_content_target(self, instance_id: str) -> ContentTarget:
-        """Suy phiên bản game và loader từ version JSON của bản chơi. Không chạm mạng.
+        """Suy phiên bản game và loader của bản chơi. Không chạm mạng.
 
-        Sau khi trộn kế thừa, `jar` trỏ về bản Mojang mà loader cưỡi lên — đó chính là
-        phiên bản game để hỏi nguồn nội dung. Bản thuần thì `jar` chính là `id`.
+        Phiên bản game: sau khi trộn kế thừa, `jar` trỏ về bản Mojang mà loader cưỡi lên.
+        Loader: theo mã bản (quy ước tên của từng loader) — trước đây chỉ nhận ra Fabric qua
+        mainClass, nên bản Forge/NeoForge bị coi là vanilla và thư viện chặn cài mod.
         """
         instance = load_instance(self.paths, instance_id)
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
-        loader_kind: LoaderKind = (
-            "fabric" if version_meta.main_class.startswith(FABRIC_MAIN_CLASS_PREFIX) else "vanilla"
-        )
         return ContentTarget(
             instance_id=instance_id,
             game_dir=self.paths.instance_dir(instance_id),
             game_version=version_meta.jar_version_id or version_meta.version_id,
-            loader_kind=loader_kind,
+            loader_kind=detect_loader_kind(instance.version_id),
         )
 
     # ----- tìm -----
@@ -91,7 +88,7 @@ class ContentOperations(LauncherContext):
         if game_versions is None:
             game_versions = (target.game_version,) if target else ()
         if loaders is None:
-            loaders = (target.loader_kind,) if target else ()
+            loaders = COMPATIBLE_LOADERS[target.loader_kind] if target else ()
         with self.make_http_client() as http_client:
             if source == "curseforge":
                 return curseforge.search_projects(

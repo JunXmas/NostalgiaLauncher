@@ -12,8 +12,7 @@ Item {
     property string title: ""
     property var kinds: ["mod"]
     property var kindLabels: ({ "mod": "Mod", "shader": "Shader", "resourcepack": "Gói tài nguyên", "modpack": "Modpack" })
-    // Modpack CurseForge dùng định dạng khác (manifest.json), chưa hỗ trợ: chỉ Modrinth có chip này.
-    readonly property bool modpackUnavailable: kind === "modpack" && contentBridge.source !== "modrinth"
+
     readonly property string kind: kinds[kindTabs.currentIndex] || kinds[0]
     readonly property var sortKeys: ["relevance", "downloads", "follows", "newest", "updated"]
     readonly property var sortLabels: ["Liên quan", "Nhiều tải", "Theo dõi", "Mới nhất", "Vừa cập nhật"]
@@ -23,7 +22,6 @@ Item {
     signal navigate(int pageIndex)
 
     function runSearch() {
-        if (page.modpackUnavailable) return;
         contentBridge.search(page.kind, searchField.text, page.sortKeys[filters.sortIndex]);
     }
     function refresh() {
@@ -207,8 +205,7 @@ Item {
 
                     Text {
                         visible: !contentBridge.searching && contentBridge.results.length === 0
-                        text: page.modpackUnavailable ? "Modpack CurseForge dùng định dạng khác, chưa hỗ trợ — chọn Modrinth."
-                                                      : "Không có kết quả."
+                        text: "Không có kết quả."
                         color: Theme.textMuted; font.pixelSize: 12
                     }
                     Text {

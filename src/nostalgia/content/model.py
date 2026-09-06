@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from nostalgia.modloader.model import COMPATIBLE_LOADERS, LoaderKind
+
 ContentKind = Literal["mod", "resourcepack", "shader", "modpack"]
 CONTENT_KINDS: tuple[ContentKind, ...] = ("mod", "resourcepack", "shader", "modpack")
 
@@ -19,9 +21,8 @@ FOLDER_BY_KIND: dict[ContentKind, str] = {
     "shader": "shaderpacks",
 }
 
-# Loader của bản chơi. "vanilla" nghĩa là không loader: không cài mod được, nhưng gói tài
-# nguyên và shader thì vẫn cài được.
-LoaderKind = Literal["vanilla", "fabric"]
+# Loader của bản chơi lấy từ modloader/model.py. "vanilla" nghĩa là không loader: không cài
+# mod được, nhưng gói tài nguyên và shader thì vẫn cài được.
 
 SortOrder = Literal["relevance", "downloads", "follows", "newest", "updated"]
 
@@ -80,7 +81,9 @@ class ProjectVersion:
         phiên bản game — loader của chúng (iris, optifine, minecraft) không liên quan."""
         if game_version not in self.game_versions:
             return False
-        return content_kind not in ("mod", "modpack") or loader_kind in self.loaders
+        if content_kind not in ("mod", "modpack"):
+            return True
+        return any(name in self.loaders for name in COMPATIBLE_LOADERS[loader_kind])
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,3 +103,6 @@ class InstalledContent:
     @property
     def label(self) -> str:
         return self.title or self.file_name
+
+
+__all__ = ["LoaderKind"]

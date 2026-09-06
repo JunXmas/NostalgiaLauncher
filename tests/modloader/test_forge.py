@@ -163,18 +163,6 @@ def test_install_neoforge_picks_stable_when_unspecified(
     assert report.version_meta.version_id == f"neoforge-{NEOFORGE_NAME}"
 
 
-def test_legacy_forge_installer_is_refused_clearly(
-    server: LocalHttpsServer,
-    server_state: ServerState,
-    tmp_path: Path,
-    certificate_pair: tuple[Path, Path],
-) -> None:
-    launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair, legacy=True)
-
-    with pytest.raises(VersionError, match="quá cũ"):
-        launcher.install_loader("forge", VERSION_ID, FORGE_NAME)
-
-
 def test_unknown_loader_version_is_a_clear_error(
     server: LocalHttpsServer,
     server_state: ServerState,

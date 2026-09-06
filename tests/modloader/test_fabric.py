@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from pathlib import Path
 
@@ -92,3 +93,42 @@ def test_unknown_game_version_is_a_clear_error(
 
     with pytest.raises(VersionError, match=r"9\.9\.9"):
         launcher.list_loader_versions("fabric", "9.9.9")
+
+
+def test_quilt_goes_through_the_same_code_with_its_own_meta(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Quilt meta không có cờ `stable`: bản không hậu tố là ổn định. Profile vào kho như Fabric."""
+    server_state.add(
+        f"/quilt/versions/loader/{VERSION_ID}",
+        json.dumps(
+            [{"loader": {"version": "0.30.0-beta.1"}}, {"loader": {"version": "0.29.1"}}]
+        ).encode(),
+    )
+    server_state.add(
+        f"/quilt/versions/loader/{VERSION_ID}/0.29.1/profile/json",
+        json.dumps(
+            {
+                "id": f"quilt-loader-0.29.1-{VERSION_ID}",
+                "inheritsFrom": VERSION_ID,
+                "mainClass": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+                "libraries": [],
+            }
+        ).encode(),
+    )
+    launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher = replace(
+        launcher, endpoints=replace(launcher.endpoints, quilt_meta=server.url("/quilt"))
+    )
+
+    versions = launcher.list_loader_versions("quilt", VERSION_ID)
+    assert [(v.loader_version, v.stable) for v in versions] == [
+        ("0.30.0-beta.1", False),
+        ("0.29.1", True),
+    ]
+    report = launcher.install_loader("quilt", VERSION_ID)
+    assert report.version_meta.version_id == f"quilt-loader-0.29.1-{VERSION_ID}"
+    assert f"/fabric/versions/loader/{VERSION_ID}" not in server_state.routes, "không đụng Fabric"
