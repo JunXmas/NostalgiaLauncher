@@ -42,11 +42,34 @@ def make_launcher(tmp_path: Path) -> Launcher:
 
 
 def test_the_interface_loads_without_a_single_qml_error(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_launcher(tmp_path))
+    """Không lỗi nạp, và cũng KHÔNG một cảnh báo lúc chạy.
+
+    `view.errors()` chỉ thấy lỗi cú pháp. Một trang thiếu `import "../"` vẫn nạp được, rồi
+    kêu `ReferenceError: Theme is not defined` khi dựng — đó là cảnh báo, phải hứng riêng.
+    """
+    from PySide6.QtCore import QObject, qInstallMessageHandler
+
+    warnings: list[str] = []
+    qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
+    try:
+        view, _bridge = build_view(make_launcher(tmp_path))
+        QGuiApplication.processEvents()
+        # Các trang nạp lười, nên phải ghé qua từng trang thì lỗi của trang đó mới lộ.
+        root_item = view.rootObject()
+        assert root_item is not None
+        sidebar = root_item.findChild(QObject, "sidebar")
+        assert sidebar is not None
+        for page_index in range(7):
+            sidebar.setProperty("currentIndex", page_index)
+            QGuiApplication.processEvents()
+        sidebar.setProperty("currentIndex", 0)
+    finally:
+        qInstallMessageHandler(None)
 
     assert view.status() == QQuickView.Status.Ready
     assert [error.toString() for error in view.errors()] == []
     assert view.rootObject() is not None
+    assert warnings == []
 
 
 def test_the_interface_renders_to_an_image(qt_app: QGuiApplication, tmp_path: Path) -> None:

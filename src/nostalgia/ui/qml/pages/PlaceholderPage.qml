@@ -1,4 +1,5 @@
 import QtQuick
+import "../"
 
 /* Trang chưa làm. Nói thẳng là chưa có, KHÔNG vẽ dữ liệu giả cho đẹp ảnh chụp. */
 Item {
