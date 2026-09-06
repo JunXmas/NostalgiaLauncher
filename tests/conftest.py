@@ -13,6 +13,7 @@ Test nào thật sự cần home thì đánh `@pytest.mark.allow_home`.
 from __future__ import annotations
 
 import os
+import socket
 import ssl
 from collections.abc import Iterator
 from pathlib import Path
@@ -80,6 +81,36 @@ def isolated_home(
         monkeypatch.setattr(os.path, "expanduser", forbidden)
 
     return home
+
+
+@pytest.fixture(autouse=True)
+def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Chặn mọi kết nối ra ngoài máy, trừ test có đánh dấu `network`.
+
+    Không có lưới này thì một test lỡ gọi ra Internet sẽ **treo** thay vì rớt: đã trả giá
+    đúng một lần — `account add-microsoft` sau khi có mã ứng dụng mặc định đã gọi thật lên
+    Microsoft rồi ngồi chờ người nhập mã suốt 900 giây, và cả bộ test đứng im ở 12%.
+
+    Chặn ở tầng socket chứ không ở tầng `HttpClient`: mọi đường ra Internet đều phải đi qua
+    đây, kể cả đường mà một ngày nào đó ai đó viết mới mà quên mất luật này.
+    """
+    if request.node.get_closest_marker("network") is not None:
+        return
+
+    real_connect = socket.socket.connect
+
+    def guarded_connect(self: socket.socket, address: object) -> None:
+        host = address[0] if isinstance(address, tuple) else ""
+        if host in {"127.0.0.1", "::1", "localhost"}:
+            real_connect(self, address)
+            return
+        message = (
+            f"test không đánh dấu `network` nhưng đang gọi ra {address!r}. "
+            "Dùng máy chủ cục bộ trong tests/, hoặc đánh dấu @pytest.mark.network."
+        )
+        raise AssertionError(message)
+
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
 
 
 @pytest.fixture(scope="session")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 
 from nostalgia.account.microsoft import build_microsoft_account, needs_refresh, refresh_account
@@ -14,7 +15,7 @@ from nostalgia.account.store import (
     save_accounts,
     upsert_account,
 )
-from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, sign_in
+from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, resolve_client_id, sign_in
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
@@ -31,16 +32,20 @@ class AccountOperations(LauncherContext):
 
     def add_microsoft_account(
         self,
-        client_id: str,
+        client_id: str = "",
         *,
         on_device_code: DeviceCodeFn = ignore_device_code,
         cancel_token: CancelToken | None = None,
     ) -> Account:
-        """Đăng nhập Microsoft. CHẠM MẠNG, và chờ người dùng nhập mã trên trang của họ."""
+        """Đăng nhập Microsoft. CHẠM MẠNG, và chờ người dùng nhập mã trên trang của họ.
+
+        Không truyền `client_id` thì dùng app đã duyệt của launcher — giao diện không cần
+        biết khái niệm này tồn tại.
+        """
         with self.make_http_client() as http_client:
             login = sign_in(
                 http_client,
-                client_id,
+                client_id or resolve_client_id(os.environ),
                 on_device_code,
                 endpoints=self.auth_endpoints,
                 cancel_token=cancel_token,
@@ -66,7 +71,7 @@ class AccountOperations(LauncherContext):
         with self.make_http_client() as http_client:
             refreshed = refresh_account(
                 http_client,
-                client_id,
+                client_id or resolve_client_id(os.environ),
                 account,
                 now=time.time(),
                 endpoints=self.auth_endpoints,
