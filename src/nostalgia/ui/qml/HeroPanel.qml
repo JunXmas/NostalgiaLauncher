@@ -33,7 +33,7 @@ Item {
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.269; landmarkY: 0.50; pivot: 1.0     // bàn chế tác bên trái
+        landmarkX: 0.269; landmarkY: 0.50; pivot: 0.85    // bàn chế tác bên trái
         pageIndex: 2; glyph: "⚙"; title: "MOD"; subtitle: "Duyệt & cài"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
@@ -45,7 +45,7 @@ Item {
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.68; landmarkY: 0.385; below: true; pivot: 1.0  // cổng xanh ngọc bên phải
+        landmarkX: 0.675; landmarkY: 0.385; below: true; pivot: 0.9 // cổng xanh ngọc bên phải
         pageIndex: 4; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }

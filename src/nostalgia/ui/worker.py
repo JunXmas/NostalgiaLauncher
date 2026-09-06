@@ -6,6 +6,7 @@ Một giao diện đứng hình vì đang tải 3.629 file là giao diện hỏn
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from collections.abc import Callable
 
@@ -48,10 +49,14 @@ class WorkerBridge(QObject):
                 work()
             except NostalgiaError as error:
                 self.failed.emit(str(error))
+            except RuntimeError:
+                # Cửa sổ đã đóng, QObject bị huỷ trong lúc luồng còn chạy: không còn ai để báo.
+                return
             except Exception as error:
                 self.failed.emit(f"lỗi không lường trước: {error}")
             finally:
-                self._set_busy(False)
+                with contextlib.suppress(RuntimeError):
+                    self._set_busy(False)
 
         self._set_busy(True)
         threading.Thread(target=guarded, daemon=True).start()
