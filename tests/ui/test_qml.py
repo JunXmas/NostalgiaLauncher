@@ -170,3 +170,52 @@ def test_hero_cards_sit_inside_the_photo_and_never_overlap(tmp_path: Path) -> No
                 or second[3] <= first[1]
             )
             assert separated, f"hai thẻ nổi đè nhau: {first} và {second}"
+
+
+def test_clicking_a_loader_button_keeps_the_create_dialog_open(tmp_path: Path) -> None:
+    """Lỗi thật đã gặp: bấm nút loader trong hộp tạo bản chơi thì hộp đóng luôn, vì TapHandler
+    không nuốt sự kiện và cú bấm lọt xuống màn tối "bấm ra ngoài thì đóng". Bấm chuột thật."""
+    from PySide6.QtCore import QObject, QPointF, Qt
+    from PySide6.QtTest import QTest
+
+    view, _bridge = build_view(make_launcher(tmp_path))
+    view.show()
+    QGuiApplication.processEvents()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 1)
+    for _ in range(50):  # Loader nạp trang xong mới có hộp thoại
+        QGuiApplication.processEvents()
+        dialog = root_item.findChild(QObject, "createDialog")
+        if dialog is not None:
+            break
+    assert dialog is not None
+    dialog.openDialog()
+    QGuiApplication.processEvents()
+    assert dialog.property("visible") is True
+
+    loader_row = root_item.findChild(QObject, "loaderRow")
+    assert loader_row is not None
+    fabric_button = loader_row.childItems()[1]  # Vanilla, Fabric, Forge, NeoForge
+    center = fabric_button.mapToScene(
+        QPointF(fabric_button.property("width") / 2, fabric_button.property("height") / 2)
+    )
+    QTest.mouseClick(
+        view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, center.toPoint()
+    )
+    QGuiApplication.processEvents()
+
+    assert dialog.property("loaderKind") == "fabric", "nút loader phải nhận được cú bấm"
+    assert dialog.property("visible") is True, "hộp không được đóng khi bấm bên trong"
+
+    # Bấm ra màn tối bên ngoài hộp thì mới đóng.
+    QTest.mouseClick(
+        view,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+        QPointF(view.width() - 5, 5).toPoint(),
+    )
+    QGuiApplication.processEvents()
+    assert dialog.property("visible") is False

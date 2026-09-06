@@ -55,11 +55,12 @@ Item {
         function onCreated(instanceId) { dialog.visible = false; }
     }
 
-    // Màn tối phía sau; bấm ra ngoài là đóng.
-    Rectangle {
+    // Màn tối phía sau; bấm ra ngoài là đóng. Dùng MouseArea chứ không TapHandler: TapHandler
+    // không nuốt sự kiện, nên bấm nút BÊN TRONG hộp cũng lọt xuống đây và đóng hộp (lỗi thật).
+    MouseArea {
         anchors.fill: parent
-        color: "#b3000000"
-        TapHandler { onTapped: if (!bridge.busy) dialog.visible = false }
+        onClicked: if (!bridge.busy) dialog.visible = false
+        Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
 
     Rectangle {
@@ -73,7 +74,7 @@ Item {
         border.width: 1
         scale: dialog.visible ? 1 : 0.96
         Behavior on scale { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
-        TapHandler { }  // nuốt bấm để không đóng hộp
+        MouseArea { anchors.fill: parent }  // nuốt bấm trong hộp, để không lọt ra màn tối phía sau
 
         // ----- cột trái: form -----
         Column {
@@ -103,6 +104,7 @@ Item {
                 spacing: 6; width: parent.width
                 Text { text: "LOADER"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
                 Row {
+                    objectName: "loaderRow"
                     spacing: 8
                     Repeater {
                         model: dialog.loaderChoices

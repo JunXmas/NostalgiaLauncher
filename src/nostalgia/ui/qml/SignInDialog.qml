@@ -21,7 +21,8 @@ Item {
         function onFailed(message) { dialog.visible = false; }
     }
 
-    Rectangle { anchors.fill: parent; color: "#b3000000"; TapHandler { } }
+    // Màn tối nuốt mọi cú bấm: hộp này chỉ đóng bằng nút Huỷ hoặc khi đăng nhập xong.
+    MouseArea { anchors.fill: parent; Rectangle { anchors.fill: parent; color: "#b3000000" } }
 
     Rectangle {
         anchors.centerIn: parent
