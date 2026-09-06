@@ -161,7 +161,7 @@ def test_switching_source_clears_results_and_routes_to_curseforge(
     import json
     from dataclasses import replace
 
-    from test_curseforge import SEARCH_BODY
+    from curseforge_fixture import SEARCH_BODY
 
     launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
     server_state.add("/cf/mods/search", json.dumps(SEARCH_BODY).encode())
@@ -194,9 +194,8 @@ def test_install_modpack_creates_an_instance_and_selects_it(
     import json
     from dataclasses import replace
 
-    from test_modpack_install import PACK_ID, publish_modpack
-
     from fabric_fixture import publish_fabric
+    from modpack_fixture import PACK_ID, publish_modpack
 
     launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
     publish_fabric(server_state)
