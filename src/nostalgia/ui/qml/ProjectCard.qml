@@ -19,18 +19,30 @@ Rectangle {
     scale: hover.hovered ? 1.01 : 1.0
     Behavior on scale { NumberAnimation { duration: Theme.quick } }
 
-    // Nền kiểu mica: chính icon mod, tải ở cỡ 10×10 rồi phóng to có nội suy — ra một mảng màu
-    // mờ mà không cần shader (MultiEffect blur không vẽ được trên GL phần mềm, đã thử).
-    Image {
-        source: project.iconUrl || ""
+    // Nền kiểu mica từ chính icon, không cần shader (MultiEffect blur không vẽ được trên GL
+    // phần mềm, đã thử). Một ảnh 10×10 phóng to thì thấy lưới ô trên GPU thật; chồng hai lớp
+    // cỡ 4×4 và 7×7 lệch tỉ lệ nhau thì lưới của lớp này bị lớp kia xoá, ra mảng màu mượt.
+    Item {
+        id: mica
         anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
         width: parent.width * 0.7
-        sourceSize: Qt.size(10, 10)
-        smooth: true
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        opacity: status === Image.Ready ? 0.8 : 0
+        opacity: micaBase.status === Image.Ready ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.slow } }
+        Image {
+            id: micaBase
+            anchors.fill: parent
+            source: project.iconUrl || ""
+            sourceSize: Qt.size(4, 4); smooth: true; asynchronous: true
+            fillMode: Image.PreserveAspectCrop
+            opacity: 0.8
+        }
+        Image {
+            anchors { fill: parent; margins: -60 }
+            source: project.iconUrl || ""
+            sourceSize: Qt.size(7, 7); smooth: true; asynchronous: true
+            fillMode: Image.PreserveAspectCrop
+            opacity: 0.45
+        }
     }
     Rectangle {
         anchors.fill: parent
