@@ -7,6 +7,7 @@ vậy — giao diện gọi thẳng sáu module lõi, và mỗi lần lõi đổ
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
@@ -15,6 +16,22 @@ from nostalgia.api import Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress
 from nostalgia.ui.worker import WorkerBridge
+
+GAME_LOG_TAIL_LINES = 60
+CRASH_MARKER = "Crash report saved to:"
+
+
+def describe_game_failure(exit_code: int, tail: deque[str]) -> str:
+    """Một câu cho dải đỏ: mã thoát, và dòng có ích nhất trong đuôi log (báo cáo crash nếu
+    có, không thì lỗi Java cuối cùng)."""
+    lines = [line.strip() for line in tail if line.strip()]
+    crash = next((line for line in reversed(lines) if CRASH_MARKER in line), "")
+    if crash:
+        return f"Game thoát (mã {exit_code}). {crash.split(CRASH_MARKER, 1)[1].strip(' #@!')}"
+    error = next((line for line in reversed(lines) if "Exception" in line or "Error" in line), "")
+    return f"Game thoát (mã {exit_code}). " + (
+        error[:160] if error else "Xem log trong thư mục bản chơi."
+    )
 
 
 class LauncherBridge(WorkerBridge):
@@ -171,7 +188,9 @@ class LauncherBridge(WorkerBridge):
         player_name = str(self.activePlayerName)
 
         def work() -> None:
-            game = self._launcher.launch_instance(instance_id, player_name)
+            # Giữ đuôi output để khi game chết còn nói được vì sao, thay vì im lặng về "Sẵn sàng".
+            tail: deque[str] = deque(maxlen=GAME_LOG_TAIL_LINES)
+            game = self._launcher.launch_instance(instance_id, player_name, on_output=tail.append)
             self._set_game_running(True)
             self.gameStarted.emit(instance_id)
             try:
@@ -179,6 +198,8 @@ class LauncherBridge(WorkerBridge):
             finally:
                 self._set_game_running(False)
             self.gameStopped.emit(exit_code)
+            if exit_code != 0:
+                self.failed.emit(describe_game_failure(exit_code, tail))
 
         self.run_in_background(work, f"Khởi động {instance_id}")
 

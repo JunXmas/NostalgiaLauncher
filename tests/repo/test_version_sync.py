@@ -11,7 +11,8 @@ import pytest
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.errors import Cancelled, VersionError
 from nostalgia.model.json_value import JsonValue
-from nostalgia.net.http import HttpClient, RetryPolicy
+from nostalgia.net.http import HttpClient
+from nostalgia.net.retry import RetryPolicy
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.storage.files import atomic_write_json

@@ -27,14 +27,18 @@ def meta_for(version_id: str) -> VersionMeta:
     return parse_version_meta(load_fixture(version_id))
 
 
-def test_no_natives_jar_reaches_the_classpath() -> None:
-    """Jar natives chỉ chứa `.so`/`.dll`; đưa vào classpath là vô nghĩa, và với kiểu cũ
-    thì còn sai vì mỗi hệ điều hành một file khác nhau."""
+def test_old_native_bundles_stay_off_the_classpath_but_modern_natives_jars_are_on_it() -> None:
+    """Bundle kiểu cũ (≤1.18) mỗi hệ điều hành một file, không lên classpath. Jar natives
+    kiểu mới (≥1.19) PHẢI lên classpath: từ 26.x game trỏ java.library.path vào thư mục con
+    và trông cậy LWJGL tự bung từ jar — thiếu là "Failed to locate library: liblwjgl.so"."""
     for version_id in ("1.8.9", "1.20.1", "1.21.4"):
         libraries = resolve_classpath_libraries(meta_for(version_id), LINUX)
         assert libraries, version_id
         assert not any(library.is_native_bundle for library in libraries), version_id
-        assert not any(library.is_natives_jar for library in libraries), version_id
+    modern = resolve_classpath_libraries(meta_for("1.20.1"), LINUX)
+    linux_natives = [str(library.coordinate) for library in modern if library.is_natives_jar]
+    assert linux_natives, "1.20.1 khai natives kiểu mới, phải có trên classpath"
+    assert all(name.endswith("natives-linux") for name in linux_natives), "chỉ natives của HĐH này"
 
 
 def test_the_classpath_differs_between_operating_systems() -> None:

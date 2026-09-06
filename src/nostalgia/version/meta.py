@@ -58,15 +58,19 @@ class Library:
     def is_natives_jar(self) -> bool:
         """Thư viện natives kiểu MỚI (≥1.19): một thư viện riêng, phân biệt bằng classifier.
 
-        Cả hai kiểu đều chỉ chứa `.so`/`.dll`/`.dylib` để giải nén — đưa chúng vào classpath
-        là vô nghĩa, và với kiểu cũ thì còn sai vì mỗi hệ điều hành một file khác nhau.
+        Vẫn bung ra `natives/` cho các bản 1.19-1.21 trỏ `java.library.path` vào đó, nhưng
+        cũng phải LÊN CLASSPATH: từ 26.x game trỏ `java.library.path` vào thư mục con
+        `natives/java` và trông cậy LWJGL tự bung từ jar trên classpath — đúng như launcher
+        chính thức. Loại jar này khỏi classpath là 26.2 chết với "Failed to locate library:
+        liblwjgl.so" (đã gặp thật).
         """
         classifier = self.coordinate.classifier
         return classifier is not None and classifier.startswith("natives-")
 
     @property
     def is_classpath_entry(self) -> bool:
-        return not self.is_native_bundle and not self.is_natives_jar
+        """Chỉ bundle kiểu cũ đứng ngoài classpath: mỗi hệ điều hành một file khác nhau."""
+        return not self.is_native_bundle
 
 
 @dataclass(frozen=True, slots=True)

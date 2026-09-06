@@ -6,7 +6,8 @@ import pytest
 
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.errors import Cancelled, IntegrityError, NetworkError
-from nostalgia.net.http import HttpClient, RetryPolicy, retry
+from nostalgia.net.http import HttpClient
+from nostalgia.net.retry import RetryPolicy, retry
 from nostalgia.operations.cancellation import CancelToken
 
 FAST_RETRY = RetryPolicy(attempts=3, initial_backoff_seconds=0.01, total_deadline_seconds=5.0)
@@ -128,3 +129,20 @@ def test_retry_stops_immediately_when_cancelled() -> None:
 
     with pytest.raises(Cancelled):
         retry(never_called, policy=FAST_RETRY, cancel_token=cancel_token)
+
+
+def test_a_stale_keep_alive_connection_is_reopened_once(
+    http_client: HttpClient, server: LocalHttpsServer, server_state: ServerState
+) -> None:
+    """Máy chủ đóng kết nối rảnh sau một lượt tải dài (piston-meta làm thật). Lần gọi kế tiếp
+    trên kết nối cũ phải được thử lại trên kết nối mới, không ném lỗi ra người dùng."""
+    url = server.url(server_state.add("/nho.json", b"{}"))
+    assert http_client.fetch_bytes(url) == b"{}"
+
+    # Giả lập đầu kia đóng: đóng socket của kết nối đang được giữ trong luồng này.
+    cached = http_client._local.by_host
+    for connection in cached.values():
+        connection.sock.close()
+
+    assert http_client.fetch_bytes(url) == b"{}"
+    assert server_state.request_count("/nho.json") == 2

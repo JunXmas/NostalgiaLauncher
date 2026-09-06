@@ -30,7 +30,8 @@ from pathlib import Path
 
 from nostalgia.errors import Cancelled, IntegrityError
 from nostalgia.model.download import DownloadTask
-from nostalgia.net.http import DEFAULT_RETRY_POLICY, HttpClient, RetryPolicy, retry
+from nostalgia.net.http import HttpClient
+from nostalgia.net.retry import DEFAULT_RETRY_POLICY, RetryPolicy, retry
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress, ProgressFn, ignore_progress
 from nostalgia.storage.files import DEFAULT_FILE_MODE, ensure_dir, sync_directory

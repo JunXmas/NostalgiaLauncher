@@ -17,7 +17,8 @@ from pathlib import Path
 from nostalgia.errors import DataFileError, VersionError
 from nostalgia.model.json_value import JsonValue, as_mapping
 from nostalgia.net.download import download_one
-from nostalgia.net.http import DEFAULT_RETRY_POLICY, HttpClient, RetryPolicy
+from nostalgia.net.http import HttpClient
+from nostalgia.net.retry import DEFAULT_RETRY_POLICY, RetryPolicy
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import VERSION_MANIFEST_URL
 from nostalgia.repo.manifest import VersionManifest, fetch_manifest

@@ -129,3 +129,32 @@ def test_play_flags_game_running_and_clears_it_when_the_game_exits(
     assert seen == ["started=van", "stopped=0"]
     assert main_bridge.gameRunning is False
     assert main_bridge.activity.startswith("Khởi động")
+
+
+def test_game_failure_message_points_at_the_crash_report() -> None:
+    """Game chết thì dải đỏ phải nói mã thoát và nơi xem: báo cáo crash nếu có, không thì
+    lỗi Java cuối; không có gì thì chỉ đường tới log."""
+    from collections import deque
+
+    from nostalgia.ui.bridge import describe_game_failure
+
+    with_crash = deque(
+        [
+            "[main/INFO]: bắt đầu",
+            "java.lang.UnsatisfiedLinkError: Failed to locate library: liblwjgl.so",
+            "#@!@# Game crashed! Crash report saved to: #@!@# /kho/crash-reports/crash-1.txt",
+        ]
+    )
+    assert (
+        describe_game_failure(1, with_crash) == "Game thoát (mã 1). /kho/crash-reports/crash-1.txt"
+    )
+
+    with_error = deque(["x", "java.lang.OutOfMemoryError: Java heap space", "  at a.b.c"])
+    assert describe_game_failure(1, with_error).endswith(
+        "java.lang.OutOfMemoryError: Java heap space"
+    )
+
+    assert (
+        describe_game_failure(137, deque())
+        == "Game thoát (mã 137). Xem log trong thư mục bản chơi."
+    )
