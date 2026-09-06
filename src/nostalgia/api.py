@@ -28,9 +28,9 @@ from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.instances import InstanceOperations
-from nostalgia.facade.modpacks import ModpackOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
 from nostalgia.facade.play import PlayOperations
+from nostalgia.facade.presets import PresetOperations
 from nostalgia.instance.model import Instance
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
@@ -40,7 +40,7 @@ from nostalgia.operations.progress import Progress
 
 
 @dataclass(frozen=True, slots=True)
-class Launcher(MultiplayerOperations, ModpackOperations, InstanceOperations, PlayOperations):
+class Launcher(MultiplayerOperations, PresetOperations, InstanceOperations, PlayOperations):
     """Toàn bộ khả năng của lõi, gói sau một đối tượng dựng một lần rồi dùng lại.
 
     Thân của từng nhóm thao tác nằm ở `nostalgia/facade/`, tách theo miền; ở đây chỉ ghép

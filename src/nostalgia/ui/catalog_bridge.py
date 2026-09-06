@@ -34,6 +34,7 @@ def slugify(display_name: str, taken: set[str]) -> str:
 class CatalogBridge(WorkerBridge):
     releasedVersionsChanged = Signal()
     loaderVersionsChanged = Signal()
+    presetVersionsChanged = Signal()
     created = Signal(str)
 
     def __init__(
@@ -44,6 +45,7 @@ class CatalogBridge(WorkerBridge):
         self._main_bridge = main_bridge
         self._released: list[dict[str, Any]] = []
         self._loader_versions: list[dict[str, Any]] = []
+        self._preset_versions: list[str] = []
 
     @Property(list, notify=releasedVersionsChanged)
     def releasedVersions(self) -> list[dict[str, Any]]:
@@ -52,6 +54,22 @@ class CatalogBridge(WorkerBridge):
     @Property(list, notify=loaderVersionsChanged)
     def loaderVersions(self) -> list[dict[str, Any]]:
         return self._loader_versions
+
+    @Property(list, notify=presetVersionsChanged)
+    def presetGameVersions(self) -> list[str]:
+        """Phiên bản mà gói Optimized có bản; rỗng = chưa tải (hộp thoại không làm mờ gì)."""
+        return list(self._preset_versions)
+
+    @Slot()
+    def loadPresetVersions(self) -> None:
+        if self._preset_versions:
+            return
+
+        def work() -> None:
+            self._preset_versions = list(self._launcher.list_preset_game_versions("optimized"))
+            self.presetVersionsChanged.emit()
+
+        self.run_in_background(work, "Xem Fabulously Optimized có những bản nào")
 
     @Slot()
     def loadReleasedVersions(self) -> None:
@@ -106,6 +124,9 @@ class CatalogBridge(WorkerBridge):
         """Cài phiên bản (và Fabric nếu chọn) rồi đăng ký bản chơi. Chạm mạng, chạy nền."""
 
         def work() -> None:
+            if loader_kind == "optimized":
+                self._create_preset(display_name, game_version)
+                return
             report = self._launcher.install_loader(
                 cast(LoaderKind, loader_kind),
                 game_version,
@@ -124,8 +145,23 @@ class CatalogBridge(WorkerBridge):
             self._main_bridge.instancesChanged.emit()
             self.created.emit(instance.instance_id)
 
-        loader_label = "Minecraft" if loader_kind == "vanilla" else loader_kind.capitalize()
+        loader_label = {"vanilla": "Minecraft", "optimized": "Fabulously Optimized"}.get(
+            loader_kind, loader_kind.capitalize()
+        )
         self.run_in_background(work, f"Cài {loader_label} {game_version} và tạo bản chơi")
+
+    def _create_preset(self, display_name: str, game_version: str) -> None:
+        taken = {instance.instance_id for instance in self._launcher.list_instances()}
+        display_label = display_name.strip() or f"Optimized {game_version}"
+        instance = self._launcher.install_preset(
+            "optimized",
+            slugify(display_label, taken),
+            display_label,
+            game_version=game_version,
+            on_progress=self._main_bridge.report_progress,
+        )
+        self._main_bridge.instancesChanged.emit()
+        self.created.emit(instance.instance_id)
 
 
 def _major(version_id: str) -> str:

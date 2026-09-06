@@ -20,9 +20,16 @@ Item {
         { key: "fabric",   label: "Fabric",   icon: "assets/loaders/fabric.png" },
         { key: "quilt",    label: "Quilt",    icon: "assets/loaders/quilt.png" },
         { key: "forge",    label: "Forge",    icon: "assets/loaders/forge.png" },
-        { key: "neoforge", label: "NeoForge", icon: "assets/loaders/neoforge.png" }
+        { key: "neoforge", label: "NeoForge", icon: "assets/loaders/neoforge.png" },
+        { key: "optimized", label: "Optimized", icon: "assets/loaders/optimized.png" }
     ]
-    readonly property bool needsLoaderStep: loaderKind !== "vanilla"
+    // Optimized = modpack Fabulously Optimized: không có bước chọn bản loader, pack tự lo Fabric.
+    readonly property bool isPreset: loaderKind === "optimized"
+    readonly property bool needsLoaderStep: loaderKind !== "vanilla" && !isPreset
+    function presetSupports(versionId) {
+        return !dialog.isPreset || catalogBridge.presetGameVersions.length === 0
+               || catalogBridge.presetGameVersions.indexOf(versionId) >= 0;
+    }
     readonly property string loaderLabel: loaderChoices.find(function (c) { return c.key === dialog.loaderKind; }).label
     // Tên để trống thì tự đặt theo loader + phiên bản, như các launcher khác — bắt gõ tên là
     // một lý do "bấm Tạo không được" mà người dùng không đoán ra.
@@ -182,6 +189,9 @@ Item {
                                     onTapped: {
                                         dialog.loaderKind = modelData.key;
                                         dialog.loaderVersion = "";
+                                        if (dialog.isPreset) catalogBridge.loadPresetVersions();
+                                        if (dialog.isPreset && dialog.gameVersion && !dialog.presetSupports(dialog.gameVersion))
+                                            dialog.gameVersion = "";
                                         if (dialog.needsLoaderStep && dialog.gameVersion)
                                             catalogBridge.loadLoaderVersions(dialog.loaderKind, dialog.gameVersion);
                                     }
@@ -206,6 +216,12 @@ Item {
                     width: parent.width
                     text: "Còn thiếu: " + dialog.missingStep
                     color: Theme.accent; font.pixelSize: 11; wrapMode: Text.WordWrap
+                }
+                Text {
+                    visible: !bridge.busy && dialog.isPreset
+                    width: parent.width
+                    text: "Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi."
+                    color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
                 }
                 Text {
                     visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
@@ -341,14 +357,16 @@ Item {
                                 Rectangle {
                                     id: versionCell
                                     readonly property bool selected: modelData.versionId === dialog.gameVersion
+                                    readonly property bool supported: dialog.presetSupports(modelData.versionId)
                                     width: Math.max(72, versionText.width + 22); height: 30; radius: 7
+                                    opacity: supported ? 1 : 0.35
                                     color: selected ? Theme.accentSoft : Theme.surfaceHigh
                                     border.color: selected ? Theme.accent : Theme.border
                                     Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
                                            color: versionCell.selected ? Theme.accent : Theme.text
                                            font.pixelSize: 12; font.family: "monospace" }
-                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
-                                    TapHandler { onTapped: dialog.pickGameVersion(modelData.versionId) }
+                                    HoverHandler { cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
+                                    TapHandler { enabled: versionCell.supported; onTapped: dialog.pickGameVersion(modelData.versionId) }
                                 }
                             }
                         }
