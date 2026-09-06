@@ -85,8 +85,8 @@ Item {
     Rectangle {
         id: box
         anchors.centerIn: parent
-        width: Math.min(parent.width - 60, 1000)
-        height: Math.min(parent.height - 60, 660)
+        width: Math.min(parent.width - 40, 1120)
+        height: Math.min(parent.height - 40, 760)
         radius: Theme.radius
         color: Theme.surface
         border.color: Theme.border
@@ -118,7 +118,7 @@ Item {
 
                 // Ảnh minh hoạ của dòng đang chọn (hoặc dòng đang bung).
                 Rectangle {
-                    width: parent.width; height: 118; radius: Theme.radiusSmall; clip: true
+                    width: parent.width; height: Math.round(width / 2.56); radius: Theme.radiusSmall; clip: true
                     color: Theme.surfaceHigh; border.color: Theme.border
                     Image {
                         id: previewArt
@@ -289,12 +289,14 @@ Item {
                         readonly property bool expanded: dialog.expandedMajor === modelData.major
                         readonly property var versions: expanded ? dialog.versionsOf(modelData.major) : []
                         width: ListView.view.width
-                        height: 118 + (expanded ? chips.height + 12 : 0)
+                        // Thẻ cao theo bề ngang để key art (2,56:1) không bị cắt quá nửa.
+                        readonly property int artHeight: Math.max(150, Math.min(210, Math.round(width / 3.1)))
+                        height: artHeight + (expanded ? chips.height + 12 : 0)
 
                         Rectangle {
                             id: art
                             anchors { left: parent.left; right: parent.right; top: parent.top }
-                            height: 118; radius: Theme.radiusSmall; clip: true
+                            height: card.artHeight; radius: Theme.radiusSmall; clip: true
                             color: Theme.surfaceHigh
                             border.color: card.expanded || dialog.majorOf(dialog.gameVersion) === modelData.major ? Theme.accent : Theme.border
                             Image {
