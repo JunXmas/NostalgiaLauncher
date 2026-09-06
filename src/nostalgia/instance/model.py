@@ -30,6 +30,8 @@ class Instance:
     max_heap_megabytes: int | None = None
     window_width: int | None = None
     window_height: int | None = None
+    # Ảnh đại diện (thường là icon modpack); rỗng thì thẻ vẽ mảng màu.
+    icon_url: str = ""
 
     @property
     def label(self) -> str:

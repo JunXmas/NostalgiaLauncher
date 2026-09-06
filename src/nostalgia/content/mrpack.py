@@ -25,7 +25,12 @@ from nostalgia.storage.files import ensure_dir, resolve_within
 INDEX_FILE_NAME = "modrinth.index.json"
 OVERRIDE_PREFIXES = ("overrides/", "client-overrides/")
 # Danh sách host của chuẩn mrpack (docs.modrinth.com/docs/modpacks/format_definition).
-ALLOWED_HOSTS = ("cdn.modrinth.com", "github.com", "raw.githubusercontent.com", "gitlab.com")
+ALLOWED_HOSTS: tuple[str, ...] = (
+    "cdn.modrinth.com",
+    "github.com",
+    "raw.githubusercontent.com",
+    "gitlab.com",
+)
 LOADER_DEPENDENCY_KEYS: tuple[tuple[str, LoaderKind], ...] = (
     ("fabric-loader", "fabric"),
     ("quilt-loader", "quilt"),

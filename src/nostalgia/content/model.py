@@ -99,6 +99,7 @@ class InstalledContent:
     version_id: str = ""
     version_number: str = ""
     icon_url: str = ""
+    source: str = "modrinth"
 
     @property
     def label(self) -> str:

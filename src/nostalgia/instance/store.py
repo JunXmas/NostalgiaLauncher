@@ -52,6 +52,7 @@ def save_instance(paths: DataPaths, instance: Instance) -> None:
         "max_heap_megabytes": instance.max_heap_megabytes,
         "window_width": instance.window_width,
         "window_height": instance.window_height,
+        "icon_url": instance.icon_url,
     }
     atomic_write_json(paths.instance_json(instance.instance_id), document)
 
@@ -127,4 +128,5 @@ def _parse_instance(fields: dict[str, JsonValue], *, fallback_id: str) -> Instan
         max_heap_megabytes=as_integer(fields.get("max_heap_megabytes")),
         window_width=as_integer(fields.get("window_width")),
         window_height=as_integer(fields.get("window_height")),
+        icon_url=as_string(fields.get("icon_url")) or "",
     )

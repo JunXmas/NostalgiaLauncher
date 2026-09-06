@@ -7,15 +7,16 @@ file của pack vào thư mục bản chơi -> chép overrides. Mọi bước đ
 
 from __future__ import annotations
 
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from nostalgia.content import curseforge
+from nostalgia.content import curseforge, mrpack
 from nostalgia.content.cfpack import apply_overrides as cf_apply_overrides
 from nostalgia.content.cfpack import read_manifest, resolve_files
 from nostalgia.content.model import Project, ProjectVersion
-from nostalgia.content.mrpack import ALLOWED_HOSTS, apply_overrides, plan_downloads, read_index
+from nostalgia.content.mrpack import apply_overrides, plan_downloads, read_index
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.content import ContentOperations
 from nostalgia.facade.loaders import LoaderOperations
@@ -61,7 +62,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
         display_name: str = "",
         *,
         game_version: str = "",
-        allowed_hosts: tuple[str, ...] = ALLOWED_HOSTS,
+        allowed_hosts: tuple[str, ...] | None = None,
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> Instance:
@@ -91,44 +92,104 @@ class ModpackOperations(LoaderOperations, ContentOperations):
                     plan = self._plan_curseforge_pack(http_client, pack_path)
                 else:
                     plan = self._plan_modrinth_pack(pack_path, allowed_hosts)
-                self.install_loader(
-                    plan.loader_kind,
-                    plan.game_version,
-                    plan.loader_version or None,
-                    on_progress=on_progress,
-                    cancel_token=cancel_token,
-                )
-                version_id = self._loader_version_id(plan.loader_kind, plan.game_version)
-                instance = create_instance(
-                    self.paths,
-                    Instance(
-                        instance_id=instance_id,
-                        version_id=version_id,
-                        display_name=display_name or plan.name,
-                    ),
-                )
-                game_dir = self.paths.instance_dir(instance_id)
-                report = download_all(
+                instance = self._install_pack_plan(
                     http_client,
-                    plan.tasks(game_dir),
-                    workers=MODPACK_WORKERS,
+                    plan,
+                    instance_id,
+                    display_name,
+                    icon_url=project.icon_url,
                     on_progress=on_progress,
                     cancel_token=cancel_token,
                 )
-                if not report.ok:
-                    first = report.failures[0]
-                    message = (
-                        f"modpack thiếu {len(report.failures)} file; "
-                        f"đầu tiên: {first.task.url}: {first.reason}"
-                    )
-                    raise NetworkError(message)
-                plan.apply_overrides(game_dir)
             finally:
                 pack_path.unlink(missing_ok=True)
         return instance
 
-    def _plan_modrinth_pack(self, pack_path: Path, allowed_hosts: tuple[str, ...]) -> PackPlan:
-        index = read_index(pack_path, allowed_hosts=allowed_hosts)
+    def install_modpack_file(
+        self,
+        pack_path: Path,
+        instance_id: str,
+        display_name: str = "",
+        *,
+        allowed_hosts: tuple[str, ...] | None = None,
+        on_progress: ProgressFn = ignore_progress,
+        cancel_token: CancelToken | None = None,
+    ) -> Instance:
+        """Modpack từ file trên máy: .mrpack (Modrinth) hoặc .zip có manifest.json (CurseForge).
+        Nhận dạng theo nội dung chứ không theo đuôi file. CHẠM MẠNG để tải mod."""
+        if instance_id in {instance.instance_id for instance in list_instances(self.paths)}:
+            message = f"đã có bản chơi {instance_id!r}"
+            raise ContentError(message)
+        with self.make_http_client() as http_client, zipfile.ZipFile(pack_path) as archive:
+            names = set(archive.namelist())
+            if "modrinth.index.json" in names:
+                plan = self._plan_modrinth_pack(pack_path, allowed_hosts)
+            elif "manifest.json" in names:
+                plan = self._plan_curseforge_pack(http_client, pack_path)
+            else:
+                message = f"{pack_path.name} không phải modpack Modrinth (.mrpack) hay CurseForge"
+                raise ContentError(message)
+            return self._install_pack_plan(
+                http_client,
+                plan,
+                instance_id,
+                display_name,
+                on_progress=on_progress,
+                cancel_token=cancel_token,
+            )
+
+    def _install_pack_plan(
+        self,
+        http_client: HttpClient,
+        plan: PackPlan,
+        instance_id: str,
+        display_name: str,
+        *,
+        icon_url: str = "",
+        on_progress: ProgressFn = ignore_progress,
+        cancel_token: CancelToken | None = None,
+    ) -> Instance:
+        """Phần chung của mọi modpack: cài loader, đăng ký bản chơi, tải file, chép overrides."""
+        self.install_loader(
+            plan.loader_kind,
+            plan.game_version,
+            plan.loader_version or None,
+            on_progress=on_progress,
+            cancel_token=cancel_token,
+        )
+        version_id = self._loader_version_id(plan.loader_kind, plan.game_version)
+        instance = create_instance(
+            self.paths,
+            Instance(
+                instance_id=instance_id,
+                version_id=version_id,
+                display_name=display_name or plan.name,
+                icon_url=icon_url,
+            ),
+        )
+        game_dir = self.paths.instance_dir(instance_id)
+        report = download_all(
+            http_client,
+            plan.tasks(game_dir),
+            workers=MODPACK_WORKERS,
+            on_progress=on_progress,
+            cancel_token=cancel_token,
+        )
+        if not report.ok:
+            first = report.failures[0]
+            message = (
+                f"modpack thiếu {len(report.failures)} file; "
+                f"đầu tiên: {first.task.url}: {first.reason}"
+            )
+            raise NetworkError(message)
+        plan.apply_overrides(game_dir)
+        return instance
+
+    def _plan_modrinth_pack(
+        self, pack_path: Path, allowed_hosts: tuple[str, ...] | None
+    ) -> PackPlan:
+        # Đọc danh sách chuẩn lúc gọi chứ không khoá vào default của tham số.
+        index = read_index(pack_path, allowed_hosts=allowed_hosts or mrpack.ALLOWED_HOSTS)
         return PackPlan(
             name=index.name,
             game_version=index.game_version,

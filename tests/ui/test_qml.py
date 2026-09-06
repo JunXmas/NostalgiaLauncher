@@ -81,7 +81,9 @@ def test_the_bridge_hands_qml_the_real_instances(tmp_path: Path) -> None:
     launcher.create_instance(Instance(instance_id="vui-ve", version_id="1.20.1"))
     _view, bridge = build_view(launcher)
 
-    assert bridge.instances == [{"instanceId": "vui-ve", "label": "vui-ve", "versionId": "1.20.1"}]
+    [row] = bridge.instances
+    assert (row["instanceId"], row["label"], row["versionId"]) == ("vui-ve", "vui-ve", "1.20.1")
+    assert row["gameDir"].endswith("instances/vui-ve")
 
 
 def test_the_bridge_hands_qml_the_real_accounts(tmp_path: Path) -> None:

@@ -7,9 +7,12 @@ Rectangle {
     property string versionId: ""
     property bool playable: true
     property bool removable: false
+    property bool editable: false
+    property string iconUrl: ""
     property bool confirmingRemove: false
     signal playRequested()
     signal removeRequested()
+    signal editRequested()
 
     // Suy loader từ mã phiên bản: "fabric-loader-…", "1.20.1-forge-…", "neoforge-…".
     readonly property string loaderLabel: versionId.indexOf("fabric-loader-") === 0 ? "Fabric"
@@ -50,8 +53,19 @@ Rectangle {
             GradientStop { position: 1.0; color: "#16211a" }
         }
 
+        // Có icon (modpack) thì làm nền mica từ nó, và vẽ icon rõ ở giữa.
+        MicaBackdrop { source: root.iconUrl; visible: root.iconUrl.length > 0 }
+        ProjectIcon {
+            visible: root.iconUrl.length > 0
+            width: 48; height: 48
+            anchors.centerIn: parent
+            source: root.iconUrl
+            fallbackText: root.label || "?"
+        }
+
         // Vài khối mờ: đủ để ô ảnh trông có chủ ý, không phải một mảng trống vì lỗi.
         Row {
+            visible: root.iconUrl.length === 0
             anchors { right: parent.right; bottom: parent.bottom; margins: 12 }
             spacing: 6
             Repeater {
@@ -73,6 +87,18 @@ Rectangle {
             HoverHandler { id: playHover; cursorShape: Qt.PointingHandCursor }
             TapHandler { enabled: root.playable; onTapped: root.playRequested() }
         }
+    }
+
+    // Nút sửa (tên, RAM, cửa sổ), chỉ hiện khi trỏ vào.
+    Text {
+        anchors { right: parent.right; rightMargin: 48; top: thumb.bottom; topMargin: 14 }
+        visible: root.editable
+        opacity: hover.hovered ? 1 : 0
+        text: "⚙"; font.pixelSize: 13
+        color: editHover.hovered ? Theme.accent : Theme.textMuted
+        Behavior on opacity { NumberAnimation { duration: Theme.quick } }
+        HoverHandler { id: editHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { onTapped: root.editRequested() }
     }
 
     // Gỡ hai bước: bấm thùng rác thì hiện "Gỡ?", bấm lần nữa mới gỡ thật. Rời chuột là huỷ.

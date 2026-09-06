@@ -35,6 +35,7 @@ class LedgerEntry:
     version_number: str
     file_name: str
     icon_url: str = ""
+    source: str = "modrinth"
 
 
 def content_dir(game_dir: Path, content_kind: ContentKind) -> Path:
@@ -73,6 +74,7 @@ def list_installed(game_dir: Path, content_kind: ContentKind) -> tuple[Installed
                 version_id=ledger_entry.version_id if ledger_entry else "",
                 version_number=ledger_entry.version_number if ledger_entry else "",
                 icon_url=ledger_entry.icon_url if ledger_entry else "",
+                source=ledger_entry.source if ledger_entry else "modrinth",
             )
         )
     return tuple(found)
@@ -133,6 +135,7 @@ def load_ledger(directory: Path) -> dict[str, LedgerEntry]:
             version_number=as_string(fields.get("version_number")) or "",
             file_name=file_name,
             icon_url=as_string(fields.get("icon_url")) or "",
+            source=as_string(fields.get("source")) or "modrinth",
         )
     return ledger
 
@@ -145,6 +148,7 @@ def save_ledger(directory: Path, ledger: dict[str, LedgerEntry]) -> None:
             "version_number": ledger_entry.version_number,
             "file_name": ledger_entry.file_name,
             "icon_url": ledger_entry.icon_url,
+            "source": ledger_entry.source,
         }
         for project_id, ledger_entry in ledger.items()
     }

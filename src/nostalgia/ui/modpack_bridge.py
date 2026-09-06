@@ -5,7 +5,9 @@ Tách khỏi `content_bridge.py` cho mỗi file ngắn; cùng một QObject nhì
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal, Slot
+from pathlib import Path
+
+from PySide6.QtCore import QUrl, Signal, Slot
 
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import slugify
@@ -56,3 +58,25 @@ class ModpackContentBridge(InstalledContentBridge):
                 self._flagsDirty.emit()
 
         self.run_in_background(work, f"Cài modpack {project.title} thành bản chơi")
+
+    @Slot(str, str)
+    def importModpackFile(self, file_url: str, display_name: str) -> None:
+        """Modpack từ file trên máy (FileDialog trả URL file://). Tên trống thì lấy tên pack."""
+        pack_path = Path(QUrl(file_url).toLocalFile() or file_url)
+        if not pack_path.is_file():
+            self.failed.emit(f"không thấy file {pack_path}")
+            return
+
+        def work() -> None:
+            taken = {instance.instance_id for instance in self._launcher.list_instances()}
+            display_label = display_name.strip() or pack_path.stem
+            instance = self._launcher.install_modpack_file(
+                pack_path,
+                slugify(display_label, taken),
+                display_name.strip(),
+                on_progress=self._main_bridge.report_progress,
+            )
+            self._main_bridge.instancesChanged.emit()
+            self.modpackInstalled.emit(instance.instance_id)
+
+        self.run_in_background(work, f"Cài modpack {pack_path.name} thành bản chơi")

@@ -45,6 +45,7 @@ Item {
         function onTargetChanged() { page.refresh(); }
         function onSourceChanged() { page.refresh(); }
         function onModpackInstalled(instanceId) { contentBridge.selectInstance(instanceId); }
+        function onIdentified(found) { identifiedNote.text = found > 0 ? "Nhận ra " + found + " file." : "Modrinth không biết file nào trong số này."; identifiedNote.visible = true; hideNote.restart(); }
     }
     Timer { id: debounce; interval: 300; onTriggered: page.runSearch() }
     // Timer chết cùng trang, khác Qt.callLater có thể bắn sau khi trang đã bị huỷ.
@@ -297,12 +298,36 @@ Item {
                         }
                     }
                 }
+                Row {
+                    id: installedActions
+                    anchors { top: installedSearchRow.bottom; topMargin: 10; right: parent.right }
+                    spacing: 8
+                    ActionButton {
+                        primary: false; height: 30
+                        label: "Kiểm tra bản mới"
+                        clickable: page.hasInstance && !contentBridge.busy && contentBridge.installed.length > 0
+                        onClicked: contentBridge.checkUpdates(page.kind)
+                    }
+                    ActionButton {
+                        primary: false; height: 30
+                        label: "Nhận diện file chép tay"
+                        clickable: page.hasInstance && !contentBridge.busy && contentBridge.installed.length > 0
+                        onClicked: contentBridge.identifyInstalled(page.kind)
+                    }
+                }
                 Text {
                     id: installedCount
-                    anchors { top: installedSearchRow.bottom; topMargin: 8; horizontalCenter: parent.horizontalCenter }
+                    anchors { top: installedSearchRow.bottom; topMargin: 16; left: parent.left }
                     text: contentBridge.installedShownCount + " / " + contentBridge.installed.length + " " + page.kindLabels[page.kind].toLowerCase()
                           + (page.hasInstance ? " trong " + contentBridge.instanceId : "")
                     color: Theme.textMuted; font.pixelSize: 12
+                }
+                Text {
+                    id: identifiedNote
+                    anchors { top: installedActions.bottom; topMargin: 6; right: parent.right }
+                    visible: false
+                    color: Theme.accent; font.pixelSize: 11
+                    Timer { id: hideNote; interval: 5000; onTriggered: identifiedNote.visible = false }
                 }
                 Text {
                     anchors { top: installedCount.bottom; topMargin: 18; horizontalCenter: parent.horizontalCenter }
@@ -327,6 +352,7 @@ Item {
                             toggleable: page.kind === "mod"
                             onToggled: function (fileName, enabled) { contentBridge.setEnabled(page.kind, fileName, enabled); }
                             onRemoveRequested: function (fileName) { contentBridge.remove(page.kind, fileName); }
+                            onUpdateRequested: function (fileName) { contentBridge.updateInstalled(page.kind, fileName); }
                         }
                     }
                 }
@@ -342,6 +368,7 @@ Item {
                         toggleable: page.kind === "mod"
                         onToggled: function (fileName, enabled) { contentBridge.setEnabled(page.kind, fileName, enabled); }
                         onRemoveRequested: function (fileName) { contentBridge.remove(page.kind, fileName); }
+                        onUpdateRequested: function (fileName) { contentBridge.updateInstalled(page.kind, fileName); }
                     }
                 }
             }

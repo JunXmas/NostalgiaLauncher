@@ -18,8 +18,9 @@ from nostalgia.content.model import (
     SearchPage,
     SortOrder,
 )
+from nostalgia.content.modrinth_parse import parse_project, parse_version
 from nostalgia.errors import ContentError
-from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
+from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
@@ -65,7 +66,7 @@ def search_projects(
     hits = tuple(
         project
         for raw_hit in as_list(document.get("hits"))
-        if (project := _parse_project(as_mapping(raw_hit), content_kind)) is not None
+        if (project := parse_project(as_mapping(raw_hit), content_kind)) is not None
     )
     return SearchPage(
         hits=hits,
@@ -91,12 +92,60 @@ def fetch_project_versions(
     versions = tuple(
         project_version
         for raw_version in as_list(document)
-        if (project_version := _parse_version(as_mapping(raw_version))) is not None
+        if (project_version := parse_version(as_mapping(raw_version))) is not None
     )
     if not versions:
         message = f"dự án {project_id!r} không có bản phát hành nào có file"
         raise ContentError(message)
     return versions
+
+
+def lookup_versions_by_hash(
+    http_client: HttpClient,
+    sha1_hashes: tuple[str, ...],
+    *,
+    endpoints: Endpoints = DEFAULT_ENDPOINTS,
+    cancel_token: CancelToken | None = None,
+) -> dict[str, ProjectVersion]:
+    """Nhận diện file chép tay: sha1 -> bản phát hành trên Modrinth (một request cho cả lô).
+    File Modrinth không biết thì không có trong kết quả. CHẠM MẠNG."""
+    if not sha1_hashes:
+        return {}
+    body = json.dumps({"hashes": list(sha1_hashes), "algorithm": "sha1"}).encode()
+    document = _fetch_json(
+        http_client, f"{endpoints.modrinth_api}/version_files", cancel_token, body=body
+    )
+    found: dict[str, ProjectVersion] = {}
+    for sha1, raw in as_mapping(document).items():
+        project_version = parse_version(as_mapping(raw))
+        if project_version is not None:
+            found[sha1] = project_version
+    return found
+
+
+def fetch_projects(
+    http_client: HttpClient,
+    project_ids: tuple[str, ...],
+    content_kind: ContentKind,
+    *,
+    endpoints: Endpoints = DEFAULT_ENDPOINTS,
+    cancel_token: CancelToken | None = None,
+) -> dict[str, Project]:
+    """Tên và icon của nhiều dự án trong một request. CHẠM MẠNG."""
+    if not project_ids:
+        return {}
+    ids = quote(json.dumps(list(project_ids), separators=(",", ":")), safe="")
+    document = _fetch_json(
+        http_client, f"{endpoints.modrinth_api}/projects?ids={ids}", cancel_token
+    )
+    projects: dict[str, Project] = {}
+    for raw in as_list(document):
+        fields = as_mapping(raw)
+        # /projects trả `id` thay vì `project_id` như /search.
+        project = parse_project({**fields, "project_id": fields.get("id")}, content_kind)
+        if project is not None:
+            projects[project.project_id] = project
+    return projects
 
 
 def choose_version(
@@ -113,73 +162,20 @@ def choose_version(
     return next((v for v in compatible if v.version_type == "release"), compatible[0])
 
 
-def _parse_project(fields: dict[str, JsonValue], content_kind: ContentKind) -> Project | None:
-    project_id = as_string(fields.get("project_id"))
-    title = as_string(fields.get("title"))
-    if not project_id or not title:
-        return None
-    loaders = tuple(
-        name
-        for category in as_list(fields.get("categories"))
-        if (name := as_string(category)) in ("fabric", "forge", "neoforge", "quilt")
-    )
-    return Project(
-        project_id=project_id,
-        project_slug=as_string(fields.get("slug")) or project_id,
-        title=title,
-        description=as_string(fields.get("description")) or "",
-        author=as_string(fields.get("author")) or "",
-        content_kind=content_kind,
-        icon_url=as_string(fields.get("icon_url")) or "",
-        downloads=as_integer(fields.get("downloads")) or 0,
-        follows=as_integer(fields.get("follows")) or 0,
-        loaders=loaders,
-    )
-
-
-def _parse_version(fields: dict[str, JsonValue]) -> ProjectVersion | None:
-    files = [as_mapping(raw_file) for raw_file in as_list(fields.get("files"))]
-    primary = next((f for f in files if f.get("primary") is True), files[0] if files else None)
-    version_id = as_string(fields.get("id"))
-    project_id = as_string(fields.get("project_id"))
-    if primary is None or not version_id or not project_id:
-        return None
-    file_url = as_string(primary.get("url"))
-    file_name = as_string(primary.get("filename"))
-    file_sha1 = as_string(as_mapping(primary.get("hashes")).get("sha1"))
-    if not file_url or not file_name or not file_sha1:
-        return None
-    required = tuple(
-        dependency_project
-        for raw_dependency in as_list(fields.get("dependencies"))
-        if as_string(as_mapping(raw_dependency).get("dependency_type")) == "required"
-        and (dependency_project := as_string(as_mapping(raw_dependency).get("project_id")))
-    )
-    return ProjectVersion(
-        version_id=version_id,
-        project_id=project_id,
-        version_number=as_string(fields.get("version_number")) or version_id,
-        version_type=as_string(fields.get("version_type")) or "release",
-        game_versions=_strings(fields.get("game_versions")),
-        loaders=_strings(fields.get("loaders")),
-        date_published=as_string(fields.get("date_published")) or "",
-        file_url=file_url,
-        file_name=file_name,
-        file_sha1=file_sha1,
-        file_size=as_integer(primary.get("size")) or 0,
-        required_project_ids=required,
-    )
-
-
-def _strings(value: JsonValue) -> tuple[str, ...]:
-    return tuple(text for element in as_list(value) if (text := as_string(element)))
-
-
-def _fetch_json(http_client: HttpClient, url: str, cancel_token: CancelToken | None) -> JsonValue:
+def _fetch_json(
+    http_client: HttpClient,
+    url: str,
+    cancel_token: CancelToken | None,
+    body: bytes | None = None,
+) -> JsonValue:
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
     response = http_client.send(
-        "GET",
+        "POST" if body is not None else "GET",
         url,
-        headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        body=body,
+        headers=headers,
         max_bytes=MAX_RESPONSE_BYTES,
         cancel_token=cancel_token,
     )

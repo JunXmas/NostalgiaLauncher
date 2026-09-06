@@ -9,8 +9,9 @@ from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import ContentTarget, Launcher
+from nostalgia.api import ContentTarget, ContentUpdate, Launcher
 from nostalgia.content.model import ContentKind
+from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.row_model import KeyedRowModel
 from nostalgia.ui.worker import WorkerBridge
 
@@ -23,19 +24,29 @@ INSTALLED_ROLES = (
     "versionNumber",
     "contentKind",
     "iconUrl",
+    "latestVersion",
 )
 
 
 class InstalledContentBridge(WorkerBridge):
+    # Hợp đồng với lớp con (ContentBridge): cầu nối chính để báo tiến độ. Khai để mypy kiểm.
+    _main_bridge: LauncherBridge
+
     installedChanged = Signal()
+    identified = Signal(int)
+    # Luồng nền xong -> đọc lại đĩa ở luồng giao diện (mô hình chỉ được đổi ở đó).
+    _installedDirty = Signal(str)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._launcher = launcher
         self._target: ContentTarget | None = None
+        self._installedDirty.connect(self.refreshInstalled)
         self._installed_model = KeyedRowModel(INSTALLED_ROLES, key="fileName", parent=self)
         self._installed_rows: list[dict[str, Any]] = []
         self._installed_filter = ""
+        # fileName -> bản mới tương thích, sau khi bấm "Kiểm tra cập nhật".
+        self._updates: dict[str, ContentUpdate] = {}
 
     @Property(QObject, constant=True)
     def installedModel(self) -> KeyedRowModel:
@@ -58,6 +69,52 @@ class InstalledContentBridge(WorkerBridge):
         self._installed_filter = text.strip().lower()
         self._sync_installed_model()
         self.installedChanged.emit()
+
+    @Slot(str)
+    def checkUpdates(self, content_kind: str) -> None:
+        """Hỏi nguồn từng dự án trong sổ; kết quả hiện thành nhãn "có bản mới" trên hàng."""
+        target = self._target
+        if target is None:
+            return
+        chosen_kind = cast(ContentKind, content_kind)
+
+        def work() -> None:
+            updates = self._launcher.find_content_updates(target, chosen_kind)
+            self._updates = {update.installed.file_name: update for update in updates}
+            self._installedDirty.emit(content_kind)
+
+        self.run_in_background(work, "Kiểm tra bản mới")
+
+    @Slot(str, str)
+    def updateInstalled(self, content_kind: str, file_name: str) -> None:
+        target = self._target
+        update = self._updates.get(file_name)
+        if target is None or update is None:
+            return
+
+        def work() -> None:
+            self._launcher.update_content(
+                target, update, on_progress=self._main_bridge.report_progress
+            )
+            self._updates.pop(file_name, None)
+            self._installedDirty.emit(content_kind)
+
+        self.run_in_background(work, f"Cập nhật {update.installed.label}")
+
+    @Slot(str)
+    def identifyInstalled(self, content_kind: str) -> None:
+        """Nhận diện file chép tay bằng sha1 trên Modrinth, rồi vẽ lại danh sách."""
+        target = self._target
+        if target is None:
+            return
+        chosen_kind = cast(ContentKind, content_kind)
+
+        def work() -> None:
+            found = self._launcher.identify_installed_content(target, chosen_kind)
+            self._installedDirty.emit(content_kind)
+            self.identified.emit(found)
+
+        self.run_in_background(work, "Nhận diện mod chép tay")
 
     @Slot(str)
     def refreshInstalled(self, content_kind: str) -> None:
@@ -93,6 +150,11 @@ class InstalledContentBridge(WorkerBridge):
                 "versionNumber": installed.version_number,
                 "contentKind": installed.content_kind,
                 "iconUrl": installed.icon_url,
+                "latestVersion": (
+                    self._updates[installed.file_name].latest.version_number
+                    if installed.file_name in self._updates
+                    else ""
+                ),
             }
             for installed in self._launcher.list_installed_content(self._target, content_kind)
         ]

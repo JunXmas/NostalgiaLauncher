@@ -8,9 +8,11 @@ vậy — giao diện gọi thẳng sáu module lõi, và mỗi lần lõi đổ
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import replace
 from typing import Any
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
+from PySide6.QtGui import QDesktopServices
 
 from nostalgia.api import Launcher
 from nostalgia.operations.cancellation import CancelToken
@@ -67,6 +69,11 @@ class LauncherBridge(WorkerBridge):
                 "instanceId": instance.instance_id,
                 "label": instance.label,
                 "versionId": instance.version_id,
+                "iconUrl": instance.icon_url,
+                "maxHeapMegabytes": instance.max_heap_megabytes or 0,
+                "windowWidth": instance.window_width or 0,
+                "windowHeight": instance.window_height or 0,
+                "gameDir": str(self._launcher.paths.instance_dir(instance.instance_id)),
             }
             for instance in self._launcher.list_instances()
         ]
@@ -124,6 +131,34 @@ class LauncherBridge(WorkerBridge):
             self.instancesChanged.emit()
 
         self.run_in_background(work, f"Cài Minecraft {version_id}")
+
+    @Slot(str, str, int, int, int)
+    def updateInstance(
+        self, instance_id: str, display_name: str, max_heap: int, width: int, height: int
+    ) -> None:
+        """Sửa tên / RAM / kích thước cửa sổ. Ghi một file nhỏ: làm ngay, không cần luồng nền."""
+        current = next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+        if current is None:
+            return
+        self._launcher.save_instance(
+            replace(
+                current,
+                display_name=display_name.strip(),
+                max_heap_megabytes=max_heap or None,
+                window_width=width or None,
+                window_height=height or None,
+            )
+        )
+        self.instancesChanged.emit()
+
+    @Slot(str)
+    def openInstanceFolder(self, instance_id: str) -> None:
+        """Mở thư mục bản chơi bằng trình quản lý file của hệ điều hành."""
+        folder = self._launcher.paths.instance_dir(instance_id)
+        folder.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 
     @Slot(str)
     def removeInstance(self, instance_id: str) -> None:

@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from nostalgia.account.model import Account, PlayerProfile
+from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.instances import InstanceOperations
@@ -47,6 +48,7 @@ class Launcher(ModpackOperations, InstanceOperations, PlayOperations):
 __all__ = [
     "Account",
     "ContentTarget",
+    "ContentUpdate",
     "Diagnosis",
     "GameProcess",
     "InstallReport",

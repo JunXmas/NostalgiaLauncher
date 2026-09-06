@@ -7,6 +7,8 @@ Rectangle {
     property bool toggleable: true
     signal toggled(string fileName, bool enabled)
     signal removeRequested(string fileName)
+    signal updateRequested(string fileName)
+    readonly property bool hasUpdate: !!(installedContent.latestVersion)
 
     height: 60
     radius: Theme.radiusSmall
@@ -44,6 +46,13 @@ Rectangle {
         id: controls
         anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
         spacing: 14
+        ActionButton {
+            visible: root.hasUpdate
+            anchors.verticalCenter: parent.verticalCenter
+            height: 28
+            label: "Cập nhật " + (installedContent.latestVersion || "")
+            onClicked: root.updateRequested(installedContent.fileName)
+        }
         Toggle {
             visible: root.toggleable
             anchors.verticalCenter: parent.verticalCenter

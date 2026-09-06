@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from nostalgia.content import curseforge, modrinth
 from nostalgia.content.installed import list_installed, remove_installed, set_enabled
@@ -18,6 +19,7 @@ from nostalgia.content.model import (
     SearchPage,
     SortOrder,
 )
+from nostalgia.content.updates import ContentUpdate, find_updates, identify_by_hash
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.store import load_instance
 from nostalgia.modloader.model import COMPATIBLE_LOADERS, detect_loader_kind
@@ -157,6 +159,66 @@ class ContentOperations(LauncherContext):
         self, target: ContentTarget, content_kind: ContentKind
     ) -> tuple[InstalledContent, ...]:
         return list_installed(target.game_dir, content_kind)
+
+    def find_content_updates(
+        self, target: ContentTarget, content_kind: ContentKind
+    ) -> tuple[ContentUpdate, ...]:
+        """Bản mới tương thích cho từng file có trong sổ. CHẠM MẠNG (một request mỗi dự án)."""
+        installed = list_installed(target.game_dir, content_kind)
+        with self.make_http_client() as http_client:
+            return find_updates(
+                installed,
+                lambda source, project_id: self.fetch_versions(
+                    http_client, cast(ContentSource, source), project_id
+                ),
+                game_version=target.game_version,
+                loader_kind=target.loader_kind,
+                content_kind=content_kind,
+            )
+
+    def update_content(
+        self,
+        target: ContentTarget,
+        update: ContentUpdate,
+        *,
+        on_progress: ProgressFn = ignore_progress,
+        cancel_token: CancelToken | None = None,
+    ) -> None:
+        """Tải bản mới rồi gỡ file cũ (chỉ khi tải xong, để hỏng giữa chừng không mất mod)."""
+        project = Project(
+            project_id=update.installed.project_id,
+            project_slug=update.installed.project_id,
+            title=update.installed.label,
+            description="",
+            author="",
+            content_kind=update.installed.content_kind,
+            icon_url=update.installed.icon_url,
+            downloads=0,
+            follows=0,
+            loaders=update.latest.loaders,
+            source=cast(ContentSource, update.installed.source),
+        )
+        self.install_content(target, project, on_progress=on_progress, cancel_token=cancel_token)
+        if update.latest.file_name != update.installed.file_name:
+            remove_installed(
+                target.game_dir, update.installed.content_kind, update.installed.file_name
+            )
+
+    def identify_installed_content(self, target: ContentTarget, content_kind: ContentKind) -> int:
+        """Nhận diện file chép tay bằng sha1 trên Modrinth; trả số file nhận ra. CHẠM MẠNG."""
+        installed = list_installed(target.game_dir, content_kind)
+        with self.make_http_client() as http_client:
+            return identify_by_hash(
+                target.game_dir,
+                content_kind,
+                installed,
+                lambda hashes: modrinth.lookup_versions_by_hash(
+                    http_client, hashes, endpoints=self.endpoints
+                ),
+                lambda ids: modrinth.fetch_projects(
+                    http_client, ids, content_kind, endpoints=self.endpoints
+                ),
+            )
 
     def set_content_enabled(
         self, target: ContentTarget, content_kind: ContentKind, file_name: str, enabled: bool
