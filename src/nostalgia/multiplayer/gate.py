@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from nostalgia.multiplayer import handshake
-from nostalgia.multiplayer.mux import MAX_HANDSHAKE_PACKET, looks_like_minecraft_handshake
+from nostalgia.multiplayer.mux import looks_like_minecraft_handshake
 
 Verdict = Literal["pending", "accepted", "rejected"]
 
@@ -37,8 +37,6 @@ class HostGate:
 
     def feed(self, payload: bytes) -> GateStep:
         self._buffer += payload
-        if len(self._buffer) > handshake.MAX_HANDSHAKE_BYTES + MAX_HANDSHAKE_PACKET:
-            return _REJECT
         if self._authenticated:
             return self._check_minecraft()
         try:
@@ -46,7 +44,9 @@ class HostGate:
         except ValueError:
             return _REJECT
         if frame is None:
-            return _WAIT
+            # Trần chỉ áp cho khung bắt tay CHƯA hoàn tất: byte sau khung là của Minecraft,
+            # có thể tới cả chunk 64 KiB trong cùng một lần đọc.
+            return _REJECT if len(self._buffer) > handshake.MAX_HANDSHAKE_BYTES else _WAIT
         self._buffer = bytearray(frame.trailing)
         if self._host_nonce is None:
             if frame.op != handshake.HELLO or not frame.fields:

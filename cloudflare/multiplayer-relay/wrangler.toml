@@ -1,0 +1,12 @@
+name = "nostalgia-multiplayer-relay"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Durable Object giữ trạng thái ghép host<->joiner cho mỗi session.
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "RelaySession"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RelaySession"]  # DO nền SQLite: dùng được trên gói free

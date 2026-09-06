@@ -65,3 +65,9 @@ def test_hello_must_come_first_and_only_once() -> None:
     host = HostGate("SECRET")
     host.feed(handshake.build_hello(b"n" * 18))
     assert host.feed(handshake.build_hello(b"n" * 18)).verdict == "rejected"
+
+
+def test_large_first_chunk_after_auth_is_forwarded_whole() -> None:
+    big = MC_HANDSHAKE + b"\x00" * 65536  # handshake + phần đầu gói tiếp theo trong cùng chunk
+    _, hosted = run_pair("SECRET", "SECRET", first_bytes=big)
+    assert hosted is not None and (hosted.verdict, len(hosted.forward)) == ("accepted", len(big))

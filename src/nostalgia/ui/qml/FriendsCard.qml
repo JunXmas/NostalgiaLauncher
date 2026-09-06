@@ -1,10 +1,8 @@
 import QtQuick
 
 /*
-  Ô ở vị trí "FRIENDS" của bản mẫu.
-
-  Danh sách bạn bè chỉ có nghĩa khi đã có phần chơi chung, mà phần đó chưa làm. Bịa bốn người
-  bạn đang online là nói dối ngay trên màn hình chính, nên ở đây nói thẳng tình trạng.
+  Ô ở vị trí "FRIENDS" của bản mẫu: lối tắt sang CHƠI CHUNG. Danh sách bạn bè (presence)
+  chưa làm — cần backend có chữ ký — nên không bịa người đang online.
 */
 Panel {
     id: root
@@ -18,11 +16,12 @@ Panel {
 
         Text {
             width: parent.width
-            text: "Phần Chơi chung chưa làm xong, nên chưa có danh sách bạn bè."
+            text: multiplayerBridge.active ? (multiplayerBridge.role === "joined" ? "Bạn đang trong phòng của bạn bè." : "Phòng của bạn đang mở — " + multiplayerBridge.joinerCount + " người đang vào.")
+                                             : "Mở phòng rồi gửi mã cho bạn, hoặc nhập mã bạn gửi để vào."
             color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
         }
         ActionButton {
-            label: "Xem Chơi chung"
+            label: multiplayerBridge.active ? "Xem phòng" : "Chơi chung"
             primary: false
             onClicked: root.openMultiplayer()
         }
