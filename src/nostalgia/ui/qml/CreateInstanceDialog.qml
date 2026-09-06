@@ -24,8 +24,13 @@ Item {
     ]
     readonly property bool needsLoaderStep: loaderKind !== "vanilla"
     readonly property string loaderLabel: loaderChoices.find(function (c) { return c.key === dialog.loaderKind; }).label
-    readonly property bool canCreate: gameVersion.length > 0 && nameField.text.trim().length > 0
-                                      && (!needsLoaderStep || loaderVersion.length > 0) && !bridge.busy
+    // Tên để trống thì tự đặt theo loader + phiên bản, như các launcher khác — bắt gõ tên là
+    // một lý do "bấm Tạo không được" mà người dùng không đoán ra.
+    readonly property string defaultName: loaderLabel + " " + gameVersion
+    readonly property string missingStep: gameVersion.length === 0 ? "Chọn phiên bản Minecraft ở cột phải."
+                                        : (needsLoaderStep && loaderVersion.length === 0) ? "Chọn bản " + loaderLabel + " ở cột phải."
+                                        : ""
+    readonly property bool canCreate: missingStep.length === 0 && !bridge.busy
     readonly property var majors: {
         var seen = [];
         for (var i = 0; i < catalogBridge.releasedVersions.length; i++) {
@@ -97,7 +102,10 @@ Item {
             Column {
                 spacing: 6; width: parent.width
                 Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
-                TextField { id: nameField; width: parent.width; placeholder: "vd. Sinh tồn vui" }
+                TextField {
+                    id: nameField; width: parent.width
+                    placeholder: dialog.gameVersion ? dialog.defaultName : "vd. Sinh tồn vui (để trống cũng được)"
+                }
             }
 
             Column {
@@ -156,8 +164,15 @@ Item {
                 height: 44
                 label: bridge.busy ? "Đang cài..." : "Tạo bản chơi"
                 clickable: dialog.canCreate
-                onClicked: catalogBridge.createInstance(nameField.text, dialog.gameVersion, dialog.loaderKind,
-                                                  dialog.loaderVersion, parseInt(heapField.text) || 0)
+                onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName,
+                                                        dialog.gameVersion, dialog.loaderKind,
+                                                        dialog.loaderVersion, parseInt(heapField.text) || 0)
+            }
+            Text {
+                visible: !bridge.busy && dialog.missingStep.length > 0
+                width: parent.width
+                text: "Còn thiếu: " + dialog.missingStep
+                color: Theme.accent; font.pixelSize: 11; wrapMode: Text.WordWrap
             }
             Text {
                 visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")

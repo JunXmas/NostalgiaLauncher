@@ -219,3 +219,36 @@ def test_clicking_a_loader_button_keeps_the_create_dialog_open(tmp_path: Path) -
     )
     QGuiApplication.processEvents()
     assert dialog.property("visible") is False
+
+
+def test_create_button_explains_what_is_missing_and_name_is_optional(tmp_path: Path) -> None:
+    """Người dùng bấm "Tạo" mà không thấy gì xảy ra là vì nút bị mờ không lý do. Giờ nút mờ
+    phải nói rõ còn thiếu bước nào, và tên để trống thì tự đặt theo loader + phiên bản."""
+    from PySide6.QtCore import QObject
+
+    view, _bridge = build_view(make_launcher(tmp_path))
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 1)
+    for _ in range(50):
+        QGuiApplication.processEvents()
+        dialog = root_item.findChild(QObject, "createDialog")
+        if dialog is not None:
+            break
+    assert dialog is not None
+
+    assert dialog.property("canCreate") is False
+    assert "phiên bản Minecraft" in dialog.property("missingStep")
+
+    dialog.setProperty("loaderKind", "forge")
+    dialog.setProperty("gameVersion", "1.20.1")
+    QGuiApplication.processEvents()
+    assert "Forge" in dialog.property("missingStep"), "Forge còn cần chọn bản loader"
+    assert dialog.property("defaultName") == "Forge 1.20.1"
+
+    dialog.setProperty("loaderVersion", "1.20.1-47.4.10")
+    QGuiApplication.processEvents()
+    assert dialog.property("missingStep") == ""
+    assert dialog.property("canCreate") is True
