@@ -31,4 +31,18 @@ QtObject {
     readonly property int quick:         120
     readonly property int normal:        220
     readonly property int slow:          420
+
+    /* 1234567 -> "1,2M": số tải/theo dõi trên thẻ mod. */
+    function compact(count) {
+        if (count >= 1000000) return (count / 1000000).toFixed(1).replace(".", ",") + "M";
+        if (count >= 1000) return (count / 1000).toFixed(1).replace(".", ",") + "K";
+        return String(count);
+    }
+
+    /* 20971520 -> "20,0 MB": dung lượng file đã cài. */
+    function fileSize(bytes) {
+        if (bytes >= 1048576) return (bytes / 1048576).toFixed(1).replace(".", ",") + " MB";
+        if (bytes >= 1024) return (bytes / 1024).toFixed(1).replace(".", ",") + " KB";
+        return bytes + " B";
+    }
 }

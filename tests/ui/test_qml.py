@@ -25,16 +25,7 @@ from nostalgia.api import Launcher
 from nostalgia.instance.model import Instance
 from nostalgia.ui.app import build_view
 
-
-@pytest.fixture(scope="session")
-def qt_app() -> QGuiApplication:
-    """Một `QGuiApplication` cho cả phiên — Qt không cho tạo hai cái."""
-    return QGuiApplication.instance() or QGuiApplication(["test"])
-
-
-@pytest.fixture(autouse=True)
-def _qt_ready(qt_app: QGuiApplication) -> None:
-    """Mọi test ở đây đều cần Qt sẵn sàng; khai một lần thay vì lặp ở từng chữ ký."""
+pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 def make_launcher(tmp_path: Path) -> Launcher:

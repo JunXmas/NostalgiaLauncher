@@ -28,6 +28,7 @@ Item {
 
         Loader {
             id: pageLoader
+            objectName: "pageLoader"
             anchors.fill: parent
             source: content.pageFor(sidebar.currentIndex)
             opacity: 0
@@ -52,8 +53,9 @@ Item {
         function pageFor(index) {
             switch (index) {
             case 0: return "pages/HomePage.qml";
-            case 1: return "pages/PlaceholderPage.qml";
-            case 5: return "pages/PlaceholderPage.qml";
+            case 1: return "pages/InstancesPage.qml";
+            case 2: return "pages/ModsPage.qml";
+            case 4: return "pages/ResourcesPage.qml";
             default: return "pages/PlaceholderPage.qml";
             }
         }

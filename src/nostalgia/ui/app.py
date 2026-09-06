@@ -16,6 +16,8 @@ from PySide6.QtQuick import QQuickView
 from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.catalog_bridge import CatalogBridge
+from nostalgia.ui.content_bridge import ContentBridge
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
@@ -28,11 +30,13 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     """
     view = QQuickView()
     view.engine().addImportPath(str(QML_DIR))
-    bridge = LauncherBridge(launcher)
-    # Gắn cầu nối vào khung nhìn: Qt sẽ huỷ nó **sau** cây QML, nên không còn cảnh báo
+    # Gắn cầu nối vào khung nhìn: Qt sẽ huỷ chúng **sau** cây QML, nên không còn cảnh báo
     # "bridge is null" ở những ràng buộc còn sống trong lúc đóng cửa sổ.
-    bridge.setParent(view)
-    view.rootContext().setContextProperty("bridge", bridge)
+    bridge = LauncherBridge(launcher, parent=view)
+    context = view.rootContext()
+    context.setContextProperty("bridge", bridge)
+    context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
+    context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     view.setTitle("Nostalgia Launcher")
     view.resize(1360, 860)

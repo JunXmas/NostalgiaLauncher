@@ -6,7 +6,9 @@ Rectangle {
     property string label: ""
     property string versionId: ""
     property bool playable: true
+    property bool removable: false
     signal playRequested()
+    signal removeRequested()
 
     implicitWidth: 230
     implicitHeight: 168
@@ -64,6 +66,18 @@ Rectangle {
             HoverHandler { id: playHover; cursorShape: Qt.PointingHandCursor }
             TapHandler { enabled: root.playable; onTapped: root.playRequested() }
         }
+    }
+
+    // Nút gỡ, chỉ hiện khi trỏ vào và khi trang cho phép.
+    Text {
+        anchors { right: parent.right; top: thumb.bottom; margins: 12 }
+        visible: root.removable
+        opacity: hover.hovered ? 1 : 0
+        text: "🗑"; font.pixelSize: 13
+        color: trashHover.hovered ? Theme.danger : Theme.textMuted
+        Behavior on opacity { NumberAnimation { duration: Theme.quick } }
+        HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { onTapped: root.removeRequested() }
     }
 
     Column {

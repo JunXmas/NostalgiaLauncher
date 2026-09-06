@@ -23,6 +23,7 @@ ALLOWED_FOR_USER_INTERFACE = (
     "nostalgia.model",
     "nostalgia.account.model",
     "nostalgia.instance.model",
+    "nostalgia.content.model",
 )
 
 # Kiểu KHÔNG được xuất hiện trong chữ ký công khai của façade: chúng buộc người gọi phải biết

@@ -1,40 +1,33 @@
-"""Cầu nối giữa QML và lõi. Đây là **file duy nhất** trong `ui/` chạm vào `nostalgia.api`.
+"""Cầu nối chính giữa QML và lõi: bản chơi, tài khoản, chơi, tải phiên bản.
 
-Gom một chỗ có lý do: khi lõi đổi, chỉ file này phải sửa, còn hàng nghìn dòng QML thì không.
-Kho tiền nhiệm không làm vậy — giao diện của nó gọi thẳng vào sáu module lõi, và mỗi lần lõi
-đổi một chi tiết là giao diện gãy theo.
-
-Mọi việc dài (tải, đăng nhập, chạy game) **không được chặn luồng vẽ**: chúng chạy ở luồng nền
-và báo về bằng tín hiệu. Một giao diện đứng hình vì đang tải 3.629 file là giao diện hỏng.
+Ba cầu nối (`bridge`, `content`, `catalog`) là những file DUY NHẤT trong `ui/` chạm vào
+`nostalgia.api`. Khi lõi đổi, chỉ chúng phải sửa, còn QML thì không. Kho tiền nhiệm không làm
+vậy — giao diện gọi thẳng sáu module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
 """
 
 from __future__ import annotations
 
-import threading
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Launcher
-from nostalgia.errors import NostalgiaError
 from nostalgia.operations.progress import Progress
+from nostalgia.ui.worker import WorkerBridge
 
 
-class LauncherBridge(QObject):
+class LauncherBridge(WorkerBridge):
     """Bề mặt mà QML nhìn thấy: vài thuộc tính đọc được, vài lệnh gọi được, và tín hiệu."""
 
     instancesChanged = Signal()
     accountsChanged = Signal()
-    busyChanged = Signal()
     progressChanged = Signal()
-    failed = Signal(str)
     gameStarted = Signal(str)
     gameStopped = Signal(int)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._launcher = launcher
-        self._busy = False
         self._progress_text = ""
         self._progress_fraction = 0.0
 
@@ -68,10 +61,6 @@ class LauncherBridge(QObject):
         """Các phiên bản đã tải về máy. Đọc đĩa, không chạm mạng."""
         return list(self._launcher.list_installed_versions())
 
-    @Property(bool, notify=busyChanged)
-    def busy(self) -> bool:
-        return self._busy
-
     @Property(str, notify=progressChanged)
     def progressText(self) -> str:
         return self._progress_text
@@ -85,17 +74,22 @@ class LauncherBridge(QObject):
     @Slot(str)
     def installVersion(self, version_id: str) -> None:
         """Tải một phiên bản ở luồng nền; giao diện vẫn vẽ được trong lúc đó."""
-        self._run_in_background(lambda: self._install(version_id))
-
-    @Slot(str, str)
-    def createInstance(self, instance_id: str, version_id: str) -> None:
-        from nostalgia.instance.model import Instance
 
         def work() -> None:
-            self._launcher.create_instance(Instance(instance_id=instance_id, version_id=version_id))
+            self._launcher.install_version(version_id, on_progress=self.report_progress)
             self.instancesChanged.emit()
 
-        self._run_in_background(work)
+        self.run_in_background(work)
+
+    @Slot(str)
+    def removeInstance(self, instance_id: str) -> None:
+        """Gỡ đăng ký bản chơi; thư mục thế giới vẫn còn nguyên trên đĩa."""
+
+        def work() -> None:
+            self._launcher.remove_instance(instance_id)
+            self.instancesChanged.emit()
+
+        self.run_in_background(work)
 
     @Slot(str)
     def addOfflineAccount(self, player_name: str) -> None:
@@ -103,7 +97,7 @@ class LauncherBridge(QObject):
             self._launcher.add_offline_account(player_name)
             self.accountsChanged.emit()
 
-        self._run_in_background(work)
+        self.run_in_background(work)
 
     @Slot(str, str)
     def play(self, instance_id: str, player_name: str) -> None:
@@ -112,36 +106,11 @@ class LauncherBridge(QObject):
             self.gameStarted.emit(instance_id)
             self.gameStopped.emit(game.wait())
 
-        self._run_in_background(work)
+        self.run_in_background(work)
 
-    # ----- phần nền -----
+    # ----- dùng chung với các cầu nối khác -----
 
-    def _install(self, version_id: str) -> None:
-        self._launcher.install_version(version_id, on_progress=self._report)
-        self.instancesChanged.emit()
-
-    def _report(self, progress: Progress) -> None:
+    def report_progress(self, progress: Progress) -> None:
         self._progress_text = f"{progress.stage} {progress.done}/{progress.total}"
         self._progress_fraction = progress.fraction
         self.progressChanged.emit()
-
-    def _run_in_background(self, work: object) -> None:
-        """Chạy một việc dài, báo lỗi ra giao diện thay vì để nó chết lặng trong luồng nền."""
-
-        def guarded() -> None:
-            try:
-                work()  # type: ignore[operator]
-            except NostalgiaError as error:
-                self.failed.emit(str(error))
-            except Exception as error:
-                self.failed.emit(f"lỗi không lường trước: {error}")
-            finally:
-                self._set_busy(False)
-
-        self._set_busy(True)
-        threading.Thread(target=guarded, daemon=True).start()
-
-    def _set_busy(self, busy: bool) -> None:
-        if self._busy != busy:
-            self._busy = busy
-            self.busyChanged.emit()
