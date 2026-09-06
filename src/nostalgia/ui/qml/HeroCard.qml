@@ -27,8 +27,8 @@ Item {
 
     width: row.width + 34
     height: cardHeight + stemLength
-    x: Math.round(parent.width * landmarkX - width * pivot)
-    y: Math.round(parent.height * landmarkY - (below ? 0 : height))
+    x: Math.round(parent.toPixelX(landmarkX) - width * pivot)
+    y: Math.round(parent.toPixelY(landmarkY) - (below ? 0 : height))
 
     // Chấm neo trên công trình, thở nhẹ để mắt bắt được.
     Rectangle {

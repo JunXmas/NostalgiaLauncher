@@ -7,11 +7,12 @@ Rectangle {
     property string glyph: ""
     property color dotColor: "transparent"
     property bool pulsing: false
+    property bool translucent: false
 
     width: content.width + 28
     height: 40
     radius: Theme.radiusSmall
-    color: Theme.surface
+    color: translucent ? "#d90f1512" : Theme.surface
     border.color: Theme.border
     border.width: 1
 

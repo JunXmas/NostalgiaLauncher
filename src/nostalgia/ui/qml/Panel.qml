@@ -5,9 +5,11 @@ Rectangle {
     default property alias content: holder.data
     property string title: ""
     property string action: ""
+    // Nằm trên ảnh nền thì để lộ ảnh phía sau một chút, như tấm kính.
+    property bool translucent: false
     signal actionClicked()
 
-    color: Theme.surface
+    color: translucent ? "#d90f1512" : Theme.surface
     radius: Theme.radius
     border.color: Theme.border
     border.width: 1
