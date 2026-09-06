@@ -1,6 +1,6 @@
 import QtQuick
 
-/* Thanh bên. STORE của bản mẫu đã đổi thành MULTIPLAYER theo yêu cầu. */
+/* Thanh bên: hiệu, danh mục, thẻ tài khoản, chân trang. STORE của bản mẫu là CHƠI CHUNG. */
 Rectangle {
     id: root
     property int currentIndex: 0
@@ -8,41 +8,42 @@ Rectangle {
     property string accountKind: ""
 
     color: Theme.surface
-    border.color: Theme.border
-    border.width: 0
 
     readonly property var entries: [
-        { label: "TRANG CHỦ",   glyph: "⌂" },
-        { label: "BẢN CHƠI",    glyph: "⛏" },
-        { label: "MOD",         glyph: "⚙" },
-        { label: "MÁY CHỦ",     glyph: "☷" },
-        { label: "TÀI NGUYÊN",  glyph: "▤" },
-        { label: "CHƠI CHUNG",  glyph: "⛶" },
-        { label: "CÀI ĐẶT",     glyph: "☸" }
+        { label: "TRANG CHỦ",  glyph: "⌂" },
+        { label: "BẢN CHƠI",   glyph: "⛏" },
+        { label: "MOD",        glyph: "⚙" },
+        { label: "MÁY CHỦ",    glyph: "☷" },
+        { label: "TÀI NGUYÊN", glyph: "▤" },
+        { label: "CHƠI CHUNG", glyph: "⛶" },
+        { label: "CÀI ĐẶT",    glyph: "☸" }
     ]
 
-    Column {
-        id: header
-        anchors { top: parent.top; left: parent.left; right: parent.right; margins: 18 }
-        spacing: 2
+    Row {
+        id: brand
+        anchors { top: parent.top; left: parent.left; margins: 20 }
+        spacing: 11
 
-        Row {
-            spacing: 10
-            Rectangle {
-                width: 30; height: 30; radius: 7; color: Theme.accentDeep
-                anchors.verticalCenter: parent.verticalCenter
-                Text { anchors.centerIn: parent; text: "▣"; color: "white"; font.pixelSize: 17 }
+        Rectangle {
+            width: 34; height: 34; radius: 8; color: Theme.accentDeep
+            anchors.verticalCenter: parent.verticalCenter
+            Text { anchors.centerIn: parent; text: "▣"; color: "white"; font.pixelSize: 18 }
+        }
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 2
+            Row {
+                Text { text: "NOSTALGIA"; color: Theme.text; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
             }
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                Text { text: "NOSTALGIA"; color: Theme.text; font.pixelSize: 16; font.bold: true; font.letterSpacing: 1.4 }
-                Text { text: "Trình khởi động Minecraft"; color: Theme.textMuted; font.pixelSize: 9; font.letterSpacing: 0.6 }
+            Text {
+                text: "THẾ GIỚI CỦA BẠN"
+                color: Theme.textMuted; font.pixelSize: 8; font.letterSpacing: 1.4
             }
         }
     }
 
     Column {
-        anchors { top: header.bottom; topMargin: 26; left: parent.left; right: parent.right; margins: 10 }
+        anchors { top: brand.bottom; topMargin: 24; left: parent.left; right: parent.right; margins: 12 }
         spacing: 4
 
         Repeater {
@@ -56,48 +57,62 @@ Rectangle {
         }
     }
 
-    // Thẻ tài khoản dưới cùng. Chưa đăng nhập thì nói thẳng là chưa, không vẽ người giả.
+    // Thẻ tài khoản. Chưa đăng nhập thì nói thẳng là chưa, không vẽ người giả.
     Rectangle {
-        anchors { left: parent.left; right: parent.right; bottom: version.top; margins: 14; bottomMargin: 14 }
-        height: 62
+        id: accountCard
+        anchors { left: parent.left; right: parent.right; bottom: footer.top; margins: 14; bottomMargin: 16 }
+        height: 96
         radius: Theme.radiusSmall
         color: Theme.surfaceHigh
 
         Row {
-            anchors { fill: parent; margins: 12 }
+            anchors { top: parent.top; left: parent.left; margins: 12 }
             spacing: 10
             Rectangle {
-                width: 36; height: 36; radius: 6
+                width: 38; height: 38; radius: 7
                 color: root.playerName ? Theme.accentDeep : Theme.border
-                anchors.verticalCenter: parent.verticalCenter
                 Text {
                     anchors.centerIn: parent
                     text: root.playerName ? root.playerName.charAt(0).toUpperCase() : "?"
-                    color: "white"; font.pixelSize: 16; font.bold: true
+                    color: "white"; font.pixelSize: 17; font.bold: true
                 }
             }
             Column {
-                anchors.verticalCenter: parent.verticalCenter
                 spacing: 3
-                Text {
-                    text: root.playerName ? root.playerName : "Chưa có tài khoản"
-                    color: Theme.text; font.pixelSize: 13; font.bold: true
+                Text { text: root.playerName ? "Chào bạn," : "Chưa đăng nhập"
+                       color: Theme.textMuted; font.pixelSize: 10 }
+                Text { text: root.playerName ? root.playerName : "—"
+                       color: Theme.text; font.pixelSize: 14; font.bold: true }
+            }
+        }
+
+        Rectangle {
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 }
+            height: 28
+            radius: 6
+            color: Theme.surface
+            Row {
+                anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }
+                spacing: 7
+                Rectangle {
+                    width: 7; height: 7; radius: 3.5
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: root.playerName ? Theme.accent : Theme.textMuted
                 }
                 Text {
-                    text: root.playerName
-                        ? (root.accountKind === "microsoft" ? "Tài khoản Microsoft" : "Tài khoản offline")
-                        : "Thêm ở trang Cài đặt"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: !root.playerName ? "Thêm ở cột phải"
+                          : (root.accountKind === "microsoft" ? "Tài khoản Microsoft" : "Tài khoản offline")
                     color: Theme.textMuted; font.pixelSize: 10
                 }
             }
         }
     }
 
-    Text {
-        id: version
-        anchors { left: parent.left; bottom: parent.bottom; margins: 18 }
-        text: "v" + Qt.application.version
-        color: Theme.textMuted
-        font.pixelSize: 10
+    Row {
+        id: footer
+        anchors { left: parent.left; bottom: parent.bottom; margins: 20 }
+        spacing: 12
+        Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: 10 }
     }
 }

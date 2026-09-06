@@ -10,7 +10,6 @@ import QtQuick
 Item {
     id: root
     property int instanceCount: 0
-    property int versionCount: 0
     property bool gameRunning: false
     signal navigate(int pageIndex)
 
@@ -87,7 +86,7 @@ Item {
 
     // Các thẻ nổi, rải như bản mẫu. STORE của bản mẫu đã thành CHƠI CHUNG.
     HeroCard {
-        x: parent.width * 0.06; y: parent.height * 0.30
+        x: parent.width * 0.285; y: parent.height * 0.20
         objectName: "heroCard"
         glyph: "⛏"; title: "BẢN CHƠI"
         subtitle: root.instanceCount + " đã tạo"
@@ -95,35 +94,35 @@ Item {
         onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.30; y: parent.height * 0.16
+        x: parent.width * 0.545; y: parent.height * 0.28
         objectName: "heroCard"
         pageIndex: 2
         glyph: "⚙"; title: "MOD"; subtitle: "Duyệt & cài"
         onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.545; y: parent.height * 0.27
+        x: parent.width * 0.075; y: parent.height * 0.335
         objectName: "heroCard"
         pageIndex: 3
         glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
         onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.775; y: parent.height * 0.155
+        x: parent.width * 0.715; y: parent.height * 0.40
         objectName: "heroCard"
         pageIndex: 4
         glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
         onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.315; y: parent.height * 0.545
+        x: parent.width * 0.035; y: parent.height * 0.635
         objectName: "heroCard"
         pageIndex: 5
         glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
         onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.60; y: parent.height * 0.60
+        x: parent.width * 0.735; y: parent.height * 0.635
         objectName: "heroCard"
         pageIndex: 6
         glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"

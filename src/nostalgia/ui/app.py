@@ -29,6 +29,9 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     view = QQuickView()
     view.engine().addImportPath(str(QML_DIR))
     bridge = LauncherBridge(launcher)
+    # Gắn cầu nối vào khung nhìn: Qt sẽ huỷ nó **sau** cây QML, nên không còn cảnh báo
+    # "bridge is null" ở những ràng buộc còn sống trong lúc đóng cửa sổ.
+    bridge.setParent(view)
     view.rootContext().setContextProperty("bridge", bridge)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     view.setTitle("Nostalgia Launcher")
