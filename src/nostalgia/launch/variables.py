@@ -52,8 +52,11 @@ def build_launch_variables(
         "user_properties": EMPTY_USER_PROPERTIES,
         "clientid": "",
         "auth_xuid": "",
-        # Phiên bản
-        "version_name": version_meta.version_id,
+        # Phiên bản. `version_name` là mã bản SỞ HỮU client jar chứ không phải id của loader:
+        # Forge dùng `-DignoreList=…,${version_name}.jar` để bỏ qua client jar khỏi module
+        # path; đặt id Forge vào đây thì jar `1.20.1.jar` bị nạp thành module `_1._20._1` và
+        # Java báo hai module cùng xuất `net.minecraft.data`. Với bản thuần hai id trùng nhau.
+        "version_name": version_meta.jar_version_id or version_meta.version_id,
         "version_type": version_meta.release_type or DEFAULT_VERSION_TYPE,
         "profile_name": launcher_name,
         # Thư mục
