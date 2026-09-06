@@ -31,6 +31,10 @@ Item {
     Component.onCompleted: {
         if (!contentBridge.instanceId && bridge.instances.length > 0)
             contentBridge.selectInstance(bridge.instances[0].instanceId);
+        // Thẻ TÀI NGUYÊN trên hero đặt loại cần mở; dùng xong xoá để lần sau mở bình thường.
+        var wanted = page.kinds.indexOf(window.libraryKind);
+        if (wanted >= 0) kindTabs.currentIndex = wanted;
+        window.libraryKind = "";
         page.refresh();
     }
     Connections {

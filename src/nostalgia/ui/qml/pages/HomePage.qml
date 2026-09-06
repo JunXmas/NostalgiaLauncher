@@ -11,6 +11,7 @@ Item {
     property string search: ""
     property int chosenIndex: 0
     signal navigate(int pageIndex)
+    signal navigateToLibrary(string contentKind)
 
     readonly property var chosen: bridge.instances.length > 0
                                   ? bridge.instances[Math.min(chosenIndex, bridge.instances.length - 1)] : null
@@ -50,6 +51,7 @@ Item {
         photo: photo
         instanceCount: bridge.instances.length
         onNavigate: function (pageIndex) { page.navigate(pageIndex); }
+        onNavigateToLibrary: function (contentKind) { page.navigateToLibrary(contentKind); }
     }
 
     // ----- góc trên trái: lời chào; góc trên phải của vùng giữa: hai pill -----
@@ -126,7 +128,7 @@ Item {
             width: parent.width
             height: 132
             translucent: true
-            onOpenMultiplayer: page.navigate(5)
+            onOpenMultiplayer: page.navigate(4)
         }
     }
 

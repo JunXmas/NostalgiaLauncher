@@ -9,6 +9,8 @@ Item {
     id: window
     implicitWidth: 1360
     implicitHeight: 860
+    // Loại nội dung mà Thư viện nên mở sẵn (thẻ TÀI NGUYÊN trên hero đặt "resourcepack").
+    property string libraryKind: ""
 
     Rectangle { anchors.fill: parent; color: Theme.background }
 
@@ -42,6 +44,7 @@ Item {
                 target: pageLoader.item
                 ignoreUnknownSignals: true
                 function onNavigate(pageIndex) { sidebar.currentIndex = pageIndex; }
+                function onNavigateToLibrary(contentKind) { window.libraryKind = contentKind; sidebar.currentIndex = 2; }
             }
 
             NumberAnimation on opacity {
@@ -57,8 +60,7 @@ Item {
             switch (index) {
             case 0: return "pages/HomePage.qml";
             case 1: return "pages/InstancesPage.qml";
-            case 2: return "pages/ModsPage.qml";
-            case 4: return "pages/ResourcesPage.qml";
+            case 2: return "pages/LibraryPage.qml";
             default: return "pages/PlaceholderPage.qml";
             }
         }

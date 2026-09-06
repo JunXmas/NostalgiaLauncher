@@ -12,9 +12,8 @@ Rectangle {
     readonly property var entries: [
         { label: "TRANG CHỦ",  glyph: "⌂" },
         { label: "BẢN CHƠI",   glyph: "⛏" },
-        { label: "MOD",        glyph: "⚙" },
+        { label: "THƯ VIỆN",   glyph: "⚙" },
         { label: "MÁY CHỦ",    glyph: "☷" },
-        { label: "TÀI NGUYÊN", glyph: "▤" },
         { label: "CHƠI CHUNG", glyph: "⛶" },
         { label: "CÀI ĐẶT",    glyph: "☸" }
     ]

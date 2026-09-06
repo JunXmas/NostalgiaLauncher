@@ -14,6 +14,7 @@ Item {
     // Tỉ lệ ảnh gốc (1800×1200). Đổi ảnh là đổi số này và đo lại toạ độ.
     readonly property real imageAspect: 1.5
     signal navigate(int pageIndex)
+    signal navigateToLibrary(string contentKind)
 
     // Kích thước ảnh sau khi phủ cover, và phần bị xén (âm) ở mép trái / mép trên.
     readonly property real shownWidth: width / height >= imageAspect ? width : height * imageAspect
@@ -46,19 +47,19 @@ Item {
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.675; landmarkY: 0.385; below: true; pivot: 0.9 // cổng xanh ngọc bên phải
-        pageIndex: 4; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
-        backdrop: root.photo; onActivated: root.navigate(pageIndex)
+        pageIndex: 2; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
+        backdrop: root.photo; onActivated: root.navigateToLibrary("resourcepack")
     }
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.293; landmarkY: 0.36; pivot: 0.6     // cổng Nether tím bên trái
-        pageIndex: 5; glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
+        pageIndex: 4; glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.134; landmarkY: 0.33; pivot: 0.35    // ngôi nhà nhỏ bên trái
-        pageIndex: 6; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
+        pageIndex: 5; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
 }

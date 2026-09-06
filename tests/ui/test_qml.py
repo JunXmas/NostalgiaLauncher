@@ -50,7 +50,7 @@ def test_the_interface_loads_without_a_single_qml_error(tmp_path: Path) -> None:
         assert root_item is not None
         sidebar = root_item.findChild(QObject, "sidebar")
         assert sidebar is not None
-        for page_index in range(7):
+        for page_index in range(6):
             sidebar.setProperty("currentIndex", page_index)
             QGuiApplication.processEvents()
         sidebar.setProperty("currentIndex", 0)
@@ -123,7 +123,9 @@ def test_every_card_on_the_hero_points_at_a_real_page(tmp_path: Path) -> None:
 
     assert len(cards) == 6, "bản mẫu có sáu thẻ nổi"
     targets = sorted(card.property("pageIndex") for card in cards)
-    assert targets == [1, 2, 3, 4, 5, 6], "sáu thẻ phải dẫn tới sáu trang khác nhau"
+    # Thư viện gộp mod + shader + gói tài nguyên, nên hai thẻ MOD và TÀI NGUYÊN cùng mở
+    # trang 2; thẻ TÀI NGUYÊN mở sẵn chip Gói tài nguyên.
+    assert targets == [1, 2, 2, 3, 4, 5], "sáu thẻ phải dẫn tới năm trang thật của thanh bên"
     assert all(card.property("title") for card in cards), "thẻ nào cũng phải có nhãn"
 
 
@@ -138,10 +140,10 @@ def test_activating_a_card_actually_changes_the_page(tmp_path: Path) -> None:
     assert sidebar is not None, "không tìm thấy thanh bên"
 
     cards = find_hero_cards(view)
-    multiplayer = next(card for card in cards if card.property("pageIndex") == 5)
+    multiplayer = next(card for card in cards if card.property("title") == "CHƠI CHUNG")
     multiplayer.activated.emit()
 
-    assert sidebar.property("currentIndex") == 5
+    assert sidebar.property("currentIndex") == 4
 
 
 def test_hero_cards_sit_inside_the_photo_and_never_overlap(tmp_path: Path) -> None:
@@ -252,3 +254,25 @@ def test_create_button_explains_what_is_missing_and_name_is_optional(tmp_path: P
     QGuiApplication.processEvents()
     assert dialog.property("missingStep") == ""
     assert dialog.property("canCreate") is True
+
+
+def test_the_resources_card_opens_the_library_on_resource_packs(tmp_path: Path) -> None:
+    """Gộp trang TÀI NGUYÊN vào Thư viện không được làm mất lối tắt: thẻ trên hero mở Thư viện
+    với chip Gói tài nguyên chọn sẵn."""
+    from PySide6.QtCore import QObject
+
+    view, _bridge = build_view(make_launcher(tmp_path))
+    root_item = view.rootObject()
+    assert root_item is not None
+    resources = next(
+        card for card in find_hero_cards(view) if card.property("title") == "TÀI NGUYÊN"
+    )
+    resources.activated.emit()
+    for _ in range(50):
+        QGuiApplication.processEvents()
+        library = root_item.findChild(QObject, "contentPage")
+        if library is not None and library.property("kind") == "resourcepack":
+            break
+    assert library is not None
+    assert library.property("kind") == "resourcepack"
+    assert root_item.property("libraryKind") == "", "dùng xong phải xoá để lần sau mở bình thường"
