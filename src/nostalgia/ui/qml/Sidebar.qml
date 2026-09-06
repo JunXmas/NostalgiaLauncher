@@ -33,7 +33,8 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
             Row {
-                Text { text: "NOSTALGIA"; color: Theme.text; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
+                Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
+                Text { text: "GIA"; color: Theme.accent; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
             }
             Text {
                 text: "THẾ GIỚI CỦA BẠN"

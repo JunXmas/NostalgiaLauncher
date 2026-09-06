@@ -8,8 +8,8 @@ Rectangle {
     property bool playable: true
     signal playRequested()
 
-    width: 230
-    height: 186
+    implicitWidth: 230
+    implicitHeight: 168
     radius: Theme.radius
     color: hover.hovered ? Theme.surfaceHigh : Theme.surface
     border.color: hover.hovered ? Theme.accent : Theme.border
@@ -34,7 +34,7 @@ Rectangle {
     Rectangle {
         id: thumb
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: 1 }
-        height: 104
+        height: 92
         radius: Theme.radius
         gradient: Gradient {
             GradientStop { position: 0.0; color: "#243a2c" }

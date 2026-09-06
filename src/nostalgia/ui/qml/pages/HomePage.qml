@@ -1,7 +1,7 @@
 import QtQuick
 import "../"
 
-/* Trang chủ: hai cột như bản mẫu — giữa là hero + danh sách bản chơi, phải là các ô thông tin. */
+/* Trang chủ như bản mẫu: giữa là lời chào, hero, danh sách bản chơi; phải là các ô thông tin. */
 Item {
     id: page
     property bool gameRunning: false
@@ -71,17 +71,15 @@ Item {
             spacing: Theme.gap
             topPadding: Theme.gap
 
-            HeroPanel {
+            // ----- hàng đầu: lời chào + pill trạng thái, chỉ nói những con số CÓ THẬT -----
+            Item {
                 width: parent.width - Theme.gap * 2
                 x: Theme.gap
-                height: 404
-                instanceCount: bridge.instances.length
-                gameRunning: page.gameRunning
-                onNavigate: function (pageIndex) { page.navigate(pageIndex); }
+                height: 66
 
                 Column {
-                    anchors { left: parent.left; top: parent.top; margins: 22 }
-                    spacing: 4
+                    anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                    spacing: 3
                     Text {
                         text: greeting(); color: Theme.textMuted; font.pixelSize: 12
                         function greeting() {
@@ -91,7 +89,7 @@ Item {
                             return "Chào buổi tối!";
                         }
                     }
-                    Text { text: "Hôm nay chơi gì?"; color: Theme.text; font.pixelSize: 26; font.bold: true }
+                    Text { text: "Hôm nay chơi gì?"; color: Theme.text; font.pixelSize: 24; font.bold: true }
                     Text {
                         text: bridge.instances.length > 0
                               ? "Tiếp tục cuộc phiêu lưu của bạn."
@@ -99,6 +97,28 @@ Item {
                         color: Theme.accent; font.pixelSize: 12
                     }
                 }
+
+                Row {
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                    spacing: 10
+                    StatusPill {
+                        glyph: "▣"
+                        text: bridge.instances.length + " bản chơi"
+                    }
+                    StatusPill {
+                        dotColor: page.gameRunning ? Theme.accent : Theme.textMuted
+                        pulsing: page.gameRunning
+                        text: page.gameRunning ? "Đang chơi" : "Sẵn sàng"
+                    }
+                }
+            }
+
+            HeroPanel {
+                width: parent.width - Theme.gap * 2
+                x: Theme.gap
+                height: Math.round(width / 2)
+                instanceCount: bridge.instances.length
+                onNavigate: function (pageIndex) { page.navigate(pageIndex); }
 
                 PlayButton {
                     anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 20 }
@@ -118,7 +138,7 @@ Item {
                 // Chiều cao đủ ôm trọn lưới: phần đầu, cộng số hàng nhân chiều cao thẻ.
                 readonly property int rows: Math.ceil(
                     Math.max(1, page.visibleInstances().length) / Math.max(1, grid.columns))
-                height: 78 + rows * 186 + (rows - 1) * Theme.gap + Theme.pad
+                height: 78 + rows * grid.cardHeight + (rows - 1) * Theme.gap + Theme.pad
 
                 Item {
                     anchors.fill: parent
@@ -156,12 +176,15 @@ Item {
                     Grid {
                         id: grid
                         anchors { left: parent.left; right: parent.right; top: listTitle.bottom; topMargin: 20 }
-                        columns: Math.max(1, Math.floor(width / (230 + Theme.gap)))
+                        readonly property int cardHeight: 168
+                        columns: 4
                         spacing: Theme.gap
 
                         Repeater {
                             model: page.visibleInstances()
                             InstanceCard {
+                                width: Math.floor((grid.width - (grid.columns - 1) * Theme.gap) / grid.columns)
+                                height: grid.cardHeight
                                 label: modelData.label
                                 versionId: modelData.versionId
                                 playable: bridge.accounts.length > 0 && !bridge.busy && !page.gameRunning

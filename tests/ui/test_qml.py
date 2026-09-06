@@ -128,3 +128,31 @@ def test_activating_a_card_actually_changes_the_page(tmp_path: Path) -> None:
     multiplayer.activated.emit()
 
     assert sidebar.property("currentIndex") == 5
+
+
+def test_hero_cards_sit_inside_the_photo_and_never_overlap(tmp_path: Path) -> None:
+    """Mỗi thẻ neo vào một công trình trong ảnh, nên toạ độ neo phải nằm trong ảnh, và hai
+    thẻ không được đè lên nhau — đè là mất chữ, mà chỉ soi mắt mới thấy. Test này thay mắt.
+    """
+    view, _bridge = build_view(make_launcher(tmp_path))
+    cards = find_hero_cards(view)
+    rectangles: list[tuple[float, float, float, float]] = []
+    for card in cards:
+        assert 0.0 < card.property("landmarkX") < 1.0
+        assert 0.0 < card.property("landmarkY") < 1.0
+        # Chỉ so phần thân thẻ: que nối được phép chạy qua khoảng trống giữa các thẻ.
+        left = card.property("x")
+        top = card.property("y") + (card.property("stemLength") if card.property("below") else 0)
+        rectangles.append(
+            (left, top, left + card.property("width"), top + card.property("cardHeight"))
+        )
+
+    for index, first in enumerate(rectangles):
+        for second in rectangles[index + 1 :]:
+            separated = (
+                first[2] <= second[0]
+                or second[2] <= first[0]
+                or first[3] <= second[1]
+                or second[3] <= first[1]
+            )
+            assert separated, f"hai thẻ nổi đè nhau: {first} và {second}"

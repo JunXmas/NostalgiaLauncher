@@ -1,16 +1,13 @@
 import QtQuick
 
 /*
-  Khu ảnh lớn ở đầu trang chủ, kèm các thẻ nổi bấm được.
-
-  Ảnh nền là ảnh chụp trong game **của chính chủ dự án** (xem assets/README.md). Nó dịch rất
-  chậm theo kiểu Ken Burns: khung hình không bao giờ đứng chết, nhưng cũng không giật mắt khi
-  người dùng đang đọc chữ đè lên nó.
+  Khu ảnh lớn ở đầu trang chủ. Sáu thẻ nổi, mỗi thẻ đứng trên đúng một công trình trong ảnh
+  (xem assets/README.md về ảnh). Ảnh đứng yên để thẻ và công trình không bao giờ lệch nhau;
+  chuyển động nằm ở chấm neo và ở thẻ khi trỏ vào.
 */
 Item {
     id: root
     property int instanceCount: 0
-    property bool gameRunning: false
     signal navigate(int pageIndex)
 
     clip: true
@@ -20,112 +17,53 @@ Item {
         anchors.fill: parent
         source: "assets/hero.jpg"
         fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        // Trôi rất chậm sang ngang rồi quay lại: đủ để thấy là sống, không đủ để gây khó chịu.
-        scale: 1.06
-        SequentialAnimation on x {
-            loops: Animation.Infinite
-            NumberAnimation { to: -18; duration: 22000; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 0; duration: 22000; easing.type: Easing.InOutSine }
-        }
     }
 
-    // Ảnh do người chơi chụp nên không đoán được chỗ nào sáng tối; phủ một lớp tối vừa đủ để
-    // mọi chữ đè lên đều đọc được, và đậm dần xuống đáy cho liền với nền trang.
+    // Làm tối nhẹ ở đáy để nút CHƠI và dải chọn bản chơi nổi rõ trên nền lát đá.
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.00; color: "#3d000000" }
-            GradientStop { position: 0.45; color: "#73080c09" }
-            GradientStop { position: 1.00; color: Theme.background }
+            GradientStop { position: 0.00; color: "#00000000" }
+            GradientStop { position: 0.60; color: "#26000000" }
+            GradientStop { position: 1.00; color: "#a6080c09" }
         }
     }
 
-    // Thẻ trạng thái: chỉ nói những con số CÓ THẬT.
-    Rectangle {
-        anchors { top: parent.top; right: parent.right; margins: 18 }
-        width: statusRow.width + 28
-        height: 44
-        radius: Theme.radiusSmall
-        color: "#d9121a16"
-        border.color: "#4d3a4a40"
-        border.width: 1
-
-        Row {
-            id: statusRow
-            anchors.centerIn: parent
-            spacing: 18
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.instanceCount + " bản chơi"
-                color: Theme.text; font.pixelSize: 12
-            }
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 7
-                Rectangle {
-                    width: 8; height: 8; radius: 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: root.gameRunning ? Theme.accent : Theme.textMuted
-                    SequentialAnimation on opacity {
-                        running: root.gameRunning
-                        loops: Animation.Infinite
-                        NumberAnimation { to: 0.35; duration: 900 }
-                        NumberAnimation { to: 1.0; duration: 900 }
-                    }
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.gameRunning ? "Đang chơi" : "Sẵn sàng"
-                    color: Theme.textMuted; font.pixelSize: 12
-                }
-            }
-        }
-    }
-
-    // Các thẻ nổi, rải như bản mẫu. STORE của bản mẫu đã thành CHƠI CHUNG.
+    // Toạ độ công trình đo trên ảnh gốc, tính theo phần trăm.
     HeroCard {
-        x: parent.width * 0.285; y: parent.height * 0.20
         objectName: "heroCard"
-        glyph: "⛏"; title: "BẢN CHƠI"
-        subtitle: root.instanceCount + " đã tạo"
-        pageIndex: 1
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.427; landmarkY: 0.31; pivot: 0.7    // ngôi nhà lớn giữa làng
+        pageIndex: 1; glyph: "⛏"; title: "BẢN CHƠI"; subtitle: root.instanceCount + " đã tạo"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.545; y: parent.height * 0.28
         objectName: "heroCard"
-        pageIndex: 2
-        glyph: "⚙"; title: "MOD"; subtitle: "Duyệt & cài"
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.269; landmarkY: 0.475; below: true  // bàn chế tác bên trái
+        pageIndex: 2; glyph: "⚙"; title: "MOD"; subtitle: "Duyệt & cài"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.075; y: parent.height * 0.335
         objectName: "heroCard"
-        pageIndex: 3
-        glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.571; landmarkY: 0.215; pivot: 0.3   // tháp treo cờ
+        pageIndex: 3; glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.715; y: parent.height * 0.40
         objectName: "heroCard"
-        pageIndex: 4
-        glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.696; landmarkY: 0.32; below: true   // cổng xanh ngọc bên phải
+        pageIndex: 4; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.035; y: parent.height * 0.635
         objectName: "heroCard"
-        pageIndex: 5
-        glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.293; landmarkY: 0.29; below: true   // cổng Nether tím bên trái
+        pageIndex: 5; glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
-        x: parent.width * 0.735; y: parent.height * 0.635
         objectName: "heroCard"
-        pageIndex: 6
-        glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
-        onActivated: root.navigate(pageIndex)
+        landmarkX: 0.134; landmarkY: 0.255; pivot: 0.35  // ngôi nhà nhỏ bên trái
+        pageIndex: 6; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
+        backdrop: photo; onActivated: root.navigate(pageIndex)
     }
 }
