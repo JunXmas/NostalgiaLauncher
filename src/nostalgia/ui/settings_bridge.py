@@ -1,38 +1,34 @@
-"""Cầu nối trang CÀI ĐẶT: khoá API CurseForge (tuỳ chọn) của người dùng.
+"""Cầu nối trang CÀI ĐẶT: thông tin chung của launcher (phiên bản, thư mục dữ liệu).
 
-Khoá chỉ nằm trong settings.json (0600) hoặc biến môi trường; QML không cần biết khoá thật,
-chỉ cần biết đã có hay chưa để hiện đúng trạng thái.
+Khoá API CurseForge KHÔNG còn nhập ở đây: thư viện đi qua máy chủ của dự án, ai muốn dùng
+khoá riêng thì đặt biến môi trường (xem `settings/store.py`).
 """
 
 from __future__ import annotations
 
-from dataclasses import replace
+from PySide6.QtCore import Property, QObject, QUrl, Slot
+from PySide6.QtGui import QDesktopServices
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
-
+from nostalgia import __version__
 from nostalgia.api import Launcher
-from nostalgia.settings.store import CURSEFORGE_KEY_ENV
-from nostalgia.ui.worker import WorkerBridge
 
 
-class SettingsBridge(WorkerBridge):
-    settingsChanged = Signal()
-
+class SettingsBridge(QObject):
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._launcher = launcher
 
-    @Property(bool, notify=settingsChanged)
-    def hasCurseforgeKey(self) -> bool:
-        return self._launcher.load_settings().has_curseforge_key
+    @Property(str, constant=True)
+    def launcherVersion(self) -> str:
+        return __version__
 
     @Property(str, constant=True)
-    def curseforgeKeyEnvName(self) -> str:
-        return CURSEFORGE_KEY_ENV
+    def dataDir(self) -> str:
+        return str(self._launcher.paths.data_dir)
 
-    @Slot(str)
-    def saveCurseforgeKey(self, api_key: str) -> None:
-        """Ghi khoá (rỗng = xoá). Đọc/ghi một file nhỏ nên làm ngay, không cần luồng nền."""
-        settings = replace(self._launcher.load_settings(), curseforge_api_key=api_key.strip())
-        self._launcher.save_settings(settings)
-        self.settingsChanged.emit()
+    @Slot()
+    def openDataFolder(self) -> None:
+        """Mở thư mục dữ liệu (versions/libraries/assets/instances) bằng trình quản lý file."""
+        folder = self._launcher.paths.data_dir
+        folder.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
