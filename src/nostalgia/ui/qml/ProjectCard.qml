@@ -7,6 +7,8 @@ Rectangle {
     property var project: ({})
     property bool installable: true
     signal installRequested(string projectId)
+    signal modpackRequested(string projectId, string title)
+    readonly property bool isModpack: (project.contentKind || "") === "modpack"
 
     height: 118
     radius: Theme.radiusSmall
@@ -60,16 +62,22 @@ Rectangle {
         anchors { right: parent.right; rightMargin: 14; bottom: parent.bottom; bottomMargin: 14 }
         spacing: 12
         Text { text: "⬇ " + Theme.compact(project.downloads || 0); color: Theme.accent; font.pixelSize: 11 }
-        Text { text: "♥ " + Theme.compact(project.follows || 0); color: Theme.textMuted; font.pixelSize: 11 }
+        // CurseForge không có "theo dõi": không vẽ số 0 giả.
+        Text {
+            visible: (project.source || "modrinth") === "modrinth"
+            text: "♥ " + Theme.compact(project.follows || 0); color: Theme.textMuted; font.pixelSize: 11
+        }
     }
     ActionButton {
         id: action
         anchors { right: parent.right; top: parent.top; margins: 14 }
-        width: 84; height: 30
-        label: project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
+        width: root.isModpack ? 120 : 84; height: 30
+        label: root.isModpack ? (project.installing ? "Đang cài..." : "Tạo bản chơi")
+             : project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
         primary: !project.installed
-        clickable: root.installable && !project.installed && !project.installing
-        onClicked: root.installRequested(project.projectId)
+        clickable: !project.installing && (root.isModpack || (root.installable && !project.installed))
+        onClicked: root.isModpack ? root.modpackRequested(project.projectId, project.title)
+                                  : root.installRequested(project.projectId)
     }
     HoverHandler { id: hover }
 }

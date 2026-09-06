@@ -12,18 +12,19 @@ from typing import Any, cast
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Launcher
-from nostalgia.content.model import ContentKind, Project, SortOrder
+from nostalgia.content.model import ContentKind, ContentSource, Project, SortOrder
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.installed_bridge import InstalledContentBridge
+from nostalgia.ui.modpack_bridge import ModpackContentBridge
 from nostalgia.ui.project_model import ProjectListModel
 
 
-class ContentBridge(InstalledContentBridge):
+class ContentBridge(ModpackContentBridge):
     targetChanged = Signal()
     filtersChanged = Signal()
     resultsChanged = Signal()
     searchingChanged = Signal()
     installFinished = Signal(str)
+    sourceChanged = Signal()
     # Hai tín hiệu nội bộ: luồng tải phát, luồng giao diện nhận (Qt tự xếp hàng qua luồng),
     # vì mô hình danh sách chỉ được đổi ở luồng giao diện.
     _pageArrived = Signal(bool, object)
@@ -43,6 +44,7 @@ class ContentBridge(InstalledContentBridge):
         self._searching = False
         self._installing: set[str] = set()
         self._last_query: tuple[ContentKind, str, SortOrder] = ("mod", "", "relevance")
+        self._source: ContentSource = "modrinth"
         # Bộ lọc của cột trái. Rỗng nghĩa là không lọc theo tiêu chí đó.
         self._loaders: list[str] = []
         self._game_versions: list[str] = []
@@ -78,6 +80,23 @@ class ContentBridge(InstalledContentBridge):
         self.filtersChanged.emit()
         self.resultsChanged.emit()
         self.installedChanged.emit()
+
+    # ----- nguồn -----
+
+    @Property(str, notify=sourceChanged)
+    def source(self) -> str:
+        return self._source
+
+    @Slot(str)
+    def setSource(self, source: str) -> None:
+        """Đổi nguồn thì kết quả cũ vô nghĩa: xoá và để trang tìm lại."""
+        if source not in ("modrinth", "curseforge") or source == self._source:
+            return
+        self._source = cast(ContentSource, source)
+        self._results_model.reset([])
+        self._total_hits = 0
+        self.sourceChanged.emit()
+        self.resultsChanged.emit()
 
     # ----- bộ lọc -----
 
@@ -147,6 +166,7 @@ class ContentBridge(InstalledContentBridge):
         """Duyệt được cả khi chưa có bản chơi; chỉ lúc cài mới cần một bản chơi đích."""
         target = self._target
         content_kind, query, sort = self._last_query
+        source = self._source
         loaders, game_versions = tuple(self._loaders), tuple(self._game_versions)
         generation = self.next_generation()
         self._set_searching(True)
@@ -156,6 +176,7 @@ class ContentBridge(InstalledContentBridge):
                 page = self._launcher.search_content(
                     target,
                     content_kind,
+                    source=source,
                     query=query,
                     sort=sort,
                     offset=offset,
@@ -171,7 +192,8 @@ class ContentBridge(InstalledContentBridge):
                 if self.is_current(generation):
                     self._set_searching(False)
 
-        self.run_in_background(work, "Tìm trên Modrinth")
+        source_label = "CurseForge" if source == "curseforge" else "Modrinth"
+        self.run_in_background(work, f"Tìm trên {source_label}")
 
     @Slot(bool, object)
     def _apply_page(self, append: bool, hits: object) -> None:
@@ -203,6 +225,8 @@ class ContentBridge(InstalledContentBridge):
         )
         if target is None or project is None or project_id in self._installing:
             return
+        if project.content_kind == "modpack":
+            return  # modpack đi đường installModpack: nó thành bản chơi mới, không cài vào đâu
         self._installing.add(project_id)
         self._refresh_flags()
 

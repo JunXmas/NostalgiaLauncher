@@ -7,7 +7,7 @@ file của pack vào thư mục bản chơi -> chép overrides. Mọi bước đ
 
 from __future__ import annotations
 
-from nostalgia.content.model import Project
+from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.modrinth import fetch_project_versions
 from nostalgia.content.mrpack import ALLOWED_HOSTS, apply_overrides, plan_downloads, read_index
 from nostalgia.errors import ContentError, NetworkError
@@ -23,6 +23,13 @@ from nostalgia.storage.files import ensure_dir
 MODPACK_WORKERS = 8
 
 
+def choose_pack_version(versions: tuple[ProjectVersion, ...], game_version: str) -> ProjectVersion:
+    """Ưu tiên bản cho đúng phiên bản game đang lọc; trong đó release đứng trước beta."""
+    matching = [v for v in versions if game_version and game_version in v.game_versions]
+    pool = matching or list(versions)
+    return next((v for v in pool if v.version_type == "release"), pool[0])
+
+
 class ModpackOperations(LoaderOperations):
     __slots__ = ()
 
@@ -32,13 +39,16 @@ class ModpackOperations(LoaderOperations):
         instance_id: str,
         display_name: str = "",
         *,
+        game_version: str = "",
         allowed_hosts: tuple[str, ...] = ALLOWED_HOSTS,
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> Instance:
         """Cài modpack Modrinth thành bản chơi `instance_id`. CHẠM MẠNG, có thể mất vài phút.
 
-        `allowed_hosts` chỉ để test trỏ vào máy chủ cục bộ.
+        `game_version` là phiên bản người dùng đang lọc: có bản pack cho đúng phiên bản đó
+        thì lấy (release trước, không thì bản mới nhất), không có mới rơi về release mới
+        nhất của pack. `allowed_hosts` chỉ để test trỏ vào máy chủ cục bộ.
         """
         if project.source != "modrinth" or project.content_kind != "modpack":
             message = f"{project.title!r} không phải modpack Modrinth"
@@ -50,7 +60,7 @@ class ModpackOperations(LoaderOperations):
             versions = fetch_project_versions(
                 http_client, project.project_id, endpoints=self.endpoints
             )
-            chosen = next((v for v in versions if v.version_type == "release"), versions[0])
+            chosen = choose_pack_version(versions, game_version)
             mrpack_path = ensure_dir(self.paths.data_dir / "installers") / chosen.file_name
             download_one(
                 http_client,

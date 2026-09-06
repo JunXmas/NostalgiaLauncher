@@ -31,6 +31,8 @@ ROLE_NAMES = (
     "loaders",
     "installed",
     "installing",
+    "contentKind",
+    "source",
 )
 FIRST_ROLE = Qt.ItemDataRole.UserRole + 1
 
@@ -76,6 +78,8 @@ class ProjectListModel(QAbstractListModel):
             "loaders": list(project.loaders),
             "installed": project.project_id in self._installed_ids,
             "installing": project.project_id in self._installing_ids,
+            "contentKind": project.content_kind,
+            "source": project.source,
         }
 
     def reset(self, projects: list[Project]) -> None:

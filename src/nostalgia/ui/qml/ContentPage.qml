@@ -11,7 +11,9 @@ Item {
     objectName: "contentPage"
     property string title: ""
     property var kinds: ["mod"]
-    property var kindLabels: ({ "mod": "Mod", "shader": "Shader", "resourcepack": "Gói tài nguyên" })
+    property var kindLabels: ({ "mod": "Mod", "shader": "Shader", "resourcepack": "Gói tài nguyên", "modpack": "Modpack" })
+    // Modpack CurseForge dùng định dạng khác (manifest.json), chưa hỗ trợ: chỉ Modrinth có chip này.
+    readonly property bool modpackUnavailable: kind === "modpack" && contentBridge.source !== "modrinth"
     readonly property string kind: kinds[kindTabs.currentIndex] || kinds[0]
     readonly property var sortKeys: ["relevance", "downloads", "follows", "newest", "updated"]
     readonly property var sortLabels: ["Liên quan", "Nhiều tải", "Theo dõi", "Mới nhất", "Vừa cập nhật"]
@@ -20,11 +22,14 @@ Item {
     property bool gridMode: true
     signal navigate(int pageIndex)
 
-    function runSearch() { contentBridge.search(page.kind, searchField.text, page.sortKeys[filters.sortIndex]); }
+    function runSearch() {
+        if (page.modpackUnavailable) return;
+        contentBridge.search(page.kind, searchField.text, page.sortKeys[filters.sortIndex]);
+    }
     function refresh() {
         // Đọc danh sách đã cài của ĐÚNG loại đang xem trước (đọc đĩa, rẻ): cờ "Đã cài" trên
         // thẻ duyệt và tab Đã cài đều lấy từ đó, nên đổi chip là phải đọc lại.
-        if (page.hasInstance) contentBridge.refreshInstalled(page.kind);
+        if (page.hasInstance && page.kind !== "modpack") contentBridge.refreshInstalled(page.kind);
         if (modeTabs.currentIndex === 0) page.runSearch();
     }
 
@@ -40,6 +45,8 @@ Item {
     Connections {
         target: contentBridge
         function onTargetChanged() { page.refresh(); }
+        function onSourceChanged() { page.refresh(); }
+        function onModpackInstalled(instanceId) { contentBridge.selectInstance(instanceId); }
     }
     Timer { id: debounce; interval: 300; onTriggered: page.runSearch() }
     // Timer chết cùng trang, khác Qt.callLater có thể bắn sau khi trang đã bị huỷ.
@@ -87,10 +94,28 @@ Item {
         Item {
             anchors.fill: parent
 
-            // ----- hàng 2: loại nội dung (chip) -----
+            // ----- hàng 2: nguồn (trái) + loại nội dung (chip) -----
             Row {
                 id: kindRow
                 spacing: 8
+                Repeater {
+                    model: [{ key: "modrinth", label: "Modrinth" }, { key: "curseforge", label: "CurseForge" }]
+                    Rectangle {
+                        readonly property bool selected: modelData.key === contentBridge.source
+                        width: sourceText.width + 26; height: 28; radius: 14
+                        color: selected ? Theme.accentSoft : "transparent"
+                        border.color: selected ? Theme.accent : Theme.border
+                        Text {
+                            id: sourceText
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 12; font.bold: parent.selected
+                        }
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: contentBridge.setSource(modelData.key) }
+                    }
+                }
+                Rectangle { width: 1; height: 28; color: Theme.border }
                 Repeater {
                     model: page.kinds
                     Rectangle {
@@ -182,7 +207,8 @@ Item {
 
                     Text {
                         visible: !contentBridge.searching && contentBridge.results.length === 0
-                        text: "Không có kết quả."
+                        text: page.modpackUnavailable ? "Modpack CurseForge dùng định dạng khác, chưa hỗ trợ — chọn Modrinth."
+                                                      : "Không có kết quả."
                         color: Theme.textMuted; font.pixelSize: 12
                     }
                     Text {
@@ -205,6 +231,7 @@ Item {
                                 project: model
                                 installable: page.hasInstance && !page.modsBlocked
                                 onInstallRequested: function (projectId) { contentBridge.install(projectId); }
+                                onModpackRequested: function (projectId, title) { modpackDialog.openFor(projectId, title); }
                             }
                         }
                         footer: loadMore
@@ -323,4 +350,6 @@ Item {
             }
         }
     }
+
+    ModpackDialog { id: modpackDialog; objectName: "modpackDialog"; anchors.fill: parent }
 }

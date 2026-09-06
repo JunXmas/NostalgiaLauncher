@@ -161,3 +161,41 @@ def test_duplicate_instance_id_is_refused_before_any_download(
     with pytest.raises(ContentError, match="đã có bản chơi"):
         launcher.install_modpack(modpack_project(), "goi-vui", allowed_hosts=(host,))
     assert server_state.request_count(f"/modrinth/project/{PACK_ID}/version") == 0
+
+
+def test_pack_version_prefers_the_filtered_game_version() -> None:
+    """Đang lọc 26.2 thì lấy bản pack cho 26.2 dù nó là beta; không lọc thì release mới nhất."""
+    from nostalgia.content.model import ProjectVersion
+    from nostalgia.facade.modpacks import choose_pack_version
+
+    def make(version_id: str, version_type: str, games: tuple[str, ...]) -> ProjectVersion:
+        return ProjectVersion(
+            version_id=version_id,
+            project_id="p",
+            version_number=version_id,
+            version_type=version_type,
+            game_versions=games,
+            loaders=("fabric",),
+            date_published="",
+            file_url="u",
+            file_name="f.mrpack",
+            file_sha1="0" * 40,
+            file_size=1,
+            required_project_ids=(),
+        )
+
+    beta_262 = make("b7", "beta", ("26.2",))
+    release_2612 = make("r14", "release", ("26.1.2",))
+    old_release_262 = make("r13", "release", ("26.2", "26.1.2"))
+    newest_first = (beta_262, release_2612, old_release_262)
+
+    assert choose_pack_version(newest_first, "26.2") is old_release_262, (
+        "release cho 26.2 thắng beta"
+    )
+    assert choose_pack_version((beta_262, release_2612), "26.2") is beta_262, (
+        "chỉ có beta cho 26.2 thì lấy nó"
+    )
+    assert choose_pack_version(newest_first, "") is release_2612, "không lọc: release mới nhất"
+    assert choose_pack_version(newest_first, "1.20.1") is release_2612, (
+        "không có bản khớp: rơi về release"
+    )

@@ -18,6 +18,7 @@ Item {
     property string versionFilter: ""
 
     Component.onCompleted: if (catalogBridge.releasedVersions.length === 0) catalogBridge.loadReleasedVersions()
+    readonly property bool singleOnly: contentBridge.source === "curseforge"
 
     Flickable {
         anchors.fill: parent
@@ -70,6 +71,13 @@ Item {
                         }
                     }
                 }
+            }
+
+            Text {
+                visible: root.singleOnly
+                width: parent.width; wrapMode: Text.WordWrap
+                text: "CurseForge chỉ lọc theo loader và phiên bản ĐẦU TIÊN được tick."
+                color: Theme.accent; font.pixelSize: 10
             }
 
             Rectangle { width: parent.width; height: 1; color: Theme.border }

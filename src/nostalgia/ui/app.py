@@ -18,6 +18,7 @@ from nostalgia.api import Launcher
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.settings_bridge import SettingsBridge
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
@@ -37,6 +38,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("bridge", bridge)
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
+    context.setContextProperty("settingsBridge", SettingsBridge(launcher, parent=view))
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     view.setTitle("Nostalgia Launcher")
     view.resize(1360, 860)

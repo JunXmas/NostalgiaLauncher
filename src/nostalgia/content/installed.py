@@ -42,7 +42,11 @@ def content_dir(game_dir: Path, content_kind: ContentKind) -> Path:
 
 
 def list_installed(game_dir: Path, content_kind: ContentKind) -> tuple[InstalledContent, ...]:
-    """File trong thư mục, sắp theo tên; ghép với sổ để lấy tên dự án. Không chạm mạng."""
+    """File trong thư mục, sắp theo tên; ghép với sổ để lấy tên dự án. Không chạm mạng.
+
+    Modpack không có thư mục (nó là cả một bản chơi) nên danh sách đã cài của nó rỗng."""
+    if content_kind not in FOLDER_BY_KIND:
+        return ()
     directory = content_dir(game_dir, content_kind)
     if not directory.is_dir():
         return ()
