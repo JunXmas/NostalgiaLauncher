@@ -27,6 +27,9 @@ ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
 # đi qua kho `repo/` và bộ cài `install/` y như một bản Mojang.
 FABRIC_META_URL = "https://meta.fabricmc.net/v2"
 
+# Modrinth: nguồn mod / gói tài nguyên / shader. Không cần khoá API; chỉ cần User-Agent tử tế.
+MODRINTH_API_URL = "https://api.modrinth.com/v2"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -41,6 +44,7 @@ class Endpoints:
     java_catalog: str = JAVA_RUNTIME_MANIFEST_URL
     asset_objects: str = ASSET_OBJECT_BASE_URL
     fabric_meta: str = FABRIC_META_URL
+    modrinth_api: str = MODRINTH_API_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

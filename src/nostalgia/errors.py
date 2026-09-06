@@ -57,3 +57,7 @@ class AuthError(NostalgiaError):
 
 class InstanceError(NostalgiaError):
     """Instance không hợp lệ, không tìm thấy, hoặc đã tồn tại."""
+
+
+class ContentError(NostalgiaError):
+    """Mod, gói tài nguyên, shader: không tìm thấy bản tương thích, hoặc file đã cài hỏng."""

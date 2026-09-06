@@ -42,6 +42,9 @@ class Route:
     # nhập sai một trường trong thân request sẽ hỏng theo cách chỉ máy chủ thật mới thấy.
     received_body: bytes = b""
     received_headers: dict[str, str] = field(default_factory=dict)
+    # Đường dẫn đầy đủ kèm chuỗi truy vấn: route khớp theo phần trước dấu `?`, nhưng test
+    # tìm kiếm cần đọc được tham số đã gửi.
+    received_path: str = ""
 
 
 @dataclass
@@ -77,6 +80,11 @@ class ServerState:
         """Thân request mà máy chủ nhận được ở lần gọi gần nhất."""
         with self.lock:
             return self.routes[path].received_body
+
+    def received_path(self, path: str) -> str:
+        """Đường dẫn kèm chuỗi truy vấn của lần gọi gần nhất."""
+        with self.lock:
+            return self.routes[path].received_path
 
     def received_header(self, path: str, name: str) -> str:
         with self.lock:
@@ -164,12 +172,13 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
 
         def do_GET(self) -> None:
             with state.lock:
-                route = state.routes.get(self.path)
+                route = state.routes.get(self.path.split("?", 1)[0])
                 if route is not None:
                     # Ghi lại cho MỌI phương thức: header `Authorization` đi kèm GET, còn
                     # thân đi kèm POST — kiểm phía gửi cần cả hai.
                     route.received_body = getattr(self, "_received", b"")
                     route.received_headers = dict(self.headers)
+                    route.received_path = self.path
                 if route is None:
                     self.send_error(404)
                     return

@@ -41,6 +41,7 @@ LAYERS: dict[str, int] = {
     "auth": 3,  # giao thức đăng nhập: cần net/, chưa biết gì về kho tài khoản
     "repo": 3,
     "install": 3,
+    "content": 3,  # Modrinth + file đã cài trong thư mục bản chơi
     "modloader": 3,  # ghi profile loader vào kho version; tải là việc của install/
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
