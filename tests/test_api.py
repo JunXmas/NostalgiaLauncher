@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from fake_mojang import VERSION_ID, publish
+from fake_mojang import JAVA_BODY, VERSION_ID, publish
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Instance, Launcher
 from nostalgia.errors import AccountError, InstanceError
@@ -29,6 +29,8 @@ def make_launcher(
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    *,
+    java_body: bytes = JAVA_BODY,
 ) -> Launcher:
     """Trỏ façade sang máy chủ cục bộ — đúng điểm tiêm mà giao diện thật cũng sẽ dùng."""
     certificate, _key = certificate_pair
@@ -40,7 +42,7 @@ def make_launcher(
     return Launcher(
         paths=DataPaths(data_dir=tmp_path / "data", config_dir=tmp_path / "config"),
         platform=LINUX,
-        endpoints=publish(server, server_state),
+        endpoints=publish(server, server_state, java_body=java_body),
         make_http_client=make_http_client,
     )
 

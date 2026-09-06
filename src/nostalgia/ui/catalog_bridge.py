@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Any
+from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Instance, Launcher
+from nostalgia.modloader.model import LoaderKind
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge
 
@@ -32,7 +33,7 @@ def slugify(display_name: str, taken: set[str]) -> str:
 
 class CatalogBridge(WorkerBridge):
     releasedVersionsChanged = Signal()
-    fabricLoadersChanged = Signal()
+    loaderVersionsChanged = Signal()
     created = Signal(str)
 
     def __init__(
@@ -42,15 +43,15 @@ class CatalogBridge(WorkerBridge):
         self._launcher = launcher
         self._main_bridge = main_bridge
         self._released: list[dict[str, Any]] = []
-        self._fabric_loaders: list[dict[str, Any]] = []
+        self._loader_versions: list[dict[str, Any]] = []
 
     @Property(list, notify=releasedVersionsChanged)
     def releasedVersions(self) -> list[dict[str, Any]]:
         return self._released
 
-    @Property(list, notify=fabricLoadersChanged)
-    def fabricLoaders(self) -> list[dict[str, Any]]:
-        return self._fabric_loaders
+    @Property(list, notify=loaderVersionsChanged)
+    def loaderVersions(self) -> list[dict[str, Any]]:
+        return self._loader_versions
 
     @Slot()
     def loadReleasedVersions(self) -> None:
@@ -72,19 +73,24 @@ class CatalogBridge(WorkerBridge):
 
         self.run_in_background(work)
 
-    @Slot(str)
-    def loadFabricLoaders(self, game_version: str) -> None:
+    @Slot(str, str)
+    def loadLoaderVersions(self, loader_kind: str, game_version: str) -> None:
+        """Bản Fabric/Forge/NeoForge cho một phiên bản game. Chạm mạng, chạy nền."""
         generation = self.next_generation()
+        self._loader_versions = []
+        self.loaderVersionsChanged.emit()
 
         def work() -> None:
-            loaders = self._launcher.list_fabric_loader_versions(game_version)
+            loaders = self._launcher.list_loader_versions(
+                cast(LoaderKind, loader_kind), game_version
+            )
             if not self.is_current(generation):
                 return
-            self._fabric_loaders = [
+            self._loader_versions = [
                 {"loaderVersion": loader_version.loader_version, "stable": loader_version.stable}
                 for loader_version in loaders
             ]
-            self.fabricLoadersChanged.emit()
+            self.loaderVersionsChanged.emit()
 
         self.run_in_background(work)
 
@@ -100,15 +106,13 @@ class CatalogBridge(WorkerBridge):
         """Cài phiên bản (và Fabric nếu chọn) rồi đăng ký bản chơi. Chạm mạng, chạy nền."""
 
         def work() -> None:
-            report_progress = self._main_bridge.report_progress
-            if loader_kind == "fabric":
-                report = self._launcher.install_fabric(
-                    game_version, loader_version or None, on_progress=report_progress
-                )
-                version_id = report.version_meta.version_id
-            else:
-                self._launcher.install_version(game_version, on_progress=report_progress)
-                version_id = game_version
+            report = self._launcher.install_loader(
+                cast(LoaderKind, loader_kind),
+                game_version,
+                loader_version or None,
+                on_progress=self._main_bridge.report_progress,
+            )
+            version_id = report.version_meta.version_id
             taken = {instance.instance_id for instance in self._launcher.list_instances()}
             instance = Instance(
                 instance_id=slugify(display_name, taken),

@@ -68,7 +68,7 @@ def test_loader_list_keeps_meta_order_and_stability_flag(
 ) -> None:
     launcher = make_fabric_launcher(server, server_state, tmp_path, certificate_pair)
 
-    versions = launcher.list_fabric_loader_versions(VERSION_ID)
+    versions = launcher.list_loader_versions("fabric", VERSION_ID)
 
     assert [candidate.loader_version for candidate in versions] == ["0.17.0-beta.1", LOADER_VERSION]
     assert [candidate.stable for candidate in versions] == [False, True]
@@ -84,7 +84,7 @@ def test_install_fabric_picks_latest_stable_and_merges_inheritance(
     và bản trộn kế thừa có mainClass của Fabric nhưng client.jar của Mojang."""
     launcher = make_fabric_launcher(server, server_state, tmp_path, certificate_pair)
 
-    report = launcher.install_fabric(VERSION_ID)
+    report = launcher.install_loader("fabric", VERSION_ID)
 
     assert report.version_meta.version_id == FABRIC_VERSION_ID
     assert launcher.paths.version_json(FABRIC_VERSION_ID).is_file()
@@ -103,8 +103,8 @@ def test_install_fabric_twice_does_not_refetch_the_profile(
     certificate_pair: tuple[Path, Path],
 ) -> None:
     launcher = make_fabric_launcher(server, server_state, tmp_path, certificate_pair)
-    launcher.install_fabric(VERSION_ID, LOADER_VERSION)
-    launcher.install_fabric(VERSION_ID, LOADER_VERSION)
+    launcher.install_loader("fabric", VERSION_ID, LOADER_VERSION)
+    launcher.install_loader("fabric", VERSION_ID, LOADER_VERSION)
 
     profile_path = f"/fabric/versions/loader/{VERSION_ID}/{LOADER_VERSION}/profile/json"
     # Profile được ghi lại (rẻ, một JSON nhỏ) nhưng client.jar và thư viện thì không tải lại.
@@ -122,4 +122,4 @@ def test_unknown_game_version_is_a_clear_error(
     server_state.add("/fabric/versions/loader/9.9.9", b"[]")
 
     with pytest.raises(VersionError, match=r"9\.9\.9"):
-        launcher.list_fabric_loader_versions("9.9.9")
+        launcher.list_loader_versions("fabric", "9.9.9")

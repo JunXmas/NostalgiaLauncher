@@ -8,10 +8,10 @@ sau bước này `install_version(version_id)` và `launch` chạy y như bản 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 
 from nostalgia.errors import VersionError
 from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
+from nostalgia.modloader.model import LoaderVersion
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
@@ -24,31 +24,23 @@ LOADER_KIND = "fabric"
 MAX_META_BYTES = 4 * 1024 * 1024
 
 
-@dataclass(frozen=True, slots=True)
-class FabricLoaderVersion:
-    """Một bản loader mà Fabric công bố cho một phiên bản game."""
-
-    loader_version: str
-    stable: bool
-
-
 def fetch_fabric_loader_versions(
     http_client: HttpClient,
     game_version: str,
     *,
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
     cancel_token: CancelToken | None = None,
-) -> tuple[FabricLoaderVersion, ...]:
+) -> tuple[LoaderVersion, ...]:
     """Các bản loader dùng được với `game_version`, mới nhất đứng đầu. CHẠM MẠNG."""
     url = f"{endpoints.fabric_meta}/versions/loader/{game_version}"
     document = _fetch_json(http_client, url, cancel_token)
-    versions: list[FabricLoaderVersion] = []
+    versions: list[LoaderVersion] = []
     for candidate in as_list(document):
         loader_fields = as_mapping(as_mapping(candidate).get("loader"))
         loader_version = as_string(loader_fields.get("version"))
         if loader_version:
             stable = loader_fields.get("stable") is True
-            versions.append(FabricLoaderVersion(loader_version=loader_version, stable=stable))
+            versions.append(LoaderVersion(loader_version=loader_version, stable=stable))
     if not versions:
         message = f"Fabric không có bản loader nào cho Minecraft {game_version!r}"
         raise VersionError(message)

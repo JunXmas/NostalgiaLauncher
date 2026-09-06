@@ -30,6 +30,14 @@ FABRIC_META_URL = "https://meta.fabricmc.net/v2"
 # Modrinth: nguồn mod / gói tài nguyên / shader. Không cần khoá API; chỉ cần User-Agent tử tế.
 MODRINTH_API_URL = "https://api.modrinth.com/v2"
 
+# Forge và NeoForge: danh sách bản lấy từ maven-metadata.xml; installer jar cùng kho maven.
+# Forge còn có promotions_slim.json để biết bản "recommended" cho từng phiên bản game.
+FORGE_MAVEN_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge"
+FORGE_PROMOTIONS_URL = (
+    "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json"
+)
+NEOFORGE_MAVEN_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -45,6 +53,9 @@ class Endpoints:
     asset_objects: str = ASSET_OBJECT_BASE_URL
     fabric_meta: str = FABRIC_META_URL
     modrinth_api: str = MODRINTH_API_URL
+    forge_maven: str = FORGE_MAVEN_URL
+    forge_promotions: str = FORGE_PROMOTIONS_URL
+    neoforge_maven: str = NEOFORGE_MAVEN_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

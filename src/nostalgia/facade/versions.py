@@ -1,4 +1,4 @@
-"""Phiên bản game: liệt kê, cài, Fabric, chẩn đoán."""
+"""Phiên bản game: liệt kê, cài, chẩn đoán. Mod loader ở `facade/loaders.py`."""
 
 from __future__ import annotations
 
@@ -6,11 +6,6 @@ from nostalgia.doctor import Diagnosis, diagnose
 from nostalgia.facade.context import LauncherContext
 from nostalgia.install.assets import load_installed_asset_index
 from nostalgia.launch.runner import InstallReport, install_version, resolve_installed_java_binary
-from nostalgia.modloader.fabric import (
-    FabricLoaderVersion,
-    fetch_fabric_loader_versions,
-    install_fabric_profile,
-)
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.repo.manifest import ManifestEntry
@@ -50,40 +45,6 @@ class VersionOperations(LauncherContext):
                 cancel_token=cancel_token,
                 endpoints=self.endpoints,
             )
-
-    def list_fabric_loader_versions(self, game_version: str) -> tuple[FabricLoaderVersion, ...]:
-        """Các bản Fabric loader cho một phiên bản game, mới nhất đứng đầu. CHẠM MẠNG."""
-        with self.make_http_client() as http_client:
-            return fetch_fabric_loader_versions(http_client, game_version, endpoints=self.endpoints)
-
-    def install_fabric(
-        self,
-        game_version: str,
-        loader_version: str | None = None,
-        *,
-        on_progress: ProgressFn = ignore_progress,
-        cancel_token: CancelToken | None = None,
-    ) -> InstallReport:
-        """Cài Fabric cho `game_version`; bỏ trống `loader_version` thì lấy bản ổn định mới
-        nhất. CHẠM MẠNG. Trả về báo cáo cài của chính bản Fabric vừa sinh ra."""
-        with self.make_http_client() as http_client:
-            if loader_version is None:
-                candidates = fetch_fabric_loader_versions(
-                    http_client, game_version, endpoints=self.endpoints, cancel_token=cancel_token
-                )
-                loader_version = next(
-                    (candidate.loader_version for candidate in candidates if candidate.stable),
-                    candidates[0].loader_version,
-                )
-            version_id = install_fabric_profile(
-                http_client,
-                self.paths,
-                game_version,
-                loader_version,
-                endpoints=self.endpoints,
-                cancel_token=cancel_token,
-            )
-        return self.install_version(version_id, on_progress=on_progress, cancel_token=cancel_token)
 
     def diagnose_version(self, version_id: str, *, verify_hashes: bool = False) -> Diagnosis:
         """Soi một bản cài. Không chạm mạng."""
