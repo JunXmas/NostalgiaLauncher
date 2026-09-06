@@ -41,12 +41,14 @@ LAYERS: dict[str, int] = {
     "auth": 3,  # giao thức đăng nhập: cần net/, chưa biết gì về kho tài khoản
     "repo": 3,
     "install": 3,
+    "modloader": 3,  # ghi profile loader vào kho version; tải là việc của install/
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
     "account": 4,
     "launch": 4,
     "doctor": 4,
     "api": 5,
+    "facade": 5,  # thân của api.py, tách theo miền
     "cli": 6,
     "ui": 6,  # cùng tầng trình bày với cli/, và chỉ được đi qua api.py
     "config": 6,

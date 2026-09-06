@@ -23,10 +23,14 @@ JAVA_RUNTIME_MANIFEST_URL = (
 # suy ra từ chính hash. Vì thế nó phải nằm ở đây chứ không nằm cạnh chỗ suy ra.
 ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
 
+# Meta của Fabric: một request trả về đúng file version JSON có `inheritsFrom`, phần còn lại
+# đi qua kho `repo/` và bộ cài `install/` y như một bản Mojang.
+FABRIC_META_URL = "https://meta.fabricmc.net/v2"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
-    """Ba địa chỉ gốc, gói lại để truyền xuống một lần.
+    """Các địa chỉ gốc, gói lại để truyền xuống một lần.
 
     Truyền ba tham số URL rời qua từng tầng là cách chắc chắn để một ngày có tầng quên
     chuyển tiếp một cái, và test "offline" lặng lẽ đi ra Internet thật. Đã xảy ra: URL asset
@@ -36,6 +40,7 @@ class Endpoints:
     version_manifest: str = VERSION_MANIFEST_URL
     java_catalog: str = JAVA_RUNTIME_MANIFEST_URL
     asset_objects: str = ASSET_OBJECT_BASE_URL
+    fabric_meta: str = FABRIC_META_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

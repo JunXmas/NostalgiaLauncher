@@ -30,19 +30,23 @@ ALLOWED_FOR_USER_INTERFACE = (
 LEAKY_RETURN_TYPES = ("dict", "Popen", "HTTPResponse", "HTTPSConnection", "ZipFile", "Response")
 
 
-def api_module() -> ast.Module:
-    for path in SOURCE_FILES:
-        if module_name(path) == "api":
-            return parse(path)
-    message = "không tìm thấy nostalgia/api.py"
-    raise AssertionError(message)
+def facade_modules() -> list[ast.Module]:
+    """`api.py` và toàn bộ thân của nó ở `facade/` — cùng một cửa, chỉ tách file."""
+    modules = [
+        parse(path)
+        for path in SOURCE_FILES
+        if module_name(path) == "api" or module_name(path).startswith("facade/")
+    ]
+    assert modules, "không tìm thấy nostalgia/api.py"
+    return modules
 
 
 def public_functions() -> list[ast.FunctionDef]:
     functions = []
-    for node in ast.walk(api_module()):
-        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
-            functions.append(node)
+    for module in facade_modules():
+        for node in ast.walk(module):
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+                functions.append(node)
     return functions
 
 
