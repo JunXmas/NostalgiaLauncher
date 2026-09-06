@@ -16,8 +16,12 @@ def test_lan_detect_ignores_non_loopback_source() -> None:
     beacon = build_beacon(25565, "Thế giới của Jun")
     found = parse_lan_beacon(beacon, "127.0.0.1")
     assert found is not None and (found.world_port, found.world_name) == (25565, "Thế giới của Jun")
-    assert parse_lan_beacon(beacon, "192.168.1.7") is None
+    assert parse_lan_beacon(beacon, "192.168.1.7") is None  # máy khác trong LAN
     assert parse_lan_beacon(beacon, "::1") is None  # IPv6 không dùng cho multicast v4
+    # Minecraft phát qua card LAN nên nguồn là IP LAN của CHÍNH máy này: phải nhận.
+    mine = frozenset({"127.0.0.1", "192.168.1.17"})
+    assert parse_lan_beacon(beacon, "192.168.1.17", mine) is not None
+    assert parse_lan_beacon(beacon, "192.168.1.7", mine) is None
 
 
 @pytest.mark.parametrize("bad_port", [22, 0, 1023, 65536, 99999])

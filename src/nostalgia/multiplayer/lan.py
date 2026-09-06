@@ -3,8 +3,9 @@
 Minecraft phát `[MOTD]<tên>[/MOTD][AD]<cổng>[/AD]` tới 224.0.2.60:4445 mỗi 1,5 s. Đây là
 kênh CỤC BỘ mỗi máy; đường dữ liệu thật đi qua relay.
 
-Luật L3: chỉ tin datagram có nguồn loopback, cổng trong 1024..65535. Không thì hàng xóm cùng
-LAN phát `[AD]22[/AD]` là launcher-host bắc cầu relay tới ssh của chính mình.
+Luật L3: chỉ tin datagram có nguồn là địa chỉ CỦA CHÍNH MÁY NÀY (Minecraft phát multicast qua
+card LAN nên nguồn là IP LAN, ví dụ 192.168.1.17, không phải 127.0.0.1), cổng trong 1024..65535.
+Không thì hàng xóm cùng LAN phát `[AD]22[/AD]` là launcher-host bắc cầu relay tới ssh của mình.
 """
 
 from __future__ import annotations
@@ -30,9 +31,24 @@ class LanWorld:
     world_name: str
 
 
-def parse_lan_beacon(datagram: bytes, source_host: str) -> LanWorld | None:
-    """Thuần. `None` nếu không phải beacon Minecraft, nguồn không phải loopback, cổng vô lý."""
-    if not source_host.startswith("127."):
+def local_ipv4_addresses() -> frozenset[str]:
+    """Mọi IPv4 của máy này: loopback, địa chỉ theo hostname, và card đi ra multicast."""
+    found = {"127.0.0.1"}
+    with contextlib.suppress(OSError):
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            found.add(str(info[4][0]))
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with contextlib.suppress(OSError), probe:
+        probe.connect((MULTICAST_GROUP, MULTICAST_PORT))  # UDP connect: không gửi gói nào
+        found.add(str(probe.getsockname()[0]))
+    return frozenset(found)
+
+
+def parse_lan_beacon(
+    datagram: bytes, source_host: str, local_hosts: frozenset[str] = frozenset({"127.0.0.1"})
+) -> LanWorld | None:
+    """Thuần. `None` nếu không phải beacon Minecraft, nguồn không phải máy này, cổng vô lý."""
+    if not (source_host.startswith("127.") or source_host in local_hosts):
         return None
     port_match = _PORT_TAG.search(datagram)
     if port_match is None:
@@ -61,6 +77,7 @@ def detect_open_to_lan(timeout_seconds: float) -> LanWorld | None:
         listener.close()
         return None
     deadline = time.monotonic() + timeout_seconds
+    local_hosts = local_ipv4_addresses()
     try:
         while (remaining := deadline - time.monotonic()) > 0:
             listener.settimeout(remaining)
@@ -68,7 +85,7 @@ def detect_open_to_lan(timeout_seconds: float) -> LanWorld | None:
                 datagram, source = listener.recvfrom(1024)
             except TimeoutError:
                 return None
-            found = parse_lan_beacon(datagram, str(source[0]))
+            found = parse_lan_beacon(datagram, str(source[0]), local_hosts)
             if found is not None:
                 return found
     finally:
