@@ -12,7 +12,6 @@ from urllib.parse import quote, urlencode
 from nostalgia import __version__
 from nostalgia.content.model import (
     ContentKind,
-    LoaderKind,
     Project,
     ProjectVersion,
     SearchPage,
@@ -21,7 +20,9 @@ from nostalgia.content.model import (
 from nostalgia.content.modrinth_parse import parse_project, parse_version
 from nostalgia.errors import ContentError
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping
+from nostalgia.modloader.model import LoaderKind
 from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import fetch_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 
@@ -62,7 +63,7 @@ def search_projects(
         "limit": min(max(limit, 1), MAX_PAGE_SIZE),
     }
     url = f"{endpoints.modrinth_api}/search?{urlencode(parameters)}"
-    document = as_mapping(_fetch_json(http_client, url, cancel_token))
+    document = as_mapping(_fetch(http_client, url, cancel_token))
     hits = tuple(
         project
         for raw_hit in as_list(document.get("hits"))
@@ -88,7 +89,7 @@ def fetch_project_versions(
     một luật áp cho cả mod lẫn gói tài nguyên, và test kiểm được offline.
     """
     url = f"{endpoints.modrinth_api}/project/{quote(project_id, safe='')}/version"
-    document = _fetch_json(http_client, url, cancel_token)
+    document = _fetch(http_client, url, cancel_token)
     versions = tuple(
         project_version
         for raw_version in as_list(document)
@@ -112,7 +113,7 @@ def lookup_versions_by_hash(
     if not sha1_hashes:
         return {}
     body = json.dumps({"hashes": list(sha1_hashes), "algorithm": "sha1"}).encode()
-    document = _fetch_json(
+    document = _fetch(
         http_client, f"{endpoints.modrinth_api}/version_files", cancel_token, body=body
     )
     found: dict[str, ProjectVersion] = {}
@@ -135,9 +136,7 @@ def fetch_projects(
     if not project_ids:
         return {}
     ids = quote(json.dumps(list(project_ids), separators=(",", ":")), safe="")
-    document = _fetch_json(
-        http_client, f"{endpoints.modrinth_api}/projects?ids={ids}", cancel_token
-    )
+    document = _fetch(http_client, f"{endpoints.modrinth_api}/projects?ids={ids}", cancel_token)
     projects: dict[str, Project] = {}
     for raw in as_list(document):
         fields = as_mapping(raw)
@@ -162,29 +161,15 @@ def choose_version(
     return next((v for v in compatible if v.version_type == "release"), compatible[0])
 
 
-def _fetch_json(
-    http_client: HttpClient,
-    url: str,
-    cancel_token: CancelToken | None,
-    body: bytes | None = None,
+def _fetch(
+    http_client: HttpClient, url: str, cancel_token: CancelToken | None, body: bytes | None = None
 ) -> JsonValue:
-    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
-    if body is not None:
-        headers["Content-Type"] = "application/json"
-    response = http_client.send(
-        "POST" if body is not None else "GET",
+    return fetch_json(
+        http_client,
         url,
-        body=body,
-        headers=headers,
+        what="Modrinth",
         max_bytes=MAX_RESPONSE_BYTES,
         cancel_token=cancel_token,
+        headers={"User-Agent": USER_AGENT},
+        body=body,
     )
-    if not response.is_ok:
-        message = f"Modrinth trả {response.status} cho {url}"
-        raise ContentError(message)
-    try:
-        parsed: JsonValue = json.loads(response.body)
-    except ValueError as exc:
-        message = f"{url}: phản hồi không phải JSON"
-        raise ContentError(message) from exc
-    return parsed

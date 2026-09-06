@@ -9,19 +9,17 @@ sau bước này `install_version(version_id)` và `launch` chạy y như bản 
 
 from __future__ import annotations
 
-import json
-
 from nostalgia.errors import VersionError
-from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
+from nostalgia.model.json_value import as_list, as_mapping, as_string
 from nostalgia.modloader.model import LoaderVersion
 from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import fetch_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 from nostalgia.repo.version_repo import is_version_document
 from nostalgia.storage.files import atomic_write_json
 from nostalgia.storage.paths import DataPaths
 
-LOADER_KIND = "fabric"
 # Danh sách loader và profile đều là JSON nhỏ; 4 MB là dư mười lần so với thực tế.
 MAX_META_BYTES = 4 * 1024 * 1024
 
@@ -40,7 +38,13 @@ def fetch_fabric_loader_versions(
     `meta_url` trống là Fabric; Quilt truyền `endpoints.quilt_meta` và nhãn của mình.
     """
     url = f"{meta_url or endpoints.fabric_meta}/versions/loader/{game_version}"
-    document = _fetch_json(http_client, url, cancel_token)
+    document = fetch_json(
+        http_client,
+        url,
+        what=f"meta {loader_label}",
+        max_bytes=MAX_META_BYTES,
+        cancel_token=cancel_token,
+    )
     versions: list[LoaderVersion] = []
     for candidate in as_list(document):
         loader_fields = as_mapping(as_mapping(candidate).get("loader"))
@@ -73,7 +77,13 @@ def install_fabric_profile(
     """
     base = meta_url or endpoints.fabric_meta
     url = f"{base}/versions/loader/{game_version}/{loader_version}/profile/json"
-    document = _fetch_json(http_client, url, cancel_token)
+    document = fetch_json(
+        http_client,
+        url,
+        what=f"meta {loader_label}",
+        max_bytes=MAX_META_BYTES,
+        cancel_token=cancel_token,
+    )
     if not is_version_document(document):
         message = (
             f"profile {loader_label} cho {game_version} / {loader_version} không phải version JSON"
@@ -85,13 +95,3 @@ def install_fabric_profile(
         raise VersionError(message)
     atomic_write_json(paths.version_json(version_id), document)
     return version_id
-
-
-def _fetch_json(http_client: HttpClient, url: str, cancel_token: CancelToken | None) -> JsonValue:
-    payload = http_client.fetch_bytes(url, max_bytes=MAX_META_BYTES, cancel_token=cancel_token)
-    try:
-        parsed: JsonValue = json.loads(payload)
-    except ValueError as exc:
-        message = f"{url}: phản hồi không phải JSON"
-        raise VersionError(message) from exc
-    return parsed

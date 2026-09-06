@@ -14,11 +14,11 @@ from nostalgia.content.installed import LedgerEntry, content_dir, load_ledger, s
 from nostalgia.content.model import (
     ContentKind,
     InstalledContent,
-    LoaderKind,
     Project,
     ProjectVersion,
 )
 from nostalgia.content.modrinth import choose_version
+from nostalgia.modloader.model import LoaderKind
 from nostalgia.storage.files import sha1_of_file
 
 FetchVersionsFn = Callable[[str, str], tuple[ProjectVersion, ...]]  # (source, project_id)

@@ -7,7 +7,6 @@ thẳng khi người dùng dán khoá riêng ở CÀI ĐẶT. Không dùng proxy
 
 from __future__ import annotations
 
-import json
 from urllib.parse import quote, urlencode
 
 from nostalgia.content.curseforge_parse import (
@@ -20,6 +19,7 @@ from nostalgia.content.model import ContentKind, ProjectVersion, SearchPage, Sor
 from nostalgia.errors import ContentError
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping
 from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import decode_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 
@@ -147,12 +147,7 @@ def _fetch_json(
     if not response.is_ok:
         message = f"CurseForge trả {response.status} cho {url}"
         raise ContentError(message)
-    try:
-        parsed: JsonValue = json.loads(response.body)
-    except ValueError as exc:
-        message = f"{url}: phản hồi không phải JSON"
-        raise ContentError(message) from exc
-    return parsed
+    return decode_json(response.body, what="CurseForge")
 
 
 __all__ = ["cdn_url", "fetch_file", "fetch_project_versions", "search_projects"]

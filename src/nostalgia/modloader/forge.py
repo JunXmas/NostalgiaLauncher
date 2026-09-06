@@ -11,18 +11,18 @@ cần chạy Java, chỉ ghi JSON và jar universal từ chính installer.
 
 from __future__ import annotations
 
-import json
 import re
 import time
 from pathlib import Path
 
 from nostalgia.errors import VersionError
 from nostalgia.model.download import DownloadTask
-from nostalgia.model.json_value import JsonValue, as_mapping, as_string
+from nostalgia.model.json_value import as_mapping, as_string
 from nostalgia.modloader.forge_legacy import install_legacy_forge, is_legacy_installer
 from nostalgia.modloader.model import LoaderVersion
 from nostalgia.net.download import download_one
 from nostalgia.net.http import HttpClient
+from nostalgia.net.payload import fetch_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 from nostalgia.storage.files import atomic_write_json, ensure_dir
@@ -49,7 +49,15 @@ def fetch_forge_versions(
         http_client, f"{endpoints.forge_maven}/maven-metadata.xml", cancel_token
     )
     promotions = as_mapping(
-        as_mapping(_fetch_json(http_client, endpoints.forge_promotions, cancel_token)).get("promos")
+        as_mapping(
+            fetch_json(
+                http_client,
+                endpoints.forge_promotions,
+                what="promotions Forge",
+                max_bytes=MAX_METADATA_BYTES,
+                cancel_token=cancel_token,
+            )
+        ).get("promos")
     )
     recommended = as_string(promotions.get(f"{game_version}-recommended")) or ""
     prefix = f"{game_version}-"
@@ -106,12 +114,6 @@ def fetch_neoforge_versions(
         message = f"NeoForge không có bản nào cho Minecraft {game_version!r} (1.20.2 trở lên)"
         raise VersionError(message)
     return tuple(found)
-
-
-def _is_recommended(name: str, prefix: str, recommended: str) -> bool:
-    if not recommended:
-        return False
-    return name == f"{prefix}{recommended}" or name.startswith(f"{prefix}{recommended}-")
 
 
 def forge_build_number(name: str, prefix: str) -> tuple[int, ...]:
@@ -212,13 +214,3 @@ def _maven_versions(
 ) -> list[str]:
     xml = http_client.fetch_bytes(url, max_bytes=MAX_METADATA_BYTES, cancel_token=cancel_token)
     return VERSION_TAG.findall(xml.decode("utf-8", errors="replace"))
-
-
-def _fetch_json(http_client: HttpClient, url: str, cancel_token: CancelToken | None) -> JsonValue:
-    payload = http_client.fetch_bytes(url, max_bytes=MAX_METADATA_BYTES, cancel_token=cancel_token)
-    try:
-        parsed: JsonValue = json.loads(payload)
-    except ValueError as exc:
-        message = f"{url}: phản hồi không phải JSON"
-        raise VersionError(message) from exc
-    return parsed

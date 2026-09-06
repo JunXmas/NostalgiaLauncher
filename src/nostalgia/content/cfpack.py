@@ -18,6 +18,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from nostalgia.content.model import ProjectVersion
+from nostalgia.content.pack_files import copy_prefixed_members
 from nostalgia.errors import ContentError
 from nostalgia.model.download import DownloadTask
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
@@ -127,15 +128,4 @@ def resolve_files(
 
 def apply_overrides(zip_path: Path, game_dir: Path, overrides_prefix: str) -> int:
     """Chép thư mục overrides của pack vào thư mục bản chơi. Trả số file."""
-    prefix = overrides_prefix.rstrip("/") + "/"
-    written = 0
-    with zipfile.ZipFile(zip_path) as archive:
-        for member in archive.infolist():
-            if not member.filename.startswith(prefix) or member.is_dir():
-                continue
-            destination = resolve_within(game_dir, member.filename[len(prefix) :])
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            with archive.open(member) as source, destination.open("wb") as target:
-                target.write(source.read())
-            written += 1
-    return written
+    return copy_prefixed_members(zip_path, game_dir, (overrides_prefix,))

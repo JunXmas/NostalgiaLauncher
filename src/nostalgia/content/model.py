@@ -104,6 +104,3 @@ class InstalledContent:
     @property
     def label(self) -> str:
         return self.title or self.file_name
-
-
-__all__ = ["LoaderKind"]

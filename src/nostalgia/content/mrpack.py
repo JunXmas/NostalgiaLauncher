@@ -16,11 +16,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from nostalgia.content.pack_files import copy_prefixed_members
 from nostalgia.errors import ContentError
 from nostalgia.model.download import DownloadTask
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
 from nostalgia.modloader.model import LoaderKind
-from nostalgia.storage.files import ensure_dir, resolve_within
+from nostalgia.storage.files import resolve_within
 
 INDEX_FILE_NAME = "modrinth.index.json"
 OVERRIDE_PREFIXES = ("overrides/", "client-overrides/")
@@ -110,18 +111,7 @@ def plan_downloads(index: ModpackIndex, game_dir: Path) -> list[DownloadTask]:
 
 def apply_overrides(mrpack_path: Path, game_dir: Path) -> int:
     """Chép `overrides/` rồi `client-overrides/` (đè lên) vào thư mục bản chơi. Trả số file."""
-    written = 0
-    with zipfile.ZipFile(mrpack_path) as archive:
-        for prefix in OVERRIDE_PREFIXES:
-            for member in archive.infolist():
-                if not member.filename.startswith(prefix) or member.is_dir():
-                    continue
-                destination = resolve_within(game_dir, member.filename[len(prefix) :])
-                ensure_dir(destination.parent)
-                with archive.open(member) as source, destination.open("wb") as target:
-                    target.write(source.read())
-                written += 1
-    return written
+    return copy_prefixed_members(mrpack_path, game_dir, OVERRIDE_PREFIXES)
 
 
 def _parse_file(fields: dict[str, JsonValue], allowed_hosts: tuple[str, ...]) -> ModpackFile | None:

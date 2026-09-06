@@ -13,7 +13,6 @@ from nostalgia.content.model import (
     ContentKind,
     ContentSource,
     InstalledContent,
-    LoaderKind,
     Project,
     ProjectVersion,
     SearchPage,
@@ -22,7 +21,7 @@ from nostalgia.content.model import (
 from nostalgia.content.updates import ContentUpdate, find_updates, identify_by_hash
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.store import load_instance
-from nostalgia.modloader.model import COMPATIBLE_LOADERS, detect_loader_kind
+from nostalgia.modloader.model import COMPATIBLE_LOADERS, LoaderKind, detect_loader_kind
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress

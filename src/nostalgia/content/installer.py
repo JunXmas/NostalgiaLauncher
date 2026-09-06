@@ -12,10 +12,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from nostalgia.content.installed import LedgerEntry, content_dir, load_ledger, save_ledger
-from nostalgia.content.model import LoaderKind, Project, ProjectVersion
+from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.modrinth import choose_version
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.model.download import DownloadTask
+from nostalgia.modloader.model import LoaderKind
 from nostalgia.net.download import download_all
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
