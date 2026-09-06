@@ -81,6 +81,7 @@ def install_project(
             version_id=project_version.version_id,
             version_number=project_version.version_number,
             file_name=project_version.file_name,
+            icon_url=project.icon_url if project_version.project_id == project.project_id else "",
         )
     save_ledger(directory, ledger)
     return ContentInstallReport(installed=tuple(chosen))

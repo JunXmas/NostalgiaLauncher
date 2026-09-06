@@ -90,6 +90,7 @@ class InstalledContent:
     title: str = ""
     version_id: str = ""
     version_number: str = ""
+    icon_url: str = ""
 
     @property
     def label(self) -> str:

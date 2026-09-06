@@ -67,7 +67,8 @@ class ContentBridge(InstalledContentBridge):
         self._target = self._launcher.describe_content_target(instance_id) if instance_id else None
         self._results_model.reset([])
         self._total_hits = 0
-        self._installed = []
+        self._installed_rows = []
+        self._installed_model.sync([])
         if self._target is not None:
             self._loaders = (
                 [self._target.loader_kind] if self._target.loader_kind != "vanilla" else []
@@ -184,7 +185,7 @@ class ContentBridge(InstalledContentBridge):
 
     @Slot()
     def _refresh_flags(self) -> None:
-        installed_ids = {row["projectId"] for row in self._installed if row["projectId"]}
+        installed_ids = {row["projectId"] for row in self._installed_rows if row["projectId"]}
         self._results_model.set_flags(installed_ids, set(self._installing))
 
     def _set_searching(self, searching: bool) -> None:
