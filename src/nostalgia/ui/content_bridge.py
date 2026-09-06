@@ -136,7 +136,7 @@ class ContentBridge(WorkerBridge):
                 if self.is_current(generation):
                     self._set_searching(False)
 
-        self.run_in_background(work)
+        self.run_in_background(work, "Tìm trên Modrinth")
 
     def _set_searching(self, searching: bool) -> None:
         if self._searching != searching:
@@ -165,7 +165,8 @@ class ContentBridge(WorkerBridge):
                 self._installing.discard(project_id)
                 self.resultsChanged.emit()
 
-        self.run_in_background(work)
+        kind_label = {"mod": "mod", "resourcepack": "gói tài nguyên", "shader": "shader"}
+        self.run_in_background(work, f"Cài {kind_label[project.content_kind]} {project.title}")
 
     @Property(list, notify=installedChanged)
     def installed(self) -> list[dict[str, Any]]:

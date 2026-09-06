@@ -8,7 +8,6 @@ import "../"
 */
 Item {
     id: page
-    property bool gameRunning: false
     property string search: ""
     property int chosenIndex: 0
     signal navigate(int pageIndex)
@@ -28,12 +27,6 @@ Item {
     }
     function playChosen() {
         if (page.chosen && bridge.activePlayerName) bridge.play(page.chosen.instanceId);
-    }
-
-    Connections {
-        target: bridge
-        function onGameStarted(instanceId) { page.gameRunning = true; }
-        function onGameStopped(exitCode) { page.gameRunning = false; }
     }
 
     // ----- ảnh nền phủ kín, tối dần về đáy để chữ và kính nổi rõ -----
@@ -84,9 +77,9 @@ Item {
         spacing: 10
         StatusPill { glyph: "▣"; text: bridge.instances.length + " bản chơi"; translucent: true }
         StatusPill {
-            dotColor: page.gameRunning ? Theme.accent : Theme.textMuted
-            pulsing: page.gameRunning
-            text: page.gameRunning ? "Đang chơi" : "Sẵn sàng"
+            dotColor: bridge.gameRunning ? Theme.accent : Theme.textMuted
+            pulsing: bridge.gameRunning
+            text: bridge.gameRunning ? "Đang chơi" : "Sẵn sàng"
             translucent: true
         }
     }
@@ -95,7 +88,7 @@ Item {
     PlayButton {
         anchors { bottom: instanceStrip.top; bottomMargin: 22 }
         x: Math.round((rightColumn.x - width) / 2)
-        playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !page.gameRunning
+        playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
         instances: bridge.instances
         chosenIndex: page.chosenIndex
         onClicked: page.playChosen()
@@ -176,31 +169,10 @@ Item {
                     width: 230; height: 168
                     label: modelData.label
                     versionId: modelData.versionId
-                    playable: bridge.activePlayerName.length > 0 && !bridge.busy && !page.gameRunning
+                    playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
                     onPlayRequested: bridge.play(modelData.instanceId)
                 }
             }
-        }
-    }
-
-    // Thanh tiến độ khi đang tải: mỏng, nằm dưới cùng, không che gì.
-    Rectangle {
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-        height: bridge.busy ? 30 : 0
-        color: Theme.surfaceHigh
-        clip: true
-        Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
-        Text {
-            anchors { left: parent.left; leftMargin: 18; verticalCenter: parent.verticalCenter }
-            text: bridge.progressText
-            color: Theme.textMuted; font.pixelSize: 11
-        }
-        Rectangle {
-            anchors { left: parent.left; bottom: parent.bottom }
-            height: 2
-            width: parent.width * bridge.progressFraction
-            color: Theme.accent
-            Behavior on width { NumberAnimation { duration: Theme.quick } }
         }
     }
 }

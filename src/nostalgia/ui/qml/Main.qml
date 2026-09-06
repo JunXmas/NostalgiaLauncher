@@ -102,5 +102,6 @@ Item {
         function onFailed(message) { banner.message = message; hideBanner.restart(); }
     }
 
+    LoadingToast { z: 90 }
     SignInDialog { anchors.fill: parent }
 }

@@ -8,7 +8,6 @@ import QtQuick
 Item {
     id: page
     objectName: "contentPage"
-    property alias mode: modeTabs.currentIndex
     property string title: ""
     property var kinds: ["mod"]
     property var kindLabels: ({ "mod": "Mod", "resourcepack": "Gói tài nguyên", "shader": "Shader" })
@@ -81,7 +80,7 @@ Item {
                 anchors { left: parent.left; right: parent.right; top: parent.top }
                 height: 36
                 spacing: 28
-                TabBar { id: modeTabs; tabs: ["Duyệt Modrinth", "Đã cài"]; width: 220
+                TabBar { id: modeTabs; objectName: "modeTabs"; tabs: ["Duyệt Modrinth", "Đã cài"]; width: 220
                          onCurrentIndexChanged: page.refresh() }
                 TabBar {
                     id: kindTabs

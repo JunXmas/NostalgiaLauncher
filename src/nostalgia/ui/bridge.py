@@ -25,6 +25,7 @@ class LauncherBridge(WorkerBridge):
     progressChanged = Signal()
     gameStarted = Signal(str)
     gameStopped = Signal(int)
+    gameRunningChanged = Signal()
     # Đăng nhập Microsoft: mã để người dùng gõ trên trang của Microsoft, rồi kết quả.
     deviceCodeReady = Signal(str, str)
     signInFinished = Signal(str)
@@ -37,6 +38,7 @@ class LauncherBridge(WorkerBridge):
         self._progress_fraction = 0.0
         self._active_player_name = ""
         self._sign_in_cancel: CancelToken | None = None
+        self._game_running = False
 
     # ----- thuộc tính cho QML -----
 
@@ -81,6 +83,11 @@ class LauncherBridge(WorkerBridge):
         """Các phiên bản đã tải về máy. Đọc đĩa, không chạm mạng."""
         return list(self._launcher.list_installed_versions())
 
+    @Property(bool, notify=gameRunningChanged)
+    def gameRunning(self) -> bool:
+        """Game đang chạy: cầu nối vẫn bận (chờ tiến trình) nhưng popup loading không hiện."""
+        return self._game_running
+
     @Property(str, notify=progressChanged)
     def progressText(self) -> str:
         return self._progress_text
@@ -99,7 +106,7 @@ class LauncherBridge(WorkerBridge):
             self._launcher.install_version(version_id, on_progress=self.report_progress)
             self.instancesChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, f"Cài Minecraft {version_id}")
 
     @Slot(str)
     def removeInstance(self, instance_id: str) -> None:
@@ -109,7 +116,7 @@ class LauncherBridge(WorkerBridge):
             self._launcher.remove_instance(instance_id)
             self.instancesChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, f"Gỡ bản chơi {instance_id}")
 
     @Slot(str)
     def addOfflineAccount(self, player_name: str) -> None:
@@ -119,7 +126,7 @@ class LauncherBridge(WorkerBridge):
             self.accountsChanged.emit()
             self.activeAccountChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, "Thêm tài khoản")
 
     @Slot()
     def signInMicrosoft(self) -> None:
@@ -142,7 +149,7 @@ class LauncherBridge(WorkerBridge):
             self.activeAccountChanged.emit()
             self.signInFinished.emit(account.player_name)
 
-        self.run_in_background(work)
+        self.run_in_background(work, "Đăng nhập Microsoft — chờ bạn nhập mã")
 
     @Slot()
     def cancelSignIn(self) -> None:
@@ -156,7 +163,7 @@ class LauncherBridge(WorkerBridge):
             self.accountsChanged.emit()
             self.activeAccountChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, f"Gỡ tài khoản {player_name}")
 
     @Slot(str)
     def play(self, instance_id: str) -> None:
@@ -165,12 +172,28 @@ class LauncherBridge(WorkerBridge):
 
         def work() -> None:
             game = self._launcher.launch_instance(instance_id, player_name)
+            self._set_game_running(True)
             self.gameStarted.emit(instance_id)
-            self.gameStopped.emit(game.wait())
+            try:
+                exit_code = game.wait()
+            finally:
+                self._set_game_running(False)
+            self.gameStopped.emit(exit_code)
 
-        self.run_in_background(work)
+        self.run_in_background(work, f"Khởi động {instance_id}")
 
     # ----- dùng chung với các cầu nối khác -----
+
+    def _set_game_running(self, running: bool) -> None:
+        self._game_running = running
+        self.gameRunningChanged.emit()
+
+    @Slot()
+    def clearProgress(self) -> None:
+        """Toast gọi khi mọi việc đã xong, để lần sau không hiện chữ tiến độ cũ."""
+        self._progress_text = ""
+        self._progress_fraction = 0.0
+        self.progressChanged.emit()
 
     def report_progress(self, progress: Progress) -> None:
         self._progress_text = f"{progress.stage} {progress.done}/{progress.total}"

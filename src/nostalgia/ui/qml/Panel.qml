@@ -4,10 +4,8 @@ import QtQuick
 Rectangle {
     default property alias content: holder.data
     property string title: ""
-    property string action: ""
     // Nằm trên ảnh nền thì để lộ ảnh phía sau một chút, như tấm kính.
     property bool translucent: false
-    signal actionClicked()
 
     color: translucent ? "#d90f1512" : Theme.surface
     radius: Theme.radius
@@ -25,16 +23,6 @@ Rectangle {
         font.letterSpacing: 1.2
     }
 
-    Text {
-        visible: action.length > 0
-        anchors { top: parent.top; right: parent.right; margins: Theme.pad }
-        text: action
-        color: link.hovered ? Theme.accent : Theme.textMuted
-        font.pixelSize: 11
-        Behavior on color { ColorAnimation { duration: Theme.quick } }
-        HoverHandler { id: link; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: actionClicked() }
-    }
 
     Item {
         id: holder

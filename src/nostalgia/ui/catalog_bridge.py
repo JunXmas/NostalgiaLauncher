@@ -71,7 +71,7 @@ class CatalogBridge(WorkerBridge):
             ]
             self.releasedVersionsChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, "Lấy danh mục phiên bản Minecraft")
 
     @Slot(str, str)
     def loadLoaderVersions(self, loader_kind: str, game_version: str) -> None:
@@ -92,7 +92,7 @@ class CatalogBridge(WorkerBridge):
             ]
             self.loaderVersionsChanged.emit()
 
-        self.run_in_background(work)
+        self.run_in_background(work, f"Lấy danh sách bản {loader_kind} cho {game_version}")
 
     @Slot(str, str, str, str, int)
     def createInstance(
@@ -124,7 +124,8 @@ class CatalogBridge(WorkerBridge):
             self._main_bridge.instancesChanged.emit()
             self.created.emit(instance.instance_id)
 
-        self.run_in_background(work)
+        loader_label = "Minecraft" if loader_kind == "vanilla" else loader_kind.capitalize()
+        self.run_in_background(work, f"Cài {loader_label} {game_version} và tạo bản chơi")
 
 
 def _major(version_id: str) -> str:

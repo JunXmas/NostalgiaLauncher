@@ -167,3 +167,31 @@ def test_microsoft_sign_in_hands_qml_the_device_code_and_activates_the_account(
     main_bridge.removeAccount(finished[0])
     wait_until(lambda: len(main_bridge.accounts) == 1)
     assert main_bridge.activePlayerName == "Khach"
+
+
+def test_play_flags_game_running_and_clears_it_when_the_game_exits(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Popup loading ẩn khi game đang chạy: cờ gameRunning bật sau khi khởi động, tắt khi thoát."""
+    from nostalgia.api import Instance
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher.install_version(VERSION_ID)
+    launcher.create_instance(Instance(instance_id="van", version_id=VERSION_ID))
+    launcher.add_offline_account("Jun")
+    main_bridge = LauncherBridge(launcher)
+    seen: list[str] = []
+    # Tín hiệu từ luồng nền xếp hàng sang luồng giao diện, nên chỉ kiểm thứ tự và trạng thái cuối:
+    # "java" giả thoát ngay, cờ phải đã tắt khi mọi tín hiệu về tới.
+    main_bridge.gameStarted.connect(lambda instance_id: seen.append(f"started={instance_id}"))
+    main_bridge.gameStopped.connect(lambda code: seen.append(f"stopped={code}"))
+
+    main_bridge.play("van")
+    wait_until(lambda: len(seen) == 2 and not main_bridge.busy)
+
+    assert seen == ["started=van", "stopped=0"]
+    assert main_bridge.gameRunning is False
+    assert main_bridge.activity.startswith("Khởi động")
