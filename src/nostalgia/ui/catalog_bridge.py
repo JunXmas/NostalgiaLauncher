@@ -129,6 +129,9 @@ class CatalogBridge(WorkerBridge):
 
 
 def _major(version_id: str) -> str:
-    """`1.20.1` -> `1.20`; giữ nguyên nếu không theo mẫu."""
+    """Họ phiên bản để gom thẻ: `1.20.1` -> `1.20`, `26.2` -> `26` (cách đánh số mới từ 2026);
+    giữ nguyên nếu không theo mẫu."""
     parts = version_id.split(".")
-    return ".".join(parts[:2]) if len(parts) >= 2 and parts[0].isdigit() else version_id
+    if len(parts) < 2 or not parts[0].isdigit():
+        return version_id
+    return parts[0] if parts[0] != "1" else ".".join(parts[:2])
