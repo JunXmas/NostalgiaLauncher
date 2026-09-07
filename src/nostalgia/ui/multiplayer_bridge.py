@@ -87,6 +87,12 @@ class MultiplayerBridge(QObject):
         if clipboard is not None and self._status.room_code:
             clipboard.setText(self._status.room_code)
 
+    @Slot(result=str)
+    def clipboardText(self) -> str:
+        """QML thuần không đọc được clipboard; nút Dán đi qua đây."""
+        clipboard = QGuiApplication.clipboard()
+        return clipboard.text() if clipboard is not None else ""
+
     def shutdown(self) -> None:
         """Gọi khi đóng cửa sổ: dừng phòng và luồng dịch vụ."""
         self._service.shutdown()

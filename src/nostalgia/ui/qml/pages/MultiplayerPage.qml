@@ -131,20 +131,34 @@ Item {
                     text: "1. Nhập mã bạn gửi rồi bấm Vào phòng.\n2. Chạy game → Multiplayer: world của bạn hiện trong danh sách LAN.\n3. Bấm vào để chơi. Xong thì bấm Rời phòng."
                     color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.35
                 }
-                Row {
-                    visible: !joinPanel.joined; spacing: 8
-                    TextField {
+                Column {
+                    visible: !joinPanel.joined; spacing: 10
+                    RoomCodeInput {
                         id: codeField
                         objectName: "roomCodeField"
-                        width: 300
-                        placeholder: "Mã phòng 18 ký tự"
-                        onAccepted: multiplayerBridge.join(text)
+                        onSubmitted: if (complete && multiplayerBridge.role === "idle") multiplayerBridge.join(code)
                     }
-                    ActionButton {
-                        objectName: "joinButton"
-                        label: "Vào phòng"
-                        clickable: multiplayerBridge.role === "idle" && codeField.text.trim().length > 0
-                        onClicked: multiplayerBridge.join(codeField.text)
+                    Row {
+                        spacing: 8
+                        ActionButton {
+                            objectName: "joinButton"
+                            label: "Vào phòng"
+                            clickable: multiplayerBridge.role === "idle" && codeField.complete
+                            onClicked: multiplayerBridge.join(codeField.code)
+                        }
+                        ActionButton {
+                            primary: false; label: "Dán"
+                            onClicked: codeField.setCode(multiplayerBridge.clipboardText())
+                        }
+                        ActionButton {
+                            primary: false; label: "Xoá"
+                            visible: codeField.code.length > 0
+                            onClicked: codeField.clear()
+                        }
+                    }
+                    Text {
+                        text: codeField.complete ? "Đủ 18 ký tự — bấm Vào phòng hoặc Enter." : "Gõ hoặc dán mã bạn gửi: 3 nhóm, mỗi nhóm 6 ký tự."
+                        color: Theme.textMuted; font.pixelSize: 11
                     }
                 }
                 Column {
@@ -157,7 +171,7 @@ Item {
                         text: "Cổng cục bộ 127.0.0.1:" + multiplayerBridge.localPort + " — chỉ máy này thấy."
                         color: Theme.textMuted; font.pixelSize: 11
                     }
-                    ActionButton { primary: false; label: "Rời phòng"; onClicked: multiplayerBridge.stop() }
+                    ActionButton { primary: false; label: "Rời phòng"; onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
                 }
             }
         }
