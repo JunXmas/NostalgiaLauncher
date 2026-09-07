@@ -40,13 +40,13 @@ Item {
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.685; landmarkY: 0.248; pivot: 1.0     // hành tinh vành xanh lục, trên phải (thẻ xoè trái, tránh cột HỒ SƠ)
+        landmarkX: 0.672; landmarkY: 0.238; pivot: 1.0     // hành tinh vành xanh lục, trên phải (thẻ xoè trái, tránh cột HỒ SƠ)
         pageIndex: 3; glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.665; landmarkY: 0.536; below: true; pivot: 1.0 // hành tinh vành xanh lam, dưới phải (thẻ xoè trái)
+        landmarkX: 0.660; landmarkY: 0.522; below: true; pivot: 1.0 // hành tinh vành xanh lam, dưới phải (thẻ xoè trái)
         pageIndex: 2; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
         backdrop: root.photo; onActivated: root.navigateToLibrary("resourcepack")
     }
