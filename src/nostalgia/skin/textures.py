@@ -7,8 +7,8 @@ dùng cache cũ, không có cache thì Steve/Alex. Không bao giờ ném lỗi r
 from __future__ import annotations
 
 import base64
-import contextlib
 import json
+import logging
 from pathlib import Path
 
 from nostalgia.errors import NostalgiaError
@@ -19,6 +19,8 @@ from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 from nostalgia.skin.defaults import default_skin
 from nostalgia.skin.model import PlayerSkin
 from nostalgia.storage.files import ensure_dir
+
+logger = logging.getLogger(__name__)
 
 MAX_TEXTURE_BYTES = 512 * 1024
 
@@ -65,8 +67,8 @@ def refresh_premium_skin(
         if not skin_url:
             return cached_skin(skins_dir, undashed, player_uuid)
         _store(http_client, skins_dir, undashed, skin_url, cape_url, slim)
-    except (NostalgiaError, ValueError, OSError):
-        pass
+    except (NostalgiaError, ValueError, OSError) as exc:
+        logger.warning("không tải được skin premium cho %s: %s", undashed, exc)
     return cached_skin(skins_dir, undashed, player_uuid)
 
 
@@ -80,7 +82,7 @@ def refresh_ely_skin(
 ) -> PlayerSkin:
     """CHẠM MẠNG. Ely.by phục vụ skin theo tên; slim không biết trước nên đọc từ ảnh sau."""
     cache_key = f"ely-{player_name.lower()}"
-    with contextlib.suppress(NostalgiaError, OSError):
+    try:
         _store(
             http_client,
             skins_dir,
@@ -89,6 +91,8 @@ def refresh_ely_skin(
             f"{endpoints.ely_capes}/{player_name}.png",
             slim=False,
         )
+    except (NostalgiaError, OSError) as exc:
+        logger.warning("không tải được skin Ely.by cho %s: %s", player_name, exc)
     return cached_skin(skins_dir, cache_key, player_uuid)
 
 

@@ -135,6 +135,12 @@ Item {
                       : "Tài khoản ngoại tuyến dùng skin mặc định (" + (page.shown.slim ? "Alex" : "Steve") + "). Muốn có skin riêng và tên duy nhất, thêm tài khoản Ely.by."
                 color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
             }
+            ActionButton {
+                visible: page.hasShown && page.tab === "skin" && page.shown.accountKind !== "offline"
+                primary: false
+                label: "⟳  Làm mới skin"
+                onClicked: accountBridge.refreshSkins()
+            }
             Row {
                 visible: page.hasShown && page.tab === "cape"; spacing: 12
                 Rectangle {
