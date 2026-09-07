@@ -15,6 +15,7 @@ import contextlib
 import re
 import socket
 import struct
+import sys
 import time
 from dataclasses import dataclass
 
@@ -32,16 +33,31 @@ class LanWorld:
 
 
 def local_ipv4_addresses() -> frozenset[str]:
-    """Mọi IPv4 của máy này: loopback, địa chỉ theo hostname, và card đi ra multicast."""
+    """Mọi IPv4 của máy này: loopback, địa chỉ theo hostname, và từng card mạng (ioctl trên
+    Linux/macOS — không mở kết nối nào, nên chạy được cả dưới lưới chặn mạng của bộ test)."""
     found = {"127.0.0.1"}
     with contextlib.suppress(OSError):
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             found.add(str(info[4][0]))
-    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.suppress(OSError), probe:
-        probe.connect((MULTICAST_GROUP, MULTICAST_PORT))  # UDP connect: không gửi gói nào
-        found.add(str(probe.getsockname()[0]))
+    found.update(_interface_ipv4_addresses())
     return frozenset(found)
+
+
+def _interface_ipv4_addresses() -> set[str]:
+    try:
+        import fcntl  # chỉ có trên POSIX; Windows dùng getaddrinfo ở trên
+    except ImportError:
+        return set()
+    request_address = 0x8915 if sys.platform.startswith("linux") else 0xC0206921  # SIOCGIFADDR
+    found: set[str] = set()
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with probe:
+        for _, interface_name in socket.if_nameindex():
+            packed = struct.pack("256s", interface_name.encode()[:15])
+            with contextlib.suppress(OSError):
+                reply = fcntl.ioctl(probe.fileno(), request_address, packed)
+                found.add(socket.inet_ntoa(reply[20:24]))
+    return found
 
 
 def parse_lan_beacon(

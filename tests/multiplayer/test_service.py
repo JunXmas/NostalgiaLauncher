@@ -108,3 +108,28 @@ def test_join_with_wrong_code_reports_failure_and_stays_idle(remote: LoopThread)
         assert len(failures) == 2 and statuses[-1].role == "idle"
     finally:
         service.shutdown()
+
+
+def test_unexpected_error_in_the_flow_surfaces_and_stop_still_resets(remote: LoopThread) -> None:
+    """Dò LAN nổ lỗi lạ (không phải MultiplayerError): giao diện phải nhận thông báo, và bấm
+    dừng vẫn về idle chứ không kẹt vì `await` task đã chết."""
+    statuses: list[RoomStatus] = []
+    failures: list[str] = []
+
+    def broken_detect(_timeout: float) -> LanWorld | None:
+        raise RuntimeError("card mạng nổ")
+
+    service = RoomService(
+        remote.relay.url,
+        on_status=statuses.append,
+        on_failure=failures.append,
+        detect_world=broken_detect,
+    )
+    try:
+        service.start_hosting().result(5)
+        wait_for(lambda: bool(failures))
+        assert failures == ["card mạng nổ"] and statuses[-1].role == "idle"
+        service.stop().result(5)
+        assert statuses[-1] == RoomStatus()
+    finally:
+        service.shutdown()

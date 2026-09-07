@@ -48,7 +48,7 @@ class RoomService:
         )
         self._thread.start()
         self._status = RoomStatus()
-        self._session: asyncio.Task[None] | None = None
+        self._flow: asyncio.Task[None] | None = None
         self._host: HostRelay | None = None
         self._joiner: JoinerBridge | None = None
         self._beacon: asyncio.Task[None] | None = None
@@ -91,7 +91,7 @@ class RoomService:
         room_code = make_room_code()
         room_id, room_secret = split_room_code(room_code)
         self._publish(role="waiting_world", room_code=room_code)
-        self._session = asyncio.current_task()
+        self._flow = asyncio.current_task()
         try:
             world = await self._wait_for_world()
             host = HostRelay(
@@ -106,11 +106,11 @@ class RoomService:
             host.start()
             self._host = host
             self._publish(role="hosting", world_name=world.world_name)
-        except MultiplayerError as exc:
-            await self._teardown()
-            self._on_failure(str(exc))
         except asyncio.CancelledError:
             pass
+        except Exception as exc:
+            await self._teardown()
+            self._on_failure(str(exc))
 
     async def _wait_for_world(self) -> LanWorld:
         deadline = self._loop.time() + WORLD_WAIT_SECONDS
@@ -134,15 +134,18 @@ class RoomService:
                 announce_forever(local_port, "§bNostalgia §7— phòng của bạn")
             )
             self._publish(role="joined", local_port=local_port)
-        except (MultiplayerError, ConnectionError, OSError) as exc:
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
             await self._teardown()
             self._on_failure(str(exc))
 
     async def _teardown(self) -> None:
-        flow, self._session = self._session, None
+        flow, self._flow = self._flow, None
         if flow is not None and flow is not asyncio.current_task():
             flow.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            # Task đã chết vì lỗi thì `await` ném lại lỗi đó; dọn dẹp vẫn phải đi tới cùng.
+            with contextlib.suppress(Exception, asyncio.CancelledError):
                 await flow
         beacon, self._beacon = self._beacon, None
         if beacon is not None:

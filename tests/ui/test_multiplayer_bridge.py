@@ -18,13 +18,13 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def wait_until(predicate, milliseconds: int = 4000) -> None:
+def wait_until(predicate, milliseconds: int = 4000, describe=lambda: "") -> None:
     waited = 0
     while waited < milliseconds and not predicate():
         QCoreApplication.processEvents()
         QTest.qWait(20)
         waited += 20
-    assert predicate(), "hết giờ chờ trạng thái tới luồng giao diện"
+    assert predicate(), f"hết giờ chờ trạng thái tới luồng giao diện: {describe()}"
 
 
 def test_status_crosses_threads_and_secret_stays_grouped(tmp_path: Path) -> None:
@@ -35,13 +35,19 @@ def test_status_crosses_threads_and_secret_stays_grouped(tmp_path: Path) -> None
     try:
         assert (multiplayer_bridge.role, multiplayer_bridge.active) == ("idle", False)
         multiplayer_bridge.startHosting()
-        wait_until(lambda: multiplayer_bridge.role == "waiting_world")
+        wait_until(
+            lambda: multiplayer_bridge.role == "waiting_world",
+            describe=lambda: f"role={multiplayer_bridge.role} changes={len(changes)}",
+        )
         assert len(multiplayer_bridge.roomCode) == 18
         assert multiplayer_bridge.roomCodeSpaced == " ".join(
             multiplayer_bridge.roomCode[i : i + 6] for i in (0, 6, 12)
         )
         multiplayer_bridge.stop()
-        wait_until(lambda: multiplayer_bridge.role == "idle")
+        wait_until(
+            lambda: multiplayer_bridge.role == "idle",
+            describe=lambda: f"role={multiplayer_bridge.role} changes={len(changes)}",
+        )
         assert multiplayer_bridge.roomCode == ""
     finally:
         multiplayer_bridge.shutdown()

@@ -61,8 +61,8 @@ def test_install_modpack_creates_an_instance_and_selects_it(
     assert content_bridge.results[0]["installing"] is False
 
     content_bridge.installModpack(PACK_ID, "")
-    wait_until(lambda: not content_bridge.busy)
-    assert failures and "host không được phép" in failures[0]
+    wait_until(lambda: bool(failures))  # tín hiệu lỗi xếp hàng, có thể tới sau khi hết bận
+    assert "host không được phép" in failures[0]
     assert main_bridge.instances == [], "bị từ chối thì không được tạo bản chơi dở"
 
 
