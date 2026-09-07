@@ -5,8 +5,9 @@ from __future__ import annotations
 import os
 import time
 
+from nostalgia.account.ely import build_ely_account, refresh_ely_account
 from nostalgia.account.microsoft import build_microsoft_account, needs_refresh, refresh_account
-from nostalgia.account.model import Account
+from nostalgia.account.model import ELY, Account
 from nostalgia.account.offline import build_offline_account
 from nostalgia.account.store import (
     find_account,
@@ -15,6 +16,7 @@ from nostalgia.account.store import (
     save_accounts,
     upsert_account,
 )
+from nostalgia.auth.ely import sign_in_ely
 from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, resolve_client_id, sign_in
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
@@ -52,6 +54,27 @@ class AccountOperations(LauncherContext):
             )
         return self._store(build_microsoft_account(login, now=time.time()))
 
+    def add_ely_account(
+        self,
+        email_or_name: str,
+        password: str,
+        *,
+        totp_code: str = "",
+        cancel_token: CancelToken | None = None,
+    ) -> Account:
+        """Đăng nhập Ely.by (non-premium). CHẠM MẠNG. Mật khẩu không lưu; ném
+        `TwoFactorRequired` khi tài khoản bật 2FA mà chưa có mã."""
+        with self.make_http_client() as http_client:
+            login = sign_in_ely(
+                http_client,
+                email_or_name,
+                password,
+                totp_code=totp_code,
+                endpoints=self.auth_endpoints,
+                cancel_token=cancel_token,
+            )
+        return self._store(build_ely_account(login))
+
     def remove_account(self, player_name: str) -> None:
         accounts = self.list_accounts()
         if find_account(accounts, player_name) is None:
@@ -66,6 +89,16 @@ class AccountOperations(LauncherContext):
         if account is None:
             message = f"không có tài khoản {player_name!r}"
             raise AccountError(message)
+        if account.account_kind == ELY:
+            with self.make_http_client() as http_client:
+                return self._store(
+                    refresh_ely_account(
+                        http_client,
+                        account,
+                        endpoints=self.auth_endpoints,
+                        cancel_token=cancel_token,
+                    )
+                )
         if not needs_refresh(account, now=time.time()):
             return account
         with self.make_http_client() as http_client:

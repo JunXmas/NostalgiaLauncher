@@ -46,6 +46,7 @@ LAYERS: dict[str, int] = {
     "modloader": 3,  # ghi profile loader vào kho version; tải là việc của install/
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
+    "skin": 3,  # tải và cache skin/cape; vẽ nhân vật là việc của giao diện
     "multiplayer": 3,  # LAN-qua-relay: chỉ stdlib socket/asyncio, không biết gì về bản chơi
     "account": 4,
     "launch": 4,

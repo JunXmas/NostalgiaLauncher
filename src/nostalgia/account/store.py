@@ -55,6 +55,7 @@ def save_accounts(path: Path, accounts: tuple[Account, ...]) -> None:
                 "account_kind": account.account_kind,
                 "access_token": account.access_token,
                 "refresh_token": account.refresh_token,
+                "client_token": account.client_token,
                 "expires_at": account.expires_at,
             }
             for account in accounts
@@ -106,6 +107,7 @@ def _parse_account(fields: dict[str, JsonValue]) -> Account | None:
         account_kind=account_kind,
         access_token=as_string(fields.get("access_token")) or "",
         refresh_token=as_string(fields.get("refresh_token")) or "",
+        client_token=as_string(fields.get("client_token")) or "",
         # Giá trị lạ (chuỗi, null, thiếu) coi như "không biết hạn" chứ không làm hỏng bản ghi.
         expires_at=float(expires_at) if isinstance(expires_at, (int, float)) else 0.0,
     )

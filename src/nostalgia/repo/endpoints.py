@@ -54,6 +54,12 @@ NEOFORGE_MAVEN_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforg
 # Relay chơi chung (Cloudflare Worker + Durable Object). Mã ở cloudflare/multiplayer-relay/.
 MULTIPLAYER_RELAY_URL = "wss://nostalgia-multiplayer-relay.junbob.workers.dev"
 
+# Hồ sơ công khai (skin/cape) theo UUID, không cần đăng nhập.
+MOJANG_SESSION_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft/profile"
+# Skin/cape của tài khoản Ely.by (non-premium), theo tên.
+ELY_SKINS_URL = "http://skinsystem.ely.by/skins"
+ELY_CAPES_URL = "http://skinsystem.ely.by/cloaks"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -77,6 +83,9 @@ class Endpoints:
     forge_promotions: str = FORGE_PROMOTIONS_URL
     neoforge_maven: str = NEOFORGE_MAVEN_URL
     multiplayer_relay: str = MULTIPLAYER_RELAY_URL
+    mojang_session_profile: str = MOJANG_SESSION_PROFILE_URL
+    ely_skins: str = ELY_SKINS_URL
+    ely_capes: str = ELY_CAPES_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

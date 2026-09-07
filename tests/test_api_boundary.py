@@ -26,6 +26,7 @@ ALLOWED_FOR_USER_INTERFACE = (
     "nostalgia.content.model",
     "nostalgia.modloader.model",
     "nostalgia.multiplayer.model",
+    "nostalgia.skin.model",
     "nostalgia.settings.store",
 )
 

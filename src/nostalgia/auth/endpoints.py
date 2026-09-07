@@ -32,6 +32,10 @@ XBOX_LIVE_URL = "https://user.auth.xboxlive.com/user/authenticate"
 XSTS_URL = "https://xsts.auth.xboxlive.com/xsts/authorize"
 MINECRAFT_LOGIN_URL = "https://api.minecraftservices.com/authentication/login_with_xbox"
 MINECRAFT_PROFILE_URL = "https://api.minecraftservices.com/minecraft/profile"
+# Ely.by: máy chủ Yggdrasil cho tài khoản non-premium, và API root cho authlib-injector.
+ELY_AUTH_URL = "https://authserver.ely.by/auth"
+ELY_AUTHLIB_ROOT_URL = "https://authserver.ely.by/api/authlib-injector"
+AUTHLIB_INJECTOR_LATEST_URL = "https://authlib-injector.yushi.moe/artifact/latest.json"
 
 # App Azure "Nostalgia Launcher" — Personal Microsoft accounts, đã được Microsoft duyệt cho
 # gọi Minecraft API. Kế thừa từ chính dự án này ở kho tiền nhiệm.
@@ -56,6 +60,9 @@ class AuthEndpoints:
     xsts_url: str = XSTS_URL
     minecraft_login_url: str = MINECRAFT_LOGIN_URL
     minecraft_profile_url: str = MINECRAFT_PROFILE_URL
+    ely_auth_url: str = ELY_AUTH_URL
+    ely_authlib_root_url: str = ELY_AUTHLIB_ROOT_URL
+    authlib_injector_latest_url: str = AUTHLIB_INJECTOR_LATEST_URL
 
 
 DEFAULT_AUTH_ENDPOINTS = AuthEndpoints()
