@@ -28,37 +28,37 @@ Item {
     // Toạ độ công trình đo trên ảnh gốc 2528×1686, tính theo phần trăm.
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.427; landmarkY: 0.39; pivot: 0.6     // ngôi nhà lớn giữa làng
+        landmarkX: 0.248; landmarkY: 0.506; pivot: 0.6     // Trái Đất khối, bên trái dưới
         pageIndex: 1; glyph: "⛏"; title: "BẢN CHƠI"; subtitle: root.instanceCount + " đã tạo"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.269; landmarkY: 0.50; pivot: 0.85    // bàn chế tác bên trái
+        landmarkX: 0.515; landmarkY: 0.42; pivot: 0.85    // khối gỗ (Sao Mộc) chính giữa
         pageIndex: 2; glyph: "⚙"; title: "MOD"; subtitle: "Duyệt & cài"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.571; landmarkY: 0.30; pivot: 0.3     // tháp treo cờ
+        landmarkX: 0.685; landmarkY: 0.248; pivot: 1.0     // hành tinh vành xanh lục, trên phải (thẻ xoè trái, tránh cột HỒ SƠ)
         pageIndex: 3; glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.675; landmarkY: 0.385; below: true; pivot: 0.9 // cổng xanh ngọc bên phải
+        landmarkX: 0.665; landmarkY: 0.536; below: true; pivot: 1.0 // hành tinh vành xanh lam, dưới phải (thẻ xoè trái)
         pageIndex: 2; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
         backdrop: root.photo; onActivated: root.navigateToLibrary("resourcepack")
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.293; landmarkY: 0.36; pivot: 0.6     // cổng Nether tím bên trái
+        landmarkX: 0.325; landmarkY: 0.315; pivot: 0.35    // khối đỏ (Sao Hoả), thẻ xoè phải để không đụng thẻ Sao Thuỷ
         pageIndex: 4; glyph: "⛶"; title: "CHƠI CHUNG"; subtitle: "Chơi cùng bạn bè"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.134; landmarkY: 0.33; pivot: 0.35    // ngôi nhà nhỏ bên trái
+        landmarkX: 0.175; landmarkY: 0.255; below: true; pivot: 0.35 // khối xám (Sao Thuỷ), thẻ treo dưới để không đụng thẻ Sao Hoả
         pageIndex: 5; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }

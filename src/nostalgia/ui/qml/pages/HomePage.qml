@@ -8,6 +8,7 @@ import "../"
 */
 Item {
     id: page
+    objectName: "homePage"
     property string search: ""
     property int chosenIndex: 0
     signal navigate(int pageIndex)
