@@ -2,9 +2,8 @@ import QtQuick
 import "../"
 
 /*
-  TÀI KHOẢN, bố cục theo bản mẫu: trái là danh sách (avatar cắt từ skin, tên, nhãn loại, ✓ tài
-  khoản đang dùng, ✕ gỡ) và tab Skin/Cape; phải là cột xem nhân vật vẽ từ skin, mũi tên ‹ › xoay
-  bốn hướng. Ba cách thêm: Microsoft (premium), Ely.by (non-premium có skin), ngoại tuyến.
+  TÀI KHOẢN: danh sách (avatar, tên, nhãn, ✓/✕) + tab Skin/Cape + cột xem nhân vật.
+  Ba cách thêm: Microsoft (premium), Ely.by (non-premium có skin), ngoại tuyến.
 */
 Item {
     id: page
@@ -13,6 +12,8 @@ Item {
     property string shownName: bridge.activePlayerName
     property int facing: 0
     property string tab: "skin"
+    // Bind một lần — QML chỉ đọc property `accounts` đúng 1 lần mỗi khi signal phát.
+    readonly property var allAccounts: accountBridge.accounts
     readonly property var shown: accountBridge.accountNamed(page.shownName)
     readonly property bool hasShown: shown && shown.playerName !== undefined
 
@@ -42,17 +43,16 @@ Item {
         }
     }
 
-    // ----- danh sách -----
     Panel {
         id: listPanel
         anchors { top: header.bottom; left: parent.left; right: rightColumn.left; margins: Theme.gap; topMargin: 6 }
-        height: Math.min(parent.height * 0.52, 90 + accountBridge.accounts.length * 62)
-        title: accountBridge.accounts.length + " TÀI KHOẢN"
+        height: Math.min(parent.height * 0.52, 90 + page.allAccounts.length * 62)
+        title: page.allAccounts.length + " TÀI KHOẢN"
 
         ListView {
             anchors.fill: parent
             clip: true; spacing: 8
-            model: accountBridge.accounts
+            model: page.allAccounts
             delegate: Rectangle {
                 id: row
                 readonly property bool active: modelData.playerName === bridge.activePlayerName
@@ -94,26 +94,22 @@ Item {
                                 cursorShape: Qt.PointingHandCursor; onClicked: bridge.removeAccount(modelData.playerName) }
                 }
                 MouseArea {
-                    id: rowHover
-                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    z: -1
+                    id: rowHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; z: -1
                     onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
                 }
             }
         }
         Text {
-            visible: accountBridge.accounts.length === 0
+            visible: page.allAccounts.length === 0
             text: "Chưa có tài khoản — bấm Thêm tài khoản."; color: Theme.textMuted; font.pixelSize: 12
         }
     }
 
-    // ----- skin / cape -----
     SkinPanel {
         anchors { top: listPanel.bottom; left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap; topMargin: 10 }
         shown: page.shown; hasShown: page.hasShown; tab: page.tab
     }
 
-    // ----- cột phải: nhân vật -----
     Rectangle {
         id: rightColumn
         anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
@@ -126,7 +122,6 @@ Item {
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
             width: 1; color: Theme.border
         }
-
         SkinFigure {
             id: figure
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 110 }
