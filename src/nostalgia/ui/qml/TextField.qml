@@ -4,6 +4,7 @@ import QtQuick
 Rectangle {
     id: root
     property alias text: input.text
+    property alias echoMode: input.echoMode
     property string placeholder: ""
     signal accepted()
 

@@ -13,7 +13,7 @@ Rectangle {
         { label: "TRANG CHỦ",  glyph: "⌂" },
         { label: "BẢN CHƠI",   glyph: "⛏" },
         { label: "THƯ VIỆN",   glyph: "⚙" },
-        { label: "MÁY CHỦ",    glyph: "☷" },
+        { label: "TÀI KHOẢN",  glyph: "☺" },
         { label: "CHƠI CHUNG", glyph: "⛶" },
         { label: "CÀI ĐẶT",    glyph: "☸" }
     ]

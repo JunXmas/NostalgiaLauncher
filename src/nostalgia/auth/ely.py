@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
 from nostalgia.auth.minecraft import to_dashed_uuid
 from nostalgia.auth.transport import post_json, response_fields
-from nostalgia.errors import AuthError
+from nostalgia.errors import AuthError, TwoFactorRequired
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
@@ -32,10 +32,6 @@ class ElyLogin:
 
     def __repr__(self) -> str:
         return f"ElyLogin(player_name={self.player_name!r}, player_uuid={self.player_uuid!r})"
-
-
-class TwoFactorRequired(AuthError):
-    """Ely.by đòi mã TOTP: giao diện hỏi mã rồi gọi lại với `totp_code`."""
 
 
 def sign_in_ely(

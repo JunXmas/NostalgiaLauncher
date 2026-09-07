@@ -107,8 +107,10 @@ Item {
         spacing: Theme.gap
 
         ProfileCard {
+            id: profileCard
             width: parent.width
-            height: 150 + Math.max(1, bridge.accounts.length) * 48
+            height: 150 + profileCard.rowCount * 48
+            Behavior on height { NumberAnimation { duration: Theme.quick } }
             translucent: true
             accounts: bridge.accounts
             activePlayerName: bridge.activePlayerName

@@ -13,8 +13,7 @@ import pytest
 import fake_ely
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import ELY, to_player_profile
-from nostalgia.auth.ely import TwoFactorRequired
-from nostalgia.errors import AuthError, IntegrityError
+from nostalgia.errors import AuthError, IntegrityError, TwoFactorRequired
 from test_api import make_launcher
 
 

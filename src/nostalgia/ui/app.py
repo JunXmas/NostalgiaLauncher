@@ -15,6 +15,7 @@ from PySide6.QtQuick import QQuickView
 
 from nostalgia import __version__
 from nostalgia.api import Launcher
+from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
@@ -38,6 +39,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context = view.rootContext()
     context.setContextProperty("bridge", bridge)
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
+    context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     context.setContextProperty("settingsBridge", SettingsBridge(launcher, parent=view))
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)

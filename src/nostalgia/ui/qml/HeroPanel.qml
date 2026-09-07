@@ -41,7 +41,7 @@ Item {
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.672; landmarkY: 0.238; pivot: 1.0     // hành tinh vành xanh lục, trên phải (thẻ xoè trái, tránh cột HỒ SƠ)
-        pageIndex: 3; glyph: "☷"; title: "MÁY CHỦ"; subtitle: "Danh sách của bạn"
+        pageIndex: 3; glyph: "☺"; title: "TÀI KHOẢN"; subtitle: "Skin, cape, đăng nhập"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {

@@ -55,6 +55,10 @@ class AuthError(NostalgiaError):
     """Đăng nhập thất bại: máy chủ từ chối, hết hạn, hoặc cần người dùng làm một việc gì đó."""
 
 
+class TwoFactorRequired(AuthError):
+    """Máy chủ đăng nhập đòi mã xác thực hai lớp: giao diện hỏi mã rồi gọi lại."""
+
+
 class InstanceError(NostalgiaError):
     """Instance không hợp lệ, không tìm thấy, hoặc đã tồn tại."""
 

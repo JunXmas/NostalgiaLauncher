@@ -15,6 +15,14 @@ Panel {
     signal accountChosen(string name)
     signal removeRequested(string name)
 
+    // Nhiều tài khoản thì thu gọn: chỉ hiện tài khoản đang chọn, bấm ▾ mới xoè danh sách.
+    property bool expanded: false
+    readonly property bool collapsible: root.accounts.length > 1
+    readonly property int rowCount: Math.max(1, shownAccounts.length)
+    readonly property var shownAccounts: (root.collapsible && !root.expanded)
+        ? root.accounts.filter(function (a) { return a.playerName === root.activePlayerName; })
+        : root.accounts
+
     title: "HỒ SƠ"
 
     Column {
@@ -22,7 +30,7 @@ Panel {
         spacing: 8
 
         Repeater {
-            model: root.accounts
+            model: root.shownAccounts
             Rectangle {
                 id: accountRow
                 readonly property bool active: modelData.playerName === root.activePlayerName
@@ -34,26 +42,31 @@ Panel {
                 Row {
                     anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
                     spacing: 10
-                    Rectangle {
-                        width: 26; height: 26; radius: 6; color: Theme.accentDeep
+                    SkinFace {
+                        size: 26
                         anchors.verticalCenter: parent.verticalCenter
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.playerName.charAt(0).toUpperCase()
-                            color: "white"; font.pixelSize: 12; font.bold: true
-                        }
+                        source: accountBridge.accountNamed(modelData.playerName).skinFile || ""
                     }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
                         Text { text: modelData.playerName; color: Theme.text; font.pixelSize: 12; font.bold: true }
                         Text {
-                            text: modelData.accountKind === "microsoft" ? "Microsoft" : "Ngoại tuyến"
+                            text: modelData.accountKind === "microsoft" ? "Microsoft"
+                                  : modelData.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến"
                             color: Theme.textMuted; font.pixelSize: 10
                         }
                     }
                 }
+                // Thu gọn: mũi tên ▾ thay cho ✕ ở hàng duy nhất; xoè ra thì ✕ như thường.
                 Text {
+                    objectName: "profileChevron"
+                    visible: root.collapsible && !root.expanded
+                    anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                    text: "▾"; font.pixelSize: 13; color: Theme.textMuted
+                }
+                Text {
+                    visible: !(root.collapsible && !root.expanded)
                     anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
                     text: "✕"; font.pixelSize: 11
                     color: removeHover.hovered ? Theme.danger : Theme.textMuted
@@ -63,7 +76,12 @@ Panel {
                     TapHandler { onTapped: root.removeRequested(modelData.playerName) }
                 }
                 HoverHandler { id: rowHover; cursorShape: Qt.PointingHandCursor }
-                TapHandler { onTapped: root.accountChosen(modelData.playerName) }
+                TapHandler {
+                    onTapped: {
+                        if (root.collapsible && !root.expanded) root.expanded = true;
+                        else { root.accountChosen(modelData.playerName); if (root.collapsible) root.expanded = false; }
+                    }
+                }
             }
         }
 
