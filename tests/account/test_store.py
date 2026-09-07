@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.account.model import MICROSOFT, OFFLINE, Account
+from nostalgia.account.model import ELY, MICROSOFT, OFFLINE, Account
 from nostalgia.account.offline import build_offline_account
 from nostalgia.account.store import (
     find_account,
@@ -134,23 +134,39 @@ def test_lookup_ignores_letter_case_because_people_type_it() -> None:
     assert find_account((), "Jun") is None
 
 
-def test_adding_the_same_name_replaces_in_place_and_keeps_the_order() -> None:
-    """Đăng nhập lại không nên làm tài khoản nhảy xuống cuối danh sách."""
+def test_same_kind_and_uuid_replaces_in_place() -> None:
+    """Đăng nhập lại (cùng kind + uuid) thay tại chỗ, giữ thứ tự."""
     accounts = make_accounts()
+    notch_uuid = accounts[1].player_uuid  # "Notch" offline
     changed = Account(
-        player_name="notch", player_uuid="u-moi", account_kind=MICROSOFT, access_token="ve"
+        player_name="Notch", player_uuid=notch_uuid, account_kind=OFFLINE, access_token="ve"
     )
 
     updated = upsert_account(accounts, changed)
 
-    assert [account.player_name for account in updated] == ["Jun", "notch", "jeb_"]
+    assert [a.player_name for a in updated] == ["Jun", "Notch", "jeb_"]
     assert len(updated) == len(accounts)
-    assert updated[1].player_uuid == "u-moi"
+    assert updated[1].access_token == "ve"
+
+
+def test_same_name_different_kind_adds_separately() -> None:
+    """offline 'Notch' và ely 'Notch' là hai tài khoản khác nhau."""
+    accounts = make_accounts()
+    ely_notch = Account(
+        player_name="Notch", player_uuid="ely-uuid", account_kind=ELY, access_token="ve"
+    )
+
+    updated = upsert_account(accounts, ely_notch)
+
+    assert len(updated) == 4
+    assert [a.player_name for a in updated] == ["Jun", "Notch", "jeb_", "Notch"]
+    assert updated[1].account_kind == OFFLINE
+    assert updated[3].account_kind == ELY
 
 
 def test_adding_a_new_name_appends() -> None:
     updated = upsert_account(make_accounts(), build_offline_account("Steve"))
-    assert [account.player_name for account in updated][-1] == "Steve"
+    assert [a.player_name for a in updated][-1] == "Steve"
     assert len(updated) == 4
 
 

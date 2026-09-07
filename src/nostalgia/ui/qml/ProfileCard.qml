@@ -58,15 +58,8 @@ Panel {
                         }
                     }
                 }
-                // Thu gọn: mũi tên ▾ thay cho ✕ ở hàng duy nhất; xoè ra thì ✕ như thường.
                 Text {
-                    objectName: "profileChevron"
-                    visible: root.collapsible && !root.expanded
-                    anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
-                    text: "▾"; font.pixelSize: 13; color: Theme.textMuted
-                }
-                Text {
-                    visible: !(root.collapsible && !root.expanded)
+                    visible: !root.collapsible || root.expanded
                     anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
                     text: "✕"; font.pixelSize: 11
                     color: removeHover.hovered ? Theme.danger : Theme.textMuted
@@ -83,6 +76,25 @@ Panel {
                     }
                 }
             }
+        }
+
+        // Nút mở rộng/thu gọn kiểu Minecraft — khối đá với viền tối, chữ rõ.
+        Rectangle {
+            objectName: "profileChevron"
+            visible: root.collapsible
+            width: parent.width; height: 30; radius: 3
+            color: expandHover.hovered ? "#5a5247" : "#4a443c"
+            border.color: "#2e2a25"; border.width: 2
+
+            Text {
+                anchors.centerIn: parent
+                text: root.expanded
+                    ? "▴ Thu gọn"
+                    : "▾ " + root.accounts.length + " tài khoản"
+                color: "#e8dcc8"; font.pixelSize: 12; font.bold: true
+            }
+            HoverHandler { id: expandHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: root.expanded = !root.expanded }
         }
 
         Text {
