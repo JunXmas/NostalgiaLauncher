@@ -13,24 +13,14 @@ Column {
     spacing: 0
     width: 300
 
-    Rectangle {
+    // Cùng khối kiểu minecraft.net như mọi nút, chỉ to hơn.
+    ActionButton {
         width: parent.width
         height: 64
-        radius: Theme.radiusSmall
-        color: root.playable ? (press.pressed ? Theme.accentDeep : Theme.accent) : Theme.surfaceHigh
-        scale: press.pressed ? 0.985 : (hover.hovered && root.playable ? 1.015 : 1.0)
-        Behavior on color { ColorAnimation { duration: Theme.quick } }
-        Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
-
-        Text {
-            anchors.centerIn: parent
-            text: "CHƠI  ▶"
-            color: root.playable ? "#06210f" : Theme.textMuted
-            font.pixelSize: 24; font.bold: true; font.letterSpacing: 2
-        }
-
-        HoverHandler { id: hover; enabled: root.playable; cursorShape: Qt.PointingHandCursor }
-        TapHandler { id: press; enabled: root.playable; onTapped: root.clicked() }
+        fontSize: 24
+        label: "CHƠI  ▶"
+        clickable: root.playable
+        onClicked: root.clicked()
     }
 
     // Có bản chơi: hộp chọn. Chưa có: một dòng dẫn sang trang tạo.
