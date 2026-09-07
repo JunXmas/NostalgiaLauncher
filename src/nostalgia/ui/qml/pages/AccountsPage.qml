@@ -108,55 +108,9 @@ Item {
     }
 
     // ----- skin / cape -----
-    Panel {
+    SkinPanel {
         anchors { top: listPanel.bottom; left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap; topMargin: 10 }
-        title: ""
-        Column {
-            anchors.fill: parent; spacing: 12
-            Row {
-                spacing: 18
-                Repeater {
-                    model: [{ key: "skin", label: "Skin" }, { key: "cape", label: "Cape" }]
-                    Text {
-                        text: modelData.label
-                        color: page.tab === modelData.key ? Theme.accent : Theme.textMuted
-                        font.pixelSize: 13; font.bold: page.tab === modelData.key
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.tab = modelData.key }
-                    }
-                }
-            }
-            Rectangle { width: parent.width; height: 1; color: Theme.border }
-            Text {
-                visible: page.hasShown && page.tab === "skin"
-                width: parent.width; wrapMode: Text.WordWrap
-                text: !page.hasShown ? ""
-                      : page.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang của bạn. Đổi skin tại minecraft.net → Profile, launcher tự cập nhật."
-                      : page.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Đổi skin/cape tại ely.by → Skins; trong game bạn bè cũng thấy nhờ authlib-injector."
-                      : "Tài khoản ngoại tuyến dùng skin mặc định (" + (page.shown.slim ? "Alex" : "Steve") + "). Muốn có skin riêng và tên duy nhất, thêm tài khoản Ely.by."
-                color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
-            }
-            ActionButton {
-                visible: page.hasShown && page.tab === "skin" && page.shown.accountKind !== "offline"
-                primary: false
-                label: "⟳  Làm mới skin"
-                onClicked: accountBridge.refreshSkins()
-            }
-            Row {
-                visible: page.hasShown && page.tab === "cape"; spacing: 12
-                Rectangle {
-                    width: 120; height: 100; radius: Theme.radiusSmall; color: Theme.surfaceHigh; border.color: Theme.border
-                    Image {
-                        visible: page.hasShown && page.shown.capeFile !== ""
-                        anchors.centerIn: parent; width: 60; height: 96
-                        source: page.hasShown ? page.shown.capeFile : ""; sourceClipRect: Qt.rect(1, 1, 10, 16); smooth: false
-                    }
-                    Text {
-                        visible: !(page.hasShown && page.shown.capeFile !== "")
-                        anchors.centerIn: parent; text: "Không có cape"; color: Theme.textMuted; font.pixelSize: 11
-                    }
-                }
-            }
-        }
+        shown: page.shown; hasShown: page.hasShown; tab: page.tab
     }
 
     // ----- cột phải: nhân vật -----

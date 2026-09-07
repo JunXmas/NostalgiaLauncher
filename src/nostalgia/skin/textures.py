@@ -96,6 +96,13 @@ def refresh_ely_skin(
     return cached_skin(skins_dir, cache_key, player_uuid)
 
 
+def _upgrade_to_https(url: str) -> str:
+    """Mojang sessionserver trả skin URL bằng http. Host chấp nhận https — dùng nó."""
+    if url.startswith("http://textures.minecraft.net/"):
+        return "https" + url[4:]
+    return url
+
+
 def _store(
     http_client: HttpClient,
     skins_dir: Path,
@@ -105,7 +112,7 @@ def _store(
     slim: bool,
 ) -> None:
     ensure_dir(skins_dir)
-    skin_bytes = http_client.fetch_bytes(skin_url, max_bytes=MAX_TEXTURE_BYTES)
+    skin_bytes = http_client.fetch_bytes(_upgrade_to_https(skin_url), max_bytes=MAX_TEXTURE_BYTES)
     (skins_dir / f"{cache_key}.png").write_bytes(skin_bytes)
     slim_marker = skins_dir / f"{cache_key}.slim"
     if slim:
@@ -115,7 +122,9 @@ def _store(
     cape_path = skins_dir / f"{cache_key}.cape.png"
     if cape_url:
         try:
-            cape_path.write_bytes(http_client.fetch_bytes(cape_url, max_bytes=MAX_TEXTURE_BYTES))
+            url = _upgrade_to_https(cape_url)
+            cape_bytes = http_client.fetch_bytes(url, max_bytes=MAX_TEXTURE_BYTES)
+            cape_path.write_bytes(cape_bytes)
         except NostalgiaError:
             cape_path.unlink(missing_ok=True)
     else:

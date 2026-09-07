@@ -6,6 +6,7 @@ trên đĩa để QML cắt vùng UV) và làm mới skin ở luồng nền mỗ
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,8 @@ from nostalgia.errors import NostalgiaError, TwoFactorRequired
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge
 
+logger = logging.getLogger(__name__)
+
 KIND_LABELS = {"microsoft": "MICROSOFT", "ely": "ELY.BY", "offline": "NGOẠI TUYẾN"}
 
 
@@ -24,6 +27,8 @@ class AccountBridge(WorkerBridge):
     skinsChanged = Signal()
     elySignedIn = Signal(str)
     twoFactorRequired = Signal()
+    skinUploaded = Signal(str)   # playerName — upload thành công
+    skinUploadFailed = Signal(str)  # thông báo lỗi
     _skinsRefreshed = Signal()
 
     def __init__(
@@ -64,6 +69,27 @@ class AccountBridge(WorkerBridge):
             self._skinsRefreshed.emit()
 
         self.run_in_background(work, "Cập nhật skin")
+
+    @Slot(str, str, bool)
+    def uploadSkin(self, player_name: str, file_url: str, slim: bool) -> None:
+        """Upload skin PNG lên Mojang cho tài khoản Microsoft đang chọn."""
+        skin_path = Path(QUrl(file_url).toLocalFile())
+        accounts = self._launcher.list_accounts()
+        account = next((a for a in accounts if a.player_name == player_name), None)
+        if account is None:
+            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
+            return
+
+        def work() -> None:
+            try:
+                self._launcher.upload_skin(account, skin_path, slim=slim)
+                self._skinsRefreshed.emit()
+                self.skinUploaded.emit(player_name)
+            except NostalgiaError as exc:
+                logger.warning("upload skin thất bại cho %s: %s", player_name, exc)
+                self.skinUploadFailed.emit(str(exc))
+
+        self.run_in_background(work, "Upload skin")
 
     @Slot(str, str, str)
     def signInEly(self, email_or_name: str, password: str, totp_code: str) -> None:
