@@ -24,6 +24,7 @@ from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.sound import SoundPlayer
+from nostalgia.ui.update_bridge import UpdateBridge
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
@@ -46,7 +47,17 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     settings_bridge = SettingsBridge(launcher, parent=view)
     context.setContextProperty("settingsBridge", settings_bridge)
-    context.setContextProperty("notifier", build_notifier(launcher, bridge, settings_bridge, view))
+    notifier = build_notifier(launcher, bridge, settings_bridge, view)
+    context.setContextProperty("notifier", notifier)
+    update_bridge = UpdateBridge(
+        launcher, check_enabled=lambda: bool(settings_bridge.autoUpdateCheck), parent=view
+    )
+    update_bridge.updateAvailable.connect(
+        lambda launcher_version: notifier.announce(
+            "update", f"Có bản mới {launcher_version}", "Mở CÀI ĐẶT → Cập nhật để tải"
+        )
+    )
+    context.setContextProperty("updateBridge", update_bridge)
     presence_bridge = PresenceBridge(
         bridge,
         read_settings=lambda: (

@@ -59,6 +59,8 @@ MOJANG_SESSION_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft
 # Skin/cape của tài khoản Ely.by (non-premium), theo tên.
 ELY_SKINS_URL = "http://skinsystem.ely.by/skins"
 ELY_CAPES_URL = "http://skinsystem.ely.by/cloaks"
+# Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
+LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/nostalgia/releases/latest"
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +88,7 @@ class Endpoints:
     mojang_session_profile: str = MOJANG_SESSION_PROFILE_URL
     ely_skins: str = ELY_SKINS_URL
     ely_capes: str = ELY_CAPES_URL
+    launcher_releases: str = LAUNCHER_RELEASES_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

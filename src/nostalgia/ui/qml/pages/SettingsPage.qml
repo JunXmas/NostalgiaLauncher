@@ -17,9 +17,14 @@ Item {
         }
     }
 
+    UpdatePanel {
+        id: updatePanel
+        anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 6 }
+    }
+
     Panel {
-        anchors { top: header.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
-                  margins: Theme.gap; topMargin: 6 }
+        anchors { top: updatePanel.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
+                  margins: Theme.gap; topMargin: Theme.gap }
         title: "CHUNG"
 
         Column {

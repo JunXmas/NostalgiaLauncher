@@ -56,7 +56,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: card.eventKind === "started" ? "▶" : card.eventKind === "crashed" ? "✕"
-                      : card.eventKind === "installed" ? "✓" : "■"
+                      : card.eventKind === "installed" ? "✓" : card.eventKind === "update" ? "⬆" : "■"
                 color: card.accentColor; font.pixelSize: 15; font.bold: true
             }
         }

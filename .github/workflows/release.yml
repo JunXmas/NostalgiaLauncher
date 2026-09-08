@@ -1,0 +1,85 @@
+name: Release
+
+# Chạy khi đẩy tag `vX.Y.Z`. Kết quả là một GitHub Release ở dạng DRAFT kèm gói Linux/Windows
+# và SHA256SUMS — chủ dự án soi rồi bấm publish; bộ tự cập nhật trong launcher chỉ nhìn thấy
+# bản đã publish (API `releases/latest` bỏ qua draft).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked --extra ui
+      - name: Thư viện cho Qt chạy không màn hình
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 libxkbcommon0 libdbus-1-3
+      - name: Tag phải khớp phiên bản trong mã
+        run: |
+          expected="v$(uv run python -c 'import nostalgia; print(nostalgia.__version__)')"
+          test "${GITHUB_REF_NAME}" = "${expected}" || { echo "tag ${GITHUB_REF_NAME} khác ${expected}"; exit 1; }
+      - run: uv run ruff check . && uv run ruff format --check . && uv run mypy
+      - run: uv run pytest -m "not network" -q
+
+  build:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            bundle_os: linux
+          - os: windows-latest
+            bundle_os: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked --extra ui --group build
+      - name: Đóng gói bằng PyInstaller
+        run: uv run pyinstaller --noconfirm packaging/nostalgia-ui.spec
+      - name: Nén thành nostalgia-<ver>-<os>-x64.zip
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          name="nostalgia-${version}-${{ matrix.bundle_os }}-x64"
+          mkdir -p out
+          cd dist && mv nostalgia-ui "Nostalgia" && python -c "import shutil; shutil.make_archive('../out/${name}', 'zip', '.', 'Nostalgia')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.bundle_os }}
+          path: out/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: bundles
+          merge-multiple: true
+      - name: SHA256SUMS
+        run: cd bundles && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS
+      - name: Tạo release DRAFT (chủ dự án publish tay)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" bundles/*.zip bundles/SHA256SUMS \
+            --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
+            --generate-notes

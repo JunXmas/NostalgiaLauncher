@@ -22,6 +22,7 @@ from nostalgia.api import Launcher, Settings
 class SettingsBridge(QObject):
     notificationSoundChanged = Signal()
     discordChanged = Signal()
+    autoUpdateCheckChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -58,6 +59,17 @@ class SettingsBridge(QObject):
         if wanted != settings:
             self._save(wanted)
             self.discordChanged.emit()
+
+    @Property(bool, notify=autoUpdateCheckChanged)
+    def autoUpdateCheck(self) -> bool:
+        return self.settings_snapshot().auto_update_check
+
+    @Slot(bool)
+    def setAutoUpdateCheck(self, enabled: bool) -> None:
+        settings = self.settings_snapshot()
+        if settings.auto_update_check != enabled:
+            self._save(replace(settings, auto_update_check=enabled))
+            self.autoUpdateCheckChanged.emit()
 
     @Slot(bool)
     def setNotificationSound(self, enabled: bool) -> None:

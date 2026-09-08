@@ -33,6 +33,8 @@ class Route:
 
     body: bytes
     status: int = 200
+    # Có giá trị thì trả kèm header `Location` (dựng 302 của GitHub sang CDN).
+    location: str = ""
     fail_first: int = 0
     declare_length: int | None = None
     chunk_delay_seconds: float = 0.0
@@ -61,11 +63,13 @@ class ServerState:
         fail_first: int = 0,
         declare_length: int | None = None,
         chunk_delay_seconds: float = 0.0,
+        location: str = "",
     ) -> str:
         with self.lock:
             self.routes[path] = Route(
                 body=body,
                 status=status,
+                location=location,
                 fail_first=fail_first,
                 declare_length=declare_length,
                 chunk_delay_seconds=chunk_delay_seconds,
@@ -190,7 +194,10 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
                 body, status = route.body, route.status
                 declared = route.declare_length
                 delay = route.chunk_delay_seconds
+                location = route.location
             self.send_response(status)
+            if location:
+                self.send_header("Location", location)
             if declared is None:
                 self.send_header("Content-Length", str(len(body)))
             elif declared >= 0:
