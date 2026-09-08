@@ -14,12 +14,21 @@ Item {
     property string tab: "skin"
     // Bind một lần — QML chỉ đọc property `accounts` đúng 1 lần mỗi khi signal phát.
     readonly property var allAccounts: accountBridge.accounts
-    readonly property var shown: accountBridge.accountNamed(page.shownName)
+    property var shown: ({})
     readonly property bool hasShown: shown && shown.playerName !== undefined
+    // Cache các field dùng nhiều lần trong right column — tránh đọc shown.xxx 7+ chỗ.
+    readonly property string shownSkinFile: hasShown ? shown.skinFile : ""
+    readonly property bool shownSlim: hasShown ? shown.slim : false
 
+    function _refreshShown() { page.shown = accountBridge.accountNamed(page.shownName); }
+    onShownNameChanged: _refreshShown()
     Connections {
         target: bridge
         function onActiveAccountChanged() { page.shownName = bridge.activePlayerName; }
+    }
+    Connections {
+        target: accountBridge
+        function onSkinsChanged() { page._refreshShown(); }
     }
 
     Item {
@@ -126,8 +135,8 @@ Item {
             id: figure
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 110 }
             pixel: 8
-            source: page.hasShown ? page.shown.skinFile : ""
-            slim: page.hasShown ? page.shown.slim : false
+            source: page.shownSkinFile
+            slim: page.shownSlim
             facing: page.facing
             visible: page.hasShown
         }
@@ -149,7 +158,7 @@ Item {
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
                    text: page.hasShown ? page.shown.playerUuid : ""; color: Theme.textMuted; font.pixelSize: 9; font.family: "monospace" }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
-                   text: page.hasShown ? page.shown.kindLabel + (page.shown.slim ? "  ·  Slim" : "  ·  Wide") : ""; color: Theme.accent; font.pixelSize: 10; font.letterSpacing: 1 }
+                   text: page.hasShown ? page.shown.kindLabel + (page.shownSlim ? "  ·  Slim" : "  ·  Wide") : ""; color: Theme.accent; font.pixelSize: 10; font.letterSpacing: 1 }
         }
     }
 

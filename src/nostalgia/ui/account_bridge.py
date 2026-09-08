@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
+from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 
 from nostalgia.account.model import Account
 from nostalgia.api import Launcher
@@ -44,14 +44,21 @@ class AccountBridge(WorkerBridge):
         self._cached_rows: list[dict[str, Any]] = []
         self._by_name: dict[str, dict[str, Any]] = {}
         self._dirty = True
-        self._skinsRefreshed.connect(self._invalidate)
-        self._skinsRefreshed.connect(self.skinsChanged)
-        main_bridge.accountsChanged.connect(self._invalidate)
+        # Coalesce: accountsChanged + _skinsRefreshed đều chỉ đặt dirty và khởi timer.
+        # Timer singleShot(0) gộp nhiều signal trong cùng event-loop tick thành MỘT lần
+        # rebuild cache + notify QML, tránh rebuild 2 lần liên tiếp.
+        self._notify_timer = QTimer(self)
+        self._notify_timer.setSingleShot(True)
+        self._notify_timer.setInterval(0)
+        self._notify_timer.timeout.connect(self.skinsChanged)
+        self._skinsRefreshed.connect(self._schedule_update)
+        main_bridge.accountsChanged.connect(self._schedule_update)
         main_bridge.accountsChanged.connect(self.refreshSkins)
-        main_bridge.accountsChanged.connect(self.skinsChanged)
 
-    def _invalidate(self) -> None:
+    def _schedule_update(self) -> None:
+        """Đánh dấu dirty và lên lịch notify QML ở cuối event-loop tick."""
         self._dirty = True
+        self._notify_timer.start()
 
     def _ensure_cache(self) -> None:
         if not self._dirty:

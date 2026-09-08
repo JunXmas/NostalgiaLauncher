@@ -39,12 +39,12 @@ Item {
         x: px * root.pixel; y: py * root.pixel
         width: shown * root.pixel; height: h * root.pixel
         Image {
-            anchors.fill: parent
+            anchors.fill: parent; cache: true
             source: root.source; smooth: false
             sourceClipRect: root.box(ox, oy, w, h, depth, root.facing)
         }
         Image {
-            visible: overlayX >= 0
+            visible: overlayX >= 0; cache: true
             anchors.fill: parent; anchors.margins: -root.pixel * 0.5
             source: root.source; smooth: false
             sourceClipRect: root.box(overlayX, overlayY, w, h, depth, root.facing)
