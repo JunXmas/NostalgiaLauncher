@@ -20,6 +20,15 @@ from release_fixture import make_bundle, make_launcher, publish_release
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
+def wait_for_state(update_bridge: UpdateBridge, wanted: str) -> None:
+    """Chờ máy trạng thái tới `wanted`; hết giờ thì nói đang kẹt ở đâu, thay vì câu chung chung."""
+    try:
+        wait_until(lambda: update_bridge.state == wanted)
+    except AssertionError as exc:
+        message = f"chờ {wanted!r} nhưng kẹt ở {update_bridge.state!r}: {update_bridge.message!r}"
+        raise AssertionError(message) from exc
+
+
 def test_check_download_and_ready_through_the_bridge(
     server: LocalHttpsServer,
     server_state: ServerState,
@@ -34,12 +43,12 @@ def test_check_download_and_ready_through_the_bridge(
     assert (update_bridge.state, update_bridge.installKind) == ("idle", "source")
 
     update_bridge.checkNow()
-    wait_until(lambda: update_bridge.state == "available")
+    wait_for_state(update_bridge, "available")
     assert update_bridge.latestVersion == "9.9.9" and announced == ["9.9.9"]
     assert update_bridge.releaseNotes == "Ghi chú"
 
     update_bridge.download()
-    wait_until(lambda: update_bridge.state == "ready")
+    wait_for_state(update_bridge, "ready")
     assert update_bridge.progressFraction == 1.0
     assert "9.9.9" in update_bridge.message
 
@@ -57,11 +66,12 @@ def test_up_to_date_and_network_failure_are_reported(
     launcher = make_launcher(server, tmp_path, certificate_pair[0])
     update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
     update_bridge.checkNow()
-    wait_until(lambda: update_bridge.state == "upToDate")
+    wait_until(lambda: update_bridge.state == "upToDate" and not update_bridge.busy)
 
     server_state.add("/releases/latest", "{ hỏng".encode(), status=500)
     update_bridge.checkNow()
-    wait_until(lambda: update_bridge.state == "failed")
+    assert update_bridge.state == "checking", "còn bận thì lệnh trước phải được nhận"
+    wait_for_state(update_bridge, "failed")
     assert update_bridge.message.startswith("Không kiểm được")
 
 

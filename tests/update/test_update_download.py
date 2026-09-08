@@ -7,6 +7,7 @@ import hashlib
 import io
 import zipfile
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -103,6 +104,27 @@ def test_older_or_prerelease_or_foreign_platform_is_not_an_update(
     assert launcher.check_launcher_update() is None, "không có gói cho linux"
     server_state.add("/releases/latest", b"Not Found", status=404)
     assert launcher.check_launcher_update() is None, "chưa có bản phát hành nào"
+
+
+def test_status_code_is_read_not_guessed_from_the_message(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Lỗi đã dính: tìm "404" trong câu lỗi, mà câu lỗi chứa URL — cổng 44041 biến 500 thành
+    "chưa có bản nào". Đường dẫn cố tình chứa 404 để tái hiện."""
+    from nostalgia.errors import NetworkError
+    from nostalgia.update.release import fetch_latest_release
+
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    endpoints = replace(launcher.endpoints, launcher_releases=server.url("/v404/releases/latest"))
+    server_state.add("/v404/releases/latest", b"loi may chu", status=500)
+    with launcher.make_http_client() as http_client, pytest.raises(NetworkError, match="500"):
+        fetch_latest_release(http_client, endpoints=endpoints)
+    server_state.add("/v404/releases/latest", b"Not Found", status=404)
+    with launcher.make_http_client() as http_client:
+        assert fetch_latest_release(http_client, endpoints=endpoints) is None
 
 
 def test_zip_slip_is_rejected_and_direct_download_verifies(tmp_path: Path) -> None:
