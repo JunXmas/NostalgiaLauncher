@@ -133,7 +133,7 @@ def test_bridge_binds_loopback_only_and_stop_ends_all_tasks() -> None:
         await relay.start()
         await world.start()
         host, joiner = await setup(relay, world, make_room_code())
-        assert joiner._server is not None
+        assert isinstance(joiner._server, asyncio.Server)
         assert joiner._server.sockets[0].getsockname()[0] == "127.0.0.1"
         reader, writer = await asyncio.open_connection("127.0.0.1", joiner.local_port)
         writer.write(MC_HANDSHAKE)

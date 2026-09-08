@@ -70,6 +70,12 @@ module = [
     "test_content_bridge",
     "test_content_bridge_packs",
     "test_settings_bridge",
+    "test_account_bridge",
+    "test_account_cache",
+    "test_home_layout",
+    "test_home_picker",
+    "test_multiplayer_bridge",
+    "test_room_code_input",
 ]
 disable_error_code = [
     "comparison-overlap",

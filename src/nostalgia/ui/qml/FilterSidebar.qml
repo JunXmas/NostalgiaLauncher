@@ -42,6 +42,7 @@ Item {
                     Repeater {
                         model: root.loaderNames
                         CheckRow {
+                            width: parent.width
                             label: root.loaderLabels[index]
                             enabled: root.loadersEnabled
                             checked: contentBridge.selectedLoaders.indexOf(modelData) >= 0
@@ -117,6 +118,7 @@ Item {
                             return !root.versionFilter || released.versionId.indexOf(root.versionFilter) >= 0;
                         }).slice(0, 60)
                         CheckRow {
+                            width: parent.width
                             label: modelData.versionId
                             checked: contentBridge.selectedGameVersions.indexOf(modelData.versionId) >= 0
                             onToggled: function (checked) { contentBridge.setGameVersionSelected(modelData.versionId, checked); root.changed(); }

@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Coroutine, Iterator
+from typing import Any, TypeVar
 
 import pytest
 from fake_relay import FakeRelay
@@ -15,6 +16,8 @@ from test_gate import MC_HANDSHAKE
 from nostalgia.multiplayer.lan import LanWorld
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
+
+T = TypeVar("T")
 
 
 class LoopThread:
@@ -28,7 +31,7 @@ class LoopThread:
         self.run(self.relay.start())
         self.run(self.world.start())
 
-    def run(self, coroutine):
+    def run(self, coroutine: Coroutine[Any, Any, T]) -> T:
         return asyncio.run_coroutine_threadsafe(coroutine, self.loop).result(5)
 
     def close(self) -> None:
@@ -45,7 +48,7 @@ def remote() -> Iterator[LoopThread]:
     loop_thread.close()
 
 
-def wait_for(predicate, seconds: float = 5.0) -> None:
+def wait_for(predicate: Callable[[], bool], seconds: float = 5.0) -> None:
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         if predicate():
@@ -54,7 +57,9 @@ def wait_for(predicate, seconds: float = 5.0) -> None:
     raise AssertionError("hết giờ chờ trạng thái")
 
 
-def make_service(remote: LoopThread, statuses: list[RoomStatus], failures: list[str]):
+def make_service(
+    remote: LoopThread, statuses: list[RoomStatus], failures: list[str]
+) -> RoomService:
     return RoomService(
         remote.relay.url,
         on_status=statuses.append,
@@ -71,7 +76,7 @@ def test_host_then_join_then_stop_ends_all_tasks(remote: LoopThread) -> None:
     join_service = make_service(remote, join_statuses, failures)
     try:
         host_service.start_hosting().result(5)
-        wait_for(lambda: host_statuses and host_statuses[-1].role == "hosting")
+        wait_for(lambda: bool(host_statuses) and host_statuses[-1].role == "hosting")
         room_code = host_statuses[-1].room_code
         assert len(room_code) == 18 and host_statuses[-1].world_name == "Thế giới test"
 

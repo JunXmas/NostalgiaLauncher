@@ -12,9 +12,10 @@ pytest.importorskip("PySide6")
 from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
-from test_qml import build_view, make_launcher
+from test_qml import make_launcher
 
 from nostalgia.instance.model import Instance
+from nostalgia.ui.app import build_view
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

@@ -19,6 +19,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 
 WORK_DIR = Path(tempfile.mkdtemp(prefix="nostalgia-probe-"))
 # Đặt HOME trước khi import nostalgia: paths.py tính thư mục cấu hình lúc import.
@@ -30,7 +31,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QObject, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 
+from nostalgia.account.model import Account  # noqa: E402
 from nostalgia.api import Launcher  # noqa: E402
+from nostalgia.skin.model import PlayerSkin  # noqa: E402
 from nostalgia.ui.app import build_view  # noqa: E402
 
 PLAYER_NAMES = ("JunSlayest", "Dinnerbone", "Notch")
@@ -45,16 +48,17 @@ def main() -> int:
     disk_reads = {"list_accounts": 0, "describe_skin": 0}
     original_list, original_describe = Launcher.list_accounts, Launcher.describe_skin
 
-    def counted_list(self: Launcher):  # noqa: ANN202
+    def counted_list(self: Launcher) -> tuple[Account, ...]:
         disk_reads["list_accounts"] += 1
         return original_list(self)
 
-    def counted_describe(self: Launcher, account):  # noqa: ANN001, ANN202
+    def counted_describe(self: Launcher, account: Account) -> PlayerSkin:
         disk_reads["describe_skin"] += 1
         return original_describe(self, account)
 
-    Launcher.list_accounts = counted_list  # type: ignore[method-assign]
-    Launcher.describe_skin = counted_describe  # type: ignore[method-assign]
+    patched: Any = Launcher  # thay hai phương thức lõi bằng bản đếm, chỉ trong tiến trình này
+    patched.list_accounts = counted_list
+    patched.describe_skin = counted_describe
 
     qt_application = QGuiApplication(["ui-account-probe"])
     qt_application.setApplicationVersion("0.0.0")
@@ -62,6 +66,7 @@ def main() -> int:
     root_item = view.rootObject()
     sidebar = root_item.findChild(QObject, "sidebar")
     page_loader = root_item.findChild(QObject, "pageLoader")
+    assert sidebar is not None and page_loader is not None
     view.show()
     longest_stall = 0.0
 

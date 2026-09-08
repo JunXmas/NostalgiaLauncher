@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,9 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def wait_until(predicate, milliseconds: int = 4000, describe=lambda: "") -> None:
+def wait_until(
+    predicate: Callable[[], bool], milliseconds: int = 4000, describe: Callable[[], str] = str
+) -> None:
     waited = 0
     while waited < milliseconds and not predicate():
         QCoreApplication.processEvents()

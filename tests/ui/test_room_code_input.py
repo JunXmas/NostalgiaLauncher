@@ -10,7 +10,9 @@ import pytest
 pytest.importorskip("PySide6")
 
 from PySide6.QtGui import QGuiApplication
-from test_qml import build_view, make_launcher
+from test_qml import make_launcher
+
+from nostalgia.ui.app import build_view
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -26,20 +28,25 @@ def test_room_code_boxes_advance_split_paste_and_backspace(tmp_path: Path) -> No
     QGuiApplication.processEvents()
     root_item = view.rootObject()
     assert root_item is not None
-    root_item.findChild(QObject, "sidebar").setProperty("currentIndex", 4)
+
+    def find(name: str) -> QObject:
+        found = root_item.findChild(QObject, name)
+        assert found is not None, f"không thấy {name}"
+        return found
+
+    find("sidebar").setProperty("currentIndex", 4)
     for _ in range(50):
         QGuiApplication.processEvents()
-        code_field = root_item.findChild(QObject, "roomCodeField")
-        if code_field is not None:
+        if root_item.findChild(QObject, "roomCodeField") is not None:
             break
-    assert code_field is not None
-    boxes = [root_item.findChild(QObject, f"roomCodeBox{i}") for i in range(3)]
-    join_button = root_item.findChild(QObject, "joinButton")
-    assert join_button is not None and join_button.property("clickable") is False
+    code_field = find("roomCodeField")
+    boxes = [find(f"roomCodeBox{i}") for i in range(3)]
+    join_button = find("joinButton")
+    assert join_button.property("clickable") is False
 
     boxes[0].focusInput()
     for character in "k7mpx3q9zvr2tb5hnw":  # QTest.keyClicks chỉ nhận QWidget, không nhận QWindow
-        QTest.keyClick(view, character)
+        QTest.keyClick(view, character)  # type: ignore[call-overload]
     QGuiApplication.processEvents()
     assert [b.property("text") for b in boxes] == ["K7MPX3", "Q9ZVR2", "TB5HNW"]
     assert code_field.property("code") == "K7MPX3Q9ZVR2TB5HNW"

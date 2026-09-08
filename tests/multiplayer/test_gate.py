@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from nostalgia.multiplayer import handshake
-from nostalgia.multiplayer.gate import HostGate, JoinerGate
+from nostalgia.multiplayer.gate import GateStep, HostGate, JoinerGate
 
 MC_HANDSHAKE = bytes([0x10, 0x00, 0xFB, 0x05, 0x09]) + b"localhost" + b"\x63\xdd\x02"
 
 
-def run_pair(host_secret: str, joiner_secret: str, first_bytes: bytes = MC_HANDSHAKE):
+def run_pair(
+    host_secret: str, joiner_secret: str, first_bytes: bytes = MC_HANDSHAKE
+) -> tuple[GateStep, GateStep | None]:
     host, joiner = HostGate(host_secret), JoinerGate(joiner_secret)
     challenge = host.feed(joiner.hello())
     assert challenge.verdict == "pending" and challenge.reply
@@ -30,7 +32,9 @@ def test_handshake_rejects_wrong_secret_on_both_sides() -> None:
     host = HostGate("SECRET")
     joiner = JoinerGate("SECRET")
     challenge = host.feed(joiner.hello())
-    forged = handshake.build_response("WRONG", handshake.parse_frame(challenge.reply).fields[0])
+    frame = handshake.parse_frame(challenge.reply)
+    assert frame is not None
+    forged = handshake.build_response("WRONG", frame.fields[0])
     assert host.feed(forged + MC_HANDSHAKE).verdict == "rejected"
 
 

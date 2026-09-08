@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
+from fake_mojang import VERSION_ID
+from local_https_server import LocalHttpsServer, ServerState
 from modrinth_fixture import (
     FABRIC_API,
     LOOPEE,
@@ -13,9 +16,6 @@ from modrinth_fixture import (
     fabric_target,
     make_content_launcher,
 )
-
-from fake_mojang import VERSION_ID
-from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Instance
 from nostalgia.content.model import Project
 from nostalgia.errors import ContentError

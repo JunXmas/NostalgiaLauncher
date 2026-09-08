@@ -10,6 +10,7 @@ from pathlib import Path
 
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import ELY, MICROSOFT, OFFLINE, Account
+from nostalgia.model.json_value import JsonValue
 from nostalgia.skin.defaults import default_skin, is_alex
 from nostalgia.skin.textures import parse_session_profile
 from test_api import make_launcher
@@ -27,8 +28,8 @@ def test_default_skin_follows_the_java_uuid_rule() -> None:
     assert default_skin("61699b2e-d327-4a01-9f1e-0ea8c3f06bc6").skin_path.name == "alex.png"
 
 
-def textures_property(skin_url: str, cape_url: str, slim: bool) -> dict[str, object]:
-    textures: dict[str, object] = {"SKIN": {"url": skin_url}}
+def textures_property(skin_url: str, cape_url: str, slim: bool) -> JsonValue:
+    textures: dict[str, JsonValue] = {"SKIN": {"url": skin_url}}
     if slim:
         textures["SKIN"] = {"url": skin_url, "metadata": {"model": "slim"}}
     if cape_url:

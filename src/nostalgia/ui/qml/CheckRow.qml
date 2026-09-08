@@ -7,7 +7,11 @@ Item {
     property bool checked: false
     signal toggled(bool checked)
 
-    width: parent ? parent.width : 160
+    // Rộng theo nội dung. KHÔNG lấy `parent.width`: đặt trong `Row` thì Row rộng theo con và con
+    // rộng theo Row → vòng lặp polish vô hạn (1.280 cảnh báo trong một phiên, CPU quay không).
+    // Chỗ nào muốn kéo hết bề ngang (cột lọc) thì tự đặt `width: parent.width`.
+    implicitWidth: box.width + 9 + caption.implicitWidth
+    width: implicitWidth
     height: 26
 
     Rectangle {
@@ -25,6 +29,7 @@ Item {
         }
     }
     Text {
+        id: caption
         anchors { left: box.right; leftMargin: 9; right: parent.right; verticalCenter: parent.verticalCenter }
         text: root.label
         color: root.checked ? Theme.text : Theme.textMuted

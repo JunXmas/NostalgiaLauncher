@@ -12,11 +12,17 @@ from fabric_fixture import publish_fabric
 from local_https_server import LocalHttpsServer, ServerState
 from modpack_fixture import PACK_ID, modpack_project, publish_modpack
 from modrinth_fixture import make_content_launcher
+from nostalgia.api import Launcher
 from nostalgia.errors import ContentError
 from nostalgia.facade.presets import PRESET_PROJECT_IDS
 
 
-def make_preset_launcher(server, state, tmp_path, certificate_pair):
+def make_preset_launcher(
+    server: LocalHttpsServer,
+    state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> tuple[Launcher, str]:
     launcher = make_content_launcher(server, state, tmp_path, certificate_pair)
     publish_fabric(state)
     host = publish_modpack(server, state)
