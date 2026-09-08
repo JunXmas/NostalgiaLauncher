@@ -40,6 +40,14 @@ def parse_session_profile(document: JsonValue) -> tuple[str, str, bool]:
     return "", "", False
 
 
+def skin_cache_key(account_kind: str, player_name: str, player_uuid: str) -> str:
+    """Tên file cache của một tài khoản: Ely.by theo tên (server phục vụ theo tên), còn lại theo
+    UUID không gạch. Một chỗ duy nhất định nghĩa quy ước này."""
+    if account_kind == "ely":
+        return f"ely-{player_name.lower()}"
+    return player_uuid.replace("-", "")
+
+
 def cached_skin(skins_dir: Path, cache_key: str, player_uuid: str) -> PlayerSkin:
     """Đọc đĩa, không chạm mạng. `.slim` ghi cạnh file skin để khỏi phải tải lại hồ sơ."""
     skin_path = skins_dir / f"{cache_key}.png"
@@ -81,7 +89,7 @@ def refresh_ely_skin(
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
 ) -> PlayerSkin:
     """CHẠM MẠNG. Ely.by phục vụ skin theo tên; slim không biết trước nên đọc từ ảnh sau."""
-    cache_key = f"ely-{player_name.lower()}"
+    cache_key = skin_cache_key("ely", player_name, player_uuid)
     try:
         _store(
             http_client,

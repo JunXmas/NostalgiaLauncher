@@ -38,6 +38,7 @@ from nostalgia.launch.runner import InstallReport
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.operations.progress import Progress
+from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
 
 
@@ -66,4 +67,5 @@ __all__ = [
     "Progress",
     "RoomService",
     "RoomStatus",
+    "Settings",
 ]

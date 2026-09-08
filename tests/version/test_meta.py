@@ -33,7 +33,7 @@ def test_every_fixture_parses(version_id: str) -> None:
 def test_legacy_versions_use_a_single_argument_string() -> None:
     """Đời ≤1.12: `minecraftArguments` là MỘT CHUỖI, không có rules."""
     version_meta = parsed("1.8.9")
-    assert version_meta.uses_legacy_arguments is True
+    assert version_meta.minecraft_arguments is not None and not version_meta.game_arguments
     assert version_meta.minecraft_arguments is not None
     assert "${auth_player_name}" in version_meta.minecraft_arguments
     assert version_meta.game_arguments == ()
@@ -42,7 +42,7 @@ def test_legacy_versions_use_a_single_argument_string() -> None:
 def test_modern_versions_use_argument_lists() -> None:
     """Đời ≥1.13: danh sách, trong đó phần tử có thể là chuỗi hoặc `{rules, value}`."""
     version_meta = parsed("1.20.1")
-    assert version_meta.uses_legacy_arguments is False
+    assert version_meta.minecraft_arguments is None and version_meta.game_arguments
     assert version_meta.minecraft_arguments is None
     assert version_meta.game_arguments and version_meta.jvm_arguments
     with_rules = [spec for spec in version_meta.game_arguments if spec.rules]
