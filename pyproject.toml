@@ -78,6 +78,7 @@ module = [
     "test_room_code_input",
     "test_game_log",
     "test_notifier",
+    "test_instance_stats",
 ]
 disable_error_code = [
     "comparison-overlap",

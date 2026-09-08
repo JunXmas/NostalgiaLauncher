@@ -135,6 +135,9 @@ def test_play_flags_game_running_and_clears_it_when_the_game_exits(
     assert seen == ["started=van", "stopped=0"]
     assert main_bridge.gameRunning is False
     assert main_bridge.activity.startswith("Khởi động")
+    # Phiên chơi được ghi vào thống kê của bản chơi và hàng cho QML thấy ngay.
+    assert launcher.describe_instance_stats("van").play.launch_count == 1
+    assert main_bridge.instances[0]["launchCount"] == 1
 
 
 def test_game_failure_message_points_at_the_crash_report() -> None:
