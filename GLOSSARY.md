@@ -255,6 +255,10 @@ src/nostalgia/
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
     version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
+  update/                        L3  tự cập nhật launcher: GitHub Releases + sha256 + tráo thư mục
+    release.py                       parse release, so phiên bản, chọn gói theo hệ, SHA256SUMS
+    download.py                      tải gói (băm khi tải, ghi nguyên tử), bung zip an toàn
+    apply.py                         script tráo thư mục sau khi launcher cũ thoát (chỉ gói đóng sẵn)
   instance/                      L3  bản chơi: thư mục riêng, kho tải dùng chung
     model.py                         Instance + luật đặt mã (một đoạn đường dẫn)
     store.py                         mỗi bản chơi một instance.json trong thư mục của nó

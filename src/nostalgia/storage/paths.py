@@ -66,6 +66,8 @@ class DataPaths:
     runtime_dir: Path = field(init=False)
     instances_dir: Path = field(init=False)
     skins_dir: Path = field(init=False)
+    # Gói cập nhật launcher đã tải + bung, chờ áp.
+    updates_dir: Path = field(init=False)
     # Kho tài khoản nằm ở `config_dir`, KHÔNG ở `data_dir`: xoá dữ liệu game để lấy chỗ
     # trống thì không được mất tài khoản theo.
     accounts_json: Path = field(init=False)
@@ -88,6 +90,7 @@ class DataPaths:
             ("runtime_dir", self.data_dir / "runtime"),
             ("instances_dir", self.data_dir / "instances"),
             ("skins_dir", self.data_dir / "skins"),
+            ("updates_dir", self.data_dir / "updates"),
             ("accounts_json", self.config_dir / "accounts.json"),
         ):
             object.__setattr__(self, name, value)

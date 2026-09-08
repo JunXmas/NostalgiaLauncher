@@ -30,6 +30,8 @@ artifacts = ["src/nostalgia/py.typed"]
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+# Chỉ để đóng gói bản phát hành (CI + thử tay); KHÔNG phải phụ thuộc runtime.
+build = ["pyinstaller>=6.10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -82,6 +84,7 @@ module = [
     "test_skin_library",
     "test_modpack_drop",
     "test_discord_presence",
+    "test_update_bridge",
 ]
 disable_error_code = [
     "comparison-overlap",

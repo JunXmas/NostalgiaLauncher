@@ -73,3 +73,7 @@ class MultiplayerError(NostalgiaError):
 
 class SkinError(NostalgiaError):
     """Skin/cape: file không phải PNG, quá lớn, hoặc không áp được cho loại tài khoản này."""
+
+
+class UpdateError(NostalgiaError):
+    """Tự cập nhật launcher: không có gói cho máy này, thiếu SHA256SUMS, hay chạy từ mã nguồn."""

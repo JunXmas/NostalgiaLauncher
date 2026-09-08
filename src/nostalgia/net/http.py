@@ -17,13 +17,15 @@ import ssl
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from nostalgia.errors import Cancelled, NetworkError
 from nostalgia.operations.cancellation import CancelToken
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
 STREAM_CHUNK_SIZE = 64 * 1024
+MAX_REDIRECTS = 5
+REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 # Trần cho phản hồi nạp trọn vào bộ nhớ. Manifest lớn nhất của Mojang khoảng 1,3 MB, nên
 # 32 MiB là rất thoáng; điều quan trọng là CÓ trần. Không có trần thì một máy chủ hỏng (hoặc
@@ -140,10 +142,26 @@ class HttpClient:
         dụng: đã đo, huỷ giữa lúc tải bốn file 4 MB không dừng được file nào.
         """
         limit = expected_size if expected_size is not None else max_bytes
-        host, path = _split(url)
-        response = self._open_response(
-            host, url, "GET", path, None, {"Accept-Encoding": "identity"}
-        )
+        # Theo chuyển hướng có hạn: GitHub (gói cập nhật) trả 302 sang CDN. Mỗi bước đi qua
+        # `_split` nên đích vẫn phải là https; quá hạn hoặc thiếu Location là lỗi, không lặp mãi.
+        for _hop in range(MAX_REDIRECTS + 1):
+            host, path = _split(url)
+            response = self._open_response(
+                host, url, "GET", path, None, {"Accept-Encoding": "identity"}
+            )
+            if response.status not in REDIRECT_STATUSES:
+                break
+            location = response.getheader("Location") or ""
+            with response:
+                response.read()
+            self._discard(host)
+            if not location:
+                message = f"{url} chuyển hướng {response.status} nhưng không có Location"
+                raise NetworkError(message)
+            url = urljoin(url, location)
+        else:
+            message = f"{url}: quá {MAX_REDIRECTS} lần chuyển hướng, đã dừng"
+            raise NetworkError(message)
 
         with response:
             _check_status(url, response.status)
@@ -278,10 +296,9 @@ def _split(url: str) -> tuple[str, str]:
 
 def _check_status(url: str, status: int) -> None:
     if 300 <= status < 400:
-        # Mojang và Fabric không chuyển hướng (đã dò thật). CurseForge, OptiFine và GitHub
-        # thì có — khi nào chạm tới chúng thì thêm xử lý 3xx ở đây, đừng để thân của trang
-        # chuyển hướng bị lưu thành file.
-        message = f"{url} trả về chuyển hướng {status}, chưa hỗ trợ"
+        # 301/302/303/307/308 đã được `stream` theo tới đích; còn lại (vd 304) không có thân
+        # để tải — đừng để một trang chuyển hướng lạ bị lưu thành file.
+        message = f"{url} trả về chuyển hướng {status}, không tải được"
         raise NetworkError(message)
     if status != 200:
         message = f"{url} trả về mã {status}"

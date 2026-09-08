@@ -26,6 +26,8 @@ class Settings:
     # Discord Rich Presence: tắt mặc định; Application ID do người dùng tạo ở Developer Portal.
     discord_presence: bool = False
     discord_application_id: str = ""
+    # Tự kiểm bản mới lúc khởi động (chỉ hỏi GitHub một câu, không tự cài).
+    auto_update_check: bool = True
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -42,6 +44,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
             fields = as_mapping(read_json(path))
             sound = fields.get("notification_sound")
             presence = fields.get("discord_presence")
+            update_check = fields.get("auto_update_check")
             settings = Settings(
                 curseforge_api_key=as_string(fields.get("curseforge_api_key")) or "",
                 notification_sound=sound if isinstance(sound, bool) else True,
@@ -49,6 +52,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 discord_application_id=(
                     as_string(fields.get("discord_application_id")) or ""
                 ).strip(),
+                auto_update_check=update_check if isinstance(update_check, bool) else True,
             )
         except DataFileError:
             settings = Settings()
@@ -67,6 +71,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "notification_sound": settings.notification_sound,
             "discord_presence": settings.discord_presence,
             "discord_application_id": settings.discord_application_id.strip(),
+            "auto_update_check": settings.auto_update_check,
         },
         private=True,
     )

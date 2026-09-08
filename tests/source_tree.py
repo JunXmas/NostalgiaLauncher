@@ -47,6 +47,7 @@ LAYERS: dict[str, int] = {
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
     "skin": 3,  # tải và cache skin/cape; vẽ nhân vật là việc của giao diện
+    "update": 3,  # bản phát hành launcher: đọc, tải + kiểm băm, script tráo thư mục
     "multiplayer": 3,  # LAN-qua-relay: chỉ stdlib socket/asyncio, không biết gì về bản chơi
     "account": 4,
     "launch": 4,
