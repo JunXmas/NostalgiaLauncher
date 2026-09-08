@@ -146,9 +146,10 @@ Rectangle {
         Text {
             objectName: "instanceStats"
             visible: root.playtimeText.length > 0
+            // Ngắn để vừa thẻ 230 px: ⏱ giờ chơi · ▶ số lần chạy · 🌍 thế giới · ⚙ mod.
             text: "⏱ " + root.playtimeText
-                  + (root.launchCount > 0 ? "  ·  ▶ " + root.launchCount + " lần" : "")
-                  + "  ·  🌍 " + root.worldCount + "  ·  ⚙ " + root.modCount + " mod"
+                  + (root.launchCount > 0 ? "  ·  ▶ " + root.launchCount : "")
+                  + "  ·  🌍 " + root.worldCount + "  ·  ⚙ " + root.modCount
             width: parent.width; elide: Text.ElideRight
             color: root.launchCount > 0 ? Theme.accent : Theme.textMuted; font.pixelSize: 10
         }
