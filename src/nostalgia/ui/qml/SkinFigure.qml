@@ -13,6 +13,9 @@ Item {
     property real pixel: 6
     readonly property int armWidth: slim ? 3 : 4
     width: pixel * 16; height: pixel * 32
+    // Layer: render 12 Image con vào 1 texture, chỉ re-render khi property đổi.
+    layer.enabled: source !== ""
+    layer.smooth: false
 
     // Toạ độ UV (x, y, w, h) từng hộp theo hướng nhìn: [trước, phải, sau, trái].
     // Đầu 8x8x8 tại (0,0); thân 8x12x4 tại (16,16); tay 4x12x4 tại (40,16)/(32,48); chân (0,16)/(16,48).
