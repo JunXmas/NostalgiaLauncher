@@ -80,6 +80,7 @@ module = [
     "test_notifier",
     "test_instance_stats",
     "test_skin_library",
+    "test_modpack_drop",
 ]
 disable_error_code = [
     "comparison-overlap",
