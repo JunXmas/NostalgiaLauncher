@@ -20,6 +20,7 @@ QtObject {
     readonly property color text:        "#e9f1ec"
     readonly property color textMuted:   "#7f9488"
     readonly property color danger:      "#f2555a"
+    readonly property color warning:     "#f5c451"
 
     readonly property int radius:        14
     readonly property int radiusSmall:   9

@@ -1,33 +1,28 @@
-"""Cầu nối chính giữa QML và lõi: bản chơi, tài khoản, chơi, tải phiên bản.
+"""Cầu nối chính giữa QML và lõi: tài khoản, chơi game, nhật ký game (phần bản chơi và tiến
+độ nằm ở `instance_bridge.py`, cùng một đối tượng `bridge` với QML).
 
-Ba cầu nối (`bridge`, `content`, `catalog`) là những file DUY NHẤT trong `ui/` chạm vào
-`nostalgia.api`. Khi lõi đổi, chỉ chúng phải sửa, còn QML thì không. Kho tiền nhiệm không làm
-vậy — giao diện gọi thẳng sáu module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
+Các cầu nối trong `ui/` là những file DUY NHẤT chạm vào `nostalgia.api`. Khi lõi đổi, chỉ
+chúng phải sửa, còn QML thì không. Kho tiền nhiệm không làm vậy — giao diện gọi thẳng sáu
+module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
 """
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import replace
 from typing import Any
 
-from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.account.model import Account
 from nostalgia.api import Launcher
 from nostalgia.operations.cancellation import CancelToken
-from nostalgia.operations.progress import Progress
-from nostalgia.ui.game_log import GAME_LOG_TAIL_LINES, describe_game_failure
-from nostalgia.ui.worker import WorkerBridge
+from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
+from nostalgia.ui.instance_bridge import InstanceBridge
 
 
-class LauncherBridge(WorkerBridge):
+class LauncherBridge(InstanceBridge):
     """Bề mặt mà QML nhìn thấy: vài thuộc tính đọc được, vài lệnh gọi được, và tín hiệu."""
 
-    instancesChanged = Signal()
     accountsChanged = Signal()
-    progressChanged = Signal()
     gameStarted = Signal(str)
     gameStopped = Signal(int)
     gameRunningChanged = Signal()
@@ -37,10 +32,7 @@ class LauncherBridge(WorkerBridge):
     activeAccountChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
-        super().__init__(parent)
-        self._launcher = launcher
-        self._progress_text = ""
-        self._progress_fraction = 0.0
+        super().__init__(launcher, parent)
         self._active_player_name = ""
         self._sign_in_cancel: CancelToken | None = None
         self._game_running = False
@@ -48,6 +40,10 @@ class LauncherBridge(WorkerBridge):
         # `accounts`/`activePlayerName` là một lần đọc + parse accounts.json — một cú bấm chọn
         # tài khoản kéo theo 11 lần đọc, thêm tài khoản 26 lần (đo bằng harness).
         self._accounts: tuple[Account, ...] | None = None
+        # Nhật ký game: luồng đọc output đổ vào đây, trang NHẬT KÝ đọc model của nó.
+        self._game_log = GameLogFeed(self)
+        # `play` chạy ở luồng nền; timer gom lô phải bật/tắt ở luồng giao diện → đi qua tín hiệu.
+        self.gameRunningChanged.connect(self._sync_game_log_session)
 
     # ----- kho tài khoản trong RAM -----
 
@@ -65,23 +61,6 @@ class LauncherBridge(WorkerBridge):
         self.activeAccountChanged.emit()
 
     # ----- thuộc tính cho QML -----
-
-    @Property(list, notify=instancesChanged)
-    def instances(self) -> list[dict[str, Any]]:
-        """Danh sách bản chơi, đã đổi sang dạng QML đọc được."""
-        return [
-            {
-                "instanceId": instance.instance_id,
-                "label": instance.label,
-                "versionId": instance.version_id,
-                "iconUrl": instance.icon_url,
-                "maxHeapMegabytes": instance.max_heap_megabytes or 0,
-                "windowWidth": instance.window_width or 0,
-                "windowHeight": instance.window_height or 0,
-                "gameDir": str(self._launcher.paths.instance_dir(instance.instance_id)),
-            }
-            for instance in self._launcher.list_instances()
-        ]
 
     @Property(list, notify=accountsChanged)
     def accounts(self) -> list[dict[str, Any]]:
@@ -107,73 +86,16 @@ class LauncherBridge(WorkerBridge):
         self._active_player_name = player_name
         self.activeAccountChanged.emit()
 
-    @Property(list, notify=instancesChanged)
-    def installedVersions(self) -> list[str]:
-        """Các phiên bản đã tải về máy. Đọc đĩa, không chạm mạng."""
-        return list(self._launcher.list_installed_versions())
+    @Property(QObject, constant=True)
+    def gameLog(self) -> GameLogFeed:
+        return self._game_log
 
     @Property(bool, notify=gameRunningChanged)
     def gameRunning(self) -> bool:
         """Game đang chạy: cầu nối vẫn bận (chờ tiến trình) nhưng popup loading không hiện."""
         return self._game_running
 
-    @Property(str, notify=progressChanged)
-    def progressText(self) -> str:
-        return self._progress_text
-
-    @Property(float, notify=progressChanged)
-    def progressFraction(self) -> float:
-        return self._progress_fraction
-
     # ----- lệnh từ QML -----
-
-    @Slot(str)
-    def installVersion(self, version_id: str) -> None:
-        """Tải một phiên bản ở luồng nền; giao diện vẫn vẽ được trong lúc đó."""
-
-        def work() -> None:
-            self._launcher.install_version(version_id, on_progress=self.report_progress)
-            self.instancesChanged.emit()
-
-        self.run_in_background(work, f"Cài Minecraft {version_id}")
-
-    @Slot(str, str, int, int, int)
-    def updateInstance(
-        self, instance_id: str, display_name: str, max_heap: int, width: int, height: int
-    ) -> None:
-        """Sửa tên / RAM / kích thước cửa sổ. Ghi một file nhỏ: làm ngay, không cần luồng nền."""
-        current = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
-        if current is None:
-            return
-        self._launcher.save_instance(
-            replace(
-                current,
-                display_name=display_name.strip(),
-                max_heap_megabytes=max_heap or None,
-                window_width=width or None,
-                window_height=height or None,
-            )
-        )
-        self.instancesChanged.emit()
-
-    @Slot(str)
-    def openInstanceFolder(self, instance_id: str) -> None:
-        """Mở thư mục bản chơi bằng trình quản lý file của hệ điều hành."""
-        folder = self._launcher.paths.instance_dir(instance_id)
-        folder.mkdir(parents=True, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
-
-    @Slot(str)
-    def removeInstance(self, instance_id: str) -> None:
-        """Gỡ đăng ký bản chơi; thư mục thế giới vẫn còn nguyên trên đĩa."""
-
-        def work() -> None:
-            self._launcher.remove_instance(instance_id)
-            self.instancesChanged.emit()
-
-        self.run_in_background(work, f"Gỡ bản chơi {instance_id}")
 
     @Slot(str)
     def addOfflineAccount(self, player_name: str) -> None:
@@ -238,9 +160,11 @@ class LauncherBridge(WorkerBridge):
             )
             if version_id:
                 self._launcher.install_version(version_id, on_progress=self.report_progress)
-            # Giữ đuôi output để khi game chết còn nói được vì sao, thay vì im lặng về "Sẵn sàng".
-            tail: deque[str] = deque(maxlen=GAME_LOG_TAIL_LINES)
-            game = self._launcher.launch_instance(instance_id, player_name, on_output=tail.append)
+            # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
+            self._game_log.reset()
+            game = self._launcher.launch_instance(
+                instance_id, player_name, on_output=self._game_log.receive
+            )
             self._set_game_running(True)
             self.gameStarted.emit(instance_id)
             try:
@@ -249,24 +173,19 @@ class LauncherBridge(WorkerBridge):
                 self._set_game_running(False)
             self.gameStopped.emit(exit_code)
             if exit_code != 0:
-                self.failed.emit(describe_game_failure(exit_code, tail))
+                self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))
 
         self.run_in_background(work, f"Khởi động {instance_id}")
 
-    # ----- dùng chung với các cầu nối khác -----
+    # ----- nội bộ -----
+
+    @Slot()
+    def _sync_game_log_session(self) -> None:
+        if self._game_running:
+            self._game_log.begin_session()
+        else:
+            self._game_log.end_session()
 
     def _set_game_running(self, running: bool) -> None:
         self._game_running = running
         self.gameRunningChanged.emit()
-
-    @Slot()
-    def clearProgress(self) -> None:
-        """Toast gọi khi mọi việc đã xong, để lần sau không hiện chữ tiến độ cũ."""
-        self._progress_text = ""
-        self._progress_fraction = 0.0
-        self.progressChanged.emit()
-
-    def report_progress(self, progress: Progress) -> None:
-        self._progress_text = f"{progress.stage} {progress.done}/{progress.total}"
-        self._progress_fraction = progress.fraction
-        self.progressChanged.emit()

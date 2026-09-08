@@ -63,7 +63,8 @@ Item {
             case 2: return "pages/LibraryPage.qml";
             case 3: return "pages/AccountsPage.qml";
             case 4: return "pages/MultiplayerPage.qml";
-            case 5: return "pages/SettingsPage.qml";
+            case 5: return "pages/LogPage.qml";
+            case 6: return "pages/SettingsPage.qml";
             default: return "pages/PlaceholderPage.qml";
             }
         }

@@ -15,6 +15,7 @@ Rectangle {
         { label: "THƯ VIỆN",   glyph: "⚙" },
         { label: "TÀI KHOẢN",  glyph: "☺" },
         { label: "CHƠI CHUNG", glyph: "⛶" },
+        { label: "NHẬT KÝ",    glyph: "≡" },
         { label: "CÀI ĐẶT",    glyph: "☸" }
     ]
 
