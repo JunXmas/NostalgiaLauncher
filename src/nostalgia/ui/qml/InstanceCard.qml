@@ -9,6 +9,11 @@ Rectangle {
     property bool removable: false
     property bool editable: false
     property string iconUrl: ""
+    // Thống kê chơi: chuỗi giờ chơi đã định dạng ở lõi, và ba con số đếm được.
+    property string playtimeText: ""
+    property int launchCount: 0
+    property int worldCount: 0
+    property int modCount: 0
     property bool confirmingRemove: false
     signal playRequested()
     signal removeRequested()
@@ -137,6 +142,16 @@ Rectangle {
             text: root.loaderLabel + "  ·  " + root.versionId
             width: parent.width; elide: Text.ElideRight
             color: Theme.textMuted; font.pixelSize: 11
+        }
+        Text {
+            objectName: "instanceStats"
+            visible: root.playtimeText.length > 0
+            // Ngắn để vừa thẻ 230 px: ⏱ giờ chơi · ▶ số lần chạy · 🌍 thế giới · ⚙ mod.
+            text: "⏱ " + root.playtimeText
+                  + (root.launchCount > 0 ? "  ·  ▶ " + root.launchCount : "")
+                  + "  ·  🌍 " + root.worldCount + "  ·  ⚙ " + root.modCount
+            width: parent.width; elide: Text.ElideRight
+            color: root.launchCount > 0 ? Theme.accent : Theme.textMuted; font.pixelSize: 10
         }
     }
 

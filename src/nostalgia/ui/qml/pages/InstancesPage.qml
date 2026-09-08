@@ -59,6 +59,8 @@ Item {
                     height: grid.cardHeight
                     label: modelData.label
                     versionId: modelData.versionId
+                    playtimeText: modelData.playtimeText; launchCount: modelData.launchCount
+                    worldCount: modelData.worldCount; modCount: modelData.modCount
                     removable: true
                     editable: true
                     iconUrl: modelData.iconUrl || ""

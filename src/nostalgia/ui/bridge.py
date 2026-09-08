@@ -8,6 +8,7 @@ module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
@@ -165,12 +166,16 @@ class LauncherBridge(InstanceBridge):
             game = self._launcher.launch_instance(
                 instance_id, player_name, on_output=self._game_log.receive
             )
+            started_at = time.time()
             self._set_game_running(True)
             self.gameStarted.emit(instance_id)
             try:
                 exit_code = game.wait()
             finally:
                 self._set_game_running(False)
+            # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
+            self._launcher.record_play_session(instance_id, started_at, time.time())
+            self.instancesChanged.emit()
             self.gameStopped.emit(exit_code)
             if exit_code != 0:
                 self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))

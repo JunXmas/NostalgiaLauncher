@@ -176,6 +176,8 @@ Item {
                     width: 230; height: 168
                     label: modelData.label
                     versionId: modelData.versionId
+                    playtimeText: modelData.playtimeText; launchCount: modelData.launchCount
+                    worldCount: modelData.worldCount; modCount: modelData.modCount
                     playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
                     onPlayRequested: bridge.play(modelData.instanceId)
                 }
