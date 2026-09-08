@@ -58,6 +58,11 @@ Panel {
                 onToggled: skinPanel.slimUpload = !skinPanel.slimUpload
             }
         }
+        SkinLibrary {
+            width: parent.width
+            visible: skinPanel.tab === "skin"
+            shown: skinPanel.shown; hasShown: skinPanel.hasShown
+        }
         Text {
             id: uploadStatus
             visible: text !== ""
