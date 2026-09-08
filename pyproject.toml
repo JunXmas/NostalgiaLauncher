@@ -81,6 +81,7 @@ module = [
     "test_instance_stats",
     "test_skin_library",
     "test_modpack_drop",
+    "test_discord_presence",
 ]
 disable_error_code = [
     "comparison-overlap",

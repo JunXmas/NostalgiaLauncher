@@ -35,3 +35,10 @@ def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}).notification_sound is True, (
         "giá trị lạ → mặc định"
     )
+
+
+def test_discord_settings_round_trip_and_default_off(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).discord_presence is False
+    save_settings(tmp_path, Settings(discord_presence=True, discord_application_id=" 1234 "))
+    loaded = load_settings(tmp_path, environment={})
+    assert (loaded.discord_presence, loaded.discord_application_id) == (True, "1234")

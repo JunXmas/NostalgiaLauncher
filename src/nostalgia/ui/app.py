@@ -21,6 +21,7 @@ from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.notifier import Notifier
+from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.sound import SoundPlayer
 
@@ -46,12 +47,23 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     settings_bridge = SettingsBridge(launcher, parent=view)
     context.setContextProperty("settingsBridge", settings_bridge)
     context.setContextProperty("notifier", build_notifier(launcher, bridge, settings_bridge, view))
+    presence_bridge = PresenceBridge(
+        bridge,
+        read_settings=lambda: (
+            bool(settings_bridge.discordPresence),
+            str(settings_bridge.discordApplicationId),
+        ),
+        instance_label=lambda instance_id: instance_label(launcher, instance_id),
+        parent=view,
+    )
+    context.setContextProperty("presenceBridge", presence_bridge)
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)
     context.setContextProperty("multiplayerBridge", multiplayer_bridge)
     # Đóng cửa sổ là đóng phòng: không để luồng relay sống sau launcher (luật L10).
     running_application = QGuiApplication.instance()
     if running_application is not None:
         running_application.aboutToQuit.connect(multiplayer_bridge.shutdown)
+        running_application.aboutToQuit.connect(presence_bridge.shutdown)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     view.setTitle("Nostalgia Launcher")
     # Bố cục trang chủ neo thẻ vào ảnh hero theo toạ độ tuyệt đối; dưới cỡ này các thẻ bắt
@@ -62,22 +74,22 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     return view, bridge
 
 
+def instance_label(launcher: Launcher, instance_id: str) -> str:
+    return next(
+        (i.label for i in launcher.list_instances() if i.instance_id == instance_id),
+        instance_id,
+    )
+
+
 def build_notifier(
     launcher: Launcher, bridge: LauncherBridge, settings_bridge: SettingsBridge, view: QQuickView
 ) -> Notifier:
     """Toast + chuông cho game khởi động / thoát / cài xong; chuông theo công tắc ở CÀI ĐẶT."""
-
-    def instance_label(instance_id: str) -> str:
-        return next(
-            (i.label for i in launcher.list_instances() if i.instance_id == instance_id),
-            instance_id,
-        )
-
     return Notifier(
         bridge,
         player=SoundPlayer(launcher.paths.data_dir / "cache" / "sounds"),
         sound_enabled=lambda: bool(settings_bridge.notificationSound),
-        instance_label=instance_label,
+        instance_label=lambda instance_id: instance_label(launcher, instance_id),
         parent=view,
     )
 

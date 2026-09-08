@@ -64,6 +64,38 @@ Item {
                     color: Theme.textMuted; font.pixelSize: 11
                 }
             }
+            Rectangle { width: parent.width; height: 1; color: Theme.border }
+            Row {
+                spacing: 10
+                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "discordToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.discordPresence
+                    onToggled: function (checked) { settingsBridge.setDiscord(checked, discordIdField.text); }
+                }
+                TextField {
+                    id: discordIdField
+                    objectName: "discordIdField"
+                    width: 220
+                    placeholder: "Application ID"
+                    text: settingsBridge.discordApplicationId
+                    onAccepted: settingsBridge.setDiscord(settingsBridge.discordPresence, text)
+                    onActiveFocusChanged: if (!activeFocus) settingsBridge.setDiscord(settingsBridge.discordPresence, text)
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: presenceBridge.statusText
+                    color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: 11
+                }
+            }
+            Text {
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                text: "Khi game chạy, hồ sơ Discord hiện \"Đang chơi <bản chơi>\" kèm thời gian. Cần Discord đang mở và một Application ID tự tạo tại discord.com/developers (Applications → New Application → General Information)."
+                color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
+            }
         }
     }
 }

@@ -18,6 +18,7 @@ from nostalgia.api import Launcher
 
 class SettingsBridge(QObject):
     notificationSoundChanged = Signal()
+    discordChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -26,6 +27,24 @@ class SettingsBridge(QObject):
     @Property(bool, notify=notificationSoundChanged)
     def notificationSound(self) -> bool:
         return self._launcher.load_settings().notification_sound
+
+    @Property(bool, notify=discordChanged)
+    def discordPresence(self) -> bool:
+        return self._launcher.load_settings().discord_presence
+
+    @Property(str, notify=discordChanged)
+    def discordApplicationId(self) -> str:
+        return self._launcher.load_settings().discord_application_id
+
+    @Slot(bool, str)
+    def setDiscord(self, enabled: bool, application_id: str) -> None:
+        settings = self._launcher.load_settings()
+        wanted = replace(
+            settings, discord_presence=enabled, discord_application_id=application_id.strip()
+        )
+        if wanted != settings:
+            self._launcher.save_settings(wanted)
+            self.discordChanged.emit()
 
     @Slot(bool)
     def setNotificationSound(self, enabled: bool) -> None:
