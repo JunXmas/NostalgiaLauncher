@@ -13,11 +13,17 @@ import pytest
 import fake_ely
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import ELY, to_player_profile
+from nostalgia.api import Launcher
 from nostalgia.errors import AuthError, IntegrityError, TwoFactorRequired
 from test_api import make_launcher
 
 
-def make_ely_launcher(server, server_state, tmp_path, certificate_pair):
+def make_ely_launcher(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> Launcher:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
     return replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
 

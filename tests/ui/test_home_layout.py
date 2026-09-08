@@ -16,6 +16,7 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtQuick import QQuickItem
 from test_qml import find_hero_cards, make_launcher
 
 from nostalgia.ui.app import build_view
@@ -23,7 +24,7 @@ from nostalgia.ui.app import build_view
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def find_item(node: QObject, name: str) -> QObject | None:
+def find_item(node: QQuickItem, name: str) -> QQuickItem | None:
     """Delegate của Repeater không có cha QObject (model giữ), nên `findChild` không thấy;
     phải đi theo cây item."""
     if node.objectName() == name:
@@ -85,13 +86,14 @@ def test_profile_card_grows_with_its_content(tmp_path: Path) -> None:
     settle()
     root_item = view.rootObject()
     assert root_item is not None
-    card = root_item.findChild(QObject, "profileCard")
+    card = root_item.findChild(QQuickItem, "profileCard")
     column = root_item.findChild(QObject, "profileColumn")
+    assert card is not None and column is not None
     toggle = find_item(card, "profileChevron")
-    assert card is not None and column is not None and toggle is not None
+    assert toggle is not None
 
     def content_bottom() -> float:
-        return column.property("y") + column.property("implicitHeight") + 18  # Theme.pad
+        return float(column.property("y") + column.property("implicitHeight") + 18)  # Theme.pad
 
     assert card.property("expanded") is False, "ba tài khoản thì mặc định thu gọn"
     assert toggle.property("visible") is True

@@ -14,6 +14,7 @@ pytest.importorskip("PySide6")
 
 from test_bridges import wait_until
 
+from nostalgia.account.model import Account
 from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.bridge import LauncherBridge
@@ -29,7 +30,12 @@ def test_reading_accounts_many_times_touches_the_disk_once(
     launcher.add_offline_account("Notch")
     reads: list[int] = []
     original = Launcher.list_accounts
-    monkeypatch.setattr(Launcher, "list_accounts", lambda self: reads.append(1) or original(self))
+
+    def counted(self: Launcher) -> tuple[Account, ...]:
+        reads.append(1)
+        return original(self)
+
+    monkeypatch.setattr(Launcher, "list_accounts", counted)
     main_bridge = LauncherBridge(launcher)
     account_bridge = AccountBridge(launcher, main_bridge)
 
