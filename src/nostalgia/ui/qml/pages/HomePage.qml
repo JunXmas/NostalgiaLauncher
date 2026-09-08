@@ -51,6 +51,7 @@ Item {
         anchors.fill: parent
         photo: photo
         instanceCount: bridge.instances.length
+        reservedRight: page.rightColumnWidth + Theme.gap * 2
         onNavigate: function (pageIndex) { page.navigate(pageIndex); }
         onNavigateToLibrary: function (contentKind) { page.navigateToLibrary(contentKind); }
     }
@@ -108,8 +109,9 @@ Item {
 
         ProfileCard {
             id: profileCard
+            objectName: "profileCard"
             width: parent.width
-            height: 150 + profileCard.rowCount * 48
+            height: implicitHeight
             Behavior on height { NumberAnimation { duration: Theme.quick } }
             translucent: true
             accounts: bridge.accounts

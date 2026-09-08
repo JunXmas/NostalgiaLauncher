@@ -1,12 +1,14 @@
 import QtQuick
 
 /*
-  Thẻ nổi trên ảnh hero, neo vào MỘT CÔNG TRÌNH trong ảnh: nhà, cổng, bàn chế tác.
+  Thẻ nổi trên ảnh hero, neo vào MỘT CÔNG TRÌNH trong ảnh: hành tinh, khối gỗ, khối đỏ.
 
   `landmarkX/Y` là toạ độ công trình tính theo phần trăm ảnh, nên đổi kích thước cửa sổ thì
-  thẻ vẫn đứng đúng chỗ. Chấm neo nằm ngay trên công trình, que nối dẫn lên (hoặc xuống) thẻ.
-  `pivot` cho biết chấm neo rơi vào đâu trên bề ngang thẻ (0 = mép trái, 1 = mép phải) — dùng
-  để hai thẻ cạnh nhau không đè lên nhau.
+  chấm neo vẫn đứng đúng chỗ. `pivot` là vị trí ƯU TIÊN của chấm neo trên bề ngang thẻ
+  (0 = mép trái, 0.5 = giữa, 1 = mép phải). Thẻ không được tràn ra ngoài vùng trống của lớp
+  cha (`freeRight`: mép trái cột HỒ SƠ); bị đẩy vào thì thẻ dịch, còn chấm neo vẫn đứng yên
+  trên công trình — trước đây phải ghim `pivot: 1.0` cho hai thẻ bên phải để né cột, và ở màn
+  hình rộng chúng lệch hẳn sang trái dù thừa chỗ.
 */
 Item {
     id: root
@@ -24,25 +26,29 @@ Item {
 
     readonly property int cardHeight: 56
     readonly property int stemLength: 22
+    readonly property real anchorX: parent.toPixelX(landmarkX)
+    readonly property real anchorY: parent.toPixelY(landmarkY)
 
     width: row.width + 34
     height: cardHeight + stemLength
-    x: Math.round(parent.toPixelX(landmarkX) - width * pivot)
-    y: Math.round(parent.toPixelY(landmarkY) - (below ? 0 : height))
+    x: Math.round(Math.max(0, Math.min(anchorX - width * pivot, parent.freeRight - width)))
+    y: Math.round(anchorY - (below ? 0 : height))
 
-    // Chấm neo trên công trình, thở nhẹ để mắt bắt được.
+    // Chấm neo trên công trình. Thở vài nhịp lúc hiện ra và khi rê chuột vào thẻ — không thở
+    // mãi: một hoạt ảnh vô hạn bắt cả cửa sổ vẽ lại 144 lần/giây, ngốn ~19% CPU khi đứng yên.
     Rectangle {
         id: pin
         width: 10; height: 10; radius: 5
-        x: Math.round(root.width * root.pivot - 5)
+        x: Math.round(Math.min(Math.max(root.anchorX - root.x, 8), root.width - 8) - 5)
         y: root.below ? -5 : root.height - 5
         color: Theme.accent
         border.color: "#a0ffffff"
         border.width: 2
         SequentialAnimation on scale {
-            loops: Animation.Infinite
-            NumberAnimation { to: 1.35; duration: 1100; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1.0;  duration: 1100; easing.type: Easing.InOutSine }
+            id: pulse
+            loops: 2
+            NumberAnimation { to: 1.35; duration: 800; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 1.0;  duration: 800; easing.type: Easing.InOutSine }
         }
     }
     Rectangle {
@@ -93,7 +99,11 @@ Item {
             }
         }
 
-        HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
+        HoverHandler {
+            id: hover
+            cursorShape: Qt.PointingHandCursor
+            onHoveredChanged: if (hovered) pulse.restart()
+        }
         TapHandler { id: press; onTapped: root.activated() }
     }
 }

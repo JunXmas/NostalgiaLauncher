@@ -1,22 +1,22 @@
-"""Cầu nối trang TÀI KHOẢN: danh sách tài khoản kèm skin, cache trong bộ nhớ.
+"""Cầu nối trang TÀI KHOẢN: tài khoản kèm skin/cape, làm mới và upload skin, đăng nhập Ely.by.
 
-Trước đây mỗi lần QML đọc property `accounts` hoặc gọi `accountNamed()` đều chạy lại
-`describe_skin()` cho MỌI tài khoản (đọc đĩa). QML binding gọi hai hàm đó 6-10 lần mỗi
-render cycle → lag rõ rệt khi có 2+ tài khoản.
-
-Giờ: cache `_cached_rows` (list) và `_by_name` (dict) trong RAM. Chỉ rebuild khi
-`_invalidate()` được gọi (từ `accountsChanged` hoặc `_skinsRefreshed`). Lookup O(1).
+Danh sách gốc nằm ở `LauncherBridge.accounts_snapshot()` (đọc đĩa một lần). Ở đây ghép thêm
+lớp skin (đường dẫn file để QML cắt vùng UV) và giữ kết quả trong RAM: chỉ dựng lại khi kho
+tài khoản đổi hoặc vừa tải skin xong, và nhiều tín hiệu tới trong cùng một nhịp được gộp thành
+MỘT lần `skinsChanged` cho QML. Skin chỉ tự tải cho tài khoản CHƯA có cache; nút "Làm mới"
+mới tải lại tất cả — thêm một tài khoản không phải là lý do để chạm mạng cho mọi tài khoản.
 """
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 
-from nostalgia.account.model import Account
+from nostalgia.account.model import ELY, MICROSOFT, Account
 from nostalgia.api import Launcher
 from nostalgia.errors import NostalgiaError, TwoFactorRequired
 from nostalgia.ui.bridge import LauncherBridge
@@ -24,7 +24,8 @@ from nostalgia.ui.worker import WorkerBridge
 
 logger = logging.getLogger(__name__)
 
-KIND_LABELS = {"microsoft": "MICROSOFT", "ely": "ELY.BY", "offline": "NGOẠI TUYẾN"}
+KIND_LABELS = {MICROSOFT: "MICROSOFT", ELY: "ELY.BY", "offline": "NGOẠI TUYẾN"}
+ONLINE_KINDS = (MICROSOFT, ELY)
 
 
 class AccountBridge(WorkerBridge):
@@ -41,62 +42,75 @@ class AccountBridge(WorkerBridge):
         super().__init__(parent)
         self._launcher = launcher
         self._main_bridge = main_bridge
-        self._cached_rows: list[dict[str, Any]] = []
-        self._by_name: dict[str, dict[str, Any]] = {}
-        self._dirty = True
-        # Coalesce: accountsChanged + _skinsRefreshed đều chỉ đặt dirty và khởi timer.
-        # Timer singleShot(0) gộp nhiều signal trong cùng event-loop tick thành MỘT lần
-        # rebuild cache + notify QML, tránh rebuild 2 lần liên tiếp.
+        self._rows: list[dict[str, Any]] = []
+        self._row_by_name: dict[str, dict[str, Any]] = {}
+        self._stale = True
+        # Gộp tín hiệu: mọi thay đổi chỉ đánh dấu cũ và khởi timer; timer 0 ms bắn một lần ở
+        # cuối nhịp sự kiện, nên QML dựng lại danh sách đúng một lần dù nhiều tín hiệu tới.
         self._notify_timer = QTimer(self)
         self._notify_timer.setSingleShot(True)
-        self._notify_timer.setInterval(0)
         self._notify_timer.timeout.connect(self.skinsChanged)
-        self._skinsRefreshed.connect(self._schedule_update)
-        main_bridge.accountsChanged.connect(self._schedule_update)
-        main_bridge.accountsChanged.connect(self.refreshSkins)
+        self._skinsRefreshed.connect(self._mark_stale)
+        main_bridge.accountsChanged.connect(self._mark_stale)
+        main_bridge.accountsChanged.connect(self._fetch_missing_skins)
 
-    def _schedule_update(self) -> None:
-        """Đánh dấu dirty và lên lịch notify QML ở cuối event-loop tick."""
-        self._dirty = True
-        self._notify_timer.start()
+    # ----- danh sách cho QML -----
 
-    def _ensure_cache(self) -> None:
-        if not self._dirty:
+    def _mark_stale(self) -> None:
+        self._stale = True
+        self._notify_timer.start(0)
+
+    def _ensure_rows(self) -> None:
+        if not self._stale:
             return
-        rows = [_describe(self._launcher, a) for a in self._launcher.list_accounts()]
-        self._cached_rows = rows
-        self._by_name = {row["playerName"]: row for row in rows}
-        self._dirty = False
+        self._rows = [_describe(self._launcher, a) for a in self._main_bridge.accounts_snapshot()]
+        self._row_by_name = {row["playerName"]: row for row in self._rows}
+        self._stale = False
 
     @Property(list, notify=skinsChanged)
     def accounts(self) -> list[dict[str, Any]]:
-        self._ensure_cache()
-        return self._cached_rows
+        self._ensure_rows()
+        return self._rows
 
     @Slot(str, result="QVariant")
     def accountNamed(self, player_name: str) -> dict[str, Any]:
-        self._ensure_cache()
-        return self._by_name.get(player_name, {})
+        self._ensure_rows()
+        return self._row_by_name.get(player_name, {})
+
+    # ----- skin: tải về cache ở luồng nền -----
 
     @Slot()
     def refreshSkins(self) -> None:
-        """Tải skin mới cho Microsoft/Ely ở luồng nền."""
-        accounts = self._launcher.list_accounts()
-        if not any(a.account_kind in ("microsoft", "ely") for a in accounts):
+        """Nút "Làm mới": tải lại skin của MỌI tài khoản Microsoft/Ely.by."""
+        self._fetch_skins(self._online_accounts(), "Cập nhật skin")
+
+    def _fetch_missing_skins(self) -> None:
+        """Kho tài khoản vừa đổi: chỉ tải cho tài khoản chưa có skin trong cache."""
+        missing = [a for a in self._online_accounts() if self._launcher.describe_skin(a).is_default]
+        self._fetch_skins(missing, "Tải skin")
+
+    def _online_accounts(self) -> list[Account]:
+        return [a for a in self._main_bridge.accounts_snapshot() if a.account_kind in ONLINE_KINDS]
+
+    def _fetch_skins(self, accounts: Iterable[Account], activity: str) -> None:
+        wanted = list(accounts)
+        if not wanted:
             return
 
         def work() -> None:
-            for account in accounts:
+            for account in wanted:
                 self._launcher.refresh_skin(account)
             self._skinsRefreshed.emit()
 
-        self.run_in_background(work, "Cập nhật skin")
+        self.run_in_background(work, activity)
 
     @Slot(str, str, bool)
     def uploadSkin(self, player_name: str, file_url: str, slim: bool) -> None:
         skin_path = Path(QUrl(file_url).toLocalFile())
-        accounts = self._launcher.list_accounts()
-        account = next((a for a in accounts if a.player_name == player_name), None)
+        account = next(
+            (a for a in self._main_bridge.accounts_snapshot() if a.player_name == player_name),
+            None,
+        )
         if account is None:
             self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
             return
@@ -112,8 +126,12 @@ class AccountBridge(WorkerBridge):
 
         self.run_in_background(work, "Upload skin")
 
+    # ----- Ely.by -----
+
     @Slot(str, str, str)
     def signInEly(self, email_or_name: str, password: str, totp_code: str) -> None:
+        """Mật khẩu chỉ đi thẳng vào lõi rồi lên Ely.by, không giữ lại ở đâu."""
+
         def work() -> None:
             try:
                 account = self._launcher.add_ely_account(
@@ -123,7 +141,7 @@ class AccountBridge(WorkerBridge):
                 self.twoFactorRequired.emit()
                 return
             self._main_bridge.setActiveAccount(account.player_name)
-            self._main_bridge.accountsChanged.emit()
+            self._main_bridge.announce_accounts_changed()
             self.elySignedIn.emit(account.player_name)
 
         self.run_in_background(work, "Đăng nhập Ely.by")
@@ -134,14 +152,13 @@ def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:
         skin = launcher.describe_skin(account)
     except NostalgiaError:
         return {"playerName": account.player_name, "skinFile": "", "capeFile": ""}
-    cape = QUrl.fromLocalFile(str(skin.cape_path)).toString() if skin.cape_path else ""
     return {
         "playerName": account.player_name,
         "playerUuid": account.player_uuid,
         "accountKind": account.account_kind,
         "kindLabel": KIND_LABELS.get(account.account_kind, account.account_kind.upper()),
         "skinFile": _file_url(skin.skin_path),
-        "capeFile": cape,
+        "capeFile": _file_url(skin.cape_path),
         "slim": skin.slim,
         "isDefaultSkin": skin.is_default,
     }

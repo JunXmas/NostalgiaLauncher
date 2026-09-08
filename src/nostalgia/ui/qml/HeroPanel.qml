@@ -11,6 +11,9 @@ Item {
     id: root
     property int instanceCount: 0
     property Item photo: null
+    // Bề rộng bị cột HỒ SƠ chiếm ở mép phải: thẻ nào cũng phải nằm gọn bên trái vùng này.
+    property real reservedRight: 0
+    readonly property real freeRight: width - reservedRight
     // Tỉ lệ ảnh gốc (1800×1200). Đổi ảnh là đổi số này và đo lại toạ độ.
     readonly property real imageAspect: 1.5
     signal navigate(int pageIndex)
@@ -25,7 +28,7 @@ Item {
     function toPixelX(fraction) { return offsetX + fraction * shownWidth; }
     function toPixelY(fraction) { return offsetY + fraction * shownHeight; }
 
-    // Toạ độ công trình đo trên ảnh gốc 2528×1686, tính theo phần trăm.
+    // Toạ độ công trình đo trên ảnh gốc, tính theo phần trăm. Thẻ tự dịch nếu đụng cột phải.
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.248; landmarkY: 0.506; pivot: 0.6     // Trái Đất khối, bên trái dưới
@@ -40,13 +43,13 @@ Item {
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.672; landmarkY: 0.238; pivot: 1.0     // hành tinh vành xanh lục, trên phải (thẻ xoè trái, tránh cột HỒ SƠ)
+        landmarkX: 0.672; landmarkY: 0.238                 // hành tinh vành xanh lục, trên phải
         pageIndex: 3; glyph: "☺"; title: "TÀI KHOẢN"; subtitle: "Skin, cape, đăng nhập"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
     HeroCard {
         objectName: "heroCard"
-        landmarkX: 0.660; landmarkY: 0.522; below: true; pivot: 1.0 // hành tinh vành xanh lam, dưới phải (thẻ xoè trái)
+        landmarkX: 0.660; landmarkY: 0.522; below: true    // hành tinh vành xanh lam, dưới phải
         pageIndex: 2; glyph: "▤"; title: "TÀI NGUYÊN"; subtitle: "Gói & shader"
         backdrop: root.photo; onActivated: root.navigateToLibrary("resourcepack")
     }
