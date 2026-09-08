@@ -20,7 +20,9 @@ from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
+from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.settings_bridge import SettingsBridge
+from nostalgia.ui.sound import SoundPlayer
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
@@ -41,7 +43,9 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
-    context.setContextProperty("settingsBridge", SettingsBridge(launcher, parent=view))
+    settings_bridge = SettingsBridge(launcher, parent=view)
+    context.setContextProperty("settingsBridge", settings_bridge)
+    context.setContextProperty("notifier", build_notifier(launcher, bridge, settings_bridge, view))
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)
     context.setContextProperty("multiplayerBridge", multiplayer_bridge)
     # Đóng cửa sổ là đóng phòng: không để luồng relay sống sau launcher (luật L10).
@@ -56,6 +60,26 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     view.resize(1360, 860)
     view.setSource(QUrl.fromLocalFile(str(QML_DIR / "Main.qml")))
     return view, bridge
+
+
+def build_notifier(
+    launcher: Launcher, bridge: LauncherBridge, settings_bridge: SettingsBridge, view: QQuickView
+) -> Notifier:
+    """Toast + chuông cho game khởi động / thoát / cài xong; chuông theo công tắc ở CÀI ĐẶT."""
+
+    def instance_label(instance_id: str) -> str:
+        return next(
+            (i.label for i in launcher.list_instances() if i.instance_id == instance_id),
+            instance_id,
+        )
+
+    return Notifier(
+        bridge,
+        player=SoundPlayer(launcher.paths.data_dir / "cache" / "sounds"),
+        sound_enabled=lambda: bool(settings_bridge.notificationSound),
+        instance_label=instance_label,
+        parent=view,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -21,6 +21,8 @@ class Settings:
     """Cấu hình đã đọc. Trường rỗng nghĩa là chưa đặt."""
 
     curseforge_api_key: str = ""
+    # Chuông khi game khởi động / thoát / cài xong. Mặc định bật; tắt ở trang CÀI ĐẶT.
+    notification_sound: bool = True
 
     @property
     def has_curseforge_key(self) -> bool:
@@ -39,8 +41,10 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
     if path.is_file():
         try:
             fields = as_mapping(read_json(path))
+            sound = fields.get("notification_sound")
             settings = Settings(
-                curseforge_api_key=as_string(fields.get("curseforge_api_key")) or ""
+                curseforge_api_key=as_string(fields.get("curseforge_api_key")) or "",
+                notification_sound=sound if isinstance(sound, bool) else True,
             )
         except DataFileError:
             settings = Settings()
@@ -54,6 +58,9 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
     """Ghi với quyền 0600: có khoá API bên trong."""
     atomic_write_json(
         settings_path(config_dir),
-        {"curseforge_api_key": settings.curseforge_api_key.strip()},
+        {
+            "curseforge_api_key": settings.curseforge_api_key.strip(),
+            "notification_sound": settings.notification_sound,
+        },
         private=True,
     )

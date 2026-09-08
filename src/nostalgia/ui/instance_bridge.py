@@ -20,6 +20,7 @@ from nostalgia.ui.worker import WorkerBridge
 class InstanceBridge(WorkerBridge):
     instancesChanged = Signal()
     progressChanged = Signal()
+    versionInstalled = Signal(str)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -64,6 +65,7 @@ class InstanceBridge(WorkerBridge):
         def work() -> None:
             self._launcher.install_version(version_id, on_progress=self.report_progress)
             self.instancesChanged.emit()
+            self.versionInstalled.emit(version_id)
 
         self.run_in_background(work, f"Cài Minecraft {version_id}")
 

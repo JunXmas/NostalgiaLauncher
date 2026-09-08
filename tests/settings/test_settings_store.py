@@ -25,3 +25,13 @@ def test_missing_or_corrupt_file_means_empty_settings(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}) == Settings()
     settings_path(tmp_path).write_text("{ hỏng")
     assert not load_settings(tmp_path, environment={}).has_curseforge_key
+
+
+def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).notification_sound is True
+    save_settings(tmp_path, Settings(notification_sound=False))
+    assert load_settings(tmp_path, environment={}).notification_sound is False
+    settings_path(tmp_path).write_text('{"notification_sound": "yes"}')
+    assert load_settings(tmp_path, environment={}).notification_sound is True, (
+        "giá trị lạ → mặc định"
+    )
