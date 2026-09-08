@@ -76,6 +76,7 @@ module = [
     "test_home_picker",
     "test_multiplayer_bridge",
     "test_room_code_input",
+    "test_game_log",
 ]
 disable_error_code = [
     "comparison-overlap",

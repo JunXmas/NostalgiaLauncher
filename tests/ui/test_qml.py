@@ -50,7 +50,7 @@ def test_the_interface_loads_without_a_single_qml_error(tmp_path: Path) -> None:
         assert root_item is not None
         sidebar = root_item.findChild(QObject, "sidebar")
         assert sidebar is not None
-        for page_index in range(6):
+        for page_index in range(7):
             sidebar.setProperty("currentIndex", page_index)
             QGuiApplication.processEvents()
         sidebar.setProperty("currentIndex", 0)
@@ -127,7 +127,7 @@ def test_every_card_on_the_hero_points_at_a_real_page(tmp_path: Path) -> None:
     targets = sorted(card.property("pageIndex") for card in cards)
     # Thư viện gộp mod + shader + gói tài nguyên, nên hai thẻ MOD và TÀI NGUYÊN cùng mở
     # trang 2; thẻ TÀI NGUYÊN mở sẵn chip Gói tài nguyên.
-    assert targets == [1, 2, 2, 3, 4, 5], "sáu thẻ phải dẫn tới năm trang thật của thanh bên"
+    assert targets == [1, 2, 2, 3, 4, 6], "sáu thẻ phải dẫn tới năm trang thật của thanh bên"
     assert all(card.property("title") for card in cards), "thẻ nào cũng phải có nhãn"
 
 

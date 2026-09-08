@@ -62,7 +62,7 @@ Item {
     HeroCard {
         objectName: "heroCard"
         landmarkX: 0.175; landmarkY: 0.255; below: true; pivot: 0.35 // khối xám (Sao Thuỷ), thẻ treo dưới để không đụng thẻ Sao Hoả
-        pageIndex: 5; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
+        pageIndex: 6; glyph: "☸"; title: "CÀI ĐẶT"; subtitle: "Tuỳ chọn launcher"
         backdrop: root.photo; onActivated: root.navigate(pageIndex)
     }
 }
