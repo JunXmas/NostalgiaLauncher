@@ -114,11 +114,6 @@ class VersionMeta:
     jvm_arguments: tuple[ArgumentSpec, ...] = ()
 
     @property
-    def uses_legacy_arguments(self) -> bool:
-        """Đời ≤1.12: tham số nằm trong một chuỗi duy nhất, không có `rules`."""
-        return self.minecraft_arguments is not None and not self.game_arguments
-
-    @property
     def jar_owner_id(self) -> str:
         """Phiên bản nào sở hữu file jar cần dùng.
 

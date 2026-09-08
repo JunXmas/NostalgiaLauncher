@@ -18,7 +18,12 @@ from nostalgia.skin.library import (
     remove_from_library,
 )
 from nostalgia.skin.model import PlayerSkin
-from nostalgia.skin.textures import cached_skin, refresh_ely_skin, refresh_premium_skin
+from nostalgia.skin.textures import (
+    cached_skin,
+    refresh_ely_skin,
+    refresh_premium_skin,
+    skin_cache_key,
+)
 from nostalgia.skin.upload import upload_skin_to_mojang
 
 
@@ -118,6 +123,4 @@ class SkinOperations(LauncherContext):
 
 
 def _cache_key(account: Account) -> str:
-    if account.account_kind == ELY:
-        return f"ely-{account.player_name.lower()}"
-    return account.player_uuid.replace("-", "")
+    return skin_cache_key(account.account_kind, account.player_name, account.player_uuid)

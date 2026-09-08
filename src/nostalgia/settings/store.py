@@ -27,10 +27,6 @@ class Settings:
     discord_presence: bool = False
     discord_application_id: str = ""
 
-    @property
-    def has_curseforge_key(self) -> bool:
-        return bool(self.curseforge_api_key.strip())
-
 
 def settings_path(config_dir: Path) -> Path:
     return config_dir / SETTINGS_FILE_NAME

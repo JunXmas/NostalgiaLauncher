@@ -24,7 +24,7 @@ def test_round_trip_is_private_and_env_overrides(tmp_path: Path) -> None:
 def test_missing_or_corrupt_file_means_empty_settings(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}) == Settings()
     settings_path(tmp_path).write_text("{ hỏng")
-    assert not load_settings(tmp_path, environment={}).has_curseforge_key
+    assert load_settings(tmp_path, environment={}).curseforge_api_key == ""
 
 
 def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
