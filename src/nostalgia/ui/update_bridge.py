@@ -79,14 +79,16 @@ class UpdateBridge(WorkerBridge):
 
     @Slot()
     def checkNow(self) -> None:
-        if self._state in ("checking", "downloading", "applying"):
+        if self.busy or self._state in ("checking", "downloading", "applying"):
             return
         self._set_state("checking", "Đang hỏi GitHub...")
 
         def work() -> None:
+            # Bắt MỌI ngoại lệ: lỗi lạ nào cũng phải về `failed`, không được để trạng thái kẹt
+            # ở "checking" mãi (nút bị khoá, người dùng không làm gì được).
             try:
                 release = self._launcher.check_launcher_update()
-            except NostalgiaError as exc:
+            except Exception as exc:
                 self._outcome.emit("failed", f"Không kiểm được: {exc}")
                 return
             self._release = release
@@ -109,7 +111,7 @@ class UpdateBridge(WorkerBridge):
                 self._staged = self._launcher.download_launcher_update(
                     release, on_progress=self.report_progress
                 )
-            except NostalgiaError as exc:
+            except Exception as exc:
                 self._outcome.emit("failed", f"Không tải được: {exc}")
                 return
             self._outcome.emit("ready", f"Bản {release.launcher_version} đã sẵn sàng")

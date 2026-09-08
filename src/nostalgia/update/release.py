@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from nostalgia.errors import NetworkError
 from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
 from nostalgia.net.http import HttpClient
-from nostalgia.net.payload import fetch_json
+from nostalgia.net.payload import decode_json
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 
 SUMS_ASSET_NAME = "SHA256SUMS"
@@ -123,19 +123,17 @@ def parse_sha256sums(text: str) -> dict[str, str]:
 def fetch_latest_release(
     http_client: HttpClient, *, endpoints: Endpoints = DEFAULT_ENDPOINTS
 ) -> LauncherRelease | None:
-    """CHẠM MẠNG. Chưa có bản phát hành nào (404) thì None, không phải lỗi."""
-    try:
-        document = fetch_json(
-            http_client,
-            endpoints.launcher_releases,
-            what="bản phát hành launcher",
-            headers={"Accept": "application/vnd.github+json"},
-        )
-    except NetworkError as exc:
-        if "404" in str(exc):
-            return None
-        raise
-    return parse_release(document)
+    """CHẠM MẠNG. Chưa có bản phát hành nào (404) thì None, không phải lỗi.
+
+    Đọc MÃ trạng thái thật, không tìm chuỗi "404" trong câu lỗi: câu lỗi chứa cả URL, và một
+    cổng hay đường dẫn có "404" trong đó sẽ biến lỗi 500 thành "chưa có bản nào" (đã dính)."""
+    url = endpoints.launcher_releases
+    response = http_client.send("GET", url, headers={"Accept": "application/vnd.github+json"})
+    if response.status == 404:
+        return None
+    if not response.is_ok:
+        raise NetworkError(f"bản phát hành launcher trả {response.status} cho {url}")
+    return parse_release(decode_json(response.body, what="bản phát hành launcher"))
 
 
 def _size_of(value: JsonValue) -> int:
