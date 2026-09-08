@@ -1,8 +1,8 @@
 import QtQuick
 import "../"
 
-/* CÀI ĐẶT: thông tin chung. Không có tuỳ chọn nào cần người chơi cấu hình — thư viện CurseForge
-   đi qua máy chủ của dự án, không cần khoá. */
+/* CÀI ĐẶT: thông tin chung và công tắc âm thanh thông báo. Thư viện CurseForge đi qua máy chủ
+   của dự án, không cần khoá. */
 Item {
     id: page
     signal navigate(int pageIndex)
@@ -46,6 +46,23 @@ Item {
                 wrapMode: Text.WordWrap
                 text: "Thư viện mod và modpack duyệt CurseForge qua máy chủ của Nostalgia, không cần khoá API."
                 color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
+            }
+            Rectangle { width: parent.width; height: 1; color: Theme.border }
+            Row {
+                spacing: 10
+                Text { text: "Âm thanh thông báo"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "notificationSoundToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.notificationSound
+                    onToggled: function (checked) { settingsBridge.setNotificationSound(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản."
+                    color: Theme.textMuted; font.pixelSize: 11
+                }
             }
         }
     }

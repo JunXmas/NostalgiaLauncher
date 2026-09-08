@@ -108,6 +108,7 @@ Item {
         function onFailed(message) { banner.message = message; hideBanner.restart(); }
     }
 
-    LoadingToast { z: 90 }
+    LoadingToast { id: loadingToast; z: 90 }
+    NotificationToast { z: 91; bottomOffset: loadingToast.active ? loadingToast.height + Theme.gap * 2 : Theme.gap }
     SignInDialog { anchors.fill: parent }
 }
