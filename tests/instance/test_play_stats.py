@@ -1,4 +1,5 @@
-"""Thống kê chơi: cộng dồn đúng, file hỏng không chặn, đếm thế giới chỉ tính thư mục có level.dat."""
+"""Thống kê chơi: cộng dồn đúng, file hỏng không chặn, đếm thế giới chỉ tính thư mục có
+level.dat."""
 
 from __future__ import annotations
 

@@ -34,6 +34,7 @@ class AccountBridge(WorkerBridge):
     twoFactorRequired = Signal()
     skinUploaded = Signal(str)
     skinUploadFailed = Signal(str)
+    libraryChanged = Signal()
     _skinsRefreshed = Signal()
 
     def __init__(
@@ -51,6 +52,7 @@ class AccountBridge(WorkerBridge):
         self._notify_timer.setSingleShot(True)
         self._notify_timer.timeout.connect(self.skinsChanged)
         self._skinsRefreshed.connect(self._mark_stale)
+        self._skinsRefreshed.connect(self.libraryChanged)
         main_bridge.accountsChanged.connect(self._mark_stale)
         main_bridge.accountsChanged.connect(self._fetch_missing_skins)
 
@@ -76,6 +78,61 @@ class AccountBridge(WorkerBridge):
     def accountNamed(self, player_name: str) -> dict[str, Any]:
         self._ensure_rows()
         return self._row_by_name.get(player_name, {})
+
+    # ----- kho skin -----
+
+    @Property(list, notify=libraryChanged)
+    def skinLibrary(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "entryId": skin_entry.entry_id,
+                "name": skin_entry.name,
+                "slim": skin_entry.slim,
+                "source": skin_entry.source,
+                "sourceLabel": skin_entry.source_label,
+                "addedAt": skin_entry.added_at,
+                "skinFile": _file_url(skin_entry.skin_path),
+            }
+            for skin_entry in self._launcher.list_skin_library()
+        ]
+
+    @Slot(str, bool)
+    def importSkin(self, file_url: str, slim: bool) -> None:
+        skin_path = Path(QUrl(file_url).toLocalFile())
+
+        def work() -> None:
+            self._launcher.import_skin(skin_path, slim=slim)
+            self.libraryChanged.emit()
+
+        self.run_in_background(work, "Thêm skin vào thư viện")
+
+    @Slot(str, str)
+    def applyLibrarySkin(self, player_name: str, entry_id: str) -> None:
+        account = self._find_account(player_name)
+        if account is None:
+            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
+            return
+
+        def work() -> None:
+            try:
+                self._launcher.apply_library_skin(account, entry_id)
+                self._skinsRefreshed.emit()
+                self.skinUploaded.emit(player_name)
+            except NostalgiaError as exc:
+                self.skinUploadFailed.emit(str(exc))
+
+        self.run_in_background(work, "Đổi skin")
+
+    @Slot(str)
+    def removeLibrarySkin(self, entry_id: str) -> None:
+        self._launcher.remove_library_skin(entry_id)
+        self.libraryChanged.emit()
+
+    def _find_account(self, player_name: str) -> Account | None:
+        return next(
+            (a for a in self._main_bridge.accounts_snapshot() if a.player_name == player_name),
+            None,
+        )
 
     # ----- skin: tải về cache ở luồng nền -----
 
@@ -107,10 +164,7 @@ class AccountBridge(WorkerBridge):
     @Slot(str, str, bool)
     def uploadSkin(self, player_name: str, file_url: str, slim: bool) -> None:
         skin_path = Path(QUrl(file_url).toLocalFile())
-        account = next(
-            (a for a in self._main_bridge.accounts_snapshot() if a.player_name == player_name),
-            None,
-        )
+        account = self._find_account(player_name)
         if account is None:
             self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
             return
@@ -158,6 +212,7 @@ def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:
         "accountKind": account.account_kind,
         "kindLabel": KIND_LABELS.get(account.account_kind, account.account_kind.upper()),
         "skinFile": _file_url(skin.skin_path),
+        "skinDigest": launcher.skin_digest(skin),
         "capeFile": _file_url(skin.cape_path),
         "slim": skin.slim,
         "isDefaultSkin": skin.is_default,

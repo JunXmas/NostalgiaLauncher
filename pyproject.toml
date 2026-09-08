@@ -79,6 +79,7 @@ module = [
     "test_game_log",
     "test_notifier",
     "test_instance_stats",
+    "test_skin_library",
 ]
 disable_error_code = [
     "comparison-overlap",
