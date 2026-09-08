@@ -100,7 +100,11 @@ def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.M
     real_connect = socket.socket.connect
 
     def guarded_connect(self: socket.socket, address: tuple[object, ...] | str) -> None:
-        host = address[0] if isinstance(address, tuple) else ""
+        # Unix socket (địa chỉ là đường dẫn) luôn nằm trong máy: IPC với Discord giả trong test.
+        if isinstance(address, str):
+            real_connect(self, address)
+            return
+        host = address[0]
         if host in {"127.0.0.1", "::1", "localhost"}:
             real_connect(self, address)
             return
