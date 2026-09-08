@@ -102,7 +102,8 @@ Rectangle {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: !root.playerName ? "Thêm ở cột phải"
-                          : (root.accountKind === "microsoft" ? "Tài khoản Microsoft" : "Tài khoản offline")
+                          : root.accountKind === "microsoft" ? "Tài khoản Microsoft"
+                          : root.accountKind === "ely" ? "Tài khoản Ely.by" : "Tài khoản ngoại tuyến"
                     color: Theme.textMuted; font.pixelSize: 10
                 }
             }

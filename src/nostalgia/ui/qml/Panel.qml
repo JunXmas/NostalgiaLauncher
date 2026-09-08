@@ -6,6 +6,8 @@ Rectangle {
     property string title: ""
     // Nằm trên ảnh nền thì để lộ ảnh phía sau một chút, như tấm kính.
     property bool translucent: false
+    // Mép trên của vùng nội dung (dưới tiêu đề), để thẻ nào cao theo nội dung tính được chiều cao.
+    readonly property alias contentTop: holder.y
 
     color: translucent ? "#d90f1512" : Theme.surface
     radius: Theme.radius

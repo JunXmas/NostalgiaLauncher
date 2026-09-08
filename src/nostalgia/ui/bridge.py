@@ -14,26 +14,12 @@ from typing import Any
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
+from nostalgia.account.model import Account
 from nostalgia.api import Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress
+from nostalgia.ui.game_log import GAME_LOG_TAIL_LINES, describe_game_failure
 from nostalgia.ui.worker import WorkerBridge
-
-GAME_LOG_TAIL_LINES = 60
-CRASH_MARKER = "Crash report saved to:"
-
-
-def describe_game_failure(exit_code: int, tail: deque[str]) -> str:
-    """Một câu cho dải đỏ: mã thoát, và dòng có ích nhất trong đuôi log (báo cáo crash nếu
-    có, không thì lỗi Java cuối cùng)."""
-    lines = [line.strip() for line in tail if line.strip()]
-    crash = next((line for line in reversed(lines) if CRASH_MARKER in line), "")
-    if crash:
-        return f"Game thoát (mã {exit_code}). {crash.split(CRASH_MARKER, 1)[1].strip(' #@!')}"
-    error = next((line for line in reversed(lines) if "Exception" in line or "Error" in line), "")
-    return f"Game thoát (mã {exit_code}). " + (
-        error[:160] if error else "Xem log trong thư mục bản chơi."
-    )
 
 
 class LauncherBridge(WorkerBridge):
@@ -58,6 +44,25 @@ class LauncherBridge(WorkerBridge):
         self._active_player_name = ""
         self._sign_in_cancel: CancelToken | None = None
         self._game_running = False
+        # Kho tài khoản đọc từ đĩa MỘT lần rồi giữ trong RAM. Trước đây mỗi binding QML đọc
+        # `accounts`/`activePlayerName` là một lần đọc + parse accounts.json — một cú bấm chọn
+        # tài khoản kéo theo 11 lần đọc, thêm tài khoản 26 lần (đo bằng harness).
+        self._accounts: tuple[Account, ...] | None = None
+
+    # ----- kho tài khoản trong RAM -----
+
+    def accounts_snapshot(self) -> tuple[Account, ...]:
+        """Danh sách tài khoản hiện tại; chỉ chạm đĩa khi chưa có hoặc vừa có thay đổi."""
+        if self._accounts is None:
+            self._accounts = self._launcher.list_accounts()
+        return self._accounts
+
+    def announce_accounts_changed(self) -> None:
+        """Gọi sau MỌI thay đổi kho tài khoản (kể cả từ cầu nối khác): quên bản trong RAM
+        rồi mới báo, để binding nào đọc lại cũng thấy dữ liệu mới."""
+        self._accounts = None
+        self.accountsChanged.emit()
+        self.activeAccountChanged.emit()
 
     # ----- thuộc tính cho QML -----
 
@@ -86,13 +91,13 @@ class LauncherBridge(WorkerBridge):
                 "playerUuid": account.player_uuid,
                 "accountKind": account.account_kind,
             }
-            for account in self._launcher.list_accounts()
+            for account in self.accounts_snapshot()
         ]
 
     @Property(str, notify=activeAccountChanged)
     def activePlayerName(self) -> str:
         """Tài khoản sẽ dùng khi bấm CHƠI: cái người dùng chọn, không thì cái đầu danh sách."""
-        names = [account.player_name for account in self._launcher.list_accounts()]
+        names = [account.player_name for account in self.accounts_snapshot()]
         if self._active_player_name in names:
             return self._active_player_name
         return names[0] if names else ""
@@ -175,8 +180,7 @@ class LauncherBridge(WorkerBridge):
         def work() -> None:
             self._launcher.add_offline_account(player_name)
             self._active_player_name = player_name
-            self.accountsChanged.emit()
-            self.activeAccountChanged.emit()
+            self.announce_accounts_changed()
 
         self.run_in_background(work, "Thêm tài khoản")
 
@@ -197,8 +201,7 @@ class LauncherBridge(WorkerBridge):
             finally:
                 self._sign_in_cancel = None
             self._active_player_name = account.player_name
-            self.accountsChanged.emit()
-            self.activeAccountChanged.emit()
+            self.announce_accounts_changed()
             self.signInFinished.emit(account.player_name)
 
         self.run_in_background(work, "Đăng nhập Microsoft — chờ bạn nhập mã")
@@ -212,8 +215,7 @@ class LauncherBridge(WorkerBridge):
     def removeAccount(self, player_name: str) -> None:
         def work() -> None:
             self._launcher.remove_account(player_name)
-            self.accountsChanged.emit()
-            self.activeAccountChanged.emit()
+            self.announce_accounts_changed()
 
         self.run_in_background(work, f"Gỡ tài khoản {player_name}")
 

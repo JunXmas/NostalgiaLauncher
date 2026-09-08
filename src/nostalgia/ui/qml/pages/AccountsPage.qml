@@ -8,10 +8,8 @@ import "../"
 Item {
     id: page
     objectName: "accountsPage"
-    signal navigate(int pageIndex)
     property string shownName: bridge.activePlayerName
     property int facing: 0
-    property string tab: "skin"
     // Bind một lần — QML chỉ đọc property `accounts` đúng 1 lần mỗi khi signal phát.
     readonly property var allAccounts: accountBridge.accounts
     property var shown: ({})
@@ -116,7 +114,7 @@ Item {
 
     SkinPanel {
         anchors { top: listPanel.bottom; left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap; topMargin: 10 }
-        shown: page.shown; hasShown: page.hasShown; tab: page.tab
+        shown: page.shown; hasShown: page.hasShown
     }
 
     Rectangle {
