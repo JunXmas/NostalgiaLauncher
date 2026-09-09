@@ -141,9 +141,17 @@ def test_notifier_announces_launch_events_and_respects_the_sound_switch(tmp_path
     assert len(played) == 5
 
 
-def test_ui_sounds_are_short_soft_and_stable() -> None:
-    """Tiếng dashboard: dưới 0,7 s kể cả vang, nhỏ hơn chuông, tắt hẳn ở cuối, và cùng tên luôn
-    ra cùng byte (ồn trắng gieo hạt cố định → cache và test ổn định)."""
+def brightness(samples: list[int]) -> float:
+    """Năng lượng sai phân / năng lượng ≈ (2·sin(π·f/fs))² với f là tần số trội: 1 kHz ≈ 0,08,
+    2,5 kHz ≈ 0,5, 6 kHz ≈ 2,3. Bản gió trắng bị chê nhức đầu đo 0,6 tới 0,75."""
+    energy = sum(value * value for value in samples) or 1
+    return sum((samples[i] - samples[i - 1]) ** 2 for i in range(1, len(samples))) / energy
+
+
+def test_ui_sounds_are_short_soft_dull_and_stable() -> None:
+    """Tiếng dashboard: dưới 0,7 s kể cả vang, nhỏ hơn chuông, không chói (không có gì đáng kể
+    trên ~2,5 kHz), tắt hẳn ở cuối, và cùng tên luôn ra cùng byte (ồn gieo hạt cố định →
+    cache và test ổn định)."""
     for sound_name in UI_SOUNDS:
         assert render_sound(sound_name) == render_sound(sound_name), sound_name
         with wave.open(io.BytesIO(render_sound(sound_name)), "rb") as reader:
@@ -155,8 +163,13 @@ def test_ui_sounds_are_short_soft_and_stable() -> None:
             abs(int.from_bytes(samples[i : i + 2], "little", signed=True))
             for i in range(0, len(samples), 2)
         )
-        assert 0.2 * 32767 < peak <= 0.3 * 32767, f"{sound_name}: nhỏ hơn chuông nhưng nghe được"
+        assert 0.12 * 32767 < peak <= 0.2 * 32767, f"{sound_name}: nhỏ hơn chuông nhưng nghe được"
         assert samples[-2:] == b"\x00\x00", f"{sound_name}: phải tắt hẳn ở cuối, không 'cạch'"
+        values = [
+            int.from_bytes(samples[i : i + 2], "little", signed=True)
+            for i in range(0, len(samples), 2)
+        ]
+        assert brightness(values) < 0.3, f"{sound_name}: chói quá, nhức đầu"
 
 
 def test_ui_taps_reach_the_notifier(tmp_path: Path) -> None:
