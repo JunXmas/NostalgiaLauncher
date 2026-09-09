@@ -1,3 +1,19 @@
+## Nostalgia Launcher 1.0.1
+
+A small polish release on top of 1.0:
+
+- **Sharper home screen.** The hero image now ships at its full 2528 px, adaptively sharpened,
+  and is drawn with mipmaps — about twice the edge detail at display size.
+- **Continue playing** (already in the final 1.0 build): your most recent worlds across all
+  instances as Minecraft-style block buttons; one click launches the instance straight into that
+  world (quick play, Minecraft 1.20+).
+- CI flake in the modpack-import test fixed.
+
+Downloads and platform notes are the same as 1.0 below. If you run 1.0.0 on Linux or Windows,
+the launcher will offer this update by itself.
+
+---
+
 ## Nostalgia Launcher 1.0 — the rework
 
 The first release of the from-scratch rewrite of Nostalgia Launcher. Same name, same heart,
