@@ -25,11 +25,14 @@ import wave
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
-from nostalgia.ui.synth import SAMPLE_RATE, bell, echo, overlay, thump, to_pcm, whoosh
+from nostalgia.ui.synth import SAMPLE_RATE, bell, echo, overlay, soften, thump, to_pcm, whoosh
 
 NOTE_SECONDS = 0.13
 VOLUME = 0.35
-UI_PEAK = 0.3
+# Tiếng giao diện nhỏ hơn chuông và không có gì trên ~2,5 kHz: bản đầu (đỉnh 0,3, gió tới
+# 7 kHz) bị chê "khó nghe, nhức đầu".
+UI_PEAK = 0.2
+UI_CUTOFF_HZ = 2500.0
 SILENT_ENV = "NOSTALGIA_SILENT"
 
 # Mỗi sự kiện một giai điệu ngắn: lên = tốt, xuống = xong, trầm = hỏng.
@@ -67,42 +70,57 @@ def render_chime(frequencies: Sequence[float]) -> bytes:
     return wrap_wav(bytes(frames))
 
 
+def finish(layers: list[float]) -> bytes:
+    """Cắt dải cao rồi đóng gói — mọi tiếng giao diện đi qua đây cho cùng một "màu"."""
+    return wrap_wav(to_pcm(soften(layers, UI_CUTOFF_HZ), UI_PEAK))
+
+
 def render_nav() -> bytes:
-    """Steam Big Picture chuyển ô: một cái "tụp" — thụp trầm 240→150 Hz cộng hơi gió 50 ms."""
-    layers = overlay(
-        (thump(240.0, 150.0, 0.06, decay_rate=60.0), 1.0, 0.0),
-        (whoosh(0.05, 2500.0, 600.0, noise_seed=1, swell=0.2), 0.35, 0.0),
+    """Steam Big Picture chuyển ô: một cái "tụp" tròn — thụp trầm 200→120 Hz, chút hơi 50 ms."""
+    return finish(
+        overlay(
+            (thump(200.0, 120.0, 0.06, decay_rate=55.0), 1.0, 0.0),
+            (whoosh(0.05, 1200.0, 400.0, noise_seed=1, swell=0.2), 0.2, 0.0),
+        )
     )
-    return wrap_wav(to_pcm(layers, UI_PEAK))
 
 
 def render_select() -> bytes:
-    """Xbox 360 chọn: hai nốt chuông kính đi lên (E5 → A5) cách 70 ms, chút lấp lánh gió,
-    vang phòng ngắn."""
-    layers = overlay(
-        (bell(659.3, 0.32), 0.8, 0.0),
-        (bell(880.0, 0.38), 1.0, 0.07),
-        (whoosh(0.12, 1500.0, 7000.0, noise_seed=2, swell=0.3), 0.12, 0.0),
+    """Xbox 360 chọn: hai nốt chuông mềm đi lên (C5 → E5) cách 80 ms, vang phòng nhẹ."""
+    return finish(
+        echo(
+            overlay(
+                (bell(523.3, 0.30), 0.8, 0.0),
+                (bell(659.3, 0.36), 1.0, 0.08),
+            ),
+            0.09,
+            0.15,
+        )
     )
-    return wrap_wav(to_pcm(echo(layers, 0.09, 0.22), UI_PEAK))
 
 
 def render_open() -> bytes:
-    """Mở hộp / bung thẻ: gió thổi lên sáng dần 0,28 s, giữa chừng điểm một nốt kính C5."""
-    layers = overlay(
-        (whoosh(0.28, 350.0, 6000.0, noise_seed=3, swell=0.55), 0.7, 0.0),
-        (bell(523.3, 0.3), 0.6, 0.14),
+    """Mở hộp / bung thẻ: hơi gió trầm thổi lên 0,26 s, giữa chừng điểm một nốt G4 mềm."""
+    return finish(
+        echo(
+            overlay(
+                (whoosh(0.26, 250.0, 1500.0, noise_seed=3, swell=0.55), 0.6, 0.0),
+                (bell(392.0, 0.30), 0.7, 0.12),
+            ),
+            0.08,
+            0.12,
+        )
     )
-    return wrap_wav(to_pcm(echo(layers, 0.08, 0.18), UI_PEAK))
 
 
 def render_back() -> bytes:
-    """Lùi / đóng: gió xẹp xuống tối dần 0,22 s, kèm nốt kính trầm G4 ngắn ngay đầu."""
-    layers = overlay(
-        (whoosh(0.22, 5000.0, 300.0, noise_seed=4, swell=0.25), 0.7, 0.0),
-        (bell(392.0, 0.22), 0.5, 0.01),
+    """Lùi / đóng: hơi gió xẹp xuống 0,2 s, kèm nốt E4 trầm ngắn ngay đầu."""
+    return finish(
+        overlay(
+            (whoosh(0.20, 1500.0, 250.0, noise_seed=4, swell=0.25), 0.6, 0.0),
+            (bell(329.6, 0.22), 0.6, 0.01),
+        )
     )
-    return wrap_wav(to_pcm(layers, UI_PEAK))
 
 
 UI_SOUNDS: dict[str, Callable[[], bytes]] = {

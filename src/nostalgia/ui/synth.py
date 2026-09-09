@@ -14,8 +14,9 @@ import random
 import struct
 
 SAMPLE_RATE = 22050
-# Bồi âm chuông kính: (bội số tần số, biên độ). Hơi lệch khỏi số nguyên cho tiếng "thuỷ tinh".
-BELL_PARTIALS = ((1.0, 1.0), (2.0, 0.5), (3.01, 0.28), (4.16, 0.14), (5.43, 0.07))
+# Bồi âm chuông: (bội số tần số, biên độ). Chỉ ba bồi âm, bồi âm cao rất nhỏ — bản năm bồi âm
+# lên tới 5,4 lần nghe "chói, nhức đầu" (jun, 09/2026); hơi lệch số nguyên cho chút "thuỷ tinh".
+BELL_PARTIALS = ((1.0, 1.0), (2.0, 0.3), (3.01, 0.08))
 
 type Track = list[float]
 
@@ -37,10 +38,10 @@ def thump(start_hz: float, end_hz: float, seconds: float, *, decay_rate: float) 
 
 
 def bell(frequency: float, seconds: float) -> Track:
-    """Chuông kính: các bồi âm cùng vào trong 3 ms, bồi âm càng cao tắt càng nhanh; nốt còn
-    -60 dB đúng lúc hết `seconds`."""
+    """Chuông mềm: các bồi âm cùng vào trong 10 ms (vào 3 ms nghe gắt), bồi âm càng cao tắt
+    càng nhanh; nốt còn -60 dB đúng lúc hết `seconds`."""
     total = frames_for(seconds)
-    attack = frames_for(0.003)
+    attack = frames_for(0.010)
     base_rate = 6.9 / seconds
     track: Track = []
     for position in range(total):
@@ -56,20 +57,34 @@ def bell(frequency: float, seconds: float) -> Track:
 def whoosh(
     seconds: float, start_hz: float, end_hz: float, *, noise_seed: int, swell: float
 ) -> Track:
-    """Gió: ồn trắng qua lọc thông thấp một cực, tần số cắt lướt từ `start_hz` tới `end_hz`
-    (lên = sáng dần, xuống = tối dần); phồng lên tới đỉnh ở `swell` phần thời gian rồi xẹp."""
+    """Gió: ồn trắng qua lọc thông thấp HAI tầng (12 dB/oct — một tầng để lọt quá nhiều xì),
+    tần số cắt lướt từ `start_hz` tới `end_hz` (lên = sáng dần, xuống = tối dần); phồng lên
+    tới đỉnh ở `swell` phần thời gian rồi xẹp."""
     total = frames_for(seconds)
     rng = random.Random(noise_seed)
-    filtered = 0.0
+    first = second = 0.0
     track: Track = []
     for position in range(total):
         progress = position / total
         cutoff = start_hz * (end_hz / start_hz) ** progress
         alpha = 1 - math.exp(-2 * math.pi * cutoff / SAMPLE_RATE)
-        filtered += alpha * (rng.uniform(-1.0, 1.0) - filtered)
+        first += alpha * (rng.uniform(-1.0, 1.0) - first)
+        second += alpha * (first - second)
         shape = progress / swell if progress < swell else (1 - progress) / (1 - swell)
-        track.append(filtered * math.sin(math.pi / 2 * shape) ** 2)
+        track.append(second * math.sin(math.pi / 2 * shape) ** 2)
     return track
+
+
+def soften(track: Track, cutoff_hz: float) -> Track:
+    """Cắt dải cao toàn bộ hỗn hợp (lọc thông thấp hai tầng): dashboard nghe "tròn", không xì."""
+    alpha = 1 - math.exp(-2 * math.pi * cutoff_hz / SAMPLE_RATE)
+    first = second = 0.0
+    softened: Track = []
+    for value in track:
+        first += alpha * (value - first)
+        second += alpha * (first - second)
+        softened.append(second)
+    return softened
 
 
 def overlay(*layers: tuple[Track, float, float]) -> Track:
