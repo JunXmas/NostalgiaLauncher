@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QSize, QUrl
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQuick import QQuickView
 
 from nostalgia import __version__
@@ -38,6 +38,8 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     """
     view = QQuickView()
     view.engine().addImportPath(str(QML_DIR))
+    # Icon cửa sổ / thanh tác vụ: cùng chiếc lá với logo ở thanh bên và icon bộ cài.
+    view.setIcon(QIcon(str(QML_DIR / "assets" / "logo.png")))
     # Gắn cầu nối vào khung nhìn: Qt sẽ huỷ chúng **sau** cây QML, nên không còn cảnh báo
     # "bridge is null" ở những ràng buộc còn sống trong lúc đóng cửa sổ.
     bridge = LauncherBridge(launcher, parent=view)

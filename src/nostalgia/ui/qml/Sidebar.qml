@@ -24,10 +24,12 @@ Rectangle {
         anchors { top: parent.top; left: parent.left; margins: 20 }
         spacing: 11
 
-        Rectangle {
-            width: 34; height: 34; radius: 8; color: Theme.accentDeep
+        // Logo chiếc lá (packaging/icons/nostalgia.svg → assets/logo.png), cũng là icon ứng dụng.
+        Image {
+            width: 34; height: 34
             anchors.verticalCenter: parent.verticalCenter
-            Text { anchors.centerIn: parent; text: "▣"; color: "white"; font.pixelSize: 18 }
+            source: "assets/logo.png"
+            sourceSize: Qt.size(68, 68); smooth: true; mipmap: true
         }
         Column {
             anchors.verticalCenter: parent.verticalCenter
