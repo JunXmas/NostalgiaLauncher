@@ -32,7 +32,7 @@ def test_versions_compare_numerically_and_prereleases_rank_below() -> None:
 def test_github_release_json_becomes_a_release_with_assets() -> None:
     document: JsonValue = {
         "tag_name": "v0.2.0",
-        "html_url": "https://github.com/JunXmas/nostalgia/releases/tag/v0.2.0",
+        "html_url": "https://github.com/JunXmas/NostalgiaLauncher/releases/tag/v0.2.0",
         "body": "Nhật ký game, thông báo, thư viện skin.",
         "draft": False,
         "prerelease": False,
