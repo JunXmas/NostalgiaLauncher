@@ -50,17 +50,23 @@ class LaunchOptions:
     window_width: int | None = None
     window_height: int | None = None
     is_demo: bool = False
+    # Vào thẳng thế giới này (tên thư mục trong saves/). Đời < 1.20 không có quick play thì
+    # khối tham số không tồn tại trong JSON và game mở bình thường, không lỗi.
+    world_folder: str = ""
 
     @property
     def features(self) -> dict[str, bool]:
         """Cờ tính năng của Mojang, quyết định tham số nào được giữ lại.
 
-        Thiếu một cờ nghĩa là tắt, nên chỉ cần khai những cờ ta thật sự bật.
+        Thiếu một cờ nghĩa là tắt, nên chỉ cần khai những cờ ta thật sự bật. KHÔNG bật
+        `has_quick_plays_support`: cờ đó gác `--quickPlayPath ${quickPlayPath}` mà ta không
+        cấp biến, sẽ bị `_refuse_unresolved` chặn.
         """
         return {
             "is_demo_user": self.is_demo,
             "has_custom_resolution": self.window_width is not None
             and self.window_height is not None,
+            "is_quick_play_singleplayer": bool(self.world_folder),
         }
 
 
@@ -129,6 +135,7 @@ def build_launch_command(
         launcher_version=__version__,
         window_width=options.window_width,
         window_height=options.window_height,
+        quick_play_world=options.world_folder or None,
     )
 
     jvm_arguments = substitute_placeholders(

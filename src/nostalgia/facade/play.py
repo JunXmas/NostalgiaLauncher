@@ -32,12 +32,14 @@ class PlayOperations(AccountOperations):
         player_name: str,
         *,
         client_id: str = "",
+        world_folder: str = "",
         on_output: OutputFn = ignore_output,
         cancel_token: CancelToken | None = None,
     ) -> GameProcess:
         """Khởi động một bản chơi và trả về tiến trình đang chạy.
 
-        `client_id` chỉ cần khi tài khoản là Microsoft và vé đã tới lúc làm mới.
+        `client_id` chỉ cần khi tài khoản là Microsoft và vé đã tới lúc làm mới. `world_folder`
+        (tên thư mục trong saves/) đưa game vào thẳng thế giới đó — chỉ tác dụng từ 1.20.
         """
         instance = load_instance(self.paths, instance_id)
         account = self._require_account(player_name, client_id, cancel_token)
@@ -61,6 +63,7 @@ class PlayOperations(AccountOperations):
                 game_dir=game_dir_of(self.paths, instance),
                 window_width=instance.window_width,
                 window_height=instance.window_height,
+                world_folder=world_folder,
             ),
             tuning=tuning,
             virtual_assets_dir=self._virtual_assets_dir(version_meta),

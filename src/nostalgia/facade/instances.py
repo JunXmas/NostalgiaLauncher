@@ -1,7 +1,9 @@
-"""Bản chơi: đăng ký, lưu, gỡ, và thống kê chơi (giờ chơi, số lần chạy, thế giới, mod)."""
+"""Bản chơi: đăng ký, lưu, gỡ, thống kê chơi (giờ chơi, số lần chạy, thế giới, mod) và thế
+giới chơi gần đây cho ô CHƠI TIẾP."""
 
 from __future__ import annotations
 
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -25,6 +27,7 @@ from nostalgia.instance.store import (
     save_instance,
     unregister_instance,
 )
+from nostalgia.instance.world import DEFAULT_RECENT_LIMIT, RecentWorld, list_recent_worlds
 from nostalgia.settings.store import load_settings
 
 
@@ -80,3 +83,10 @@ class InstanceOperations(LauncherContext):
     ) -> PlayStats:
         """Game vừa thoát: cộng phiên chơi vào số liệu của bản chơi đó."""
         return record_play_session(self.paths, instance_id, started_at, ended_at)
+
+    def list_recent_worlds(
+        self, *, limit: int = DEFAULT_RECENT_LIMIT, now: float | None = None
+    ) -> tuple[RecentWorld, ...]:
+        """Chỉ đọc đĩa: thế giới chơi gần nhất trên mọi bản chơi, mới nhất trước."""
+        moment = time.time() if now is None else now
+        return list_recent_worlds(self.paths, list_instances(self.paths), limit=limit, now=moment)

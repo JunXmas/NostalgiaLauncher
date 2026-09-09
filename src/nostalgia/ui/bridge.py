@@ -45,6 +45,8 @@ class LauncherBridge(InstanceBridge):
         self._game_log = GameLogFeed(self)
         # `play` chạy ở luồng nền; timer gom lô phải bật/tắt ở luồng giao diện → đi qua tín hiệu.
         self.gameRunningChanged.connect(self._sync_game_log_session)
+        # Game vừa tắt: thế giới vừa chơi phải lên đầu ô CHƠI TIẾP (chỉ xoá cache, quét khi đọc).
+        self.gameStopped.connect(self._forget_recent_worlds)
 
     # ----- kho tài khoản trong RAM -----
 
@@ -145,6 +147,14 @@ class LauncherBridge(InstanceBridge):
     @Slot(str)
     def play(self, instance_id: str) -> None:
         """Chơi bằng tài khoản đang hoạt động."""
+        self._launch(instance_id)
+
+    @Slot(str, str)
+    def playWorld(self, instance_id: str, world_folder: str) -> None:
+        """Ô CHƠI TIẾP: mở bản chơi và vào thẳng thế giới (thư mục trong saves/)."""
+        self._launch(instance_id, world_folder)
+
+    def _launch(self, instance_id: str, world_folder: str = "") -> None:
         player_name = str(self.activePlayerName)
 
         def work() -> None:
@@ -164,7 +174,10 @@ class LauncherBridge(InstanceBridge):
             # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
             self._game_log.reset()
             game = self._launcher.launch_instance(
-                instance_id, player_name, on_output=self._game_log.receive
+                instance_id,
+                player_name,
+                world_folder=world_folder,
+                on_output=self._game_log.receive,
             )
             started_at = time.time()
             self._set_game_running(True)
@@ -180,7 +193,10 @@ class LauncherBridge(InstanceBridge):
             if exit_code != 0:
                 self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))
 
-        self.run_in_background(work, f"Khởi động {instance_id}")
+        activity = (
+            f"Vào {world_folder} ({instance_id})" if world_folder else f"Khởi động {instance_id}"
+        )
+        self.run_in_background(work, activity)
 
     # ----- nội bộ -----
 
