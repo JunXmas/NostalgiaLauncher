@@ -137,8 +137,10 @@ def test_blips_are_short_soft_glides() -> None:
             duration = reader.getnframes() / reader.getframerate()
             samples = reader.readframes(reader.getnframes())
         assert 0.05 <= duration <= 0.25, f"{sound_name}: blip phải ngắn"
-        peak = max(abs(int.from_bytes(samples[i : i + 2], "little", signed=True))
-                   for i in range(0, len(samples), 2))
+        peak = max(
+            abs(int.from_bytes(samples[i : i + 2], "little", signed=True))
+            for i in range(0, len(samples), 2)
+        )
         assert 0 < peak < 0.3 * 32767, f"{sound_name}: blip phải nhỏ hơn chuông"
         assert samples[-2:] == b"\x00\x00", f"{sound_name}: phải tắt hẳn ở cuối, không 'cạch'"
 
