@@ -31,7 +31,7 @@ def test_import_apply_and_remove_through_the_bridge(tmp_path: Path) -> None:
 
     skin_file = tmp_path / "ao-xanh.png"
     skin_file.write_bytes(PNG_HEADER + b"xanh")
-    account_bridge.importSkin(QUrl.fromLocalFile(str(skin_file)).toString(), True)
+    account_bridge.addSkin("", QUrl.fromLocalFile(str(skin_file)).toString(), True)
     wait_until(lambda: len(account_bridge.skinLibrary) == 1 and not account_bridge.busy)
     [row] = account_bridge.skinLibrary
     assert (row["name"], row["slim"], row["sourceLabel"]) == ("ao-xanh", True, "Tự nhập")
@@ -52,6 +52,24 @@ def test_import_apply_and_remove_through_the_bridge(tmp_path: Path) -> None:
     assert account_bridge.accountNamed("Jun")["isDefaultSkin"] is False, (
         "gỡ khỏi kho không đụng skin đang dùng"
     )
+
+
+def test_add_skin_for_a_non_microsoft_account_stores_and_applies_at_once(tmp_path: Path) -> None:
+    """Một nút "Thêm skin" thay cho hai nút cũ (Tuỳ chỉnh / Tải skin lên): tài khoản không phải
+    Microsoft thì file vào kho VÀ được dùng ngay, không cần bấm thêm "Dùng"."""
+    launcher = make_launcher(tmp_path)
+    launcher.add_offline_account("Jun")
+    account_bridge = AccountBridge(launcher, LauncherBridge(launcher))
+    skin_file = tmp_path / "ao-do.png"
+    skin_file.write_bytes(PNG_HEADER + b"do")
+
+    applied: list[str] = []
+    account_bridge.skinUploaded.connect(applied.append)
+    account_bridge.addSkin("Jun", QUrl.fromLocalFile(str(skin_file)).toString(), False)
+    wait_until(lambda: applied == ["Jun"] and not account_bridge.busy)
+    [row] = account_bridge.skinLibrary
+    wait_until(lambda: account_bridge.accountNamed("Jun")["skinDigest"] == row["entryId"])
+    assert account_bridge.accountNamed("Jun")["isDefaultSkin"] is False
 
 
 def test_library_grid_renders_entries(tmp_path: Path) -> None:

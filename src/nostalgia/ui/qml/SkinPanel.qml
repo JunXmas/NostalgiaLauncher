@@ -1,8 +1,7 @@
 import QtQuick
-import QtQuick.Dialogs
 
 /*
-  Ô Skin/Cape: tab, mô tả, nút làm mới + upload (chỉ Microsoft), checkbox slim,
+  Ô Skin/Cape: tab, mô tả, nút làm mới, thư viện skin (nút "Thêm skin" duy nhất nằm ở đó)
   và xem trước cape. Tách khỏi AccountsPage để giữ mỗi file ≤ 200 dòng.
 */
 Panel {
@@ -10,7 +9,6 @@ Panel {
     property var shown: ({})
     property bool hasShown: false
     property string tab: "skin"
-    property bool slimUpload: false
 
     title: ""
 
@@ -33,30 +31,16 @@ Panel {
             visible: skinPanel.hasShown && skinPanel.tab === "skin"
             width: parent.width; wrapMode: Text.WordWrap
             text: !skinPanel.hasShown ? ""
-                  : skinPanel.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang. Có thể tải skin PNG mới lên bằng nút bên dưới."
-                  : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Đổi skin/cape tại ely.by → Skins; trong game bạn bè cũng thấy nhờ authlib-injector."
-                  : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Muốn có skin riêng, thêm tài khoản Ely.by."
+                  : skinPanel.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới."
+                  : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Đổi skin/cape thật tại ely.by → Skins (bạn bè trong game thấy nhờ authlib-injector); \"Thêm skin\" chỉ đổi ảnh hiện trong launcher."
+                  : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher."
             color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
         }
-        Row {
+        ActionButton {
             visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind !== "offline"
-            spacing: 10
-            ActionButton {
-                primary: false
-                label: "⟳  Làm mới"
-                onClicked: accountBridge.refreshSkins()
-            }
-            ActionButton {
-                visible: skinPanel.hasShown && skinPanel.shown.accountKind === "microsoft"
-                label: "📁  Tải skin lên"
-                onClicked: skinFileDialog.open()
-            }
-            CheckRow {
-                visible: skinPanel.hasShown && skinPanel.shown.accountKind === "microsoft"
-                label: "Slim (Alex)"
-                checked: skinPanel.slimUpload
-                onToggled: skinPanel.slimUpload = !skinPanel.slimUpload
-            }
+            primary: false
+            label: "⟳  Làm mới"
+            onClicked: accountBridge.refreshSkins()
         }
         SkinLibrary {
             width: parent.width
@@ -90,12 +74,5 @@ Panel {
                 }
             }
         }
-    }
-
-    FileDialog {
-        id: skinFileDialog
-        title: "Chọn file skin PNG"
-        nameFilters: ["Ảnh PNG (*.png)"]
-        onAccepted: accountBridge.uploadSkin(skinPanel.shown.playerName, selectedFile, skinPanel.slimUpload)
     }
 }

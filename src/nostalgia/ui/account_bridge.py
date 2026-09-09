@@ -96,15 +96,30 @@ class AccountBridge(WorkerBridge):
             for skin_entry in self._launcher.list_skin_library()
         ]
 
-    @Slot(str, bool)
-    def importSkin(self, file_url: str, slim: bool) -> None:
+    @Slot(str, str, bool)
+    def addSkin(self, player_name: str, file_url: str, slim: bool) -> None:
+        """Một nút "Thêm skin" cho mọi loại tài khoản: Microsoft thì upload lên Mojang (và tự
+        vào kho); loại khác thì cất vào kho rồi dùng ngay trong launcher; chưa chọn tài khoản
+        thì chỉ cất vào kho."""
+        account = self._find_account(player_name)
+        if account is not None and account.account_kind == MICROSOFT:
+            self.uploadSkin(player_name, file_url, slim)
+            return
         skin_path = Path(QUrl(file_url).toLocalFile())
 
         def work() -> None:
-            self._launcher.import_skin(skin_path, slim=slim)
-            self.libraryChanged.emit()
+            try:
+                skin_entry = self._launcher.import_skin(skin_path, slim=slim)
+                self.libraryChanged.emit()
+                if account is None:
+                    return
+                self._launcher.apply_library_skin(account, skin_entry.entry_id)
+                self._skinsRefreshed.emit()
+                self.skinUploaded.emit(player_name)
+            except NostalgiaError as exc:
+                self.skinUploadFailed.emit(str(exc))
 
-        self.run_in_background(work, "Thêm skin vào thư viện")
+        self.run_in_background(work, "Thêm skin")
 
     @Slot(str, str)
     def applyLibrarySkin(self, player_name: str, entry_id: str) -> None:
