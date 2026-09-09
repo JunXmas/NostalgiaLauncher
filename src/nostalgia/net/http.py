@@ -22,6 +22,24 @@ from urllib.parse import urljoin, urlsplit
 from nostalgia.errors import Cancelled, NetworkError
 from nostalgia.operations.cancellation import CancelToken
 
+_TLS_LOCK = threading.Lock()
+_TLS_CACHE: dict[str, ssl.SSLContext] = {}
+
+
+def default_tls_context() -> ssl.SSLContext:
+    """Context TLS mặc định dùng chung cho cả tiến trình, tạo MỘT lần dưới khoá.
+
+    Nạp chứng chỉ hệ thống (`load_default_certs`) song song từ nhiều luồng từng làm CPython
+    segfault trên CI: lúc mở cửa sổ, vài cầu nối cùng dựng `HttpClient` trong luồng nền. Một
+    `SSLContext` dùng chung sau khi tạo là an toàn, và khỏi đọc lại kho chứng chỉ mỗi lần.
+    """
+    with _TLS_LOCK:
+        context = _TLS_CACHE.get("default")
+        if context is None:
+            context = _TLS_CACHE["default"] = ssl.create_default_context()
+        return context
+
+
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
 STREAM_CHUNK_SIZE = 64 * 1024
 MAX_REDIRECTS = 5
@@ -67,7 +85,7 @@ class HttpClient:
         thật; cả hai đều tệ hơn một chỗ tiêm rõ ràng.
         """
         self._timeout_seconds = timeout_seconds
-        self._tls_context = tls_context or ssl.create_default_context()
+        self._tls_context = tls_context or default_tls_context()
         self._local = threading.local()
         # Giữ danh sách mọi kết nối đã mở để `close()` đóng được cả kết nối của luồng khác.
         self._connections: list[http.client.HTTPSConnection] = []

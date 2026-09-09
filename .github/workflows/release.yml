@@ -1,8 +1,12 @@
 name: Release
 
-# Chạy khi đẩy tag `vX.Y.Z`. Kết quả là một GitHub Release ở dạng DRAFT kèm gói Linux/Windows
-# và SHA256SUMS — chủ dự án soi rồi bấm publish; bộ tự cập nhật trong launcher chỉ nhìn thấy
-# bản đã publish (API `releases/latest` bỏ qua draft).
+# Chạy khi đẩy tag `vX.Y.Z`. Mỗi hệ dựng gói PyInstaller onedir, CHẠY THỬ gói đó
+# (NOSTALGIA_SMOKE_TEST=1: nạp QML + cầu nối rồi thoát), rồi đóng thành bộ cài:
+#   Linux x64   : .zip (bộ tự cập nhật), .tar.gz, .AppImage, .deb, .rpm
+#   macOS       : .zip (bộ tự cập nhật) + .dmg, riêng cho Apple Silicon (arm64) và Intel (x64)
+#   Windows x64 : .zip (bộ tự cập nhật) + bộ cài setup.exe (Inno Setup)
+# Kết quả là một GitHub Release DRAFT kèm SHA256SUMS của mọi file; chủ dự án soi rồi publish
+# (bộ tự cập nhật chỉ nhìn thấy bản đã publish).
 
 on:
   push:
@@ -10,6 +14,10 @@ on:
 
 permissions:
   contents: write
+
+env:
+  APPIMAGETOOL_URL: https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+  APPIMAGETOOL_SHA256: ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
 
 jobs:
   check:
@@ -39,10 +47,20 @@ jobs:
         include:
           - os: ubuntu-22.04
             bundle_os: linux
+            bundle_arch: x64
           - os: windows-latest
             bundle_os: windows
+            bundle_arch: x64
+          - os: macos-14
+            bundle_os: macos
+            bundle_arch: arm64
+          - os: macos-15-intel
+            bundle_os: macos
+            bundle_arch: x64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
+    env:
+      BUNDLE_NAME: nostalgia-${{ github.ref_name }}-${{ matrix.bundle_os }}-${{ matrix.bundle_arch }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -50,19 +68,79 @@ jobs:
           enable-cache: true
           python-version: "3.12"
       - run: uv sync --locked --extra ui --group build
+
+      - name: Icon .icns cho macOS
+        if: matrix.bundle_os == 'macos'
+        run: |
+          set -e
+          mkdir -p nostalgia.iconset
+          for size in 16 32 128 256; do
+            sips -z $size $size packaging/icons/nostalgia.png --out nostalgia.iconset/icon_${size}x${size}.png >/dev/null
+            double=$((size * 2))
+            sips -z $double $double packaging/icons/nostalgia.png --out nostalgia.iconset/icon_${size}x${size}@2x.png >/dev/null
+          done
+          iconutil -c icns nostalgia.iconset -o packaging/icons/nostalgia.icns
+
       - name: Đóng gói bằng PyInstaller
         run: uv run pyinstaller --noconfirm packaging/nostalgia-ui.spec
-      - name: Nén thành nostalgia-<ver>-<os>-x64.zip
+
+      - name: Chạy thử gói đóng sẵn (Linux)
+        if: matrix.bundle_os == 'linux'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0 libfontconfig1
+          NOSTALGIA_SMOKE_TEST=1 QT_QPA_PLATFORM=offscreen HOME="$RUNNER_TEMP/home" dist/nostalgia-ui/nostalgia-ui
+      - name: Chạy thử gói đóng sẵn (macOS)
+        if: matrix.bundle_os == 'macos'
+        run: NOSTALGIA_SMOKE_TEST=1 QT_QPA_PLATFORM=offscreen HOME="$RUNNER_TEMP/home" "dist/Nostalgia Launcher.app/Contents/MacOS/nostalgia-ui"
+      - name: Chạy thử gói đóng sẵn (Windows)
+        if: matrix.bundle_os == 'windows'
+        shell: pwsh
+        run: |
+          $env:NOSTALGIA_SMOKE_TEST = "1"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:USERPROFILE = "$env:RUNNER_TEMP\home"
+          $proc = Start-Process -FilePath "dist\nostalgia-ui\nostalgia-ui.exe" -Wait -PassThru
+          if ($proc.ExitCode -ne 0) { throw "gói Windows thoát mã $($proc.ExitCode)" }
+
+      - name: Gói zip cho bộ tự cập nhật (Linux, Windows)
+        if: matrix.bundle_os != 'macos'
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          name="nostalgia-${version}-${{ matrix.bundle_os }}-x64"
           mkdir -p out
-          cd dist && mv nostalgia-ui "Nostalgia" && python -c "import shutil; shutil.make_archive('../out/${name}', 'zip', '.', 'Nostalgia')"
+          name="nostalgia-${GITHUB_REF_NAME#v}-${{ matrix.bundle_os }}-${{ matrix.bundle_arch }}"
+          python -c "import shutil; shutil.copytree('dist/nostalgia-ui', 'build/zip/Nostalgia'); shutil.make_archive('out/${name}', 'zip', 'build/zip', 'Nostalgia')"
+      - name: Gói zip + dmg (macOS)
+        if: matrix.bundle_os == 'macos'
+        run: |
+          set -e
+          mkdir -p out build/dmg
+          name="nostalgia-${GITHUB_REF_NAME#v}-${{ matrix.bundle_os }}-${{ matrix.bundle_arch }}"
+          ditto -c -k --keepParent "dist/Nostalgia Launcher.app" "out/${name}.zip"
+          cp -R "dist/Nostalgia Launcher.app" build/dmg/
+          ln -s /Applications build/dmg/Applications
+          hdiutil create -volname "Nostalgia Launcher" -srcfolder build/dmg -ov -format UDZO "out/${name}.dmg"
+
+      - name: AppImage, deb, rpm, tar.gz (Linux)
+        if: matrix.bundle_os == 'linux'
+        run: |
+          set -e
+          sudo apt-get install -y -qq rpm
+          curl -sSL -o appimagetool "$APPIMAGETOOL_URL"
+          echo "$APPIMAGETOOL_SHA256  appimagetool" | sha256sum -c -
+          chmod +x appimagetool && ./appimagetool --appimage-extract >/dev/null
+          APPIMAGETOOL="$PWD/squashfs-root/AppRun" packaging/linux/build-packages.sh "${GITHUB_REF_NAME#v}"
+      - name: Bộ cài setup.exe (Windows, Inno Setup)
+        if: matrix.bundle_os == 'windows'
+        shell: pwsh
+        run: |
+          $env:NOSTALGIA_VERSION = "${{ github.ref_name }}".TrimStart("v")
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\windows\installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC thoát mã $LASTEXITCODE" }
+
       - uses: actions/upload-artifact@v4
         with:
-          name: bundle-${{ matrix.bundle_os }}
-          path: out/*.zip
+          name: bundle-${{ matrix.bundle_os }}-${{ matrix.bundle_arch }}
+          path: out/*
           if-no-files-found: error
 
   release:
@@ -70,16 +148,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: bundles
           merge-multiple: true
       - name: SHA256SUMS
-        run: cd bundles && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS
+        run: cd bundles && sha256sum * > SHA256SUMS && cat SHA256SUMS
       - name: Tạo release DRAFT (chủ dự án publish tay)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" bundles/*.zip bundles/SHA256SUMS \
+          gh release create "${GITHUB_REF_NAME}" bundles/* \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
-            --generate-notes
+            --notes-file docs/RELEASE_NOTES.md

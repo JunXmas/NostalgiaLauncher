@@ -7,12 +7,20 @@ Onedir (một thư mục) thay vì onefile: bộ tự cập nhật tráo CẢ TH
 và khởi động nhanh hơn vì không phải bung 100 MB vào thư mục tạm mỗi lần mở.
 """
 
+import re
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files
 
 ROOT = Path(SPECPATH).parent
 PACKAGE = ROOT / "src" / "nostalgia"
+VERSION = re.search(r'__version__ = "([^"]+)"', (PACKAGE / "__init__.py").read_text()).group(1)
+ICONS = ROOT / "packaging" / "icons"
+# Icon theo hệ: Windows nhúng .ico vào exe; macOS dùng .icns do workflow sinh từ PNG bằng
+# iconutil (chỉ có trên macOS); Linux lấy PNG qua .desktop nên không cần ở đây.
+EXE_ICON = str(ICONS / "nostalgia.ico") if sys.platform == "win32" else None
+APP_ICON = str(ICONS / "nostalgia.icns") if (ICONS / "nostalgia.icns").is_file() else None
 
 # QML, ảnh, skin mặc định: PyInstaller không tự thấy file được nạp bằng đường dẫn lúc chạy.
 datas = [
@@ -45,6 +53,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
+    icon=EXE_ICON,
 )
 coll = COLLECT(
     exe,
@@ -55,3 +64,18 @@ coll = COLLECT(
     upx=False,
     name="nostalgia-ui",
 )
+# macOS: bọc thêm thành .app để kéo vào Applications và đóng .dmg; thư mục onedir vẫn được
+# giữ trong dist/nostalgia-ui cho gói zip của bộ tự cập nhật.
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="Nostalgia Launcher.app",
+        icon=APP_ICON,
+        bundle_identifier="dev.junxmas.nostalgia",
+        info_plist={
+            "CFBundleShortVersionString": VERSION,
+            "CFBundleVersion": VERSION,
+            "NSHighResolutionCapable": True,
+            "LSMinimumSystemVersion": "12.0",
+        },
+    )

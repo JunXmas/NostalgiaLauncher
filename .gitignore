@@ -5,7 +5,10 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
+out/
+packaging/icons/nostalgia.icns
 *.egg-info/
 .claude/
 .env
 CLAUDE.md
+*.log

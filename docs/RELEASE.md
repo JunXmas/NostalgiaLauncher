@@ -11,10 +11,18 @@
    ```
 
 3. Workflow `.github/workflows/release.yml` chạy: kiểm tag khớp `__version__`, lint + test,
-   đóng gói PyInstaller onedir cho Linux và Windows, nén thành
-   `nostalgia-<ver>-<os>-x64.zip`, ghi `SHA256SUMS`, và tạo **GitHub Release dạng DRAFT**.
+   rồi trên từng hệ: đóng gói PyInstaller onedir, **chạy thử gói** (`NOSTALGIA_SMOKE_TEST=1`
+   nạp QML + cầu nối rồi thoát), và dựng bộ cài:
+   - Linux x64 (ubuntu-22.04, glibc 2.35): `.zip` cho bộ tự cập nhật, `.tar.gz`, `.AppImage`
+     (appimagetool 1.9.1 ghim sha256), `.deb`, `.rpm` — `packaging/linux/build-packages.sh`.
+   - macOS arm64 (macos-14) và x64 (macos-15-intel): `.app` (BUNDLE trong spec) → `.zip` + `.dmg`.
+   - Windows x64: `.zip` + `setup.exe` bằng Inno Setup (`packaging/windows/installer.iss`,
+     cài vào thư mục người dùng, không cần admin, để bộ tự cập nhật tráo được).
+   Cuối cùng ghi `SHA256SUMS` cho mọi file và tạo **GitHub Release dạng DRAFT** với ghi chú
+   từ `docs/RELEASE_NOTES.md` (cập nhật file này trước khi tag).
 4. Tải gói draft về chạy thử. Ổn thì bấm **Publish release**. Bộ tự cập nhật chỉ nhìn thấy
-   bản đã publish (`releases/latest` bỏ qua draft và pre-release).
+   bản đã publish (`releases/latest` bỏ qua draft và pre-release). Gói macOS (`.app`) không tự
+   tráo — launcher chỉ báo có bản mới và mở trang tải.
 
 Gom nhiều thay đổi vào một bản — đừng ra bản dồn dập để người dùng kịp test.
 
