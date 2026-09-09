@@ -25,7 +25,7 @@ import wave
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
-from nostalgia.ui.synth import SAMPLE_RATE, bell, echo, overlay, soften, thump, to_pcm, whoosh
+from nostalgia.ui.synth import SAMPLE_RATE, bell, blip, echo, overlay, soften, to_pcm, whoosh
 
 NOTE_SECONDS = 0.13
 VOLUME = 0.35
@@ -76,11 +76,11 @@ def finish(layers: list[float]) -> bytes:
 
 
 def render_nav() -> bytes:
-    """Steam Big Picture chuyển ô: một cái "tụp" tròn — thụp trầm 200→120 Hz, chút hơi 50 ms."""
+    """Chuyển ô (thanh bên, loader): blip 8-bit lướt lên 880→1175 Hz, 70 ms — cú thụp trầm
+    kiểu Steam Big Picture bị chê khó nghe, jun muốn giữ tiếng 8-bit ở đây."""
     return finish(
         overlay(
-            (thump(200.0, 120.0, 0.06, decay_rate=55.0), 1.0, 0.0),
-            (whoosh(0.05, 1200.0, 400.0, noise_seed=1, swell=0.2), 0.2, 0.0),
+            (blip(880.0, 1174.7, 0.07), 1.0, 0.0),
         )
     )
 

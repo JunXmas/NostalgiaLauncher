@@ -25,15 +25,19 @@ def frames_for(seconds: float) -> int:
     return max(1, int(SAMPLE_RATE * seconds))
 
 
-def thump(start_hz: float, end_hz: float, seconds: float, *, decay_rate: float) -> Track:
-    """Sin lướt cao độ (cấp số nhân) tắt dần theo hàm mũ — cú "thụp" trầm rất ngắn."""
+def blip(start_hz: float, end_hz: float, seconds: float) -> Track:
+    """Blip "8-bit": một nốt sin lướt cao độ (cấp số nhân) với bồi âm bậc hai nhỏ, vào 8 ms,
+    tắt dần theo nửa cosin. Tiếng chuyển ô ở thanh bên — jun chọn lại kiểu này thay cho cú
+    thụp trầm (09/2026)."""
     total = frames_for(seconds)
+    attack = frames_for(0.008)
     phase = 0.0
     track: Track = []
     for position in range(total):
         progress = position / total
         phase += 2 * math.pi * start_hz * (end_hz / start_hz) ** progress / SAMPLE_RATE
-        track.append(math.sin(phase) * math.exp(-decay_rate * position / SAMPLE_RATE))
+        envelope = min(1.0, position / attack) * (0.5 + 0.5 * math.cos(math.pi * progress))
+        track.append(envelope * (math.sin(phase) + 0.2 * math.sin(2 * phase)))
     return track
 
 
