@@ -1,6 +1,8 @@
 <div align="center">
 
-# ⛏ Nostalgia Launcher
+<img src="packaging/icons/nostalgia-128.png" width="96" alt="Nostalgia Launcher logo">
+
+# Nostalgia Launcher
 
 ### A Minecraft launcher rebuilt from zero — for the feeling of coming home.
 
