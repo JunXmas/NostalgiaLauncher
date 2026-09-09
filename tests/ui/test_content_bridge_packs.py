@@ -100,7 +100,10 @@ def test_import_modpack_file_creates_an_instance_from_a_local_mrpack(
     mrpack.ALLOWED_HOSTS = (host,)
     try:
         content_bridge.importModpackFile(pack_path.as_uri(), "", "")
-        wait_until(lambda: bool(created) or not content_bridge.busy)
+        # `busy` tắt trước khi tín hiệu queued `modpackInstalled` được giao, nên chờ hết bận
+        # RỒI chờ tín hiệu (ngắn) — chờ "một trong hai" từng làm CI rớt ngẫu nhiên với created=[].
+        wait_until(lambda: not content_bridge.busy)
+        wait_until(lambda: bool(created), seconds=2.0)
     finally:
         mrpack.ALLOWED_HOSTS = original
     assert created == ["tai-ve"]
