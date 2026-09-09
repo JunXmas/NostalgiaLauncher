@@ -20,7 +20,7 @@ Item {
         var packs = [];
         for (var index = 0; index < urls.length; index++)
             if (page.isPackUrl(urls[index])) packs.push(String(urls[index]));
-        if (packs.length > 0) contentBridge.importModpackFile(packs[0], "");
+        if (packs.length > 0) contentBridge.importModpackFile(packs[0], "", "");
         return packs.length;
     }
 
@@ -78,6 +78,7 @@ Item {
                     versionId: modelData.versionId
                     playtimeText: modelData.playtimeText; launchCount: modelData.launchCount
                     worldCount: modelData.worldCount; modCount: modelData.modCount
+                    customGameDir: modelData.customGameDir
                     removable: true
                     editable: true
                     iconUrl: modelData.iconUrl || ""
@@ -134,6 +135,6 @@ Item {
         id: packPicker
         title: "Chọn modpack"
         nameFilters: ["Modpack (*.mrpack *.zip)", "Mọi file (*)"]
-        onAccepted: contentBridge.importModpackFile(selectedFile.toString(), "")
+        onAccepted: contentBridge.importModpackFile(selectedFile.toString(), "", "")
     }
 }

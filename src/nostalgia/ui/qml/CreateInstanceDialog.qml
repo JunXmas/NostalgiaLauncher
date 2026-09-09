@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Dialogs
 
 /*
   Hộp thoại tạo bản chơi, hai cột theo bản mẫu: trái là form (ảnh minh hoạ của dòng đang chọn,
@@ -64,8 +65,11 @@ Item {
     function versionsOf(major) {
         return catalogBridge.releasedVersions.filter(function (r) { return r.major === major; });
     }
+    // Thư mục chơi riêng (URL file:// từ FolderDialog); rỗng = theo cài đặt / mặc định.
+    property string gameDirUrl: ""
+    readonly property string gameDirPath: gameDirUrl ? decodeURIComponent(String(gameDirUrl).replace(/^file:\/\//, "")) : ""
     function openDialog() {
-        dialog.gameVersion = ""; dialog.loaderVersion = ""; dialog.expandedMajor = "";
+        dialog.gameVersion = ""; dialog.loaderVersion = ""; dialog.expandedMajor = ""; dialog.gameDirUrl = "";
         nameField.text = ""; heapField.text = "";
         dialog.visible = true;
         if (catalogBridge.releasedVersions.length === 0) catalogBridge.loadReleasedVersions();
@@ -147,13 +151,27 @@ Item {
                 Column {
                     spacing: 5; width: parent.width
                     Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                    // Bấm để chọn ổ khác cho mods/saves của bản chơi này (kho chung vẫn ở data_dir).
                     Rectangle {
+                        objectName: "gameDirPicker"
                         width: parent.width; height: 34; radius: Theme.radiusSmall
-                        color: Theme.surfaceHigh; border.color: Theme.border
+                        color: Theme.surfaceHigh; border.color: folderHover.hovered ? Theme.accent : Theme.border
                         Text {
-                            anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
-                            text: "Mặc định trong instances/"; color: Theme.textMuted; font.pixelSize: 12
+                            anchors { left: parent.left; leftMargin: 10; right: clearFolder.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
+                            text: dialog.gameDirUrl ? dialog.gameDirPath
+                                  : (settingsBridge.defaultGameDirRoot ? "Mặc định: " + settingsBridge.defaultGameDirRoot + "/…" : "Mặc định trong instances/ — bấm để chọn ổ khác")
+                            elide: Text.ElideMiddle
+                            color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 12
                         }
+                        Text {
+                            id: clearFolder
+                            visible: dialog.gameDirUrl !== ""
+                            anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                            text: "✕"; color: Theme.textMuted; font.pixelSize: 11
+                            TapHandler { onTapped: dialog.gameDirUrl = "" }
+                        }
+                        HoverHandler { id: folderHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: folderPicker.open() }
                     }
                 }
 
@@ -242,7 +260,8 @@ Item {
                     clickable: dialog.canCreate
                     onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName,
                                                             dialog.gameVersion, dialog.loaderKind,
-                                                            dialog.loaderVersion, parseInt(heapField.text) || 0)
+                                                            dialog.loaderVersion, parseInt(heapField.text) || 0,
+                                                            dialog.gameDirUrl)
                 }
             }
         }
@@ -409,5 +428,11 @@ Item {
                 }
             }
         }
+    }
+
+    FolderDialog {
+        id: folderPicker
+        title: "Chọn thư mục chơi cho bản chơi này"
+        onAccepted: dialog.gameDirUrl = selectedFolder.toString()
     }
 }

@@ -15,7 +15,7 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from nostalgia.api import Instance, Launcher
 from nostalgia.modloader.model import LoaderKind
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.worker import WorkerBridge
+from nostalgia.ui.worker import WorkerBridge, local_path
 
 
 def slugify(display_name: str, taken: set[str]) -> str:
@@ -112,7 +112,7 @@ class CatalogBridge(WorkerBridge):
 
         self.run_in_background(work, f"Lấy danh sách bản {loader_kind} cho {game_version}")
 
-    @Slot(str, str, str, str, int)
+    @Slot(str, str, str, str, int, str)
     def createInstance(
         self,
         display_name: str,
@@ -120,12 +120,15 @@ class CatalogBridge(WorkerBridge):
         loader_kind: str,
         loader_version: str,
         max_heap_megabytes: int,
+        game_dir_url: str,
     ) -> None:
-        """Cài phiên bản (và Fabric nếu chọn) rồi đăng ký bản chơi. Chạm mạng, chạy nền."""
+        """Cài phiên bản (và Fabric nếu chọn) rồi đăng ký bản chơi. Chạm mạng, chạy nền.
+        `game_dir_url` là thư mục chơi riêng do FolderDialog trả (file://); rỗng = mặc định."""
+        game_dir_override = local_path(game_dir_url)
 
         def work() -> None:
             if loader_kind == "optimized":
-                self._create_preset(display_name, game_version)
+                self._create_preset(display_name, game_version, game_dir_override)
                 return
             report = self._launcher.install_loader(
                 cast(LoaderKind, loader_kind),
@@ -140,6 +143,7 @@ class CatalogBridge(WorkerBridge):
                 version_id=version_id,
                 display_name=display_name.strip(),
                 max_heap_megabytes=max_heap_megabytes or None,
+                game_dir_override=game_dir_override,
             )
             self._launcher.create_instance(instance)
             self._main_bridge.instancesChanged.emit()
@@ -150,7 +154,7 @@ class CatalogBridge(WorkerBridge):
         )
         self.run_in_background(work, f"Cài {loader_label} {game_version} và tạo bản chơi")
 
-    def _create_preset(self, display_name: str, game_version: str) -> None:
+    def _create_preset(self, display_name: str, game_version: str, game_dir_override: str) -> None:
         taken = {instance.instance_id for instance in self._launcher.list_instances()}
         display_label = display_name.strip() or f"Optimized {game_version}"
         instance = self._launcher.install_preset(
@@ -158,6 +162,7 @@ class CatalogBridge(WorkerBridge):
             slugify(display_label, taken),
             display_label,
             game_version=game_version,
+            game_dir_override=game_dir_override,
             on_progress=self._main_bridge.report_progress,
         )
         self._main_bridge.instancesChanged.emit()

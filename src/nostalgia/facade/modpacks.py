@@ -19,9 +19,9 @@ from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.mrpack import apply_overrides, plan_downloads, read_index
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.content import ContentOperations
+from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.loaders import LoaderOperations
 from nostalgia.instance.model import Instance
-from nostalgia.instance.store import create_instance, list_instances
 from nostalgia.model.download import DownloadTask
 from nostalgia.modloader.model import LoaderKind, detect_loader_kind
 from nostalgia.net.download import download_all, download_one
@@ -52,7 +52,7 @@ def choose_pack_version(versions: tuple[ProjectVersion, ...], game_version: str)
     return next((v for v in pool if v.version_type == "release"), pool[0])
 
 
-class ModpackOperations(LoaderOperations, ContentOperations):
+class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations):
     __slots__ = ()
 
     def install_modpack(
@@ -62,6 +62,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
         display_name: str = "",
         *,
         game_version: str = "",
+        game_dir_override: str = "",
         allowed_hosts: tuple[str, ...] | None = None,
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
@@ -75,9 +76,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
         if project.content_kind != "modpack":
             message = f"{project.title!r} không phải modpack"
             raise ContentError(message)
-        if instance_id in {instance.instance_id for instance in list_instances(self.paths)}:
-            message = f"đã có bản chơi {instance_id!r}"
-            raise ContentError(message)
+        self.require_instance_id_free(instance_id)
         with self.make_http_client() as http_client:
             versions = self.fetch_versions(http_client, project.source, project.project_id)
             chosen = choose_pack_version(versions, game_version)
@@ -98,6 +97,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
                     instance_id,
                     display_name,
                     icon_url=project.icon_url,
+                    game_dir_override=game_dir_override,
                     on_progress=on_progress,
                     cancel_token=cancel_token,
                 )
@@ -111,15 +111,14 @@ class ModpackOperations(LoaderOperations, ContentOperations):
         instance_id: str,
         display_name: str = "",
         *,
+        game_dir_override: str = "",
         allowed_hosts: tuple[str, ...] | None = None,
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> Instance:
         """Modpack từ file trên máy: .mrpack (Modrinth) hoặc .zip có manifest.json (CurseForge).
         Nhận dạng theo nội dung chứ không theo đuôi file. CHẠM MẠNG để tải mod."""
-        if instance_id in {instance.instance_id for instance in list_instances(self.paths)}:
-            message = f"đã có bản chơi {instance_id!r}"
-            raise ContentError(message)
+        self.require_instance_id_free(instance_id)
         with self.make_http_client() as http_client, zipfile.ZipFile(pack_path) as archive:
             names = set(archive.namelist())
             if "modrinth.index.json" in names:
@@ -134,6 +133,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
                 plan,
                 instance_id,
                 display_name,
+                game_dir_override=game_dir_override,
                 on_progress=on_progress,
                 cancel_token=cancel_token,
             )
@@ -146,6 +146,7 @@ class ModpackOperations(LoaderOperations, ContentOperations):
         display_name: str,
         *,
         icon_url: str = "",
+        game_dir_override: str = "",
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> Instance:
@@ -158,16 +159,16 @@ class ModpackOperations(LoaderOperations, ContentOperations):
             cancel_token=cancel_token,
         )
         version_id = self._loader_version_id(plan.loader_kind, plan.game_version)
-        instance = create_instance(
-            self.paths,
+        instance = self.create_instance(
             Instance(
                 instance_id=instance_id,
                 version_id=version_id,
                 display_name=display_name or plan.name,
                 icon_url=icon_url,
-            ),
+                game_dir_override=game_dir_override,
+            )
         )
-        game_dir = self.paths.instance_dir(instance_id)
+        game_dir = self.instance_game_dir(instance)
         report = download_all(
             http_client,
             plan.tasks(game_dir),

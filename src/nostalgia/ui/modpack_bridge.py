@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QUrl, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import slugify
 from nostalgia.ui.installed_bridge import InstalledContentBridge
 from nostalgia.ui.project_model import ProjectListModel
+from nostalgia.ui.worker import local_path
 
 
 class ModpackContentBridge(InstalledContentBridge):
@@ -29,9 +30,11 @@ class ModpackContentBridge(InstalledContentBridge):
     def _refresh_flags(self) -> None:
         raise NotImplementedError
 
-    @Slot(str, str)
-    def installModpack(self, project_id: str, display_name: str) -> None:
-        """Modpack Modrinth thành một bản chơi mới; tên trống thì lấy tên pack."""
+    @Slot(str, str, str)
+    def installModpack(self, project_id: str, display_name: str, game_dir_url: str) -> None:
+        """Modpack Modrinth thành một bản chơi mới; tên trống thì lấy tên pack; thư mục chơi
+        riêng (file:// từ FolderDialog) trống thì theo cài đặt / mặc định."""
+        game_dir_override = local_path(game_dir_url)
         project = next(
             (p for p in self._results_model.projects if p.project_id == project_id), None
         )
@@ -49,6 +52,7 @@ class ModpackContentBridge(InstalledContentBridge):
                     slugify(display_label, taken),
                     display_label,
                     game_version=self._game_versions[0] if self._game_versions else "",
+                    game_dir_override=game_dir_override,
                     on_progress=self._main_bridge.report_progress,
                 )
                 self._main_bridge.instancesChanged.emit()
@@ -59,10 +63,11 @@ class ModpackContentBridge(InstalledContentBridge):
 
         self.run_in_background(work, f"Cài modpack {project.title} thành bản chơi")
 
-    @Slot(str, str)
-    def importModpackFile(self, file_url: str, display_name: str) -> None:
+    @Slot(str, str, str)
+    def importModpackFile(self, file_url: str, display_name: str, game_dir_url: str) -> None:
         """Modpack từ file trên máy (FileDialog trả URL file://). Tên trống thì lấy tên pack."""
-        pack_path = Path(QUrl(file_url).toLocalFile() or file_url)
+        pack_path = Path(local_path(file_url))
+        game_dir_override = local_path(game_dir_url)
         if not pack_path.is_file():
             self.failed.emit(f"không thấy file {pack_path}")
             return
@@ -74,6 +79,7 @@ class ModpackContentBridge(InstalledContentBridge):
                 pack_path,
                 slugify(display_label, taken),
                 display_name.strip(),
+                game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )
             self._main_bridge.instancesChanged.emit()

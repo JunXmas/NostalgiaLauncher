@@ -30,7 +30,7 @@ Item {
     }
     Rectangle {
         anchors.centerIn: parent
-        width: 480; height: 330
+        width: 480; height: 356
         radius: Theme.radius
         color: Theme.surface
         border.color: Theme.border
@@ -44,6 +44,11 @@ Item {
             Text {
                 text: (dialog.instance.instanceId || "") + "  ·  " + (dialog.instance.versionId || "")
                 color: Theme.textMuted; font.pixelSize: 11; font.family: "monospace"
+            }
+            Text {
+                width: parent.width; elide: Text.ElideMiddle
+                text: "Thư mục chơi: " + (dialog.instance.gameDir || "")
+                color: Theme.textMuted; font.pixelSize: 11
             }
             Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
             TextField { id: nameField; width: parent.width; placeholder: "Tên hiển thị"; onAccepted: dialog.save() }

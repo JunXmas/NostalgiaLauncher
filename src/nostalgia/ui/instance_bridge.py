@@ -52,7 +52,8 @@ class InstanceBridge(WorkerBridge):
             "maxHeapMegabytes": instance.max_heap_megabytes or 0,
             "windowWidth": instance.window_width or 0,
             "windowHeight": instance.window_height or 0,
-            "gameDir": str(self._launcher.paths.instance_dir(instance.instance_id)),
+            "gameDir": str(self._launcher.instance_game_dir(instance)),
+            "customGameDir": bool(instance.game_dir_override),
             "playtimeText": stats.playtime_text,
             "launchCount": stats.play.launch_count,
             "lastPlayedAt": stats.play.last_played_at,
@@ -108,7 +109,12 @@ class InstanceBridge(WorkerBridge):
     @Slot(str)
     def openInstanceFolder(self, instance_id: str) -> None:
         """Mở thư mục bản chơi bằng trình quản lý file của hệ điều hành."""
-        folder = self._launcher.paths.instance_dir(instance_id)
+        instance = next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+        if instance is None:
+            return
+        folder = self._launcher.instance_game_dir(instance)
         folder.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 

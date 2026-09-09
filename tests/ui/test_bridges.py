@@ -49,11 +49,16 @@ def test_catalog_bridge_creates_a_vanilla_instance(
     wait_until(lambda: len(catalog_bridge.releasedVersions) == 1)
     assert catalog_bridge.releasedVersions[0] == {"versionId": VERSION_ID, "major": "1.99"}
 
-    catalog_bridge.createInstance("Sinh tồn vui!", VERSION_ID, "vanilla", "", 2048)
+    game_dir = tmp_path / "o-khac" / "sinh-ton"
+    catalog_bridge.createInstance(
+        "Sinh tồn vui!", VERSION_ID, "vanilla", "", 2048, game_dir.as_uri()
+    )
     wait_until(lambda: bool(created))
     assert created == ["sinh-ton-vui"]
     instance = launcher.list_instances()[0]
     assert (instance.display_name, instance.max_heap_megabytes) == ("Sinh tồn vui!", 2048)
+    assert instance.game_dir_override == str(game_dir) and game_dir.is_dir()
+    assert launcher.instance_game_dir(instance) == game_dir
     assert launcher.list_installed_versions() == (VERSION_ID,)
 
 

@@ -8,7 +8,7 @@ from nostalgia.account.model import ELY, Account, to_player_profile
 from nostalgia.errors import InstanceError
 from nostalgia.facade.accounts import AccountOperations
 from nostalgia.install.assets import load_installed_asset_index
-from nostalgia.instance.store import load_instance
+from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.launch.authlib import (
     authlib_jvm_arguments,
     ensure_authlib_injector,
@@ -58,7 +58,7 @@ class PlayOperations(AccountOperations):
             to_player_profile(account),
             java_binary,
             LaunchOptions(
-                game_dir=self.paths.instance_dir(instance.instance_id),
+                game_dir=game_dir_of(self.paths, instance),
                 window_width=instance.window_width,
                 window_height=instance.window_height,
             ),
