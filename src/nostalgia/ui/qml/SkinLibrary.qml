@@ -4,7 +4,8 @@ import QtQuick.Dialogs
 /*
   Thư viện skin: mọi skin launcher từng thấy (tải về cho tài khoản, đã upload, tự nhập) xếp
   thành lưới thẻ; thẻ đang dùng cho tài khoản được chọn có viền xanh và nhãn "Đang dùng".
-  "Dùng" → tài khoản Microsoft thì upload lên Mojang, tài khoản khác thì đổi ngay trong launcher.
+  "Thêm skin" là nút duy nhất để đưa file PNG vào: Microsoft thì upload lên Mojang (và vào kho),
+  tài khoản khác thì vào kho rồi dùng ngay; "Dùng" trên thẻ cũng theo đúng luật đó.
 */
 Item {
     id: library
@@ -35,7 +36,7 @@ Item {
         }
         ActionButton {
             objectName: "importSkinButton"
-            primary: false; label: "⚙  Tuỳ chỉnh"
+            label: "📁  Thêm skin"
             onClicked: importDialog.open()
         }
     }
@@ -94,14 +95,14 @@ Item {
     Text {
         visible: library.entries.length === 0
         anchors { top: header.bottom; topMargin: 14; left: parent.left }
-        text: "Chưa có skin nào. Skin tải về cho tài khoản Microsoft/Ely.by và skin bạn upload sẽ tự vào đây."
+        text: "Chưa có skin nào. Bấm \"Thêm skin\" để chọn file PNG; skin tải về cho tài khoản Microsoft/Ely.by cũng tự vào đây."
         color: Theme.textMuted; font.pixelSize: 11
     }
 
     FileDialog {
         id: importDialog
-        title: "Chọn file skin PNG để thêm vào thư viện"
+        title: "Chọn file skin PNG"
         nameFilters: ["Ảnh PNG (*.png)"]
-        onAccepted: accountBridge.importSkin(selectedFile, library.slimImport)
+        onAccepted: accountBridge.addSkin(library.hasShown ? library.shown.playerName : "", selectedFile, library.slimImport)
     }
 }
