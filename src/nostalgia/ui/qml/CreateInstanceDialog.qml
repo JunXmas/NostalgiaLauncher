@@ -81,9 +81,15 @@ Item {
         dialog.gameVersion = ""; dialog.loaderVersion = ""; dialog.expandedMajor = ""; dialog.gameDirUrl = "";
         nameField.text = ""; heapField.text = "";
         dialog.visible = true;
+        notifier.playUi("open");
         if (dialog.released.length === 0) catalogBridge.loadReleasedVersions();
     }
+    function close() {
+        notifier.playUi("back");
+        dialog.visible = false;
+    }
     function pickGameVersion(versionId) {
+        notifier.playUi("select");
         dialog.gameVersion = versionId;
         dialog.loaderVersion = "";
         if (dialog.needsLoaderStep) catalogBridge.loadLoaderVersions(dialog.loaderKind, versionId);
@@ -98,7 +104,7 @@ Item {
     // nuốt sự kiện nên bấm nút BÊN TRONG hộp cũng lọt xuống đây (lỗi thật).
     MouseArea {
         anchors.fill: parent
-        onClicked: if (!bridge.busy) dialog.visible = false
+        onClicked: if (!bridge.busy) dialog.close()
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
 
@@ -214,6 +220,7 @@ Item {
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                                 TapHandler {
                                     onTapped: {
+                                        if (!selected) notifier.playUi("nav");
                                         dialog.loaderKind = modelData.key;
                                         dialog.loaderVersion = "";
                                         if (dialog.isPreset) catalogBridge.loadPresetVersions();
@@ -304,7 +311,7 @@ Item {
                 anchors { right: parent.right; top: parent.top; topMargin: 4 }
                 text: "✕"; color: closeHover.hovered ? Theme.text : Theme.textMuted; font.pixelSize: 16
                 HoverHandler { id: closeHover; cursorShape: Qt.PointingHandCursor }
-                TapHandler { onTapped: if (!bridge.busy) dialog.visible = false }
+                TapHandler { onTapped: if (!bridge.busy) dialog.close() }
             }
 
             // Bước 1: thẻ theo dòng, bung ra danh sách bản.
@@ -424,6 +431,7 @@ Item {
                                 HoverHandler { id: artHover; cursorShape: Qt.PointingHandCursor }
                                 TapHandler {
                                     onTapped: {
+                                        notifier.playUi(card.expanded ? "back" : "open");
                                         dialog.expandedMajor = card.expanded ? "" : modelData.major;
                                         if (!card.expanded) majorList.positionViewAtIndex(index, ListView.Beginning);
                                     }

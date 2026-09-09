@@ -23,6 +23,8 @@ class Settings:
     curseforge_api_key: str = ""
     # Chuông khi game khởi động / thoát / cài xong. Mặc định bật; tắt ở trang CÀI ĐẶT.
     notification_sound: bool = True
+    # Blip giao diện (chuyển trang, bấm nút, bung thẻ) kiểu Xbox 360 / Steam Big Picture.
+    ui_sound: bool = True
     # Discord Rich Presence: tắt mặc định; Application ID do người dùng tạo ở Developer Portal.
     discord_presence: bool = False
     discord_application_id: str = ""
@@ -45,11 +47,13 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
         try:
             fields = as_mapping(read_json(path))
             sound = fields.get("notification_sound")
+            ui_sound = fields.get("ui_sound")
             presence = fields.get("discord_presence")
             update_check = fields.get("auto_update_check")
             settings = Settings(
                 curseforge_api_key=as_string(fields.get("curseforge_api_key")) or "",
                 notification_sound=sound if isinstance(sound, bool) else True,
+                ui_sound=ui_sound if isinstance(ui_sound, bool) else True,
                 discord_presence=presence if isinstance(presence, bool) else False,
                 discord_application_id=(
                     as_string(fields.get("discord_application_id")) or ""
@@ -74,6 +78,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
         {
             "curseforge_api_key": settings.curseforge_api_key.strip(),
             "notification_sound": settings.notification_sound,
+            "ui_sound": settings.ui_sound,
             "discord_presence": settings.discord_presence,
             "discord_application_id": settings.discord_application_id.strip(),
             "auto_update_check": settings.auto_update_check,
