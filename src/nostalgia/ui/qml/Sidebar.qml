@@ -53,7 +53,7 @@ Rectangle {
                 label: modelData.label
                 glyph: modelData.glyph
                 selected: index === root.currentIndex
-                onClicked: root.currentIndex = index
+                onClicked: { if (index !== root.currentIndex) notifier.playUi("nav"); root.currentIndex = index; }
             }
         }
     }

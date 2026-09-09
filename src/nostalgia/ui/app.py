@@ -95,11 +95,13 @@ def instance_label(launcher: Launcher, instance_id: str) -> str:
 def build_notifier(
     launcher: Launcher, bridge: LauncherBridge, settings_bridge: SettingsBridge, view: QQuickView
 ) -> Notifier:
-    """Toast + chuông cho game khởi động / thoát / cài xong; chuông theo công tắc ở CÀI ĐẶT."""
+    """Toast + chuông cho game khởi động / thoát / cài xong, và blip giao diện; mỗi thứ một
+    công tắc ở CÀI ĐẶT."""
     return Notifier(
         bridge,
         player=SoundPlayer(launcher.paths.data_dir / "cache" / "sounds"),
         sound_enabled=lambda: bool(settings_bridge.notificationSound),
+        ui_sound_enabled=lambda: bool(settings_bridge.uiSound),
         instance_label=lambda instance_id: instance_label(launcher, instance_id),
         parent=view,
     )

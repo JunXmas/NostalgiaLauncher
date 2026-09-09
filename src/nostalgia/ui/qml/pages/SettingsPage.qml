@@ -94,6 +94,22 @@ Item {
                     color: Theme.textMuted; font.pixelSize: 11
                 }
             }
+            Row {
+                spacing: 10
+                Text { text: "Âm thanh giao diện"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "uiSoundToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.uiSound
+                    onToggled: function (checked) { settingsBridge.setUiSound(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ."
+                    color: Theme.textMuted; font.pixelSize: 11
+                }
+            }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Row {
                 spacing: 10

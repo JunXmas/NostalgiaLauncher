@@ -1,4 +1,5 @@
-"""Thông báo sự kiện khởi chạy: toast trên màn hình + chuông (nếu bật trong CÀI ĐẶT).
+"""Thông báo sự kiện khởi chạy: toast trên màn hình + chuông (nếu bật trong CÀI ĐẶT), và
+tiếng blip giao diện (công tắc riêng) khi QML báo người dùng chuyển trang / bấm nút / bung thẻ.
 
 Nghe tín hiệu của cầu nối chính (game khởi động / thoát / cài xong phiên bản) rồi phát ra
 MỘT tín hiệu `notified(eventKind, title, detail)` cho QML vẽ toast. Tín hiệu gốc tới từ luồng
@@ -20,6 +21,8 @@ type EnabledFn = Callable[[], bool]
 
 class Notifier(QObject):
     notified = Signal(str, str, str)
+    # Tên blip vừa phát (chỉ khi công tắc bật) — để test kiểm dây nối từ QML mà không cần loa.
+    uiSoundPlayed = Signal(str)
 
     def __init__(
         self,
@@ -27,12 +30,14 @@ class Notifier(QObject):
         *,
         player: SoundPlayer,
         sound_enabled: EnabledFn,
+        ui_sound_enabled: EnabledFn,
         instance_label: LabelFn,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._player = player
         self._sound_enabled = sound_enabled
+        self._ui_sound_enabled = ui_sound_enabled
         self._instance_label = instance_label
         bridge.gameStarted.connect(self._on_game_started)
         bridge.gameStopped.connect(self._on_game_stopped)
@@ -42,6 +47,14 @@ class Notifier(QObject):
         self.notified.emit(event_kind, title, detail)
         if self._sound_enabled():
             self._player.play(event_kind)
+
+    @Slot(str)
+    def playUi(self, sound_name: str) -> None:
+        """Blip giao diện: nav / select / open / back. QML gọi ngay lúc bấm; im nếu tắt."""
+        if not self._ui_sound_enabled():
+            return
+        self.uiSoundPlayed.emit(sound_name)
+        self._player.play(sound_name)
 
     @Slot(str)
     def _on_game_started(self, instance_id: str) -> None:

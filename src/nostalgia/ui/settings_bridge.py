@@ -21,6 +21,7 @@ from nostalgia.api import Launcher, Settings
 
 class SettingsBridge(QObject):
     notificationSoundChanged = Signal()
+    uiSoundChanged = Signal()
     discordChanged = Signal()
     autoUpdateCheckChanged = Signal()
     gameDirRootChanged = Signal()
@@ -42,6 +43,10 @@ class SettingsBridge(QObject):
     @Property(bool, notify=notificationSoundChanged)
     def notificationSound(self) -> bool:
         return self.settings_snapshot().notification_sound
+
+    @Property(bool, notify=uiSoundChanged)
+    def uiSound(self) -> bool:
+        return self.settings_snapshot().ui_sound
 
     @Property(bool, notify=discordChanged)
     def discordPresence(self) -> bool:
@@ -92,6 +97,13 @@ class SettingsBridge(QObject):
         if settings.notification_sound != enabled:
             self._save(replace(settings, notification_sound=enabled))
             self.notificationSoundChanged.emit()
+
+    @Slot(bool)
+    def setUiSound(self, enabled: bool) -> None:
+        settings = self.settings_snapshot()
+        if settings.ui_sound != enabled:
+            self._save(replace(settings, ui_sound=enabled))
+            self.uiSoundChanged.emit()
 
     @Property(str, constant=True)
     def launcherVersion(self) -> str:

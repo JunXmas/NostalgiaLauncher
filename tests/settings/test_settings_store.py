@@ -27,6 +27,14 @@ def test_missing_or_corrupt_file_means_empty_settings(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}).curseforge_api_key == ""
 
 
+def test_ui_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).ui_sound is True
+    save_settings(tmp_path, Settings(ui_sound=False))
+    assert load_settings(tmp_path, environment={}).ui_sound is False
+    settings_path(tmp_path).write_text('{"ui_sound": 0}')
+    assert load_settings(tmp_path, environment={}).ui_sound is True, "giá trị lạ → mặc định"
+
+
 def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}).notification_sound is True
     save_settings(tmp_path, Settings(notification_sound=False))

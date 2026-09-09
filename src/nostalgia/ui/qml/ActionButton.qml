@@ -54,5 +54,5 @@ Item {
     }
 
     HoverHandler { id: hover; enabled: root.clickable; cursorShape: Qt.PointingHandCursor }
-    TapHandler { id: press; enabled: root.clickable; onTapped: root.clicked() }
+    TapHandler { id: press; enabled: root.clickable; onTapped: { notifier.playUi("select"); root.clicked(); } }
 }

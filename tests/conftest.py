@@ -67,6 +67,8 @@ def isolated_home(
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(home / ".cache"))
     monkeypatch.setenv("NOSTALGIA_DATA_DIR", str(home / "data"))
+    # Test bấm nút trong QML không được làm loa máy kêu; test về âm thanh tự bỏ biến này.
+    monkeypatch.setenv("NOSTALGIA_SILENT", "1")
 
     if request.node.get_closest_marker("allow_home") is None:
         message = (
