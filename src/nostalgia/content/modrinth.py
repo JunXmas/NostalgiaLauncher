@@ -27,7 +27,7 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 
 # Modrinth yêu cầu User-Agent nhận diện được ứng dụng; không có thì bị chặn.
-USER_AGENT = f"NostalgiaLauncher/{__version__} (github.com/JunXmas/nostalgia)"
+USER_AGENT = f"NostalgiaLauncher/{__version__} (github.com/JunXmas/NostalgiaLauncher)"
 PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024

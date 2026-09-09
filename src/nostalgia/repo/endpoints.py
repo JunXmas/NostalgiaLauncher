@@ -60,7 +60,7 @@ MOJANG_SESSION_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft
 ELY_SKINS_URL = "http://skinsystem.ely.by/skins"
 ELY_CAPES_URL = "http://skinsystem.ely.by/cloaks"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
-LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/nostalgia/releases/latest"
+LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
 
 
 @dataclass(frozen=True, slots=True)
