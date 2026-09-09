@@ -24,9 +24,10 @@ Rectangle {
         anchors { top: parent.top; left: parent.left; margins: 20 }
         spacing: 11
 
-        // Logo chiếc lá (packaging/icons/nostalgia.svg → assets/logo.png), cũng là icon ứng dụng.
+        // Logo khối lá Minecraft của jun (packaging/icons/nostalgia-source.png → assets/logo.png),
+        // cũng là icon ứng dụng.
         Image {
-            width: 34; height: 34
+            width: 36; height: 36
             anchors.verticalCenter: parent.verticalCenter
             source: "assets/logo.png"
             sourceSize: Qt.size(68, 68); smooth: true; mipmap: true
