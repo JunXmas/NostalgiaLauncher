@@ -32,11 +32,14 @@ Item {
     }
 
     // ----- ảnh nền phủ kín, tối dần về đáy để chữ và kính nổi rõ -----
+    // Ảnh 2528 px, luôn bị thu nhỏ: mipmap để Qt lọc đúng khi thu (không mipmap là lấy mẫu
+    // 2×2 → răng cưa và "mờ nhoè" trên sao và cạnh khối).
     Image {
         id: photo
         anchors.fill: parent
         source: "../assets/hero.jpg"
         fillMode: Image.PreserveAspectCrop
+        smooth: true; mipmap: true
     }
     Rectangle {
         anchors.fill: parent
