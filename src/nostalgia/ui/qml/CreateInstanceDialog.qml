@@ -27,9 +27,18 @@ Item {
     // Optimized = modpack Fabulously Optimized: không có bước chọn bản loader, pack tự lo Fabric.
     readonly property bool isPreset: loaderKind === "optimized"
     readonly property bool needsLoaderStep: loaderKind !== "vanilla" && !isPreset
+    // Danh mục lấy từ cầu nối MỘT lần mỗi khi nó đổi: mỗi lần đọc `catalogBridge.releasedVersions`
+    // là Python chuyển cả trăm dict sang JS, nên vòng lặp `[i]` trên đó (16 thẻ cùng gọi) từng
+    // làm mỗi cú bấm đứng ~200 ms. Tra dòng lớn của một bản qua bảng, không quét lại danh sách.
+    readonly property var released: catalogBridge.releasedVersions
+    readonly property var presetVersions: catalogBridge.presetGameVersions
+    readonly property var majorIndex: {
+        var byVersion = {};
+        for (var i = 0; i < released.length; i++) byVersion[released[i].versionId] = released[i].major;
+        return byVersion;
+    }
     function presetSupports(versionId) {
-        return !dialog.isPreset || catalogBridge.presetGameVersions.length === 0
-               || catalogBridge.presetGameVersions.indexOf(versionId) >= 0;
+        return !dialog.isPreset || dialog.presetVersions.length === 0 || dialog.presetVersions.indexOf(versionId) >= 0;
     }
     readonly property string loaderLabel: loaderChoices.find(function (c) { return c.key === dialog.loaderKind; }).label
     // Tên để trống thì tự đặt theo loader + phiên bản, như các launcher khác — bắt gõ tên là
@@ -42,19 +51,19 @@ Item {
     // Các dòng lớn theo thứ tự mới → cũ, kèm số bản trong dòng.
     readonly property var majors: {
         var order = [], count = {};
-        for (var i = 0; i < catalogBridge.releasedVersions.length; i++) {
-            var major = catalogBridge.releasedVersions[i].major;
+        for (var i = 0; i < released.length; i++) {
+            var major = released[i].major;
             if (!(major in count)) { count[major] = 0; order.push(major); }
             count[major] += 1;
         }
         return order.map(function (m) { return { major: m, count: count[m] }; });
     }
-    readonly property string previewMajor: gameVersion ? majorOf(gameVersion) : (expandedMajor || (majors.length ? majors[0].major : ""))
+    // Dòng lớn của bản đã chọn, tính một lần cho mọi thẻ.
+    readonly property string selectedMajor: majorOf(gameVersion)
+    readonly property string previewMajor: selectedMajor || expandedMajor || (majors.length ? majors[0].major : "")
 
     function majorOf(versionId) {
-        for (var i = 0; i < catalogBridge.releasedVersions.length; i++)
-            if (catalogBridge.releasedVersions[i].versionId === versionId) return catalogBridge.releasedVersions[i].major;
-        return "";
+        return dialog.majorIndex[versionId] || "";
     }
     // Dòng có key art riêng; dòng khác (1.7 trở về trước, snapshot lạ) dùng ảnh Java Edition cổ điển.
     readonly property var knownArt: ["26", "1.21", "1.20", "1.19", "1.18", "1.17", "1.16", "1.15", "1.14",
@@ -63,7 +72,7 @@ Item {
         return knownArt.indexOf(major) >= 0 ? "assets/keyart/" + major + ".jpg" : "assets/keyart/old.jpg";
     }
     function versionsOf(major) {
-        return catalogBridge.releasedVersions.filter(function (r) { return r.major === major; });
+        return dialog.released.filter(function (r) { return r.major === major; });
     }
     // Thư mục chơi riêng (URL file:// từ FolderDialog); rỗng = theo cài đặt / mặc định.
     property string gameDirUrl: ""
@@ -72,7 +81,7 @@ Item {
         dialog.gameVersion = ""; dialog.loaderVersion = ""; dialog.expandedMajor = ""; dialog.gameDirUrl = "";
         nameField.text = ""; heapField.text = "";
         dialog.visible = true;
-        if (catalogBridge.releasedVersions.length === 0) catalogBridge.loadReleasedVersions();
+        if (dialog.released.length === 0) catalogBridge.loadReleasedVersions();
     }
     function pickGameVersion(versionId) {
         dialog.gameVersion = versionId;
@@ -304,13 +313,13 @@ Item {
                 visible: !(dialog.needsLoaderStep && dialog.gameVersion)
 
                 Text {
-                    visible: catalogBridge.releasedVersions.length === 0
+                    visible: dialog.released.length === 0
                     text: catalogBridge.busy ? "Đang tải danh mục phiên bản..." : "Không tải được danh mục."
                     color: Theme.textMuted; font.pixelSize: 12
                 }
                 ActionButton {
                     y: 30
-                    visible: catalogBridge.releasedVersions.length === 0 && !catalogBridge.busy
+                    visible: dialog.released.length === 0 && !catalogBridge.busy
                     primary: false; label: "Thử lại"
                     onClicked: catalogBridge.loadReleasedVersions()
                 }
@@ -329,7 +338,7 @@ Item {
                         readonly property int artHeight: Math.max(150, Math.min(300, Math.round(width / 2.56)))
                         // Thẻ "sáng" khi đang bung hoặc chứa phiên bản đã chọn; thẻ khác nằm tối mờ
                         // trong ô. Thẻ sáng có quầng sáng quanh viền, bóng đổ và nhấc lên khỏi ô.
-                        readonly property bool lit: expanded || dialog.majorOf(dialog.gameVersion) === modelData.major
+                        readonly property bool lit: expanded || dialog.selectedMajor === modelData.major
                         height: artHeight + 20 + (expanded ? chips.implicitHeight + 14 : 0)
                         Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
 
