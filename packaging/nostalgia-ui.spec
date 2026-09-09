@@ -15,7 +15,7 @@ from PyInstaller.utils.hooks import collect_data_files
 
 ROOT = Path(SPECPATH).parent
 PACKAGE = ROOT / "src" / "nostalgia"
-VERSION = re.search(r'__version__ = "([^"]+)"', (PACKAGE / "__init__.py").read_text()).group(1)
+VERSION = re.search(r'__version__ = "([^"]+)"', (PACKAGE / "__init__.py").read_text(encoding="utf-8")).group(1)
 ICONS = ROOT / "packaging" / "icons"
 # Icon theo hệ: Windows nhúng .ico vào exe; macOS dùng .icns do workflow sinh từ PNG bằng
 # iconutil (chỉ có trên macOS); Linux lấy PNG qua .desktop nên không cần ở đây.
