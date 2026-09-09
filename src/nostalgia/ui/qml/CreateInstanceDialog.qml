@@ -324,68 +324,148 @@ Item {
                         readonly property bool expanded: dialog.expandedMajor === modelData.major
                         readonly property var versions: expanded ? dialog.versionsOf(modelData.major) : []
                         width: ListView.view.width
-                        // Thẻ cao theo bề ngang để key art (2,56:1) không bị cắt quá nửa.
-                        readonly property int artHeight: Math.max(150, Math.min(210, Math.round(width / 3.1)))
-                        height: artHeight + (expanded ? chips.height + 12 : 0)
+                        // Thẻ vẽ ĐÚNG tỉ lệ key art 2,56:1 để không cắt mất logo hay nhân vật; các
+                        // phiên bản con trượt xuống bên dưới ảnh với hoạt ảnh, không nhảy phắt.
+                        readonly property int artHeight: Math.max(150, Math.min(300, Math.round(width / 2.56)))
+                        // Thẻ "sáng" khi đang bung hoặc chứa phiên bản đã chọn; thẻ khác nằm tối mờ
+                        // trong ô. Thẻ sáng có quầng sáng quanh viền, bóng đổ và nhấc lên khỏi ô.
+                        readonly property bool lit: expanded || dialog.majorOf(dialog.gameVersion) === modelData.major
+                        height: artHeight + 20 + (expanded ? chips.implicitHeight + 14 : 0)
+                        Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
 
-                        Rectangle {
-                            id: art
-                            anchors { left: parent.left; right: parent.right; top: parent.top }
-                            height: card.artHeight; radius: Theme.radiusSmall; clip: true
-                            color: Theme.surfaceHigh
-                            border.color: card.expanded || dialog.majorOf(dialog.gameVersion) === modelData.major ? Theme.accent : Theme.border
-                            Image {
-                                anchors.fill: parent; anchors.margins: 1
-                                source: dialog.artFor(modelData.major)
-                                fillMode: Image.PreserveAspectCrop; asynchronous: true
+                        Item {
+                            id: artBlock
+                            anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 8; rightMargin: 8 }
+                            anchors.topMargin: card.lit ? 6 : 12
+                            height: card.artHeight
+                            scale: card.lit ? 1.015 : 1
+                            transformOrigin: Item.Center
+                            Behavior on anchors.topMargin { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+                            Behavior on scale { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
+
+                            // Bóng đổ dưới thẻ đã nhấc lên.
+                            Rectangle {
+                                x: 0; y: 7; width: parent.width; height: parent.height
+                                radius: Theme.radiusSmall + 2; color: "#000000"
+                                opacity: card.lit ? 0.45 : 0
+                                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                            }
+                            // Quầng sáng: ba vòng viền màu accent mờ dần ra ngoài, không cần shader.
+                            Rectangle {
+                                anchors.fill: parent; anchors.margins: -9
+                                radius: Theme.radiusSmall + 9; color: "transparent"
+                                border.width: 4; border.color: Theme.accent
+                                opacity: card.lit ? 0.1 : 0
+                                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
                             }
                             Rectangle {
+                                anchors.fill: parent; anchors.margins: -5
+                                radius: Theme.radiusSmall + 5; color: "transparent"
+                                border.width: 5; border.color: Theme.accent
+                                opacity: card.lit ? 0.22 : 0
+                                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                            }
+                            Rectangle {
+                                anchors.fill: parent; anchors.margins: -2
+                                radius: Theme.radiusSmall + 2; color: "transparent"
+                                border.width: 2; border.color: Theme.accent
+                                opacity: card.lit ? 0.6 : 0
+                                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                            }
+
+                            Rectangle {
+                                id: art
                                 anchors.fill: parent
-                                gradient: Gradient {
-                                    orientation: Gradient.Horizontal
-                                    GradientStop { position: 0.0; color: "#cc07100a" }
-                                    GradientStop { position: 0.45; color: "#5507100a" }
-                                    GradientStop { position: 1.0; color: "#1a07100a" }
+                                radius: Theme.radiusSmall; clip: true
+                                color: Theme.surfaceHigh
+                                border.color: card.lit ? Theme.accent : Theme.border
+                                Behavior on border.color { ColorAnimation { duration: Theme.normal } }
+                                Image {
+                                    anchors.fill: parent; anchors.margins: 1
+                                    source: dialog.artFor(modelData.major)
+                                    fillMode: Image.PreserveAspectCrop; asynchronous: true
                                 }
-                            }
-                            Column {
-                                anchors { left: parent.left; leftMargin: 18; bottom: parent.bottom; bottomMargin: 14 }
-                                Text { text: modelData.major; color: Theme.text; font.pixelSize: 28; font.bold: true
-                                       style: Text.Raised; styleColor: "#80000000" }
-                                Text { text: modelData.count + " phiên bản"; color: Theme.text; font.pixelSize: 12; opacity: 0.85 }
-                            }
-                            Text {
-                                anchors { right: parent.right; rightMargin: 16; bottom: parent.bottom; bottomMargin: 12 }
-                                text: card.expanded ? "▲" : "▼"; color: Theme.text; font.pixelSize: 12; opacity: 0.8
-                            }
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
-                            TapHandler {
-                                onTapped: {
-                                    dialog.expandedMajor = card.expanded ? "" : modelData.major;
-                                    if (!card.expanded) majorList.positionViewAtIndex(index, ListView.Beginning);
+                                Rectangle {
+                                    anchors.fill: parent
+                                    gradient: Gradient {
+                                        orientation: Gradient.Horizontal
+                                        GradientStop { position: 0.0; color: "#cc07100a" }
+                                        GradientStop { position: 0.45; color: "#5507100a" }
+                                        GradientStop { position: 1.0; color: "#1a07100a" }
+                                    }
+                                }
+                                // Lớp tối phủ thẻ chưa chọn; rê chuột vào thì hé sáng, chọn thì bỏ hẳn.
+                                Rectangle {
+                                    anchors.fill: parent; color: "#06090c"
+                                    opacity: card.lit ? 0 : (artHover.hovered ? 0.3 : 0.55)
+                                    Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                                }
+                                Column {
+                                    anchors { left: parent.left; leftMargin: 18; bottom: parent.bottom; bottomMargin: 14 }
+                                    opacity: card.lit ? 1 : 0.75
+                                    Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                                    Text { text: modelData.major; color: Theme.text; font.pixelSize: 28; font.bold: true
+                                           style: Text.Raised; styleColor: "#80000000" }
+                                    Text { text: modelData.count + " phiên bản"; color: Theme.text; font.pixelSize: 12; opacity: 0.85 }
+                                }
+                                Text {
+                                    anchors { right: parent.right; rightMargin: 16; bottom: parent.bottom; bottomMargin: 12 }
+                                    text: card.expanded ? "▲" : "▼"; color: Theme.text; font.pixelSize: 12; opacity: 0.8
+                                }
+                                HoverHandler { id: artHover; cursorShape: Qt.PointingHandCursor }
+                                TapHandler {
+                                    onTapped: {
+                                        dialog.expandedMajor = card.expanded ? "" : modelData.major;
+                                        if (!card.expanded) majorList.positionViewAtIndex(index, ListView.Beginning);
+                                    }
                                 }
                             }
                         }
-                        Flow {
-                            id: chips
-                            anchors { left: parent.left; right: parent.right; top: art.bottom; topMargin: 8 }
-                            spacing: 6
-                            visible: card.expanded
-                            Repeater {
-                                model: card.versions
-                                Rectangle {
-                                    id: versionCell
-                                    readonly property bool selected: modelData.versionId === dialog.gameVersion
-                                    readonly property bool supported: dialog.presetSupports(modelData.versionId)
-                                    width: Math.max(72, versionText.width + 22); height: 30; radius: 7
-                                    opacity: supported ? 1 : 0.35
-                                    color: selected ? Theme.accentSoft : Theme.surfaceHigh
-                                    border.color: selected ? Theme.accent : Theme.border
-                                    Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
-                                           color: versionCell.selected ? Theme.accent : Theme.text
-                                           font.pixelSize: 12; font.family: "monospace" }
-                                    HoverHandler { cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
-                                    TapHandler { enabled: versionCell.supported; onTapped: dialog.pickGameVersion(modelData.versionId) }
+                        // Khung cắt riêng cho các nút phiên bản: lúc thẻ đang trượt mở, nút không tràn
+                        // sang thẻ dưới; còn quầng sáng của ảnh thì không bị cắt.
+                        Item {
+                            clip: true
+                            anchors { left: parent.left; right: parent.right; top: artBlock.bottom; topMargin: 10; bottom: parent.bottom }
+                            Flow {
+                                id: chips
+                                anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 8; rightMargin: 8 }
+                                spacing: 8
+                                opacity: card.expanded ? 1 : 0
+                                enabled: card.expanded
+                                Behavior on opacity { NumberAnimation { duration: Theme.normal } }
+                                Repeater {
+                                    model: card.versions
+                                    // Nút phiên bản kiểu khối Minecraft như trang chủ: khối đá, chọn thì thành khối cỏ.
+                                    Item {
+                                        id: versionCell
+                                        readonly property bool selected: modelData.versionId === dialog.gameVersion
+                                        readonly property bool supported: dialog.presetSupports(modelData.versionId)
+                                        readonly property int edge: 3
+                                        width: Math.max(78, versionText.width + 26); height: 34
+                                        opacity: supported ? 1 : 0.35
+                                        Rectangle { anchors.fill: parent; color: "#1e1e1f" }
+                                        Rectangle {
+                                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 2 }
+                                            height: parent.height - 4
+                                            color: versionCell.selected ? "#1d4d13" : "#2e2a25"
+                                        }
+                                        Rectangle {
+                                            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 2 }
+                                            anchors.topMargin: versionPress.pressed ? 4 : 2
+                                            height: parent.height - 4 - versionCell.edge + (versionPress.pressed ? 2 : 0)
+                                            color: versionCell.selected ? (versionHover.hovered ? "#4f9a36" : "#3c8527")
+                                                                        : (versionHover.hovered ? "#5a5247" : "#4a443c")
+                                            Behavior on color { ColorAnimation { duration: Theme.quick } }
+                                            Rectangle { anchors { left: parent.left; right: parent.right; top: parent.top }
+                                                        height: 2; color: versionCell.selected ? "#66ffffff" : "#33ffffff" }
+                                            Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
+                                                   color: versionCell.selected ? "white" : "#e8dcc8"
+                                                   font.pixelSize: 12; font.bold: true
+                                                   style: Text.Raised; styleColor: "#40000000" }
+                                        }
+                                        HoverHandler { id: versionHover; cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
+                                        TapHandler { id: versionPress; enabled: versionCell.supported; onTapped: dialog.pickGameVersion(modelData.versionId) }
+                                    }
                                 }
                             }
                         }
