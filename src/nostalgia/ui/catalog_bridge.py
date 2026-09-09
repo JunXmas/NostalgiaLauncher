@@ -1,0 +1,178 @@
+"""Cầu nối cho hộp thoại tạo bản chơi: danh mục phiên bản, loader Fabric, và tạo + cài.
+
+Mã bản chơi sinh từ tên hiển thị (`Sinh tồn vui` -> `sinh-ton-vui`), thêm hậu tố số nếu
+trùng — người dùng không phải học luật đặt tên thư mục.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from typing import Any, cast
+
+from PySide6.QtCore import Property, QObject, Signal, Slot
+
+from nostalgia.api import Instance, Launcher
+from nostalgia.modloader.model import LoaderKind
+from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.worker import WorkerBridge, local_path
+
+
+def slugify(display_name: str, taken: set[str]) -> str:
+    """Mã hợp lệ theo `INSTANCE_ID_PATTERN`, duy nhất trong `taken`."""
+    ascii_text = unicodedata.normalize("NFKD", display_name).encode("ascii", "ignore").decode()
+    base = re.sub(r"[^A-Za-z0-9._-]+", "-", ascii_text).strip("-._").lower()[:60] or "ban-choi"
+    if base[0] in "._-":
+        base = "b" + base
+    candidate, counter = base, 2
+    while candidate in taken:
+        candidate = f"{base}-{counter}"
+        counter += 1
+    return candidate
+
+
+class CatalogBridge(WorkerBridge):
+    releasedVersionsChanged = Signal()
+    loaderVersionsChanged = Signal()
+    presetVersionsChanged = Signal()
+    created = Signal(str)
+
+    def __init__(
+        self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
+    ) -> None:
+        super().__init__(parent)
+        self._launcher = launcher
+        self._main_bridge = main_bridge
+        self._released: list[dict[str, Any]] = []
+        self._loader_versions: list[dict[str, Any]] = []
+        self._preset_versions: list[str] = []
+
+    @Property(list, notify=releasedVersionsChanged)
+    def releasedVersions(self) -> list[dict[str, Any]]:
+        return self._released
+
+    @Property(list, notify=loaderVersionsChanged)
+    def loaderVersions(self) -> list[dict[str, Any]]:
+        return self._loader_versions
+
+    @Property(list, notify=presetVersionsChanged)
+    def presetGameVersions(self) -> list[str]:
+        """Phiên bản mà gói Optimized có bản; rỗng = chưa tải (hộp thoại không làm mờ gì)."""
+        return list(self._preset_versions)
+
+    @Slot()
+    def loadPresetVersions(self) -> None:
+        if self._preset_versions:
+            return
+
+        def work() -> None:
+            self._preset_versions = list(self._launcher.list_preset_game_versions("optimized"))
+            self.presetVersionsChanged.emit()
+
+        self.run_in_background(work, "Xem Fabulously Optimized có những bản nào")
+
+    @Slot()
+    def loadReleasedVersions(self) -> None:
+        """Danh mục bản chính thức của Mojang, mới nhất đứng đầu. Chạm mạng, chạy nền."""
+        generation = self.next_generation()
+
+        def work() -> None:
+            released = self._launcher.list_released_versions(limit=500)
+            if not self.is_current(generation):
+                return
+            self._released = [
+                {
+                    "versionId": released_version.version_id,
+                    "major": _major(released_version.version_id),
+                }
+                for released_version in released
+            ]
+            self.releasedVersionsChanged.emit()
+
+        self.run_in_background(work, "Lấy danh mục phiên bản Minecraft")
+
+    @Slot(str, str)
+    def loadLoaderVersions(self, loader_kind: str, game_version: str) -> None:
+        """Bản Fabric/Forge/NeoForge cho một phiên bản game. Chạm mạng, chạy nền."""
+        generation = self.next_generation()
+        self._loader_versions = []
+        self.loaderVersionsChanged.emit()
+
+        def work() -> None:
+            loaders = self._launcher.list_loader_versions(
+                cast(LoaderKind, loader_kind), game_version
+            )
+            if not self.is_current(generation):
+                return
+            self._loader_versions = [
+                {"loaderVersion": loader_version.loader_version, "stable": loader_version.stable}
+                for loader_version in loaders
+            ]
+            self.loaderVersionsChanged.emit()
+
+        self.run_in_background(work, f"Lấy danh sách bản {loader_kind} cho {game_version}")
+
+    @Slot(str, str, str, str, int, str)
+    def createInstance(
+        self,
+        display_name: str,
+        game_version: str,
+        loader_kind: str,
+        loader_version: str,
+        max_heap_megabytes: int,
+        game_dir_url: str,
+    ) -> None:
+        """Cài phiên bản (và Fabric nếu chọn) rồi đăng ký bản chơi. Chạm mạng, chạy nền.
+        `game_dir_url` là thư mục chơi riêng do FolderDialog trả (file://); rỗng = mặc định."""
+        game_dir_override = local_path(game_dir_url)
+
+        def work() -> None:
+            if loader_kind == "optimized":
+                self._create_preset(display_name, game_version, game_dir_override)
+                return
+            report = self._launcher.install_loader(
+                cast(LoaderKind, loader_kind),
+                game_version,
+                loader_version or None,
+                on_progress=self._main_bridge.report_progress,
+            )
+            version_id = report.version_meta.version_id
+            taken = {instance.instance_id for instance in self._launcher.list_instances()}
+            instance = Instance(
+                instance_id=slugify(display_name, taken),
+                version_id=version_id,
+                display_name=display_name.strip(),
+                max_heap_megabytes=max_heap_megabytes or None,
+                game_dir_override=game_dir_override,
+            )
+            self._launcher.create_instance(instance)
+            self._main_bridge.instancesChanged.emit()
+            self.created.emit(instance.instance_id)
+
+        loader_label = {"vanilla": "Minecraft", "optimized": "Fabulously Optimized"}.get(
+            loader_kind, loader_kind.capitalize()
+        )
+        self.run_in_background(work, f"Cài {loader_label} {game_version} và tạo bản chơi")
+
+    def _create_preset(self, display_name: str, game_version: str, game_dir_override: str) -> None:
+        taken = {instance.instance_id for instance in self._launcher.list_instances()}
+        display_label = display_name.strip() or f"Optimized {game_version}"
+        instance = self._launcher.install_preset(
+            "optimized",
+            slugify(display_label, taken),
+            display_label,
+            game_version=game_version,
+            game_dir_override=game_dir_override,
+            on_progress=self._main_bridge.report_progress,
+        )
+        self._main_bridge.instancesChanged.emit()
+        self.created.emit(instance.instance_id)
+
+
+def _major(version_id: str) -> str:
+    """Họ phiên bản để gom thẻ: `1.20.1` -> `1.20`, `26.2` -> `26` (cách đánh số mới từ 2026);
+    giữ nguyên nếu không theo mẫu."""
+    parts = version_id.split(".")
+    if len(parts) < 2 or not parts[0].isdigit():
+        return version_id
+    return parts[0] if parts[0] != "1" else ".".join(parts[:2])

@@ -183,7 +183,12 @@ def test_the_fabric_command_runs_the_loader_but_keeps_the_vanilla_jar() -> None:
     assert command.main_class.startswith("net.fabricmc")
     classpath_arg = command.jvm_arguments[command.jvm_arguments.index("-cp") + 1]
     assert "1.21.4.jar" in classpath_arg, "jar là của bản vanilla, không phải của loader"
-    assert command.game_arguments[command.game_arguments.index("--version") + 1] == FABRIC_ID
+    assert "asm-9.10.1.jar" in classpath_arg, "thư viện kiểu maven của loader phải lên classpath"
+    # `${version_name}` là mã bản SỞ HỮU jar, không phải id loader: Forge dùng nó trong
+    # `-DignoreList=…,${version_name}.jar` để bỏ client jar khỏi module path. Đặt id loader vào
+    # thì Forge 1.20.1 chết ngay lúc khởi động với "Modules minecraft and _1._20._1 export
+    # package net.minecraft.data" (đã gặp thật).
+    assert command.game_arguments[command.game_arguments.index("--version") + 1] == "1.21.4"
 
 
 def test_memory_flags_come_before_the_version_flags_so_the_version_wins() -> None:

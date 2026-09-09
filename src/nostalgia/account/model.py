@@ -15,6 +15,7 @@ from dataclasses import dataclass
 # Hai giá trị này đi vào lệnh java qua ${user_type}. Mojang chờ đúng chuỗi này.
 OFFLINE = "offline"
 MICROSOFT = "microsoft"
+ELY = "ely"  # non-premium qua Ely.by: tên duy nhất, skin/cape hiện trong game nhờ authlib-injector
 
 # Vé giả cho tài khoản offline. Game không kiểm nó khi chơi một mình, nhưng bỏ trống thì một
 # số bản đời cũ hiểu nhầm là thiếu tham số và tự thoát.
@@ -32,6 +33,8 @@ class Account:
     # Chỉ tài khoản Microsoft mới có. `refresh_token` là thứ giữ cho lần chơi sau khỏi phải
     # nhập lại mã; `expires_at` là mốc epoch mà `access_token` hết hiệu lực (0 = không biết).
     refresh_token: str = ""
+    # Ely.by (Yggdrasil): clientToken đi kèm accessToken khi refresh/validate; Microsoft không dùng.
+    client_token: str = ""
     expires_at: float = 0.0
 
     def __repr__(self) -> str:
@@ -81,5 +84,6 @@ def to_player_profile(account: Account) -> PlayerProfile:
         player_name=account.player_name,
         player_uuid=account.player_uuid,
         access_token=account.access_token or OFFLINE_ACCESS_TOKEN,
-        user_type=account.account_kind,
+        # `--userType` của game: Ely đi qua authlib-injector nên khai như tài khoản Mojang cũ.
+        user_type="mojang" if account.account_kind == ELY else account.account_kind,
     )

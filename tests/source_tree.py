@@ -34,6 +34,7 @@ LAYERS: dict[str, int] = {
     "operations": 0,  # báo tiến độ, yêu cầu dừng
     "model": 0,  # dataclass dùng chung (thêm ở bước 3)
     "net": 1,
+    "settings": 1,  # cấu hình người dùng trên đĩa; content/ đọc khoá API từ đây
     "version": 2,
     "java/component": 2,
     "java/runtime_manifest": 2,  # cũng thuần: chỉ phân tích JSON
@@ -41,13 +42,20 @@ LAYERS: dict[str, int] = {
     "auth": 3,  # giao thức đăng nhập: cần net/, chưa biết gì về kho tài khoản
     "repo": 3,
     "install": 3,
+    "content": 3,  # Modrinth + file đã cài trong thư mục bản chơi
+    "modloader": 3,  # ghi profile loader vào kho version; tải là việc của install/
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó
     "java": 3,
+    "skin": 3,  # tải và cache skin/cape; vẽ nhân vật là việc của giao diện
+    "update": 3,  # bản phát hành launcher: đọc, tải + kiểm băm, script tráo thư mục
+    "multiplayer": 3,  # LAN-qua-relay: chỉ stdlib socket/asyncio, không biết gì về bản chơi
     "account": 4,
     "launch": 4,
     "doctor": 4,
     "api": 5,
+    "facade": 5,  # thân của api.py, tách theo miền
     "cli": 6,
+    "ui": 6,  # cùng tầng trình bày với cli/, và chỉ được đi qua api.py
     "config": 6,
 }
 

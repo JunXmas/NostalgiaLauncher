@@ -4,10 +4,15 @@
 Xbox Live đổi vé, XSTS cấp quyền, rồi Minecraft Services mới cho vé chơi game. Rải bốn địa
 chỉ đó khắp nơi là cách chắc chắn để một ngày sửa một chỗ mà quên ba chỗ còn lại.
 
-**Không có mã ứng dụng nào nằm trong kho này.** Mỗi người phải tự đăng ký app ở
-portal.azure.com (App registrations → "Personal Microsoft accounts only" → bật "Allow public
-client flows"), rồi xin duyệt truy cập Minecraft API ở https://aka.ms/mce-reviewappid. Mã đó
-đưa vào bằng biến môi trường; nhúng cứng mã của người khác là dùng nhờ danh nghĩa của họ.
+**Mã ứng dụng Azure nằm ngay trong mã nguồn, và điều đó là đúng chuẩn.** Luồng device-code
+dùng *public client*: theo thiết kế của OAuth, loại này **không có client secret**, và mã ứng
+dụng đi kèm mọi request mà bất cứ người dùng nào cũng bắt được. Nó là **định danh ứng dụng**,
+không phải bí mật — giấu nó không bảo vệ được gì, còn bắt mỗi người tự đăng ký một app thì
+họ phải chờ Microsoft duyệt tới 24 giờ trước khi đăng nhập được lần đầu. Các trình khởi động
+mã nguồn mở khác (PrismLauncher, MultiMC) cũng nhúng thẳng như vậy.
+
+Cái KHÔNG bao giờ được nhúng là client secret và vé đăng nhập của người dùng; ở đây không có
+cái nào trong hai thứ đó.
 """
 
 from __future__ import annotations
@@ -27,7 +32,16 @@ XBOX_LIVE_URL = "https://user.auth.xboxlive.com/user/authenticate"
 XSTS_URL = "https://xsts.auth.xboxlive.com/xsts/authorize"
 MINECRAFT_LOGIN_URL = "https://api.minecraftservices.com/authentication/login_with_xbox"
 MINECRAFT_PROFILE_URL = "https://api.minecraftservices.com/minecraft/profile"
+# Ely.by: máy chủ Yggdrasil cho tài khoản non-premium, và API root cho authlib-injector.
+ELY_AUTH_URL = "https://authserver.ely.by/auth"
+ELY_AUTHLIB_ROOT_URL = "https://authserver.ely.by/api/authlib-injector"
+AUTHLIB_INJECTOR_LATEST_URL = "https://authlib-injector.yushi.moe/artifact/latest.json"
 
+# App Azure "Nostalgia Launcher" — Personal Microsoft accounts, đã được Microsoft duyệt cho
+# gọi Minecraft API. Kế thừa từ chính dự án này ở kho tiền nhiệm.
+DEFAULT_CLIENT_ID = "868f1ec1-fa81-46de-a1f3-599156f2edd7"
+
+# Chỉ dành cho ai fork và muốn dùng app Azure của riêng họ.
 CLIENT_ID_ENV = "NOSTALGIA_MSA_CLIENT_ID"
 
 
@@ -46,6 +60,9 @@ class AuthEndpoints:
     xsts_url: str = XSTS_URL
     minecraft_login_url: str = MINECRAFT_LOGIN_URL
     minecraft_profile_url: str = MINECRAFT_PROFILE_URL
+    ely_auth_url: str = ELY_AUTH_URL
+    ely_authlib_root_url: str = ELY_AUTHLIB_ROOT_URL
+    authlib_injector_latest_url: str = AUTHLIB_INJECTOR_LATEST_URL
 
 
 DEFAULT_AUTH_ENDPOINTS = AuthEndpoints()

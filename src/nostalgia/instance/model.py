@@ -30,6 +30,11 @@ class Instance:
     max_heap_megabytes: int | None = None
     window_width: int | None = None
     window_height: int | None = None
+    # Ảnh đại diện (thường là icon modpack); rỗng thì thẻ vẽ mảng màu.
+    icon_url: str = ""
+    # Thư mục chơi riêng (đường dẫn tuyệt đối, vd ổ D). Rỗng = `instances/<mã>` mặc định.
+    # Phần nặng của một bản chơi (mods, saves, resourcepacks) nằm ở đây; kho chung không đổi.
+    game_dir_override: str = ""
 
     @property
     def label(self) -> str:

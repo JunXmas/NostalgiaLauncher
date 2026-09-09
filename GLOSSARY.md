@@ -255,6 +255,10 @@ src/nostalgia/
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính
     version_repo.py                  load_* đĩa, fetch_* mạng, sync_* phối hợp
+  update/                        L3  tự cập nhật launcher: GitHub Releases + sha256 + tráo thư mục
+    release.py                       parse release, so phiên bản, chọn gói theo hệ, SHA256SUMS
+    download.py                      tải gói (băm khi tải, ghi nguyên tử), bung zip an toàn
+    apply.py                         script tráo thư mục sau khi launcher cũ thoát (chỉ gói đóng sẵn)
   instance/                      L3  bản chơi: thư mục riêng, kho tải dùng chung
     model.py                         Instance + luật đặt mã (một đoạn đường dẫn)
     store.py                         mỗi bản chơi một instance.json trong thư mục của nó
@@ -281,6 +285,10 @@ src/nostalgia/
     runner.py                        nối các mảnh: cài đủ rồi tìm java đã cài
   doctor.py                      L4  soi mắt xích hỏng
   api.py                         L5  façade duy nhất cho giao diện
+  ui/                            L6  giao diện Qt/QML
+    bridge.py                        FILE DUY NHẤT trong ui/ chạm vào api.py
+    app.py                           điểm vào, cố tình mỏng
+    qml/                             cách vẽ; Theme.qml giữ toàn bộ màu và nhịp hoạt ảnh
   cli/                           L6  tầng DUY NHẤT được print()
   config.py                      L6  chỉ cli/ được đọc
 ```

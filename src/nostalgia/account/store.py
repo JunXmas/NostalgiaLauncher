@@ -55,6 +55,7 @@ def save_accounts(path: Path, accounts: tuple[Account, ...]) -> None:
                 "account_kind": account.account_kind,
                 "access_token": account.access_token,
                 "refresh_token": account.refresh_token,
+                "client_token": account.client_token,
                 "expires_at": account.expires_at,
             }
             for account in accounts
@@ -72,17 +73,25 @@ def find_account(accounts: tuple[Account, ...], player_name: str) -> Account | N
     return None
 
 
-def upsert_account(accounts: tuple[Account, ...], account: Account) -> tuple[Account, ...]:
-    """Thêm mới, hoặc thay tại chỗ nếu tên đã có. Giữ nguyên thứ tự.
+def _same_identity(a: Account, b: Account) -> bool:
+    """Hai bản ghi cùng danh tính nếu cùng loại VÀ cùng UUID.
 
-    Thay tại chỗ chứ không xoá-rồi-thêm-cuối: thứ tự trong file là thứ tự người dùng thấy
-    khi liệt kê, và một lần đăng nhập lại không nên làm tài khoản nhảy xuống cuối danh sách.
+    Không khớp theo tên vì: (1) offline "Steve" và ely "Steve" là hai tài khoản khác nhau,
+    (2) tên Microsoft có thể đổi nhưng UUID không đổi.
     """
-    wanted = account.player_name.casefold()
+    return a.account_kind == b.account_kind and a.player_uuid == b.player_uuid
+
+
+def upsert_account(accounts: tuple[Account, ...], account: Account) -> tuple[Account, ...]:
+    """Thêm mới, hoặc thay tại chỗ nếu cùng danh tính. Giữ nguyên thứ tự.
+
+    Khớp theo (account_kind, player_uuid) chứ không theo tên: tên có thể trùng giữa các loại
+    tài khoản khác nhau, và tên Microsoft có thể đổi nhưng UUID thì không.
+    """
     replaced = tuple(
-        account if existing.player_name.casefold() == wanted else existing for existing in accounts
+        account if _same_identity(existing, account) else existing for existing in accounts
     )
-    if any(existing.player_name.casefold() == wanted for existing in accounts):
+    if any(_same_identity(existing, account) for existing in accounts):
         return replaced
     return (*accounts, account)
 
@@ -106,6 +115,7 @@ def _parse_account(fields: dict[str, JsonValue]) -> Account | None:
         account_kind=account_kind,
         access_token=as_string(fields.get("access_token")) or "",
         refresh_token=as_string(fields.get("refresh_token")) or "",
+        client_token=as_string(fields.get("client_token")) or "",
         # Giá trị lạ (chuỗi, null, thiếu) coi như "không biết hạn" chứ không làm hỏng bản ghi.
         expires_at=float(expires_at) if isinstance(expires_at, (int, float)) else 0.0,
     )

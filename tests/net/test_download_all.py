@@ -11,7 +11,8 @@ from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.errors import Cancelled
 from nostalgia.model.download import Artifact, DownloadTask, RemoteFile
 from nostalgia.net.download import download_all
-from nostalgia.net.http import HttpClient, RetryPolicy
+from nostalgia.net.http import HttpClient
+from nostalgia.net.retry import RetryPolicy
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress
 

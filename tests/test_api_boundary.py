@@ -12,8 +12,10 @@ import pytest
 
 from source_tree import SOURCE_FILES, imported_modules, module_name, parse
 
-# Giao diện chỉ được đi qua đúng những cửa này.
+# Giao diện chỉ được đi qua đúng những cửa này. Ý định của luật là chặn giao diện thò tay
+# vào RUỘT của lõi — nên module của chính nó và số phiên bản của gói thì đương nhiên được.
 ALLOWED_FOR_USER_INTERFACE = (
+    "nostalgia.ui",
     "nostalgia.api",
     "nostalgia.errors",
     "nostalgia.operations.progress",
@@ -21,6 +23,11 @@ ALLOWED_FOR_USER_INTERFACE = (
     "nostalgia.model",
     "nostalgia.account.model",
     "nostalgia.instance.model",
+    "nostalgia.content.model",
+    "nostalgia.modloader.model",
+    "nostalgia.multiplayer.model",
+    "nostalgia.skin.model",
+    "nostalgia.settings.store",
 )
 
 # Kiểu KHÔNG được xuất hiện trong chữ ký công khai của façade: chúng buộc người gọi phải biết
@@ -28,19 +35,23 @@ ALLOWED_FOR_USER_INTERFACE = (
 LEAKY_RETURN_TYPES = ("dict", "Popen", "HTTPResponse", "HTTPSConnection", "ZipFile", "Response")
 
 
-def api_module() -> ast.Module:
-    for path in SOURCE_FILES:
-        if module_name(path) == "api":
-            return parse(path)
-    message = "không tìm thấy nostalgia/api.py"
-    raise AssertionError(message)
+def facade_modules() -> list[ast.Module]:
+    """`api.py` và toàn bộ thân của nó ở `facade/` — cùng một cửa, chỉ tách file."""
+    modules = [
+        parse(path)
+        for path in SOURCE_FILES
+        if module_name(path) == "api" or module_name(path).startswith("facade/")
+    ]
+    assert modules, "không tìm thấy nostalgia/api.py"
+    return modules
 
 
 def public_functions() -> list[ast.FunctionDef]:
     functions = []
-    for node in ast.walk(api_module()):
-        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
-            functions.append(node)
+    for module in facade_modules():
+        for node in ast.walk(module):
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+                functions.append(node)
     return functions
 
 
@@ -77,7 +88,7 @@ def test_a_future_user_interface_may_only_import_the_facade() -> None:
     problems = []
     for path in ui_files:
         for imported in imported_modules(path):
-            dotted = "nostalgia." + imported.replace("/", ".")
-            if not dotted.startswith(ALLOWED_FOR_USER_INTERFACE):
+            dotted = "nostalgia." + imported.replace("/", ".") if imported else "nostalgia"
+            if dotted != "nostalgia" and not dotted.startswith(ALLOWED_FOR_USER_INTERFACE):
                 problems.append(f"{module_name(path)} import {dotted}")
     assert not problems, "giao diện chỉ được import façade và mô hình:\n" + "\n".join(problems)

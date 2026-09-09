@@ -17,7 +17,7 @@ from nostalgia.account.model import MICROSOFT, Account
 from nostalgia.account.store import find_account, load_accounts, save_accounts
 from nostalgia.auth import microsoft as auth_microsoft
 from nostalgia.auth.device_code import DeviceCode, MicrosoftTokens
-from nostalgia.auth.endpoints import CLIENT_ID_ENV
+from nostalgia.auth.endpoints import CLIENT_ID_ENV, DEFAULT_CLIENT_ID
 from nostalgia.auth.microsoft import DeviceCodeFn, MicrosoftLogin, ignore_device_code
 from nostalgia.auth.minecraft import MinecraftSession
 from nostalgia.cli.main import main
@@ -41,16 +41,26 @@ def make_login(*, owns_game: bool = True, expires_in: int = 3600) -> MicrosoftLo
     )
 
 
-def test_signing_in_without_a_client_id_says_exactly_what_to_register(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+def test_signing_in_uses_the_launchers_own_approved_app(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Không có mã ứng dụng là chuyện thường gặp nhất; thông báo phải là hướng dẫn."""
-    assert main([*roots(tmp_path), "account", "add-microsoft"]) == 1
+    """Người chơi không phải đăng ký app Azure nào — launcher mang sẵn app đã duyệt."""
+    seen: list[str] = []
 
-    captured = capsys.readouterr().err
-    assert "portal.azure.com" in captured
-    assert "mce-reviewappid" in captured
-    assert CLIENT_ID_ENV in captured
+    def fake_sign_in(
+        _http_client: HttpClient,
+        client_id: str,
+        _on_device_code: DeviceCodeFn = ignore_device_code,
+        **_kwargs: object,
+    ) -> MicrosoftLogin:
+        seen.append(client_id)
+        return make_login()
+
+    monkeypatch.setattr(auth_microsoft, "sign_in", fake_sign_in)
+
+    assert main([*roots(tmp_path), "account", "add-microsoft"]) == 0
+    assert seen == [DEFAULT_CLIENT_ID]
+    capsys.readouterr()
 
 
 def test_signing_in_shows_the_code_and_saves_the_account(

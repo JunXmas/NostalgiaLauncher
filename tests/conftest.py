@@ -13,6 +13,7 @@ Test nào thật sự cần home thì đánh `@pytest.mark.allow_home`.
 from __future__ import annotations
 
 import os
+import socket
 import ssl
 from collections.abc import Iterator
 from pathlib import Path
@@ -66,6 +67,8 @@ def isolated_home(
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(home / ".cache"))
     monkeypatch.setenv("NOSTALGIA_DATA_DIR", str(home / "data"))
+    # Test bấm nút trong QML không được làm loa máy kêu; test về âm thanh tự bỏ biến này.
+    monkeypatch.setenv("NOSTALGIA_SILENT", "1")
 
     if request.node.get_closest_marker("allow_home") is None:
         message = (
@@ -80,6 +83,40 @@ def isolated_home(
         monkeypatch.setattr(os.path, "expanduser", forbidden)
 
     return home
+
+
+@pytest.fixture(autouse=True)
+def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Chặn mọi kết nối ra ngoài máy, trừ test có đánh dấu `network`.
+
+    Không có lưới này thì một test lỡ gọi ra Internet sẽ **treo** thay vì rớt: đã trả giá
+    đúng một lần — `account add-microsoft` sau khi có mã ứng dụng mặc định đã gọi thật lên
+    Microsoft rồi ngồi chờ người nhập mã suốt 900 giây, và cả bộ test đứng im ở 12%.
+
+    Chặn ở tầng socket chứ không ở tầng `HttpClient`: mọi đường ra Internet đều phải đi qua
+    đây, kể cả đường mà một ngày nào đó ai đó viết mới mà quên mất luật này.
+    """
+    if request.node.get_closest_marker("network") is not None:
+        return
+
+    real_connect = socket.socket.connect
+
+    def guarded_connect(self: socket.socket, address: tuple[object, ...] | str) -> None:
+        # Unix socket (địa chỉ là đường dẫn) luôn nằm trong máy: IPC với Discord giả trong test.
+        if isinstance(address, str):
+            real_connect(self, address)
+            return
+        host = address[0]
+        if host in {"127.0.0.1", "::1", "localhost"}:
+            real_connect(self, address)
+            return
+        message = (
+            f"test không đánh dấu `network` nhưng đang gọi ra {address!r}. "
+            "Dùng máy chủ cục bộ trong tests/, hoặc đánh dấu @pytest.mark.network."
+        )
+        raise AssertionError(message)
+
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
 
 
 @pytest.fixture(scope="session")
@@ -112,3 +149,14 @@ def http_client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
         yield http_client
     finally:
         http_client.close()
+
+
+@pytest.fixture(scope="session")
+def qt_app() -> object:
+    """Một `QGuiApplication` cho cả phiên — Qt không cho tạo hai. Chỉ test trong `tests/ui/`
+    dùng; PySide6 là phụ thuộc tuỳ chọn nên import lười và bỏ qua nếu thiếu."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
+    from PySide6.QtGui import QGuiApplication
+
+    return QGuiApplication.instance() or QGuiApplication(["test"])

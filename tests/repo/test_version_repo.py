@@ -11,7 +11,7 @@ import pytest
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.errors import UnsafePathError, VersionError
 from nostalgia.model.json_value import JsonValue
-from nostalgia.net.http import RetryPolicy
+from nostalgia.net.retry import RetryPolicy
 from nostalgia.repo.version_repo import VersionRepository, is_version_document
 from nostalgia.storage.files import atomic_write_json
 from nostalgia.storage.paths import DataPaths

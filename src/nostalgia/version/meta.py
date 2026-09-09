@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 from nostalgia.model.download import Artifact, RemoteFile
 from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
+from nostalgia.repo.endpoints import MOJANG_LIBRARIES_URL
 from nostalgia.version.maven import MavenCoordinate
 from nostalgia.version.rules import Rule, parse_rules
 
@@ -57,15 +58,19 @@ class Library:
     def is_natives_jar(self) -> bool:
         """Thư viện natives kiểu MỚI (≥1.19): một thư viện riêng, phân biệt bằng classifier.
 
-        Cả hai kiểu đều chỉ chứa `.so`/`.dll`/`.dylib` để giải nén — đưa chúng vào classpath
-        là vô nghĩa, và với kiểu cũ thì còn sai vì mỗi hệ điều hành một file khác nhau.
+        Vẫn bung ra `natives/` cho các bản 1.19-1.21 trỏ `java.library.path` vào đó, nhưng
+        cũng phải LÊN CLASSPATH: từ 26.x game trỏ `java.library.path` vào thư mục con
+        `natives/java` và trông cậy LWJGL tự bung từ jar trên classpath — đúng như launcher
+        chính thức. Loại jar này khỏi classpath là 26.2 chết với "Failed to locate library:
+        liblwjgl.so" (đã gặp thật).
         """
         classifier = self.coordinate.classifier
         return classifier is not None and classifier.startswith("natives-")
 
     @property
     def is_classpath_entry(self) -> bool:
-        return not self.is_native_bundle and not self.is_natives_jar
+        """Chỉ bundle kiểu cũ đứng ngoài classpath: mỗi hệ điều hành một file khác nhau."""
+        return not self.is_native_bundle
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,11 +112,6 @@ class VersionMeta:
     minecraft_arguments: str | None = None
     game_arguments: tuple[ArgumentSpec, ...] = ()
     jvm_arguments: tuple[ArgumentSpec, ...] = ()
-
-    @property
-    def uses_legacy_arguments(self) -> bool:
-        """Đời ≤1.12: tham số nằm trong một chuỗi duy nhất, không có `rules`."""
-        return self.minecraft_arguments is not None and not self.game_arguments
 
     @property
     def jar_owner_id(self) -> str:
@@ -190,10 +190,13 @@ def _parse_library(library_fields: dict[str, JsonValue], coordinate: MavenCoordi
         if (artifact := _parse_artifact(as_mapping(raw))) is not None
     }
     extract = as_mapping(library_fields.get("extract"))
+    artifact = _parse_artifact(as_mapping(downloads.get("artifact")))
+    if artifact is None and "classifiers" not in downloads:
+        artifact = _maven_artifact(library_fields, coordinate)
     return Library(
         coordinate=coordinate,
         rules=parse_rules(library_fields.get("rules")),
-        artifact=_parse_artifact(as_mapping(downloads.get("artifact"))),
+        artifact=artifact,
         classifier_artifacts=classifiers,
         natives_classifier_by_os={
             name: value
@@ -204,6 +207,19 @@ def _parse_library(library_fields: dict[str, JsonValue], coordinate: MavenCoordi
             pattern for pattern in as_list(extract.get("exclude")) if isinstance(pattern, str)
         ),
     )
+
+
+def _maven_artifact(library_fields: dict[str, JsonValue], coordinate: MavenCoordinate) -> Artifact:
+    """Thư viện khai kiểu maven — Fabric, Forge đời cũ: chỉ có `name`, `url` gốc và (có thể)
+    `sha1`/`size` ở ngoài. Đường dẫn suy từ toạ độ; bỏ qua chúng là mất chính jar của loader,
+    và game chết với "Could not find or load main class ...KnotClient" (đã gặp thật)."""
+    base_url = (as_string(library_fields.get("url")) or MOJANG_LIBRARIES_URL).rstrip("/")
+    remote = RemoteFile(
+        url=f"{base_url}/{coordinate.relative_path}",
+        sha1=as_string(library_fields.get("sha1")),
+        size=as_integer(library_fields.get("size")),
+    )
+    return Artifact(remote=remote, relative_path=coordinate.relative_path)
 
 
 def _parse_remote_file(raw: dict[str, JsonValue]) -> RemoteFile | None:

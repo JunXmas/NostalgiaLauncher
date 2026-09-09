@@ -46,8 +46,13 @@ def natives_jar() -> bytes:
     return buffer.getvalue()
 
 
-def publish(server: LocalHttpsServer, state: ServerState) -> Endpoints:
-    """Đăng ký mọi tài nguyên lên máy chủ cục bộ và trả về ba địa chỉ gốc."""
+def publish(
+    server: LocalHttpsServer, state: ServerState, *, java_body: bytes = JAVA_BODY
+) -> Endpoints:
+    """Đăng ký mọi tài nguyên lên máy chủ cục bộ và trả về các địa chỉ gốc.
+
+    `java_body` cho test thay "java" bằng một script đóng vai khác (vd installer Forge).
+    """
     natives_body = natives_jar()
     asset_hash = digest(ASSET_BODY)
     asset_index_document = {
@@ -128,13 +133,13 @@ def publish(server: LocalHttpsServer, state: ServerState) -> Endpoints:
 
     return Endpoints(
         version_manifest=server.url(manifest_url),
-        java_catalog=server.url(_publish_java(server, state)),
+        java_catalog=server.url(_publish_java(server, state, java_body)),
         asset_objects=server.url("/assets"),
     )
 
 
-def _publish_java(server: LocalHttpsServer, state: ServerState) -> str:
-    compressed = lzma.compress(JAVA_BODY, format=LZMA_FORMAT)
+def _publish_java(server: LocalHttpsServer, state: ServerState, java_body: bytes) -> str:
+    compressed = lzma.compress(java_body, format=LZMA_FORMAT)
     state.add("/java/bin-java.lzma", compressed)
     runtime_document = {
         "files": {
@@ -143,7 +148,7 @@ def _publish_java(server: LocalHttpsServer, state: ServerState) -> str:
                 "type": "file",
                 "executable": True,
                 "downloads": {
-                    "raw": remote(server.url("/java/bin-java"), JAVA_BODY),
+                    "raw": remote(server.url("/java/bin-java"), java_body),
                     "lzma": remote(server.url("/java/bin-java.lzma"), compressed),
                 },
             },

@@ -33,7 +33,7 @@ def test_every_fixture_parses(version_id: str) -> None:
 def test_legacy_versions_use_a_single_argument_string() -> None:
     """Đời ≤1.12: `minecraftArguments` là MỘT CHUỖI, không có rules."""
     version_meta = parsed("1.8.9")
-    assert version_meta.uses_legacy_arguments is True
+    assert version_meta.minecraft_arguments is not None and not version_meta.game_arguments
     assert version_meta.minecraft_arguments is not None
     assert "${auth_player_name}" in version_meta.minecraft_arguments
     assert version_meta.game_arguments == ()
@@ -42,7 +42,7 @@ def test_legacy_versions_use_a_single_argument_string() -> None:
 def test_modern_versions_use_argument_lists() -> None:
     """Đời ≥1.13: danh sách, trong đó phần tử có thể là chuỗi hoặc `{rules, value}`."""
     version_meta = parsed("1.20.1")
-    assert version_meta.uses_legacy_arguments is False
+    assert version_meta.minecraft_arguments is None and version_meta.game_arguments
     assert version_meta.minecraft_arguments is None
     assert version_meta.game_arguments and version_meta.jvm_arguments
     with_rules = [spec for spec in version_meta.game_arguments if spec.rules]
@@ -170,3 +170,33 @@ def test_empty_document_parses_to_empty_values() -> None:
     version_meta = parse_version_meta({})
     assert (version_meta.version_id, version_meta.main_class) == ("", "")
     assert version_meta.libraries == ()
+
+
+def test_maven_style_libraries_get_an_artifact_from_name_and_url() -> None:
+    """Fabric khai thư viện chỉ bằng `name` + `url` gốc. Bỏ qua chúng là mất jar của loader."""
+    version_meta = parse_version_meta(load_fixture("fabric-loader-0.19.3-1.21.4"))
+    asm_library = next(
+        library for library in version_meta.libraries if library.coordinate.artifact == "asm"
+    )
+
+    assert asm_library.artifact is not None
+    assert asm_library.artifact.remote.url == (
+        "https://maven.fabricmc.net/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar"
+    )
+    assert asm_library.artifact.relative_path == "org/ow2/asm/asm/9.10.1/asm-9.10.1.jar"
+    assert asm_library.artifact.remote.sha1 == "ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236"
+
+
+def test_maven_style_library_without_url_defaults_to_the_mojang_repository() -> None:
+    version_meta = parse_version_meta(
+        {
+            "id": "x",
+            "mainClass": "m",
+            "libraries": [{"name": "net.sf.jopt-simple:jopt-simple:5.0.4"}],
+        }
+    )
+    artifact = version_meta.libraries[0].artifact
+    assert artifact is not None
+    assert artifact.remote.url == (
+        "https://libraries.minecraft.net/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"
+    )

@@ -28,7 +28,7 @@ def test_adding_the_same_account_twice_does_not_duplicate_it(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     main([*roots(tmp_path), "account", "add-offline", "Jun"])
-    main([*roots(tmp_path), "account", "add-offline", "jun"])
+    main([*roots(tmp_path), "account", "add-offline", "Jun"])
     capsys.readouterr()
 
     main([*roots(tmp_path), "account", "list"])

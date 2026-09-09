@@ -1,15 +1,37 @@
 [project]
 name = "nostalgia"
-version = "0.1.0"
-description = "Nostalgia Launcher — lõi trình khởi động Minecraft: cài đặt và khởi động game. Không giao diện."
+version = "1.0.0"
+description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"
+# GPL-3.0: ai fork và phân phối cũng phải mở mã theo cùng giấy phép — dự án không thể bị gói
+# vào sản phẩm thương mại đóng.
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "JunXmas" }]
+keywords = ["minecraft", "launcher", "modrinth", "curseforge", "fabric", "forge", "pyside6"]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+]
 # Không phụ thuộc runtime. Mọi thứ HTTP dùng http.client của thư viện chuẩn — xem
 # docs/PERFORMANCE.md §2 để biết vì sao (nhanh hơn requests 1,5x khi song song, nạp rẻ hơn).
 dependencies = []
 
+# Giao diện là TUỲ CHỌN. Lõi và dòng lệnh vẫn chạy với đúng thư viện chuẩn; ai muốn cửa sổ
+# thì `uv sync --extra ui`. Giữ như vậy để tính chất "không phụ thuộc runtime" của lõi không
+# bị một thư viện 100 MB xoá sổ chỉ vì có thêm giao diện.
+[project.optional-dependencies]
+ui = ["PySide6-Essentials>=6.7"]
+
 [project.scripts]
 nostalgia = "nostalgia.cli.main:main"
+nostalgia-ui = "nostalgia.ui.app:main"
+
+[project.urls]
+Homepage = "https://github.com/JunXmas/NostalgiaLauncher"
+Releases = "https://github.com/JunXmas/NostalgiaLauncher/releases"
 
 [build-system]
 requires = ["hatchling"]
@@ -23,6 +45,8 @@ artifacts = ["src/nostalgia/py.typed"]
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+# Chỉ để đóng gói bản phát hành (CI + thử tay); KHÔNG phải phụ thuộc runtime.
+build = ["pyinstaller>=6.10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -51,3 +75,39 @@ files = ["src", "tests", "bench"]
 python_version = "3.12"
 strict = true
 warn_unreachable = true
+
+# Nhượng bộ DUY NHẤT, và có lý do cụ thể: decorator `@Property` của PySide6 trả về một đối
+# tượng `Property` chứ không phải giá trị, nên mypy đọc `bridge.instances` thành `Property`
+# thay vì `list`. Đây là hạn chế của phần khai kiểu PySide6, không phải chỗ ta viết ẩu — nên
+# chỉ tắt đúng những mã lỗi phát sinh từ nó, và chỉ ở test của tầng giao diện.
+[[tool.mypy.overrides]]
+module = [
+    "test_qml",
+    "test_bridges",
+    "test_content_bridge",
+    "test_content_bridge_packs",
+    "test_settings_bridge",
+    "test_account_bridge",
+    "test_account_cache",
+    "test_home_layout",
+    "test_home_picker",
+    "test_multiplayer_bridge",
+    "test_room_code_input",
+    "test_game_log",
+    "test_notifier",
+    "test_instance_stats",
+    "test_skin_library",
+    "test_modpack_drop",
+    "test_discord_presence",
+    "test_update_bridge",
+]
+disable_error_code = [
+    "comparison-overlap",
+    "attr-defined",
+    "index",
+    "unreachable",
+    "return-value",
+    "arg-type",
+    "misc",
+    "has-type",
+]

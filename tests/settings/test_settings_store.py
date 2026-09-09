@@ -1,0 +1,52 @@
+"""Cấu hình người dùng: ghi 0600, biến môi trường thắng file, file hỏng không chặn launcher."""
+
+from __future__ import annotations
+
+import stat
+from pathlib import Path
+
+from nostalgia.settings.store import Settings, load_settings, save_settings, settings_path
+
+
+def test_round_trip_is_private_and_env_overrides(tmp_path: Path) -> None:
+    save_settings(tmp_path, Settings(curseforge_api_key="  $2a$10$khoa  "))
+
+    assert stat.S_IMODE(settings_path(tmp_path).stat().st_mode) == 0o600
+    assert load_settings(tmp_path, environment={}).curseforge_api_key == "$2a$10$khoa"
+    assert (
+        load_settings(
+            tmp_path, environment={"NOSTALGIA_CURSEFORGE_API_KEY": "env"}
+        ).curseforge_api_key
+        == "env"
+    )
+
+
+def test_missing_or_corrupt_file_means_empty_settings(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}) == Settings()
+    settings_path(tmp_path).write_text("{ hỏng")
+    assert load_settings(tmp_path, environment={}).curseforge_api_key == ""
+
+
+def test_ui_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).ui_sound is True
+    save_settings(tmp_path, Settings(ui_sound=False))
+    assert load_settings(tmp_path, environment={}).ui_sound is False
+    settings_path(tmp_path).write_text('{"ui_sound": 0}')
+    assert load_settings(tmp_path, environment={}).ui_sound is True, "giá trị lạ → mặc định"
+
+
+def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).notification_sound is True
+    save_settings(tmp_path, Settings(notification_sound=False))
+    assert load_settings(tmp_path, environment={}).notification_sound is False
+    settings_path(tmp_path).write_text('{"notification_sound": "yes"}')
+    assert load_settings(tmp_path, environment={}).notification_sound is True, (
+        "giá trị lạ → mặc định"
+    )
+
+
+def test_discord_settings_round_trip_and_default_off(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).discord_presence is False
+    save_settings(tmp_path, Settings(discord_presence=True, discord_application_id=" 1234 "))
+    loaded = load_settings(tmp_path, environment={})
+    assert (loaded.discord_presence, loaded.discord_application_id) == (True, "1234")

@@ -55,5 +55,25 @@ class AuthError(NostalgiaError):
     """Đăng nhập thất bại: máy chủ từ chối, hết hạn, hoặc cần người dùng làm một việc gì đó."""
 
 
+class TwoFactorRequired(AuthError):
+    """Máy chủ đăng nhập đòi mã xác thực hai lớp: giao diện hỏi mã rồi gọi lại."""
+
+
 class InstanceError(NostalgiaError):
     """Instance không hợp lệ, không tìm thấy, hoặc đã tồn tại."""
+
+
+class ContentError(NostalgiaError):
+    """Mod, gói tài nguyên, shader: không tìm thấy bản tương thích, hoặc file đã cài hỏng."""
+
+
+class MultiplayerError(NostalgiaError):
+    """Chơi chung: mã phòng sai, relay không nối được, không thấy world "Open to LAN"."""
+
+
+class SkinError(NostalgiaError):
+    """Skin/cape: file không phải PNG, quá lớn, hoặc không áp được cho loại tài khoản này."""
+
+
+class UpdateError(NostalgiaError):
+    """Tự cập nhật launcher: không có gói cho máy này, thiếu SHA256SUMS, hay chạy từ mã nguồn."""

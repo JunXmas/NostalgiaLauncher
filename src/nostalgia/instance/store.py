@@ -36,14 +36,65 @@ def create_instance(paths: DataPaths, instance: Instance) -> Instance:
     if paths.instance_json(instance.instance_id).exists():
         message = f"đã có instance {instance.instance_id!r}"
         raise InstanceError(message)
+    if instance.game_dir_override:
+        chosen = Path(instance.game_dir_override)
+        for other in list_instances(paths):
+            if other.game_dir_override and Path(other.game_dir_override) == chosen:
+                message = f"thư mục {chosen} đã là thư mục chơi của {other.instance_id!r}"
+                raise InstanceError(message)
     save_instance(paths, instance)
     return instance
 
 
+def game_dir_of(paths: DataPaths, instance: Instance) -> Path:
+    """Thư mục chơi thật của một bản chơi — chỗ DUY NHẤT phân giải quy ước này.
+
+    `instance.json` luôn nằm ở `instances/<mã>/` (kho đăng ký, để liệt kê và gỡ không đổi);
+    còn thư mục chơi có thể là một ổ khác nếu người dùng chọn lúc tạo."""
+    if instance.game_dir_override:
+        return Path(instance.game_dir_override)
+    return paths.instance_dir(instance.instance_id)
+
+
+def check_game_dir_override(paths: DataPaths, text: str) -> str:
+    """Chuẩn hoá đường dẫn người dùng chọn; rỗng là "mặc định". Từ chối đường dẫn tương đối và
+    mọi chỗ đè lên kho chung của launcher (chọn nhầm thư mục dữ liệu, hay thư mục cha của nó,
+    là để mod ghi lung tung vào kho)."""
+    text = text.strip()
+    if not text:
+        return ""
+    chosen = Path(text).expanduser()
+    if not chosen.is_absolute():
+        message = f"thư mục chơi phải là đường dẫn tuyệt đối: {text!r}"
+        raise InstanceError(message)
+    reserved = (
+        paths.data_dir,
+        paths.config_dir,
+        paths.versions_dir,
+        paths.libraries_dir,
+        paths.assets_dir,
+        paths.runtime_dir,
+        paths.instances_dir,
+        paths.skins_dir,
+        paths.updates_dir,
+    )
+    for taken in reserved:
+        if chosen == taken or taken.is_relative_to(chosen):
+            message = f"{chosen} đè lên kho của launcher ({taken}) — chọn thư mục khác"
+            raise InstanceError(message)
+    return str(chosen)
+
+
 def save_instance(paths: DataPaths, instance: Instance) -> None:
-    """Ghi cấu hình của một bản chơi, tạo sẵn thư mục chơi cho nó."""
+    """Ghi cấu hình của một bản chơi, tạo sẵn thư mục chơi cho nó (kể cả thư mục riêng)."""
     check_instance_id(instance.instance_id)
     ensure_dir(paths.instance_dir(instance.instance_id))
+    if instance.game_dir_override:
+        try:
+            ensure_dir(Path(instance.game_dir_override))
+        except OSError as exc:
+            message = f"không tạo được thư mục chơi {instance.game_dir_override}: {exc}"
+            raise InstanceError(message) from exc
     document: JsonValue = {
         "format": FORMAT_VERSION,
         "instance_id": instance.instance_id,
@@ -52,6 +103,8 @@ def save_instance(paths: DataPaths, instance: Instance) -> None:
         "max_heap_megabytes": instance.max_heap_megabytes,
         "window_width": instance.window_width,
         "window_height": instance.window_height,
+        "icon_url": instance.icon_url,
+        "game_dir": instance.game_dir_override or None,
     }
     atomic_write_json(paths.instance_json(instance.instance_id), document)
 
@@ -96,8 +149,11 @@ def unregister_instance(paths: DataPaths, instance_id: str) -> Path:
     if not path.is_file():
         message = f"chưa có instance {instance_id!r}"
         raise InstanceError(message)
+    instance = _read_if_usable(path, instance_id)
     path.unlink()
-    return paths.instance_dir(instance_id)
+    if instance is None:
+        return paths.instance_dir(instance_id)
+    return game_dir_of(paths, instance)
 
 
 def _read_if_usable(path: Path, fallback_id: str) -> Instance | None:
@@ -127,4 +183,6 @@ def _parse_instance(fields: dict[str, JsonValue], *, fallback_id: str) -> Instan
         max_heap_megabytes=as_integer(fields.get("max_heap_megabytes")),
         window_width=as_integer(fields.get("window_width")),
         window_height=as_integer(fields.get("window_height")),
+        icon_url=as_string(fields.get("icon_url")) or "",
+        game_dir_override=as_string(fields.get("game_dir")) or "",
     )
