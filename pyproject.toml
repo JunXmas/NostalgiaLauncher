@@ -1,9 +1,20 @@
 [project]
 name = "nostalgia"
-version = "0.1.0"
-description = "Nostalgia Launcher — lõi trình khởi động Minecraft: cài đặt và khởi động game. Không giao diện."
+version = "1.0.0"
+description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"
+# GPL-3.0: ai fork và phân phối cũng phải mở mã theo cùng giấy phép — dự án không thể bị gói
+# vào sản phẩm thương mại đóng.
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "JunXmas" }]
+keywords = ["minecraft", "launcher", "modrinth", "curseforge", "fabric", "forge", "pyside6"]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+]
 # Không phụ thuộc runtime. Mọi thứ HTTP dùng http.client của thư viện chuẩn — xem
 # docs/PERFORMANCE.md §2 để biết vì sao (nhanh hơn requests 1,5x khi song song, nạp rẻ hơn).
 dependencies = []
@@ -17,6 +28,10 @@ ui = ["PySide6-Essentials>=6.7"]
 [project.scripts]
 nostalgia = "nostalgia.cli.main:main"
 nostalgia-ui = "nostalgia.ui.app:main"
+
+[project.urls]
+Homepage = "https://github.com/JunXmas/NostalgiaLauncher"
+Releases = "https://github.com/JunXmas/NostalgiaLauncher/releases"
 
 [build-system]
 requires = ["hatchling"]

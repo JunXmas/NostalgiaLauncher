@@ -6,6 +6,7 @@ nằm ở QML. File này cố ý mỏng để không có chỗ nào cho logic l�
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -119,6 +120,11 @@ def main(argv: list[str] | None = None) -> int:
             print(error.toString(), file=sys.stderr)
         return 1
     view.show()
+    if os.environ.get("NOSTALGIA_SMOKE_TEST") == "1":
+        # Workflow release chạy gói đóng sẵn trên cả ba hệ với biến này: dựng xong cửa sổ
+        # (QML nạp, cầu nối, tài nguyên) là đủ bằng chứng gói chạy — không vào vòng lặp.
+        print("smoke ok")
+        return 0
     return qt_application.exec()
 
 

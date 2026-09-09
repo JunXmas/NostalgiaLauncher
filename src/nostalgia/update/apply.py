@@ -21,6 +21,7 @@ from nostalgia.storage.files import ensure_dir, set_executable
 
 INSTALL_KIND_FROZEN = "frozen"
 INSTALL_KIND_SOURCE = "source"
+INSTALL_KIND_APP = "app"
 EXECUTABLE_NAME = "nostalgia-ui"
 
 
@@ -35,7 +36,11 @@ class SwapPlan:
 
 
 def detect_install_kind() -> str:
-    return INSTALL_KIND_FROZEN if getattr(sys, "frozen", False) else INSTALL_KIND_SOURCE
+    """`frozen`: gói onedir tự tráo được. `app`: gói macOS .app — thư mục thực thi nằm trong
+    Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `source`: mã nguồn."""
+    if not getattr(sys, "frozen", False):
+        return INSTALL_KIND_SOURCE
+    return INSTALL_KIND_APP if sys.platform == "darwin" else INSTALL_KIND_FROZEN
 
 
 def current_install_dir() -> Path:

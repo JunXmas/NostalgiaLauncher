@@ -83,7 +83,9 @@ Panel {
             visible: !panel.frozen
             width: Math.min(parent.width, 720)
             wrapMode: Text.WordWrap
-            text: "Đang chạy từ mã nguồn: launcher chỉ báo có bản mới; cập nhật bằng git pull + uv sync. Gói đóng sẵn (tải từ trang release) thì tự cài và mở lại."
+            text: updateBridge.installKind === "app"
+                  ? "Gói macOS (.app): launcher chỉ báo có bản mới; tải .dmg mới từ trang release rồi kéo đè vào Applications."
+                  : "Đang chạy từ mã nguồn: launcher chỉ báo có bản mới; cập nhật bằng git pull + uv sync. Gói đóng sẵn Linux/Windows (tải từ trang release) thì tự cài và mở lại."
             color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
         }
     }
