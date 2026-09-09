@@ -100,6 +100,7 @@ module = [
     "test_modpack_drop",
     "test_discord_presence",
     "test_update_bridge",
+    "test_continue_card",
 ]
 disable_error_code = [
     "comparison-overlap",

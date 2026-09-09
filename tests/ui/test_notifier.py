@@ -117,28 +117,26 @@ def test_notifier_announces_launch_events_and_respects_the_sound_switch(tmp_path
     bridge.gameStarted.emit("sinh-ton")
     bridge.gameStopped.emit(0)
     bridge.gameStopped.emit(1)
-    bridge.versionInstalled.emit("1.20.1")
-    wait_until(lambda: len(seen) == 4)
-    assert [event[0] for event in seen] == ["started", "stopped", "crashed", "installed"]
-    assert seen[0][2] == "Sinh tồn" and "1" in seen[2][2] and "1.20.1" in seen[3][2]
+    wait_until(lambda: len(seen) == 3)
+    assert [event[0] for event in seen] == ["started", "stopped", "crashed"]
+    assert seen[0][2] == "Sinh tồn" and "1" in seen[2][2]
     assert [Path(path).name.rsplit("-", 1)[0] for path in played] == [
         "sound-started",
         "sound-stopped",
         "sound-crashed",
-        "sound-installed",
     ]
 
     enabled["sound"] = False
     bridge.gameStarted.emit("sinh-ton")
-    wait_until(lambda: len(seen) == 5)
-    assert len(played) == 4, "tắt âm thanh thì toast vẫn lên nhưng chuông im"
+    wait_until(lambda: len(seen) == 4)
+    assert len(played) == 3, "tắt âm thanh thì toast vẫn lên nhưng chuông im"
 
     # Blip giao diện đi theo công tắc RIÊNG: chuông tắt mà blip vẫn kêu, và ngược lại.
     notifier.playUi("select")
     assert Path(played[-1]).name.startswith("sound-select-")
     enabled["ui"] = False
     notifier.playUi("nav")
-    assert len(played) == 5
+    assert len(played) == 4
 
 
 def brightness(samples: list[int]) -> float:

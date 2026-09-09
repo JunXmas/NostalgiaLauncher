@@ -121,13 +121,14 @@ Item {
             onAccountChosen: function (name) { bridge.setActiveAccount(name); }
             onRemoveRequested: function (name) { bridge.removeAccount(name); }
         }
-        VersionsCard {
+        ContinueCard {
+            objectName: "continueCard"
             width: parent.width
             height: 214
             translucent: true
-            versions: bridge.installedVersions
-            busy: bridge.busy
-            onInstallRequested: function (versionId) { if (versionId) bridge.installVersion(versionId); }
+            worlds: bridge.recentWorlds
+            playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
+            onWorldChosen: function (instanceId, worldFolder) { bridge.playWorld(instanceId, worldFolder); }
         }
         FriendsCard {
             width: parent.width

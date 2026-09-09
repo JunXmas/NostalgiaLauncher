@@ -34,6 +34,7 @@ from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.skins import SkinOperations
 from nostalgia.facade.updates import StagedUpdate, UpdateOperations
 from nostalgia.instance.model import Instance
+from nostalgia.instance.world import RecentWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
 from nostalgia.multiplayer.model import RoomStatus
@@ -73,6 +74,7 @@ __all__ = [
     "PlayerProfile",
     "PlayerSkin",
     "Progress",
+    "RecentWorld",
     "RoomService",
     "RoomStatus",
     "Settings",

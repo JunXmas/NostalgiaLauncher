@@ -1,4 +1,5 @@
-"""Phần bản chơi và tiến độ của cầu nối chính: danh sách bản chơi, tải phiên bản, sửa/gỡ.
+"""Phần bản chơi và tiến độ của cầu nối chính: danh sách bản chơi, thế giới chơi gần đây,
+sửa/gỡ bản chơi.
 
 Tách khỏi `bridge.py` để mỗi file dưới 200 dòng; QML vẫn thấy tất cả trên cùng một đối
 tượng `bridge` vì `LauncherBridge` kế thừa lớp này.
@@ -20,7 +21,7 @@ from nostalgia.ui.worker import WorkerBridge
 class InstanceBridge(WorkerBridge):
     instancesChanged = Signal()
     progressChanged = Signal()
-    versionInstalled = Signal(str)
+    recentWorldsChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -30,10 +31,34 @@ class InstanceBridge(WorkerBridge):
         # Hàng cho QML giữ trong RAM: mỗi hàng kèm thống kê (đếm thế giới, mod trên đĩa), mà
         # trang chủ đọc `instances` ở nhiều binding — không quét đĩa lại cho từng binding.
         self._instance_rows: list[dict[str, Any]] | None = None
+        # Thế giới gần đây cũng vậy: đọc level.dat chỉ khi bản chơi đổi hoặc game vừa tắt.
+        self._recent_world_rows: list[dict[str, Any]] | None = None
         self.instancesChanged.connect(self._forget_instance_rows)
+        self.instancesChanged.connect(self._forget_recent_worlds)
 
     def _forget_instance_rows(self) -> None:
         self._instance_rows = None
+
+    def _forget_recent_worlds(self) -> None:
+        self._recent_world_rows = None
+        self.recentWorldsChanged.emit()
+
+    @Property(list, notify=recentWorldsChanged)
+    def recentWorlds(self) -> list[dict[str, Any]]:
+        """Thế giới chơi gần nhất trên mọi bản chơi, mới nhất trước, tối đa 4 hàng."""
+        if self._recent_world_rows is None:
+            self._recent_world_rows = [
+                {
+                    "instanceId": world.instance_id,
+                    "instanceLabel": world.instance_label,
+                    "worldFolder": world.world_folder,
+                    "worldName": world.world_name,
+                    "lastPlayedAt": world.last_played_at,
+                    "lastPlayedText": world.last_played_text,
+                }
+                for world in self._launcher.list_recent_worlds()
+            ]
+        return self._recent_world_rows
 
     @Property(list, notify=instancesChanged)
     def instances(self) -> list[dict[str, Any]]:
@@ -61,11 +86,6 @@ class InstanceBridge(WorkerBridge):
             "modCount": stats.mod_count,
         }
 
-    @Property(list, notify=instancesChanged)
-    def installedVersions(self) -> list[str]:
-        """Các phiên bản đã tải về máy. Đọc đĩa, không chạm mạng."""
-        return list(self._launcher.list_installed_versions())
-
     @Property(str, notify=progressChanged)
     def progressText(self) -> str:
         return self._progress_text
@@ -73,17 +93,6 @@ class InstanceBridge(WorkerBridge):
     @Property(float, notify=progressChanged)
     def progressFraction(self) -> float:
         return self._progress_fraction
-
-    @Slot(str)
-    def installVersion(self, version_id: str) -> None:
-        """Tải một phiên bản ở luồng nền; giao diện vẫn vẽ được trong lúc đó."""
-
-        def work() -> None:
-            self._launcher.install_version(version_id, on_progress=self.report_progress)
-            self.instancesChanged.emit()
-            self.versionInstalled.emit(version_id)
-
-        self.run_in_background(work, f"Cài Minecraft {version_id}")
 
     @Slot(str, str, int, int, int)
     def updateInstance(

@@ -41,7 +41,6 @@ class Notifier(QObject):
         self._instance_label = instance_label
         bridge.gameStarted.connect(self._on_game_started)
         bridge.gameStopped.connect(self._on_game_stopped)
-        bridge.versionInstalled.connect(self._on_version_installed)
 
     def announce(self, event_kind: str, title: str, detail: str) -> None:
         self.notified.emit(event_kind, title, detail)
@@ -66,7 +65,3 @@ class Notifier(QObject):
             self.announce("stopped", "Game đã thoát", "Hẹn gặp lại!")
         else:
             self.announce("crashed", "Game gặp sự cố", f"Mã thoát {exit_code} — xem NHẬT KÝ")
-
-    @Slot(str)
-    def _on_version_installed(self, version_id: str) -> None:
-        self.announce("installed", "Đã tải xong", f"Minecraft {version_id} sẵn sàng")

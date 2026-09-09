@@ -84,6 +84,13 @@ def publish(
                     "rules": [{"action": "allow", "features": {"has_custom_resolution": True}}],
                     "value": ["--width", "${resolution_width}", "--height", "${resolution_height}"],
                 },
+                # Khối quick play y như 1.20+: chỉ hiện khi façade được bảo vào thẳng một thế giới.
+                {
+                    "rules": [
+                        {"action": "allow", "features": {"is_quick_play_singleplayer": True}}
+                    ],
+                    "value": ["--quickPlaySingleplayer", "${quickPlaySingleplayer}"],
+                },
             ]
         },
         "javaVersion": {"component": JAVA_COMPONENT, "majorVersion": 8},

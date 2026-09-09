@@ -39,6 +39,7 @@ def build_launch_variables(
     launcher_version: str,
     window_width: int | None = None,
     window_height: int | None = None,
+    quick_play_world: str | None = None,
 ) -> dict[str, str]:
     """Dựng bảng thay thế. Mọi giá trị đều là `str` — đây là biên với `argv`."""
     undashed_uuid = player_profile.undashed_uuid
@@ -75,4 +76,7 @@ def build_launch_variables(
     if window_width is not None and window_height is not None:
         variables["resolution_width"] = str(window_width)
         variables["resolution_height"] = str(window_height)
+    # Vào thẳng một thế giới (1.20+): giá trị là tên thư mục trong saves/.
+    if quick_play_world:
+        variables["quickPlaySingleplayer"] = quick_play_world
     return variables

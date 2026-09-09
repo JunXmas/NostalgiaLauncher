@@ -1,8 +1,8 @@
 """Bố cục trang chủ: thẻ hero không đè cột HỒ SƠ, ô HỒ SƠ cao theo nội dung.
 
 Hai lỗi đã thấy bằng mắt trên máy thật: thẻ TÀI KHOẢN/TÀI NGUYÊN lệch hẳn sang trái ở màn hình
-rộng, và ô "Thêm" của HỒ SƠ tràn ra đè lên PHIÊN BẢN ĐÃ TẢI khi có nhiều tài khoản. Test này
-thay mắt cho CI.
+rộng, và ô "Thêm" của HỒ SƠ tràn ra đè lên ô bên dưới (nay là CHƠI TIẾP) khi có nhiều tài
+khoản. Test này thay mắt cho CI.
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ def test_hero_cards_stay_clear_of_the_profile_column(tmp_path: Path) -> None:
 
 def test_profile_card_grows_with_its_content(tmp_path: Path) -> None:
     """Lỗi đã gặp: ô HỒ SƠ cao theo hằng số, thêm nút thu gọn là ô "Thêm" tràn ra đè lên ô
-    PHIÊN BẢN ĐÃ TẢI. Nay ô phải cao đúng bằng nội dung, cả khi thu gọn lẫn khi xoè."""
+    bên dưới (CHƠI TIẾP). Nay ô phải cao đúng bằng nội dung, cả khi thu gọn lẫn khi xoè."""
     launcher = make_launcher(tmp_path)
     for name in ("Jun", "Notch", "Dinnerbone"):
         launcher.add_offline_account(name)
