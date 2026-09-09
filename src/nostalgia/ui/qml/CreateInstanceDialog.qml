@@ -324,9 +324,12 @@ Item {
                         readonly property bool expanded: dialog.expandedMajor === modelData.major
                         readonly property var versions: expanded ? dialog.versionsOf(modelData.major) : []
                         width: ListView.view.width
-                        // Thẻ cao theo bề ngang để key art (2,56:1) không bị cắt quá nửa.
-                        readonly property int artHeight: Math.max(150, Math.min(210, Math.round(width / 3.1)))
-                        height: artHeight + (expanded ? chips.height + 12 : 0)
+                        // Thẻ vẽ ĐÚNG tỉ lệ key art 2,56:1 để không cắt mất logo hay nhân vật; các
+                        // phiên bản con trượt xuống bên dưới ảnh với hoạt ảnh, không nhảy phắt.
+                        readonly property int artHeight: Math.max(150, Math.min(300, Math.round(width / 2.56)))
+                        height: artHeight + (expanded ? chips.implicitHeight + 14 : 0)
+                        clip: true
+                        Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
 
                         Rectangle {
                             id: art
@@ -368,24 +371,43 @@ Item {
                         }
                         Flow {
                             id: chips
-                            anchors { left: parent.left; right: parent.right; top: art.bottom; topMargin: 8 }
-                            spacing: 6
-                            visible: card.expanded
+                            anchors { left: parent.left; right: parent.right; top: art.bottom; topMargin: 10 }
+                            spacing: 8
+                            opacity: card.expanded ? 1 : 0
+                            enabled: card.expanded
+                            Behavior on opacity { NumberAnimation { duration: Theme.normal } }
                             Repeater {
                                 model: card.versions
-                                Rectangle {
+                                // Nút phiên bản kiểu khối Minecraft như trang chủ: khối đá, chọn thì thành khối cỏ.
+                                Item {
                                     id: versionCell
                                     readonly property bool selected: modelData.versionId === dialog.gameVersion
                                     readonly property bool supported: dialog.presetSupports(modelData.versionId)
-                                    width: Math.max(72, versionText.width + 22); height: 30; radius: 7
+                                    readonly property int edge: 3
+                                    width: Math.max(78, versionText.width + 26); height: 34
                                     opacity: supported ? 1 : 0.35
-                                    color: selected ? Theme.accentSoft : Theme.surfaceHigh
-                                    border.color: selected ? Theme.accent : Theme.border
-                                    Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
-                                           color: versionCell.selected ? Theme.accent : Theme.text
-                                           font.pixelSize: 12; font.family: "monospace" }
-                                    HoverHandler { cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
-                                    TapHandler { enabled: versionCell.supported; onTapped: dialog.pickGameVersion(modelData.versionId) }
+                                    Rectangle { anchors.fill: parent; color: "#1e1e1f" }
+                                    Rectangle {
+                                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 2 }
+                                        height: parent.height - 4
+                                        color: versionCell.selected ? "#1d4d13" : "#2e2a25"
+                                    }
+                                    Rectangle {
+                                        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 2 }
+                                        anchors.topMargin: versionPress.pressed ? 4 : 2
+                                        height: parent.height - 4 - versionCell.edge + (versionPress.pressed ? 2 : 0)
+                                        color: versionCell.selected ? (versionHover.hovered ? "#4f9a36" : "#3c8527")
+                                                                    : (versionHover.hovered ? "#5a5247" : "#4a443c")
+                                        Behavior on color { ColorAnimation { duration: Theme.quick } }
+                                        Rectangle { anchors { left: parent.left; right: parent.right; top: parent.top }
+                                                    height: 2; color: versionCell.selected ? "#66ffffff" : "#33ffffff" }
+                                        Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
+                                               color: versionCell.selected ? "white" : "#e8dcc8"
+                                               font.pixelSize: 12; font.bold: true
+                                               style: Text.Raised; styleColor: "#40000000" }
+                                    }
+                                    HoverHandler { id: versionHover; cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
+                                    TapHandler { id: versionPress; enabled: versionCell.supported; onTapped: dialog.pickGameVersion(modelData.versionId) }
                                 }
                             }
                         }

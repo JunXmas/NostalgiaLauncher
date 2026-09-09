@@ -2,25 +2,27 @@
 
 Toàn bộ key art Minecraft là tài sản của Mojang Studios / Microsoft, dùng cho mục đích
 phi thương mại, minh hoạ trong launcher. Ảnh lấy qua kho file của minecraft.wiki
-(bản gốc do Mojang phát hành trên minecraft.net / Minecraft Live), sau đó resize
-về 1024x400 (cắt giữa, JPEG q82).
+(bản gốc do Mojang phát hành trên minecraft.net / Minecraft Live) hoặc từ bộ slide key art
+chủ dự án cung cấp (09/2026), sau đó resize về 1024x400 (JPEG q82). Khung cắt chọn tay để
+giữ logo và nhân vật (neo giữa hoặc neo trên); thẻ trong hộp Tạo bản chơi vẽ đúng tỉ lệ
+2,56:1 nên không cắt thêm.
 
 | File | Họ phiên bản | Nguồn gốc |
 |---|---|---|
 | 26.jpg | 26.x (key art 26.2, mới nhất có banner) | https://minecraft.wiki/images/26.2_banner.jpg |
 | 1.21.jpg | Tricky Trials | https://minecraft.wiki/images/1.21_banner.jpg |
-| 1.20.jpg | Trails & Tales | https://minecraft.wiki/images/1.20_banner.jpg |
-| 1.19.jpg | The Wild Update | https://minecraft.wiki/images/1.19_banner.jpg |
-| 1.18.jpg | Caves & Cliffs II | https://minecraft.wiki/images/Caves%26Cliffs2Java.jpg |
-| 1.17.jpg | Caves & Cliffs I | https://minecraft.wiki/images/Java_Edition_1.17.jpg |
-| 1.16.jpg | Nether Update | https://minecraft.wiki/images/NetherUpdateArtwork.png |
-| 1.15.jpg | Buzzy Bees | https://minecraft.wiki/images/BuzzyBeesJava.jpg |
-| 1.14.jpg | Village & Pillage | https://minecraft.wiki/images/Village_%26_Pillage_banner.png |
-| 1.13.jpg | Update Aquatic | https://minecraft.wiki/images/Update_Aquatic.png |
-| 1.12.jpg | World of Color | https://minecraft.wiki/images/World_of_Color_Update.png |
-| 1.11.jpg | Exploration Update (ảnh công bố chính thức, dạng screenshot) | https://minecraft.wiki/images/ExplorationUpdateJava.png |
-| 1.10.jpg | Frostburn (ảnh công bố chính thức, dạng screenshot) | https://minecraft.wiki/images/Frostburn_Update.png |
-| 1.9.jpg | Combat Update | https://minecraft.wiki/images/Combat_Update.png |
+| 1.20.jpg | Trails & Tales | Key art Mojang, từ bộ slide chủ dự án (09/2026); cắt 1024x400 neo trên, giữ logo |
+| 1.19.jpg | The Wild Update | Key art Mojang, từ bộ slide chủ dự án; cắt neo trên |
+| 1.18.jpg | Caves & Cliffs II | Key art Mojang, từ bộ slide chủ dự án; cắt neo trên |
+| 1.17.jpg | Caves & Cliffs I | Key art Mojang, từ bộ slide chủ dự án; cắt neo trên |
+| 1.16.jpg | Nether Update | Key art Mojang, từ bộ slide chủ dự án; cắt neo trên |
+| 1.15.jpg | Buzzy Bees | Key art Mojang (ảnh nền) + logo rời ghép lên trên, từ bộ slide chủ dự án |
+| 1.14.jpg | Village & Pillage | Key art Mojang, từ bộ slide chủ dự án; cắt giữa |
+| 1.13.jpg | Update Aquatic | Key art Mojang, từ bộ slide chủ dự án; cắt giữa |
+| 1.12.jpg | World of Color | Key art Mojang (ảnh nền) + logo rời ghép lên trên, từ bộ slide chủ dự án |
+| 1.11.jpg | Exploration Update | Key art Mojang (full artwork, không logo) — bộ slide dẫn nguồn minecraft-archive.fandom.com/wiki/1.11_-_The_Exploration_Update |
+| 1.10.jpg | Frostburn | Ảnh công bố chính thức (screenshot) + logo "The Frostburn Update" ghép góc trên trái, từ bộ slide chủ dự án |
+| 1.9.jpg | Combat Update | Key art Mojang, từ bộ slide chủ dự án; cắt giữa |
 | 1.8.jpg | Bountiful Update | https://minecraft.wiki/images/The_Bountiful_Update.png |
 | old.jpg | Mọi bản cũ hơn — key art "Minecraft: Java Edition" cổ điển | https://minecraft.wiki/images/MCJE_key_art.png |
 
