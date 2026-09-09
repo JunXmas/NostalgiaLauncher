@@ -20,7 +20,7 @@ from nostalgia.content.model import (
 )
 from nostalgia.content.updates import ContentUpdate, find_updates, identify_by_hash
 from nostalgia.facade.context import LauncherContext
-from nostalgia.instance.store import load_instance
+from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modloader.model import COMPATIBLE_LOADERS, LoaderKind, detect_loader_kind
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
@@ -63,7 +63,7 @@ class ContentOperations(LauncherContext):
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         return ContentTarget(
             instance_id=instance_id,
-            game_dir=self.paths.instance_dir(instance_id),
+            game_dir=game_dir_of(self.paths, instance),
             game_version=version_meta.jar_version_id or version_meta.version_id,
             loader_kind=detect_loader_kind(instance.version_id),
         )

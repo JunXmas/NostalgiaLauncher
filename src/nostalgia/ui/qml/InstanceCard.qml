@@ -9,6 +9,7 @@ Rectangle {
     property bool removable: false
     property bool editable: false
     property string iconUrl: ""
+    property bool customGameDir: false
     // Thống kê chơi: chuỗi giờ chơi đã định dạng ở lõi, và ba con số đếm được.
     property string playtimeText: ""
     property int launchCount: 0
@@ -139,7 +140,8 @@ Rectangle {
             width: parent.width; elide: Text.ElideRight
         }
         Text {
-            text: root.loaderLabel + "  ·  " + root.versionId
+            // 💾 đứng đầu: bản chơi này nằm ở thư mục riêng (ổ khác), không bị đuôi dài che mất.
+            text: (root.customGameDir ? "💾  " : "") + root.loaderLabel + "  ·  " + root.versionId
             width: parent.width; elide: Text.ElideRight
             color: Theme.textMuted; font.pixelSize: 11
         }

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Dialogs
 
 /* Hộp đặt tên bản chơi khi cài modpack. Tên trống thì lấy tên pack. */
 Item {
@@ -7,8 +8,10 @@ Item {
     z: 100
     property string projectId: ""
     property string packTitle: ""
+    property string gameDirUrl: ""
+    readonly property string gameDirPath: gameDirUrl ? decodeURIComponent(String(gameDirUrl).replace(/^file:\/\//, "")) : ""
 
-    function openFor(id, title) { projectId = id; packTitle = title; nameField.text = ""; visible = true; }
+    function openFor(id, title) { projectId = id; packTitle = title; nameField.text = ""; gameDirUrl = ""; visible = true; }
 
     MouseArea {
         anchors.fill: parent
@@ -17,7 +20,7 @@ Item {
     }
     Rectangle {
         anchors.centerIn: parent
-        width: 460; height: 230
+        width: 460; height: 290
         radius: Theme.radius
         color: Theme.surface
         border.color: Theme.border
@@ -37,11 +40,30 @@ Item {
             Row {
                 spacing: 8
                 ActionButton {
+                    primary: false; label: "📁  Thư mục chơi"
+                    onClicked: folderPicker.open()
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 260; elide: Text.ElideMiddle
+                    text: dialog.gameDirUrl ? dialog.gameDirPath : "mặc định"
+                    color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 11
+                }
+            }
+            Row {
+                spacing: 8
+                ActionButton {
                     label: "Cài"
-                    onClicked: { contentBridge.installModpack(dialog.projectId, nameField.text); dialog.visible = false; }
+                    onClicked: { contentBridge.installModpack(dialog.projectId, nameField.text, dialog.gameDirUrl); dialog.visible = false; }
                 }
                 ActionButton { primary: false; label: "Huỷ"; onClicked: dialog.visible = false }
             }
         }
+    }
+
+    FolderDialog {
+        id: folderPicker
+        title: "Chọn thư mục chơi cho modpack này"
+        onAccepted: dialog.gameDirUrl = selectedFolder.toString()
     }
 }

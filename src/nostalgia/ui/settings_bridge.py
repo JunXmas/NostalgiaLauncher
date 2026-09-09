@@ -23,6 +23,7 @@ class SettingsBridge(QObject):
     notificationSoundChanged = Signal()
     discordChanged = Signal()
     autoUpdateCheckChanged = Signal()
+    gameDirRootChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -59,6 +60,20 @@ class SettingsBridge(QObject):
         if wanted != settings:
             self._save(wanted)
             self.discordChanged.emit()
+
+    @Property(str, notify=gameDirRootChanged)
+    def defaultGameDirRoot(self) -> str:
+        return self.settings_snapshot().default_game_dir_root
+
+    @Slot(str)
+    def setDefaultGameDirRoot(self, text: str) -> None:
+        """Nhận đường dẫn hoặc URL file:// từ FolderDialog; rỗng = về mặc định."""
+        chosen = QUrl(text).toLocalFile() if text.startswith("file:") else text
+        chosen = self._launcher.check_game_dir(chosen)
+        settings = self.settings_snapshot()
+        if settings.default_game_dir_root != chosen:
+            self._save(replace(settings, default_game_dir_root=chosen))
+            self.gameDirRootChanged.emit()
 
     @Property(bool, notify=autoUpdateCheckChanged)
     def autoUpdateCheck(self) -> bool:

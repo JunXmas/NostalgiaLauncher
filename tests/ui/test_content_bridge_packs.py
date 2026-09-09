@@ -60,7 +60,7 @@ def test_install_modpack_creates_an_instance_and_selects_it(
     content_bridge.install(PACK_ID)  # đường cài thường phải từ chối modpack, im lặng
     assert content_bridge.results[0]["installing"] is False
 
-    content_bridge.installModpack(PACK_ID, "")
+    content_bridge.installModpack(PACK_ID, "", "")
     wait_until(lambda: bool(failures))  # tín hiệu lỗi xếp hàng, có thể tới sau khi hết bận
     assert "host không được phép" in failures[0]
     assert main_bridge.instances == [], "bị từ chối thì không được tạo bản chơi dở"
@@ -99,7 +99,7 @@ def test_import_modpack_file_creates_an_instance_from_a_local_mrpack(
     original = mrpack.ALLOWED_HOSTS
     mrpack.ALLOWED_HOSTS = (host,)
     try:
-        content_bridge.importModpackFile(pack_path.as_uri(), "")
+        content_bridge.importModpackFile(pack_path.as_uri(), "", "")
         wait_until(lambda: bool(created) or not content_bridge.busy)
     finally:
         mrpack.ALLOWED_HOSTS = original

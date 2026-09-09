@@ -10,7 +10,7 @@ import contextlib
 import threading
 from collections.abc import Callable
 
-from PySide6.QtCore import Property, QObject, Signal
+from PySide6.QtCore import Property, QObject, QUrl, Signal
 
 from nostalgia.errors import NostalgiaError
 
@@ -75,3 +75,11 @@ class WorkerBridge(QObject):
         if self._busy != busy:
             self._busy = busy
             self.busyChanged.emit()
+
+
+def local_path(text: str) -> str:
+    """FileDialog/FolderDialog của QML trả URL `file://`; lõi chỉ nhận đường dẫn. Rỗng giữ rỗng."""
+    text = text.strip()
+    if text.startswith("file:"):
+        return QUrl(text).toLocalFile()
+    return text

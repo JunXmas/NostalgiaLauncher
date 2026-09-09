@@ -28,6 +28,8 @@ class Settings:
     discord_application_id: str = ""
     # Tự kiểm bản mới lúc khởi động (chỉ hỏi GitHub một câu, không tự cài).
     auto_update_check: bool = True
+    # Thư mục lưu bản chơi mới (vd ổ còn chỗ). Rỗng = `instances/` trong thư mục dữ liệu.
+    default_game_dir_root: str = ""
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -53,6 +55,9 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                     as_string(fields.get("discord_application_id")) or ""
                 ).strip(),
                 auto_update_check=update_check if isinstance(update_check, bool) else True,
+                default_game_dir_root=(
+                    as_string(fields.get("default_game_dir_root")) or ""
+                ).strip(),
             )
         except DataFileError:
             settings = Settings()
@@ -72,6 +77,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "discord_presence": settings.discord_presence,
             "discord_application_id": settings.discord_application_id.strip(),
             "auto_update_check": settings.auto_update_check,
+            "default_game_dir_root": settings.default_game_dir_root.strip(),
         },
         private=True,
     )

@@ -23,6 +23,9 @@ def add_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) 
     create.add_argument("--max-memory", type=int, default=None, help="bộ nhớ tối đa, tính MB")
     create.add_argument("--width", type=int, default=None, help="chiều rộng cửa sổ")
     create.add_argument("--height", type=int, default=None, help="chiều cao cửa sổ")
+    create.add_argument(
+        "--game-dir", default="", help="thư mục chơi riêng (vd ổ khác); mặc định instances/<mã>"
+    )
     create.set_defaults(run=run_create)
 
     actions.add_parser("list", help="liệt kê bản chơi").set_defaults(run=run_list)
@@ -42,7 +45,7 @@ def add_parser(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) 
 def run_create(arguments: argparse.Namespace, context: CliContext) -> int:
     from nostalgia.cli.output import say
     from nostalgia.instance.model import Instance
-    from nostalgia.instance.store import create_instance
+    from nostalgia.instance.store import check_game_dir_override, create_instance, game_dir_of
 
     instance = create_instance(
         context.paths,
@@ -53,10 +56,11 @@ def run_create(arguments: argparse.Namespace, context: CliContext) -> int:
             max_heap_megabytes=arguments.max_memory,
             window_width=arguments.width,
             window_height=arguments.height,
+            game_dir_override=check_game_dir_override(context.paths, arguments.game_dir),
         ),
     )
     say(f"đã tạo {instance.label} ({instance.version_id})")
-    say(f"thư mục chơi: {context.paths.instance_dir(instance.instance_id)}")
+    say(f"thư mục chơi: {game_dir_of(context.paths, instance)}")
     return 0
 
 
