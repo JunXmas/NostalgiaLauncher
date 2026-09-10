@@ -96,9 +96,11 @@ Item {
         anchors { bottom: instanceStrip.top; bottomMargin: 22 }
         x: Math.round((rightColumn.x - width) / 2)
         playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
+        running: bridge.gameRunning
         instances: bridge.instances
         chosenIndex: page.chosenIndex
         onClicked: page.playChosen()
+        onStopRequested: bridge.stopGame()
         onPicked: function (index) { page.chosenIndex = index; }
         onCreateRequested: page.navigate(1)
     }

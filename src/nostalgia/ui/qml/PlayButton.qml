@@ -6,7 +6,10 @@ Column {
     property var instances: []
     property int chosenIndex: 0
     property bool playable: true
+    // Game đang chạy: cùng nút đó thành DỪNG (đỏ), bấm là kill tiến trình game.
+    property bool running: false
     signal clicked()
+    signal stopRequested()
     signal picked(int index)
     signal createRequested()
 
@@ -15,12 +18,14 @@ Column {
 
     // Cùng khối kiểu minecraft.net như mọi nút, chỉ to hơn.
     ActionButton {
+        objectName: "playButton"
         width: parent.width
         height: 64
         fontSize: 24
-        label: "CHƠI  ▶"
-        clickable: root.playable
-        onClicked: root.clicked()
+        label: root.running ? "DỪNG  ■" : "CHƠI  ▶"
+        danger: root.running
+        clickable: root.running || root.playable
+        onClicked: root.running ? root.stopRequested() : root.clicked()
     }
 
     // Có bản chơi: hộp chọn. Chưa có: một dòng dẫn sang trang tạo.

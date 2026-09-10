@@ -7,6 +7,8 @@ Item {
     id: root
     property string label: ""
     property bool primary: true
+    // Nút nguy hiểm (DỪNG game): khối đỏ đất nung, cùng hình khối.
+    property bool danger: false
     property bool clickable: true
     property int fontSize: 12
     signal clicked()
@@ -14,9 +16,11 @@ Item {
     readonly property int edge: 4         // cạnh dưới "khối"
     readonly property int pressDrop: press.pressed && root.clickable ? 3 : 0
     readonly property color faceColor: !root.clickable ? "#5a5b5c"
+                                      : root.danger ? (hover.hovered ? "#d4413c" : "#b8332f")
                                       : root.primary ? (hover.hovered ? "#4f9a36" : "#3c8527")
                                                      : (hover.hovered ? "#5a5c5e" : "#48494a")
     readonly property color edgeColor: !root.clickable ? "#3b3c3d"
+                                      : root.danger ? "#5e1614"
                                       : root.primary ? "#1d4d13" : "#2b2c2d"
     readonly property color glintColor: root.primary ? "#66ffffff" : "#33ffffff"
 
