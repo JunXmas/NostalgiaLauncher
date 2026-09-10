@@ -91,6 +91,10 @@ def publish(
                     ],
                     "value": ["--quickPlaySingleplayer", "${quickPlaySingleplayer}"],
                 },
+                {
+                    "rules": [{"action": "allow", "features": {"is_quick_play_multiplayer": True}}],
+                    "value": ["--quickPlayMultiplayer", "${quickPlayMultiplayer}"],
+                },
             ]
         },
         "javaVersion": {"component": JAVA_COMPONENT, "majorVersion": 8},

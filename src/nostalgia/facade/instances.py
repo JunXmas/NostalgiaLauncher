@@ -11,6 +11,11 @@ from nostalgia.content.installed import list_installed
 from nostalgia.errors import ContentError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.model import Instance
+from nostalgia.instance.server_list import (
+    DEFAULT_SERVER_LIMIT,
+    RecentServer,
+    list_recent_servers,
+)
 from nostalgia.instance.stats import (
     InstanceStats,
     PlayStats,
@@ -90,3 +95,7 @@ class InstanceOperations(LauncherContext):
         """Chỉ đọc đĩa: thế giới chơi gần nhất trên mọi bản chơi, mới nhất trước."""
         moment = time.time() if now is None else now
         return list_recent_worlds(self.paths, list_instances(self.paths), limit=limit, now=moment)
+
+    def list_recent_servers(self, *, limit: int = DEFAULT_SERVER_LIMIT) -> tuple[RecentServer, ...]:
+        """Chỉ đọc đĩa: server đã thêm trong game, bản chơi vừa sửa danh sách gần nhất trước."""
+        return list_recent_servers(self.paths, list_instances(self.paths), limit=limit)

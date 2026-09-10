@@ -40,6 +40,7 @@ def build_launch_variables(
     window_width: int | None = None,
     window_height: int | None = None,
     quick_play_world: str | None = None,
+    quick_play_server: str | None = None,
 ) -> dict[str, str]:
     """Dựng bảng thay thế. Mọi giá trị đều là `str` — đây là biên với `argv`."""
     undashed_uuid = player_profile.undashed_uuid
@@ -79,4 +80,7 @@ def build_launch_variables(
     # Vào thẳng một thế giới (1.20+): giá trị là tên thư mục trong saves/.
     if quick_play_world:
         variables["quickPlaySingleplayer"] = quick_play_world
+    # Vào thẳng máy chủ (1.20+): `host[:port]` như người chơi gõ trong game.
+    if quick_play_server:
+        variables["quickPlayMultiplayer"] = quick_play_server
     return variables

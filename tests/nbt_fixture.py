@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import gzip
 import struct
+import zlib
 from pathlib import Path
 
 TAG_BYTE, TAG_INT, TAG_LONG, TAG_DOUBLE, TAG_BYTE_ARRAY, TAG_STRING = 1, 3, 4, 6, 7, 8
@@ -70,3 +71,46 @@ def write_world(game_dir: Path, folder: str, world_name: str, last_played_ms: in
     level_path.parent.mkdir(parents=True, exist_ok=True)
     level_path.write_bytes(build_level_dat(world_name, last_played_ms))
     return level_path
+
+
+# ----- servers.dat: NBT KHÔNG nén -----
+
+
+def tiny_png(width: int = 64, height: int = 64) -> bytes:
+    """PNG RGBA xanh lá hợp lệ, dựng bằng zlib/struct — icon server giả."""
+    raw = b"".join(b"\x00" + bytes([40, 160, 60, 255]) * width for _ in range(height))
+
+    def chunk(chunk_type: bytes, payload: bytes) -> bytes:
+        crc = zlib.crc32(chunk_type + payload) & 0xFFFFFFFF
+        return struct.pack(">I", len(payload)) + chunk_type + payload + struct.pack(">I", crc)
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(raw))
+        + chunk(b"IEND", b"")
+    )
+
+
+def build_servers_dat(servers: list[tuple[str, str, str | None, bool]]) -> bytes:
+    """`servers`: (name, ip, icon_base64 | None, hidden). Đúng dạng game ghi, thêm tag nhiễu."""
+    elements = b""
+    for server_name, address, icon_base64, hidden in servers:
+        children = _named(TAG_STRING, "name", _string(server_name))
+        children += _named(TAG_STRING, "ip", _string(address))
+        children += _named(TAG_BYTE, "acceptTextures", b"\x01")
+        if icon_base64 is not None:
+            children += _named(TAG_STRING, "icon", _string(icon_base64))
+        if hidden:
+            children += _named(TAG_BYTE, "hidden", b"\x01")
+        elements += _compound(children)
+    servers_list = bytes([TAG_COMPOUND if servers else 0]) + struct.pack(">i", len(servers))
+    return _named(TAG_COMPOUND, "", _compound(_named(TAG_LIST, "servers", servers_list + elements)))
+
+
+def write_servers(game_dir: Path, servers: list[tuple[str, str, str | None, bool]]) -> Path:
+    servers_path = game_dir / "servers.dat"
+    servers_path.parent.mkdir(parents=True, exist_ok=True)
+    servers_path.write_bytes(build_servers_dat(servers))
+    return servers_path

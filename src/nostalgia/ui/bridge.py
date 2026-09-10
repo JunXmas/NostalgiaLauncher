@@ -170,7 +170,12 @@ class LauncherBridge(InstanceBridge):
         self._stop_requested = True
         threading.Thread(target=game.stop, name="nostalgia-stop-game", daemon=True).start()
 
-    def _launch(self, instance_id: str, world_folder: str = "") -> None:
+    @Slot(str, str)
+    def playServer(self, instance_id: str, server_address: str) -> None:
+        """Ô CHƠI TIẾP, nhóm SERVER: mở bản chơi và vào thẳng máy chủ (`host[:port]`)."""
+        self._launch(instance_id, server_address=server_address)
+
+    def _launch(self, instance_id: str, world_folder: str = "", server_address: str = "") -> None:
         player_name = str(self.activePlayerName)
 
         def work() -> None:
@@ -193,6 +198,7 @@ class LauncherBridge(InstanceBridge):
                 instance_id,
                 player_name,
                 world_folder=world_folder,
+                server_address=server_address,
                 on_output=self._game_log.receive,
             )
             started_at = time.time()
@@ -216,9 +222,12 @@ class LauncherBridge(InstanceBridge):
             if exit_code != 0:
                 self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))
 
-        activity = (
-            f"Vào {world_folder} ({instance_id})" if world_folder else f"Khởi động {instance_id}"
-        )
+        if server_address:
+            activity = f"Vào máy chủ {server_address} ({instance_id})"
+        elif world_folder:
+            activity = f"Vào {world_folder} ({instance_id})"
+        else:
+            activity = f"Khởi động {instance_id}"
         self.run_in_background(work, activity)
 
     # ----- nội bộ -----

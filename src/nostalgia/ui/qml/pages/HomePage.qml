@@ -129,11 +129,13 @@ Item {
         ContinueCard {
             objectName: "continueCard"
             width: parent.width
-            height: 214
+            height: 340
             translucent: true
             worlds: bridge.recentWorlds
+            servers: bridge.recentServers
             playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
             onWorldChosen: function (instanceId, worldFolder) { bridge.playWorld(instanceId, worldFolder); }
+            onServerChosen: function (instanceId, address) { bridge.playServer(instanceId, address); }
         }
         FriendsCard {
             width: parent.width

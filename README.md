@@ -138,6 +138,7 @@ Everything below did not exist in the old `NostalgiaLauncher`, or was rebuilt fr
 - 🛒 **CurseForge without an API key**, plus Modrinth, plus **drag-and-drop** modpack import.
 - 🌐 **Play together over the internet** with a room code — no port forwarding, no plugins.
 - 🎨 **Skin library** inside the launcher, one button to add / upload / apply.
+- ⏯ **Continue playing** from the home page: recent worlds *and* the servers you added in-game (with their real icons) — one click jumps straight in; the PLAY button turns into STOP while the game runs.
 - 📜 Live **game log** with filters, **play statistics**, toasts, chimes, **dashboard-style UI sounds**, **Discord Rich Presence**.
 - 🔄 **Auto-update** that refuses anything without a matching `SHA256SUMS`.
 - 📦 **Installers for everyone**: AppImage / .deb / .rpm / tar.gz on Linux, .dmg for Apple Silicon and Intel, a proper setup.exe on Windows.

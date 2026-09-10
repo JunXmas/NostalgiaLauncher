@@ -33,6 +33,7 @@ class PlayOperations(AccountOperations):
         *,
         client_id: str = "",
         world_folder: str = "",
+        server_address: str = "",
         on_output: OutputFn = ignore_output,
         cancel_token: CancelToken | None = None,
     ) -> GameProcess:
@@ -64,6 +65,7 @@ class PlayOperations(AccountOperations):
                 window_width=instance.window_width,
                 window_height=instance.window_height,
                 world_folder=world_folder,
+                server_address=server_address,
             ),
             tuning=tuning,
             virtual_assets_dir=self._virtual_assets_dir(version_meta),

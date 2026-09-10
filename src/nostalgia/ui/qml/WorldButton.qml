@@ -12,6 +12,10 @@ Item {
     property string worldName: ""
     property string detail: ""
     property bool clickable: true
+    // Ô icon bên trái: ảnh (URL data: của icon server) nếu có, không thì ký tự `glyph`.
+    property string iconSource: ""
+    property string glyph: "▦"
+    readonly property bool iconReady: picture.status === Image.Ready
     signal chosen()
 
     readonly property int edge: 3
@@ -54,7 +58,18 @@ Item {
                     width: 20; height: 20; radius: 4
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.accentSoft; border.color: Theme.accent
-                    Text { anchors.centerIn: parent; text: "▦"; color: Theme.accent; font.pixelSize: 11 }
+                    clip: true
+                    Image {
+                        id: picture
+                        anchors.fill: parent; anchors.margins: 1
+                        source: root.iconSource
+                        sourceSize: Qt.size(40, 40); smooth: true; mipmap: true; asynchronous: true
+                        visible: root.iconReady
+                    }
+                    Text {
+                        anchors.centerIn: parent; visible: !root.iconReady
+                        text: root.glyph; color: Theme.accent; font.pixelSize: 11
+                    }
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter

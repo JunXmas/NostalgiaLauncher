@@ -26,7 +26,7 @@ ARRAY_ELEMENT_SIZES = {TAG_BYTE_ARRAY: 1, TAG_INT_ARRAY: 4, TAG_LONG_ARRAY: 8}
 DATA_COMPOUND_NAME = "Data"
 WORLD_NAME_TAG = "LevelName"
 LAST_PLAYED_TAG = "LastPlayed"
-_READ_ERRORS = (OSError, EOFError, struct.error, IndexError, UnicodeDecodeError, ValueError)
+READ_ERRORS = (OSError, EOFError, struct.error, IndexError, UnicodeDecodeError, ValueError)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +37,7 @@ class LevelSummary:
     last_played_ms: int
 
 
-class _Reader:
+class Reader:
     """Con trỏ đọc big-endian trên payload đã giải nén."""
 
     __slots__ = ("offset", "payload")
@@ -69,7 +69,7 @@ class _Reader:
         return len(self.payload) - self.offset
 
 
-def _skip_payload(reader: _Reader, tag_id: int, depth: int) -> None:
+def skip_payload(reader: Reader, tag_id: int, depth: int) -> None:
     """Nhảy qua payload của một tag mà không giữ gì. Đệ quy có trần độ sâu."""
     if depth > MAX_DEPTH:
         message = "NBT lồng quá sâu"
@@ -88,20 +88,20 @@ def _skip_payload(reader: _Reader, tag_id: int, depth: int) -> None:
             message = "danh sách NBT khai nhiều phần tử hơn dữ liệu"
             raise ValueError(message)
         for _ in range(count):
-            _skip_payload(reader, element_tag, depth + 1)
+            skip_payload(reader, element_tag, depth + 1)
     elif tag_id == TAG_COMPOUND:
         while True:
             child_tag = reader.unpack("B")
             if child_tag == TAG_END:
                 return
             reader.skip(reader.unpack("H"))
-            _skip_payload(reader, child_tag, depth + 1)
+            skip_payload(reader, child_tag, depth + 1)
     else:
         message = f"tag NBT lạ {tag_id}"
         raise ValueError(message)
 
 
-def _read_fields(reader: _Reader, depth: int) -> dict[str, int | str]:
+def _read_fields(reader: Reader, depth: int) -> dict[str, int | str]:
     """Đọc các con string / int / long của một compound; chui vào đúng compound `Data` ở gốc,
     còn lại nhảy qua."""
     if depth > MAX_DEPTH:
@@ -122,7 +122,7 @@ def _read_fields(reader: _Reader, depth: int) -> dict[str, int | str]:
         elif child_tag == TAG_COMPOUND and depth == 0 and name == DATA_COMPOUND_NAME:
             fields.update(_read_fields(reader, depth + 1))
         else:
-            _skip_payload(reader, child_tag, depth + 1)
+            skip_payload(reader, child_tag, depth + 1)
 
 
 def load_level_summary(level_path: Path) -> LevelSummary | None:
@@ -132,12 +132,12 @@ def load_level_summary(level_path: Path) -> LevelSummary | None:
             payload = stream.read(MAX_LEVEL_BYTES + 1)
         if len(payload) > MAX_LEVEL_BYTES:
             return None
-        reader = _Reader(payload)
+        reader = Reader(payload)
         if reader.unpack("B") != TAG_COMPOUND:
             return None
         reader.text()  # tên compound gốc, thường rỗng
         fields = _read_fields(reader, 0)
-    except _READ_ERRORS:
+    except READ_ERRORS:
         return None
     world_name = fields.get(WORLD_NAME_TAG)
     last_played = fields.get(LAST_PLAYED_TAG)

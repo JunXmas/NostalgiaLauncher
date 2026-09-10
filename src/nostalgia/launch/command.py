@@ -53,6 +53,13 @@ class LaunchOptions:
     # Vào thẳng thế giới này (tên thư mục trong saves/). Đời < 1.20 không có quick play thì
     # khối tham số không tồn tại trong JSON và game mở bình thường, không lỗi.
     world_folder: str = ""
+    # Vào thẳng máy chủ này (`host[:port]`), cũng chỉ 1.20+. Không đi cùng `world_folder`.
+    server_address: str = ""
+
+    def __post_init__(self) -> None:
+        if self.world_folder and self.server_address:
+            message = "chỉ vào thẳng MỘT nơi: thế giới hoặc máy chủ, không cả hai"
+            raise ValueError(message)
 
     @property
     def features(self) -> dict[str, bool]:
@@ -67,6 +74,7 @@ class LaunchOptions:
             "has_custom_resolution": self.window_width is not None
             and self.window_height is not None,
             "is_quick_play_singleplayer": bool(self.world_folder),
+            "is_quick_play_multiplayer": bool(self.server_address),
         }
 
 
@@ -136,6 +144,7 @@ def build_launch_command(
         window_width=options.window_width,
         window_height=options.window_height,
         quick_play_world=options.world_folder or None,
+        quick_play_server=options.server_address or None,
     )
 
     jvm_arguments = substitute_placeholders(
