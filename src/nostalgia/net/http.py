@@ -19,8 +19,17 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit
 
+from nostalgia import __version__
 from nostalgia.errors import Cancelled, NetworkError
 from nostalgia.operations.cancellation import CancelToken
+
+# Header mặc định của MỌI request. User-Agent là bắt buộc về thực tế: GitHub API trả 403 cho
+# request không có UA (bộ tự cập nhật từng "Không kiểm được" vì vậy), Modrinth cũng chặn; người
+# gọi vẫn đè được bằng `headers=`.
+DEFAULT_HEADERS: Mapping[str, str] = {
+    "Accept-Encoding": "identity",
+    "User-Agent": f"NostalgiaLauncher/{__version__}",
+}
 
 _TLS_LOCK = threading.Lock()
 _TLS_CACHE: dict[str, ssl.SSLContext] = {}
@@ -34,10 +43,9 @@ def default_tls_context() -> ssl.SSLContext:
     `SSLContext` dùng chung sau khi tạo là an toàn, và khỏi đọc lại kho chứng chỉ mỗi lần.
     """
     with _TLS_LOCK:
-        context = _TLS_CACHE.get("default")
-        if context is None:
-            context = _TLS_CACHE["default"] = ssl.create_default_context()
-        return context
+        if "default" not in _TLS_CACHE:
+            _TLS_CACHE["default"] = ssl.create_default_context()
+        return _TLS_CACHE["default"]
 
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.
@@ -120,7 +128,7 @@ class HttpClient:
         if cancel_token is not None:
             cancel_token.raise_if_cancelled()
         host, path = _split(url)
-        request_headers = {"Accept-Encoding": "identity", **(headers or {})}
+        request_headers = {**DEFAULT_HEADERS, **(headers or {})}
         response = self._open_response(host, url, method, path, body, request_headers)
         try:
             with response:
@@ -164,9 +172,7 @@ class HttpClient:
         # `_split` nên đích vẫn phải là https; quá hạn hoặc thiếu Location là lỗi, không lặp mãi.
         for _hop in range(MAX_REDIRECTS + 1):
             host, path = _split(url)
-            response = self._open_response(
-                host, url, "GET", path, None, {"Accept-Encoding": "identity"}
-            )
+            response = self._open_response(host, url, "GET", path, None, dict(DEFAULT_HEADERS))
             if response.status not in REDIRECT_STATUSES:
                 break
             location = response.getheader("Location") or ""
