@@ -24,6 +24,16 @@ Item {
     function runSearch() {
         contentBridge.search(page.kind, searchField.text, page.sortKeys[filters.sortIndex]);
     }
+    // Mod đã có trong bản chơi: nút xám nhưng vẫn bấm được — hỏi lại rồi mới cài đè, đúng như
+    // người chơi mong ("tôi biết nó có rồi, tôi muốn cài lại").
+    property string pendingProjectId: ""
+    function requestInstall(projectId, title, alreadyInstalled) {
+        if (!alreadyInstalled) { contentBridge.install(projectId); return; }
+        page.pendingProjectId = projectId;
+        reinstallConfirm.ask("Cài thêm " + title + "?",
+                             "Bạn chắc chắn muốn cài thêm " + page.kindLabels[page.kind].toLowerCase()
+                             + " này chứ? " + page.kindLabels[page.kind] + " đã tồn tại trong bản chơi — cài lại sẽ ghi đè file hiện có.");
+    }
     function refresh() {
         // Đọc danh sách đã cài của ĐÚNG loại đang xem trước (đọc đĩa, rẻ): cờ "Đã cài" trên
         // thẻ duyệt và tab Đã cài đều lấy từ đó, nên đổi chip là phải đọc lại.
@@ -228,7 +238,7 @@ Item {
                                 anchors { fill: parent; rightMargin: 10; bottomMargin: 10 }
                                 project: model
                                 installable: page.hasInstance && !page.modsBlocked
-                                onInstallRequested: function (projectId) { contentBridge.install(projectId); }
+                                onInstallRequested: function (projectId, title, alreadyInstalled) { page.requestInstall(projectId, title, alreadyInstalled); }
                                 onModpackRequested: function (projectId, title) { modpackDialog.openFor(projectId, title); }
                             }
                         }
@@ -244,7 +254,7 @@ Item {
                             width: ListView.view.width
                             project: model
                             installable: page.hasInstance && !page.modsBlocked
-                            onInstallRequested: function (projectId) { contentBridge.install(projectId); }
+                            onInstallRequested: function (projectId, title, alreadyInstalled) { page.requestInstall(projectId, title, alreadyInstalled); }
                         }
                         footer: loadMore
                     }
@@ -376,4 +386,11 @@ Item {
     }
 
     ModpackDialog { id: modpackDialog; objectName: "modpackDialog"; anchors.fill: parent }
+    ConfirmDialog {
+        id: reinstallConfirm
+        objectName: "reinstallConfirm"
+        anchors.fill: parent
+        acceptLabel: "Cài thêm"
+        onAccepted: contentBridge.install(page.pendingProjectId)
+    }
 }

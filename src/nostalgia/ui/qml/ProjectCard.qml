@@ -6,7 +6,7 @@ Rectangle {
     id: root
     property var project: ({})
     property bool installable: true
-    signal installRequested(string projectId)
+    signal installRequested(string projectId, string title, bool alreadyInstalled)
     signal modpackRequested(string projectId, string title)
     readonly property bool isModpack: (project.contentKind || "") === "modpack"
 
@@ -74,10 +74,11 @@ Rectangle {
         width: root.isModpack ? 120 : 84; height: 30
         label: root.isModpack ? (project.installing ? "Đang cài..." : "Tạo bản chơi")
              : project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
+        // Đã cài thì nút xám nhưng VẪN bấm được: trang sẽ hỏi lại trước khi cài đè.
         primary: !project.installed
-        clickable: !project.installing && (root.isModpack || (root.installable && !project.installed))
+        clickable: !project.installing && (root.isModpack || root.installable)
         onClicked: root.isModpack ? root.modpackRequested(project.projectId, project.title)
-                                  : root.installRequested(project.projectId)
+                                  : root.installRequested(project.projectId, project.title, project.installed)
     }
     HoverHandler { id: hover }
 }
