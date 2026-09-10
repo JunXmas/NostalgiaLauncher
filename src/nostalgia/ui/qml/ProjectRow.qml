@@ -5,7 +5,7 @@ Rectangle {
     id: root
     property var project: ({})
     property bool installable: true
-    signal installRequested(string projectId)
+    signal installRequested(string projectId, string title, bool alreadyInstalled)
 
     height: 74
     radius: Theme.radiusSmall
@@ -79,9 +79,10 @@ Rectangle {
         anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
         width: 92
         label: project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
+        // Đã cài thì nút xám nhưng VẪN bấm được: trang sẽ hỏi lại trước khi cài đè.
         primary: !project.installed
-        clickable: root.installable && !project.installed && !project.installing
-        onClicked: root.installRequested(project.projectId)
+        clickable: root.installable && !project.installing
+        onClicked: root.installRequested(project.projectId, project.title, project.installed)
     }
 
     HoverHandler { id: hover }
