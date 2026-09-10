@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSize, QUrl
+from PySide6.QtCore import QObject, QSize, QUrl
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQuick import QQuickView
 
@@ -85,6 +85,11 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     view.setMinimumSize(QSize(1280, 800))
     view.resize(1360, 860)
     view.setSource(QUrl.fromLocalFile(str(QML_DIR / "Main.qml")))
+    # Hộp hỏi lại dùng chung nằm ở Main.qml để phủ cả thanh bên; các trang (nạp sau, qua Loader)
+    # gọi nó bằng context property thay vì phải với lên cây cha.
+    root_item = view.rootObject()
+    if root_item is not None:
+        context.setContextProperty("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
     return view, bridge
 
 

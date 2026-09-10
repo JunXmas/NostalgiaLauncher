@@ -30,9 +30,11 @@ Item {
     function requestInstall(projectId, title, alreadyInstalled) {
         if (!alreadyInstalled) { contentBridge.install(projectId); return; }
         page.pendingProjectId = projectId;
-        reinstallConfirm.ask("Cài thêm " + title + "?",
-                             "Bạn chắc chắn muốn cài thêm " + page.kindLabels[page.kind].toLowerCase()
-                             + " này chứ? " + page.kindLabels[page.kind] + " đã tồn tại trong bản chơi — cài lại sẽ ghi đè file hiện có.");
+        confirmDialog.acceptLabel = "Cài thêm";
+        confirmDialog.ask("Cài thêm " + title + "?",
+                          "Bạn chắc chắn muốn cài thêm " + page.kindLabels[page.kind].toLowerCase()
+                          + " này chứ? " + page.kindLabels[page.kind] + " đã tồn tại trong bản chơi — cài lại sẽ ghi đè file hiện có.",
+                          function () { contentBridge.install(projectId); });
     }
     function refresh() {
         // Đọc danh sách đã cài của ĐÚNG loại đang xem trước (đọc đĩa, rẻ): cờ "Đã cài" trên
@@ -386,11 +388,4 @@ Item {
     }
 
     ModpackDialog { id: modpackDialog; objectName: "modpackDialog"; anchors.fill: parent }
-    ConfirmDialog {
-        id: reinstallConfirm
-        objectName: "reinstallConfirm"
-        anchors.fill: parent
-        acceptLabel: "Cài thêm"
-        onAccepted: contentBridge.install(page.pendingProjectId)
-    }
 }

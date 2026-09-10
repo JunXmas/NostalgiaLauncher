@@ -111,4 +111,6 @@ Item {
     LoadingToast { id: loadingToast; z: 90 }
     NotificationToast { z: 91; bottomOffset: loadingToast.active ? loadingToast.height + Theme.gap * 2 : Theme.gap }
     SignInDialog { anchors.fill: parent }
+    // Hộp hỏi lại dùng chung của mọi trang (app.py lộ nó qua context property `confirmDialog`).
+    ConfirmDialog { objectName: "confirmDialog"; anchors.fill: parent }
 }
