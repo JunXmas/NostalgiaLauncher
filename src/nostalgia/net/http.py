@@ -43,10 +43,9 @@ def default_tls_context() -> ssl.SSLContext:
     `SSLContext` dùng chung sau khi tạo là an toàn, và khỏi đọc lại kho chứng chỉ mỗi lần.
     """
     with _TLS_LOCK:
-        context = _TLS_CACHE.get("default")
-        if context is None:
-            context = _TLS_CACHE["default"] = ssl.create_default_context()
-        return context
+        if "default" not in _TLS_CACHE:
+            _TLS_CACHE["default"] = ssl.create_default_context()
+        return _TLS_CACHE["default"]
 
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.

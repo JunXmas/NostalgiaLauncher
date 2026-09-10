@@ -5,7 +5,6 @@ chặn. Người gọi vẫn đè được."""
 from __future__ import annotations
 
 from local_https_server import LocalHttpsServer, ServerState
-
 from nostalgia import __version__
 from nostalgia.net.http import HttpClient
 
