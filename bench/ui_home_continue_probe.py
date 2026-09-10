@@ -10,6 +10,7 @@ và khi đứng yên.
 
 from __future__ import annotations
 
+import base64
 import os
 import sys
 import tempfile
@@ -29,12 +30,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests"))
 from PySide6.QtCore import QObject, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 
-from nbt_fixture import write_world  # noqa: E402
+from nbt_fixture import tiny_png, write_servers, write_world  # noqa: E402
 from nostalgia.api import Instance, Launcher  # noqa: E402
 from nostalgia.ui.app import build_view  # noqa: E402
 
 INSTANCE_COUNT = 3
 WORLDS_PER_INSTANCE = 20
+SERVERS_PER_INSTANCE = 5
 
 
 def seed(launcher: Launcher) -> None:
@@ -51,6 +53,14 @@ def seed(launcher: Launcher) -> None:
                 f"Thế giới {world_number}",
                 now_ms - world_number * 60_000,
             )
+        icon = base64.b64encode(tiny_png()).decode()
+        write_servers(
+            game_dir,
+            [
+                (f"Server {n}", f"s{n}.example:25565", icon, False)
+                for n in range(SERVERS_PER_INSTANCE)
+            ],
+        )
 
 
 def main() -> int:
@@ -87,7 +97,11 @@ def main() -> int:
     card = root_item.findChild(QObject, "continueCard")
     assert card is not None
     shown = len(bridge.property("recentWorlds"))
-    print(f"thế giới trên đĩa: {INSTANCE_COUNT * WORLDS_PER_INSTANCE}, hàng hiện: {shown}")
+    shown_servers = len(bridge.property("recentServers"))
+    print(
+        f"thế giới trên đĩa: {INSTANCE_COUNT * WORLDS_PER_INSTANCE}, hàng hiện: {shown}; "
+        f"server trên đĩa: {INSTANCE_COUNT * SERVERS_PER_INSTANCE}, hàng hiện: {shown_servers}"
+    )
     measure("quét lại khi game tắt", lambda: bridge.gameStopped.emit(0))
     measure("đọc lại property (cache)", lambda: bridge.recentWorlds)
     measure("bản chơi đổi", lambda: bridge.instancesChanged.emit())

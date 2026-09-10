@@ -111,7 +111,7 @@ def test_play_world_hands_the_folder_to_the_facade(
     assert (recorded["instance_id"], recorded["world_folder"]) == ("van", "w1")
 
 
-def test_card_shows_at_most_four_block_buttons_and_a_click_opens_that_world(
+def test_card_shows_at_most_three_block_buttons_and_a_click_opens_that_world(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     launcher = make_launcher(tmp_path)
@@ -124,12 +124,12 @@ def test_card_shows_at_most_four_block_buttons_and_a_click_opens_that_world(
     assert root_item is not None
     card = root_item.findChild(QObject, "continueCard")
     assert card is not None
-    wait_until(lambda: len(collect_items(card, "continueRow")) == 4)
+    wait_until(lambda: len(collect_items(card, "continueRow")) == 3)
     empty = find_item(card, "continueEmpty")
     assert empty is not None and empty.property("visible") is False
     first = collect_items(card, "continueRow")[0]
     assert first.property("worldName") == "Thế giới 0"
-    assert first.property("height") * 4 + 15 <= card.property("height") - 60, "4 nút phải nằm gọn"
+    assert first.property("height") * 3 + 10 <= card.property("height") - 60, "3 nút phải nằm gọn"
 
     center = first.mapToScene(QPointF(first.property("width") / 2, first.property("height") / 2))
     QTest.mouseClick(

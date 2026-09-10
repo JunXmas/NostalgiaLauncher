@@ -22,6 +22,7 @@ class InstanceBridge(WorkerBridge):
     instancesChanged = Signal()
     progressChanged = Signal()
     recentWorldsChanged = Signal()
+    recentServersChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -33,6 +34,7 @@ class InstanceBridge(WorkerBridge):
         self._instance_rows: list[dict[str, Any]] | None = None
         # Thế giới gần đây cũng vậy: đọc level.dat chỉ khi bản chơi đổi hoặc game vừa tắt.
         self._recent_world_rows: list[dict[str, Any]] | None = None
+        self._recent_server_rows: list[dict[str, Any]] | None = None
         self.instancesChanged.connect(self._forget_instance_rows)
         self.instancesChanged.connect(self._forget_recent_worlds)
 
@@ -40,8 +42,27 @@ class InstanceBridge(WorkerBridge):
         self._instance_rows = None
 
     def _forget_recent_worlds(self) -> None:
+        """Quên cả thế giới lẫn server của ô CHƠI TIẾP; quét lại khi QML đọc."""
         self._recent_world_rows = None
+        self._recent_server_rows = None
         self.recentWorldsChanged.emit()
+        self.recentServersChanged.emit()
+
+    @Property(list, notify=recentServersChanged)
+    def recentServers(self) -> list[dict[str, Any]]:
+        """Server đã thêm trong game trên mọi bản chơi, tối đa 3 hàng, kèm icon dạng URL data:."""
+        if self._recent_server_rows is None:
+            self._recent_server_rows = [
+                {
+                    "instanceId": server.instance_id,
+                    "instanceLabel": server.instance_label,
+                    "serverName": server.server_name,
+                    "address": server.address,
+                    "iconUrl": server.icon_url,
+                }
+                for server in self._launcher.list_recent_servers()
+            ]
+        return self._recent_server_rows
 
     @Property(list, notify=recentWorldsChanged)
     def recentWorlds(self) -> list[dict[str, Any]]:
