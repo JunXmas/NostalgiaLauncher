@@ -5,6 +5,8 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Hộp hỏi lại (cài thêm mod đã có) giờ nằm ở cấp cửa sổ: phủ cả thanh bên, bấm ra ngoài không
+  đóng và không lọt xuống phía sau; chỉ Thôi / Esc đóng, Enter đồng ý.
 - Trang chủ: ô CHƠI TIẾP có thêm nhóm **SERVER** — các server đã thêm trong game (đọc
   `servers.dat`, icon thật của server), bấm là vào thẳng server (quick play multiplayer, 1.20+).
   Không ping, trang chủ vẫn không chạm mạng.
