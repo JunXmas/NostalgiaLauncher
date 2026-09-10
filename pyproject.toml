@@ -101,6 +101,7 @@ module = [
     "test_discord_presence",
     "test_update_bridge",
     "test_continue_card",
+    "test_stop_game",
 ]
 disable_error_code = [
     "comparison-overlap",

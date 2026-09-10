@@ -8,13 +8,14 @@ module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.account.model import Account
-from nostalgia.api import Launcher
+from nostalgia.api import GameProcess, Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
 from nostalgia.ui.instance_bridge import InstanceBridge
@@ -37,6 +38,10 @@ class LauncherBridge(InstanceBridge):
         self._active_player_name = ""
         self._sign_in_cancel: CancelToken | None = None
         self._game_running = False
+        # Tiến trình game đang chạy (để nút DỪNG gửi tín hiệu) và cờ "người dùng tự dừng" —
+        # dừng chủ động không phải sự cố, không toast "gặp sự cố".
+        self._game: GameProcess | None = None
+        self._stop_requested = False
         # Kho tài khoản đọc từ đĩa MỘT lần rồi giữ trong RAM. Trước đây mỗi binding QML đọc
         # `accounts`/`activePlayerName` là một lần đọc + parse accounts.json — một cú bấm chọn
         # tài khoản kéo theo 11 lần đọc, thêm tài khoản 26 lần (đo bằng harness).
@@ -154,6 +159,17 @@ class LauncherBridge(InstanceBridge):
         """Ô CHƠI TIẾP: mở bản chơi và vào thẳng thế giới (thư mục trong saves/)."""
         self._launch(instance_id, world_folder)
 
+    @Slot()
+    def stopGame(self) -> None:
+        """Nút DỪNG: xin game đóng (SIGTERM cả cây tiến trình), hết ân huệ thì ép. Chạy ở luồng
+        riêng vì `stop()` chờ tới vài giây; luồng của `_launch` thấy tiến trình thoát và dọn như
+        mọi lần thoát khác."""
+        game = self._game
+        if game is None:
+            return
+        self._stop_requested = True
+        threading.Thread(target=game.stop, name="nostalgia-stop-game", daemon=True).start()
+
     def _launch(self, instance_id: str, world_folder: str = "") -> None:
         player_name = str(self.activePlayerName)
 
@@ -180,15 +196,22 @@ class LauncherBridge(InstanceBridge):
                 on_output=self._game_log.receive,
             )
             started_at = time.time()
+            self._game = game
+            self._stop_requested = False
             self._set_game_running(True)
             self.gameStarted.emit(instance_id)
             try:
                 exit_code = game.wait()
             finally:
+                self._game = None
                 self._set_game_running(False)
             # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
             self._launcher.record_play_session(instance_id, started_at, time.time())
             self.instancesChanged.emit()
+            if self._stop_requested:
+                # Người dùng bấm DỪNG: game chết vì tín hiệu ta gửi — báo là thoát bình thường.
+                self.gameStopped.emit(0)
+                return
             self.gameStopped.emit(exit_code)
             if exit_code != 0:
                 self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))
