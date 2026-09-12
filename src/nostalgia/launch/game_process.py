@@ -20,6 +20,7 @@ import logging
 import os
 import signal
 import subprocess
+import sys
 import threading
 from collections.abc import Callable, Mapping
 
@@ -112,17 +113,37 @@ class GameProcess:
             self._output_thread.join(timeout=OUTPUT_DRAIN_SECONDS)
             return exit_code
 
-        self._signal(signal.SIGTERM)
+        if sys.platform == "win32":
+            return self._stop_windows(grace_seconds)
+        return self._stop_posix(grace_seconds)
+
+    def _stop_posix(self, grace_seconds: float) -> int:
+        """Dừng trên Unix/macOS: SIGTERM → chờ → SIGKILL."""
+        self._signal_posix(signal.SIGTERM)
         try:
             return self.wait(timeout=grace_seconds)
         except subprocess.TimeoutExpired:
             logger.warning("game (pid %d) không đóng sau SIGTERM, chuyển sang SIGKILL", self.pid)
 
-        self._signal(signal.SIGKILL)
+        self._signal_posix(signal.SIGKILL)
         return self.wait(timeout=KILL_WAIT_SECONDS)
 
-    def _signal(self, sent_signal: signal.Signals) -> None:
-        """Gửi tín hiệu cho CẢ CÂY tiến trình, nhưng chỉ khi chắc chắn không đụng chính mình."""
+    def _stop_windows(self, grace_seconds: float) -> int:
+        """Dừng trên Windows: terminate() → chờ → kill(). Không dùng process group POSIX."""
+        self._process.terminate()
+        try:
+            return self.wait(timeout=grace_seconds)
+        except subprocess.TimeoutExpired:
+            logger.warning("game (pid %d) không đóng sau terminate, chuyển sang kill", self.pid)
+
+        self._process.kill()
+        return self.wait(timeout=KILL_WAIT_SECONDS)
+
+    def _signal_posix(self, sent_signal: signal.Signals) -> None:
+        """Gửi tín hiệu cho CẢ CÂY tiến trình, nhưng chỉ khi chắc chắn không đụng chính mình.
+
+        Chỉ dùng trên Unix/macOS — Windows không có `os.getpgid` và `os.killpg`.
+        """
         pid = self._process.pid
         try:
             process_group = os.getpgid(pid)
@@ -152,6 +173,7 @@ def start_game(
 ) -> GameProcess:
     """Chạy lệnh đã dựng, trong thư mục game, ở một phiên riêng."""
     ensure_dir(command.game_dir)
+    creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
     process = subprocess.Popen(
         command.argv,
         cwd=command.game_dir,
@@ -159,7 +181,8 @@ def start_game(
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
         env=dict(environment) if environment is not None else None,
-        start_new_session=True,
+        start_new_session=(sys.platform != "win32"),
+        creationflags=creation_flags,
     )
     return GameProcess(process, on_output)
 
