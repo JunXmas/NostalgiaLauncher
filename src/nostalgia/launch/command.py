@@ -104,8 +104,17 @@ class LaunchCommand:
 
         Lệnh khởi động là thứ người dùng hay dán vào báo lỗi. Không che ở đây thì vé
         Microsoft của họ đi thẳng lên diễn đàn.
+
+        Dùng substring replace thay vì so khớp tuyệt đối: với Minecraft < 1.8, chuỗi
+        ``--session token:<access_token>:<uuid>`` chứa token BÊN TRONG giá trị lớn hơn.
         """
-        return tuple(MASK if value in self.secret_values else value for value in self.argv)
+        masked: list[str] = []
+        for value in self.argv:
+            result = value
+            for secret in self.secret_values:
+                result = result.replace(secret, MASK)
+            masked.append(result)
+        return tuple(masked)
 
 
 def build_launch_command(

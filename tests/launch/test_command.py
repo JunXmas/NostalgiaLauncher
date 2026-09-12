@@ -228,6 +228,25 @@ def test_the_placeholder_token_of_offline_accounts_is_not_masked() -> None:
     assert command.masked_argv() == command.argv
 
 
+def test_a_token_embedded_in_a_compound_session_string_is_masked() -> None:
+    """LAU-02: Minecraft < 1.8 dùng ``--session token:<access_token>:<uuid>``. Token nằm bên
+    trong chuỗi lớn hơn nên so khớp tuyệt đối bỏ sót — phải dùng substring replace."""
+    access_token = "eyJhbGciOiJIUzI1NiJ9.long-token"
+    compound = f"token:{access_token}:fake-uuid"
+    command = LaunchCommand(
+        java_binary=JAVA_BINARY,
+        jvm_arguments=(),
+        main_class="net.minecraft.client.Minecraft",
+        game_arguments=("--session", compound, "--other", "safe"),
+        game_dir=GAME_DIR,
+        secret_values=frozenset({access_token}),
+    )
+    masked = command.masked_argv()
+    assert access_token not in " ".join(masked), "token bị lộ ra log"
+    assert "***" in " ".join(masked)
+    assert "safe" in masked
+
+
 def test_an_unknown_variable_stops_the_launch_instead_of_producing_a_broken_command() -> None:
     version_dict = dict(load_fixture("1.20.1"))
     version_dict["minecraftArguments"] = "--kho ${bien_la}"
