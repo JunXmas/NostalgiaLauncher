@@ -69,14 +69,21 @@ def test_running_twice_changes_nothing(tmp_path: Path) -> None:
     assert second.skipped_unchanged == 1
 
 
-def test_two_archives_claiming_one_name_with_different_content_is_an_error(
+def test_two_archives_claiming_one_name_with_different_content_keeps_larger(
     tmp_path: Path,
 ) -> None:
-    """Ghi đè lặng lẽ là cách tệ nhất: game nạp nhầm thư viện và lỗi hiện ra ở chỗ khác."""
-    first = make_archive(tmp_path / "a.jar", {"deep/liblwjgl.so": LIBRARY_BYTES})
-    second = make_archive(tmp_path / "b.jar", {"other/liblwjgl.so": LIBRARY_BYTES + b"khac"})
-    with pytest.raises(IntegrityError, match="cùng đòi tên"):
-        extract_natives((first, second), tmp_path / "natives")
+    """Trên thực tế lwjgl-freetype đóng freetype.dll khác kích thước giữa hai jar.
+
+    Giữ bản lớn hơn (thường đầy đủ hơn) thay vì crash — game vẫn nạp được thư viện.
+    """
+    small = LIBRARY_BYTES
+    large = LIBRARY_BYTES + b"extra-content-from-newer-build"
+    first = make_archive(tmp_path / "a.jar", {"deep/freetype.dll": small})
+    second = make_archive(tmp_path / "b.jar", {"other/freetype.dll": large})
+    report = extract_natives((first, second), tmp_path / "natives")
+    # Bản lớn hơn phải thắng
+    assert (tmp_path / "natives" / "freetype.dll").read_bytes() == large
+    assert len(report.extracted) == 2  # ghi cả hai lần (lần 2 ghi đè)
 
 
 def test_the_same_file_from_two_archives_is_fine(tmp_path: Path) -> None:
@@ -85,6 +92,17 @@ def test_the_same_file_from_two_archives_is_fine(tmp_path: Path) -> None:
     second = make_archive(tmp_path / "b.jar", {"y/liblwjgl.so": LIBRARY_BYTES})
     report = extract_natives((first, second), tmp_path / "natives")
     assert report.skipped_unchanged == 1
+
+
+def test_duplicate_native_keeps_larger_regardless_of_order(tmp_path: Path) -> None:
+    """Thứ tự archive không quan trọng — bản lớn hơn luôn thắng."""
+    small = LIBRARY_BYTES
+    large = LIBRARY_BYTES + b"extra-content-from-newer-build"
+    # Lần này bản lớn đến trước, bản nhỏ sau
+    first = make_archive(tmp_path / "a.jar", {"deep/freetype.dll": large})
+    second = make_archive(tmp_path / "b.jar", {"other/freetype.dll": small})
+    extract_natives((first, second), tmp_path / "natives")
+    assert (tmp_path / "natives" / "freetype.dll").read_bytes() == large
 
 
 def test_a_path_that_tries_to_escape_is_neutralised(tmp_path: Path) -> None:

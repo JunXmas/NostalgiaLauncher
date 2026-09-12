@@ -3,8 +3,8 @@
 **Làm phẳng có chủ ý.** Soi jar thật: `jtracy` để `.so` ngay ở gốc, còn `lwjgl-vma` chôn nó
 dưới `linux/x64/org/lwjgl/vma/`. JVM **không tìm đệ quy** trong `java.library.path`, nên giữ
 nguyên cây thư mục là game không nạp được thư viện. Đã đo trên ba phiên bản (1.8.9, 1.20.1,
-1.21.4): làm phẳng không gây đụng tên nào — nhưng nếu có đụng, ở đây báo lỗi chứ không lặng
-lẽ ghi đè.
+1.21.4): làm phẳng không gây đụng tên nào — nhưng nếu có đụng (đã gặp thật với freetype.dll
+trên một số phiên bản), giữ bản lớn hơn và ghi log cảnh báo.
 
 Hai lớp chặn tài nguyên: trần tổng dung lượng giải nén, và bỏ qua mục là symlink trong
 archive. Cả hai đều là chuyện của archive tải từ mạng.
@@ -12,6 +12,7 @@ archive. Cả hai đều là chuyện của archive tải từ mạng.
 
 from __future__ import annotations
 
+import logging
 import stat
 import zipfile
 from collections.abc import Iterator
@@ -22,6 +23,8 @@ from nostalgia.errors import IntegrityError, UnsafePathError
 from nostalgia.install.library import NativeArchive
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.storage.files import ensure_dir, resolve_child
+
+log = logging.getLogger(__name__)
 
 # Trần cho tổng dung lượng bung ra từ MỘT lượt giải nén. Đo thật: 1.20.1 bung 18 file, dưới
 # 20 MB. 512 MiB là rất thoáng; điều quan trọng là có trần, vì một archive dựng ác ý có thể
@@ -135,15 +138,25 @@ def _already_extracted(target: Path, member: zipfile.ZipInfo) -> bool:
 
 
 def _write_member(archive: zipfile.ZipFile, member: zipfile.ZipInfo, target: Path) -> None:
-    """Ghi một mục ra đĩa, báo lỗi nếu hai archive khác nhau cùng đòi một tên.
+    """Ghi một mục ra đĩa; nếu hai archive khác nhau cùng đòi một tên, giữ bản lớn hơn.
 
     Làm phẳng khiến hai file khác thư mục có thể trùng tên. Đo trên ba phiên bản thì không
-    xảy ra, nhưng nếu xảy ra thì ghi đè lặng lẽ là cách tệ nhất: game sẽ nạp nhầm thư viện
-    và lỗi hiện ra ở chỗ hoàn toàn khác.
+    xảy ra, nhưng trên thực tế LWJGL-freetype có thể đóng `freetype.dll` với kích thước khác
+    nhau giữa hai JAR. Ghi đè lặng lẽ là cách tệ nhất: game nạp nhầm thư viện và lỗi hiện
+    ra ở chỗ khác. Giữ bản lớn hơn (thường là bản đầy đủ hơn) và ghi cảnh báo.
     """
-    if target.exists() and target.stat().st_size != member.file_size:
-        message = f"hai thư viện natives cùng đòi tên {target.name!r} với nội dung khác nhau"
-        raise IntegrityError(message)
+    if target.exists():
+        existing_size = target.stat().st_size
+        if existing_size != member.file_size:
+            log.warning(
+                "natives trùng tên %r: đã có %d byte, archive đưa %d byte — giữ bản lớn hơn",
+                target.name,
+                existing_size,
+                member.file_size,
+            )
+            if member.file_size <= existing_size:
+                return  # bản đang có lớn hơn hoặc bằng, bỏ qua bản mới
+            # bản mới lớn hơn → ghi đè bên dưới
     with archive.open(member) as source, target.open("wb") as sink:
         while chunk := source.read(1 << 18):
             sink.write(chunk)

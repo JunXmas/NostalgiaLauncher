@@ -1,6 +1,6 @@
 [project]
 name = "nostalgia"
-version = "1.0.2"
+version = "1.0.4"
 description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -1,19 +1,15 @@
-## Nostalgia Launcher 1.0.2
+## Nostalgia Launcher 1.0.4
 
-Patch release on top of 1.0.1:
+Bản sửa lỗi cho hai vấn đề liên quan đến `freetype.dll`:
 
-- **STOP button.** While the game is running, the big PLAY button turns into a red STOP —
-  one click ends the game process (a polite close first, forced if it ignores that).
-  Stopping on purpose is never reported as a crash.
-- **Continue playing now lists your servers.** The home card has two groups: recent worlds
-  and the servers you added in-game (with their real icons, read from `servers.dat`). One click
-  launches the instance straight into that server (quick play, Minecraft 1.20+). No pinging —
-  the home page still never touches the network.
-- **Re-install confirmation.** A mod that is already installed shows a grey "Installed" button
-  you can still press; the launcher asks before overwriting. The dialog now covers the whole
-  window, ignores clicks outside it, and closes only with Cancel / Esc.
+- **Sửa crash khi chạy game** — một số phiên bản Minecraft có hai thư viện LWJGL cùng đóng
+  `freetype.dll` nhưng kích thước khác nhau. Trước đây launcher báo lỗi đỏ
+  *"hai thư viện natives cùng đòi tên 'freetype.dll' với nội dung khác nhau"* và không chạy
+  game được. Giờ launcher giữ bản lớn hơn (đầy đủ hơn) và game chạy bình thường.
+- **Sửa lỗi build Windows** (từ v1.0.3) — PyInstaller + PySide6 trên Windows đóng gói hai bản
+  `freetype.dll` khác nhau khiến gói không chạy. Đã loại bản thừa.
 
-Linux and Windows builds of 1.0.1 will offer this update automatically. Downloads and platform
+Linux and Windows builds of 1.0.2 will offer this update automatically. Downloads and platform
 notes are the same as 1.0 below.
 
 ---
