@@ -31,6 +31,18 @@ datas += collect_data_files("PySide6", subdir="Qt/qml", includes=["QtQuick/**", 
 
 block_cipher = None
 
+# Sửa lỗi PyInstaller Windows: hai thư viện đều đóng gói freetype.dll khác nhau
+def filter_binaries(binaries):
+    seen = set()
+    result = []
+    for dst, src, typ in binaries:
+        name = Path(dst).name
+        if name == "freetype.dll" and name in seen:
+            continue
+        seen.add(name)
+        result.append((dst, src, typ))
+    return result
+
 analysis = Analysis(
     [str(ROOT / "packaging" / "entry_ui.py")],
     pathex=[str(ROOT / "src")],
@@ -42,6 +54,10 @@ analysis = Analysis(
     excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3DCore"],
     noarchive=False,
 )
+
+# Loại bỏ bản trùng lặp của freetype.dll trên Windows
+if sys.platform == "win32":
+    analysis.binaries = filter_binaries(analysis.binaries)
 pyz = PYZ(analysis.pure, analysis.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
