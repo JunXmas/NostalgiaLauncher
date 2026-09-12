@@ -103,6 +103,7 @@ module = [
     "test_continue_card",
     "test_stop_game",
     "test_continue_servers",
+    "test_tray",
 ]
 disable_error_code = [
     "comparison-overlap",

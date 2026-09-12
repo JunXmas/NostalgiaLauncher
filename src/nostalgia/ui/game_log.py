@@ -48,7 +48,7 @@ def classify_level(line: str) -> str:
     return "info"
 
 
-def describe_game_failure(exit_code: int, tail: deque[str]) -> str:
+def describe_game_failure(exit_code: int, tail: list[str]) -> str:
     """Một câu cho dải đỏ: mã thoát, và dòng có ích nhất trong đuôi log (báo cáo crash nếu
     có, không thì lỗi Java cuối cùng)."""
     lines = [line.strip() for line in tail if line.strip()]
@@ -134,12 +134,18 @@ class GameLogFeed(QObject):
         """Đuôi log gần nhất, đọc được từ luồng nền (dùng cho câu báo lỗi)."""
         return self._tail
 
+    @property
+    def tail_snapshot(self) -> list[str]:
+        """Bản chụp an toàn giữa các luồng của đuôi log, dùng khi game thoát."""
+        with self._lock:
+            return list(self._tail)
+
     def reset(self) -> None:
         """Game sắp chạy: bỏ phần đệm của lần trước. Gọi được từ luồng nền, NGAY trước khi
         chạy game — để những dòng đầu tiên không bị xoá oan khi `begin_session` tới muộn."""
         with self._lock:
             self._pending.clear()
-        self._tail.clear()
+            self._tail.clear()
 
     def begin_session(self) -> None:
         """Game đã chạy: xoá nhật ký cũ trên màn hình, bắt đầu gom lô. Gọi từ luồng giao diện.
@@ -157,7 +163,7 @@ class GameLogFeed(QObject):
         """Nhận một dòng từ LUỒNG BẤT KỲ. Rẻ: chỉ nối vào bộ đệm."""
         with self._lock:
             self._pending.append(line)
-        self._tail.append(line)
+            self._tail.append(line)
 
     @Slot()
     def drain(self) -> None:

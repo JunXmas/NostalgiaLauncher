@@ -25,6 +25,7 @@ class SettingsBridge(QObject):
     discordChanged = Signal()
     autoUpdateCheckChanged = Signal()
     gameDirRootChanged = Signal()
+    hideWhenGameRunningChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -90,6 +91,17 @@ class SettingsBridge(QObject):
         if settings.auto_update_check != enabled:
             self._save(replace(settings, auto_update_check=enabled))
             self.autoUpdateCheckChanged.emit()
+
+    @Property(bool, notify=hideWhenGameRunningChanged)
+    def hideWhenGameRunning(self) -> bool:
+        return self.settings_snapshot().hide_when_game_running
+
+    @Slot(bool)
+    def setHideWhenGameRunning(self, enabled: bool) -> None:
+        settings = self.settings_snapshot()
+        if settings.hide_when_game_running != enabled:
+            self._save(replace(settings, hide_when_game_running=enabled))
+            self.hideWhenGameRunningChanged.emit()
 
     @Slot(bool)
     def setNotificationSound(self, enabled: bool) -> None:

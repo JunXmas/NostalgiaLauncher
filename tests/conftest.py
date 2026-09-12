@@ -157,6 +157,6 @@ def qt_app() -> object:
     dùng; PySide6 là phụ thuộc tuỳ chọn nên import lười và bỏ qua nếu thiếu."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
-    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtWidgets import QApplication
 
-    return QGuiApplication.instance() or QGuiApplication(["test"])
+    return QApplication.instance() or QApplication(["test"])

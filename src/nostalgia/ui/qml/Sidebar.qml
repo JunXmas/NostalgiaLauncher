@@ -9,15 +9,23 @@ Rectangle {
 
     color: Theme.surface
 
-    readonly property var entries: [
-        { label: "TRANG CHỦ",  glyph: "⌂" },
-        { label: "BẢN CHƠI",   glyph: "⛏" },
-        { label: "THƯ VIỆN",   glyph: "⚙" },
-        { label: "TÀI KHOẢN",  glyph: "☺" },
-        { label: "CHƠI CHUNG", glyph: "⛶" },
-        { label: "NHẬT KÝ",    glyph: "≡" },
-        { label: "CÀI ĐẶT",    glyph: "☸" }
-    ]
+    Connections {
+        target: Tr
+        function onLanguageChanged() { root.entries = root._buildEntries(); }
+    }
+
+    property var entries: _buildEntries()
+    function _buildEntries() {
+        return [
+            { label: Tr.text("home"),        glyph: "⌂" },
+            { label: Tr.text("instances"),   glyph: "⛏" },
+            { label: Tr.text("library"),     glyph: "⚙" },
+            { label: Tr.text("accounts"),    glyph: "☺" },
+            { label: Tr.text("multiplayer"), glyph: "⛶" },
+            { label: Tr.text("log"),         glyph: "≡" },
+            { label: Tr.text("settings"),    glyph: "☸" }
+        ];
+    }
 
     Row {
         id: brand
@@ -40,7 +48,7 @@ Rectangle {
                 Text { text: "GIA"; color: Theme.accent; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
             }
             Text {
-                text: "THẾ GIỚI CỦA BẠN"
+                text: Tr.text("tagline")
                 color: Theme.textMuted; font.pixelSize: 8; font.letterSpacing: 1.4
             }
         }
@@ -83,7 +91,7 @@ Rectangle {
             }
             Column {
                 spacing: 3
-                Text { text: root.playerName ? "Chào bạn," : "Chưa đăng nhập"
+                Text { text: root.playerName ? Tr.text("hello_prefix") : Tr.text("not_signed_in")
                        color: Theme.textMuted; font.pixelSize: 10 }
                 Text { text: root.playerName ? root.playerName : "—"
                        color: Theme.text; font.pixelSize: 14; font.bold: true }
@@ -105,9 +113,9 @@ Rectangle {
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: !root.playerName ? "Thêm ở cột phải"
-                          : root.accountKind === "microsoft" ? "Tài khoản Microsoft"
-                          : root.accountKind === "ely" ? "Tài khoản Ely.by" : "Tài khoản ngoại tuyến"
+                    text: !root.playerName ? Tr.text("add_on_right")
+                          : root.accountKind === "microsoft" ? Tr.text("account_microsoft")
+                          : root.accountKind === "ely" ? Tr.text("account_ely") : Tr.text("account_offline")
                     color: Theme.textMuted; font.pixelSize: 10
                 }
             }

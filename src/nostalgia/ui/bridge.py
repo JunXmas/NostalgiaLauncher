@@ -220,7 +220,7 @@ class LauncherBridge(InstanceBridge):
                 return
             self.gameStopped.emit(exit_code)
             if exit_code != 0:
-                self.failed.emit(describe_game_failure(exit_code, self._game_log.tail))
+                self.failed.emit(describe_game_failure(exit_code, self._game_log.tail_snapshot))
 
         if server_address:
             activity = f"Vào máy chủ {server_address} ({instance_id})"
