@@ -32,6 +32,8 @@ class Settings:
     auto_update_check: bool = True
     # Thư mục lưu bản chơi mới (vd ổ còn chỗ). Rỗng = `instances/` trong thư mục dữ liệu.
     default_game_dir_root: str = ""
+    # Thu gọn launcher vào khay hệ thống khi game chạy để giải phóng RAM.
+    hide_when_game_running: bool = True
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -50,6 +52,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
             ui_sound = fields.get("ui_sound")
             presence = fields.get("discord_presence")
             update_check = fields.get("auto_update_check")
+            hide_game = fields.get("hide_when_game_running")
             settings = Settings(
                 curseforge_api_key=as_string(fields.get("curseforge_api_key")) or "",
                 notification_sound=sound if isinstance(sound, bool) else True,
@@ -62,6 +65,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 default_game_dir_root=(
                     as_string(fields.get("default_game_dir_root")) or ""
                 ).strip(),
+                hide_when_game_running=hide_game if isinstance(hide_game, bool) else True,
             )
         except DataFileError:
             settings = Settings()
@@ -83,6 +87,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "discord_application_id": settings.discord_application_id.strip(),
             "auto_update_check": settings.auto_update_check,
             "default_game_dir_root": settings.default_game_dir_root.strip(),
+            "hide_when_game_running": settings.hide_when_game_running,
         },
         private=True,
     )

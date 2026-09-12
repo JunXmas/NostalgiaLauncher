@@ -50,3 +50,13 @@ def test_discord_settings_round_trip_and_default_off(tmp_path: Path) -> None:
     save_settings(tmp_path, Settings(discord_presence=True, discord_application_id=" 1234 "))
     loaded = load_settings(tmp_path, environment={})
     assert (loaded.discord_presence, loaded.discord_application_id) == (True, "1234")
+
+
+def test_hide_when_game_running_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is True
+    save_settings(tmp_path, Settings(hide_when_game_running=False))
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is False
+    settings_path(tmp_path).write_text('{"hide_when_game_running": "invalid"}')
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is True, (
+        "giá trị lạ → mặc định"
+    )

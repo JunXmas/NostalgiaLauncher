@@ -24,6 +24,15 @@ def test_ui_sound_switch_persists(tmp_path: Path) -> None:
     assert launcher.load_settings().ui_sound is False, "phải ghi xuống đĩa"
 
 
+def test_hide_when_game_running_switch_persists(tmp_path: Path) -> None:
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    settings_bridge = SettingsBridge(launcher)
+    assert settings_bridge.hideWhenGameRunning is True
+    settings_bridge.setHideWhenGameRunning(False)
+    assert settings_bridge.hideWhenGameRunning is False
+    assert launcher.load_settings().hide_when_game_running is False, "phải ghi xuống đĩa"
+
+
 def test_bridge_exposes_version_and_data_dir_only(tmp_path: Path) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     settings_bridge = SettingsBridge(launcher)

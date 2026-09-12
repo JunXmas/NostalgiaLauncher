@@ -13,6 +13,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, QSize, QUrl
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQuick import QQuickView
+from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from nostalgia import __version__
 from nostalgia.api import Launcher
@@ -26,6 +27,9 @@ from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.update_bridge import UpdateBridge
+
+# TranslationProvider.qml đọc từ điển i18n/*.json bằng XMLHttpRequest; Qt6 chặn mặc định.
+os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
@@ -90,6 +94,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     root_item = view.rootObject()
     if root_item is not None:
         context.setContextProperty("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
+    build_tray(view, bridge, settings_bridge)
     return view, bridge
 
 
@@ -115,9 +120,41 @@ def build_notifier(
     )
 
 
+def build_tray(
+    view: QQuickView, bridge: LauncherBridge, settings_bridge: SettingsBridge
+) -> QSystemTrayIcon:
+    """Khay hệ thống: ẩn cửa sổ khi game chạy, hiện lại khi game tắt — giải phóng RAM."""
+    tray = QSystemTrayIcon(view.icon(), parent=view)
+    tray.setToolTip("Nostalgia Launcher")
+    menu = QMenu()
+    show_action = menu.addAction("Hiện lại Launcher")
+    show_action.triggered.connect(lambda: view.show())
+    stop_action = menu.addAction("Dừng game")
+    stop_action.triggered.connect(bridge.stopGame)
+    menu.addSeparator()
+    quit_action = menu.addAction("Thoát")
+    running_app = QApplication.instance()
+    if running_app is not None:
+        quit_action.triggered.connect(running_app.quit)
+    tray.setContextMenu(menu)
+
+    def on_game_started(_instance_id: str) -> None:
+        if settings_bridge.hideWhenGameRunning:
+            view.hide()
+            tray.show()
+
+    def on_game_stopped(_exit_code: int) -> None:
+        tray.hide()
+        view.show()
+
+    bridge.gameStarted.connect(on_game_started)
+    bridge.gameStopped.connect(on_game_stopped)
+    return tray
+
+
 def main(argv: list[str] | None = None) -> int:
     """Mở cửa sổ. Trả về mã thoát của vòng lặp sự kiện Qt."""
-    qt_application = QGuiApplication(argv if argv is not None else sys.argv)
+    qt_application = QApplication(argv if argv is not None else sys.argv)
     qt_application.setApplicationName("Nostalgia Launcher")
     qt_application.setApplicationVersion(__version__)
 

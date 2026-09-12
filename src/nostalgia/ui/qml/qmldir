@@ -1,1 +1,2 @@
 singleton Theme 1.0 Theme.qml
+singleton Tr 1.0 TranslationProvider.qml

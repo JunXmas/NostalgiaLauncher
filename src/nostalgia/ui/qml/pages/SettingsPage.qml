@@ -113,6 +113,22 @@ Item {
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Row {
                 spacing: 10
+                Text { text: "Thu gọn vào khay khi chơi"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "hideWhenGameRunningToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.hideWhenGameRunning
+                    onToggled: function (checked) { settingsBridge.setHideWhenGameRunning(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM."
+                    color: Theme.textMuted; font.pixelSize: 11
+                }
+            }
+            Row {
+                spacing: 10
                 Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: 12; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Toggle {

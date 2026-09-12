@@ -96,3 +96,32 @@ def test_log_page_renders_lines_with_levels(tmp_path: Path) -> None:
     wait_until(lambda: log_list.property("count") == 3)
     wait_until(lambda: copy_button.property("clickable") is True)
     assert feed.allText().count("\n") == 2
+
+
+def test_tail_snapshot_is_thread_safe() -> None:
+    """Mô phỏng race condition: luồng nền ghi liên tục trong khi luồng chính đọc snapshot."""
+    feed = GameLogFeed()
+    stop = threading.Event()
+    errors: list[str] = []
+
+    def writer() -> None:
+        n = 0
+        while not stop.is_set():
+            feed.receive(f"dòng {n}")
+            n += 1
+
+    worker = threading.Thread(target=writer)
+    worker.start()
+    try:
+        for _ in range(200):
+            try:
+                snapshot = feed.tail_snapshot
+                # Iterate the snapshot to ensure it's a stable copy
+                _ = [line for line in snapshot]  # noqa: C416
+            except RuntimeError as exc:
+                errors.append(str(exc))
+    finally:
+        stop.set()
+        worker.join()
+    assert not errors, f"race condition detected: {errors}"
+
