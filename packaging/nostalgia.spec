@@ -34,6 +34,18 @@ if WINDOWS and (ASSETS / "icon.ico").exists():
 elif MACOS and (ASSETS / "icon.icns").exists():
     icon = str(ASSETS / "icon.icns")
 
+# Sửa lỗi PyInstaller Windows: hai thư viện đều đóng gói freetype.dll khác nhau
+def filter_binaries(binaries):
+    seen = set()
+    result = []
+    for dst, src, typ in binaries:
+        name = Path(dst).name
+        if name == "freetype.dll" and name in seen:
+            continue
+        seen.add(name)
+        result.append((dst, src, typ))
+    return result
+
 a = Analysis(
     [str(ROOT / "packaging" / "entry.py")],
     pathex=[str(ROOT)],
@@ -54,6 +66,10 @@ a = Analysis(
     ],
     noarchive=False,
 )
+
+# Loại bỏ bản trùng lặp của freetype.dll trên Windows
+if WINDOWS:
+    a.binaries = filter_binaries(a.binaries)
 
 pyz = PYZ(a.pure)
 
