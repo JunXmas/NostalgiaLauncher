@@ -16,10 +16,10 @@ from pathlib import Path
 
 from nostalgia.errors import AccountError, NetworkError
 from nostalgia.net.http import HttpClient
+from nostalgia.repo.endpoints import SKIN_UPLOAD_URL
 
 logger = logging.getLogger(__name__)
 
-SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
 MAX_SKIN_SIZE = 256 * 1024  # skin PNG tối đa: 256 KiB (thực tế chỉ ~4 KB)
 
 
