@@ -22,8 +22,6 @@ def slugify(display_name: str, taken: set[str]) -> str:
     """Mã hợp lệ theo `INSTANCE_ID_PATTERN`, duy nhất trong `taken`."""
     ascii_text = unicodedata.normalize("NFKD", display_name).encode("ascii", "ignore").decode()
     base = re.sub(r"[^A-Za-z0-9._-]+", "-", ascii_text).strip("-._").lower()[:60] or "ban-choi"
-    if base[0] in "._-":
-        base = "b" + base
     candidate, counter = base, 2
     while candidate in taken:
         candidate = f"{base}-{counter}"

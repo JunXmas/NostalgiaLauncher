@@ -6,6 +6,7 @@ nằm ở QML. File này cố ý mỏng để không có chỗ nào cho logic l�
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -28,6 +29,8 @@ from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.update_bridge import UpdateBridge
 
 QML_DIR = Path(__file__).resolve().parent / "qml"
+
+logger = logging.getLogger(__name__)
 
 
 def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
@@ -124,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     view, _bridge = build_view(Launcher.for_environment())
     if view.status() != QQuickView.Status.Ready:
         for error in view.errors():
-            print(error.toString(), file=sys.stderr)
+            logger.error("%s", error.toString())
         return 1
     view.show()
     if os.environ.get("NOSTALGIA_SMOKE_TEST") == "1":
