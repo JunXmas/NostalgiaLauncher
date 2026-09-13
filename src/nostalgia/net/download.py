@@ -20,6 +20,7 @@ Bảy trong chín luật ở docs/PERFORMANCE.md §5 được thi hành ở đâ
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import os
 import tempfile
@@ -28,7 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from nostalgia.errors import Cancelled, IntegrityError
+from nostalgia.errors import Cancelled, DiskFullError, IntegrityError
 from nostalgia.model.download import DownloadTask
 from nostalgia.net.http import HttpClient
 from nostalgia.net.retry import DEFAULT_RETRY_POLICY, RetryPolicy, retry
@@ -128,8 +129,10 @@ def download_all(
             )
         except Cancelled:
             raise
+        except DiskFullError:
+            raise
         # Bắt rộng có chủ ý: một file lỗi không được làm sập cả đợt 3.500 file. Riêng
-        # Cancelled đã được cho nổi lên ở nhánh trên.
+        # Cancelled và DiskFullError đã được cho nổi lên ở các nhánh trên.
         except Exception as exc:
             with failure_lock:
                 failures.append(DownloadFailure(task=task, reason=str(exc)))
@@ -211,7 +214,13 @@ def _fetch_and_commit(
 
             def write(chunk: bytes) -> None:
                 digest.update(chunk)
-                handle.write(chunk)
+                try:
+                    handle.write(chunk)
+                except OSError as exc:
+                    if exc.errno in (errno.ENOSPC, errno.EDQUOT):
+                        message = f"ổ đĩa đầy khi đang tải {task.url}: {exc}"
+                        raise DiskFullError(message) from exc
+                    raise
 
             written = http_client.stream(
                 task.url,

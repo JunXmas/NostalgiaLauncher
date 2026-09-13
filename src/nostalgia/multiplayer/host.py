@@ -19,6 +19,7 @@ from nostalgia.net.websocket import TlsContext, WebSocketClient
 MAX_PENDING = 32
 MAX_JOINERS = 16
 READ_CHUNK = 65536
+SEND_QUEUE_SIZE = 128
 
 
 class HostRelay:
@@ -43,6 +44,8 @@ class HostRelay:
         self._gates: dict[int, HostGate] = {}
         self._deadlines: dict[int, asyncio.TimerHandle] = {}
         self._worlds: dict[int, asyncio.StreamWriter] = {}
+        self._write_queues: dict[int, asyncio.Queue[bytes | None]] = {}
+        self._write_pumps: set[asyncio.Task[None]] = set()
         self._pumps: set[asyncio.Task[None]] = set()
         self._runner: asyncio.Task[None] | None = None
         self.locked = False
@@ -88,6 +91,8 @@ class HostRelay:
         for stream_id in list(self._gates) + list(self._worlds):
             self._drop(stream_id)
         for pump in list(self._pumps):
+            pump.cancel()
+        for pump in list(self._write_pumps):
             pump.cancel()
         if self._socket is not None:
             await self._socket.close()
@@ -141,6 +146,11 @@ class HostRelay:
         except OSError:
             return False
         self._worlds[stream_id] = writer
+        queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=SEND_QUEUE_SIZE)
+        self._write_queues[stream_id] = queue
+        write_pump = asyncio.ensure_future(self._write_pump_for(stream_id, writer, queue))
+        self._write_pumps.add(write_pump)
+        write_pump.add_done_callback(self._write_pumps.discard)
         pump = asyncio.ensure_future(self._from_world(stream_id, reader))
         self._pumps.add(pump)
         pump.add_done_callback(self._pumps.discard)
@@ -148,15 +158,37 @@ class HostRelay:
         return True
 
     async def _to_world(self, stream_id: int, payload: bytes) -> None:
-        writer = self._worlds.get(stream_id)
-        if writer is None or not payload:
+        queue = self._write_queues.get(stream_id)
+        if queue is None or not payload:
             return
         try:
-            writer.write(payload)
-            await writer.drain()
-        except (ConnectionError, OSError):
+            queue.put_nowait(payload)
+        except asyncio.QueueFull:
             self._drop(stream_id)
             await self._send_close(stream_id)
+
+    async def _write_pump_for(
+        self, stream_id: int, writer: asyncio.StreamWriter, queue: asyncio.Queue[bytes | None]
+    ) -> None:
+        """Ghi dữ liệu từ hàng đợi vào TCP writer riêng cho mỗi client.
+
+        Nếu drain() bị chặn do TCP buffer đầy, chỉ client này bị ảnh hưởng —
+        vòng dispatch chính và các client khác vẫn chạy bình thường.
+        """
+        try:
+            while True:
+                payload = await queue.get()
+                if payload is None:
+                    break
+                try:
+                    writer.write(payload)
+                    await writer.drain()
+                except (ConnectionError, OSError):
+                    break
+        finally:
+            if stream_id in self._worlds:
+                self._drop(stream_id)
+                await self._send_close(stream_id)
 
     async def _from_world(self, stream_id: int, reader: asyncio.StreamReader) -> None:
         try:
@@ -172,6 +204,10 @@ class HostRelay:
     def _drop(self, stream_id: int) -> None:
         self._forget_gate(stream_id)
         writer = self._worlds.pop(stream_id, None)
+        queue = self._write_queues.pop(stream_id, None)
+        if queue is not None:
+            with contextlib.suppress(asyncio.QueueFull):
+                queue.put_nowait(None)
         if writer is not None:
             writer.close()
             self._notify()

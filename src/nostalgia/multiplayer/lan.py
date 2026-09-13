@@ -66,15 +66,19 @@ def parse_lan_beacon(
     """Thuần. `None` nếu không phải beacon Minecraft, nguồn không phải máy này, cổng vô lý."""
     if not (source_host.startswith("127.") or source_host in local_hosts):
         return None
-    port_match = _PORT_TAG.search(datagram)
-    if port_match is None:
+    port_matches = _PORT_TAG.findall(datagram)
+    if not port_matches:
         return None
-    world_port = int(port_match.group(1))
+    world_port = int(port_matches[-1])
     if not 1024 <= world_port <= 65535:
         return None
     motd_match = _MOTD_TAG.search(datagram)
     world_name = motd_match.group(1).decode("utf-8", "replace") if motd_match else "World"
-    return LanWorld(world_port, world_name[:64])
+    # Lọc bỏ mọi thẻ đặc biệt khỏi tên thế giới để ngăn injection qua MOTD.
+    sanitised_name = _PORT_TAG.sub(b"", world_name.encode("utf-8", "replace")).decode(
+        "utf-8", "replace"
+    )
+    return LanWorld(world_port, sanitised_name[:64])
 
 
 def detect_open_to_lan(timeout_seconds: float) -> LanWorld | None:

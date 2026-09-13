@@ -31,6 +31,18 @@ class NetworkError(NostalgiaError):
     """Không lấy được dữ liệu qua mạng: kết nối lỗi, mã trả về lạ, hoặc hết thời gian."""
 
 
+class StorageError(NostalgiaError):
+    """Lỗi liên quan tới lưu trữ: đĩa đầy, hết quota, hoặc ghi thất bại."""
+
+
+class DiskFullError(StorageError):
+    """Ổ đĩa đầy (ENOSPC) hoặc hết quota (EDQUOT) khi ghi file.
+
+    Kế thừa `StorageError`, KHÔNG kế thừa `NetworkError`: cơ chế retry chỉ thử lại lỗi
+    mạng và lỗi toàn vẹn — ổ cứng đầy thì retry chỉ lãng phí tài nguyên.
+    """
+
+
 class IntegrityError(NostalgiaError):
     """File tải về không khớp kích thước hoặc sha1 mà máy chủ công bố."""
 
