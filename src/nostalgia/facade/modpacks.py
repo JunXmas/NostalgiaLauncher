@@ -232,4 +232,4 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
         if not candidates:
             message = f"không thấy bản {loader_kind} cho {game_version} sau khi cài"
             raise ContentError(message)
-        return sorted(candidates)[-1]
+        return max(candidates)

@@ -62,6 +62,10 @@ ELY_CAPES_URL = "http://skinsystem.ely.by/cloaks"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
 LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
 
+# Upload skin lên Mojang (PUT, cần Bearer token). Riêng biệt với session profile vì khác
+# endpoint hoàn toàn: profile đọc công khai, upload cần xác thực.
+SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -89,6 +93,7 @@ class Endpoints:
     ely_skins: str = ELY_SKINS_URL
     ely_capes: str = ELY_CAPES_URL
     launcher_releases: str = LAUNCHER_RELEASES_URL
+    skin_upload: str = SKIN_UPLOAD_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

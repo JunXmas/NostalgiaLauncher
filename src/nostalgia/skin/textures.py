@@ -23,6 +23,8 @@ from nostalgia.storage.files import ensure_dir
 logger = logging.getLogger(__name__)
 
 MAX_TEXTURE_BYTES = 512 * 1024
+# Mojang sessionserver trả skin URL bằng http plain. Host chấp nhận https, nên ta nâng cấp.
+_MOJANG_TEXTURE_HTTP_PREFIX = "http://textures.minecraft.net/"
 
 
 def parse_session_profile(document: JsonValue) -> tuple[str, str, bool]:
@@ -106,7 +108,7 @@ def refresh_ely_skin(
 
 def _upgrade_to_https(url: str) -> str:
     """Mojang sessionserver trả skin URL bằng http. Host chấp nhận https — dùng nó."""
-    if url.startswith("http://textures.minecraft.net/"):
+    if url.startswith(_MOJANG_TEXTURE_HTTP_PREFIX):
         return "https" + url[4:]
     return url
 
