@@ -1,3 +1,9 @@
+## Nostalgia Launcher 1.0.5
+
+Bản vá khẩn cấp (hotfix) sửa lỗi tính năng tự động cập nhật (auto-update) tải xong nhưng không áp dụng cài đặt trên mọi nền tảng (Windows, macOS, Linux).
+
+---
+
 ## Nostalgia Launcher 1.0.4
 
 Bản sửa lỗi cho hai vấn đề liên quan đến `freetype.dll`:
