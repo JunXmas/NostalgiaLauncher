@@ -16,7 +16,7 @@ Item {
 
     readonly property var chosen: bridge.instances.length > 0
                                   ? bridge.instances[Math.min(chosenIndex, bridge.instances.length - 1)] : null
-    readonly property int rightColumnWidth: 296
+    readonly property int rightColumnWidth: page.width < 900 ? 240 : 296
     readonly property int instanceStripHeight: 78 + 168 + Theme.pad
 
     function visibleInstances() {
@@ -129,7 +129,7 @@ Item {
         ContinueCard {
             objectName: "continueCard"
             width: parent.width
-            height: 340
+            height: Math.min(340, page.height - 380)
             translucent: true
             worlds: bridge.recentWorlds
             servers: bridge.recentServers

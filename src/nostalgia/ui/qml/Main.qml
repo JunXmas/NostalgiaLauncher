@@ -17,7 +17,7 @@ Item {
     Sidebar {
         id: sidebar
         objectName: "sidebar"
-        width: 232
+        width: window.width < 1100 ? 190 : 232
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.activePlayerName
         accountKind: {
