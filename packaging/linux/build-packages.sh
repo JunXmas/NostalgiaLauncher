@@ -40,7 +40,7 @@ DEB="$STAGE/deb"
 mkdir -p "$DEB/DEBIAN"
 cp -a "$TREE/." "$DEB/"
 sed "s/@VERSION@/$VERSION/" "$PKG/debian-control" > "$DEB/DEBIAN/control"
-dpkg-deb --build --root-owner-group "$DEB" "$OUT/nostalgia_${VERSION}_amd64.deb"
+dpkg-deb -Zxz --build --root-owner-group "$DEB" "$OUT/nostalgia_${VERSION}_amd64.deb"
 
 # --- rpm (máy dev Debian thường không có rpmbuild: bỏ qua, CI thì bắt buộc) -------------------
 if command -v rpmbuild >/dev/null 2>&1; then
