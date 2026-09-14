@@ -74,13 +74,20 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
             ["cmd.exe", "/c", str(script_path)], creationflags=detached, close_fds=True
         )
         return
+
+    # Lỗi Python: start_new_session=True + close_fds=True chạy setsid SAU khi đóng fd,
+    # làm kernel không tạo session leader đúng. Dùng preexec_fn rõ ràng để chạy trước.
+    def _detach():
+        os.setsid()
+        os.setpgrp()
+
     subprocess.Popen(
         ["/bin/sh", str(script_path)],
-        start_new_session=True,
+        preexec_fn=_detach,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        close_fds=True,
+        close_fds=False,
     )
 
 

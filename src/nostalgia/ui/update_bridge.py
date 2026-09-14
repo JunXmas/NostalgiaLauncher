@@ -129,9 +129,11 @@ class UpdateBridge(WorkerBridge):
             self._set_state("failed", str(exc))
             return
         self._set_state("applying", "Đang mở lại launcher...")
-        running_application = QGuiApplication.instance()
-        if running_application is not None:
-            running_application.quit()
+        # QUAN TRỌNG: QGuiApplication.quit() là async, nó không thoát ngay.
+        # Dùng os._exit() để thoát NGAY LẬP TỨC, không đợi event loop.
+        # Nếu không script sẽ đợi hết timeout 60s và thoát mà không làm gì.
+        import os
+        os._exit(0)
 
     @Slot()
     def openReleasePage(self) -> None:
