@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ import pytest
 from nostalgia.update.apply import (
     INSTALL_KIND_SOURCE,
     SwapPlan,
+    clean_child_env,
     detect_install_kind,
     render_swap_script,
     write_swap_script,
@@ -45,7 +47,12 @@ def test_swap_waits_for_the_old_process_then_replaces_and_relaunches(tmp_path: P
 
     assert (install / "lib" / "core.so").read_text() == "mới"
     assert not install.with_name("Nostalgia.old").exists(), "bản cũ được dọn sau khi tráo xong"
-    assert marker.read_text().strip() == "started", "launcher mới được mở lại"
+    # nohup ... & khiến launcher chạy nền — chờ marker tối đa 5 giây.
+    for _ in range(50):
+        if marker.exists():
+            break
+        time.sleep(0.1)
+    assert marker.exists() and marker.read_text().strip() == "started", "launcher mới được mở lại"
     assert staged.is_dir(), "bản bung vẫn còn để lần sau không tải lại nếu cần"
 
 
@@ -73,3 +80,32 @@ def test_windows_script_and_source_install_kind() -> None:
     assert "tasklist" in script and "4242" in script and "xcopy" in script
     assert 'move "C:\\Nostalgia.old" "C:\\Nostalgia"' in script, "chép hỏng thì trả lại"
     assert detect_install_kind() == INSTALL_KIND_SOURCE, "test chạy từ mã nguồn, không phải gói"
+
+
+def test_sh_script_uses_nohup_not_exec() -> None:
+    """Script sh phải dùng ``nohup ... &`` thay vì ``exec`` để launcher mới
+    không bị kẹt trong session bị cô lập."""
+    plan = SwapPlan(
+        Path("/opt/Nostalgia"), Path("/tmp/staged"), Path("/opt/Nostalgia/nostalgia-ui"), 1234
+    )
+    script = render_swap_script(plan, windows=False)
+    assert "nohup" in script, "phải dùng nohup"
+    assert "exec " not in script, "không được dùng exec — kẹt session cô lập"
+
+
+def test_clean_child_env_restores_orig(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Khi PyInstaller đặt ``LD_LIBRARY_PATH_ORIG``, ``clean_child_env`` phải
+    khôi phục giá trị gốc đó và xoá biến ``_ORIG``."""
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/tmp/_MEIxxxxxx/lib")
+    monkeypatch.setenv("LD_LIBRARY_PATH_ORIG", "/usr/lib")
+    env = clean_child_env()
+    assert env["LD_LIBRARY_PATH"] == "/usr/lib"
+    assert "LD_LIBRARY_PATH_ORIG" not in env
+
+
+def test_clean_child_env_removes_when_no_orig(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Khi không có ``_ORIG``, biến bị ô nhiễm phải bị xoá hoàn toàn."""
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/tmp/_MEIxxxxxx/lib")
+    monkeypatch.delenv("LD_LIBRARY_PATH_ORIG", raising=False)
+    env = clean_child_env()
+    assert "LD_LIBRARY_PATH" not in env
