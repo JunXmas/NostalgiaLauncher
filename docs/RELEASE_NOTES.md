@@ -1,3 +1,16 @@
+## Nostalgia Launcher 1.0.6
+
+Bản vá khẩn cấp (hotfix) gồm hai sửa lỗi:
+
+- **Sửa lỗi cài đặt .deb trên Linux Mint** (MYLA-19) — file `.deb` trước đây dùng nén zstd
+  mà các phiên bản `dpkg`/`apt` trên Linux Mint (và Ubuntu cũ) chưa hỗ trợ, khiến cài đặt
+  thất bại. Đã chuyển sang nén xz để tương thích rộng hơn.
+- **Sửa lỗi giao diện responsive trên màn hình nhỏ** (MYLA-20) — trên màn hình 1366×768,
+  các nút bấm bị chèn lên nhau hoặc biến mất. Đã giảm kích thước tối thiểu cửa sổ, bổ sung
+  ScrollView, và sử dụng responsive layout để đảm bảo hiển thị tốt từ 1024×768 trở lên.
+
+---
+
 ## Nostalgia Launcher 1.0.5
 
 Bản vá khẩn cấp (hotfix) sửa lỗi tính năng tự động cập nhật (auto-update) tải xong nhưng không áp dụng cài đặt trên mọi nền tảng (Windows, macOS, Linux).
