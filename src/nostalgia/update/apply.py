@@ -25,6 +25,24 @@ INSTALL_KIND_APP = "app"
 EXECUTABLE_NAME = "nostalgia-ui"
 
 
+def clean_child_env() -> dict[str, str]:
+    """Trả về bản sao ``os.environ`` đã gỡ ``LD_LIBRARY_PATH`` (và
+    ``DYLD_LIBRARY_PATH``) mà PyInstaller ghi đè.
+
+    PyInstaller lưu giá trị gốc vào biến ``*_ORIG``; nếu biến đó tồn tại ta
+    khôi phục, ngược lại xoá hẳn — tránh launcher mới kế thừa đường dẫn trỏ
+    vào thư mục bản cũ (đã bị xoá sau swap).
+    """
+    env = os.environ.copy()
+    for var in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"):
+        original = env.pop(var + "_ORIG", None)
+        if original is not None:
+            env[var] = original
+        else:
+            env.pop(var, None)
+    return env
+
+
 @dataclass(frozen=True, slots=True)
 class SwapPlan:
     """Mọi thứ script tráo cần biết. Thuần dữ liệu để test không phải chạy script thật."""
@@ -88,6 +106,7 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         close_fds=False,
+        env=clean_child_env(),
     )
 
 
@@ -110,7 +129,7 @@ if cp -R {staged} {install}; then
 else
     rm -rf {install}; mv {old} {install}; exit 1
 fi
-exec {executable}
+nohup {executable} </dev/null >/dev/null 2>&1 &
 """
 
 
