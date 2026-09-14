@@ -67,7 +67,7 @@ Item {
             id: grid
             anchors { left: parent.left; right: parent.right; top: parent.top }
             readonly property int cardHeight: 168
-            columns: 4
+            columns: grid.width < 600 ? 2 : (grid.width < 900 ? 3 : 4)
             spacing: Theme.gap
             Repeater {
                 model: bridge.instances

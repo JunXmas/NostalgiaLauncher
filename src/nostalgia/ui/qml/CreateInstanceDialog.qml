@@ -112,7 +112,7 @@ Item {
         id: box
         anchors.centerIn: parent
         width: Math.min(parent.width - 40, 1120)
-        height: Math.min(parent.height - 40, 760)
+        height: Math.min(parent.height - 20, 760)
         radius: Theme.radius
         color: Theme.surface
         border.color: Theme.border
@@ -121,163 +121,173 @@ Item {
         Behavior on scale { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         MouseArea { anchors.fill: parent }
 
-        // ----- cột trái: form -----
+        // ----- cột trái: form (cuộn được khi cửa sổ thấp) -----
         Item {
             id: form
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom; margins: 24 }
-            width: 300
+            width: Math.min(300, box.width * 0.35)
 
-            Column {
-                id: formTop
-                anchors { left: parent.left; right: parent.right; top: parent.top }
-                spacing: 14
-
-                Column {
-                    spacing: 2
-                    Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: 18; font.bold: true }
-                    Text {
-                        text: dialog.loaderLabel + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
-                              + (dialog.loaderVersion ? "  ·  " + dialog.loaderVersion : "")
-                        color: Theme.accent; font.pixelSize: 11
-                    }
-                }
-
-                // Ảnh minh hoạ của dòng đang chọn (hoặc dòng đang bung).
-                Rectangle {
-                    width: parent.width; height: Math.round(width / 2.56); radius: Theme.radiusSmall; clip: true
-                    color: Theme.surfaceHigh; border.color: Theme.border
-                    Image {
-                        id: previewArt
-                        anchors.fill: parent; anchors.margins: 1
-                        source: dialog.artFor(dialog.previewMajor)
-                        fillMode: Image.PreserveAspectCrop; asynchronous: true
-                    }
-                }
+            Flickable {
+                id: formFlick
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: formColumn.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
 
                 Column {
-                    spacing: 5; width: parent.width
-                    Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
-                    TextField {
-                        id: nameField; width: parent.width
-                        placeholder: dialog.gameVersion ? dialog.defaultName : "Để trống = tự động"
-                    }
-                }
+                    id: formColumn
+                    width: formFlick.width
+                    spacing: 14
 
-                Column {
-                    spacing: 5; width: parent.width
-                    Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
-                    // Bấm để chọn ổ khác cho mods/saves của bản chơi này (kho chung vẫn ở data_dir).
+                    Column {
+                        spacing: 2
+                        Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+                        Text {
+                            text: dialog.loaderLabel + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
+                                  + (dialog.loaderVersion ? "  ·  " + dialog.loaderVersion : "")
+                            color: Theme.accent; font.pixelSize: 11
+                        }
+                    }
+
+                    // Ảnh minh hoạ của dòng đang chọn (hoặc dòng đang bung).
                     Rectangle {
-                        objectName: "gameDirPicker"
-                        width: parent.width; height: 34; radius: Theme.radiusSmall
-                        color: Theme.surfaceHigh; border.color: folderHover.hovered ? Theme.accent : Theme.border
-                        Text {
-                            anchors { left: parent.left; leftMargin: 10; right: clearFolder.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
-                            text: dialog.gameDirUrl ? dialog.gameDirPath
-                                  : (settingsBridge.defaultGameDirRoot ? "Mặc định: " + settingsBridge.defaultGameDirRoot + "/…" : "Mặc định trong instances/ — bấm để chọn ổ khác")
-                            elide: Text.ElideMiddle
-                            color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 12
+                        width: parent.width; height: Math.round(width / 2.56); radius: Theme.radiusSmall; clip: true
+                        color: Theme.surfaceHigh; border.color: Theme.border
+                        Image {
+                            id: previewArt
+                            anchors.fill: parent; anchors.margins: 1
+                            source: dialog.artFor(dialog.previewMajor)
+                            fillMode: Image.PreserveAspectCrop; asynchronous: true
                         }
-                        Text {
-                            id: clearFolder
-                            visible: dialog.gameDirUrl !== ""
-                            anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
-                            text: "✕"; color: Theme.textMuted; font.pixelSize: 11
-                            TapHandler { onTapped: dialog.gameDirUrl = "" }
-                        }
-                        HoverHandler { id: folderHover; cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: folderPicker.open() }
                     }
-                }
 
-                Column {
-                    spacing: 5; width: parent.width
-                    Text { text: "LOADER"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
-                    Grid {
-                        objectName: "loaderRow"
-                        columns: 3; spacing: 8
-                        Repeater {
-                            model: dialog.loaderChoices
-                            Rectangle {
-                                readonly property bool selected: modelData.key === dialog.loaderKind
-                                width: 94; height: 66; radius: Theme.radiusSmall
-                                color: selected ? Theme.accentSoft : Theme.surfaceHigh
-                                border.color: selected ? Theme.accent : Theme.border
-                                border.width: 1
-                                Column {
-                                    anchors.centerIn: parent; spacing: 5
-                                    Image {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 26; height: 26; source: modelData.icon
-                                        fillMode: Image.PreserveAspectFit; smooth: true; mipmap: true
+                    Column {
+                        spacing: 5; width: parent.width
+                        Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        TextField {
+                            id: nameField; width: parent.width
+                            placeholder: dialog.gameVersion ? dialog.defaultName : "Để trống = tự động"
+                        }
+                    }
+
+                    Column {
+                        spacing: 5; width: parent.width
+                        Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        // Bấm để chọn ổ khác cho mods/saves của bản chơi này (kho chung vẫn ở data_dir).
+                        Rectangle {
+                            objectName: "gameDirPicker"
+                            width: parent.width; height: 34; radius: Theme.radiusSmall
+                            color: Theme.surfaceHigh; border.color: folderHover.hovered ? Theme.accent : Theme.border
+                            Text {
+                                anchors { left: parent.left; leftMargin: 10; right: clearFolder.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
+                                text: dialog.gameDirUrl ? dialog.gameDirPath
+                                      : (settingsBridge.defaultGameDirRoot ? "Mặc định: " + settingsBridge.defaultGameDirRoot + "/…" : "Mặc định trong instances/ — bấm để chọn ổ khác")
+                                elide: Text.ElideMiddle
+                                color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 12
+                            }
+                            Text {
+                                id: clearFolder
+                                visible: dialog.gameDirUrl !== ""
+                                anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                                text: "✕"; color: Theme.textMuted; font.pixelSize: 11
+                                TapHandler { onTapped: dialog.gameDirUrl = "" }
+                            }
+                            HoverHandler { id: folderHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: folderPicker.open() }
+                        }
+                    }
+
+                    Column {
+                        spacing: 5; width: parent.width
+                        Text { text: "LOADER"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Grid {
+                            id: loaderGrid
+                            objectName: "loaderRow"
+                            columns: parent.width < 280 ? 2 : 3; spacing: 8
+                            Repeater {
+                                model: dialog.loaderChoices
+                                Rectangle {
+                                    readonly property bool selected: modelData.key === dialog.loaderKind
+                                    width: Math.min(94, (form.width - (loaderGrid.columns - 1) * 8) / loaderGrid.columns); height: 66; radius: Theme.radiusSmall
+                                    color: selected ? Theme.accentSoft : Theme.surfaceHigh
+                                    border.color: selected ? Theme.accent : Theme.border
+                                    border.width: 1
+                                    Column {
+                                        anchors.centerIn: parent; spacing: 5
+                                        Image {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            width: 26; height: 26; source: modelData.icon
+                                            fillMode: Image.PreserveAspectFit; smooth: true; mipmap: true
+                                        }
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData.label; color: selected ? Theme.accent : Theme.text
+                                            font.pixelSize: 11; font.bold: selected
+                                        }
                                     }
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.label; color: selected ? Theme.accent : Theme.text
-                                        font.pixelSize: 11; font.bold: selected
-                                    }
-                                }
-                                HoverHandler { cursorShape: Qt.PointingHandCursor }
-                                TapHandler {
-                                    onTapped: {
-                                        if (!selected) notifier.playUi("nav");
-                                        dialog.loaderKind = modelData.key;
-                                        dialog.loaderVersion = "";
-                                        if (dialog.isPreset) catalogBridge.loadPresetVersions();
-                                        if (dialog.isPreset && dialog.gameVersion && !dialog.presetSupports(dialog.gameVersion))
-                                            dialog.gameVersion = "";
-                                        if (dialog.needsLoaderStep && dialog.gameVersion)
-                                            catalogBridge.loadLoaderVersions(dialog.loaderKind, dialog.gameVersion);
+                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                                    TapHandler {
+                                        onTapped: {
+                                            if (!selected) notifier.playUi("nav");
+                                            dialog.loaderKind = modelData.key;
+                                            dialog.loaderVersion = "";
+                                            if (dialog.isPreset) catalogBridge.loadPresetVersions();
+                                            if (dialog.isPreset && dialog.gameVersion && !dialog.presetSupports(dialog.gameVersion))
+                                                dialog.gameVersion = "";
+                                            if (dialog.needsLoaderStep && dialog.gameVersion)
+                                                catalogBridge.loadLoaderVersions(dialog.loaderKind, dialog.gameVersion);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                Row {
-                    spacing: 10
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
-                    TextField { id: heapField; width: 110; placeholder: "mặc định" }
-                }
-            }
+                    Row {
+                        spacing: 10
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        TextField { id: heapField; width: 110; placeholder: "mặc định" }
+                    }
 
-            Column {
-                anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                spacing: 8
-                Text {
-                    visible: !bridge.busy && dialog.missingStep.length > 0
-                    width: parent.width
-                    text: "Còn thiếu: " + dialog.missingStep
-                    color: Theme.accent; font.pixelSize: 11; wrapMode: Text.WordWrap
-                }
-                Text {
-                    visible: !bridge.busy && dialog.isPreset
-                    width: parent.width
-                    text: "Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi."
-                    color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
-                }
-                Text {
-                    visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
-                    width: parent.width
-                    text: "Forge/NeoForge cài bằng installer chính thức; có thể mất vài phút."
-                    color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
-                }
-                Text {
-                    visible: bridge.busy
-                    width: parent.width
-                    text: bridge.progressText
-                    color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
-                }
-                ActionButton {
-                    width: parent.width
-                    height: 44
-                    label: bridge.busy ? "Đang cài..." : "Tạo bản chơi " + dialog.loaderLabel
-                    clickable: dialog.canCreate
-                    onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName,
-                                                            dialog.gameVersion, dialog.loaderKind,
-                                                            dialog.loaderVersion, parseInt(heapField.text) || 0,
-                                                            dialog.gameDirUrl)
+                    // --- Khu vực dưới cùng: thông báo + nút tạo (nằm trong cùng Column để cuộn được) ---
+                    Item { width: 1; height: 8 }  // spacer
+
+                    Text {
+                        visible: !bridge.busy && dialog.missingStep.length > 0
+                        width: parent.width
+                        text: "Còn thiếu: " + dialog.missingStep
+                        color: Theme.accent; font.pixelSize: 11; wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        visible: !bridge.busy && dialog.isPreset
+                        width: parent.width
+                        text: "Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi."
+                        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
+                        width: parent.width
+                        text: "Forge/NeoForge cài bằng installer chính thức; có thể mất vài phút."
+                        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        visible: bridge.busy
+                        width: parent.width
+                        text: bridge.progressText
+                        color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
+                    }
+                    ActionButton {
+                        width: parent.width
+                        height: 44
+                        label: bridge.busy ? "Đang cài..." : "Tạo bản chơi " + dialog.loaderLabel
+                        clickable: dialog.canCreate
+                        onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName,
+                                                                dialog.gameVersion, dialog.loaderKind,
+                                                                dialog.loaderVersion, parseInt(heapField.text) || 0,
+                                                                dialog.gameDirUrl)
+                    }
                 }
             }
         }
