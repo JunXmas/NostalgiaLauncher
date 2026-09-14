@@ -85,7 +85,9 @@ def test_windows_script_and_source_install_kind() -> None:
 def test_sh_script_uses_nohup_not_exec() -> None:
     """Script sh phải dùng ``nohup ... &`` thay vì ``exec`` để launcher mới
     không bị kẹt trong session bị cô lập."""
-    plan = SwapPlan(Path("/opt/Nostalgia"), Path("/tmp/staged"), Path("/opt/Nostalgia/nostalgia-ui"), 1234)
+    plan = SwapPlan(
+        Path("/opt/Nostalgia"), Path("/tmp/staged"), Path("/opt/Nostalgia/nostalgia-ui"), 1234
+    )
     script = render_swap_script(plan, windows=False)
     assert "nohup" in script, "phải dùng nohup"
     assert "exec " not in script, "không được dùng exec — kẹt session cô lập"
