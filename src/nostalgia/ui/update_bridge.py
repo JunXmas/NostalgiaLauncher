@@ -133,6 +133,7 @@ class UpdateBridge(WorkerBridge):
         # Dùng os._exit() để thoát NGAY LẬP TỨC, không đợi event loop.
         # Nếu không script sẽ đợi hết timeout 60s và thoát mà không làm gì.
         import os
+
         os._exit(0)
 
     @Slot()
