@@ -77,7 +77,7 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
 
     # Lỗi Python: start_new_session=True + close_fds=True chạy setsid SAU khi đóng fd,
     # làm kernel không tạo session leader đúng. Dùng preexec_fn rõ ràng để chạy trước.
-    def _detach():
+    def _detach() -> None:
         os.setsid()
         os.setpgrp()
 

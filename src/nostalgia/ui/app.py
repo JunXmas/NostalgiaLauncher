@@ -80,7 +80,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
         running_application.aboutToQuit.connect(presence_bridge.shutdown)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     view.setTitle("Nostalgia Launcher")
-    # Cho phép cửa sổ co nhỏ đến 1024×600 để chạy được trên màn hình 1366×768 (trừ taskbar,
+    # Cho phép cửa sổ co nhỏ đến 1024x600 để chạy được trên màn hình 1366x768 (trừ taskbar,
     # title bar). Bố cục QML tự scale xuống nhờ ScrollView / Flickable và layout linh hoạt.
     view.setMinimumSize(QSize(1024, 600))
     view.resize(1360, 860)

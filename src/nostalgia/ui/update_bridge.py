@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices, QGuiApplication
+from PySide6.QtGui import QDesktopServices
 
 from nostalgia.api import Launcher, LauncherRelease, Progress, StagedUpdate
 from nostalgia.errors import NostalgiaError
