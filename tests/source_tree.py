@@ -49,6 +49,7 @@ LAYERS: dict[str, int] = {
     "skin": 3,  # tải và cache skin/cape; vẽ nhân vật là việc của giao diện
     "update": 3,  # bản phát hành launcher: đọc, tải + kiểm băm, script tráo thư mục
     "multiplayer": 3,  # LAN-qua-relay: chỉ stdlib socket/asyncio, không biết gì về bản chơi
+    "nos_client": 3,  # Nos Client: config HUD + manager tải/inject mod jar
     "account": 4,
     "launch": 4,
     "doctor": 4,

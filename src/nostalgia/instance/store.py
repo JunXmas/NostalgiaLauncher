@@ -16,7 +16,7 @@ from pathlib import Path
 
 from nostalgia.errors import DataFileError, InstanceError
 from nostalgia.instance.model import Instance, check_instance_id
-from nostalgia.model.json_value import JsonValue, as_integer, as_mapping, as_string
+from nostalgia.model.json_value import JsonValue, as_boolean, as_integer, as_mapping, as_string
 from nostalgia.storage.files import atomic_write_json, ensure_dir, read_json
 from nostalgia.storage.paths import DataPaths
 
@@ -105,6 +105,7 @@ def save_instance(paths: DataPaths, instance: Instance) -> None:
         "window_height": instance.window_height,
         "icon_url": instance.icon_url,
         "game_dir": instance.game_dir_override or None,
+        "nos_client_enabled": instance.nos_client_enabled,
     }
     atomic_write_json(paths.instance_json(instance.instance_id), document)
 
@@ -185,4 +186,5 @@ def _parse_instance(fields: dict[str, JsonValue], *, fallback_id: str) -> Instan
         window_height=as_integer(fields.get("window_height")),
         icon_url=as_string(fields.get("icon_url")) or "",
         game_dir_override=as_string(fields.get("game_dir")) or "",
+        nos_client_enabled=as_boolean(fields.get("nos_client_enabled"), default=False),
     )

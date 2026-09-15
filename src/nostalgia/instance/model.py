@@ -35,6 +35,8 @@ class Instance:
     # Thư mục chơi riêng (đường dẫn tuyệt đối, vd ổ D). Rỗng = `instances/<mã>` mặc định.
     # Phần nặng của một bản chơi (mods, saves, resourcepacks) nằm ở đây; kho chung không đổi.
     game_dir_override: str = ""
+    # Nos Client: bật HUD overlay ingame cho bản chơi này.
+    nos_client_enabled: bool = False
 
     @property
     def label(self) -> str:

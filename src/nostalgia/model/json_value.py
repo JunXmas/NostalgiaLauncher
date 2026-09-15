@@ -37,3 +37,12 @@ def as_integer(value: JsonValue) -> int | None:
     if isinstance(value, bool):
         return None
     return value if isinstance(value, int) else None
+
+
+def as_boolean(value: JsonValue, *, default: bool = False) -> bool:
+    """Trả về `value` nếu nó là `bool`, ngược lại trả về `default`.
+
+    Khác với `as_string` và `as_integer` (trả `None` khi thiếu): giá trị boolean thường
+    mang nghĩa bật/tắt và người gọi luôn cần một giá trị mặc định rõ ràng.
+    """
+    return value if isinstance(value, bool) else default

@@ -29,6 +29,7 @@ from nostalgia.doctor import Diagnosis
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
+from nostalgia.facade.nos_client import NosClientOperations
 from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.skins import SkinOperations
@@ -40,6 +41,7 @@ from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
+from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
@@ -52,6 +54,7 @@ class Launcher(
     MultiplayerOperations,
     SkinOperations,
     PresetOperations,
+    NosClientOperations,
     InstanceOperations,
     PlayOperations,
 ):
@@ -72,6 +75,7 @@ __all__ = [
     "Instance",
     "Launcher",
     "LauncherRelease",
+    "NosClientConfig",
     "PlayerProfile",
     "PlayerSkin",
     "Progress",

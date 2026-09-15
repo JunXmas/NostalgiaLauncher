@@ -66,7 +66,7 @@ Item {
         Grid {
             id: grid
             anchors { left: parent.left; right: parent.right; top: parent.top }
-            readonly property int cardHeight: 168
+            readonly property int cardHeight: 198
             columns: grid.width < 600 ? 2 : (grid.width < 900 ? 3 : 4)
             spacing: Theme.gap
             Repeater {
@@ -83,9 +83,24 @@ Item {
                     editable: true
                     iconUrl: modelData.iconUrl || ""
                     playable: bridge.activePlayerName.length > 0 && !bridge.busy
+                    // Nos Client state.
+                    nosClientEnabled: modelData.nosClientEnabled || false
+                    nosInstanceId: modelData.instanceId
+                    nosCoords: modelData.nosCoords !== undefined ? modelData.nosCoords : true
+                    nosDirection: modelData.nosDirection !== undefined ? modelData.nosDirection : true
+                    nosDay: modelData.nosDay !== undefined ? modelData.nosDay : true
+                    nosFps: modelData.nosFps || false
+                    nosPing: modelData.nosPing || false
+                    nosCps: modelData.nosCps || false
                     onPlayRequested: bridge.play(modelData.instanceId)
                     onRemoveRequested: bridge.removeInstance(modelData.instanceId)
                     onEditRequested: editDialog.openFor(modelData)
+                    onNosClientToggled: function (enabled) {
+                        bridge.toggleNosClient(modelData.instanceId, enabled)
+                    }
+                    onNosClientConfigChanged: function (coords, direction, day, fps, ping, cps) {
+                        bridge.updateNosClientConfig(modelData.instanceId, coords, direction, day, fps, ping, cps)
+                    }
                 }
             }
         }

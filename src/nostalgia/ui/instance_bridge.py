@@ -13,7 +13,7 @@ from typing import Any
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
-from nostalgia.api import Instance, Launcher
+from nostalgia.api import Instance, Launcher, NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.ui.worker import WorkerBridge
 
@@ -90,6 +90,7 @@ class InstanceBridge(WorkerBridge):
 
     def _describe(self, instance: Instance) -> dict[str, Any]:
         stats = self._launcher.describe_instance_stats(instance.instance_id)
+        nos_config = self._launcher.nos_client_config(instance)
         return {
             "instanceId": instance.instance_id,
             "label": instance.label,
@@ -105,6 +106,13 @@ class InstanceBridge(WorkerBridge):
             "lastPlayedAt": stats.play.last_played_at,
             "worldCount": stats.world_count,
             "modCount": stats.mod_count,
+            "nosClientEnabled": instance.nos_client_enabled,
+            "nosCoords": nos_config.coords,
+            "nosDirection": nos_config.direction,
+            "nosDay": nos_config.day,
+            "nosFps": nos_config.fps,
+            "nosPing": nos_config.ping,
+            "nosCps": nos_config.cps,
         }
 
     @Property(str, notify=progressChanged)
@@ -157,6 +165,55 @@ class InstanceBridge(WorkerBridge):
             self.instancesChanged.emit()
 
         self.run_in_background(work, f"Gỡ bản chơi {instance_id}")
+
+    @Slot(str, bool)
+    def toggleNosClient(self, instance_id: str, enabled: bool) -> None:
+        """Bật/tắt Nos Client cho một bản chơi. Tải mod ở nền nếu bật."""
+        current = next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+        if current is None:
+            return
+
+        def work() -> None:
+            self._launcher.toggle_nos_client(current, enabled)
+            if enabled:
+                self._launcher.prepare_nos_client(
+                    replace(current, nos_client_enabled=True)
+                )
+            else:
+                self._launcher.cleanup_nos_client(current)
+            self.instancesChanged.emit()
+
+        self.run_in_background(work, f"{'Bật' if enabled else 'Tắt'} Nos Client cho {instance_id}")
+
+    @Slot(str, bool, bool, bool, bool, bool, bool)
+    def updateNosClientConfig(
+        self,
+        instance_id: str,
+        coords: bool,
+        direction: bool,
+        day: bool,
+        fps: bool,
+        ping: bool,
+        cps: bool,
+    ) -> None:
+        """Cập nhật cấu hình HUD của Nos Client. Ghi file nhỏ: làm ngay."""
+        current = next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+        if current is None:
+            return
+        config = NosClientConfig(
+            coords=coords,
+            direction=direction,
+            day=day,
+            fps=fps,
+            ping=ping,
+            cps=cps,
+        )
+        self._launcher.set_nos_client_config(current, config)
+        self.instancesChanged.emit()
 
     @Slot()
     def clearProgress(self) -> None:

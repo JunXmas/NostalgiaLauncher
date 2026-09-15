@@ -16,9 +16,20 @@ Rectangle {
     property int worldCount: 0
     property int modCount: 0
     property bool confirmingRemove: false
+    // Nos Client state.
+    property bool nosClientEnabled: false
+    property string nosInstanceId: ""
+    property bool nosCoords: true
+    property bool nosDirection: true
+    property bool nosDay: true
+    property bool nosFps: false
+    property bool nosPing: false
+    property bool nosCps: false
     signal playRequested()
     signal removeRequested()
     signal editRequested()
+    signal nosClientToggled(bool enabled)
+    signal nosClientConfigChanged(bool coords, bool direction, bool day, bool fps, bool ping, bool cps)
 
     // Suy loader từ mã phiên bản: "fabric-loader-…", "1.20.1-forge-…", "neoforge-…".
     readonly property string loaderLabel: versionId.indexOf("fabric-loader-") === 0 ? "Fabric"
@@ -27,7 +38,7 @@ Rectangle {
                                         : versionId.indexOf("forge") >= 0 ? "Forge" : "Vanilla"
 
     implicitWidth: 230
-    implicitHeight: 168
+    implicitHeight: 198
     radius: Theme.radius
     color: hover.hovered ? Theme.surfaceHigh : Theme.surface
     border.color: hover.hovered ? Theme.accent : Theme.border
@@ -144,6 +155,16 @@ Rectangle {
             text: (root.customGameDir ? "💾  " : "") + root.loaderLabel + "  ·  " + root.versionId
             width: parent.width; elide: Text.ElideRight
             color: Theme.textMuted; font.pixelSize: 11
+        }
+        NosClientBadge {
+            nosEnabled: root.nosClientEnabled
+            instanceId: root.nosInstanceId
+            nosCoords: root.nosCoords; nosDirection: root.nosDirection; nosDay: root.nosDay
+            nosFps: root.nosFps; nosPing: root.nosPing; nosCps: root.nosCps
+            onToggled: function (enabled) { root.nosClientToggled(enabled) }
+            onConfigChanged: function (coords, direction, day, fps, ping, cps) {
+                root.nosClientConfigChanged(coords, direction, day, fps, ping, cps)
+            }
         }
         Text {
             objectName: "instanceStats"
