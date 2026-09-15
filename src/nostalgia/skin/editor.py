@@ -1,6 +1,6 @@
-"""Đọc/ghi ảnh PNG RGBA 64×64 dùng thư viện chuẩn — không cần Pillow hay OpenCV.
+"""Đọc/ghi ảnh PNG RGBA 64x64 dùng thư viện chuẩn — không cần Pillow hay OpenCV.
 
-Minecraft skin dùng PNG 64×64 với 4 kênh RGBA. Module này cung cấp bộ tiện ích tối thiểu
+Minecraft skin dùng PNG 64x64 với 4 kênh RGBA. Module này cung cấp bộ tiện ích tối thiểu
 cho bước đầu của trình vẽ skin tích hợp: nạp texture ra lưới điểm ảnh, sửa từng điểm,
 tô vùng, và lưu lại thành PNG nguyên vẹn.
 
@@ -16,7 +16,7 @@ import zlib
 from dataclasses import dataclass
 from pathlib import Path
 
-# Kích thước duy nhất hợp lệ cho skin Minecraft 64×64.
+# Kích thước duy nhất hợp lệ cho skin Minecraft 64x64.
 SKIN_WIDTH = 64
 SKIN_HEIGHT = 64
 
@@ -26,7 +26,7 @@ _COLOR_TYPE_RGBA = 6
 _BIT_DEPTH_8 = 8
 _FILTER_NONE = 0
 
-# Kiểu một điểm ảnh: (R, G, B, A), mỗi kênh 0–255.
+# Kiểu một điểm ảnh: (R, G, B, A), mỗi kênh 0-255.
 type Rgba = tuple[int, int, int, int]
 
 # Lưới điểm ảnh: danh sách các hàng, mỗi hàng là danh sách RGBA.
@@ -43,9 +43,9 @@ class SkinTexture:
 
 
 def load_texture(path: Path) -> SkinTexture:
-    """Đọc file PNG RGBA 64×64 và trả về ``SkinTexture``.
+    """Đọc file PNG RGBA 64x64 và trả về ``SkinTexture``.
 
-    Chỉ chấp nhận ảnh đúng kích thước 64×64, color type 6, bit depth 8, không interlace.
+    Chỉ chấp nhận ảnh đúng kích thước 64x64, color type 6, bit depth 8, không interlace.
     Ném ``ValueError`` nếu file không thoả mãn.
     """
     raw = path.read_bytes()
@@ -55,7 +55,7 @@ def load_texture(path: Path) -> SkinTexture:
 
     width, height, pixels_data = _decode_png_rgba(raw)
     if width != SKIN_WIDTH or height != SKIN_HEIGHT:
-        message = f"{path}: kích thước {width}×{height}, cần {SKIN_WIDTH}×{SKIN_HEIGHT}"
+        message = f"{path}: kích thước {width}x{height}, cần {SKIN_WIDTH}x{SKIN_HEIGHT}"
         raise ValueError(message)
 
     grid = _raw_to_grid(pixels_data, width, height)
@@ -63,7 +63,7 @@ def load_texture(path: Path) -> SkinTexture:
 
 
 def save_texture(grid: PixelGrid, path: Path) -> None:
-    """Ghi lưới điểm ảnh RGBA ra file PNG 64×64."""
+    """Ghi lưới điểm ảnh RGBA ra file PNG 64x64."""
     height = len(grid)
     width = len(grid[0]) if height else 0
     raw = _grid_to_raw(grid, width, height)
@@ -76,7 +76,7 @@ def apply_pixel(grid: PixelGrid, x: int, y: int, rgba: Rgba) -> None:
     height = len(grid)
     width = len(grid[0]) if height else 0
     if not (0 <= x < width and 0 <= y < height):
-        message = f"toạ độ ({x}, {y}) ngoài biên {width}×{height}"
+        message = f"toạ độ ({x}, {y}) ngoài biên {width}x{height}"
         raise IndexError(message)
     grid[y][x] = rgba
 
@@ -100,10 +100,14 @@ def fill_region(grid: PixelGrid, x: int, y: int, rgba: Rgba) -> None:
         cx, cy = queue.pop(0)
         grid[cy][cx] = rgba
         for nx, ny in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
-            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited:
-                if grid[ny][nx] == target_color:
-                    visited.add((nx, ny))
-                    queue.append((nx, ny))
+            if (
+                0 <= nx < width
+                and 0 <= ny < height
+                and (nx, ny) not in visited
+                and grid[ny][nx] == target_color
+            ):
+                visited.add((nx, ny))
+                queue.append((nx, ny))
 
 
 # --- Nội bộ: đọc/ghi PNG ---
@@ -127,7 +131,7 @@ def _decode_png_rgba(png_content: bytes) -> tuple[int, int, bytes]:
     chunks = _read_chunks(png_content)
     ihdr_content = next(d for t, d in chunks if t == b"IHDR")
     width, height, bit_depth, color_type = struct.unpack(">IIBB", ihdr_content[:10])
-    compression, _filter_method, interlace = struct.unpack("BBB", ihdr_content[10:13])
+    _compression, _filter_method, interlace = struct.unpack("BBB", ihdr_content[10:13])
 
     if color_type != _COLOR_TYPE_RGBA:
         message = f"color type {color_type}, cần {_COLOR_TYPE_RGBA} (RGBA)"
@@ -210,10 +214,14 @@ def _raw_to_grid(pixel_bytes: bytes, width: int, height: int) -> PixelGrid:
         row: list[Rgba] = []
         for x in range(width):
             base = (y * width + x) * 4
-            row.append((
-                pixel_bytes[base], pixel_bytes[base + 1],
-                pixel_bytes[base + 2], pixel_bytes[base + 3],
-            ))
+            row.append(
+                (
+                    pixel_bytes[base],
+                    pixel_bytes[base + 1],
+                    pixel_bytes[base + 2],
+                    pixel_bytes[base + 3],
+                )
+            )
         grid.append(row)
     return grid
 
@@ -235,9 +243,7 @@ def _grid_to_raw(grid: PixelGrid, width: int, height: int) -> bytes:
 def _encode_png_rgba(raw: bytes, width: int, height: int) -> bytes:
     """Ghi dữ liệu RGBA thành file PNG hoàn chỉnh, filter None cho mọi hàng."""
     # IHDR
-    ihdr_content = struct.pack(
-        ">IIBBBBB", width, height, _BIT_DEPTH_8, _COLOR_TYPE_RGBA, 0, 0, 0
-    )
+    ihdr_content = struct.pack(">IIBBBBB", width, height, _BIT_DEPTH_8, _COLOR_TYPE_RGBA, 0, 0, 0)
     # Thêm filter byte (0 = None) đầu mỗi hàng rồi nén
     filtered = bytearray()
     stride = width * 4

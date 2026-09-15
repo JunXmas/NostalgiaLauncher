@@ -90,7 +90,7 @@ def test_stuck_client_does_not_block_other_players() -> None:
         room_id, room_secret = split_room_code(room_code)
 
         # Kết nối joiner 1 trước (sẽ bị nghẽn ở phía world)
-        reader1, writer1 = await asyncio.open_connection("127.0.0.1", joiner1.local_port)
+        _reader1, writer1 = await asyncio.open_connection("127.0.0.1", joiner1.local_port)
         writer1.write(MC_HANDSHAKE)
         await writer1.drain()
         await asyncio.sleep(0.15)

@@ -124,4 +124,3 @@ def test_tail_snapshot_is_thread_safe() -> None:
         stop.set()
         worker.join()
     assert not errors, f"race condition detected: {errors}"
-

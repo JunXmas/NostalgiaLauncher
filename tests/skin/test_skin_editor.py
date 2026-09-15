@@ -70,7 +70,7 @@ def test_apply_pixel_out_of_bounds_raises_index_error() -> None:
 def test_fill_region_fills_a_connected_same_color_area() -> None:
     """Tô vùng kiểu thùng sơn: chỉ lan sang pixel cùng màu, dừng tại biên khác màu."""
     grid = _make_solid_grid(width=8, height=8, rgba=(0, 0, 0, 255))
-    # Vẽ hàng rào quanh vùng 3×3 góc trên trái
+    # Vẽ hàng rào quanh vùng 3x3 góc trên trái
     barrier = (255, 255, 255, 255)
     for i in range(4):
         grid[3][i] = barrier  # hàng ngang
@@ -124,13 +124,13 @@ def test_load_texture_rejects_non_png(tmp_path: Path) -> None:
 
 
 def test_load_texture_rejects_wrong_size(tmp_path: Path) -> None:
-    """Skin phải chính xác 64×64; kích thước khác bị từ chối."""
+    """Skin phải chính xác 64x64; kích thước khác bị từ chối."""
     small_grid: list[list[tuple[int, int, int, int]]] = [
         [(0, 0, 0, 0) for _ in range(32)] for _ in range(32)
     ]
     path = tmp_path / "small.png"
     save_texture(small_grid, path)
-    with pytest.raises(ValueError, match="32×32"):
+    with pytest.raises(ValueError, match="32x32"):
         load_texture(path)
 
 

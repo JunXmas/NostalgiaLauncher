@@ -5,10 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from nostalgia.instance.model import Instance
-from nostalgia.instance.store import create_instance, load_instance, save_instance
+from nostalgia.instance.store import create_instance, load_instance
 from nostalgia.nos_client.config import (
     NosClientConfig,
     load_nos_client_config,
@@ -148,12 +146,14 @@ class TestInstanceModelNosClient:
         legacy_dir.mkdir(parents=True)
         # Ghi JSON kiểu cũ, không có nos_client_enabled.
         (legacy_dir / "instance.json").write_text(
-            json.dumps({
-                "format": 1,
-                "instance_id": "legacy",
-                "version_id": "1.18.2",
-                "display_name": "Legacy World",
-            })
+            json.dumps(
+                {
+                    "format": 1,
+                    "instance_id": "legacy",
+                    "version_id": "1.18.2",
+                    "display_name": "Legacy World",
+                }
+            )
         )
 
         loaded = load_instance(paths, "legacy")

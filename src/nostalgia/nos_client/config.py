@@ -9,9 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from nostalgia.errors import DataFileError
 from nostalgia.model.json_value import JsonValue, as_boolean, as_mapping
 from nostalgia.storage.files import atomic_write_json, ensure_dir, read_json
-from nostalgia.errors import DataFileError
 
 CONFIG_FILE = "config/nos-client.json"
 

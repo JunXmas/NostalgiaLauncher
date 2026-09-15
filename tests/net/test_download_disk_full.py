@@ -38,7 +38,6 @@ def test_disk_full_raises_disk_full_error_not_network_error(
     task = _make_task(server, tmp_path / "out.bin")
 
     call_count = 0
-    real_write = None
 
     class FakeHandle:
         """Bọc file handle thật, ném OSError(ENOSPC) ngay lần write đầu tiên."""
@@ -46,7 +45,7 @@ def test_disk_full_raises_disk_full_error_not_network_error(
         def __init__(self, real: object) -> None:
             self._real = real
 
-        def write(self, content: bytes) -> int:
+        def write(self, _content: bytes) -> int:
             nonlocal call_count
             call_count += 1
             error = OSError(errno.ENOSPC, "No space left on device")
@@ -62,8 +61,6 @@ def test_disk_full_raises_disk_full_error_not_network_error(
         def __exit__(self, *args: object) -> None:
             self._real.close()
 
-    import builtins
-
     original_fdopen = __import__("os").fdopen
 
     def patched_fdopen(fd: int, mode: str = "r", *args: object, **kwargs: object) -> object:
@@ -72,9 +69,11 @@ def test_disk_full_raises_disk_full_error_not_network_error(
             return FakeHandle(real)
         return real
 
-    with patch("os.fdopen", side_effect=patched_fdopen):
-        with pytest.raises(DiskFullError, match="ổ đĩa đầy"):
-            download_one(http_client, task, retry_policy=FAST_RETRY)
+    with (
+        patch("os.fdopen", side_effect=patched_fdopen),
+        pytest.raises(DiskFullError, match="ổ đĩa đầy"),
+    ):
+        download_one(http_client, task, retry_policy=FAST_RETRY)
 
     # Không được retry: lỗi đĩa đầy là vĩnh viễn, retry chỉ lãng phí.
     assert call_count == 1, f"retry đã chạy {call_count} lần, kỳ vọng chỉ 1"
@@ -104,7 +103,7 @@ def test_disk_full_does_not_retry(
             attempt_count += 1
 
             class FailOnWrite:
-                def write(self, content: bytes) -> int:
+                def write(self, _content: bytes) -> int:
                     err = OSError(errno.ENOSPC, "No space left on device")
                     err.errno = errno.ENOSPC
                     raise err
@@ -121,8 +120,7 @@ def test_disk_full_does_not_retry(
             return FailOnWrite()
         return real
 
-    with patch("os.fdopen", side_effect=counting_fdopen):
-        with pytest.raises(DiskFullError):
-            download_one(http_client, task, retry_policy=FAST_RETRY)
+    with patch("os.fdopen", side_effect=counting_fdopen), pytest.raises(DiskFullError):
+        download_one(http_client, task, retry_policy=FAST_RETRY)
 
     assert attempt_count == 1, f"phải thử đúng 1 lần, nhưng thử {attempt_count} lần"

@@ -194,11 +194,7 @@ class LauncherBridge(InstanceBridge):
                 self._launcher.install_version(version_id, on_progress=self.report_progress)
             # Nos Client: nếu bật, inject mod jar trước khi chạy.
             instance_obj = next(
-                (
-                    i
-                    for i in self._launcher.list_instances()
-                    if i.instance_id == instance_id
-                ),
+                (i for i in self._launcher.list_instances() if i.instance_id == instance_id),
                 None,
             )
             if instance_obj is not None and instance_obj.nos_client_enabled:

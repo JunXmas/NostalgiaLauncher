@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import replace
-from pathlib import Path
 
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.model import Instance

@@ -7,10 +7,9 @@ import time
 from pathlib import Path
 
 import pytest
+from test_game_process import DEADLINE, GRACE, python_command
 
 from nostalgia.launch.game_process import start_game
-
-from test_game_process import DEADLINE, GRACE, python_command
 
 
 def test_windows_stop_uses_terminate_then_kill(

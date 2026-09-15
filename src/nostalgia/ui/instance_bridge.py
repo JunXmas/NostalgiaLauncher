@@ -178,9 +178,7 @@ class InstanceBridge(WorkerBridge):
         def work() -> None:
             self._launcher.toggle_nos_client(current, enabled)
             if enabled:
-                self._launcher.prepare_nos_client(
-                    replace(current, nos_client_enabled=True)
-                )
+                self._launcher.prepare_nos_client(replace(current, nos_client_enabled=True))
             else:
                 self._launcher.cleanup_nos_client(current)
             self.instancesChanged.emit()

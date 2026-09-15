@@ -6,7 +6,6 @@ rồi copy vào `mods/` của từng instance khi cần.
 
 from __future__ import annotations
 
-
 import logging
 import shutil
 from dataclasses import dataclass
@@ -47,9 +46,7 @@ def _fetch_latest_release(http_client: HttpClient) -> ModRelease | None:
     """
     url = f"{GITHUB_API_BASE}/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/releases/latest"
     try:
-        response = http_client.get_json(
-            url, headers={"Accept": "application/vnd.github+json"}
-        )
+        response = http_client.get_json(url, headers={"Accept": "application/vnd.github+json"})
     except NetworkError:
         logger.warning("không lấy được thông tin release từ GitHub")
         return None
@@ -66,7 +63,11 @@ def _fetch_latest_release(http_client: HttpClient) -> ModRelease | None:
         if not isinstance(artifact, dict):
             continue
         artifact_name = artifact.get("name", "")
-        if isinstance(artifact_name, str) and artifact_name.endswith(".jar") and artifact_name.startswith(MOD_JAR_PREFIX):
+        if (
+            isinstance(artifact_name, str)
+            and artifact_name.endswith(".jar")
+            and artifact_name.startswith(MOD_JAR_PREFIX)
+        ):
             download_url = artifact.get("browser_download_url", "")
             artifact_size = artifact.get("size")
             mod_version = tag.lstrip("v")
@@ -85,9 +86,7 @@ def _cache_dir(paths: DataPaths) -> Path:
     return paths.data_dir / MOD_CACHE_DIR_NAME
 
 
-def ensure_mod_cached(
-    http_client: HttpClient, paths: DataPaths
-) -> Path | None:
+def ensure_mod_cached(http_client: HttpClient, paths: DataPaths) -> Path | None:
     """Đảm bảo mod jar có trong cache. Tải về nếu chưa có hoặc có phiên bản mới.
 
     Trả về đường dẫn tới file jar trong cache, hoặc None nếu không tải được.
