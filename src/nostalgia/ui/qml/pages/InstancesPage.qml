@@ -42,9 +42,9 @@ Item {
             spacing: 8
             ActionButton {
                 primary: false
-                label: "Nhập modpack từ file"
+                label: "⬇  Nhập"
                 clickable: !bridge.busy && !contentBridge.busy
-                onClicked: packPicker.open()
+                onClicked: importDialog.openDialog()
             }
             ActionButton {
                 label: "+  Tạo mới"
@@ -129,6 +129,7 @@ Item {
 
     CreateInstanceDialog { id: dialog; objectName: "createDialog"; anchors.fill: parent }
     InstanceEditDialog { id: editDialog; anchors.fill: parent }
+    ImportInstanceDialog { id: importDialog; anchors.fill: parent }
 
     // Modpack từ file trên máy: .mrpack (Modrinth) hoặc .zip (CurseForge); nhận dạng theo nội dung.
     FileDialog {
