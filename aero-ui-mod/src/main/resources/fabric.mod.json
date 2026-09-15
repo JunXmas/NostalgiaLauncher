@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "nos-client",
+  "version": "${version}",
+  "name": "Nos Client",
+  "description": "HUD overlay & client utilities for Nostalgia Launcher",
+  "authors": ["NostalgiaTeam"],
+  "contact": {
+    "homepage": "https://github.com/JunXmas/NostalgiaLauncher",
+    "sources": "https://github.com/JunXmas/NostalgiaLauncher"
+  },
+  "license": "GPL-3.0",
+  "icon": "assets/nos-client/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.nostalgia.nosclient.NosClientMod"]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": ">=1.19.4",
+    "java": ">=17"
+  }
+}

@@ -1,0 +1,58 @@
+plugins {
+    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'java'
+}
+
+def TARGETS = [
+    '121': [mc: '1.21.1', yarn: '1.21.1+build.3',  loader: '0.16.5', api: '0.102.0+1.21.1'],
+    '20x': [mc: '1.20.4', yarn: '1.20.4+build.3',  loader: '0.16.5', api: '0.97.0+1.20.4'],
+    '194': [mc: '1.19.4', yarn: '1.19.4+build.2',  loader: '0.16.5', api: '0.87.0+1.19.4'],
+]
+
+def era = project.hasProperty('aeroTarget') ? project.aeroTarget : '121'
+def t   = TARGETS[era]
+if (t == null) throw new GradleException("Unknown aeroTarget: ${era}. Valid: ${TARGETS.keySet()}")
+
+group   = 'com.nostalgia'
+version = '1.0.0'
+
+base {
+    archivesName = "nos-client-${era}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${t.mc}"
+    mappings  "net.fabricmc:yarn:${t.yarn}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${t.loader}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${t.api}"
+
+    // Gson is on MC classpath, no need to add explicitly
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+}
+
+processResources {
+    inputs.property 'version', version
+    filesMatching('fabric.mod.json') {
+        expand 'version': version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+loom {
+    runConfigs.configureEach {
+        ideConfigGenerated = true
+    }
+}
