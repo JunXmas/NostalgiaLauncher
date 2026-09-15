@@ -83,24 +83,9 @@ Item {
                     editable: true
                     iconUrl: modelData.iconUrl || ""
                     playable: bridge.activePlayerName.length > 0 && !bridge.busy
-                    // Nos Client state.
-                    nosClientEnabled: modelData.nosClientEnabled || false
-                    nosInstanceId: modelData.instanceId
-                    nosCoords: modelData.nosCoords !== undefined ? modelData.nosCoords : true
-                    nosDirection: modelData.nosDirection !== undefined ? modelData.nosDirection : true
-                    nosDay: modelData.nosDay !== undefined ? modelData.nosDay : true
-                    nosFps: modelData.nosFps || false
-                    nosPing: modelData.nosPing || false
-                    nosCps: modelData.nosCps || false
                     onPlayRequested: bridge.play(modelData.instanceId)
                     onRemoveRequested: bridge.removeInstance(modelData.instanceId)
                     onEditRequested: editDialog.openFor(modelData)
-                    onNosClientToggled: function (enabled) {
-                        bridge.toggleNosClient(modelData.instanceId, enabled)
-                    }
-                    onNosClientConfigChanged: function (coords, direction, day, fps, ping, cps) {
-                        bridge.updateNosClientConfig(modelData.instanceId, coords, direction, day, fps, ping, cps)
-                    }
                 }
             }
         }
