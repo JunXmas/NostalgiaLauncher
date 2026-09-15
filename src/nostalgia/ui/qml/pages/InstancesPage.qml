@@ -47,6 +47,12 @@ Item {
                 onClicked: packPicker.open()
             }
             ActionButton {
+                primary: false
+                label: "⬇ Nhập bản chơi"
+                clickable: !bridge.busy && !importBridge.busy
+                onClicked: importDialog.openDialog()
+            }
+            ActionButton {
                 label: "+  Tạo mới"
                 onClicked: dialog.openDialog()
             }
@@ -129,6 +135,7 @@ Item {
 
     CreateInstanceDialog { id: dialog; objectName: "createDialog"; anchors.fill: parent }
     InstanceEditDialog { id: editDialog; anchors.fill: parent }
+    ImportInstanceDialog { id: importDialog; anchors.fill: parent }
 
     // Modpack từ file trên máy: .mrpack (Modrinth) hoặc .zip (CurseForge); nhận dạng theo nội dung.
     FileDialog {

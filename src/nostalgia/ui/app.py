@@ -22,6 +22,7 @@ from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.import_bridge import ImportBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
@@ -80,6 +81,8 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("presenceBridge", presence_bridge)
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)
     context.setContextProperty("multiplayerBridge", multiplayer_bridge)
+    import_bridge = ImportBridge(launcher, bridge, parent=view)
+    context.setContextProperty("importBridge", import_bridge)
     # Đóng cửa sổ là đóng phòng: không để luồng relay sống sau launcher (luật L10).
     running_application = QGuiApplication.instance()
     if running_application is not None:
