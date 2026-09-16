@@ -126,7 +126,6 @@ class ImportOperations(ModpackOperations):
         )
 
 
-
 # ---------------------------------------------------------------------------
 
 # Thư mục cần sao chép khi import từ launcher khác.

@@ -108,10 +108,15 @@ def _scan_curseforge() -> list[Found]:
                 loader_kind = "neoforge"
             elif "forge" in loader_name:
                 loader_kind = "forge"
-            found.append(Found(
-                "CurseForge", body.get("name", inst_dir.name),
-                inst_dir, body.get("gameVersion", ""), loader_kind,
-            ))
+            found.append(
+                Found(
+                    "CurseForge",
+                    body.get("name", inst_dir.name),
+                    inst_dir,
+                    body.get("gameVersion", ""),
+                    loader_kind,
+                )
+            )
         except Exception:
             logger.debug("lỗi khi quét CurseForge instance %s", inst_dir, exc_info=True)
     return found
@@ -132,10 +137,15 @@ def _scan_modrinth_app() -> list[Found]:
             continue
         try:
             body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
-            found.append(Found(
-                "ModrinthApp", body.get("name", inst_dir.name), inst_dir,
-                body.get("game_version", ""), body.get("loader", "vanilla").lower(),  # type: ignore[arg-type]
-            ))
+            found.append(
+                Found(
+                    "ModrinthApp",
+                    body.get("name", inst_dir.name),
+                    inst_dir,
+                    body.get("game_version", ""),
+                    body.get("loader", "vanilla").lower(),  # type: ignore[arg-type]
+                )
+            )
         except Exception:
             logger.debug("lỗi khi quét ModrinthApp profile %s", inst_dir, exc_info=True)
     return found
