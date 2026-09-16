@@ -42,3 +42,43 @@ def test_bridge_exposes_version_and_data_dir_only(tmp_path: Path) -> None:
     meta_object = settings_bridge.metaObject()
     exposed = {meta_object.property(i).name() for i in range(meta_object.propertyCount())}
     assert not {name for name in exposed if "urseforge" in name or "Key" in name}
+
+
+def test_valid_game_dir_root_saves_and_emits_changed(tmp_path: Path) -> None:
+    """Đường dẫn hợp lệ → lưu xuống đĩa và phát gameDirRootChanged."""
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    settings_bridge = SettingsBridge(launcher)
+    changed: list[str] = []
+    errors: list[str] = []
+    settings_bridge.gameDirRootChanged.connect(lambda: changed.append("changed"))
+    settings_bridge.gameDirRootError.connect(errors.append)
+
+    new_root = str(tmp_path / "o-D" / "Nostalgia")
+    settings_bridge.setDefaultGameDirRoot(new_root)
+
+    assert settings_bridge.defaultGameDirRoot == new_root
+    assert launcher.load_settings().default_game_dir_root == new_root, "phải ghi xuống đĩa"
+    assert changed == ["changed"]
+    assert errors == [], "không có lỗi khi đường dẫn hợp lệ"
+
+
+def test_invalid_game_dir_root_emits_error_not_saved(tmp_path: Path) -> None:
+    """Đường dẫn không hợp lệ (tương đối, đè lên kho launcher) → gameDirRootError, không lưu.
+    Đây là bug ban đầu: người chơi chọn ổ D gốc hoặc đường dẫn sai, cài đặt vẫn là ổ C
+    mà không có thông báo gì — sau fix phải hiện lỗi rõ ràng."""
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    settings_bridge = SettingsBridge(launcher)
+    changed: list[str] = []
+    errors: list[str] = []
+    settings_bridge.gameDirRootChanged.connect(lambda: changed.append("changed"))
+    settings_bridge.gameDirRootError.connect(errors.append)
+
+    # Đường dẫn tương đối — hợp lệ theo OS nhưng launcher từ chối
+    settings_bridge.setDefaultGameDirRoot("relative/path")
+    # Đường dẫn đè lên kho launcher
+    settings_bridge.setDefaultGameDirRoot(str(tmp_path / "data"))
+
+    assert settings_bridge.defaultGameDirRoot == "", "cài đặt không được thay đổi"
+    assert launcher.load_settings().default_game_dir_root == "", "không ghi xuống đĩa"
+    assert changed == [], "gameDirRootChanged không được phát"
+    assert len(errors) == 2, "mỗi đường dẫn sai phát một lỗi"

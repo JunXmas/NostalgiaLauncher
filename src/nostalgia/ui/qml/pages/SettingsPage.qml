@@ -65,12 +65,28 @@ Item {
                 }
             }
             Text {
+                id: gameDirRootErrorText
+                objectName: "gameDirRootErrorText"
+                visible: text.length > 0
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                color: Theme.danger
+                font.pixelSize: 11
+                lineHeight: 1.3
+                Connections {
+                    target: settingsBridge
+                    function onGameDirRootError(message) { gameDirRootErrorText.text = message; }
+                    function onGameDirRootChanged() { gameDirRootErrorText.text = ""; }
+                }
+            }
+            Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
                 text: "Bản chơi mới (tạo mới, cài modpack, nhập file, kéo-thả) sẽ đặt mods/saves ở thư mục này; kho chung (versions, libraries, assets, Java) vẫn ở thư mục dữ liệu. Bản chơi đã có không bị chuyển."
                 color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
+
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap

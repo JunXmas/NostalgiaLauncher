@@ -17,6 +17,7 @@ from PySide6.QtGui import QDesktopServices
 
 from nostalgia import __version__
 from nostalgia.api import Launcher, Settings
+from nostalgia.errors import NostalgiaError
 
 
 class SettingsBridge(QObject):
@@ -25,6 +26,7 @@ class SettingsBridge(QObject):
     discordChanged = Signal()
     autoUpdateCheckChanged = Signal()
     gameDirRootChanged = Signal()
+    gameDirRootError = Signal(str)  # phát khi đường dẫn không hợp lệ — QML hiện thông báo
     hideWhenGameRunningChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
@@ -75,7 +77,14 @@ class SettingsBridge(QObject):
     def setDefaultGameDirRoot(self, text: str) -> None:
         """Nhận đường dẫn hoặc URL file:// từ FolderDialog; rỗng = về mặc định."""
         chosen = QUrl(text).toLocalFile() if text.startswith("file:") else text
-        chosen = self._launcher.check_game_dir(chosen)
+        try:
+            chosen = self._launcher.check_game_dir(chosen)
+        except NostalgiaError as exc:
+            # Đường dẫn không hợp lệ (ổ gốc, đè lên kho launcher...): báo lỗi rõ ràng.
+            # Nếu để exception truyền ra PySide6 sẽ nuốt im lặng và cài đặt không đổi —
+            # người dùng vẫn thấy ổ C mặc định mà không biết lý do.
+            self.gameDirRootError.emit(str(exc))
+            return
         settings = self.settings_snapshot()
         if settings.default_game_dir_root != chosen:
             self._save(replace(settings, default_game_dir_root=chosen))
