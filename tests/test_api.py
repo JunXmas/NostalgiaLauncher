@@ -107,7 +107,7 @@ def test_the_facade_refuses_clearly_instead_of_returning_none(
         launcher.remove_account("khong-co")
 
 
-def test_removing_an_instance_through_the_facade_keeps_the_worlds(
+def test_deleting_an_instance_through_the_facade_removes_the_game_dir(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
@@ -115,14 +115,15 @@ def test_removing_an_instance_through_the_facade_keeps_the_worlds(
 ) -> None:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
     launcher.create_instance(Instance(instance_id="cua-toi", version_id=VERSION_ID))
-    world = launcher.paths.instance_dir("cua-toi") / "saves"
-    world.mkdir(parents=True, exist_ok=True)
-    (world / "level.dat").write_bytes(b"x")
+    game_dir = launcher.paths.instance_dir("cua-toi")
+    saves = game_dir / "saves"
+    saves.mkdir(parents=True, exist_ok=True)
+    (saves / "level.dat").write_bytes(b"x")
 
-    left_behind = launcher.remove_instance("cua-toi")
+    launcher.delete_instance("cua-toi")
 
     assert launcher.list_instances() == ()
-    assert (left_behind / "saves" / "level.dat").exists()
+    assert not game_dir.exists()
 
 
 def test_two_launchers_can_work_on_two_profiles_at_once(tmp_path: Path) -> None:

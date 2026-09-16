@@ -158,13 +158,13 @@ class InstanceBridge(WorkerBridge):
 
     @Slot(str)
     def removeInstance(self, instance_id: str) -> None:
-        """Gỡ đăng ký bản chơi; thư mục thế giới vẫn còn nguyên trên đĩa."""
+        """Xoá hẳn bản chơi khỏi danh sách và xóa toàn bộ thư mục game (không thể hoàn tác)."""
 
         def work() -> None:
-            self._launcher.remove_instance(instance_id)
+            self._launcher.delete_instance(instance_id)
             self.instancesChanged.emit()
 
-        self.run_in_background(work, f"Gỡ bản chơi {instance_id}")
+        self.run_in_background(work, f"Xoá bản chơi {instance_id}")
 
     @Slot(str, bool)
     def toggleNosClient(self, instance_id: str, enabled: bool) -> None:

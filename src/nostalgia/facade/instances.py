@@ -26,11 +26,11 @@ from nostalgia.instance.stats import (
 from nostalgia.instance.store import (
     check_game_dir_override,
     create_instance,
+    delete_instance,
     game_dir_of,
     list_instances,
     load_instance,
     save_instance,
-    unregister_instance,
 )
 from nostalgia.instance.world import DEFAULT_RECENT_LIMIT, RecentWorld, list_recent_worlds
 from nostalgia.settings.store import load_settings
@@ -70,9 +70,13 @@ class InstanceOperations(LauncherContext):
     def save_instance(self, instance: Instance) -> None:
         save_instance(self.paths, instance)
 
-    def remove_instance(self, instance_id: str) -> Path:
-        """Gỡ đăng ký và trả về thư mục chơi **vẫn còn nguyên** thế giới trong đó."""
-        return unregister_instance(self.paths, instance_id)
+    def delete_instance(self, instance_id: str) -> None:
+        """Xoá hẳn bản chơi khỏi danh sách VÀ xoá toàn bộ thư mục game.
+
+        Nếu instance dùng thư mục ngoài (game_dir_override), chỉ gỡ đăng ký,
+        không đụng thư mục ngoài vì launcher không sở hữu nó.
+        """
+        delete_instance(self.paths, instance_id)
 
     def describe_instance_stats(self, instance_id: str) -> InstanceStats:
         """Chỉ đọc đĩa: số liệu đã ghi + đếm thế giới trong `saves/` và mod trong `mods/`."""

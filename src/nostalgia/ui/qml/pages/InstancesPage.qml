@@ -84,7 +84,16 @@ Item {
                     iconUrl: modelData.iconUrl || ""
                     playable: bridge.activePlayerName.length > 0 && !bridge.busy
                     onPlayRequested: bridge.play(modelData.instanceId)
-                    onRemoveRequested: bridge.removeInstance(modelData.instanceId)
+                    onRemoveRequested: {
+                        var id = modelData.instanceId;
+                        var name = modelData.label || id;
+                        confirmDialog.ask(
+                            "Xoá bản chơi "" + name + ""?",
+                            "Hành động này sẽ xoá vĩnh viễn toàn bộ dữ liệu: mods, save game, "
+                            + "config và mọi file trong thư mục bản chơi. Không thể hoàn tác.",
+                            function() { bridge.removeInstance(id); }
+                        );
+                    }
                     onEditRequested: editDialog.openFor(modelData)
                 }
             }

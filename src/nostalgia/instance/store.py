@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from pathlib import Path
 
 from nostalgia.errors import DataFileError, InstanceError
@@ -142,8 +143,8 @@ def list_instances(paths: DataPaths) -> tuple[Instance, ...]:
 def unregister_instance(paths: DataPaths, instance_id: str) -> Path:
     """Bỏ đăng ký nhưng **giữ nguyên thế giới**, và trả về thư mục còn lại.
 
-    Xoá thế giới của người chơi vì một lệnh gõ nhầm là mất mát không lấy lại được. Ai thật
-    sự muốn xoá thì phải nói rõ ở tầng trên; ở đây chỉ gỡ cấu hình.
+    Dùng khi instance có `game_dir_override` trỏ đến thư mục người dùng tự chọn —
+    không bao giờ xoá thư mục ngoài vì launcher không sở hữu nó.
     """
     check_instance_id(instance_id)
     path = paths.instance_json(instance_id)
@@ -155,6 +156,46 @@ def unregister_instance(paths: DataPaths, instance_id: str) -> Path:
     if instance is None:
         return paths.instance_dir(instance_id)
     return game_dir_of(paths, instance)
+
+
+def delete_instance(paths: DataPaths, instance_id: str) -> None:
+    """Xoá hẳn bản chơi: gỡ đăng ký **và** xoá toàn bộ thư mục game (mods, saves, config…).
+
+    Hành động không thể hoàn tác. Caller phải hỏi lại người dùng trước khi gọi.
+
+    Nếu instance dùng `game_dir_override` (thư mục ngoài do người dùng tự chọn),
+    chỉ xoá `instance.json` và thư mục đăng ký trong kho — KHÔNG đụng đến thư mục ngoài,
+    vì launcher không sở hữu nó.
+    """
+    check_instance_id(instance_id)
+    path = paths.instance_json(instance_id)
+    if not path.is_file():
+        message = f"chưa có instance {instance_id!r}"
+        raise InstanceError(message)
+    instance = _read_if_usable(path, instance_id)
+
+    # Xoá file cấu hình trước để ngay cả khi rmtree thất bại, instance vẫn biến khỏi danh sách.
+    path.unlink()
+
+    registry_dir = paths.instance_dir(instance_id)
+    if instance is not None and instance.game_dir_override:
+        # Thư mục ngoài — chỉ dọn thư mục đăng ký trong kho, không đụng game_dir_override.
+        if registry_dir.is_dir():
+            shutil.rmtree(registry_dir, ignore_errors=True)
+        logger.info(
+            "instance %r đã gỡ (thư mục ngoài %s giữ nguyên)",
+            instance_id,
+            instance.game_dir_override,
+        )
+    else:
+        # Thư mục mặc định trong kho — xoá toàn bộ.
+        target = game_dir_of(paths, instance) if instance is not None else registry_dir
+        if target.is_dir():
+            shutil.rmtree(target)
+            logger.info("đã xoá hẳn instance %r tại %s", instance_id, target)
+        # Nếu registry_dir ≠ target (không xảy ra với game_dir mặc định, phòng thủ thêm):
+        if registry_dir != target and registry_dir.is_dir():
+            shutil.rmtree(registry_dir, ignore_errors=True)
 
 
 def _read_if_usable(path: Path, fallback_id: str) -> Instance | None:
