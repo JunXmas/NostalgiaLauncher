@@ -93,19 +93,16 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
         )
         return
 
-    # Lỗi Python: start_new_session=True + close_fds=True chạy setsid SAU khi đóng fd,
-    # làm kernel không tạo session leader đúng. Dùng preexec_fn rõ ràng để chạy trước.
-    def _detach() -> None:
-        os.setsid()
-        os.setpgrp()
-
+    # start_new_session=True gọi setsid() trước fork — an toàn hơn preexec_fn vì Python xử lý
+    # trước khi exec, không bao giờ ném "Operation not permitted" (preexec_fn ném lỗi này
+    # khi launcher đã là session leader, ví dụ chạy từ terminal hoặc .desktop file).
     subprocess.Popen(
         ["/bin/sh", str(script_path)],
-        preexec_fn=_detach,
+        start_new_session=True,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        close_fds=False,
+        close_fds=True,
         env=clean_child_env(),
     )
 
