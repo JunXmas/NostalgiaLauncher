@@ -126,7 +126,11 @@ jobs:
           ditto -c -k --keepParent "dist/Nostalgia Launcher.app" "out/${name}.zip"
           cp -R "dist/Nostalgia Launcher.app" build/dmg/
           ln -s /Applications build/dmg/Applications
-          hdiutil create -volname "Nostalgia Launcher" -srcfolder build/dmg -ov -format UDZO "out/${name}.dmg"
+          for attempt in 1 2 3; do
+            hdiutil create -volname "Nostalgia Launcher" -srcfolder build/dmg -ov -format UDZO "out/${name}.dmg" && break
+            echo "hdiutil attempt $attempt failed, retrying in 5s..."
+            sleep 5
+          done
 
       - name: AppImage, deb, rpm, tar.gz (Linux)
         if: matrix.bundle_os == 'linux'
