@@ -61,7 +61,7 @@ class ImportBridge(WorkerBridge):
         self.run_in_background(work, "Đang quét launcher trên máy...")
 
     @Slot(str, str, str)
-    def importMrpackFile(self, file_url: str, display_name: str, game_dir_url: str) -> None:
+    def importMrpackFile(self, file_url: str, display_label: str, game_dir_url: str) -> None:
         """Nhập modpack từ file .mrpack trên máy."""
         pack_path = Path(local_path(file_url))
         game_dir_override = local_path(game_dir_url)
@@ -71,11 +71,11 @@ class ImportBridge(WorkerBridge):
 
         def work() -> None:
             taken = {i.instance_id for i in self._launcher.list_instances()}
-            display_label = display_name.strip() or pack_path.stem
-            instance = self._launcher.import_mrpack_file(
+            final_label = display_label.strip() or pack_path.stem
+            instance = self._launcher.install_modpack_file(
                 pack_path,
-                slugify(display_label, taken),
-                display_label,
+                slugify(final_label, taken),
+                final_label,
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )

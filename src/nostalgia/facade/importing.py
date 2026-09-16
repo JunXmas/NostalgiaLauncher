@@ -105,25 +105,6 @@ class ImportOperations(ModpackOperations):
         on_progress(Progress(stage="Hoàn tất", done=3, total=3))
         return instance
 
-    def import_mrpack_file(
-        self,
-        path: Path,
-        instance_id: str,
-        display_name: str = "",
-        *,
-        game_dir_override: str = "",
-        on_progress: ProgressFn = ignore_progress,
-        cancel_token: CancelToken | None = None,
-    ) -> Instance:
-        """Cài .mrpack từ file local (dùng lại ModpackOperations.install_modpack_file)."""
-        return self.install_modpack_file(
-            path,
-            instance_id,
-            display_name,
-            game_dir_override=game_dir_override,
-            on_progress=on_progress,
-            cancel_token=cancel_token,
-        )
 
 
 # ---------------------------------------------------------------------------

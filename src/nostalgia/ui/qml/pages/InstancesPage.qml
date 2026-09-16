@@ -42,12 +42,6 @@ Item {
             spacing: 8
             ActionButton {
                 primary: false
-                label: "Nhập modpack từ file"
-                clickable: !bridge.busy && !contentBridge.busy
-                onClicked: packPicker.open()
-            }
-            ActionButton {
-                primary: false
                 label: "⬇ Nhập bản chơi"
                 clickable: !bridge.busy && !importBridge.busy
                 onClicked: importDialog.openDialog()
@@ -145,12 +139,4 @@ Item {
     CreateInstanceDialog { id: dialog; objectName: "createDialog"; anchors.fill: parent }
     InstanceEditDialog { id: editDialog; anchors.fill: parent }
     ImportInstanceDialog { id: importDialog; anchors.fill: parent }
-
-    // Modpack từ file trên máy: .mrpack (Modrinth) hoặc .zip (CurseForge); nhận dạng theo nội dung.
-    FileDialog {
-        id: packPicker
-        title: "Chọn modpack"
-        nameFilters: ["Modpack (*.mrpack *.zip)", "Mọi file (*)"]
-        onAccepted: contentBridge.importModpackFile(selectedFile.toString(), "", "")
-    }
 }

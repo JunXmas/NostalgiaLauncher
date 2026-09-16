@@ -64,7 +64,7 @@ class ModpackContentBridge(InstalledContentBridge):
         self.run_in_background(work, f"Cài modpack {project.title} thành bản chơi")
 
     @Slot(str, str, str)
-    def importModpackFile(self, file_url: str, display_name: str, game_dir_url: str) -> None:
+    def importModpackFile(self, file_url: str, display_label: str, game_dir_url: str) -> None:
         """Modpack từ file trên máy (FileDialog trả URL file://). Tên trống thì lấy tên pack."""
         pack_path = Path(local_path(file_url))
         game_dir_override = local_path(game_dir_url)
@@ -74,11 +74,11 @@ class ModpackContentBridge(InstalledContentBridge):
 
         def work() -> None:
             taken = {instance.instance_id for instance in self._launcher.list_instances()}
-            display_label = display_name.strip() or pack_path.stem
+            final_label = display_label.strip() or pack_path.stem
             instance = self._launcher.install_modpack_file(
                 pack_path,
-                slugify(display_label, taken),
-                display_name.strip(),
+                slugify(final_label, taken),
+                final_label,
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )
