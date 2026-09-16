@@ -1,4 +1,4 @@
-"""Quét instance từ các launcher Minecraft phổ biến: PrismLauncher, CurseForge, ModrinthApp, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
 
 from __future__ import annotations
 
@@ -108,7 +108,10 @@ def _scan_curseforge() -> list[Found]:
                 loader_kind = "neoforge"
             elif "forge" in loader_name:
                 loader_kind = "forge"
-            found.append(Found("CurseForge", body.get("name", inst_dir.name), inst_dir, body.get("gameVersion", ""), loader_kind))
+            found.append(Found(
+                "CurseForge", body.get("name", inst_dir.name),
+                inst_dir, body.get("gameVersion", ""), loader_kind,
+            ))
         except Exception:
             logger.debug("lỗi khi quét CurseForge instance %s", inst_dir, exc_info=True)
     return found

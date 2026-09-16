@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from nostalgia.facade.importing import ImportOperations, _copy_game_data
+from nostalgia.facade.importing import _copy_game_data
 from nostalgia.importing.launchers import Found
 
 

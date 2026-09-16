@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.importing.launchers import Found, find_all, _scan_prism, _scan_modrinth_app
+from nostalgia.importing.launchers import Found, find_all
 
 
 class TestFound:
