@@ -13,7 +13,6 @@ from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
 from nostalgia.api import Launcher, LauncherRelease, Progress, StagedUpdate
-from nostalgia.errors import NostalgiaError
 from nostalgia.ui.worker import WorkerBridge
 
 STARTUP_CHECK_DELAY_MS = 3000
@@ -122,11 +121,15 @@ class UpdateBridge(WorkerBridge):
     def applyAndRestart(self) -> None:
         """Gói đóng sẵn: chạy script tráo rồi thoát launcher. Mã nguồn: chỉ mở trang tải."""
         if self._staged is None:
+            # Không nên xảy ra — nút chỉ hiện khi state=="ready", nhưng phòng hờ
+            self._set_state("failed", "Chưa tải xong bản mới — vui lòng tải lại")
             return
         try:
             self._launcher.apply_launcher_update(self._staged)
-        except NostalgiaError as exc:
-            self._set_state("failed", str(exc))
+        except Exception as exc:
+            # Bắt TẤT CẢ exception — kể cả lỗi hệ thống (PermissionError, OSError...)
+            # vì nếu chỉ bắt NostalgiaError thì PySide6 nuốt im lặng, người dùng không biết
+            self._set_state("failed", f"Không áp được bản mới: {exc}")
             return
         self._set_state("applying", "Đang mở lại launcher...")
         # QUAN TRỌNG: QGuiApplication.quit() là async, nó không thoát ngay.

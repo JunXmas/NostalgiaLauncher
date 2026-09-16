@@ -91,3 +91,51 @@ def test_settings_page_shows_the_update_section(tmp_path: Path) -> None:
     settings_bridge = view.rootContext().contextProperty("settingsBridge")
     settings_bridge.setAutoUpdateCheck(False)
     wait_until(lambda: toggle.property("checked") is False)
+
+
+def test_apply_with_no_staged_shows_error_not_silent(
+    server: LocalHttpsServer,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Ấn 'Cài và mở lại' khi chưa tải xong phải báo lỗi, không được im lặng (bấm mà không có
+    phản hồi gì làm người dùng nghĩ nút bị hỏng)."""
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+    assert update_bridge._staged is None
+
+    update_bridge.applyAndRestart()
+
+    assert update_bridge.state == "failed"
+    assert update_bridge.message  # không được rỗng
+
+
+def test_apply_os_error_is_surfaced_not_swallowed(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Nếu write_swap_script hoặc launch_swap_script ném exception hệ thống (PermissionError,
+    OSError...), lỗi phải hiện ra ở UI thay vì bị PySide6 nuốt im lặng."""
+    from unittest.mock import patch
+
+    publish_release(server, server_state, make_bundle("moi"))
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+
+    update_bridge.checkNow()
+    wait_for_state(update_bridge, "available")
+    update_bridge.download()
+    wait_for_state(update_bridge, "ready")
+
+    # Giả lập launcher bị cài từ gói đóng sẵn nhưng apply_launcher_update ném PermissionError
+    # (patch trực tiếp vào facade vì Launcher dùng __slots__ không thể patch.object)
+    with patch(
+        "nostalgia.facade.updates.UpdateOperations.apply_launcher_update",
+        side_effect=PermissionError("không có quyền ghi"),
+    ):
+        update_bridge.applyAndRestart()
+
+    assert update_bridge.state == "failed"
+    assert update_bridge.message  # không được rỗng, lỗi phải hiện cho người dùng
