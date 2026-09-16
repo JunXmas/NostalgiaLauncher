@@ -173,7 +173,7 @@ def start_game(
 ) -> GameProcess:
     """Chạy lệnh đã dựng, trong thư mục game, ở một phiên riêng."""
     ensure_dir(command.game_dir)
-    creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
+    creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0  # type: ignore[attr-defined]
     process = subprocess.Popen(
         command.argv,
         cwd=command.game_dir,

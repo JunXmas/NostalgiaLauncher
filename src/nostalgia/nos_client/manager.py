@@ -6,6 +6,7 @@ rồi copy vào `mods/` của từng instance khi cần.
 
 from __future__ import annotations
 
+import json
 import logging
 import shutil
 from dataclasses import dataclass
@@ -46,8 +47,9 @@ def _fetch_latest_release(http_client: HttpClient) -> ModRelease | None:
     """
     url = f"{GITHUB_API_BASE}/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/releases/latest"
     try:
-        response = http_client.get_json(url, headers={"Accept": "application/vnd.github+json"})
-    except NetworkError:
+        raw = http_client.fetch_bytes(url, max_bytes=256 * 1024)
+        response = json.loads(raw)
+    except (NetworkError, ValueError):
         logger.warning("không lấy được thông tin release từ GitHub")
         return None
 

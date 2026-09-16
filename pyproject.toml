@@ -104,6 +104,16 @@ module = [
     "test_stop_game",
     "test_continue_servers",
     "test_tray",
+    "test_download_disk_full",
+    "test_reinstall_confirm",
+    "test_game_process_windows",
+    "test_host_deadlock",
+    "test_lan_injection",
+    "test_nos_client",
+    "test_skin_editor",
+    "test_game_log",
+    "test_settings_bridge",
+    "test_tray",
 ]
 disable_error_code = [
     "comparison-overlap",
@@ -114,4 +124,5 @@ disable_error_code = [
     "arg-type",
     "misc",
     "has-type",
+    "unused-ignore",
 ]

@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Property, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Found, Launcher
 from nostalgia.ui.bridge import LauncherBridge
@@ -28,7 +28,7 @@ class ImportBridge(WorkerBridge):
     importError = Signal(str)
 
     def __init__(
-        self, launcher: Launcher, main_bridge: LauncherBridge, parent: object = None
+        self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
     ) -> None:
         super().__init__(parent)
         self._launcher = launcher

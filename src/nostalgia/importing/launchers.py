@@ -59,7 +59,8 @@ def _scan_prism() -> list[Found]:
             game_dir = inst_dir / ".minecraft"
             if not game_dir.exists():
                 game_dir = inst_dir / "minecraft" if (inst_dir / "minecraft").exists() else inst_dir
-            game_version, loader_kind = "", "vanilla"
+            game_version: str = ""
+            loader_kind: LoaderKind = "vanilla"
             mmc_pack = inst_dir / "mmc-pack.json"
             if mmc_pack.exists():
                 pack_body = json.loads(mmc_pack.read_text(encoding="utf-8"))
@@ -75,7 +76,7 @@ def _scan_prism() -> list[Found]:
                         loader_kind = "forge"
                     elif uid == "net.neoforged.neoforge":
                         loader_kind = "neoforge"
-            found.append(Found("PrismLauncher", instance_name, game_dir, game_version, loader_kind))  # type: ignore[arg-type]
+            found.append(Found("PrismLauncher", instance_name, game_dir, game_version, loader_kind))
         except Exception:
             logger.debug("lỗi khi quét PrismLauncher instance %s", inst_dir, exc_info=True)
     return found
@@ -137,13 +138,16 @@ def _scan_modrinth_app() -> list[Found]:
             continue
         try:
             body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
+            raw_loader = body.get("loader", "vanilla").lower()
+            _valid_loaders = {"fabric", "quilt", "forge", "neoforge"}
+            loader_kind_m: LoaderKind = raw_loader if raw_loader in _valid_loaders else "vanilla"
             found.append(
                 Found(
                     "ModrinthApp",
                     body.get("name", inst_dir.name),
                     inst_dir,
                     body.get("game_version", ""),
-                    body.get("loader", "vanilla").lower(),  # type: ignore[arg-type]
+                    loader_kind_m,
                 )
             )
         except Exception:

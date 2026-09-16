@@ -59,7 +59,7 @@ def test_disk_full_raises_disk_full_error_not_network_error(
             return self
 
         def __exit__(self, *args: object) -> None:
-            self._real.close()
+            self._real.close()  # type: ignore[union-attr]
 
     original_fdopen = __import__("os").fdopen
 
@@ -98,7 +98,7 @@ def test_disk_full_does_not_retry(
 
     def counting_fdopen(fd: int, mode: str = "r", *args: object, **kwargs: object) -> object:
         nonlocal attempt_count
-        real = original_fdopen(fd, mode, *args, **kwargs)
+        real = original_fdopen(fd, mode, *args, **kwargs)  # type: ignore[call-overload]
         if "w" in mode:
             attempt_count += 1
 
