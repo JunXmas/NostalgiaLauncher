@@ -1,4 +1,10 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla.
+
+Trên Linux, một launcher cài bằng **Flatpak** KHÔNG ghi vào `~/.local/share`: hộp cát đổi
+hướng nó sang `~/.var/app/<id>/data`. Quét mỗi đường quen thuộc là trả về rỗng ngay trên máy
+có sẵn ba bản chơi — đúng lỗi Jun gặp 17/09/2026. Vì thế mỗi launcher khai một DANH SÁCH
+thư mục gốc, không phải một thư mục.
+"""
 
 from __future__ import annotations
 
@@ -26,30 +32,50 @@ class Found:
     loader_kind: LoaderKind
 
 
-def _platform_dir(linux: str, darwin: str, windows: str) -> Path | None:
-    """Trả thư mục theo hệ điều hành, hoặc None nếu không hỗ trợ."""
+def _platform_dirs(linux: str, darwin: str, windows: str, flatpak: str = "") -> list[Path]:
+    """Mọi thư mục cần soi theo hệ điều hành — có thể rỗng nếu hệ này không hỗ trợ.
+
+    Trả DANH SÁCH vì trên Linux cùng một launcher có hai chỗ ở: bản cài thường nằm dưới
+    `~/.local/share`, bản Flatpak nằm trong hộp cát `~/.var/app/<id>/data`.
+    """
     sys_plat = platform.system()
     if sys_plat == "Linux":
-        return Path(linux).expanduser()
+        paths = [Path(linux).expanduser()]
+        if flatpak:
+            # Flatpak dựng lại đúng cây `~/.local/share` bên trong hộp cát, nên phần đuôi
+            # sau `~/.local/share/` giữ nguyên — chỉ đổi phần gốc.
+            tail = linux.removeprefix("~/.local/share/")
+            paths.append(Path(f"~/.var/app/{flatpak}/data/{tail}").expanduser())
+        return paths
     if sys_plat == "Darwin":
-        return Path(darwin).expanduser()
+        return [Path(darwin).expanduser()]
     if sys_plat == "Windows":
-        return Path(os.environ.get("APPDATA", "~")) / windows
-    return None
+        return [Path(os.environ.get("APPDATA", "~")) / windows]
+    return []
+
+
+def _instance_dirs(bases: list[Path]) -> list[Path]:
+    """Mọi thư mục con của mọi thư mục gốc có thật. Thư mục gốc không tồn tại thì bỏ qua."""
+    return [
+        inst_dir
+        for base in bases
+        if base.is_dir()
+        for inst_dir in sorted(base.iterdir())
+        if inst_dir.is_dir()
+    ]
 
 
 def _scan_prism() -> list[Found]:
-    """PrismLauncher: đọc instance.cfg + mmc-pack.json."""
-    base = _platform_dir(
+    """PrismLauncher: đọc instance.cfg + mmc-pack.json. Gồm cả bản cài bằng Flatpak."""
+    bases = _platform_dirs(
         "~/.local/share/PrismLauncher/instances",
         "~/Library/Application Support/PrismLauncher/instances",
         "PrismLauncher/instances",
+        flatpak="org.prismlauncher.PrismLauncher",
     )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "instance.cfg").exists():
+    for inst_dir in _instance_dirs(bases):
+        if not (inst_dir / "instance.cfg").exists():
             continue
         try:
             content = "[DEFAULT]\n" + (inst_dir / "instance.cfg").read_text(encoding="utf-8")
@@ -124,17 +150,16 @@ def _scan_curseforge() -> list[Found]:
 
 
 def _scan_modrinth_app() -> list[Found]:
-    """ModrinthApp: đọc profile.json."""
-    base = _platform_dir(
+    """ModrinthApp: đọc profile.json. Gồm cả bản cài bằng Flatpak."""
+    bases = _platform_dirs(
         "~/.local/share/ModrinthApp/profiles",
         "~/Library/Application Support/ModrinthApp/profiles",
         "ModrinthApp/profiles",
+        flatpak="com.modrinth.ModrinthApp",
     )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "profile.json").exists():
+    for inst_dir in _instance_dirs(bases):
+        if not (inst_dir / "profile.json").exists():
             continue
         try:
             body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
@@ -156,7 +181,13 @@ def _scan_modrinth_app() -> list[Found]:
 
 
 def _scan_vanilla() -> list[Found]:
-    """Official Minecraft launcher."""
+    """Launcher chính chủ — và TLauncher, vì cả hai dùng chung một thư mục `.minecraft`.
+
+    TLauncher không đẻ thư mục riêng; nó chỉ thêm `TlauncherProfiles.json` vào cạnh
+    `launcher_profiles.json` của bản chính chủ. Nên đây không phải scanner thứ năm, chỉ là
+    cái nhãn đúng cho thứ đã quét được — quảng cáo "hỗ trợ TLauncher" mà gắn nhãn "Vanilla"
+    thì người dùng tưởng launcher của mình không được nhận ra.
+    """
     sys_plat = platform.system()
     if sys_plat == "Linux":
         base = Path("~/.minecraft").expanduser()
@@ -180,6 +211,8 @@ def _scan_vanilla() -> list[Found]:
                     break
         except Exception:
             logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
+    if (base / "TlauncherProfiles.json").exists():
+        return [Found("TLauncher", "TLauncher Minecraft", base, game_version, "vanilla")]
     return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
 
 

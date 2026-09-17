@@ -139,6 +139,19 @@ Item {
                           : importBridge.scanResults.length + " bản chơi tìm thấy"
                     color: Theme.textMuted; font.pixelSize: 12
                 }
+
+                // Quét ra rỗng mà không nói gì thêm thì người dùng không biết nên làm gì
+                // tiếp — kể tên thứ được hỗ trợ để họ đối chiếu với launcher đang dùng.
+                Text {
+                    objectName: "scanEmptyHint"
+                    visible: !importBridge.busy && importBridge.scanResults.length === 0
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: "Hỗ trợ: PrismLauncher, ModrinthApp (kể cả bản Flatpak), CurseForge, "
+                          + "TLauncher và launcher chính chủ. Launcher khác thì dùng thẻ "
+                          + "\"Từ file .mrpack\" ở trên."
+                    color: Theme.textMuted; font.pixelSize: 11
+                }
                 ActionButton {
                     primary: false; label: "Quét lại"
                     clickable: !importBridge.busy

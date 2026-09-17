@@ -13,6 +13,22 @@ phát hành, nên ai đang chạy 1.0.10 sẽ nhận thẳng bản này.
 - **Gỡ nút "Nhập modpack từ file" trùng lặp** ở trang Bản chơi — hộp thoại *Nhập bản chơi* đã
   có sẵn tab làm đúng việc đó.
 
+### Quét launcher khác
+
+- **Launcher cài bằng Flatpak giờ quét ra.** PrismLauncher và ModrinthApp bản Flatpak ghi dữ
+  liệu vào `~/.var/app/<id>/data` chứ không phải `~/.local/share`, nên máy có sẵn ba bản chơi
+  vẫn báo "không tìm thấy launcher nào". Giờ soi cả hai chỗ.
+- **TLauncher được gọi đúng tên.** TLauncher dùng chung thư mục `.minecraft` với bản chính
+  chủ; có `TlauncherProfiles.json` thì hiện nhãn *TLauncher* thay vì *Vanilla*.
+- **Quét ra rỗng thì nói rõ phải làm gì** — hộp thoại kể tên các launcher được hỗ trợ và chỉ
+  sang thẻ "Từ file .mrpack" cho launcher ngoài danh sách.
+
+### Chơi game trên Windows
+
+- **Không còn cửa sổ CMD đen hiện lên cạnh Minecraft, và đóng nó không làm game tắt theo.**
+  `java.exe` là chương trình console: thiếu cờ `CREATE_NO_WINDOW` thì Windows cấp cho nó một
+  cửa sổ riêng, bấm X lên cửa sổ đó là Windows gửi tín hiệu thoát cho game.
+
 ### Tự cập nhật trên Linux
 
 - **Sửa lỗi `Exception occurred in preexec_fn`** khi launcher chạy script tráo bản mới. Lỗi
