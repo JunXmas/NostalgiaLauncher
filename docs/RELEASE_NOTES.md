@@ -1,3 +1,34 @@
+## Nostalgia Launcher 1.0.12
+
+Bản vá khẩn cấp (hotfix). Gộp cả phần sửa của 1.0.11 — bản đó dựng xong nhưng chưa từng
+phát hành, nên ai đang chạy 1.0.10 sẽ nhận thẳng bản này.
+
+### Nhập bản chơi / modpack từ file
+
+- **Bản chơi không còn mang tên file thay vì tên pack.** Nhập một modpack mà không gõ gì vào
+  ô tên thì launcher lấy tên thật đọc trong `modrinth.index.json`. Trước đây tải "Gói Vui" về
+  máy thành `tai-ve.mrpack` thì thẻ bản chơi hiện `tai-ve`.
+- **Chọn nhầm file không còn im lặng.** Lỗi khi nhập từ file giờ hiện trên dải báo lỗi; trước
+  đây cú bấm đó không có chuyện gì xảy ra.
+- **Gỡ nút "Nhập modpack từ file" trùng lặp** ở trang Bản chơi — hộp thoại *Nhập bản chơi* đã
+  có sẵn tab làm đúng việc đó.
+
+### Tự cập nhật trên Linux
+
+- **Sửa lỗi `Exception occurred in preexec_fn`** khi launcher chạy script tráo bản mới. Lỗi
+  xảy ra khi launcher đã là session leader (mở từ terminal, từ file `.desktop`, hoặc systemd):
+  `os.setsid()` ném *Operation not permitted* và bản cập nhật không áp được. Đã thay bằng
+  `start_new_session=True`, an toàn trong mọi trường hợp.
+
+### Cài đặt
+
+- **"Chọn ổ khác" không còn im lặng** khi đường dẫn không hợp lệ (đã có trong 1.0.10).
+
+Tải xuống và ghi chú từng nền tảng: xem bảng ở mục 1.0 phía dưới. Nhớ đối chiếu
+`SHA256SUMS` với file tải về.
+
+---
+
 ## Nostalgia Launcher 1.0.6
 
 Bản vá khẩn cấp (hotfix) gồm hai sửa lỗi:
