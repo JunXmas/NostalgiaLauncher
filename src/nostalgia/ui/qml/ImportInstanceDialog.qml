@@ -24,7 +24,8 @@ Item {
     Connections {
         target: importBridge
         function onImportDone(instanceId) { dialog.close(); }
-        function onImportError(message) { /* lỗi đã hiện qua failed signal */ }
+        // Lỗi đã lên dải báo ở Main.qml (failed + importError); hộp thoại cứ mở để chọn lại.
+        function onImportError(message) {}
     }
 
     // Màn tối phía sau

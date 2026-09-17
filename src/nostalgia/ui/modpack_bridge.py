@@ -31,7 +31,7 @@ class ModpackContentBridge(InstalledContentBridge):
         raise NotImplementedError
 
     @Slot(str, str, str)
-    def installModpack(self, project_id: str, display_name: str, game_dir_url: str) -> None:
+    def installModpack(self, project_id: str, display_label: str, game_dir_url: str) -> None:
         """Modpack Modrinth thành một bản chơi mới; tên trống thì lấy tên pack; thư mục chơi
         riêng (file:// từ FolderDialog) trống thì theo cài đặt / mặc định."""
         game_dir_override = local_path(game_dir_url)
@@ -46,11 +46,11 @@ class ModpackContentBridge(InstalledContentBridge):
         def work() -> None:
             try:
                 taken = {instance.instance_id for instance in self._launcher.list_instances()}
-                display_label = display_name.strip() or project.title
+                final_label = display_label.strip() or project.title
                 instance = self._launcher.install_modpack(
                     project,
-                    slugify(display_label, taken),
-                    display_label,
+                    slugify(final_label, taken),
+                    final_label,
                     game_version=self._game_versions[0] if self._game_versions else "",
                     game_dir_override=game_dir_override,
                     on_progress=self._main_bridge.report_progress,
@@ -64,7 +64,7 @@ class ModpackContentBridge(InstalledContentBridge):
         self.run_in_background(work, f"Cài modpack {project.title} thành bản chơi")
 
     @Slot(str, str, str)
-    def importModpackFile(self, file_url: str, display_name: str, game_dir_url: str) -> None:
+    def importModpackFile(self, file_url: str, display_label: str, game_dir_url: str) -> None:
         """Modpack từ file trên máy (FileDialog trả URL file://). Tên trống thì lấy tên pack."""
         pack_path = Path(local_path(file_url))
         game_dir_override = local_path(game_dir_url)
@@ -74,11 +74,13 @@ class ModpackContentBridge(InstalledContentBridge):
 
         def work() -> None:
             taken = {instance.instance_id for instance in self._launcher.list_instances()}
-            display_label = display_name.strip() or pack_path.stem
+            # Mã bản chơi cần một chuỗi NGAY BÂY GIỜ, nên lấy tên file làm chỗ dựa. Tên hiển
+            # thị thì không: để trống cho lõi điền tên thật đọc trong pack (`plan.name`) —
+            # "Gói Vui" đẹp hơn "tai-ve" nhiều.
             instance = self._launcher.install_modpack_file(
                 pack_path,
-                slugify(display_label, taken),
-                display_name.strip(),
+                slugify(display_label.strip() or pack_path.stem, taken),
+                display_label.strip(),
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )

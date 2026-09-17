@@ -73,6 +73,7 @@ Item {
     // Dải báo lỗi: trượt xuống từ trên, tự biến mất. Lỗi im lặng là lỗi tệ nhất.
     Rectangle {
         id: banner
+        objectName: "errorBanner"
         property string message: ""
         anchors { top: parent.top; right: parent.right; margins: 18 }
         width: Math.min(460, window.width - sidebar.width - 60)
@@ -106,6 +107,13 @@ Item {
     Connections {
         target: catalogBridge
         function onFailed(message) { banner.message = message; hideBanner.restart(); }
+    }
+    // Hộp thoại Nhập bản chơi là đường chọn file duy nhất còn lại, nên lỗi của nó cũng phải
+    // lên dải này: `failed` cho hỏng lúc chạy nền, `importError` cho từ chối ngay tại chỗ.
+    Connections {
+        target: importBridge
+        function onFailed(message) { banner.message = message; hideBanner.restart(); }
+        function onImportError(message) { banner.message = message; hideBanner.restart(); }
     }
 
     LoadingToast { id: loadingToast; z: 90 }

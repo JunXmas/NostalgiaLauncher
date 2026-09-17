@@ -186,3 +186,42 @@ def test_check_updates_flags_rows_and_identify_names_hand_copied_files(
     content_bridge.checkUpdates("mod")
     wait_until(lambda: not content_bridge.busy)
     assert failures and "LAZ" in failures[0]
+
+
+def test_import_modpack_file_keeps_the_pack_name_when_the_user_typed_nothing(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Tên trống → tên hiển thị phải là TÊN PACK ("Gói Vui"), không phải tên file đã tải về."""
+    from dataclasses import replace
+
+    import nostalgia.content.mrpack as mrpack
+    from fabric_fixture import publish_fabric
+    from modpack_fixture import publish_modpack
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    publish_fabric(server_state)
+    host = publish_modpack(server, server_state)
+    launcher = replace(
+        launcher, endpoints=replace(launcher.endpoints, fabric_meta=server.url("/fabric"))
+    )
+    with launcher.make_http_client() as http_client:
+        pack_bytes = http_client.fetch_bytes(server.url("/files/goi-vui.mrpack"))
+    pack_path = tmp_path / "tai-ve.mrpack"
+    pack_path.write_bytes(pack_bytes)
+    main_bridge = LauncherBridge(launcher)
+    content_bridge = ContentBridge(launcher, main_bridge)
+    created: list[str] = []
+    content_bridge.modpackInstalled.connect(created.append)
+    original = mrpack.ALLOWED_HOSTS
+    mrpack.ALLOWED_HOSTS = (host,)
+    try:
+        content_bridge.importModpackFile(pack_path.as_uri(), "", "")
+        wait_until(lambda: not content_bridge.busy)
+        wait_until(lambda: bool(created), seconds=2.0)
+    finally:
+        mrpack.ALLOWED_HOSTS = original
+    instance = next(i for i in launcher.list_instances() if i.instance_id == created[0])
+    assert instance.display_name == "Gói Vui"
