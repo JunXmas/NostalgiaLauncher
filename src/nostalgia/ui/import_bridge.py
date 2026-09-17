@@ -85,7 +85,7 @@ class ImportBridge(WorkerBridge):
         self.run_in_background(work, f"Nhập modpack {pack_path.name}")
 
     @Slot(int, str)
-    def importFromLauncher(self, index: int, display_name: str) -> None:
+    def importFromLauncher(self, index: int, display_label: str) -> None:
         """Nhập instance từ launcher khác (index trong danh sách đã quét)."""
         if index < 0 or index >= len(self._found_list):
             self.importError.emit("Instance không hợp lệ")
@@ -94,11 +94,11 @@ class ImportBridge(WorkerBridge):
 
         def work() -> None:
             taken = {i.instance_id for i in self._launcher.list_instances()}
-            display_label = display_name.strip() or found.instance_name
+            final_label = display_label.strip() or found.instance_name
             instance = self._launcher.import_from_launcher(
                 found,
-                slugify(display_label, taken),
-                display_label,
+                slugify(final_label, taken),
+                final_label,
                 on_progress=self._main_bridge.report_progress,
             )
             self._main_bridge.instancesChanged.emit()
