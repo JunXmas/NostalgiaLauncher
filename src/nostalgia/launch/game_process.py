@@ -40,6 +40,12 @@ KILL_WAIT_SECONDS = 2.0
 # Chờ luồng đọc gom nốt output. Cháu nội giữ ống có thể khiến nó không bao giờ thấy EOF.
 OUTPUT_DRAIN_SECONDS = 2.0
 
+# Hai cờ `CreateProcess` của Windows. Lấy qua `getattr` vì `subprocess` trên Linux/macOS
+# không có chúng — mà nhánh Windows vẫn phải KIỂM ĐƯỢC trên CI Linux. Giá trị dự phòng là
+# hằng của chính Windows API, không phải số tự đặt.
+CREATE_NEW_PROCESS_GROUP = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,6 +66,19 @@ def resolve_signal_target(pid: int, process_group: int) -> tuple[str, int]:
     if process_group == pid:
         return WHOLE_GROUP, process_group
     return SINGLE_PROCESS, pid
+
+
+def creation_flags_for(platform_name: str) -> int:
+    """Cờ `CreateProcess` cho nền tảng đang chạy. Hàm THUẦN để kiểm được trên CI Linux.
+
+    `CREATE_NO_WINDOW` không phải chuyện thẩm mỹ. `java.exe` là chương trình console: thiếu
+    cờ này thì Windows cấp cho nó một cửa sổ console riêng, và cửa sổ console có sẵn trình
+    xử lý mặc định — người dùng bấm X là Windows gửi tín hiệu thoát cho mọi tiến trình gắn
+    với console đó, tức là Minecraft tắt theo cái cửa sổ đen tưởng như vô hại.
+    """
+    if platform_name != "win32":
+        return 0
+    return CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
 
 
 def ignore_output(_line: str) -> None:
@@ -173,7 +192,6 @@ def start_game(
 ) -> GameProcess:
     """Chạy lệnh đã dựng, trong thư mục game, ở một phiên riêng."""
     ensure_dir(command.game_dir)
-    creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0  # type: ignore[attr-defined]
     process = subprocess.Popen(
         command.argv,
         cwd=command.game_dir,
@@ -182,7 +200,7 @@ def start_game(
         stdin=subprocess.DEVNULL,
         env=dict(environment) if environment is not None else None,
         start_new_session=(sys.platform != "win32"),
-        creationflags=creation_flags,
+        creationflags=creation_flags_for(sys.platform),
     )
     return GameProcess(process, on_output)
 
