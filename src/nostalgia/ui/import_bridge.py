@@ -71,11 +71,12 @@ class ImportBridge(WorkerBridge):
 
         def work() -> None:
             taken = {i.instance_id for i in self._launcher.list_instances()}
-            final_label = display_label.strip() or pack_path.stem
+            # Như `ModpackContentBridge.importModpackFile`: mã bản chơi phải có ngay nên dựa
+            # vào tên file, còn tên hiển thị để trống cho lõi lấy tên thật trong pack.
             instance = self._launcher.install_modpack_file(
                 pack_path,
-                slugify(final_label, taken),
-                final_label,
+                slugify(display_label.strip() or pack_path.stem, taken),
+                display_label.strip(),
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )

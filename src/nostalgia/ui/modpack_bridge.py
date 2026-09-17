@@ -74,11 +74,13 @@ class ModpackContentBridge(InstalledContentBridge):
 
         def work() -> None:
             taken = {instance.instance_id for instance in self._launcher.list_instances()}
-            final_label = display_label.strip() or pack_path.stem
+            # Mã bản chơi cần một chuỗi NGAY BÂY GIỜ, nên lấy tên file làm chỗ dựa. Tên hiển
+            # thị thì không: để trống cho lõi điền tên thật đọc trong pack (`plan.name`) —
+            # "Gói Vui" đẹp hơn "tai-ve" nhiều.
             instance = self._launcher.install_modpack_file(
                 pack_path,
-                slugify(final_label, taken),
-                final_label,
+                slugify(display_label.strip() or pack_path.stem, taken),
+                display_label.strip(),
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )

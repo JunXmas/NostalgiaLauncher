@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Dialogs
 import "../"
 
 /* Trang BẢN CHƠI: lưới thẻ, nút tạo mới mở hộp thoại hai cột, gỡ bằng nút trên thẻ.
@@ -138,5 +137,5 @@ Item {
 
     CreateInstanceDialog { id: dialog; objectName: "createDialog"; anchors.fill: parent }
     InstanceEditDialog { id: editDialog; anchors.fill: parent }
-    ImportInstanceDialog { id: importDialog; anchors.fill: parent }
+    ImportInstanceDialog { id: importDialog; objectName: "importDialog"; anchors.fill: parent }
 }
