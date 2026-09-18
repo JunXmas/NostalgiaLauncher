@@ -16,7 +16,8 @@ import os
 import platform
 from pathlib import Path
 
-from nostalgia.modloader.model import LoaderKind
+from nostalgia.importing import tlauncher
+from nostalgia.modloader.model import LoaderKind, detect_loader_kind
 
 logger = logging.getLogger(__name__)
 
@@ -180,46 +181,74 @@ def _scan_modrinth_app() -> list[Found]:
     return found
 
 
-def _scan_vanilla() -> list[Found]:
-    """Launcher chính chủ — và TLauncher, vì cả hai dùng chung một thư mục `.minecraft`.
-
-    TLauncher không đẻ thư mục riêng; nó chỉ thêm `TlauncherProfiles.json` vào cạnh
-    `launcher_profiles.json` của bản chính chủ. Nên đây không phải scanner thứ năm, chỉ là
-    cái nhãn đúng cho thứ đã quét được — quảng cáo "hỗ trợ TLauncher" mà gắn nhãn "Vanilla"
-    thì người dùng tưởng launcher của mình không được nhận ra.
-    """
+def _minecraft_dir() -> Path | None:
+    """Thư mục `.minecraft` mặc định của hệ này — nơi ở chung của bản chính chủ và TLauncher."""
     sys_plat = platform.system()
     if sys_plat == "Linux":
-        base = Path("~/.minecraft").expanduser()
-    elif sys_plat == "Darwin":
-        base = Path("~/Library/Application Support/minecraft").expanduser()
-    elif sys_plat == "Windows":
-        base = Path(os.environ.get("APPDATA", "~")) / ".minecraft"
-    else:
-        return []
-    if not base.exists() or not (base / "versions").is_dir():
-        return []
-    game_version = ""
+        return Path("~/.minecraft").expanduser()
+    if sys_plat == "Darwin":
+        return Path("~/Library/Application Support/minecraft").expanduser()
+    if sys_plat == "Windows":
+        return Path(os.environ.get("APPDATA", "~")) / ".minecraft"
+    return None
+
+
+def _last_version_id(base: Path) -> str:
+    """Bản game gần nhất ghi trong `launcher_profiles.json`, rỗng nếu đọc không được."""
     profiles_json = base / "launcher_profiles.json"
-    if profiles_json.exists():
-        try:
-            body = json.loads(profiles_json.read_text(encoding="utf-8"))
-            for saved in body.get("profiles", {}).values():
-                last_v = saved.get("lastVersionId")
-                if last_v:
-                    game_version = last_v
-                    break
-        except Exception:
-            logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
-    if (base / "TlauncherProfiles.json").exists():
-        return [Found("TLauncher", "TLauncher Minecraft", base, game_version, "vanilla")]
-    return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
+    if not profiles_json.exists():
+        return ""
+    try:
+        body = json.loads(profiles_json.read_text(encoding="utf-8"))
+        for saved in body.get("profiles", {}).values():
+            last_v = saved.get("lastVersionId")
+            if last_v:
+                return str(last_v)
+    except Exception:
+        logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
+    return ""
+
+
+def _scan_tlauncher() -> list[Found]:
+    """TLauncher: thư mục game lấy từ config riêng của nó, chứ không đoán là `.minecraft`.
+
+    TLauncher không đẻ thư mục instance như Prism; nó chơi thẳng trong một thư mục game duy
+    nhất, mặc định là `.minecraft` dùng chung với bản chính chủ. Nhưng người dùng đổi được
+    thư mục đó trong phần cài đặt, và khi đã đổi thì chỉ `minecraft.gamedir` biết nó ở đâu.
+    """
+    base = tlauncher.game_dir(_minecraft_dir())
+    if base is None:
+        return []
+    # `login.version.game` là bản đang chọn; `launcher_profiles.json` chỉ là đường lui.
+    game_version = tlauncher.selected_version() or _last_version_id(base)
+    loader_kind = detect_loader_kind(game_version)
+    return [Found("TLauncher", "TLauncher Minecraft", base, game_version, loader_kind)]
+
+
+def _scan_vanilla() -> list[Found]:
+    """Launcher chính chủ.
+
+    Bỏ qua khi `TlauncherProfiles.json` nằm cùng thư mục: lúc đó `.minecraft` là nhà của
+    TLauncher và `_scan_tlauncher` đã kể nó rồi — kể lần nữa là một bản chơi hiện hai dòng.
+    """
+    base = _minecraft_dir()
+    if base is None or not base.exists() or not (base / "versions").is_dir():
+        return []
+    if (base / tlauncher.PROFILES_FILENAME).is_file():
+        return []
+    return [Found("Vanilla", "Vanilla Minecraft", base, _last_version_id(base), "vanilla")]
 
 
 def find_all() -> list[Found]:
     """Tìm tất cả instances từ mọi launcher. An toàn: không bao giờ ném lỗi."""
     all_found: list[Found] = []
-    for scanner in (_scan_prism, _scan_curseforge, _scan_modrinth_app, _scan_vanilla):
+    for scanner in (
+        _scan_prism,
+        _scan_curseforge,
+        _scan_modrinth_app,
+        _scan_tlauncher,
+        _scan_vanilla,
+    ):
         try:
             all_found.extend(scanner())
         except Exception:
