@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.importing.launchers import Found, find_all
+from nostalgia.importing.launchers import find_all
+from nostalgia.importing.model import Found
 
 
 class TestFound:
