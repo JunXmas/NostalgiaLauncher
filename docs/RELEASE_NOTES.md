@@ -1,3 +1,22 @@
+## Nostalgia Launcher 1.0.13
+
+Bản vá Windows, đồng thời giữ toàn bộ phần dọn dẹp và sửa lỗi nhập modpack từ 1.0.12.
+
+### Chơi trên Windows
+
+- **Minecraft không còn mở kèm cửa sổ CMD.** Java giờ chạy với `CREATE_NO_WINDOW`, nên đóng
+  nhầm cửa sổ console không còn làm Minecraft tắt theo.
+
+### Dọn dẹp nhập modpack
+
+- Gỡ nút nhập từ file và wrapper trùng lặp; thống nhất tên tham số `display_label`.
+- Vẫn giữ tên thật đọc từ pack khi ô tên để trống, và vẫn hiện lỗi khi chọn nhầm file.
+
+Tải xuống và ghi chú từng nền tảng: xem bảng ở mục 1.0 phía dưới. Nhớ đối chiếu
+`SHA256SUMS` với file tải về.
+
+---
+
 ## Nostalgia Launcher 1.0.12
 
 Bản vá khẩn cấp (hotfix). Gộp cả phần sửa của 1.0.11 — bản đó dựng xong nhưng chưa từng
