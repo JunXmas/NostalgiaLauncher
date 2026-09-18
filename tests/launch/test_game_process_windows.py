@@ -9,7 +9,26 @@ from pathlib import Path
 import pytest
 from test_game_process import DEADLINE, GRACE, python_command
 
-from nostalgia.launch.game_process import start_game
+from nostalgia.launch.game_process import (
+    CREATE_NEW_PROCESS_GROUP,
+    CREATE_NO_WINDOW,
+    resolve_creation_flags,
+    start_game,
+)
+
+
+def test_windows_creation_flags_hide_console() -> None:
+    """MYLA-37.5: trên Windows phải có CREATE_NO_WINDOW, nếu không `java.exe` mở cửa sổ CMD
+    và người dùng đóng cửa sổ đó là Minecraft tắt theo. Giữ cả CREATE_NEW_PROCESS_GROUP."""
+    flags = resolve_creation_flags("win32")
+    assert flags & CREATE_NO_WINDOW
+    assert flags & CREATE_NEW_PROCESS_GROUP
+
+
+def test_posix_creation_flags_are_zero() -> None:
+    """Ngoài Windows, `creationflags` phải là 0 — Popen từ chối mọi giá trị khác."""
+    assert resolve_creation_flags("linux") == 0
+    assert resolve_creation_flags("darwin") == 0
 
 
 def test_windows_stop_uses_terminate_then_kill(
