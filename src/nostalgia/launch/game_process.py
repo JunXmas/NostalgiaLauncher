@@ -49,6 +49,20 @@ logger = logging.getLogger(__name__)
 WHOLE_GROUP = "group"
 SINGLE_PROCESS = "process"
 
+# Cờ Windows, viết thẳng số vì `subprocess.CREATE_*` không tồn tại trên Linux/macOS — hằng số
+# thật thì hàm thuần dưới đây mới kiểm được nhánh win32 từ máy CI chạy Linux.
+CREATE_NEW_PROCESS_GROUP = 0x00000200
+# Không cấp console cho tiến trình con. Thiếu cờ này, `java.exe` mở một cửa sổ CMD, và người
+# dùng đóng cửa sổ đó là Minecraft tắt theo — đúng lỗi MYLA-37.5.
+CREATE_NO_WINDOW = 0x08000000
+
+
+def resolve_creation_flags(platform: str) -> int:
+    """Cờ `creationflags` cho `Popen`. Thuần, để kiểm nhánh win32 mà không cần máy Windows."""
+    if platform != "win32":
+        return 0
+    return CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+
 
 def resolve_signal_target(pid: int, process_group: int) -> tuple[str, int]:
     """Được phép giết cả nhóm hay chỉ một tiến trình.
@@ -173,7 +187,7 @@ def start_game(
 ) -> GameProcess:
     """Chạy lệnh đã dựng, trong thư mục game, ở một phiên riêng."""
     ensure_dir(command.game_dir)
-    creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0  # type: ignore[attr-defined]
+    creation_flags = resolve_creation_flags(sys.platform)
     process = subprocess.Popen(
         command.argv,
         cwd=command.game_dir,
