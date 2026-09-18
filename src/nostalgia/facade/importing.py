@@ -12,7 +12,7 @@ from pathlib import Path
 
 from nostalgia.errors import ContentError
 from nostalgia.facade.modpacks import ModpackOperations
-from nostalgia.importing.launchers import Found
+from nostalgia.importing.model import Found
 from nostalgia.instance.model import Instance
 from nostalgia.modloader.model import detect_loader_kind
 from nostalgia.operations.cancellation import CancelToken

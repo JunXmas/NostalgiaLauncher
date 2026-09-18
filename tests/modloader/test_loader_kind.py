@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from nostalgia.content.model import ProjectVersion
-from nostalgia.modloader.model import detect_loader_kind
+from nostalgia.modloader.model import detect_game_version, detect_loader_kind
 
 
 @pytest.mark.parametrize(
@@ -45,3 +45,22 @@ def test_quilt_accepts_fabric_mods_but_forge_does_not() -> None:
     assert not fabric_only.supports("1.20.1", "forge", "mod")
     assert not fabric_only.supports("1.20.1", "vanilla", "mod")
     assert fabric_only.supports("1.20.1", "vanilla", "resourcepack")
+
+
+@pytest.mark.parametrize(
+    ("version_id", "expected"),
+    [
+        ("1.20.1", "1.20.1"),
+        ("fabric-loader-0.15.0-1.20.1", "1.20.1"),
+        ("quilt-loader-0.29.1-1.20.1", "1.20.1"),
+        ("1.20.1-forge-47.4.10", "1.20.1"),
+        ("1.20.1-neoforge-47.1.3", "1.20.1"),
+        # Mã bản chỉ mang số của chính loader thì không nói ra bản game.
+        ("neoforge-21.1.249", ""),
+        # Con trỏ của launcher chính thức, không phải một bản.
+        ("latest-release", ""),
+        ("latest-snapshot", ""),
+    ],
+)
+def test_game_version_is_read_from_the_version_id(version_id: str, expected: str) -> None:
+    assert detect_game_version(version_id) == expected

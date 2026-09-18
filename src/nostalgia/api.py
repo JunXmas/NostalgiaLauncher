@@ -35,7 +35,7 @@ from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.skins import SkinOperations
 from nostalgia.facade.updates import StagedUpdate, UpdateOperations
-from nostalgia.importing.launchers import Found
+from nostalgia.importing.model import Found
 from nostalgia.instance.model import Instance
 from nostalgia.instance.server_list import RecentServer
 from nostalgia.instance.world import RecentWorld
