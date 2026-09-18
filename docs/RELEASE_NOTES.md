@@ -18,8 +18,12 @@ phát hành, nên ai đang chạy 1.0.10 sẽ nhận thẳng bản này.
 - **Launcher cài bằng Flatpak giờ quét ra.** PrismLauncher và ModrinthApp bản Flatpak ghi dữ
   liệu vào `~/.var/app/<id>/data` chứ không phải `~/.local/share`, nên máy có sẵn ba bản chơi
   vẫn báo "không tìm thấy launcher nào". Giờ soi cả hai chỗ.
-- **TLauncher được gọi đúng tên.** TLauncher dùng chung thư mục `.minecraft` với bản chính
-  chủ; có `TlauncherProfiles.json` thì hiện nhãn *TLauncher* thay vì *Vanilla*.
+- **TLauncher quét ra kể cả khi đã đổi thư mục game.** TLauncher mặc định chơi chung
+  `.minecraft` với bản chính chủ, nhưng đổi được thư mục đó trong phần cài đặt — và chỗ duy
+  nhất biết nó nằm đâu là `~/.tlauncher/tlauncher-2.0.properties`. Đoán `.minecraft` thì
+  người đã đổi thư mục quét ra rỗng. Giờ đọc thẳng `minecraft.gamedir`, lấy đúng bản game
+  đang chọn (`login.version.game`) kèm loader của nó, và hiện nhãn *TLauncher* thay vì
+  *Vanilla*.
 - **Quét ra rỗng thì nói rõ phải làm gì** — hộp thoại kể tên các launcher được hỗ trợ và chỉ
   sang thẻ "Từ file .mrpack" cho launcher ngoài danh sách.
 
