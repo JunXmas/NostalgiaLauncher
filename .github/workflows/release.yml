@@ -10,7 +10,9 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    # Chỉ `vX.Y.Z`. Tag có hậu tố (v1.0.10-hotfix) từng khởi chạy workflow rồi chết ở bước
+    # so tag với `__version__` — không bao giờ khớp được. Lọc ngay ở đây thay vì để đỏ.
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
 
 permissions:
   contents: write
@@ -165,12 +167,42 @@ jobs:
         with:
           path: bundles
           merge-multiple: true
+      - name: Đủ 11 file của 4 hệ mới được phát hành
+        # Thiếu file thì thà dừng còn hơn ra một draft khuyết — người tải bản thiếu sẽ
+        # không biết là thiếu.
+        run: |
+          set -e
+          ver="${GITHUB_REF_NAME#v}"
+          missing=0
+          for f in \
+            "nostalgia-${ver}-linux-x64.AppImage" "nostalgia-${ver}-linux-x64.tar.gz" \
+            "nostalgia-${ver}-linux-x64.zip" "nostalgia_${ver}_amd64.deb" \
+            "nostalgia-${ver}-1.x86_64.rpm" \
+            "nostalgia-${ver}-macos-arm64.dmg" "nostalgia-${ver}-macos-arm64.zip" \
+            "nostalgia-${ver}-macos-x64.dmg" "nostalgia-${ver}-macos-x64.zip" \
+            "nostalgia-${ver}-windows-x64-setup.exe" "nostalgia-${ver}-windows-x64.zip"; do
+            [ -s "bundles/$f" ] || { echo "thiếu: $f"; missing=1; }
+          done
+          test "$missing" -eq 0 || { echo "::error::draft khuyết file, dừng"; exit 1; }
+          echo "đủ 11 file"
       - name: SHA256SUMS
         run: cd bundles && sha256sum * > SHA256SUMS && cat SHA256SUMS
       - name: Tạo release DRAFT (chủ dự án publish tay)
         env:
           GH_TOKEN: ${{ github.token }}
+        # Tải ~800 MB lên: một file rớt mạng là cả bước đỏ. Tách tạo release khỏi tải file,
+        # rồi tải từng file có thử lại — lần chạy lại chỉ đụng file còn thiếu.
         run: |
-          gh release create "${GITHUB_REF_NAME}" bundles/* \
-            --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
-            --notes-file docs/RELEASE_NOTES.md
+          set -e
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
+              --notes-file docs/RELEASE_NOTES.md
+          for f in bundles/*; do
+            for attempt in 1 2 3; do
+              gh release upload "${GITHUB_REF_NAME}" "$f" \
+                --repo "${GITHUB_REPOSITORY}" --clobber && break
+              echo "tải $f rớt lần $attempt, thử lại sau 10s"; sleep 10
+              [ "$attempt" -lt 3 ] || { echo "::error::không tải được $f"; exit 1; }
+            done
+          done
