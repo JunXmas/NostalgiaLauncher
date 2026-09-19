@@ -26,30 +26,55 @@ class Found:
     loader_kind: LoaderKind
 
 
-def _platform_dir(linux: str, darwin: str, windows: str) -> Path | None:
-    """Trả thư mục theo hệ điều hành, hoặc None nếu không hỗ trợ."""
+def _home() -> Path:
+    """Thư mục home của người dùng, lấy từ biến môi trường.
+
+    Không dùng `Path.home()` / `expanduser()`: GLOSSARY.md §1.4 cấm, và lưới trong
+    `tests/conftest.py` chặn thẳng — scanner gọi tới sẽ nổ rồi im lặng trả rỗng, đúng cái bẫy
+    đã giấu lỗi Flatpak này. Quét launcher khác là chỗ hiếm hoi buộc phải nhìn ra ngoài
+    `DataPaths`, nên đọc biến môi trường một chỗ duy nhất tại đây.
+    """
+    return Path(os.environ.get("HOME") or os.environ.get("USERPROFILE") or "/nonexistent")
+
+
+def _platform_dirs(share: str, darwin: str, windows: str, *, flatpak: str = "") -> list[Path]:
+    """Mọi thư mục có thể chứa instance, theo hệ điều hành.
+
+    Trả về danh sách chứ không một đường dẫn: trên Linux cùng một launcher cài bằng gói hệ
+    thống thì nằm ở `~/.local/share/<share>`, cài bằng Flatpak lại nằm trong hộp cát
+    `~/.var/app/<app-id>/data/<share>`. Trước đây chỉ dò chỗ đầu, nên bỏ sót sạch instance
+    của người dùng cài Flatpak — cách cài phổ biến nhất của PrismLauncher trên Linux.
+    """
     sys_plat = platform.system()
     if sys_plat == "Linux":
-        return Path(linux).expanduser()
+        dirs = [_home() / ".local/share" / share]
+        if flatpak:
+            dirs.append(_home() / ".var/app" / flatpak / "data" / share)
+        return dirs
     if sys_plat == "Darwin":
-        return Path(darwin).expanduser()
+        return [_home() / darwin]
     if sys_plat == "Windows":
-        return Path(os.environ.get("APPDATA", "~")) / windows
-    return None
+        appdata = os.environ.get("APPDATA")
+        return [Path(appdata) / windows] if appdata else []
+    return []
+
+
+def _instance_dirs(bases: list[Path]) -> list[Path]:
+    """Mọi thư mục con của các thư mục gốc có thật. Gốc không tồn tại thì bỏ qua."""
+    return [child for base in bases if base.is_dir() for child in base.iterdir() if child.is_dir()]
 
 
 def _scan_prism() -> list[Found]:
     """PrismLauncher: đọc instance.cfg + mmc-pack.json."""
-    base = _platform_dir(
-        "~/.local/share/PrismLauncher/instances",
-        "~/Library/Application Support/PrismLauncher/instances",
+    bases = _platform_dirs(
         "PrismLauncher/instances",
+        "Library/Application Support/PrismLauncher/instances",
+        "PrismLauncher/instances",
+        flatpak="org.prismlauncher.PrismLauncher",
     )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "instance.cfg").exists():
+    for inst_dir in _instance_dirs(bases):
+        if not (inst_dir / "instance.cfg").exists():
             continue
         try:
             content = "[DEFAULT]\n" + (inst_dir / "instance.cfg").read_text(encoding="utf-8")
@@ -86,12 +111,12 @@ def _scan_curseforge() -> list[Found]:
     """CurseForge (Overwolf): chỉ macOS + Windows."""
     sys_plat = platform.system()
     if sys_plat == "Darwin":
-        base = Path("~/Documents/curseforge/minecraft/Instances").expanduser()
+        base = _home() / "Documents/curseforge/minecraft/Instances"
     elif sys_plat == "Windows":
-        base = Path(os.environ.get("USERPROFILE", "~")) / "curseforge/minecraft/Instances"
+        base = _home() / "curseforge/minecraft/Instances"
     else:
         return []
-    if not base.exists():
+    if not base.is_dir():
         return []
     found: list[Found] = []
     for inst_dir in base.iterdir():
@@ -125,16 +150,15 @@ def _scan_curseforge() -> list[Found]:
 
 def _scan_modrinth_app() -> list[Found]:
     """ModrinthApp: đọc profile.json."""
-    base = _platform_dir(
-        "~/.local/share/ModrinthApp/profiles",
-        "~/Library/Application Support/ModrinthApp/profiles",
+    bases = _platform_dirs(
         "ModrinthApp/profiles",
+        "Library/Application Support/ModrinthApp/profiles",
+        "ModrinthApp/profiles",
+        flatpak="com.modrinth.ModrinthApp",
     )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "profile.json").exists():
+    for inst_dir in _instance_dirs(bases):
+        if not (inst_dir / "profile.json").exists():
             continue
         try:
             body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
@@ -159,14 +183,17 @@ def _scan_vanilla() -> list[Found]:
     """Official Minecraft launcher."""
     sys_plat = platform.system()
     if sys_plat == "Linux":
-        base = Path("~/.minecraft").expanduser()
+        base = _home() / ".minecraft"
     elif sys_plat == "Darwin":
-        base = Path("~/Library/Application Support/minecraft").expanduser()
+        base = _home() / "Library/Application Support/minecraft"
     elif sys_plat == "Windows":
-        base = Path(os.environ.get("APPDATA", "~")) / ".minecraft"
+        appdata = os.environ.get("APPDATA")
+        if not appdata:
+            return []
+        base = Path(appdata) / ".minecraft"
     else:
         return []
-    if not base.exists() or not (base / "versions").is_dir():
+    if not (base / "versions").is_dir():
         return []
     game_version = ""
     profiles_json = base / "launcher_profiles.json"
@@ -190,6 +217,8 @@ def find_all() -> list[Found]:
         try:
             all_found.extend(scanner())
         except Exception:
-            logger.debug("lỗi khi chạy %s", scanner.__name__, exc_info=True)
+            # `warning` chứ không `debug`: mức debug đã giấu trọn lỗi Flatpak — scanner nổ,
+            # hộp thoại báo "không tìm thấy launcher nào", không một dòng log nào nhìn thấy.
+            logger.warning("lỗi khi chạy %s", scanner.__name__, exc_info=True)
     all_found.sort(key=lambda x: (x.launcher, x.instance_name))
     return all_found
