@@ -1,29 +1,19 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Lunar Client, Vanilla."""
 
 from __future__ import annotations
 
 import configparser
-import dataclasses
 import json
 import logging
 import os
 import platform
 from pathlib import Path
 
+from nostalgia.importing.lunar import scan_lunar_client
+from nostalgia.importing.model import Found
 from nostalgia.modloader.model import LoaderKind
 
 logger = logging.getLogger(__name__)
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class Found:
-    """Đại diện cho một instance Minecraft từ một launcher khác."""
-
-    launcher: str
-    instance_name: str
-    game_dir: Path
-    game_version: str
-    loader_kind: LoaderKind
 
 
 def _platform_dir(linux: str, darwin: str, windows: str) -> Path | None:
@@ -186,7 +176,13 @@ def _scan_vanilla() -> list[Found]:
 def find_all() -> list[Found]:
     """Tìm tất cả instances từ mọi launcher. An toàn: không bao giờ ném lỗi."""
     all_found: list[Found] = []
-    for scanner in (_scan_prism, _scan_curseforge, _scan_modrinth_app, _scan_vanilla):
+    for scanner in (
+        _scan_prism,
+        _scan_curseforge,
+        _scan_modrinth_app,
+        scan_lunar_client,
+        _scan_vanilla,
+    ):
         try:
             all_found.extend(scanner())
         except Exception:
