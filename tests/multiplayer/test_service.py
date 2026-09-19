@@ -10,7 +10,7 @@ from typing import Any, TypeVar
 
 import pytest
 from fake_relay import FakeRelay
-from test_end_to_end import FakeWorld, game_client
+from test_end_to_end import FakeWorld
 from test_gate import MC_HANDSHAKE
 
 from nostalgia.multiplayer.lan import LanWorld
@@ -84,9 +84,30 @@ def test_host_then_join_then_stop_ends_all_tasks(remote: LoopThread) -> None:
         assert join_statuses[-1].role == "joined" and join_statuses[-1].local_port > 0
         assert join_statuses[-1].room_code == ""  # joiner không lộ lại mã
 
-        echoed = remote.run(game_client(join_statuses[-1].local_port))
-        assert echoed == MC_HANDSHAKE[::-1]
-        wait_for(lambda: host_statuses[-1].joiner_count == 1)
+        # `game_client()` tự đóng socket ngay khi đọc xong echo (finally của nó) — cú đóng đó
+        # dội ngược qua ba vòng lặp (bridge → relay → host) và tự hạ joiner_count về 0. Cú dội
+        # chạy song song, không có mốc nào đảm bảo xong SAU khi `game_client` return — có lúc
+        # nó xong TRƯỚC (đã bắt được: đọc `joiner_count` ngay lập tức, không qua polling, vẫn
+        # thấy 0). Vì vậy phải mở kết nối, đọc echo, kiểm joiner_count XONG RỒI mới đóng —
+        # không có cách đọc "đủ nhanh" nào thắng được cascade tự gây ra bởi chính phép thử.
+        async def probe() -> tuple[asyncio.StreamWriter, bytes]:
+            reader, writer = await asyncio.open_connection(
+                "127.0.0.1", join_statuses[-1].local_port
+            )
+            writer.write(MC_HANDSHAKE)
+            await writer.drain()
+            echoed = await asyncio.wait_for(reader.readexactly(len(MC_HANDSHAKE)), 3)
+            return writer, echoed
+
+        async def close(writer: asyncio.StreamWriter) -> None:
+            writer.close()
+
+        writer, echoed = remote.run(probe())
+        try:
+            assert echoed == MC_HANDSHAKE[::-1]
+            assert host_statuses[-1].joiner_count == 1
+        finally:
+            remote.run(close(writer))
 
         host_service.set_locked(True).result(5)
         assert host_statuses[-1].locked is True
