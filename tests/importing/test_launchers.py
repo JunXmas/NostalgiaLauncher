@@ -80,6 +80,46 @@ class TestScanPrism:
         # find_all catches all exceptions, so it should return empty or just vanilla.
 
 
+class TestScanLunar:
+    """Lunar Client: chỉ detect thư mục tồn tại, không suy version/loader.
+
+    `~/.lunarclient` giả lập bằng patch `Path.expanduser` (không đụng `HOME` thật) — cấm gọi
+    expanduser() thật trong test, theo `tests/conftest.py`.
+    """
+
+    def test_detects_lunarclient_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        (tmp_path / ".lunarclient").mkdir()
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setattr(
+            "nostalgia.importing.launchers.Path.expanduser",
+            lambda self: tmp_path / ".lunarclient" if str(self) == "~/.lunarclient" else self,
+        )
+
+        from nostalgia.importing.launchers import _scan_lunar
+
+        result = _scan_lunar()
+
+        assert len(result) == 1
+        found = result[0]
+        assert found.launcher == "Lunar Client"
+        assert found.game_dir == tmp_path / ".lunarclient"
+        assert found.game_version == ""
+        assert found.loader_kind == "vanilla"
+
+    def test_no_lunarclient_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setattr(
+            "nostalgia.importing.launchers.Path.expanduser",
+            lambda self: tmp_path / ".lunarclient" if str(self) == "~/.lunarclient" else self,
+        )
+
+        from nostalgia.importing.launchers import _scan_lunar
+
+        assert _scan_lunar() == []
+
+
 class TestFindAll:
     """find_all() gom kết quả từ mọi scanner, bắt lỗi riêng từng scanner."""
 

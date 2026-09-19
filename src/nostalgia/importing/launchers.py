@@ -1,4 +1,8 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Lunar Client, Vanilla.
+
+TLauncher/SKLauncher chưa có scanner: chưa tìm được nguồn xác minh cấu trúc thư mục/config
+thật — đừng code theo phỏng đoán chưa kiểm chứng.
+"""
 
 from __future__ import annotations
 
@@ -155,6 +159,29 @@ def _scan_modrinth_app() -> list[Found]:
     return found
 
 
+def _scan_lunar() -> list[Found]:
+    """Lunar Client: không multi-instance, chọn version qua `--version` CLI arg lúc launch.
+
+    Linux/macOS: `~/.lunarclient`. Windows: `%APPDATA%\\.lunarclient` (path Windows chưa được
+    đối chiếu chéo 2 nguồn độc lập như Linux/macOS — best-effort).
+
+    Chỉ detect thư mục `.lunarclient` tồn tại — không có file nào của Lunar mô tả
+    version/loader theo từng "instance". `accounts.json` trong thư mục này chỉ chứa tài khoản
+    (kể cả accessToken/refreshToken sống) — tuyệt đối không đọc, không liên quan version/loader.
+    """
+    base = _platform_dir(
+        "~/.lunarclient",
+        "~/.lunarclient",
+        ".lunarclient",  # %APPDATA%\.lunarclient — chưa xác minh chéo, xem docstring trên.
+    )
+    if base is None or not base.exists():
+        return []
+    # game_version="" (sentinel "chưa xác định", cùng quy ước với _scan_prism/_scan_vanilla ở
+    # trên) và loader_kind="vanilla" (sentinel "không rõ", cùng quy ước ModrinthApp) — không
+    # đổi kiểu Found sang Optional cho một launcher, xem ghi chú bàn giao.
+    return [Found("Lunar Client", "Lunar Client", base, "", "vanilla")]
+
+
 def _scan_vanilla() -> list[Found]:
     """Official Minecraft launcher."""
     sys_plat = platform.system()
@@ -186,7 +213,13 @@ def _scan_vanilla() -> list[Found]:
 def find_all() -> list[Found]:
     """Tìm tất cả instances từ mọi launcher. An toàn: không bao giờ ném lỗi."""
     all_found: list[Found] = []
-    for scanner in (_scan_prism, _scan_curseforge, _scan_modrinth_app, _scan_vanilla):
+    for scanner in (
+        _scan_prism,
+        _scan_curseforge,
+        _scan_modrinth_app,
+        _scan_lunar,
+        _scan_vanilla,
+    ):
         try:
             all_found.extend(scanner())
         except Exception:
