@@ -36,6 +36,22 @@ def detect_loader_kind(version_id: str) -> LoaderKind:
     return "vanilla"
 
 
+def detect_game_version(version_id: str) -> str:
+    """Tách bản game ra khỏi mã bản của loader: `fabric-loader-0.15.0-1.20.1` → `1.20.1`.
+
+    Trả rỗng khi chính mã bản không nói ra bản game — `neoforge-21.1.249` chỉ mang số của
+    NeoForge, `latest-release` là con trỏ chứ không phải một bản. Rỗng nghĩa là "chưa biết",
+    người gọi phải hỏi người dùng chứ đừng đoán.
+    """
+    loader_kind = detect_loader_kind(version_id)
+    if loader_kind in {"fabric", "quilt"}:
+        return version_id.rsplit("-", 1)[-1]
+    if loader_kind in {"forge", "neoforge"}:
+        head = version_id.split("-", 1)[0]
+        return "" if head.lower() in {"forge", "neoforge"} else head
+    return "" if version_id.startswith("latest-") else version_id
+
+
 @dataclass(frozen=True, slots=True)
 class LoaderVersion:
     """Một bản loader dùng được với một phiên bản game.

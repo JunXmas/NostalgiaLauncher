@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from nostalgia.facade.importing import _copy_game_data
-from nostalgia.importing.launchers import Found
+from nostalgia.importing.model import Found
 
 
 class TestCopyGameData:
