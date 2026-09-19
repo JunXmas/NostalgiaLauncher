@@ -44,7 +44,7 @@ packages = ["src/nostalgia"]
 artifacts = ["src/nostalgia/py.typed"]
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "pre-commit>=3.8"]
 # Chỉ để đóng gói bản phát hành (CI + thử tay); KHÔNG phải phụ thuộc runtime.
 build = ["pyinstaller>=6.10"]
 
