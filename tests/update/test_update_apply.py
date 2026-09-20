@@ -10,11 +10,13 @@ from pathlib import Path
 
 import pytest
 
+from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 from nostalgia.update.apply import (
     INSTALL_KIND_SOURCE,
     SwapPlan,
     clean_child_env,
     detect_install_kind,
+    launch_swap_script,
     render_swap_script,
     write_swap_script,
 )
@@ -67,6 +69,26 @@ def test_failed_copy_restores_the_old_install(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert (install / "lib" / "core.so").read_text() == "cũ", "thất bại thì bản cũ phải nguyên"
     assert not marker.exists()
+
+
+def test_windows_launch_uses_create_no_window_not_detached_process(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """JL-7: DETACHED_PROCESS không ẩn được console của `cmd.exe` (nó tự AllocConsole) và làm
+    CREATE_NO_WINDOW bị Windows lờ đi khi dùng chung — phải thay cờ, không phải thêm."""
+    captured: dict[str, object] = {}
+
+    def fake_popen(argv: list[str], **kwargs: object) -> None:
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    launch_swap_script(tmp_path / "apply-update.cmd", windows=True)
+
+    flags = captured["kwargs"]["creationflags"]  # type: ignore[index]
+    assert flags == CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+    assert flags & 0x00000008 == 0, "DETACHED_PROCESS (0x8) không được còn"
 
 
 def test_windows_script_and_source_install_kind() -> None:
