@@ -230,7 +230,8 @@ def _scan_vanilla() -> list[Found]:
             if usable:
                 game_version = max(usable, key=lambda p: p["lastUsed"])["lastVersionId"]
         except Exception:
-            logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
+            # Cả launcher_profiles.json không đọc nổi -> mất hẳn game_version của Vanilla.
+            logger.warning("lỗi khi đọc launcher_profiles.json", exc_info=True)
     return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
 
 
@@ -241,6 +242,8 @@ def find_all() -> list[Found]:
         try:
             all_found.extend(scanner())
         except Exception:
-            logger.debug("lỗi khi chạy %s", scanner.__name__, exc_info=True)
+            # Cả một bộ quét chết -> nguyên launcher biến mất khỏi danh sách, người dùng
+            # không hiểu vì sao.
+            logger.warning("lỗi khi chạy %s", scanner.__name__, exc_info=True)
     all_found.sort(key=lambda x: (x.launcher, x.instance_name))
     return all_found

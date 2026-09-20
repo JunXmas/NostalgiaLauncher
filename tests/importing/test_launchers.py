@@ -145,40 +145,49 @@ class TestScanPrism:
 
 @pytest.mark.allow_home
 @pytest.mark.parametrize(
-    ("profiles", "expected_version"),
+    ("profiles_body", "expected_version", "expect_warning"),
     [
         # Khoá đầu tiên trong dict ("cu") KHÔNG phải profile dùng gần nhất — thứ tự khoá
         # trong JSON/dict không có nghĩa, `for ... break` cũ lấy nhầm cái đầu.
         (
-            {
-                "cu": {"lastVersionId": "1.16.5", "lastUsed": "2020-01-01T00:00:00Z"},
-                "moi": {"lastVersionId": "1.21.1", "lastUsed": "2026-09-01T00:00:00Z"},
-            },
+            json.dumps(
+                {
+                    "profiles": {
+                        "cu": {"lastVersionId": "1.16.5", "lastUsed": "2020-01-01T00:00:00Z"},
+                        "moi": {"lastVersionId": "1.21.1", "lastUsed": "2026-09-01T00:00:00Z"},
+                    }
+                }
+            ),
             "1.21.1",
+            False,
         ),
-        ({"x": {"lastVersionId": "1.21.1"}}, ""),
+        (json.dumps({"profiles": {"x": {"lastVersionId": "1.21.1"}}}), "", False),
+        # File hỏng hẳn -> mất version của cả launcher Vanilla, phải log warning.
+        ("khong-phai-json", "", True),
     ],
 )
 def test_scan_vanilla_picks_newest_lastused(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    profiles: dict[str, dict[str, str]],
+    caplog: pytest.LogCaptureFixture,
+    profiles_body: str,
     expected_version: str,
+    expect_warning: bool,
 ) -> None:
     """_scan_vanilla chọn game_version theo profile lastUsed mới nhất, không lấy bừa."""
     home = tmp_path / "home"
     base = home / ".minecraft"
     (base / "versions").mkdir(parents=True)
-    (base / "launcher_profiles.json").write_text(
-        json.dumps({"profiles": profiles}), encoding="utf-8"
-    )
+    (base / "launcher_profiles.json").write_text(profiles_body, encoding="utf-8")
 
     monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
     monkeypatch.setenv("HOME", str(home))
 
-    result = _scan_vanilla()
+    with caplog.at_level("WARNING", logger="nostalgia.importing.launchers"):
+        result = _scan_vanilla()
     assert len(result) == 1
     assert result[0].game_version == expected_version
+    assert any(rec.levelname == "WARNING" for rec in caplog.records) == expect_warning
 
 
 class TestModuleDocstring:
@@ -194,9 +203,21 @@ class TestFindAll:
 
     def test_returns_list(self) -> None:
         """find_all luôn trả list, không bao giờ ném lỗi."""
-        result = find_all()
-        assert isinstance(result, list)
+        assert isinstance(find_all(), list)
         # Trên CI có thể không có launcher nào, nhưng không được crash.
+
+    def test_scanner_crash_logs_warning(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Một scanner ném lỗi: nguyên launcher biến mất khỏi danh sách -> log warning."""
+
+        def _boom() -> list[Found]:
+            raise RuntimeError("scanner hỏng")
+
+        monkeypatch.setattr("nostalgia.importing.launchers._scan_prism", _boom)
+        with caplog.at_level("WARNING", logger="nostalgia.importing.launchers"):
+            find_all()
+        assert any(rec.levelname == "WARNING" for rec in caplog.records)
 
     def test_sorted_by_launcher_and_name(self) -> None:
         """Kết quả luôn sắp xếp theo launcher, rồi instance_name."""
