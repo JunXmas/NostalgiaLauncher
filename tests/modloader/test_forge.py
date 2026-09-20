@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
+import sys
 import zipfile
 from dataclasses import replace
 from pathlib import Path
@@ -14,8 +16,10 @@ from fake_mojang import VERSION_ID
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Launcher
 from nostalgia.errors import VersionError
-from nostalgia.modloader.forge import neoforge_prefix
+from nostalgia.modloader.forge import neoforge_prefix, run_installer
+from nostalgia.net.http import HttpClient
 from nostalgia.repo.version_repo import VersionRepository
+from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 from test_api import make_launcher
 
 FORGE_NAME = f"{VERSION_ID}-47.2.0"
@@ -173,3 +177,35 @@ def test_unknown_loader_version_is_a_clear_error(
 
     with pytest.raises(VersionError, match="không có bản loader"):
         launcher.install_loader("forge", VERSION_ID, "1.99.9-0.0.0")
+
+
+def test_installer_hides_console_on_windows(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    http_client: HttpClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """MYLA-37.5 (Forge): installer chạy qua `java.exe` không được mở cửa sổ CMD trên Windows."""
+    server_state.add("/forge-installer.jar", installer_jar())
+    versions_dir = tmp_path / "versions"
+    captured_kwargs: list[dict[str, object]] = []
+
+    def fake_run(argv: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured_kwargs.append(kwargs)
+        (versions_dir / "forge-fake-id").mkdir(parents=True)
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    run_installer(
+        http_client,
+        tmp_path,
+        versions_dir,
+        tmp_path / "libraries",
+        Path("java"),
+        server.url("/forge-installer.jar"),
+    )
+
+    assert captured_kwargs[0]["creationflags"] == CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW

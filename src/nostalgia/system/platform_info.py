@@ -77,3 +77,18 @@ def current_platform() -> Platform:
 def classpath_separator(os_name: str) -> str:
     """Dấu ngăn cách classpath của java: `;` trên Windows, `:` ở nơi khác."""
     return CLASSPATH_SEPARATORS.get(os_name, ":")
+
+
+# Cờ Windows, viết thẳng số vì `subprocess.CREATE_*` không tồn tại trên Linux/macOS — hằng số
+# thật thì `resolve_creation_flags` mới kiểm được nhánh win32 từ máy CI chạy Linux.
+CREATE_NEW_PROCESS_GROUP = 0x00000200
+# Không cấp console cho tiến trình con. Thiếu cờ này, `java.exe` mở một cửa sổ CMD, và người
+# dùng đóng cửa sổ đó là tiến trình con tắt theo — đúng lỗi MYLA-37.5.
+CREATE_NO_WINDOW = 0x08000000
+
+
+def resolve_creation_flags(platform: str) -> int:
+    """Cờ `creationflags` cho `Popen`/`subprocess.run`. Thuần, kiểm win32 không cần Windows."""
+    if platform != "win32":
+        return 0
+    return CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW

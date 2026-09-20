@@ -12,6 +12,7 @@ cần chạy Java, chỉ ghi JSON và jar universal từ chính installer.
 from __future__ import annotations
 
 import re
+import sys
 import time
 from pathlib import Path
 
@@ -26,6 +27,7 @@ from nostalgia.net.payload import fetch_json
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.endpoints import DEFAULT_ENDPOINTS, Endpoints
 from nostalgia.storage.files import atomic_write_json, ensure_dir
+from nostalgia.system.platform_info import resolve_creation_flags
 
 MAX_METADATA_BYTES = 4 * 1024 * 1024
 INSTALLER_TIMEOUT_SECONDS = 600
@@ -176,6 +178,7 @@ def run_installer(
                     text=True,
                     timeout=INSTALLER_TIMEOUT_SECONDS,
                     check=False,
+                    creationflags=resolve_creation_flags(sys.platform),
                 )
             except subprocess.TimeoutExpired:
                 last_output = f"installer không xong sau {INSTALLER_TIMEOUT_SECONDS} giây"
