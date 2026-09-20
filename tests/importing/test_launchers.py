@@ -10,7 +10,6 @@ import pytest
 from nostalgia.importing import launchers
 from nostalgia.importing.launchers import (
     Found,
-    _dedupe_repeated_prefix,
     _scan_prism,
     _scan_vanilla,
     find_all,
@@ -73,20 +72,6 @@ name=DonutSMP Modpack
 
 [UI]
 mods_Page\\Columns="AAAA/wAAAAAAAAAB%AAAAZA=="
-"""
-
-# Đoạn liên quan của instance.cfg THẬT trên máy (đọc chỉ-đọc từ
-# /home/jun/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances/
-# "DonutSMP Modpack"/instance.cfg — dán trong bình luận issue). Chỉ một dòng `name=`. Chuỗi
-# lặp đã có sẵn TRONG FILE vì ManagedPack tự ghép ManagedPackName + " " + ManagedPackVersionName,
-# và ManagedPackVersionName modrinth ở đây lại tự lặp lại ManagedPackName ở đầu:
-#   ManagedPackName=DonutSMP Modpack
-#   ManagedPackVersionName=DonutSMP Modpack 2.0.1
-#   name=DonutSMP Modpack DonutSMP Modpack 2.0.1
-REAL_DUPLICATE_NAME_CFG = """[General]
-ManagedPackName=DonutSMP Modpack
-ManagedPackVersionName=DonutSMP Modpack 2.0.1
-name=DonutSMP Modpack DonutSMP Modpack 2.0.1
 """
 
 
@@ -156,42 +141,6 @@ class TestScanPrism:
         monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
         assert _scan_prism() == []
-
-    def test_managed_pack_name_not_tripled(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """instance.cfg thật (ManagedPackVersionName tự lặp ManagedPackName) không bị nhân ba.
-
-        Bằng chứng máy thật — xem REAL_DUPLICATE_NAME_CFG: chỉ MỘT dòng `name=` trong file,
-        giá trị 'DonutSMP Modpack DonutSMP Modpack 2.0.1' đã nằm sẵn trong file vì PrismLauncher
-        tự ghép ManagedPackName + ManagedPackVersionName lúc ghi, không phải lỗi đọc parser.
-        """
-        home = tmp_path / "home"
-        instances = home / ".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances"
-        _write_instance(instances, "DonutSMP Modpack", REAL_DUPLICATE_NAME_CFG)
-
-        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
-        monkeypatch.setenv("HOME", str(home))
-        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
-
-        result = _scan_prism()
-        assert len(result) == 1
-        assert result[0].instance_name == "DonutSMP Modpack 2.0.1"
-        assert result[0].instance_name.count("DonutSMP Modpack") == 1
-
-
-@pytest.mark.parametrize(
-    ("name", "expected"),
-    [
-        ("DonutSMP Modpack DonutSMP Modpack 2.0.1", "DonutSMP Modpack 2.0.1"),
-        ("RLCraft RLCraft", "RLCraft"),
-        ("RLCraft", "RLCraft"),
-        ("Re-Console 26.2 26.07.5.main-26.2", "Re-Console 26.2 26.07.5.main-26.2"),
-    ],
-)
-def test_dedupe_repeated_prefix(name: str, expected: str) -> None:
-    """_dedupe_repeated_prefix bóc cụm từ mở đầu bị lặp, để nguyên chỗ không lặp."""
-    assert _dedupe_repeated_prefix(name) == expected
 
 
 @pytest.mark.allow_home
