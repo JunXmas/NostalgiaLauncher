@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
+import sys
 import zipfile
 from dataclasses import replace
 from pathlib import Path
@@ -14,6 +16,10 @@ from fake_mojang import VERSION_ID
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Launcher
 from nostalgia.errors import VersionError
+from nostalgia.launch.game_process import (
+    CREATE_NEW_PROCESS_GROUP,
+    CREATE_NO_WINDOW,
+)
 from nostalgia.modloader.forge import neoforge_prefix
 from nostalgia.repo.version_repo import VersionRepository
 from test_api import make_launcher
@@ -149,6 +155,33 @@ def test_install_forge_runs_installer_and_merges_inheritance(
     assert list((launcher.paths.data_dir / "installers").iterdir()) == []
     assert (launcher.paths.data_dir / "launcher_profiles.json").is_file()
 
+
+def test_install_forge_passes_windows_creation_flags(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """MYLA-37.5 (Forge): trên Windows, installer cũng phải chạy ẩn console, giống game_process."""
+    launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    seen_flags: list[int] = []
+    real_run = subprocess.run
+
+    def spy_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        seen_flags.append(kwargs.get("creationflags", 0))
+        kwargs.pop("creationflags", None)
+        return real_run(*args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", spy_run)
+
+    launcher.install_loader("forge", VERSION_ID, FORGE_NAME)
+
+    assert seen_flags
+    assert seen_flags[0] & CREATE_NO_WINDOW
+    assert seen_flags[0] & CREATE_NEW_PROCESS_GROUP
 
 def test_install_neoforge_picks_stable_when_unspecified(
     server: LocalHttpsServer,

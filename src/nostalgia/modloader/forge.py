@@ -145,6 +145,9 @@ def run_installer(
     nó bỏ qua phần đã đúng, nên thử tối đa `INSTALLER_ATTEMPTS` lần.
     """
     import subprocess  # nhập trễ: đường nhanh của CLI không cần nó
+    import sys
+
+    from nostalgia.launch.game_process import resolve_creation_flags
 
     installer_dir = ensure_dir(data_dir / "installers")
     jar_path = installer_dir / installer_url.rsplit("/", 1)[-1]
@@ -176,6 +179,7 @@ def run_installer(
                     text=True,
                     timeout=INSTALLER_TIMEOUT_SECONDS,
                     check=False,
+                    creationflags=resolve_creation_flags(sys.platform),
                 )
             except subprocess.TimeoutExpired:
                 last_output = f"installer không xong sau {INSTALLER_TIMEOUT_SECONDS} giây"
