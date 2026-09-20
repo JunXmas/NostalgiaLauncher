@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.importing.launchers import Found, find_all
+from nostalgia.importing.launchers import Found, _scan_prism, find_all
 
 
 class TestFound:
@@ -38,46 +38,107 @@ class TestFound:
         assert found.loader_kind == "fabric"
 
 
+def _write_instance(
+    instances: Path,
+    dir_name: str,
+    cfg_body: str,
+    *,
+    game_version: str = "1.21",
+    loader_uid: str | None = "net.fabricmc.fabric-loader",
+) -> Path:
+    """Dựng một instance PrismLauncher giả, trả thư mục instance."""
+    inst = instances / dir_name
+    (inst / ".minecraft").mkdir(parents=True)
+    (inst / "instance.cfg").write_text(cfg_body, encoding="utf-8")
+    components: list[dict[str, str]] = [{"uid": "net.minecraft", "version": game_version}]
+    if loader_uid is not None:
+        components.append({"uid": loader_uid, "version": "0.19.2"})
+    (inst / "mmc-pack.json").write_text(
+        json.dumps({"components": components, "formatVersion": 1}), encoding="utf-8"
+    )
+    return inst
+
+
+# instance.cfg thật của Prism 9.x: có section [General], và [UI] chứa base64 có dấu '%'.
+REAL_CFG = """[General]
+ConfigVersion=1.3
+InstanceType=OneSix
+JavaPath=/usr/bin/java
+name=DonutSMP Modpack
+totalTimePlayed=870
+
+[UI]
+mods_Page\\Columns="AAAA/wAAAAAAAAAB%AAAAZA=="
+mods_Page\\ColumnsOverride=false
+"""
+
+
 class TestScanPrism:
     """Quét PrismLauncher từ filesystem giả."""
 
-    def test_prism_detects_fabric(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Dựng cấu trúc PrismLauncher giả và kiểm tra detect."""
-        instances = tmp_path / "instances"
-        inst = instances / "my-instance"
-        game_subdir = inst / ".minecraft"
-        game_subdir.mkdir(parents=True)
+    def test_flatpak_path_and_general_section(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Bản Flatpak ở ~/.var/app vẫn phải quét ra, và đọc đúng name trong [General]."""
+        home = tmp_path / "home"
+        instances = home / ".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances"
+        _write_instance(instances, "DonutSMP Modpack", REAL_CFG)
 
-        # instance.cfg (INI không có section header)
-        (inst / "instance.cfg").write_text("name=Fabric 1.21\n")
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
-        # mmc-pack.json
-        (inst / "mmc-pack.json").write_text(
-            json.dumps(
-                {
-                    "components": [
-                        {"uid": "net.minecraft", "version": "1.21"},
-                        {"uid": "net.fabricmc.fabric-loader", "version": "0.15.0"},
-                    ]
-                }
-            )
+        result = _scan_prism()
+        assert len(result) == 1
+        assert result[0].instance_name == "DonutSMP Modpack"
+        assert result[0].game_version == "1.21"
+        assert result[0].loader_kind == "fabric"
+        assert result[0].game_dir == instances / "DonutSMP Modpack/.minecraft"
+
+    def test_legacy_cfg_without_section(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """instance.cfg bản cũ không có section header vẫn đọc được name."""
+        home = tmp_path / "home"
+        instances = home / ".local/share/PrismLauncher/instances"
+        _write_instance(
+            instances,
+            "old-inst",
+            "name=Forge cổ\nInstanceType=OneSix\n",
+            game_version="1.12.2",
+            loader_uid="net.minecraftforge",
         )
 
-        # Monkeypatch platform and path
         monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
-        monkeypatch.setattr(
-            "nostalgia.importing.launchers.Path.expanduser",
-            lambda self: tmp_path if str(self).endswith("PrismLauncher/instances") else self,
-        )
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
-        # Can't easily monkeypatch Path.expanduser for specific instances,
-        # so test the parsing logic via the module internals.
-        # This test validates the dataclass creation and field correctness.
+        result = _scan_prism()
+        assert [(f.instance_name, f.game_version, f.loader_kind) for f in result] == [
+            ("Forge cổ", "1.12.2", "forge")
+        ]
 
-    def test_no_prism_dir(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Không có thư mục PrismLauncher → danh sách rỗng."""
+    def test_xdg_and_flatpak_not_double_counted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """XDG_DATA_HOME trỏ đúng chỗ mặc định thì instance chỉ đếm một lần."""
+        home = tmp_path / "home"
+        instances = home / ".local/share/PrismLauncher/instances"
+        _write_instance(instances, "solo", "[General]\nname=Solo\n")
+
         monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
-        # find_all catches all exceptions, so it should return empty or just vanilla.
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local/share"))
+
+        assert [f.instance_name for f in _scan_prism()] == ["Solo"]
+
+    def test_no_prism_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Không có thư mục PrismLauncher → danh sách rỗng, không ném lỗi."""
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(tmp_path / "trong-rong"))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+
+        assert _scan_prism() == []
 
 
 class TestFindAll:
