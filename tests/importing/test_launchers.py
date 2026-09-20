@@ -7,7 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.importing.launchers import Found, _scan_prism, find_all
+from nostalgia.importing import launchers
+from nostalgia.importing.launchers import (
+    Found,
+    _dedupe_repeated_prefix,
+    _scan_prism,
+    _scan_vanilla,
+    find_all,
+)
 
 
 class TestFound:
@@ -59,17 +66,27 @@ def _write_instance(
     return inst
 
 
-# instance.cfg thật của Prism 9.x: có section [General], và [UI] chứa base64 có dấu '%'.
+# instance.cfg thật của Prism 9.x: có section [General], và [UI] chứa base64 có dấu '%'
+# (RawConfigParser phải không nội suy '%', ConfigParser thường sẽ ném lỗi ở đây).
 REAL_CFG = """[General]
-ConfigVersion=1.3
-InstanceType=OneSix
-JavaPath=/usr/bin/java
 name=DonutSMP Modpack
-totalTimePlayed=870
 
 [UI]
 mods_Page\\Columns="AAAA/wAAAAAAAAAB%AAAAZA=="
-mods_Page\\ColumnsOverride=false
+"""
+
+# Đoạn liên quan của instance.cfg THẬT trên máy (đọc chỉ-đọc từ
+# /home/jun/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances/
+# "DonutSMP Modpack"/instance.cfg — dán trong bình luận issue). Chỉ một dòng `name=`. Chuỗi
+# lặp đã có sẵn TRONG FILE vì ManagedPack tự ghép ManagedPackName + " " + ManagedPackVersionName,
+# và ManagedPackVersionName modrinth ở đây lại tự lặp lại ManagedPackName ở đầu:
+#   ManagedPackName=DonutSMP Modpack
+#   ManagedPackVersionName=DonutSMP Modpack 2.0.1
+#   name=DonutSMP Modpack DonutSMP Modpack 2.0.1
+REAL_DUPLICATE_NAME_CFG = """[General]
+ManagedPackName=DonutSMP Modpack
+ManagedPackVersionName=DonutSMP Modpack 2.0.1
+name=DonutSMP Modpack DonutSMP Modpack 2.0.1
 """
 
 
@@ -139,6 +156,88 @@ class TestScanPrism:
         monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
         assert _scan_prism() == []
+
+    def test_managed_pack_name_not_tripled(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """instance.cfg thật (ManagedPackVersionName tự lặp ManagedPackName) không bị nhân ba.
+
+        Bằng chứng máy thật — xem REAL_DUPLICATE_NAME_CFG: chỉ MỘT dòng `name=` trong file,
+        giá trị 'DonutSMP Modpack DonutSMP Modpack 2.0.1' đã nằm sẵn trong file vì PrismLauncher
+        tự ghép ManagedPackName + ManagedPackVersionName lúc ghi, không phải lỗi đọc parser.
+        """
+        home = tmp_path / "home"
+        instances = home / ".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances"
+        _write_instance(instances, "DonutSMP Modpack", REAL_DUPLICATE_NAME_CFG)
+
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+
+        result = _scan_prism()
+        assert len(result) == 1
+        assert result[0].instance_name == "DonutSMP Modpack 2.0.1"
+        assert result[0].instance_name.count("DonutSMP Modpack") == 1
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("DonutSMP Modpack DonutSMP Modpack 2.0.1", "DonutSMP Modpack 2.0.1"),
+        ("RLCraft RLCraft", "RLCraft"),
+        ("RLCraft", "RLCraft"),
+        ("Re-Console 26.2 26.07.5.main-26.2", "Re-Console 26.2 26.07.5.main-26.2"),
+    ],
+)
+def test_dedupe_repeated_prefix(name: str, expected: str) -> None:
+    """_dedupe_repeated_prefix bóc cụm từ mở đầu bị lặp, để nguyên chỗ không lặp."""
+    assert _dedupe_repeated_prefix(name) == expected
+
+
+@pytest.mark.allow_home
+@pytest.mark.parametrize(
+    ("profiles", "expected_version"),
+    [
+        # Khoá đầu tiên trong dict ("cu") KHÔNG phải profile dùng gần nhất — thứ tự khoá
+        # trong JSON/dict không có nghĩa, `for ... break` cũ lấy nhầm cái đầu.
+        (
+            {
+                "cu": {"lastVersionId": "1.16.5", "lastUsed": "2020-01-01T00:00:00Z"},
+                "moi": {"lastVersionId": "1.21.1", "lastUsed": "2026-09-01T00:00:00Z"},
+            },
+            "1.21.1",
+        ),
+        ({"x": {"lastVersionId": "1.21.1"}}, ""),
+    ],
+)
+def test_scan_vanilla_picks_newest_lastused(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    profiles: dict[str, dict[str, str]],
+    expected_version: str,
+) -> None:
+    """_scan_vanilla chọn game_version theo profile lastUsed mới nhất, không lấy bừa."""
+    home = tmp_path / "home"
+    base = home / ".minecraft"
+    (base / "versions").mkdir(parents=True)
+    (base / "launcher_profiles.json").write_text(
+        json.dumps({"profiles": profiles}), encoding="utf-8"
+    )
+
+    monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+    monkeypatch.setenv("HOME", str(home))
+
+    result = _scan_vanilla()
+    assert len(result) == 1
+    assert result[0].game_version == expected_version
+
+
+class TestModuleDocstring:
+    """Dòng mô tả module không được nhắc bộ quét không tồn tại."""
+
+    def test_no_tlauncher_mention(self) -> None:
+        assert launchers.__doc__ is not None
+        assert "TLauncher" not in launchers.__doc__
 
 
 class TestFindAll:

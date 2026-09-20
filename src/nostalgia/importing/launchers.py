@@ -1,4 +1,4 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Vanilla."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import platform
+import re
 from pathlib import Path
 
 from nostalgia.modloader.model import LoaderKind
@@ -76,19 +77,28 @@ def _prism_bases() -> list[Path]:
     return []
 
 
+def _dedupe_repeated_prefix(name: str) -> str:
+    """Bỏ cụm từ mở đầu bị lặp lại trong tên.
+
+    PrismLauncher tự ghép `name` = ManagedPackName + " " + ManagedPackVersionName, và với
+    một số gói modrinth thì ManagedPackVersionName lại tự lặp lại ManagedPackName ở đầu —
+    ví dụ thật trên máy: 'DonutSMP Modpack DonutSMP Modpack 2.0.1'. Bóc cụm lặp, giữ phần sau.
+    """
+    return re.sub(r"^(.+?) \1(?=\s|$)", r"\1", name)
+
+
 def _prism_instance_name(cfg: Path, fallback: str) -> str:
-    """Đọc `name=` trong instance.cfg.
+    """Đọc `name=` trong instance.cfg, bỏ cụm lặp đầu chuỗi.
 
     File này là INI có section `[General]`, nhưng bản cũ lại không có section nào. Đọc thô
     (không nội suy `%`) vì mục `[UI]` chứa base64 làm ConfigParser thường ném lỗi.
     """
-    body = cfg.read_text(encoding="utf-8")
     parser = configparser.RawConfigParser()
-    parser.read_string("[__nostalgia__]\n" + body)
+    parser.read_string("[__nostalgia__]\n" + cfg.read_text(encoding="utf-8"))
     for section in ("General", "__nostalgia__"):
         name = parser.get(section, "name", fallback="").strip()
         if name:
-            return name
+            return _dedupe_repeated_prefix(name)
     return fallback
 
 
@@ -225,12 +235,11 @@ def _scan_vanilla() -> list[Found]:
     profiles_json = base / "launcher_profiles.json"
     if profiles_json.exists():
         try:
-            body = json.loads(profiles_json.read_text(encoding="utf-8"))
-            for saved in body.get("profiles", {}).values():
-                last_v = saved.get("lastVersionId")
-                if last_v:
-                    game_version = last_v
-                    break
+            profiles = json.loads(profiles_json.read_text(encoding="utf-8")).get("profiles", {})
+            # lastUsed mới nhất thắng; không có lastUsed thì để game_version rỗng, đừng lấy bừa.
+            usable = [p for p in profiles.values() if p.get("lastUsed") and p.get("lastVersionId")]
+            if usable:
+                game_version = max(usable, key=lambda p: p["lastUsed"])["lastVersionId"]
         except Exception:
             logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
     return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
