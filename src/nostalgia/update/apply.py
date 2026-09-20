@@ -87,9 +87,14 @@ def write_swap_script(
 def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") -> None:
     """Chạy script tách hẳn khỏi launcher, để launcher thoát mà script vẫn sống."""
     if windows:
-        detached = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        # DETACHED_PROCESS nói "đừng kế thừa console cha", không nói "đừng có console" — cmd.exe
+        # là app console nên vẫn tự AllocConsole và hiện cửa sổ. CREATE_NO_WINDOW mới là cờ đúng,
+        # nhưng Win32 bỏ qua nó khi đứng chung với DETACHED_PROCESS/CREATE_NEW_CONSOLE nên phải
+        # thay chứ không phải thêm. CREATE_NEW_PROCESS_GROUP giữ nguyên: Windows không có kill
+        # theo cây tiến trình mặc định, script vẫn sống sau khi launcher thoát.
+        creationflags = 0x08000000 | 0x00000200  # CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
         subprocess.Popen(
-            ["cmd.exe", "/c", str(script_path)], creationflags=detached, close_fds=True
+            ["cmd.exe", "/c", str(script_path)], creationflags=creationflags, close_fds=True
         )
         return
 

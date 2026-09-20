@@ -15,11 +15,41 @@ from nostalgia.update.apply import (
     SwapPlan,
     clean_child_env,
     detect_install_kind,
+    launch_swap_script,
     render_swap_script,
     write_swap_script,
 )
 
 pytestmark = pytest.mark.skipif(os.name == "nt", reason="script sh chỉ chạy trên POSIX")
+
+DETACHED_PROCESS = 0x00000008
+CREATE_NEW_PROCESS_GROUP = 0x00000200
+CREATE_NO_WINDOW = 0x08000000
+
+
+def test_windows_launch_uses_create_no_window_not_detached_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """CREATE_NO_WINDOW bị Win32 bỏ qua khi đứng chung với DETACHED_PROCESS — phải thay,
+    không phải thêm. Gỡ bản vá (đổi lại thành DETACHED_PROCESS) để test này đỏ đúng chỗ."""
+    captured: dict[str, object] = {}
+
+    def fake_popen(args, **kwargs):
+        captured["creationflags"] = kwargs["creationflags"]
+
+        class _Proc:
+            pass
+
+        return _Proc()
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    launch_swap_script(Path(r"C:\Nostalgia\apply-update.cmd"), windows=True)
+
+    flags = captured["creationflags"]
+    assert flags & CREATE_NO_WINDOW, "phải bật CREATE_NO_WINDOW để không hiện cửa sổ CMD"
+    assert not flags & DETACHED_PROCESS, "DETACHED_PROCESS làm CREATE_NO_WINDOW bị bỏ qua"
+    assert flags & CREATE_NEW_PROCESS_GROUP, "vẫn cần nhóm tiến trình riêng"
 
 
 def make_tree(tmp_path: Path) -> tuple[Path, Path, Path]:
