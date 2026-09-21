@@ -10,6 +10,7 @@ import pytest
 from nostalgia.importing import launchers
 from nostalgia.importing.launchers import (
     Found,
+    _scan_modrinth_app,
     _scan_prism,
     _scan_vanilla,
     find_all,
@@ -141,6 +142,47 @@ class TestScanPrism:
         monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
         assert _scan_prism() == []
+
+
+class TestScanModrinth:
+    """Quét ModrinthApp từ filesystem giả.
+
+    App-id Flatpak thật: `com.modrinth.ModrinthApp` (manifest flathub/com.modrinth.ModrinthApp).
+    Đường native Linux xác nhận từ trang hỗ trợ Modrinth: `$XDG_DATA_HOME/ModrinthApp/`
+    (mặc định `~/.local/share/ModrinthApp/`). Máy chủ dự án không cài ModrinthApp
+    (`ls ~/.var/app/` chỉ ra `com.obsproject.Studio`, `org.prismlauncher.PrismLauncher`,
+    `org.vinegarhq.Sober`) — chưa kiểm được trên một cài đặt Flatpak thật, chỉ tra từ manifest.
+    """
+
+    def test_flatpak_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Bản Flatpak ở ~/.var/app/com.modrinth.ModrinthApp vẫn phải quét ra."""
+        home = tmp_path / "home"
+        profiles = home / ".var/app/com.modrinth.ModrinthApp/data/ModrinthApp/profiles"
+        prof = profiles / "donutsmp"
+        prof.mkdir(parents=True)
+        (prof / "profile.json").write_text(
+            json.dumps({"name": "DonutSMP", "game_version": "1.21", "loader": "forge"}),
+            encoding="utf-8",
+        )
+
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+
+        result = _scan_modrinth_app()
+        assert len(result) == 1
+        assert result[0].instance_name == "DonutSMP"
+        assert result[0].game_version == "1.21"
+        assert result[0].loader_kind == "forge"
+        assert result[0].game_dir == profiles / "donutsmp"
+
+    def test_no_modrinth_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Không có thư mục ModrinthApp → danh sách rỗng, không ném lỗi."""
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(tmp_path / "trong-rong"))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+
+        assert _scan_modrinth_app() == []
 
 
 @pytest.mark.allow_home
