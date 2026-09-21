@@ -22,6 +22,17 @@ QtObject {
     readonly property color danger:      "#f2555a"
     readonly property color warning:     "#f5c451"
 
+    /* Khối kiểu Bedrock (ActionButton, Toggle, Slider): viền tối, mặt sáng, cạnh dưới dày.
+       Gom ở đây để nút, công tắc và thanh trượt không trôi thành ba sắc xám khác nhau. */
+    readonly property color blockBorder:  "#1e1e1f"
+    readonly property color blockFace:    "#48494a"
+    readonly property color blockEdge:    "#2b2c2d"
+    readonly property color blockOnFace:  "#3c8527"
+    readonly property color blockOnEdge:  "#1d4d13"
+    readonly property color blockLight:   "#d0d1d2"
+    readonly property color blockTrack:   "#2b2c2d"
+    readonly property color blockGlint:   "#33ffffff"
+
     readonly property int radius:        14
     readonly property int radiusSmall:   9
     readonly property int gap:           14
