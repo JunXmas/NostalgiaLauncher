@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -12,6 +13,8 @@ import pytest
 
 from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 from nostalgia.update.apply import (
+    INSTALL_KIND_FROZEN,
+    INSTALL_KIND_RESTRICTED,
     INSTALL_KIND_SOURCE,
     SwapPlan,
     clean_child_env,
@@ -102,6 +105,51 @@ def test_windows_script_and_source_install_kind() -> None:
     assert "tasklist" in script and "4242" in script and "xcopy" in script
     assert 'move "C:\\Nostalgia.old" "C:\\Nostalgia"' in script, "chép hỏng thì trả lại"
     assert detect_install_kind() == INSTALL_KIND_SOURCE, "test chạy từ mã nguồn, không phải gói"
+
+
+def test_appimage_env_forces_restricted(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Biến môi trường ``APPIMAGE`` (mount squashfs chỉ-đọc) → không đi vào đường tráo."""
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setenv("APPIMAGE", str(tmp_path / "Nostalgia.AppImage"))
+    monkeypatch.setattr(sys, "executable", str(tmp_path / "nostalgia-ui"))
+    assert detect_install_kind() == INSTALL_KIND_RESTRICTED
+
+
+def test_readonly_install_dir_forces_restricted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Thư mục cài không có quyền ghi (gói .deb/.rpm ở /opt, chủ root) → không đi vào đường tráo."""
+    if os.geteuid() == 0:
+        pytest.skip("root ghi được cả thư mục 0o555 — test này vô nghĩa dưới root")
+    install_dir = tmp_path / "opt_nostalgia"
+    install_dir.mkdir()
+    executable = install_dir / "nostalgia-ui"
+    executable.touch()
+    install_dir.chmod(0o555)
+    try:
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        monkeypatch.setattr(sys, "platform", "linux")
+        monkeypatch.delenv("APPIMAGE", raising=False)
+        monkeypatch.setattr(sys, "executable", str(executable))
+        assert detect_install_kind() == INSTALL_KIND_RESTRICTED
+    finally:
+        install_dir.chmod(0o755)
+
+
+def test_writable_frozen_install_dir_is_unchanged(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Đường `frozen` bình thường (ghi được) không đổi hành vi."""
+    install_dir = tmp_path / "install"
+    install_dir.mkdir()
+    executable = install_dir / "nostalgia-ui"
+    executable.touch()
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.delenv("APPIMAGE", raising=False)
+    monkeypatch.setattr(sys, "executable", str(executable))
+    assert detect_install_kind() == INSTALL_KIND_FROZEN
 
 
 def test_sh_script_uses_nohup_not_exec() -> None:

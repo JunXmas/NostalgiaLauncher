@@ -23,6 +23,7 @@ from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_W
 INSTALL_KIND_FROZEN = "frozen"
 INSTALL_KIND_SOURCE = "source"
 INSTALL_KIND_APP = "app"
+INSTALL_KIND_RESTRICTED = "restricted"
 EXECUTABLE_NAME = "nostalgia-ui"
 
 
@@ -56,10 +57,17 @@ class SwapPlan:
 
 def detect_install_kind() -> str:
     """`frozen`: gói onedir tự tráo được. `app`: gói macOS .app — thư mục thực thi nằm trong
-    Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `source`: mã nguồn."""
+    Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `restricted`: frozen
+    nhưng không tráo được — AppImage (biến môi trường ``APPIMAGE``, mount squashfs chỉ-đọc)
+    hoặc thư mục cài không có quyền ghi (gói `.deb`/`.rpm` cài ở `/opt`, chủ là root). Cùng
+    rơi vào nhánh "chỉ mở trang tải" như `app`. `source`: mã nguồn."""
     if not getattr(sys, "frozen", False):
         return INSTALL_KIND_SOURCE
-    return INSTALL_KIND_APP if sys.platform == "darwin" else INSTALL_KIND_FROZEN
+    if sys.platform == "darwin":
+        return INSTALL_KIND_APP
+    if os.environ.get("APPIMAGE") or not os.access(current_install_dir(), os.W_OK):
+        return INSTALL_KIND_RESTRICTED
+    return INSTALL_KIND_FROZEN
 
 
 def current_install_dir() -> Path:

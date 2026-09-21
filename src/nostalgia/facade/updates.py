@@ -13,6 +13,8 @@ from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.update.apply import (
     INSTALL_KIND_FROZEN,
+    INSTALL_KIND_RESTRICTED,
+    INSTALL_KIND_SOURCE,
     SwapPlan,
     current_install_dir,
     detect_install_kind,
@@ -40,7 +42,8 @@ class UpdateOperations(LauncherContext):
     __slots__ = ()
 
     def launcher_install_kind(self) -> str:
-        """`frozen` (gói PyInstaller, tự áp được) hay `source` (chạy từ mã nguồn)."""
+        """`frozen` (gói PyInstaller, tự áp được) hay `source`/`app`/`restricted` (chỉ mở
+        trang tải — xem `detect_install_kind`)."""
         return detect_install_kind()
 
     def check_launcher_update(self) -> LauncherRelease | None:
@@ -89,8 +92,19 @@ class UpdateOperations(LauncherContext):
     def apply_launcher_update(self, staged: StagedUpdate) -> Path:
         """Viết và chạy script tráo thư mục; người gọi PHẢI thoát launcher ngay sau đó.
         Chỉ cho gói đóng sẵn — chạy từ mã nguồn thì ném `UpdateError`."""
-        if self.launcher_install_kind() != INSTALL_KIND_FROZEN:
+        install_kind = self.launcher_install_kind()
+        if install_kind == INSTALL_KIND_SOURCE:
             raise UpdateError("đang chạy từ mã nguồn: cập nhật bằng `git pull` và `uv sync`")
+        if install_kind == INSTALL_KIND_RESTRICTED:
+            raise UpdateError(
+                "không tự cập nhật được với kiểu cài này (AppImage hoặc thư mục cài không có "
+                "quyền ghi, ví dụ gói .deb/.rpm cài ở /opt): tải bản mới từ trang phát hành rồi "
+                "cài đè thủ công"
+            )
+        if install_kind != INSTALL_KIND_FROZEN:
+            raise UpdateError(
+                f"kiểu cài '{install_kind}' không tự cập nhật được: tải bản mới thủ công"
+            )
         install_dir = current_install_dir()
         executable = install_dir / Path(sys.executable).name
         plan = SwapPlan(install_dir, staged.bundle_dir, executable, os.getpid())
