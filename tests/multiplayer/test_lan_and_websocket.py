@@ -3,13 +3,32 @@
 from __future__ import annotations
 
 import asyncio
+import socket
+import sys
+import threading
+import time
 
 import pytest
 from fake_relay import FakeRelay
 
 from nostalgia.errors import MultiplayerError
-from nostalgia.multiplayer.lan import build_beacon, parse_lan_beacon
+from nostalgia.multiplayer.lan import (
+    MULTICAST_GROUP,
+    MULTICAST_PORT,
+    LanWorld,
+    _interface_ipv4_addresses,
+    build_beacon,
+    detect_open_to_lan,
+    parse_lan_beacon,
+)
 from nostalgia.net.websocket import MAX_FRAME_BYTES, WebSocketClient
+
+# Chụp `connect` thật ở thời điểm import module — TRƯỚC khi fixture autouse `no_accidental_internet`
+# (tests/conftest.py) vá nó cho từng test. `_interface_ipv4_addresses_via_udp_connect()` cần
+# `connect()` thật tới một địa chỉ không phải loopback để kernel chọn route qua NIC thật (không
+# gói UDP nào thật sự rời máy trong bước `connect()`), việc mà lưới chặn mạng của bộ test cấm
+# theo mặc định.
+_REAL_SOCKET_CONNECT = socket.socket.connect
 
 
 def test_lan_detect_ignores_non_loopback_source() -> None:
@@ -28,6 +47,85 @@ def test_lan_detect_ignores_non_loopback_source() -> None:
 def test_lan_detect_rejects_bad_port(bad_port: int) -> None:
     assert parse_lan_beacon(build_beacon(bad_port, "x"), "127.0.0.1") is None
     assert parse_lan_beacon(b"[MOTD]x[/MOTD]", "127.0.0.1") is None
+
+
+def test_detect_open_to_lan_finds_real_beacon_over_loopback() -> None:
+    """Dò THẬT (không chỉ hàm thuần): phát beacon giả qua loopback, khẳng định
+    `detect_open_to_lan()` mở socket, join multicast, nghe, và trả đúng world.
+
+    Máy chạy CI/dev có thể có launcher/agent khác cũng đang phát beacon thật trên cùng cổng
+    4445 (cổng multicast cố định theo giao thức Minecraft, không đổi được) — `detect_open_to_lan`
+    trả world ĐẦU TIÊN thấy được, có thể là beacon của tiến trình khác. Vòng lặp dưới đây lặp
+    gọi/phát tới khi thấy ĐÚNG world của chính test, giống cách `service.py._wait_for_world`
+    polling thật, thay vì giả định lần gọi đầu tiên chắc chắn là của mình.
+    """
+    world_name = f"Beacon giả trong test {time.monotonic_ns()}"
+    beacon = build_beacon(25566, world_name)
+    sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+    sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton("127.0.0.1"))
+
+    found: LanWorld | None = None
+    deadline = time.monotonic() + 15.0
+    try:
+        while found is None and time.monotonic() < deadline:
+            result: dict[str, object] = {}
+
+            def detect() -> None:
+                result["world"] = detect_open_to_lan(1.0)
+
+            detector = threading.Thread(target=detect)
+            detector.start()
+            resend_deadline = time.monotonic() + 1.0
+            while detector.is_alive() and time.monotonic() < resend_deadline:
+                sender.sendto(beacon, (MULTICAST_GROUP, MULTICAST_PORT))
+                time.sleep(0.1)
+            detector.join(2.0)
+            assert not detector.is_alive(), "detect_open_to_lan() không trả về đúng hạn"
+            candidate = result.get("world")
+            if candidate is not None and candidate.world_name == world_name:  # type: ignore[union-attr]
+                found = candidate  # type: ignore[assignment]
+    finally:
+        sender.close()
+
+    assert found is not None, "None trong khi beacon đang phát là lỗi"
+    assert (found.world_port, found.world_name) == (25566, world_name)
+
+
+def test_detect_open_to_lan_bind_failure_differs_from_timeout() -> None:
+    """Bind hỏng (cổng bị chiếm bởi socket không chia sẻ được) phải ném `MultiplayerError`
+    kèm errno — KHÁC với hết giờ không thấy beacon, vốn trả `None` im lặng."""
+    blocker = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    blocker.bind(("", MULTICAST_PORT))  # không SO_REUSEADDR/REUSEPORT: chiếm cổng độc quyền
+    try:
+        with pytest.raises(MultiplayerError, match=r"errno=") as excinfo:
+            detect_open_to_lan(0.2)
+        assert "4445" in str(excinfo.value)
+    finally:
+        blocker.close()
+
+    # Gỡ chướng ngại: bind lại thành công, không còn ném MultiplayerError. Không khẳng định
+    # cứng None — máy dev có thể đang chạy launcher thật (nghe đúng cổng 4445) và phát beacon
+    # thật đúng lúc; kết quả hợp lệ ở đây là "không ném MultiplayerError", bất kể trả None hay
+    # một LanWorld thật.
+    try:
+        detect_open_to_lan(0.2)
+    except MultiplayerError as exc:
+        pytest.fail(f"bind lại phải thành công sau khi gỡ chướng ngại, nhưng vẫn lỗi: {exc}")
+
+
+def test_interface_addresses_fallback_without_fcntl(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Windows không có `fcntl`: `_interface_ipv4_addresses()` phải rơi về kỹ thuật UDP
+    `connect()` + `getsockname()` thay vì trả rỗng (nguyên nhân (1) trong JL-13)."""
+    monkeypatch.setattr(socket.socket, "connect", _REAL_SOCKET_CONNECT)
+    monkeypatch.setitem(sys.modules, "fcntl", None)  # `import fcntl` bên trong hàm sẽ ném ImportError
+
+    addresses = _interface_ipv4_addresses()
+
+    assert addresses, "fallback không có fcntl vẫn phải tìm được ít nhất một IP của máy"
+    for address in addresses:
+        socket.inet_aton(address)  # phải là IPv4 hợp lệ
+    assert "127.0.0.1" not in addresses, "fallback phải tìm IP NIC thật, không phải loopback"
 
 
 def test_websocket_accept_is_verified() -> None:
