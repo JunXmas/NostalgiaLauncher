@@ -29,7 +29,7 @@ os.environ["XDG_DATA_HOME"] = str(WORK_DIR / "home/.local/share")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QObject, qInstallMessageHandler  # noqa: E402
-from PySide6.QtGui import QGuiApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from nostalgia.account.model import Account  # noqa: E402
 from nostalgia.api import Launcher  # noqa: E402
@@ -60,7 +60,7 @@ def main() -> int:
     patched.list_accounts = counted_list
     patched.describe_skin = counted_describe
 
-    qt_application = QGuiApplication(["ui-account-probe"])
+    qt_application = QApplication(["ui-account-probe"])
     qt_application.setApplicationVersion("0.0.0")
     view, bridge = build_view(launcher)
     root_item = view.rootObject()

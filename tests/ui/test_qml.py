@@ -278,3 +278,15 @@ def test_the_resources_card_opens_the_library_on_resource_packs(tmp_path: Path) 
     assert library is not None
     assert library.property("kind") == "resourcepack"
     assert root_item.property("libraryKind") == "", "dùng xong phải xoá để lần sau mở bình thường"
+
+
+def test_bench_scripts_build_a_qapplication_not_a_qguiapplication() -> None:
+    """`build_view()` tạo `QSystemTrayIcon` — widget, đòi `QApplication`. Bench nào dựng
+    `QGuiApplication` sẽ chết ở `QWidget: Cannot create a QWidget without QApplication`, mà
+    không test nào bắt được vì test dùng đúng lớp (`tests/conftest.py`). Kiểm tĩnh, vì không
+    thể dựng hai QApplication trong cùng một phiên để thử thật."""
+    bench_dir = Path(__file__).resolve().parents[2] / "bench"
+    scripts = sorted(bench_dir.glob("ui_*.py"))
+    assert scripts, f"không thấy bench giao diện nào trong {bench_dir}"
+    offenders = [p.name for p in scripts if "QGuiApplication(" in p.read_text(encoding="utf-8")]
+    assert not offenders, f"bench dựng QGuiApplication, chết khi build_view tạo tray: {offenders}"

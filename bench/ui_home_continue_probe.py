@@ -28,7 +28,7 @@ os.environ.setdefault("NOSTALGIA_SILENT", "1")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests"))
 
 from PySide6.QtCore import QObject, qInstallMessageHandler  # noqa: E402
-from PySide6.QtGui import QGuiApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from nbt_fixture import tiny_png, write_servers, write_world  # noqa: E402
 from nostalgia.api import Instance, Launcher  # noqa: E402
@@ -69,7 +69,7 @@ def main() -> int:
     launcher = Launcher.for_data_dir(WORK_DIR / "data", WORK_DIR / "config")
     launcher.add_offline_account("JunSlayest")
     seed(launcher)
-    qt_application = QGuiApplication(["ui-home-continue-probe"])
+    qt_application = QApplication(["ui-home-continue-probe"])
     qt_application.setApplicationVersion("0.0.0")
     view, bridge = build_view(launcher)
     root_item = view.rootObject()
