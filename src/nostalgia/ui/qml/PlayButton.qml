@@ -13,6 +13,21 @@ Column {
     signal picked(int index)
     signal createRequested()
 
+    // Thứ tự hiện trong khay: bản vừa chơi gần nhất lên đầu, còn lại giữ nguyên thứ tự chữ
+    // cái của `instances`. Mảng này là chỉ số TRONG `instances`, nên `picked()` vẫn phát ra
+    // chỉ số gốc — phần còn lại của trang chủ không cần biết khay đã sắp lại.
+    readonly property var order: root.instances
+        .map(function (_, index) { return index; })
+        .sort(function (first, second) {
+            var gap = (root.instances[second].lastPlayedAt || 0)
+                    - (root.instances[first].lastPlayedAt || 0);
+            return gap !== 0 ? gap : first - second;  // hoà thì giữ thứ tự cũ, đừng xáo trộn
+        })
+    // Chỉ số bản vừa chơi; -1 khi chưa ai chơi lần nào (máy mới) — lúc đó không gắn nhãn.
+    readonly property int recentIndex: root.order.length > 0
+                                       && (root.instances[root.order[0]].lastPlayedAt || 0) > 0
+                                       ? root.order[0] : -1
+
     spacing: 0
     width: 300
 
@@ -35,9 +50,16 @@ Column {
         dropUp: true
         width: parent.width
         height: 40
-        model: root.instances.map(function (instance) { return instance.label + "  (" + instance.versionId + ")"; })
-        currentIndex: root.chosenIndex
-        onActivated: function (index) { root.picked(index); }
+        // Đóng lại chỉ thấy một dòng: viên "N bản" là thứ duy nhất nói rằng còn bản khác.
+        badge: root.instances.length > 1 ? root.instances.length + " bản" : ""
+        markedIndex: root.order.indexOf(root.recentIndex)
+        markLabel: "vừa chơi"
+        model: root.order.map(function (index) {
+            var instance = root.instances[index];
+            return instance.label + "  (" + instance.versionId + ")";
+        })
+        currentIndex: root.order.indexOf(root.chosenIndex)
+        onActivated: function (position) { root.picked(root.order[position]); }
     }
     Rectangle {
         visible: root.instances.length === 0

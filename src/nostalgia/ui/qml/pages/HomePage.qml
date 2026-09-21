@@ -10,7 +10,10 @@ Item {
     id: page
     objectName: "homePage"
     property string search: ""
-    property int chosenIndex: 0
+    // Mặc định là bản vừa chơi gần nhất, không phải mục đầu bảng chữ cái. Đây là một
+    // binding: `onPicked` gán đè sẽ phá nó, nên lựa chọn tay của người dùng được giữ
+    // nguyên trong phiên.
+    property int chosenIndex: page.lastPlayedIndex()
     signal navigate(int pageIndex)
     signal navigateToLibrary(string contentKind)
 
@@ -26,6 +29,19 @@ Item {
             return entry.label.toLowerCase().indexOf(needle) >= 0
                 || entry.versionId.toLowerCase().indexOf(needle) >= 0;
         });
+    }
+    /* Chỉ số instance có `lastPlayedAt` lớn nhất; chưa ai chơi lần nào thì mục đầu. */
+    function lastPlayedIndex() {
+        var best = 0;
+        var bestPlayedAt = 0;
+        for (var index = 0; index < bridge.instances.length; index++) {
+            var playedAt = bridge.instances[index].lastPlayedAt || 0;
+            if (playedAt > bestPlayedAt) {
+                bestPlayedAt = playedAt;
+                best = index;
+            }
+        }
+        return best;
     }
     function playChosen() {
         if (page.chosen && bridge.activePlayerName) bridge.play(page.chosen.instanceId);
