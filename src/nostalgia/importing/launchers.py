@@ -1,29 +1,23 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp,
+TLauncher, SKlauncher, Vanilla.
+"""
 
 from __future__ import annotations
 
 import configparser
-import dataclasses
 import json
 import logging
 import os
 import platform
 from pathlib import Path
 
+from nostalgia.importing import launchers_extra as extra
+from nostalgia.importing.launchers_extra import Found
 from nostalgia.modloader.model import LoaderKind
 
 logger = logging.getLogger(__name__)
 
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class Found:
-    """Đại diện cho một instance Minecraft từ một launcher khác."""
-
-    launcher: str
-    instance_name: str
-    game_dir: Path
-    game_version: str
-    loader_kind: LoaderKind
+__all__ = ["Found", "find_all"]
 
 
 def _home() -> Path:
@@ -230,6 +224,9 @@ def _scan_vanilla() -> list[Found]:
         return []
     if not base.exists() or not (base / "versions").is_dir():
         return []
+    if (base / extra.TLAUNCHER_MARKER).is_file():
+        # TLauncher, không phải bản chính chủ -- _scan_tlauncher đã kể nó rồi.
+        return []
     game_version = ""
     profiles_json = base / "launcher_profiles.json"
     if profiles_json.exists():
@@ -248,7 +245,9 @@ def _scan_vanilla() -> list[Found]:
 def find_all() -> list[Found]:
     """Tìm tất cả instances từ mọi launcher. An toàn: không bao giờ ném lỗi."""
     all_found: list[Found] = []
-    for scanner in (_scan_prism, _scan_curseforge, _scan_modrinth_app, _scan_vanilla):
+    scanners = [_scan_prism, _scan_curseforge, _scan_modrinth_app]
+    scanners += [extra._scan_tlauncher, extra._scan_sklauncher, _scan_vanilla]
+    for scanner in scanners:
         try:
             all_found.extend(scanner())
         except Exception:
