@@ -3,6 +3,52 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.0.14 — 2026-09-21
+
+Gộp 11 bản vá. Ghi chú đầy đủ: [release v1.0.14](https://github.com/JunXmas/NostalgiaLauncher/releases/tag/v1.0.14).
+
+- **Chơi chung**: dò "Open to LAN" nghe trên từng card mạng một (máy nhiều NIC / VPN trước đây
+  bị trượt); cổng bị chiếm và "chưa ai mở LAN" báo hai câu khác nhau; chống spam vào phòng ở
+  relay đã thực sự được gọi.
+- **Skin**: Ely.by hết luôn ra Steve/Alex (launcher gọi `http://` rồi tự từ chối chính mình);
+  đổi skin Microsoft kiểm kích thước ảnh + làm mới phiên; skin tự chọn không bị đồng bộ ghi đè.
+- **Nhập bản chơi**: thêm TLauncher và SKlauncher (tổng 6 launcher); vá ModrinthApp quét rỗng
+  vì thiếu đường Flatpak.
+- **Tự cập nhật**: AppImage và thư mục cài chỉ-đọc báo rõ thay vì tráo hỏng.
+- **Windows**: cài Forge và tự cập nhật không còn bật cửa sổ CMD đen; Discord Rich Presence
+  chạy được (trước là chỗ trống).
+- **Giao diện**: thanh chọn bản chơi mở sẵn bản vừa chơi; nút gạt vẽ lại kiểu Bedrock.
+
+## 1.0.13 — 2026-09-17
+
+- **Minecraft không còn mở kèm cửa sổ CMD trên Windows.** Java chạy với `CREATE_NO_WINDOW`,
+  đóng nhầm cửa sổ console không làm Minecraft tắt theo.
+- Dọn nút nhập modpack và wrapper trùng lặp; thống nhất tên tham số `display_label`.
+
+## 1.0.12 — 2026-09-17
+
+Bản vá khẩn cấp, gộp cả 1.0.11 (bản đó dựng xong nhưng chưa từng phát hành).
+
+- **Bản chơi không còn mang tên file thay vì tên pack** — nhập modpack để trống ô tên thì lấy
+  tên thật trong `modrinth.index.json`.
+- **Chọn nhầm file không còn im lặng** — lỗi nhập từ file hiện trên dải báo lỗi.
+- **Sửa `Exception occurred in preexec_fn`** khi tự cập nhật trên Linux: launcher đã là session
+  leader thì `os.setsid()` ném *Operation not permitted*. Thay bằng `start_new_session=True`.
+- **"Chọn ổ khác" không còn im lặng** khi đường dẫn không hợp lệ.
+
+## 1.0.6 — 2026-09-14
+
+Bản vá khẩn cấp:
+
+- **Sửa lỗi cài `.deb` trên Linux Mint** (MYLA-19) — `.deb` trước dùng nén zstd mà `dpkg`/`apt`
+  trên Mint và Ubuntu cũ chưa hỗ trợ. Chuyển sang xz.
+- **Sửa giao diện trên màn hình nhỏ** (MYLA-20) — ở 1366×768 nút bị chèn lên nhau hoặc biến
+  mất. Giảm cỡ cửa sổ tối thiểu, thêm ScrollView, layout co giãn từ 1024×768 trở lên.
+
+## 1.0.5 — 2026-09-13
+
+Bản vá khẩn cấp: tự cập nhật tải xong nhưng không áp được, trên cả ba hệ.
+
 ## 1.0.4 — 2026-09-12
 
 - Sửa lỗi `freetype.dll` khi chơi một số phiên bản: hai thư viện natives (LWJGL-freetype) cùng
