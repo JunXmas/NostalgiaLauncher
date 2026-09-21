@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from nostalgia.storage.files import ensure_dir, set_executable
+from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 
 INSTALL_KIND_FROZEN = "frozen"
 INSTALL_KIND_SOURCE = "source"
@@ -87,9 +88,18 @@ def write_swap_script(
 def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") -> None:
     """Chạy script tách hẳn khỏi launcher, để launcher thoát mà script vẫn sống."""
     if windows:
-        detached = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        # DETACHED_PROCESS (bỏ ở đây) chỉ nói "đừng kế thừa console của cha" — `cmd.exe` vẫn tự
+        # AllocConsole và Windows dựng một cửa sổ mới. CREATE_NO_WINDOW mới là cờ đúng, nhưng nó
+        # bị Windows lờ đi khi dùng chung DETACHED_PROCESS, nên phải THAY chứ không phải thêm.
+        # Bỏ DETACHED_PROCESS không làm script chết theo cha: Windows không có process-tree kill
+        # mặc định, và ở đây không gắn JobObject nào ràng script vào vòng đời launcher.
         subprocess.Popen(
-            ["cmd.exe", "/c", str(script_path)], creationflags=detached, close_fds=True
+            ["cmd.exe", "/c", str(script_path)],
+            creationflags=CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
+            close_fds=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         return
 

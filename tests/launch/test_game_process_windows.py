@@ -9,11 +9,11 @@ from pathlib import Path
 import pytest
 from test_game_process import DEADLINE, GRACE, python_command
 
-from nostalgia.launch.game_process import (
+from nostalgia.launch.game_process import start_game
+from nostalgia.system.platform_info import (
     CREATE_NEW_PROCESS_GROUP,
     CREATE_NO_WINDOW,
     resolve_creation_flags,
-    start_game,
 )
 
 
