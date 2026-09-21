@@ -23,7 +23,34 @@ from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_W
 INSTALL_KIND_FROZEN = "frozen"
 INSTALL_KIND_SOURCE = "source"
 INSTALL_KIND_APP = "app"
+# AppImage: mount squashfs chỉ-đọc (`/tmp/.mount_*`) — biến môi trường `APPIMAGE`
+# do runtime AppImage tự đặt, không cần đụng tới install_dir để biết.
+INSTALL_KIND_APPIMAGE = "appimage"
+# Không có quyền ghi vào install_dir: gói .deb/.rpm cài ở /opt (chủ là root), hoặc Windows
+# cài toàn máy vào Program Files (cần admin). Cùng một nguyên nhân gốc nên gộp một kiểu.
+INSTALL_KIND_READONLY = "readonly"
 EXECUTABLE_NAME = "nostalgia-ui"
+
+# Câu tiếng Việt cho từng kiểu không tráo được — dùng khi báo lỗi thay cho exception thô.
+_BLOCKED_REASONS: dict[str, str] = {
+    INSTALL_KIND_SOURCE: "đang chạy từ mã nguồn: cập nhật bằng `git pull` và `uv sync`",
+    INSTALL_KIND_APPIMAGE: (
+        "bạn đang chạy bản AppImage (gắn kết chỉ-đọc, không tự tráo được): "
+        "tải bản AppImage mới ở trang release rồi thay file .AppImage cũ"
+    ),
+    INSTALL_KIND_READONLY: (
+        "thư mục cài không có quyền ghi (cài bằng .deb/.rpm, hoặc cần quyền quản trị): "
+        "tải bản mới ở trang release rồi cài đè bằng đúng cách bạn đã cài lần đầu"
+    ),
+}
+
+
+def blocked_install_reason(install_kind: str) -> str:
+    """Câu tiếng Việt giải thích vì sao `install_kind` không tự áp bản mới tại chỗ được.
+
+    Trả về câu mặc định (kiểu chạy từ mã nguồn) cho kiểu chưa có câu riêng — chỉ `frozen`
+    mới thực sự tráo được nên không cần câu ở đây."""
+    return _BLOCKED_REASONS.get(install_kind, _BLOCKED_REASONS[INSTALL_KIND_SOURCE])
 
 
 def clean_child_env() -> dict[str, str]:
@@ -56,10 +83,19 @@ class SwapPlan:
 
 def detect_install_kind() -> str:
     """`frozen`: gói onedir tự tráo được. `app`: gói macOS .app — thư mục thực thi nằm trong
-    Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `source`: mã nguồn."""
+    Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `source`: mã nguồn.
+    `appimage`: biến môi trường `APPIMAGE` báo runtime đang chạy từ mount squashfs chỉ-đọc —
+    tráo vào đó vô nghĩa. `readonly`: `install_dir` tồn tại nhưng không ghi được (`.deb`/`.rpm`
+    ở `/opt` chủ root, hoặc cài toàn máy trên Windows cần admin)."""
     if not getattr(sys, "frozen", False):
         return INSTALL_KIND_SOURCE
-    return INSTALL_KIND_APP if sys.platform == "darwin" else INSTALL_KIND_FROZEN
+    if sys.platform == "darwin":
+        return INSTALL_KIND_APP
+    if os.environ.get("APPIMAGE"):
+        return INSTALL_KIND_APPIMAGE
+    if not os.access(current_install_dir(), os.W_OK):
+        return INSTALL_KIND_READONLY
+    return INSTALL_KIND_FROZEN
 
 
 def current_install_dir() -> Path:

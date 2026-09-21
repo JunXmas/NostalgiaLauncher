@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -12,6 +13,9 @@ import pytest
 
 from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 from nostalgia.update.apply import (
+    INSTALL_KIND_APPIMAGE,
+    INSTALL_KIND_FROZEN,
+    INSTALL_KIND_READONLY,
     INSTALL_KIND_SOURCE,
     SwapPlan,
     clean_child_env,
@@ -102,6 +106,54 @@ def test_windows_script_and_source_install_kind() -> None:
     assert "tasklist" in script and "4242" in script and "xcopy" in script
     assert 'move "C:\\Nostalgia.old" "C:\\Nostalgia"' in script, "chép hỏng thì trả lại"
     assert detect_install_kind() == INSTALL_KIND_SOURCE, "test chạy từ mã nguồn, không phải gói"
+
+
+def _make_frozen_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Giả một gói `frozen` (`sys.frozen=True`, `sys.executable` trỏ vào `tmp_path`)."""
+    install_dir = tmp_path / "Nostalgia"
+    install_dir.mkdir()
+    executable = install_dir / "nostalgia-ui"
+    executable.write_text("")
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(executable))
+    monkeypatch.setattr(sys, "platform", "linux")
+    return install_dir
+
+
+def test_appimage_env_blocks_swap_even_if_writable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """JL-9: biến môi trường `APPIMAGE` báo mount squashfs chỉ-đọc — không tráo được dù
+    `install_dir` (giả trong tmp_path) trông như ghi được."""
+    _make_frozen_executable(tmp_path, monkeypatch)
+    monkeypatch.setenv("APPIMAGE", "/tmp/.mount_Nostalgia/AppRun")
+
+    assert detect_install_kind() == INSTALL_KIND_APPIMAGE
+
+
+@pytest.mark.skipif(os.name == "nt", reason="chmod 0o555 không áp dụng kiểu POSIX trên Windows")
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ghi được cả thư mục 0o555 — test vô nghĩa")
+def test_readonly_install_dir_blocks_swap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """JL-9: `install_dir` không có quyền ghi (`.deb`/`.rpm` ở `/opt` chủ root) — không tráo
+    được."""
+    install_dir = _make_frozen_executable(tmp_path, monkeypatch)
+    monkeypatch.delenv("APPIMAGE", raising=False)
+    install_dir.chmod(0o555)
+    try:
+        assert detect_install_kind() == INSTALL_KIND_READONLY
+    finally:
+        install_dir.chmod(0o755)
+
+
+def test_writable_frozen_install_is_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """JL-9: đường `frozen` bình thường (ghi được, không phải AppImage) không được đổi hành vi —
+    đây là đường đang chạy tốt của đa số người dùng Linux/Windows."""
+    _make_frozen_executable(tmp_path, monkeypatch)
+    monkeypatch.delenv("APPIMAGE", raising=False)
+
+    assert detect_install_kind() == INSTALL_KIND_FROZEN
 
 
 def test_sh_script_uses_nohup_not_exec() -> None:

@@ -14,6 +14,7 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.update.apply import (
     INSTALL_KIND_FROZEN,
     SwapPlan,
+    blocked_install_reason,
     current_install_dir,
     detect_install_kind,
     launch_swap_script,
@@ -88,9 +89,11 @@ class UpdateOperations(LauncherContext):
 
     def apply_launcher_update(self, staged: StagedUpdate) -> Path:
         """Viết và chạy script tráo thư mục; người gọi PHẢI thoát launcher ngay sau đó.
-        Chỉ cho gói đóng sẵn — chạy từ mã nguồn thì ném `UpdateError`."""
-        if self.launcher_install_kind() != INSTALL_KIND_FROZEN:
-            raise UpdateError("đang chạy từ mã nguồn: cập nhật bằng `git pull` và `uv sync`")
+        Chỉ cho gói đóng sẵn có quyền ghi vào install_dir — mọi kiểu khác (mã nguồn, macOS
+        .app, AppImage, cài đọc-chỉ) thì ném `UpdateError` với câu giải thích tương ứng."""
+        install_kind = self.launcher_install_kind()
+        if install_kind != INSTALL_KIND_FROZEN:
+            raise UpdateError(blocked_install_reason(install_kind))
         install_dir = current_install_dir()
         executable = install_dir / Path(sys.executable).name
         plan = SwapPlan(install_dir, staged.bundle_dir, executable, os.getpid())
