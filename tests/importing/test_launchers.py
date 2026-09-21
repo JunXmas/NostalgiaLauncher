@@ -12,6 +12,7 @@ from nostalgia.importing.launchers import (
     Found,
     find_all,
 )
+from nostalgia.importing.launchers_extra import _scan_sklauncher, _scan_tlauncher
 
 
 class TestFound:
@@ -42,15 +43,22 @@ class TestFound:
         assert found.loader_kind == "fabric"
 
 
-
-
 class TestModuleDocstring:
-    """Dòng mô tả module không được nhắc bộ quét không tồn tại."""
+    """Dòng mô tả module không được nhắc bộ quét không tồn tại,
+    và không được thiếu bộ quét có thật.
+    """
 
-    def test_no_tlauncher_mention(self) -> None:
+    def test_lists_every_real_scanner(self) -> None:
         assert launchers.__doc__ is not None
-        assert "TLauncher" not in launchers.__doc__
-
+        for name in (
+            "PrismLauncher",
+            "CurseForge",
+            "ModrinthApp",
+            "TLauncher",
+            "SKlauncher",
+            "Vanilla",
+        ):
+            assert name in launchers.__doc__
 
 
 class TestFindAll:
@@ -83,3 +91,81 @@ class TestFindAll:
                     result[i + 1].launcher,
                     result[i + 1].instance_name,
                 )
+
+
+class TestScanTlauncher:
+    """Quét TLauncher từ home giả -- luật §1.4: không được dùng expanduser()."""
+
+    def test_found_via_marker(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """TlauncherProfiles.json trong .minecraft -> tìm ra đúng bản + loader."""
+        home = tmp_path / "home"
+        base = home / ".minecraft"
+        base.mkdir(parents=True)
+        (base / "TlauncherProfiles.json").write_text("{}", encoding="utf-8")
+        (home / ".tlauncher").mkdir()
+        cfg = "login.version.game=1.20.1-forge-47.4.10\n"
+        (home / ".tlauncher/tlauncher-2.0.properties").write_text(cfg, encoding="utf-8")
+
+        monkeypatch.setattr("nostalgia.importing.launchers_extra.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+
+        assert _scan_tlauncher() == [
+            Found("TLauncher", "TLauncher Minecraft", base, "1.20.1-forge-47.4.10", "forge")
+        ]
+
+    def test_empty_without_marker(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Không có TlauncherProfiles.json -> rỗng (đó là bản chính chủ, không phải TLauncher)."""
+        home = tmp_path / "home"
+        (home / ".minecraft").mkdir(parents=True)
+
+        monkeypatch.setattr("nostalgia.importing.launchers_extra.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+
+        assert _scan_tlauncher() == []
+
+
+class TestScanSklauncher:
+    """Quét SKlauncher từ home giả -- luật §1.4: không được dùng expanduser()."""
+
+    def test_found_via_marker_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Thư mục con sklauncher/ trong .minecraft -> tách nó khỏi bản chính chủ."""
+        home = tmp_path / "home"
+        base = home / ".minecraft"
+        (base / "sklauncher").mkdir(parents=True)
+        profiles = {"profiles": {"abc": {"name": "A", "lastVersionId": "1.21"}}}
+        (base / "launcher_profiles.json").write_text(json.dumps(profiles), encoding="utf-8")
+
+        monkeypatch.setattr("nostalgia.importing.launchers_extra.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+
+        assert _scan_sklauncher() == [Found("SKlauncher", "A", base, "1.21", "vanilla")]
+
+    def test_empty_without_marker_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Không có thư mục sklauncher/ -> rỗng (đó là bản chính chủ)."""
+        home = tmp_path / "home"
+        base = home / ".minecraft"
+        base.mkdir(parents=True)
+        profiles = {"profiles": {"abc": {"name": "A", "lastVersionId": "1.21"}}}
+        (base / "launcher_profiles.json").write_text(json.dumps(profiles), encoding="utf-8")
+
+        monkeypatch.setattr("nostalgia.importing.launchers_extra.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+
+        assert _scan_sklauncher() == []
+
+    def test_empty_when_version_is_pointer(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """lastVersionId kiểu 'latest-release' là con trỏ, không phải bản chơi thật -> bỏ qua."""
+        home = tmp_path / "home"
+        base = home / ".minecraft"
+        (base / "sklauncher").mkdir(parents=True)
+        profiles = {"profiles": {"abc": {"name": "A", "lastVersionId": "latest-release"}}}
+        (base / "launcher_profiles.json").write_text(json.dumps(profiles), encoding="utf-8")
+
+        monkeypatch.setattr("nostalgia.importing.launchers_extra.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+
+        assert _scan_sklauncher() == []

@@ -62,7 +62,6 @@ def _write_modrinth_profile(
     return prof
 
 
-
 class TestScanModrinthApp:
     """Quét ModrinthApp từ filesystem giả."""
 
@@ -93,7 +92,6 @@ class TestScanModrinthApp:
         monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local/share"))
 
         assert [f.instance_name for f in _scan_modrinth_app()] == ["Solo"]
-
 
 
 class TestScanPrism:
@@ -164,7 +162,6 @@ class TestScanPrism:
         assert _scan_prism() == []
 
 
-
 class TestScanCurseforge:
     """Quét CurseForge từ home giả — luật §1.4: không được dùng expanduser()."""
 
@@ -186,10 +183,7 @@ class TestScanCurseforge:
         monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Darwin")
         monkeypatch.setenv("HOME", str(home))
 
-        assert _scan_curseforge() == [
-            Found("CurseForge", "RLCraft", inst_dir, "1.12.2", "forge")
-        ]
-
+        assert _scan_curseforge() == [Found("CurseForge", "RLCraft", inst_dir, "1.12.2", "forge")]
 
 
 class TestScanVanilla:
@@ -208,7 +202,6 @@ class TestScanVanilla:
         result = _scan_vanilla()
         assert len(result) == 1
         assert result[0].game_dir == base
-
 
 
 @pytest.mark.allow_home
@@ -256,4 +249,3 @@ def test_scan_vanilla_picks_newest_lastused(
     assert len(result) == 1
     assert result[0].game_version == expected_version
     assert any(rec.levelname == "WARNING" for rec in caplog.records) == expect_warning
-
