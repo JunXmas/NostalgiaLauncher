@@ -135,7 +135,7 @@ def _scan_curseforge() -> list[Found]:
     """CurseForge (Overwolf): chỉ macOS + Windows."""
     sys_plat = platform.system()
     if sys_plat == "Darwin":
-        base = Path("~/Documents/curseforge/minecraft/Instances").expanduser()
+        base = _home() / "Documents/curseforge/minecraft/Instances"
     elif sys_plat == "Windows":
         base = Path(os.environ.get("USERPROFILE", "~")) / "curseforge/minecraft/Instances"
     else:
@@ -221,9 +221,9 @@ def _scan_vanilla() -> list[Found]:
     """Official Minecraft launcher."""
     sys_plat = platform.system()
     if sys_plat == "Linux":
-        base = Path("~/.minecraft").expanduser()
+        base = _home() / ".minecraft"
     elif sys_plat == "Darwin":
-        base = Path("~/Library/Application Support/minecraft").expanduser()
+        base = _home() / "Library/Application Support/minecraft"
     elif sys_plat == "Windows":
         base = Path(os.environ.get("APPDATA", "~")) / ".minecraft"
     else:

@@ -1,4 +1,4 @@
-"""Cầu nối cho trang Nhập bản chơi: quét launcher, nhập .mrpack, nhập từ launcher, đồng bộ Rooms.
+"""Cầu nối cho trang Nhập bản chơi: quét launcher, nhập .mrpack, nhập từ launcher.
 
 Tách khỏi các bridge khác cho mỗi file ngắn; cùng một QObject nhìn từ QML.
 """
