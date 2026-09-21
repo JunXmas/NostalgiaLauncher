@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 from PySide6.QtCore import QObject, QSize, QUrl
 from PySide6.QtGui import QGuiApplication, QIcon
@@ -80,6 +81,11 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     )
     context.setContextProperty("presenceBridge", presence_bridge)
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)
+    multiplayer_bridge.statusChanged.connect(
+        lambda: presence_bridge.setRoomState(
+            str(multiplayer_bridge.role), cast(int, multiplayer_bridge.joinerCount)
+        )
+    )
     context.setContextProperty("multiplayerBridge", multiplayer_bridge)
     import_bridge = ImportBridge(launcher, bridge, parent=view)
     context.setContextProperty("importBridge", import_bridge)

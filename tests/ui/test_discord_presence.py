@@ -23,6 +23,7 @@ from nostalgia.ui.discord_presence import (
     candidate_socket_paths,
     decode_frame,
     encode_frame,
+    read_frame,
 )
 from nostalgia.ui.presence_bridge import PresenceBridge
 
@@ -30,11 +31,14 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 class FakeDiscord:
-    """Một Discord giả: nghe trên `discord-ipc-0` trong thư mục tạm, ghi lại mọi khung nhận."""
+    """Một Discord giả: nghe trên `discord-ipc-0` trong thư mục tạm, ghi lại mọi khung nhận.
+    `activity_evt` điều khiển phản hồi cho SET_ACTIVITY — mặc định `None` (thành công), đặt
+    `"ERROR"` để mô phỏng Application ID sai."""
 
-    def __init__(self, runtime_dir: Path) -> None:
+    def __init__(self, runtime_dir: Path, activity_evt: str | None = None) -> None:
         self.path = runtime_dir / "discord-ipc-0"
         self.frames: list[tuple[int, dict[str, object]]] = []
+        self._activity_evt = activity_evt
         self._server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._server.bind(str(self.path))
         self._server.listen(1)
@@ -58,7 +62,9 @@ class FakeDiscord:
                 if frame[0] == OP_HANDSHAKE:
                     connection.sendall(encode_frame(OP_FRAME, {"cmd": "DISPATCH", "evt": "READY"}))
                 elif frame[0] == OP_FRAME:
-                    connection.sendall(encode_frame(OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": None}))
+                    connection.sendall(
+                        encode_frame(OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": self._activity_evt})
+                    )
                 elif frame[0] == OP_CLOSE:
                     return
 
@@ -77,7 +83,24 @@ def test_frames_round_trip_and_socket_paths_follow_the_platform(tmp_path: Path) 
         and (tmp_path / "snap.discord" / "discord-ipc-0") in paths
     )
     assert Path("/tmp/discord-ipc-3") in paths
-    assert str(candidate_socket_paths({}, "win32")[0]).endswith("discord-ipc-0")
+    assert str(candidate_socket_paths({}, "win32")[0]) == r"\\.\pipe\discord-ipc-0"
+
+
+def test_socket_paths_fall_back_to_run_user_uid_without_xdg_runtime_dir() -> None:
+    paths = candidate_socket_paths({}, "linux")
+    assert any(str(path).startswith("/run/user/") for path in paths), (
+        "thiếu XDG_RUNTIME_DIR (vd chạy từ systemd service) vẫn phải thử /run/user/<uid>"
+    )
+
+
+def test_read_frame_reassembles_a_frame_split_across_many_recv_calls() -> None:
+    frame = encode_frame(OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": None})
+    chunks = [frame[index : index + 3] for index in range(0, len(frame), 3)]
+
+    def fragmented_recv(_size: int) -> bytes:
+        return chunks.pop(0) if chunks else b""
+
+    assert read_frame(fragmented_recv) == (OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": None})
 
 
 def test_handshake_then_activity_reaches_the_fake_discord(tmp_path: Path) -> None:
@@ -100,6 +123,17 @@ def test_handshake_then_activity_reaches_the_fake_discord(tmp_path: Path) -> Non
         "timestamps": {"start": 1_700_000_000},
     }
     assert closing[0] == OP_CLOSE
+
+
+def test_set_activity_reports_failure_when_discord_answers_with_error(tmp_path: Path) -> None:
+    fake = FakeDiscord(tmp_path, activity_evt="ERROR")
+    presence = DiscordPresence("123456789", environ={"XDG_RUNTIME_DIR": str(tmp_path)})
+    assert presence.connect() is True
+    assert presence.set_activity("x", "y", 0) is False, (
+        "Discord trả evt == ERROR (vd Application ID sai) không được báo thành công"
+    )
+    presence.close()
+    fake.close()
 
 
 def test_without_discord_everything_stays_quiet(tmp_path: Path) -> None:
@@ -132,6 +166,7 @@ def test_bridge_shows_presence_while_the_game_runs(tmp_path: Path) -> None:
     arguments = activity[1]["args"]
     assert isinstance(arguments, dict)
     assert arguments["activity"]["details"] == "Đang chơi Sinh tồn"
+    assert arguments["activity"]["state"] == "Nostalgia Launcher"
 
     bridge.gameStopped.emit(0)
     wait_until(lambda: presence_bridge.connected is False)
@@ -142,3 +177,36 @@ def test_bridge_shows_presence_while_the_game_runs(tmp_path: Path) -> None:
     bridge.gameStarted.emit("sinh-ton")
     wait_until(lambda: presence_bridge.statusText == "Đã xoá trạng thái")
     assert presence_bridge.connected is False, "tắt trong CÀI ĐẶT thì không chạm Discord"
+
+
+def test_bridge_shows_shared_room_state_while_playing_together(tmp_path: Path) -> None:
+    fake = FakeDiscord(tmp_path)
+    launcher = make_launcher(tmp_path)
+    bridge = LauncherBridge(launcher)
+    presence_bridge = PresenceBridge(
+        bridge,
+        read_settings=lambda: (True, "987"),
+        instance_label=lambda _instance_id: "Sinh tồn",
+        make_presence=lambda client_id: DiscordPresence(
+            client_id, environ={"XDG_RUNTIME_DIR": str(tmp_path)}, pid=1
+        ),
+    )
+
+    bridge.gameStarted.emit("sinh-ton")
+    wait_until(lambda: presence_bridge.connected is True)
+
+    def latest_state() -> str | None:
+        frames = [f for f in fake.frames if f[0] == OP_FRAME]
+        if not frames:
+            return None
+        arguments = frames[-1][1]["args"]
+        assert isinstance(arguments, dict)
+        return str(arguments["activity"]["state"])
+
+    presence_bridge.setRoomState("hosting", 2)
+    wait_until(lambda: latest_state() == "Đang chơi chung với 2 người")
+
+    presence_bridge.setRoomState("idle", 0)
+    wait_until(lambda: latest_state() == "Nostalgia Launcher")
+
+    fake.close()

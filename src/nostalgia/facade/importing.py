@@ -1,6 +1,6 @@
-"""Nhập bản chơi từ nguồn bên ngoài: file .mrpack, launcher khác, hoặc Rooms sync.
+"""Nhập bản chơi từ nguồn bên ngoài: file .mrpack hoặc launcher khác.
 
-Ba luồng import chung một đường ra (`create_instance`), nhưng mỗi luồng có cách lấy dữ liệu
+Hai luồng import chung một đường ra (`create_instance`), nhưng mỗi luồng có cách lấy dữ liệu
 khác nhau. Facade này gom chúng lại để giao diện chỉ cần gọi một nơi.
 """
 

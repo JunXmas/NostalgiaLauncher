@@ -16,7 +16,7 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QApplication
 
 from nostalgia.api import Launcher
 from nostalgia.ui.app import build_view
@@ -32,7 +32,7 @@ def main(argv: list[str]) -> int:
     data_dir = Path(argv[1])
     output = Path(argv[2])
 
-    qt_application = QGuiApplication(["ui-screenshot"])
+    qt_application = QApplication(["ui-screenshot"])
     qt_application.setApplicationVersion("0.1.0")
     view, _bridge = build_view(Launcher.for_data_dir(data_dir, data_dir.parent / "config"))
     for error in view.errors():

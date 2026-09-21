@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import nostalgia
 from nostalgia.account.model import MICROSOFT, Account, to_player_profile
 from nostalgia.account.offline import build_offline_account, offline_uuid
 from nostalgia.errors import VersionError
@@ -262,7 +263,15 @@ def test_an_unknown_variable_stops_the_launch_instead_of_producing_a_broken_comm
 
 
 def test_the_command_matches_the_approved_snapshot() -> None:
-    """Mọi thay đổi ngoài ý muốn trong lệnh sẽ lộ ra ở diff của PR, không lọt êm."""
+    """Đặt định: snapshot gác DANH SÁCH THAM SỐ, không gác chuỗi
+    phiên bản launcher. Fixture ghi `<VERSION>` làm chỗ giữ chỗ cho
+    `-Dminecraft.launcher.version=...`, thay bằng `nostalgia.__version__` hiện tại
+    trước khi so khớp, để mỗi lần bump version không làm test này
+    đỏ oan.
+    """
     argv = build("1.20.1").argv
-    approved = SNAPSHOT.read_text(encoding="utf-8").splitlines()
+    approved = [
+        line.replace("<VERSION>", nostalgia.__version__)
+        for line in SNAPSHOT.read_text(encoding="utf-8").splitlines()
+    ]
     assert list(argv) == approved
