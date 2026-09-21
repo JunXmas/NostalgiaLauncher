@@ -86,7 +86,12 @@ def test_host_then_join_then_stop_ends_all_tasks(remote: LoopThread) -> None:
 
         echoed = remote.run(game_client(join_statuses[-1].local_port))
         assert echoed == MC_HANDSHAKE[::-1]
-        wait_for(lambda: host_statuses[-1].joiner_count == 1)
+        # game_client() đóng writer ngay sau khi đọc đủ byte vọng, nên joiner đóng socket và
+        # relay báo CLOSE về host chỉ trong vài micro-giây — host trừ joiner_count về 0 trước
+        # khi luồng test kịp đọc host_statuses[-1]. Trạng thái joiner_count == 1 có thật và
+        # host đã phát ra đúng lúc; chỗ sai là test đọc giá trị mới nhất thay vì hỏi đã từng
+        # có trạng thái nào đạt điều kiện chưa. Không phải lỗi ở host/service.
+        wait_for(lambda: any(status.joiner_count == 1 for status in host_statuses))
 
         host_service.set_locked(True).result(5)
         assert host_statuses[-1].locked is True

@@ -1,4 +1,4 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Vanilla."""
 
 from __future__ import annotations
 
@@ -82,9 +82,8 @@ def _prism_instance_name(cfg: Path, fallback: str) -> str:
     File này là INI có section `[General]`, nhưng bản cũ lại không có section nào. Đọc thô
     (không nội suy `%`) vì mục `[UI]` chứa base64 làm ConfigParser thường ném lỗi.
     """
-    body = cfg.read_text(encoding="utf-8")
     parser = configparser.RawConfigParser()
-    parser.read_string("[__nostalgia__]\n" + body)
+    parser.read_string("[__nostalgia__]\n" + cfg.read_text(encoding="utf-8"))
     for section in ("General", "__nostalgia__"):
         name = parser.get(section, "name", fallback="").strip()
         if name:
@@ -225,14 +224,14 @@ def _scan_vanilla() -> list[Found]:
     profiles_json = base / "launcher_profiles.json"
     if profiles_json.exists():
         try:
-            body = json.loads(profiles_json.read_text(encoding="utf-8"))
-            for saved in body.get("profiles", {}).values():
-                last_v = saved.get("lastVersionId")
-                if last_v:
-                    game_version = last_v
-                    break
+            profiles = json.loads(profiles_json.read_text(encoding="utf-8")).get("profiles", {})
+            # lastUsed mới nhất thắng; không có lastUsed thì để game_version rỗng, đừng lấy bừa.
+            usable = [p for p in profiles.values() if p.get("lastUsed") and p.get("lastVersionId")]
+            if usable:
+                game_version = max(usable, key=lambda p: p["lastUsed"])["lastVersionId"]
         except Exception:
-            logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
+            # Cả launcher_profiles.json không đọc nổi -> mất hẳn game_version của Vanilla.
+            logger.warning("lỗi khi đọc launcher_profiles.json", exc_info=True)
     return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
 
 
@@ -243,6 +242,8 @@ def find_all() -> list[Found]:
         try:
             all_found.extend(scanner())
         except Exception:
-            logger.debug("lỗi khi chạy %s", scanner.__name__, exc_info=True)
+            # Cả một bộ quét chết -> nguyên launcher biến mất khỏi danh sách, người dùng
+            # không hiểu vì sao.
+            logger.warning("lỗi khi chạy %s", scanner.__name__, exc_info=True)
     all_found.sort(key=lambda x: (x.launcher, x.instance_name))
     return all_found

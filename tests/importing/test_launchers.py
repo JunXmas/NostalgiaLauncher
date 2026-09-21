@@ -7,7 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from nostalgia.importing.launchers import Found, _scan_prism, find_all
+from nostalgia.importing import launchers
+from nostalgia.importing.launchers import (
+    Found,
+    _scan_prism,
+    _scan_vanilla,
+    find_all,
+)
 
 
 class TestFound:
@@ -59,17 +65,13 @@ def _write_instance(
     return inst
 
 
-# instance.cfg thật của Prism 9.x: có section [General], và [UI] chứa base64 có dấu '%'.
+# instance.cfg thật của Prism 9.x: có section [General], và [UI] chứa base64 có dấu '%'
+# (RawConfigParser phải không nội suy '%', ConfigParser thường sẽ ném lỗi ở đây).
 REAL_CFG = """[General]
-ConfigVersion=1.3
-InstanceType=OneSix
-JavaPath=/usr/bin/java
 name=DonutSMP Modpack
-totalTimePlayed=870
 
 [UI]
 mods_Page\\Columns="AAAA/wAAAAAAAAAB%AAAAZA=="
-mods_Page\\ColumnsOverride=false
 """
 
 
@@ -141,14 +143,81 @@ class TestScanPrism:
         assert _scan_prism() == []
 
 
+@pytest.mark.allow_home
+@pytest.mark.parametrize(
+    ("profiles_body", "expected_version", "expect_warning"),
+    [
+        # Khoá đầu tiên trong dict ("cu") KHÔNG phải profile dùng gần nhất — thứ tự khoá
+        # trong JSON/dict không có nghĩa, `for ... break` cũ lấy nhầm cái đầu.
+        (
+            json.dumps(
+                {
+                    "profiles": {
+                        "cu": {"lastVersionId": "1.16.5", "lastUsed": "2020-01-01T00:00:00Z"},
+                        "moi": {"lastVersionId": "1.21.1", "lastUsed": "2026-09-01T00:00:00Z"},
+                    }
+                }
+            ),
+            "1.21.1",
+            False,
+        ),
+        (json.dumps({"profiles": {"x": {"lastVersionId": "1.21.1"}}}), "", False),
+        # File hỏng hẳn -> mất version của cả launcher Vanilla, phải log warning.
+        ("khong-phai-json", "", True),
+    ],
+)
+def test_scan_vanilla_picks_newest_lastused(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    profiles_body: str,
+    expected_version: str,
+    expect_warning: bool,
+) -> None:
+    """_scan_vanilla chọn game_version theo profile lastUsed mới nhất, không lấy bừa."""
+    home = tmp_path / "home"
+    base = home / ".minecraft"
+    (base / "versions").mkdir(parents=True)
+    (base / "launcher_profiles.json").write_text(profiles_body, encoding="utf-8")
+
+    monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+    monkeypatch.setenv("HOME", str(home))
+
+    with caplog.at_level("WARNING", logger="nostalgia.importing.launchers"):
+        result = _scan_vanilla()
+    assert len(result) == 1
+    assert result[0].game_version == expected_version
+    assert any(rec.levelname == "WARNING" for rec in caplog.records) == expect_warning
+
+
+class TestModuleDocstring:
+    """Dòng mô tả module không được nhắc bộ quét không tồn tại."""
+
+    def test_no_tlauncher_mention(self) -> None:
+        assert launchers.__doc__ is not None
+        assert "TLauncher" not in launchers.__doc__
+
+
 class TestFindAll:
     """find_all() gom kết quả từ mọi scanner, bắt lỗi riêng từng scanner."""
 
     def test_returns_list(self) -> None:
         """find_all luôn trả list, không bao giờ ném lỗi."""
-        result = find_all()
-        assert isinstance(result, list)
+        assert isinstance(find_all(), list)
         # Trên CI có thể không có launcher nào, nhưng không được crash.
+
+    def test_scanner_crash_logs_warning(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Một scanner ném lỗi: nguyên launcher biến mất khỏi danh sách -> log warning."""
+
+        def _boom() -> list[Found]:
+            raise RuntimeError("scanner hỏng")
+
+        monkeypatch.setattr("nostalgia.importing.launchers._scan_prism", _boom)
+        with caplog.at_level("WARNING", logger="nostalgia.importing.launchers"):
+            find_all()
+        assert any(rec.levelname == "WARNING" for rec in caplog.records)
 
     def test_sorted_by_launcher_and_name(self) -> None:
         """Kết quả luôn sắp xếp theo launcher, rồi instance_name."""
