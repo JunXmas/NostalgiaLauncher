@@ -10,6 +10,7 @@ import pytest
 from nostalgia.importing import launchers
 from nostalgia.importing.launchers import (
     Found,
+    _scan_modrinth_app,
     _scan_prism,
     _scan_vanilla,
     find_all,
@@ -73,6 +74,49 @@ name=DonutSMP Modpack
 [UI]
 mods_Page\\Columns="AAAA/wAAAAAAAAAB%AAAAZA=="
 """
+
+
+def _write_modrinth_profile(
+    profiles: Path, dir_name: str, *, name: str = "", loader_kind: str = "fabric"
+) -> Path:
+    """Dựng một profile ModrinthApp giả (game_version cố định "1.21"), trả thư mục profile."""
+    prof = profiles / dir_name
+    prof.mkdir(parents=True)
+    body = {"name": name or dir_name, "game_version": "1.21", "loader": loader_kind}
+    (prof / "profile.json").write_text(json.dumps(body), encoding="utf-8")
+    return prof
+
+
+class TestScanModrinthApp:
+    """Quét ModrinthApp từ filesystem giả."""
+
+    def test_flatpak_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Bản Flatpak (app-id com.modrinth.ModrinthApp) ở ~/.var/app vẫn phải quét ra."""
+        home = tmp_path / "home"
+        profiles = home / ".var/app/com.modrinth.ModrinthApp/data/ModrinthApp/profiles"
+        _write_modrinth_profile(profiles, "RLCraft", name="RLCraft", loader_kind="forge")
+
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+
+        assert _scan_modrinth_app() == [
+            Found("ModrinthApp", "RLCraft", profiles / "RLCraft", "1.21", "forge")
+        ]
+
+    def test_xdg_and_flatpak_not_double_counted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """XDG_DATA_HOME trỏ đúng chỗ mặc định thì profile chỉ đếm một lần."""
+        home = tmp_path / "home"
+        profiles = home / ".local/share/ModrinthApp/profiles"
+        _write_modrinth_profile(profiles, "solo", name="Solo")
+
+        monkeypatch.setattr("nostalgia.importing.launchers.platform.system", lambda: "Linux")
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local/share"))
+
+        assert [f.instance_name for f in _scan_modrinth_app()] == ["Solo"]
 
 
 class TestScanPrism:
