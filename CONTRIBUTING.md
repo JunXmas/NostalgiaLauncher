@@ -14,12 +14,15 @@ Tên nhánh theo mẫu `step-NN-mô-tả-ngắn`, ví dụ `step-04-version-mode
 ## Trước khi mở PR
 
 ```bash
-uv sync
+uv sync --extra ui
 uv run pre-commit install
 ```
 
 Cài một lần cho mỗi bản clone — hook chặn `ruff check`, `ruff format`, `mypy` ngay lúc
 `git commit`, khỏi phải đợi CI báo đỏ.
+
+`--extra ui` bắt buộc: `PySide6-Essentials` nằm ở nhóm `ui`, không phải `dev`. Thiếu
+cờ này, `mypy` không thấy PySide6 và báo hàng trăm lỗi `import-not-found` giả.
 
 ```bash
 uv run ruff check .

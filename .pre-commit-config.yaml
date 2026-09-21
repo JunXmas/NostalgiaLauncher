@@ -13,7 +13,10 @@ repos:
         types: [python]
       - id: mypy
         name: mypy strict
-        entry: uv run mypy
+        # PySide6-Essentials nằm ở extra "ui", không phải "dev" — thiếu --extra ui,
+        # mypy không thấy PySide6 và báo hàng trăm lỗi import-not-found GIẢ vĩnh viễn.
+        # `uv sync --extra ui` (xem CONTRIBUTING.md) phải chạy trước khi cài hook này.
+        entry: uv run --extra ui mypy
         language: system
         pass_filenames: false
         types: [python]
