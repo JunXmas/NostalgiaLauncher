@@ -1,0 +1,22 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff lint
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy strict
+        # PySide6-Essentials nằm ở extra "ui", không phải "dev" — thiếu --extra ui,
+        # mypy không thấy PySide6 và báo hàng trăm lỗi import-not-found GIẢ vĩnh viễn.
+        # `uv sync --extra ui` (xem CONTRIBUTING.md) phải chạy trước khi cài hook này.
+        entry: uv run --extra ui mypy
+        language: system
+        pass_filenames: false
+        types: [python]
