@@ -1,4 +1,4 @@
-"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, TLauncher, Vanilla."""
+"""Quét instance Minecraft từ PrismLauncher, CurseForge, ModrinthApp, Vanilla."""
 
 from __future__ import annotations
 
@@ -38,47 +38,99 @@ def _platform_dir(linux: str, darwin: str, windows: str) -> Path | None:
     return None
 
 
+def _home() -> Path:
+    """Thư mục nhà, đọc từ biến môi trường.
+
+    Không dùng `expanduser()`: luật §1.4 của kho cấm, vì nó tra thẳng hệ điều hành và test
+    không chặn được — đúng cái đã làm mất dữ liệu một lần.
+    """
+    return Path(os.environ.get("USERPROFILE" if platform.system() == "Windows" else "HOME", "."))
+
+
+def _prism_bases() -> list[Path]:
+    """Mọi chỗ PrismLauncher có thể để thư mục instances, theo thứ tự ưu tiên.
+
+    Bản Flatpak ghi vào `~/.var/app/<app-id>/data`, không phải `~/.local/share` — trên Linux
+    đây là cách cài phổ biến nhất, bỏ qua nó thì danh sách luôn rỗng.
+    """
+    home = _home()
+    sys_plat = platform.system()
+    if sys_plat == "Linux":
+        xdg_data = (
+            Path(os.environ["XDG_DATA_HOME"])
+            if os.environ.get("XDG_DATA_HOME")
+            else home / ".local/share"
+        )
+        return [
+            xdg_data / "PrismLauncher/instances",
+            home / ".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances",
+            home / ".local/share/PrismLauncher/instances",
+        ]
+    if sys_plat == "Darwin":
+        return [home / "Library/Application Support/PrismLauncher/instances"]
+    if sys_plat == "Windows":
+        appdata = os.environ.get("APPDATA")
+        return [
+            (Path(appdata) if appdata else home / "AppData/Roaming") / "PrismLauncher/instances"
+        ]
+    return []
+
+
+def _prism_instance_name(cfg: Path, fallback: str) -> str:
+    """Đọc `name=` trong instance.cfg.
+
+    File này là INI có section `[General]`, nhưng bản cũ lại không có section nào. Đọc thô
+    (không nội suy `%`) vì mục `[UI]` chứa base64 làm ConfigParser thường ném lỗi.
+    """
+    parser = configparser.RawConfigParser()
+    parser.read_string("[__nostalgia__]\n" + cfg.read_text(encoding="utf-8"))
+    for section in ("General", "__nostalgia__"):
+        name = parser.get(section, "name", fallback="").strip()
+        if name:
+            return name
+    return fallback
+
+
 def _scan_prism() -> list[Found]:
     """PrismLauncher: đọc instance.cfg + mmc-pack.json."""
-    base = _platform_dir(
-        "~/.local/share/PrismLauncher/instances",
-        "~/Library/Application Support/PrismLauncher/instances",
-        "PrismLauncher/instances",
-    )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "instance.cfg").exists():
+    seen: set[Path] = set()
+    for base in _prism_bases():
+        if not base.is_dir() or base.resolve() in seen:
             continue
-        try:
-            content = "[DEFAULT]\n" + (inst_dir / "instance.cfg").read_text(encoding="utf-8")
-            parser = configparser.ConfigParser()
-            parser.read_string(content)
-            instance_name = parser.get("DEFAULT", "name", fallback=inst_dir.name)
-            game_dir = inst_dir / ".minecraft"
-            if not game_dir.exists():
-                game_dir = inst_dir / "minecraft" if (inst_dir / "minecraft").exists() else inst_dir
-            game_version: str = ""
-            loader_kind: LoaderKind = "vanilla"
-            mmc_pack = inst_dir / "mmc-pack.json"
-            if mmc_pack.exists():
-                pack_body = json.loads(mmc_pack.read_text(encoding="utf-8"))
-                for comp in pack_body.get("components", []):
-                    uid = comp.get("uid", "")
-                    if uid == "net.minecraft":
-                        game_version = comp.get("version", "")
-                    elif uid == "net.fabricmc.fabric-loader":
-                        loader_kind = "fabric"
-                    elif uid == "org.quiltmc.quilt-loader":
-                        loader_kind = "quilt"
-                    elif uid == "net.minecraftforge":
-                        loader_kind = "forge"
-                    elif uid == "net.neoforged.neoforge":
-                        loader_kind = "neoforge"
-            found.append(Found("PrismLauncher", instance_name, game_dir, game_version, loader_kind))
-        except Exception:
-            logger.debug("lỗi khi quét PrismLauncher instance %s", inst_dir, exc_info=True)
+        seen.add(base.resolve())
+        for inst_dir in base.iterdir():
+            if not inst_dir.is_dir() or not (inst_dir / "instance.cfg").exists():
+                continue
+            try:
+                instance_name = _prism_instance_name(inst_dir / "instance.cfg", inst_dir.name)
+                game_dir = inst_dir / ".minecraft"
+                if not game_dir.exists():
+                    game_dir = (
+                        inst_dir / "minecraft" if (inst_dir / "minecraft").exists() else inst_dir
+                    )
+                game_version: str = ""
+                loader_kind: LoaderKind = "vanilla"
+                mmc_pack = inst_dir / "mmc-pack.json"
+                if mmc_pack.exists():
+                    pack_body = json.loads(mmc_pack.read_text(encoding="utf-8"))
+                    for comp in pack_body.get("components", []):
+                        uid = comp.get("uid", "")
+                        if uid == "net.minecraft":
+                            game_version = comp.get("version", "")
+                        elif uid == "net.fabricmc.fabric-loader":
+                            loader_kind = "fabric"
+                        elif uid == "org.quiltmc.quilt-loader":
+                            loader_kind = "quilt"
+                        elif uid == "net.minecraftforge":
+                            loader_kind = "forge"
+                        elif uid == "net.neoforged.neoforge":
+                            loader_kind = "neoforge"
+                found.append(
+                    Found("PrismLauncher", instance_name, game_dir, game_version, loader_kind)
+                )
+            except Exception:
+                logger.debug("lỗi khi quét PrismLauncher instance %s", inst_dir, exc_info=True)
     return found
 
 
@@ -172,14 +224,14 @@ def _scan_vanilla() -> list[Found]:
     profiles_json = base / "launcher_profiles.json"
     if profiles_json.exists():
         try:
-            body = json.loads(profiles_json.read_text(encoding="utf-8"))
-            for saved in body.get("profiles", {}).values():
-                last_v = saved.get("lastVersionId")
-                if last_v:
-                    game_version = last_v
-                    break
+            profiles = json.loads(profiles_json.read_text(encoding="utf-8")).get("profiles", {})
+            # lastUsed mới nhất thắng; không có lastUsed thì để game_version rỗng, đừng lấy bừa.
+            usable = [p for p in profiles.values() if p.get("lastUsed") and p.get("lastVersionId")]
+            if usable:
+                game_version = max(usable, key=lambda p: p["lastUsed"])["lastVersionId"]
         except Exception:
-            logger.debug("lỗi khi đọc launcher_profiles.json", exc_info=True)
+            # Cả launcher_profiles.json không đọc nổi -> mất hẳn game_version của Vanilla.
+            logger.warning("lỗi khi đọc launcher_profiles.json", exc_info=True)
     return [Found("Vanilla", "Vanilla Minecraft", base, game_version, "vanilla")]
 
 
@@ -190,6 +242,8 @@ def find_all() -> list[Found]:
         try:
             all_found.extend(scanner())
         except Exception:
-            logger.debug("lỗi khi chạy %s", scanner.__name__, exc_info=True)
+            # Cả một bộ quét chết -> nguyên launcher biến mất khỏi danh sách, người dùng
+            # không hiểu vì sao.
+            logger.warning("lỗi khi chạy %s", scanner.__name__, exc_info=True)
     all_found.sort(key=lambda x: (x.launcher, x.instance_name))
     return all_found
