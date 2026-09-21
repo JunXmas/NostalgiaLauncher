@@ -26,18 +26,6 @@ class Found:
     loader_kind: LoaderKind
 
 
-def _platform_dir(linux: str, darwin: str, windows: str) -> Path | None:
-    """Trả thư mục theo hệ điều hành, hoặc None nếu không hỗ trợ."""
-    sys_plat = platform.system()
-    if sys_plat == "Linux":
-        return Path(linux).expanduser()
-    if sys_plat == "Darwin":
-        return Path(darwin).expanduser()
-    if sys_plat == "Windows":
-        return Path(os.environ.get("APPDATA", "~")) / windows
-    return None
-
-
 def _home() -> Path:
     """Thư mục nhà, đọc từ biến môi trường.
 
@@ -47,11 +35,13 @@ def _home() -> Path:
     return Path(os.environ.get("USERPROFILE" if platform.system() == "Windows" else "HOME", "."))
 
 
-def _prism_bases() -> list[Path]:
-    """Mọi chỗ PrismLauncher có thể để thư mục instances, theo thứ tự ưu tiên.
+def _app_bases(linux_subdir: str, flatpak_app_id: str, darwin_dir: str) -> list[Path]:
+    """Mọi chỗ trên mỗi hệ điều hành launcher này có thể để dữ liệu, theo thứ tự ưu tiên.
 
-    Bản Flatpak ghi vào `~/.var/app/<app-id>/data`, không phải `~/.local/share` — trên Linux
-    đây là cách cài phổ biến nhất, bỏ qua nó thì danh sách luôn rỗng.
+    Bản Flatpak trên Linux ghi vào `~/.var/app/<app-id>/data`, không phải `~/.local/share`
+    — đây là cách cài phổ biến nhất, bỏ qua nó thì danh sách luôn rỗng. `linux_subdir` cũng
+    dùng lại cho Windows (`%APPDATA%/<linux_subdir>`) vì hai launcher trong module này đặt
+    tên thư mục con giống nhau trên hai hệ đó.
     """
     home = _home()
     sys_plat = platform.system()
@@ -62,18 +52,25 @@ def _prism_bases() -> list[Path]:
             else home / ".local/share"
         )
         return [
-            xdg_data / "PrismLauncher/instances",
-            home / ".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances",
-            home / ".local/share/PrismLauncher/instances",
+            xdg_data / linux_subdir,
+            home / ".var/app" / flatpak_app_id / "data" / linux_subdir,
+            home / ".local/share" / linux_subdir,
         ]
     if sys_plat == "Darwin":
-        return [home / "Library/Application Support/PrismLauncher/instances"]
+        return [home / darwin_dir]
     if sys_plat == "Windows":
         appdata = os.environ.get("APPDATA")
-        return [
-            (Path(appdata) if appdata else home / "AppData/Roaming") / "PrismLauncher/instances"
-        ]
+        return [(Path(appdata) if appdata else home / "AppData/Roaming") / linux_subdir]
     return []
+
+
+def _prism_bases() -> list[Path]:
+    """Mọi chỗ PrismLauncher có thể để thư mục instances, theo thứ tự ưu tiên."""
+    return _app_bases(
+        "PrismLauncher/instances",
+        "org.prismlauncher.PrismLauncher",
+        "Library/Application Support/PrismLauncher/instances",
+    )
 
 
 def _prism_instance_name(cfg: Path, fallback: str) -> str:
@@ -175,35 +172,48 @@ def _scan_curseforge() -> list[Found]:
     return found
 
 
+def _modrinth_bases() -> list[Path]:
+    """Mọi chỗ ModrinthApp có thể để thư mục profiles, theo thứ tự ưu tiên.
+
+    App-id Flatpak `com.modrinth.ModrinthApp` (xem Flathub) — cùng bệnh đã vá cho
+    PrismLauncher ở `_prism_bases()`.
+    """
+    return _app_bases(
+        "ModrinthApp/profiles",
+        "com.modrinth.ModrinthApp",
+        "Library/Application Support/ModrinthApp/profiles",
+    )
+
+
 def _scan_modrinth_app() -> list[Found]:
     """ModrinthApp: đọc profile.json."""
-    base = _platform_dir(
-        "~/.local/share/ModrinthApp/profiles",
-        "~/Library/Application Support/ModrinthApp/profiles",
-        "ModrinthApp/profiles",
-    )
-    if base is None or not base.exists():
-        return []
     found: list[Found] = []
-    for inst_dir in base.iterdir():
-        if not inst_dir.is_dir() or not (inst_dir / "profile.json").exists():
+    seen: set[Path] = set()
+    for base in _modrinth_bases():
+        if not base.is_dir() or base.resolve() in seen:
             continue
-        try:
-            body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
-            raw_loader = body.get("loader", "vanilla").lower()
-            _valid_loaders = {"fabric", "quilt", "forge", "neoforge"}
-            loader_kind_m: LoaderKind = raw_loader if raw_loader in _valid_loaders else "vanilla"
-            found.append(
-                Found(
-                    "ModrinthApp",
-                    body.get("name", inst_dir.name),
-                    inst_dir,
-                    body.get("game_version", ""),
-                    loader_kind_m,
+        seen.add(base.resolve())
+        for inst_dir in base.iterdir():
+            if not inst_dir.is_dir() or not (inst_dir / "profile.json").exists():
+                continue
+            try:
+                body = json.loads((inst_dir / "profile.json").read_text(encoding="utf-8"))
+                raw_loader = body.get("loader", "vanilla").lower()
+                _valid_loaders = {"fabric", "quilt", "forge", "neoforge"}
+                loader_kind_m: LoaderKind = (
+                    raw_loader if raw_loader in _valid_loaders else "vanilla"
                 )
-            )
-        except Exception:
-            logger.debug("lỗi khi quét ModrinthApp profile %s", inst_dir, exc_info=True)
+                found.append(
+                    Found(
+                        "ModrinthApp",
+                        body.get("name", inst_dir.name),
+                        inst_dir,
+                        body.get("game_version", ""),
+                        loader_kind_m,
+                    )
+                )
+            except Exception:
+                logger.debug("lỗi khi quét ModrinthApp profile %s", inst_dir, exc_info=True)
     return found
 
 
