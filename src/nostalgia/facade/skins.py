@@ -8,7 +8,8 @@ from pathlib import Path
 
 from nostalgia.account.model import ELY, MICROSOFT, Account
 from nostalgia.errors import AccountError, SkinError
-from nostalgia.facade.context import LauncherContext
+from nostalgia.facade.accounts import AccountOperations
+from nostalgia.operations.cancellation import CancelToken
 from nostalgia.skin.library import (
     SkinEntry,
     add_to_library,
@@ -28,7 +29,7 @@ from nostalgia.skin.upload import upload_skin_to_mojang
 
 
 @dataclass(frozen=True, slots=True)
-class SkinOperations(LauncherContext):
+class SkinOperations(AccountOperations):
     def describe_skin(self, account: Account) -> PlayerSkin:
         """Chỉ đọc đĩa. Chưa có cache thì Steve/Alex theo UUID."""
         return cached_skin(self.paths.skins_dir, _cache_key(account), account.player_uuid)
@@ -89,12 +90,18 @@ class SkinOperations(LauncherContext):
             return self.upload_skin(account, skin_entry.skin_path, slim=skin_entry.slim)
         skins_dir = self.paths.skins_dir
         skins_dir.mkdir(parents=True, exist_ok=True)
-        (skins_dir / f"{_cache_key(account)}.png").write_bytes(skin_entry.skin_path.read_bytes())
-        marker = skins_dir / f"{_cache_key(account)}.slim"
+        cache_key = _cache_key(account)
+        (skins_dir / f"{cache_key}.png").write_bytes(skin_entry.skin_path.read_bytes())
+        marker = skins_dir / f"{cache_key}.slim"
         if skin_entry.slim:
             marker.touch()
         else:
             marker.unlink(missing_ok=True)
+        if account.account_kind == ELY:
+            # Ely chỉ đổi skin thật qua web (upload.py); đây chỉ đổi ảnh trong launcher.
+            # `refresh_skin` kế tiếp KHÔNG được âm thầm ghi đè lựa chọn này — đánh dấu để
+            # `refresh_ely_skin` biết giữ lại cho tới khi server thật đồng bộ theo (JL-18 mục 5).
+            (skins_dir / f"{cache_key}.local-override").touch()
         return self.describe_skin(account)
 
     def _collect(self, skin_path: Path, *, name: str, slim: bool, source: str) -> None:
@@ -104,17 +111,27 @@ class SkinOperations(LauncherContext):
         except SkinError:
             return
 
-    def upload_skin(self, account: Account, skin_path: Path, *, slim: bool = False) -> PlayerSkin:
+    def upload_skin(
+        self,
+        account: Account,
+        skin_path: Path,
+        *,
+        slim: bool = False,
+        client_id: str = "",
+        cancel_token: CancelToken | None = None,
+    ) -> PlayerSkin:
         """Upload skin mới lên Mojang (chỉ tài khoản Microsoft). CHẠM MẠNG.
 
-        Sau khi upload thành công, tải lại skin từ server để cập nhật cache.
+        Làm mới vé trước (như luồng chơi) — vé hết hạn thì Mojang trả 401 thay vì launcher
+        tự xin vé mới. Sau khi upload thành công, tải lại skin từ server để cập nhật cache.
         """
         if account.account_kind != MICROSOFT:
             raise AccountError("chỉ tài khoản Microsoft mới upload được skin lên Mojang")
-        if not account.access_token:
-            raise AccountError("tài khoản chưa đăng nhập hoặc vé hết hạn — đăng nhập lại")
+        account = self._require_account(account.player_name, client_id, cancel_token)
         with self.make_http_client() as http_client:
-            upload_skin_to_mojang(http_client, account.access_token, skin_path, slim=slim)
+            upload_skin_to_mojang(
+                http_client, account.access_token, skin_path, slim=slim, endpoints=self.endpoints
+            )
             skin = refresh_premium_skin(
                 http_client, self.paths.skins_dir, account.player_uuid, endpoints=self.endpoints
             )

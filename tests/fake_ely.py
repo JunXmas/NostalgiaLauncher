@@ -55,3 +55,25 @@ def publish(server: LocalHttpsServer, state: ServerState) -> AuthEndpoints:
         ely_authlib_root_url=server.url("/ely/api/authlib-injector"),
         authlib_injector_latest_url=server.url("/authlib/latest.json"),
     )
+
+
+def publish_textures(
+    server: LocalHttpsServer,
+    state: ServerState,
+    player_name: str,
+    *,
+    slim: bool = False,
+    status: int = 200,
+) -> str:
+    """Route giả cho `GET /textures/<tên>` — JSON metadata thật của Ely (JL-18 mục 4/6).
+
+    `status=204` mô phỏng "tài khoản chưa có skin" (hành vi thật đã kiểm bằng curl: tên
+    không tồn tại trả 204 rỗng, không phải lỗi).
+    """
+    skin: dict[str, object] = {"url": "http://textures.minecraft.net/texture/fake"}
+    if slim:
+        skin["metadata"] = {"model": "slim"}
+    body = b"" if status != 200 else json.dumps({"SKIN": skin}).encode()
+    path = f"/textures/{player_name}"
+    state.add(path, body, status=status)
+    return server.url("/textures")

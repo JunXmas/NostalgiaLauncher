@@ -82,6 +82,27 @@ def refresh_premium_skin(
     return cached_skin(skins_dir, undashed, player_uuid)
 
 
+def parse_ely_textures(document: JsonValue) -> bool:
+    """slim từ JSON textures Ely (`{"SKIN":{"metadata":{"model":"slim"}}}`) — phản hồi phẳng,
+    không có lớp properties/base64 như hồ sơ Mojang. Thuần."""
+    skin = as_mapping(as_mapping(document).get("SKIN"))
+    metadata = as_mapping(skin.get("metadata"))
+    return as_string(metadata.get("model")) == "slim"
+
+
+def _fetch_ely_slim(http_client: HttpClient, endpoints: Endpoints, player_name: str) -> bool:
+    """CHẠM MẠNG. slim thật của Ely qua `endpoints.ely_textures/<tên>`. Lỗi mạng/JSON hoặc
+    tài khoản chưa có skin (204 rỗng) thì coi là classic — không được để việc này chặn tải
+    skin chính, nên lỗi ở đây không ném ra ngoài."""
+    try:
+        document = fetch_json(
+            http_client, f"{endpoints.ely_textures}/{player_name}", what="metadata skin Ely"
+        )
+    except NostalgiaError:
+        return False
+    return parse_ely_textures(document)
+
+
 def refresh_ely_skin(
     http_client: HttpClient,
     skins_dir: Path,
@@ -90,16 +111,30 @@ def refresh_ely_skin(
     *,
     endpoints: Endpoints = DEFAULT_ENDPOINTS,
 ) -> PlayerSkin:
-    """CHẠM MẠNG. Ely.by phục vụ skin theo tên; slim không biết trước nên đọc từ ảnh sau."""
+    """CHẠM MẠNG. Ely.by phục vụ skin theo tên; slim đọc thật từ `endpoints.ely_textures`.
+
+    Nếu người dùng vừa `apply_library_skin` cục bộ (đánh dấu bằng `.local-override`, JL-18
+    mục 5), refresh không được âm thầm ghi đè nó — chỉ đồng bộ lại khi ely.by thật sự đã đổi
+    theo, lúc đó marker tự gỡ.
+    """
     cache_key = skin_cache_key("ely", player_name, player_uuid)
+    skin_url = f"{endpoints.ely_skins}/{player_name}.png"
+    override_marker = skins_dir / f"{cache_key}.local-override"
     try:
+        if override_marker.is_file():
+            local_path = skins_dir / f"{cache_key}.png"
+            remote_bytes = http_client.fetch_bytes(skin_url, max_bytes=MAX_TEXTURE_BYTES)
+            if local_path.is_file() and local_path.read_bytes() != remote_bytes:
+                return cached_skin(skins_dir, cache_key, player_uuid)
+            override_marker.unlink(missing_ok=True)
+        slim = _fetch_ely_slim(http_client, endpoints, player_name)
         _store(
             http_client,
             skins_dir,
             cache_key,
-            f"{endpoints.ely_skins}/{player_name}.png",
+            skin_url,
             f"{endpoints.ely_capes}/{player_name}.png",
-            slim=False,
+            slim=slim,
         )
     except (NostalgiaError, OSError) as exc:
         logger.warning("không tải được skin Ely.by cho %s: %s", player_name, exc)
