@@ -71,7 +71,7 @@ def test_detect_open_to_lan_finds_real_beacon_over_loopback() -> None:
         while found is None and time.monotonic() < deadline:
             result: dict[str, object] = {}
 
-            def detect() -> None:
+            def detect(result: dict[str, object] = result) -> None:
                 result["world"] = detect_open_to_lan(1.0)
 
             detector = threading.Thread(target=detect)
@@ -83,7 +83,7 @@ def test_detect_open_to_lan_finds_real_beacon_over_loopback() -> None:
             detector.join(2.0)
             assert not detector.is_alive(), "detect_open_to_lan() không trả về đúng hạn"
             candidate = result.get("world")
-            if candidate is not None and candidate.world_name == world_name:  # type: ignore[union-attr]
+            if candidate is not None and candidate.world_name == world_name:  # type: ignore[attr-defined]
                 found = candidate  # type: ignore[assignment]
     finally:
         sender.close()
@@ -118,7 +118,9 @@ def test_interface_addresses_fallback_without_fcntl(monkeypatch: pytest.MonkeyPa
     """Windows không có `fcntl`: `_interface_ipv4_addresses()` phải rơi về kỹ thuật UDP
     `connect()` + `getsockname()` thay vì trả rỗng (nguyên nhân (1) trong JL-13)."""
     monkeypatch.setattr(socket.socket, "connect", _REAL_SOCKET_CONNECT)
-    monkeypatch.setitem(sys.modules, "fcntl", None)  # `import fcntl` bên trong hàm sẽ ném ImportError
+    monkeypatch.setitem(
+        sys.modules, "fcntl", None
+    )  # `import fcntl` bên trong hàm sẽ ném ImportError
 
     addresses = _interface_ipv4_addresses()
 

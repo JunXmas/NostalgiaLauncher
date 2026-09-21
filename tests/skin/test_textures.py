@@ -11,6 +11,7 @@ from pathlib import Path
 import fake_ely
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import ELY, MICROSOFT, OFFLINE, Account
+from nostalgia.api import Launcher
 from nostalgia.model.json_value import JsonValue
 from nostalgia.repo import endpoints as endpoints_module
 from nostalgia.skin.defaults import default_skin, is_alex
@@ -83,7 +84,7 @@ def _launcher_with_fake_ely(
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
-) -> object:
+) -> Launcher:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
     return replace(
         launcher,

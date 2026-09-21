@@ -63,9 +63,7 @@ class FakeDiscord:
                     connection.sendall(encode_frame(OP_FRAME, {"cmd": "DISPATCH", "evt": "READY"}))
                 elif frame[0] == OP_FRAME:
                     connection.sendall(
-                        encode_frame(
-                            OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": self._activity_evt}
-                        )
+                        encode_frame(OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": self._activity_evt})
                     )
                 elif frame[0] == OP_CLOSE:
                     return

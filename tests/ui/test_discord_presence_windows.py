@@ -5,6 +5,7 @@ là bề mặt riêng (pipe_opener) không đụng tới FakeDiscord/socket th�
 from __future__ import annotations
 
 from pathlib import Path
+from typing import BinaryIO, cast
 
 import pytest
 
@@ -50,7 +51,6 @@ class FakeWindowsPipe:
         pass
 
 
-
 def test_windows_named_pipe_handshake_and_activity() -> None:
     ready = encode_frame(OP_FRAME, {"cmd": "DISPATCH", "evt": "READY"})
     ack = encode_frame(OP_FRAME, {"cmd": "SET_ACTIVITY", "evt": None})
@@ -59,7 +59,7 @@ def test_windows_named_pipe_handshake_and_activity() -> None:
         "123456789",
         environ={},
         platform_name="win32",
-        pipe_opener=lambda _path: pipe,
+        pipe_opener=lambda _path: cast(BinaryIO, pipe),
     )
     assert presence.connect() is True
     assert presence.set_activity("Đang chơi Sinh tồn", "Nostalgia Launcher", 0) is True
@@ -72,9 +72,8 @@ def test_windows_named_pipe_handshake_and_activity() -> None:
 
 
 def test_windows_named_pipe_missing_discord_stays_quiet() -> None:
-    def missing(_path: Path) -> object:
+    def missing(_path: Path) -> BinaryIO:
         raise OSError("no such pipe")
 
     presence = DiscordPresence("123", environ={}, platform_name="win32", pipe_opener=missing)
     assert presence.connect() is False
-

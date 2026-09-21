@@ -185,7 +185,11 @@ class HttpClient:
             if not location:
                 message = f"{url} chuyển hướng {response.status} nhưng không có Location"
                 raise NetworkError(message)
-            url = "https://" + h.removeprefix("http://") if (h := urljoin(url, location)).startswith("http://") else h
+            url = (
+                "https://" + h.removeprefix("http://")
+                if (h := urljoin(url, location)).startswith("http://")
+                else h
+            )
         else:
             message = f"{url}: quá {MAX_REDIRECTS} lần chuyển hướng, đã dừng"
             raise NetworkError(message)

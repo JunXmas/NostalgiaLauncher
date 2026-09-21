@@ -14,17 +14,16 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QGuiApplication
+from test_qml import make_launcher
 
 from nostalgia.instance.model import Instance
 from nostalgia.ui.app import build_view
-from test_qml import make_launcher
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def build_home(tmp_path: Path, played_at: dict[str, int]) -> tuple[object, object]:
+def build_home(tmp_path: Path, played_at: dict[str, int]) -> tuple[QObject, QObject]:
     """Ba bản chơi tên theo thứ tự chữ cái, mốc chơi cuối do test đặt (0 = chưa chơi)."""
-    from PySide6.QtCore import QObject
 
     launcher = make_launcher(tmp_path)
     for instance_id, last_played_at in played_at.items():
@@ -41,7 +40,7 @@ def build_home(tmp_path: Path, played_at: dict[str, int]) -> tuple[object, objec
     return home, picker
 
 
-def picker_rows(picker: object) -> list[str]:
+def picker_rows(picker: QObject) -> list[str]:
     """`model` là mảng JS: PySide trả `QJSValue`, phải đổi sang Python mới đọc được."""
     rows = picker.property("model")
     return list(rows.toVariant() if hasattr(rows, "toVariant") else rows)
@@ -113,4 +112,3 @@ def test_nothing_is_labelled_recent_when_nothing_was_ever_played(tmp_path: Path)
 
     assert picker.property("markedIndex") == -1, "chưa chơi gì thì không hàng nào là vừa chơi"
     assert [row.split("  ")[0] for row in rows] == ["a-dau-bang", "b-giua", "c-cuoi"]
-

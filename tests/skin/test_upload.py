@@ -27,8 +27,8 @@ def png_bytes(width: int, height: int) -> bytes:
 
 
 def _install_put_support(server: LocalHttpsServer) -> None:
-    handler = server._server.RequestHandlerClass  # type: ignore[attr-defined]
-    handler.do_PUT = handler.do_POST
+    handler = server._server.RequestHandlerClass
+    handler.do_PUT = handler.do_POST  # type: ignore[attr-defined]
 
 
 def test_upload_succeeds_and_server_receives_the_bytes(
