@@ -1,10 +1,10 @@
 """Discord Rich Presence qua IPC cục bộ, KHÔNG thêm thư viện.
 
 Discord đang chạy mở một socket `discord-ipc-N` (Linux/macOS: unix socket trong
-$XDG_RUNTIME_DIR, /tmp hoặc thư mục snap/flatpak; Windows: named pipe). Giao thức rất nhỏ:
-mỗi khung = opcode (uint32 LE) + độ dài (uint32 LE) + JSON. Bắt tay `{"v":1,"client_id":…}`
-rồi `SET_ACTIVITY`. Không có Discord thì `connect` trả False và mọi thứ im lặng — presence là
-thứ trang trí, không được làm phiền việc chơi.
+$XDG_RUNTIME_DIR, /tmp hoặc thư mục snap/flatpak; Windows: named pipe, mở được như file
+thường bằng `open()`). Giao thức rất nhỏ: mỗi khung = opcode (uint32 LE) + độ dài (uint32 LE)
++ JSON. Bắt tay `{"v":1,"client_id":…}` rồi `SET_ACTIVITY`. Không có Discord thì `connect`
+trả False và mọi thứ im lặng — presence là thứ trang trí, không được làm phiền việc chơi.
 """
 
 from __future__ import annotations
@@ -16,9 +16,9 @@ import socket
 import struct
 import sys
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO, Protocol
 
 OP_HANDSHAKE = 0
 OP_FRAME = 1
@@ -28,16 +28,28 @@ MAX_FRAME_BYTES = 64 * 1024
 SOCKET_TIMEOUT_SECONDS = 2.0
 
 
+class Connection(Protocol):
+    """Socket Unix và named pipe Windows dùng chung giao diện này."""
+
+    def sendall(self, payload: bytes) -> None: ...
+    def recv(self, size: int) -> bytes: ...
+    def close(self) -> None: ...
+
+
 def candidate_socket_paths(
     environ: Mapping[str, str], platform_name: str = sys.platform
 ) -> list[Path]:
     """Mọi chỗ Discord có thể đặt socket, thử theo thứ tự. Windows dùng named pipe."""
     if platform_name == "win32":
-        return [Path(rf"\\?\pipe\discord-ipc-{number}") for number in range(10)]
+        return [Path(rf"\\.\pipe\discord-ipc-{number}") for number in range(10)]
     socket_dirs: list[Path] = []
     for variable in ("XDG_RUNTIME_DIR", "TMPDIR", "TMP", "TEMP"):
         if environ.get(variable):
             socket_dirs.append(Path(environ[variable]))
+    if not environ.get("XDG_RUNTIME_DIR") and hasattr(os, "getuid"):
+        # Snap/Flatpak/nhiều distro không đặt XDG_RUNTIME_DIR trong môi trường được truyền
+        # vào (vd chạy từ systemd service) nhưng thư mục chuẩn theo UID vẫn tồn tại.
+        socket_dirs.append(Path(f"/run/user/{os.getuid()}"))
     socket_dirs.append(Path("/tmp"))
     runtime_dir = environ.get("XDG_RUNTIME_DIR")
     if runtime_dir:
@@ -70,6 +82,26 @@ def decode_frame(chunk: bytes) -> tuple[int, dict[str, Any]] | None:
     return opcode, body if isinstance(body, dict) else {}
 
 
+def read_frame(recv: Callable[[int], bytes]) -> tuple[int, dict[str, Any]] | None:
+    """Đọc một khung trọn vẹn, gọi `recv` nhiều lần nếu khung tới phân mảnh (thường ở TCP,
+    nhưng cũng có thể xảy ra với named pipe). `recv` rỗng giữa chừng nghĩa là đầu kia đóng."""
+    buffer = b""
+    while len(buffer) < HEADER.size:
+        chunk = recv(HEADER.size - len(buffer))
+        if not chunk:
+            return None
+        buffer += chunk
+    _, length = HEADER.unpack_from(buffer)
+    if length > MAX_FRAME_BYTES:
+        return None
+    while len(buffer) < HEADER.size + length:
+        chunk = recv(HEADER.size + length - len(buffer))
+        if not chunk:
+            return None
+        buffer += chunk
+    return decode_frame(buffer)
+
+
 def build_activity(details: str, state: str, started_at: int) -> dict[str, Any]:
     activity: dict[str, Any] = {"details": details[:128], "state": state[:128]}
     if started_at > 0:
@@ -77,16 +109,46 @@ def build_activity(details: str, state: str, started_at: int) -> dict[str, Any]:
     return activity
 
 
+class _PipeConnection:
+    """Bọc named pipe Windows (mở như file thường) sau cùng giao diện `Connection` với socket
+    Unix, để phần còn lại của module không cần biết đang chạy trên hệ nào."""
+
+    def __init__(self, handle: BinaryIO) -> None:
+        self._handle = handle
+
+    def sendall(self, payload: bytes) -> None:
+        self._handle.write(payload)
+        self._handle.flush()
+
+    def recv(self, size: int) -> bytes:
+        return self._handle.read(size)
+
+    def close(self) -> None:
+        self._handle.close()
+
+
+def _open_pipe(path: Path) -> BinaryIO:
+    return path.open("r+b", buffering=0)
+
+
 class DiscordPresence:
     """Một kết nối IPC. Dùng từ MỘT luồng; mọi lỗi socket đổi thành `connected == False`."""
 
     def __init__(
-        self, client_id: str, *, environ: Mapping[str, str] | None = None, pid: int | None = None
+        self,
+        client_id: str,
+        *,
+        environ: Mapping[str, str] | None = None,
+        pid: int | None = None,
+        platform_name: str = sys.platform,
+        pipe_opener: Callable[[Path], BinaryIO] = _open_pipe,
     ) -> None:
         self._client_id = client_id.strip()
         self._environ = os.environ if environ is None else environ
         self._pid = os.getpid() if pid is None else pid
-        self._socket: socket.socket | None = None
+        self._platform_name = platform_name
+        self._pipe_opener = pipe_opener
+        self._socket: Connection | None = None
 
     @property
     def connected(self) -> bool:
@@ -95,7 +157,7 @@ class DiscordPresence:
     def connect(self) -> bool:
         if not self._client_id:
             return False
-        for path in candidate_socket_paths(self._environ):
+        for path in candidate_socket_paths(self._environ, self._platform_name):
             connection = self._open(path)
             if connection is None:
                 continue
@@ -103,7 +165,7 @@ class DiscordPresence:
                 connection.sendall(
                     encode_frame(OP_HANDSHAKE, {"v": 1, "client_id": self._client_id})
                 )
-                reply = decode_frame(connection.recv(MAX_FRAME_BYTES))
+                reply = read_frame(connection.recv)
             except OSError:
                 connection.close()
                 continue
@@ -139,16 +201,21 @@ class DiscordPresence:
         )
         try:
             self._socket.sendall(frame)
-            self._socket.recv(MAX_FRAME_BYTES)
+            reply = read_frame(self._socket.recv)
         except OSError:
             self.close()
             return False
-        return True
+        if reply is None:
+            self.close()
+            return False
+        return reply[1].get("evt") != "ERROR"
 
-    @staticmethod
-    def _open(path: Path) -> socket.socket | None:
-        if sys.platform == "win32":
-            return None  # named pipe của Windows: chưa hỗ trợ, im lặng
+    def _open(self, path: Path) -> Connection | None:
+        if self._platform_name == "win32":
+            try:
+                return _PipeConnection(self._pipe_opener(path))
+            except OSError:
+                return None
         if not path.exists():
             return None
         connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
