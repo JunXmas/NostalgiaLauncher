@@ -170,6 +170,9 @@ class HttpClient:
         limit = expected_size if expected_size is not None else max_bytes
         # Theo chuyển hướng có hạn: GitHub (gói cập nhật) trả 302 sang CDN. Mỗi bước đi qua
         # `_split` nên đích vẫn phải là https; quá hạn hoặc thiếu Location là lỗi, không lặp mãi.
+        # Đích redirect http:// bị nâng lên https:// trước khi thử lại: `_split` từ chối thẳng
+        # mọi scheme khác https, và máy chủ nêu http trong Location (vd. Ely.by → textures.
+        # minecraft.net) thường chấp nhận https trên cùng host — thấy thật ở skinsystem.ely.by.
         for _hop in range(MAX_REDIRECTS + 1):
             host, path = _split(url)
             response = self._open_response(host, url, "GET", path, None, dict(DEFAULT_HEADERS))
@@ -182,7 +185,7 @@ class HttpClient:
             if not location:
                 message = f"{url} chuyển hướng {response.status} nhưng không có Location"
                 raise NetworkError(message)
-            url = urljoin(url, location)
+            url = "https://" + h.removeprefix("http://") if (h := urljoin(url, location)).startswith("http://") else h
         else:
             message = f"{url}: quá {MAX_REDIRECTS} lần chuyển hướng, đã dừng"
             raise NetworkError(message)

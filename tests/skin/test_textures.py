@@ -10,6 +10,7 @@ from pathlib import Path
 
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.account.model import ELY, MICROSOFT, OFFLINE, Account
+from nostalgia.repo import endpoints as endpoints_module
 from nostalgia.model.json_value import JsonValue
 from nostalgia.skin.defaults import default_skin, is_alex
 from nostalgia.skin.textures import parse_session_profile
@@ -96,3 +97,22 @@ def test_ely_skin_is_served_by_name(
     skin = launcher.refresh_skin(account)
     assert skin.skin_path.name == "ely-junbob.png" and skin.skin_path.read_bytes() == SKIN_PNG
     assert skin.cape_path is None  # /ely/cloaks/JunBob.png trả 404 → không có cape
+
+
+def test_every_endpoint_url_constant_is_https() -> None:
+    """Regression JL-11: ELY_SKINS_URL/ELY_CAPES_URL tung la http:// va bi HttpClient
+    tu choi thang o _split, lam skin Ely.by luon roi ve Steve/Alex trong im lang.
+
+    Test soi CHINH hang so trong endpoints.py - khong tiem URL gia nhu cac test khac
+    trong file nay - vi do la loai test duy nhat bat duoc lop loi nay (JL-11).
+    """
+    non_http_schemes = ("wss://",)  # relay choi chung dung WebSocket, khong phai HTTP(S)
+    for name in dir(endpoints_module):
+        if not name.endswith("_URL"):
+            continue
+        value = getattr(endpoints_module, name)
+        if not isinstance(value, str):
+            continue
+        if value.startswith(non_http_schemes):
+            continue
+        assert value.startswith("https://"), f"{name} phai https://, dang la {value!r}"
