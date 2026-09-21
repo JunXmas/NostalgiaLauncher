@@ -185,11 +185,8 @@ class HttpClient:
             if not location:
                 message = f"{url} chuyển hướng {response.status} nhưng không có Location"
                 raise NetworkError(message)
-            url = (
-                "https://" + h.removeprefix("http://")
-                if (h := urljoin(url, location)).startswith("http://")
-                else h
-            )
+            h = urljoin(url, location)
+            url = "https://" + h.removeprefix("http://") if h.startswith("http://") else h
         else:
             message = f"{url}: quá {MAX_REDIRECTS} lần chuyển hướng, đã dừng"
             raise NetworkError(message)
@@ -300,8 +297,7 @@ class HttpClient:
     def _discard(self, host: str) -> None:
         """Bỏ kết nối đã lỗi để lần thử sau dựng lại từ đầu."""
         cached: dict[str, http.client.HTTPSConnection] = getattr(self._local, "by_host", {})
-        connection = cached.pop(host, None)
-        if connection is None:
+        if (connection := cached.pop(host, None)) is None:
             return
         with self._lock:
             if connection in self._connections:
