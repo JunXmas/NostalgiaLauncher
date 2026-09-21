@@ -46,6 +46,14 @@ export class RelaySession {
     this.joinTimes = [];           // mốc thời gian các lần nối join (rate-limit)
   }
 
+  // Rate-limit: dem moc thoi gian moi lan noi (host lan join) trong RL_WINDOW_MS,
+  // rot moc cu ra khoi cua so. Vuot RL_MAX -> true (phai tu choi).
+  rateLimited(now) {
+    this.joinTimes = this.joinTimes.filter((t) => now - t < RL_WINDOW_MS);
+    this.joinTimes.push(now);
+    return this.joinTimes.length > RL_MAX;
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     const role = url.searchParams.get("role");
@@ -55,6 +63,11 @@ export class RelaySession {
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     server.accept();
+
+    if (this.rateLimited(Date.now())) {
+      server.close(REFUSED, "refused");
+      return new Response(null, { status: 101, webSocket: client });
+    }
 
     if (role === "host") {
       // HOST ĐẦU TIÊN GIỮ CHỖ: không cho host sau ĐÁ host cũ. Trước đây host mới
