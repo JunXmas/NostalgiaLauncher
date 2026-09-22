@@ -66,7 +66,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     )
     update_bridge.updateAvailable.connect(
         lambda launcher_version: notifier.announce(
-            "update", f"Có bản mới {launcher_version}", "Mở CÀI ĐẶT → Cập nhật để tải"
+            "update", f"Có bản mới {launcher_version}", "Bấm Tải về ở dải xanh trên đầu cửa sổ"
         )
     )
     context.setContextProperty("updateBridge", update_bridge)

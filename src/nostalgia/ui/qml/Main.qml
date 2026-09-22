@@ -31,10 +31,16 @@ Item {
         id: content
         anchors { top: parent.top; bottom: parent.bottom; left: sidebar.right; right: parent.right }
 
+        // Bản mới phải thấy được ở mọi trang, không phải đi tìm trong CÀI ĐẶT.
+        UpdateBanner {
+            id: updateBanner
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+        }
+
         Loader {
             id: pageLoader
             objectName: "pageLoader"
-            anchors.fill: parent
+            anchors { top: updateBanner.bottom; bottom: parent.bottom; left: parent.left; right: parent.right }
             source: content.pageFor(sidebar.currentIndex)
             opacity: 0
             onLoaded: fadeIn.restart()
