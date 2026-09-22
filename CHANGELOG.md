@@ -3,11 +3,14 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.0.15 — 2026-09-22
+## 1.0.15 — 2026-09-23
 
-- **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, mang sẵn nút Tải về / Cài và mở lại và
-  phần trăm lúc tải. Trước đây nút tải chỉ nằm trong CÀI ĐẶT → CẬP NHẬT nên gần như không ai
-  thấy. Đóng được bằng ✕; đóng rồi thì im tới lần mở launcher sau.
+- **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, kèm phần trăm lúc tải. Trước đây nút
+  tải chỉ nằm trong CÀI ĐẶT → CẬP NHẬT nên gần như không ai thấy. Đóng được bằng ✕; đóng rồi
+  thì im tới lần mở launcher sau.
+- **Cập nhật chỉ còn một nút.** Bấm "Cập nhật ngay" là launcher tải, tự cài, tự tắt và mở
+  lại — không phải bấm lần thứ hai. Bản cài kiểu `.deb`/`.rpm`/AppImage/macOS `.app` không tự
+  tráo được thì mở thẳng trang tải thay vì tải một gói rồi mới báo lỗi.
 
 ## 1.0.14 — 2026-09-21
 

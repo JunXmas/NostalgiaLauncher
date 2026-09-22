@@ -1,15 +1,17 @@
-Bản nhỏ: nút cập nhật giờ nằm ngay trước mắt.
+Cập nhật launcher giờ là **một nút**.
 
-Trước đây launcher chỉ hiện toast bốn giây rồi bảo bạn tự vào CÀI ĐẶT → CẬP NHẬT tìm nút
-tải. Không mấy ai đi tìm. Giờ có một dải xanh chạy ngang đầu cửa sổ, thấy ở mọi trang, mang
-sẵn nút Tải về và Cài và mở lại.
+Trước đây launcher hiện toast bốn giây rồi bảo bạn tự vào CÀI ĐẶT → CẬP NHẬT tìm nút tải,
+tải xong lại phải bấm thêm nút thứ hai để cài. Giờ có một dải xanh chạy ngang đầu cửa sổ,
+thấy ở mọi trang, và bấm một lần là xong cả việc.
 
 ## Cập nhật
 
-- **Dải báo bản mới ở đầu cửa sổ.** Hiện khi có bản mới, cho thấy phần trăm trong lúc tải,
-  rồi đổi thành "Cài và mở lại" khi tải xong. Bấm ✕ để tắt, tắt rồi thì im cho tới lần mở
-  launcher sau.
-- Toast cũng trỏ đúng vào dải đó thay vì bảo bạn đi tìm trong CÀI ĐẶT.
+- **Một nút cho cả việc.** Bấm "Cập nhật ngay": launcher tải, tự cài, tự tắt và mở lại. Bạn
+  không phải bấm thêm gì.
+- **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, cho thấy phần trăm trong lúc tải. Bấm
+  ✕ để tắt; tắt rồi thì im cho tới lần mở launcher sau.
+- Bản cài kiểu `.deb`, `.rpm`, AppImage hay macOS `.app` không tự tráo file được — những bản
+  đó mở thẳng trang tải thay vì tải một gói rồi mới báo không cài được.
 - Mục CẬP NHẬT ở CÀI ĐẶT vẫn còn nguyên cho ai thích chỗ cũ.
 
 ## Tải xuống
@@ -30,8 +32,8 @@ Nhớ đối chiếu `SHA256SUMS` với file tải về. File `.zip` là thứ b
 ## Cách cập nhật
 
 Mở launcher là nó tự kiểm sau vài giây; có bản mới thì dải xanh hiện ngay trên đầu, bấm
-Tải về. Bản đóng gói Linux/Windows tự cài và mở lại. Bản `.deb`/`.rpm`/AppImage/macOS `.app`
-thì launcher mở trang này để bạn tải tay.
+"Cập nhật ngay" rồi để yên — launcher tự tải, tự cài và mở lại. Bản `.deb`/`.rpm`/AppImage/
+macOS `.app` thì launcher mở trang này để bạn tải tay.
 
 ---
 
