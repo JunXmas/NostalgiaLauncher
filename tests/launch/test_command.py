@@ -275,3 +275,21 @@ def test_the_command_matches_the_approved_snapshot() -> None:
         for line in SNAPSHOT.read_text(encoding="utf-8").splitlines()
     ]
     assert list(argv) == approved
+
+
+@pytest.mark.parametrize("version_id", VERSION_IDS)
+def test_the_authlib_agent_survives_into_the_real_argv(version_id: str) -> None:
+    """Cờ `-javaagent` của Ely.by phải tới được argv thật trên MỌI đời bản game.
+
+    Đây là toàn bộ lý do skin Ely hiện trong game: mất cờ này thì máy chủ trả Steve cho
+    mọi người. `tuning.extra_arguments` đi qua `_collect_jvm_arguments`, nhánh "bản game tự
+    khai jvm_arguments" (1.13+, Fabric, Forge) khác nhánh "đời cũ" — test chạy cả hai.
+    """
+    agent = "-javaagent:/kho/data/authlib-injector/authlib-injector-1.2.8.jar=https://ely/api"
+    command = build(version_id, tuning=JvmTuning(extra_arguments=(agent,)))
+
+    assert agent in command.jvm_arguments, f"{version_id}: mất cờ javaagent"
+    # Phải nằm TRƯỚC main class: javaagent là cờ JVM, rơi xuống sau main class thì JVM coi
+    # nó là tham số của game và bỏ qua — skin im lặng không hiện, không lỗi nào báo.
+    argv = command.argv
+    assert argv.index(agent) < argv.index(command.main_class), f"{version_id}: cờ nằm sai chỗ"

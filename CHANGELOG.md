@@ -3,6 +3,12 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.0.15 — 2026-09-22
+
+- **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, mang sẵn nút Tải về / Cài và mở lại và
+  phần trăm lúc tải. Trước đây nút tải chỉ nằm trong CÀI ĐẶT → CẬP NHẬT nên gần như không ai
+  thấy. Đóng được bằng ✕; đóng rồi thì im tới lần mở launcher sau.
+
 ## 1.0.14 — 2026-09-21
 
 Gộp 11 bản vá. Ghi chú đầy đủ: [release v1.0.14](https://github.com/JunXmas/NostalgiaLauncher/releases/tag/v1.0.14).
