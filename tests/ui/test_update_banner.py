@@ -57,12 +57,8 @@ class FakeUpdateBridge(QObject):
         return 0.5
 
     @Slot()
-    def download(self) -> None:
-        self.calls.append("download")
-
-    @Slot()
-    def applyAndRestart(self) -> None:
-        self.calls.append("apply")
+    def updateNow(self) -> None:
+        self.calls.append("update")
 
     @Slot()
     def openReleasePage(self) -> None:
@@ -103,20 +99,21 @@ def test_banner_shows_each_stage_and_drives_the_bridge() -> None:
     fake.set_state("available")
     assert banner.property("active") is True
     assert "9.9.9" in text_of(banner)
-    download_button = banner.findChild(QObject, "bannerDownloadButton")
-    assert download_button is not None and banner.property("canDownload")
-    download_button.metaObject().invokeMethod(download_button, "clicked")
-    assert fake.calls == ["download"]
+    update_button = banner.findChild(QObject, "bannerUpdateButton")
+    assert update_button is not None and banner.property("canUpdate")
+    assert update_button.property("label") == "⬇  Cập nhật ngay"
+    update_button.metaObject().invokeMethod(update_button, "clicked")
+    assert fake.calls == ["update"]
 
+    # Một nút là đủ: tải và cài là hai nhịp của cùng một lần bấm, nên sau khi bấm thì không
+    # còn nút nào để bấm nữa — chỉ còn chữ báo tiến trình.
     fake.set_state("downloading")
     assert "50%" in text_of(banner)
+    assert banner.property("canUpdate") is False
 
     fake.set_state("ready")
-    apply_button = banner.findChild(QObject, "bannerApplyButton")
-    assert apply_button is not None and banner.property("canApply")
-    assert apply_button.property("label") == "Cài và mở lại"
-    apply_button.metaObject().invokeMethod(apply_button, "clicked")
-    assert fake.calls == ["download", "apply"]
+    assert banner.property("canUpdate") is False
+    assert "mở lại" in text_of(banner)
 
 
 def test_dismissing_the_banner_silences_it() -> None:

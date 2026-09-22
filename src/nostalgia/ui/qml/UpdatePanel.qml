@@ -43,16 +43,11 @@ Panel {
                 onClicked: updateBridge.checkNow()
             }
             ActionButton {
-                objectName: "downloadUpdateButton"
+                objectName: "updateNowButton"
                 visible: panel.state === "available"
-                label: "⬇  Tải bản " + updateBridge.latestVersion
-                onClicked: updateBridge.download()
-            }
-            ActionButton {
-                objectName: "applyUpdateButton"
-                visible: panel.state === "ready"
-                label: panel.frozen ? "Cài và mở lại" : "Mở trang tải"
-                onClicked: panel.frozen ? updateBridge.applyAndRestart() : updateBridge.openReleasePage()
+                // Một nút cho cả việc: tải → tráo → mở lại (xem UpdateBanner.qml).
+                label: panel.frozen ? "⬇  Cập nhật ngay" : "Mở trang tải"
+                onClicked: updateBridge.updateNow()
             }
             Text {
                 objectName: "updateMessage"
