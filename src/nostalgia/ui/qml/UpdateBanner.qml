@@ -16,10 +16,10 @@ Rectangle {
                                    || updateBridge.state === "ready")
     property bool dismissed: false
     readonly property bool frozen: updateBridge.installKind === "frozen"
-    // Hai cờ này là điều kiện hiện của hai nút, tách ra để test đọc được: `visible` của QML là
+    // Cờ này là điều kiện hiện của nút, tách ra để test đọc được: `visible` của QML là
     // hiện-thật-sự (luôn false khi cây chưa vào cửa sổ), nên không kiểm được ràng buộc.
-    readonly property bool canDownload: active && updateBridge.state === "available"
-    readonly property bool canApply: active && updateBridge.state === "ready"
+    // Lúc đang tải thì ẩn nút: việc đã chạy, bấm thêm không thêm được gì.
+    readonly property bool canUpdate: active && updateBridge.state === "available"
 
     height: active ? 52 : 0
     visible: active
@@ -42,7 +42,7 @@ Rectangle {
                   ? "Đang tải bản " + updateBridge.latestVersion + "… "
                     + Math.round(updateBridge.progressFraction * 100) + "%"
                   : updateBridge.state === "ready"
-                  ? "Bản " + updateBridge.latestVersion + " đã tải xong"
+                  ? "Đang cài bản " + updateBridge.latestVersion + ", launcher sắp mở lại…"
                   : "Có bản mới " + updateBridge.latestVersion
             color: Theme.text; font.pixelSize: 13; font.bold: true
         }
@@ -52,18 +52,12 @@ Rectangle {
         anchors { right: parent.right; rightMargin: Theme.pad; verticalCenter: parent.verticalCenter }
         spacing: 10
         ActionButton {
-            objectName: "bannerDownloadButton"
+            objectName: "bannerUpdateButton"
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.canDownload
-            label: "⬇  Tải về"
-            onClicked: updateBridge.download()
-        }
-        ActionButton {
-            objectName: "bannerApplyButton"
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.canApply
-            label: root.frozen ? "Cài và mở lại" : "Mở trang tải"
-            onClicked: root.frozen ? updateBridge.applyAndRestart() : updateBridge.openReleasePage()
+            visible: root.canUpdate
+            // Một nút, một nhịp: tải → tráo → mở lại. Gói không tự tráo được thì mở trang tải.
+            label: root.frozen ? "⬇  Cập nhật ngay" : "Mở trang tải"
+            onClicked: updateBridge.updateNow()
         }
         Text {
             objectName: "updateBannerDismiss"

@@ -39,6 +39,8 @@ class UpdateBridge(WorkerBridge):
         self._progress_fraction = 0.0
         self._release: LauncherRelease | None = None
         self._staged: StagedUpdate | None = None
+        # Bấm "Cập nhật ngay" là một nhịp: tải xong thì áp luôn, không bắt bấm nút thứ hai.
+        self._apply_when_ready = False
         self._outcome.connect(self._apply_outcome)
         # Kiểm lúc khởi động nhưng để cửa sổ vẽ xong trước — người dùng không chờ GitHub để thấy UI.
         QTimer.singleShot(STARTUP_CHECK_DELAY_MS, self._check_on_startup)
@@ -118,6 +120,19 @@ class UpdateBridge(WorkerBridge):
         self.run_in_background(work, f"Tải bản {release.launcher_version}")
 
     @Slot()
+    def updateNow(self) -> None:
+        """MỘT nút cho cả việc: tải xong thì tự áp và mở lại, người dùng không bấm gì thêm.
+
+        Gói không tự tráo được (mã nguồn, .deb/.rpm/AppImage, macOS .app) thì `applyAndRestart`
+        sẽ về `failed` — nên ở đó mở thẳng trang tải thay vì tải một gói rồi báo lỗi.
+        """
+        if self._launcher.launcher_install_kind() != "frozen":
+            self.openReleasePage()
+            return
+        self._apply_when_ready = True
+        self.download()
+
+    @Slot()
     def applyAndRestart(self) -> None:
         """Gói đóng sẵn: chạy script tráo rồi thoát launcher. Mã nguồn: chỉ mở trang tải."""
         if self._staged is None:
@@ -155,6 +170,13 @@ class UpdateBridge(WorkerBridge):
         self._set_state(state, message)
         if state == "available" and self._release is not None:
             self.updateAvailable.emit(self._release.launcher_version)
+        if state == "ready" and self._apply_when_ready:
+            # Nhịp hai của "Cập nhật ngay". Chạy trên luồng giao diện (tín hiệu `_outcome` đã
+            # xếp hàng về đây), nên tráo file và thoát app đều an toàn.
+            self._apply_when_ready = False
+            self.applyAndRestart()
+        elif state == "failed":
+            self._apply_when_ready = False
 
     def _set_state(self, state: str, message: str) -> None:
         self._state, self._message = state, message

@@ -139,3 +139,61 @@ def test_apply_os_error_is_surfaced_not_swallowed(
 
     assert update_bridge.state == "failed"
     assert update_bridge.message  # không được rỗng, lỗi phải hiện cho người dùng
+
+
+def test_one_button_downloads_then_applies_without_a_second_click(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """`updateNow()` là MỘT nhịp: tải xong tự áp và mở lại, người dùng không bấm nút thứ hai.
+
+    Đây là cả tính năng. Nếu nhịp hai lặng lẽ không chạy, giao diện đứng ở "đã tải xong" và
+    người dùng chờ mãi một cái nút đã bị gỡ đi — không gì khác đỏ.
+    """
+    from unittest.mock import patch
+
+    publish_release(server, server_state, make_bundle("moi"))
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+    update_bridge.checkNow()
+    wait_for_state(update_bridge, "available")
+
+    applied: list[object] = []
+
+    def record(staged: object) -> Path:
+        applied.append(staged)
+        return tmp_path / "swap.sh"
+
+    with (
+        patch(
+            "nostalgia.facade.updates.UpdateOperations.launcher_install_kind", return_value="frozen"
+        ),
+        patch(
+            "nostalgia.facade.updates.UpdateOperations.apply_launcher_update", side_effect=record
+        ),
+    ):
+        update_bridge.updateNow()
+        wait_until(lambda: bool(applied))
+
+    assert len(applied) == 1, "phải tự áp đúng một lần sau khi tải xong"
+
+
+def test_one_button_on_a_package_that_cannot_swap_opens_the_page_instead(
+    server: LocalHttpsServer,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Chạy từ mã nguồn (hay .deb/AppImage/macOS .app): tải về rồi mới báo "không tráo được"
+    là phí băng thông và làm người dùng cụt hứng. Mở thẳng trang tải."""
+    from unittest.mock import patch
+
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+
+    with patch.object(UpdateBridge, "openReleasePage") as open_page:
+        update_bridge.updateNow()
+
+    open_page.assert_called_once()
+    assert update_bridge.state == "idle", "không được tải gì khi gói không tự tráo được"
