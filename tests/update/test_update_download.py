@@ -38,6 +38,7 @@ def test_check_download_and_stage_follow_the_whole_path(
         release, on_progress=lambda progress: seen.append(progress.done)
     )
     assert staged.launcher_version == RELEASE_VERSION
+    assert staged.bundle_dir is not None
     assert (staged.bundle_dir / "lib" / "core.txt").read_text() == "moi"
     assert staged.bundle_dir.name == "Nostalgia", "bỏ lớp thư mục bọc của zip"
     assert seen and seen[-1] == len(bundle)

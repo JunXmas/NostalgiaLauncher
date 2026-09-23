@@ -15,7 +15,7 @@ Rectangle {
                                    || updateBridge.state === "downloading"
                                    || updateBridge.state === "ready")
     property bool dismissed: false
-    readonly property bool frozen: updateBridge.installKind === "frozen"
+    readonly property bool canSelfUpdate: updateBridge.canSelfUpdate
     // Cờ này là điều kiện hiện của nút, tách ra để test đọc được: `visible` của QML là
     // hiện-thật-sự (luôn false khi cây chưa vào cửa sổ), nên không kiểm được ràng buộc.
     // Lúc đang tải thì ẩn nút: việc đã chạy, bấm thêm không thêm được gì.
@@ -56,7 +56,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.canUpdate
             // Một nút, một nhịp: tải → tráo → mở lại. Gói không tự tráo được thì mở trang tải.
-            label: root.frozen ? "⬇  Cập nhật ngay" : "Mở trang tải"
+            label: root.canSelfUpdate ? "⬇  Cập nhật ngay" : "Mở trang tải"
             onClicked: updateBridge.updateNow()
         }
         Text {

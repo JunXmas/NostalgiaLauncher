@@ -110,6 +110,41 @@ def choose_bundle(release: LauncherRelease, os_name: str, os_arch: str) -> Relea
     return release.asset_named(bundle_asset_name(release.launcher_version, os_name, os_arch))
 
 
+# Gói cài cho từng kiểu cài. Gói `.zip` onedir chỉ tráo được khi launcher nằm trong thư mục
+# ghi được; các kiểu còn lại cần đúng loại gói mà hệ thống của chúng hiểu.
+_PACKAGE_SUFFIXES: dict[str, tuple[str, ...]] = {
+    "appimage": (".AppImage",),
+    "readonly": (".deb", ".rpm"),
+}
+# `.deb` đặt tên theo quy ước Debian (`nostalgia_1.0.15_amd64.deb`), `.rpm` theo quy ước RPM
+# (`nostalgia-1.0.15-1.x86_64.rpm`) — cùng một kiến trúc, ba cách viết. Một chỗ dịch duy nhất.
+_ARCH_ALIASES: dict[str, tuple[str, ...]] = {
+    "x64": ("x64", "amd64", "x86_64"),
+    "arm64": ("arm64", "aarch64"),
+}
+
+
+def choose_package(
+    release: LauncherRelease, install_kind: str, os_arch: str
+) -> ReleaseAsset | None:
+    """Gói CÀI cho kiểu cài này (AppImage / .deb / .rpm), hay None nếu kiểu này không có.
+
+    Khác `choose_bundle`: gói `.zip` onedir để tráo tại chỗ, còn đây là gói mà hệ thống cài
+    hộ (`pkexec apt install`, hoặc thay thẳng file .AppImage). Không có gói đúng kiến trúc thì
+    KHÔNG lùi về gói bất kỳ — cài nhầm kiến trúc còn tệ hơn bảo người dùng tải tay.
+    """
+    suffixes = _PACKAGE_SUFFIXES.get(install_kind)
+    if suffixes is None:
+        return None
+    arches = _ARCH_ALIASES.get(os_arch, (os_arch,))
+    for suffix in suffixes:
+        for release_asset in release.release_assets:
+            name = release_asset.name
+            if name.endswith(suffix) and any(arch in name for arch in arches):
+                return release_asset
+    return None
+
+
 def parse_sha256sums(text: str) -> dict[str, str]:
     """Định dạng của `sha256sum`: `<hex>  <tên file>` mỗi dòng; chấp nhận dấu `*` kiểu nhị phân."""
     sums: dict[str, str] = {}

@@ -10,8 +10,11 @@ thấy ở mọi trang, và bấm một lần là xong cả việc.
   không phải bấm thêm gì.
 - **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, cho thấy phần trăm trong lúc tải. Bấm
   ✕ để tắt; tắt rồi thì im cho tới lần mở launcher sau.
-- Bản cài kiểu `.deb`, `.rpm`, AppImage hay macOS `.app` không tự tráo file được — những bản
-  đó mở thẳng trang tải thay vì tải một gói rồi mới báo không cài được.
+- **AppImage, `.deb` và `.rpm` cũng tự cập nhật được.** Launcher tải đúng loại gói bạn đang
+  dùng: AppImage thay thẳng file đang chạy rồi mở lại; `.deb`/`.rpm` nhờ hệ điều hành cài đè
+  (một hộp thoại xin mật khẩu). Gói nào cũng phải khớp `SHA256SUMS` mới được cài.
+- Bản macOS `.app` và bản chạy từ mã nguồn thì mở thẳng trang tải, thay vì tải một gói rồi mới
+  báo không cài được.
 - Mục CẬP NHẬT ở CÀI ĐẶT vẫn còn nguyên cho ai thích chỗ cũ.
 
 ## Tải xuống
@@ -27,13 +30,14 @@ thấy ở mọi trang, và bấm một lần là xong cả việc.
 | Windows 10/11 x64 | `nostalgia-1.0.15-windows-x64-setup.exe` | bộ cài, không cần quyền admin; SmartScreen → "More info → Run anyway" (chưa ký) |
 | Windows, xách tay | `nostalgia-1.0.15-windows-x64.zip` | giải nén, chạy `Nostalgia\nostalgia-ui.exe` |
 
-Nhớ đối chiếu `SHA256SUMS` với file tải về. File `.zip` là thứ bộ tự cập nhật tải.
+Nhớ đối chiếu `SHA256SUMS` với file tải về — bộ tự cập nhật cũng đối chiếu đúng file này
+trước khi cài, và tải về đúng loại gói bạn đang dùng.
 
 ## Cách cập nhật
 
 Mở launcher là nó tự kiểm sau vài giây; có bản mới thì dải xanh hiện ngay trên đầu, bấm
-"Cập nhật ngay" rồi để yên — launcher tự tải, tự cài và mở lại. Bản `.deb`/`.rpm`/AppImage/
-macOS `.app` thì launcher mở trang này để bạn tải tay.
+"Cập nhật ngay" rồi để yên — launcher tự tải, tự cài và mở lại. Bản macOS `.app` thì launcher
+mở trang này để bạn tải tay.
 
 ---
 
