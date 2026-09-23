@@ -1,0 +1,144 @@
+/* Bảng màu khớp src/nostalgia/ui/qml/Theme.qml — không bịa màu riêng cho trang này. */
+:root {
+  --background: #0a0d0b;
+  --surface: #111713;
+  --surface-high: #18201a;
+  --border: #222c26;
+  --accent: #4ade80;
+  --accent-deep: #22a24f;
+  --accent-soft: #1b3524;
+  --text: #e9f1ec;
+  --text-muted: #7f9488;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.hero {
+  text-align: center;
+  padding: 4rem 1.5rem 2rem;
+}
+
+.mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  background: var(--accent);
+  border-radius: 12px;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.25rem;
+}
+
+.tagline {
+  color: var(--text-muted);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.status {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.btn-primary {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  background: var(--accent);
+  color: var(--background);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  border-bottom: 3px solid var(--accent-deep);
+  transition: transform 0.1s ease;
+}
+
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(1px); border-bottom-width: 1px; }
+
+.btn-meta {
+  font-weight: 400;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+#other-files {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+#other-files summary {
+  cursor: pointer;
+  color: var(--text);
+}
+
+#other-files ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#other-files a {
+  color: var(--accent);
+}
+
+.showcase {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.showcase figure {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.showcase img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.showcase figcaption {
+  padding: 0.5rem 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+footer a { color: var(--accent); }
