@@ -173,6 +173,9 @@ def test_one_button_downloads_then_applies_without_a_second_click(
         patch(
             "nostalgia.facade.updates.UpdateOperations.apply_launcher_update", side_effect=record
         ),
+        # applyAndRestart thoát tiến trình bằng os._exit; không chặn thì nó giết luôn pytest
+        # và cả bộ test dừng giữa chừng mà vẫn báo mã thoát 0.
+        patch("os._exit"),
     ):
         update_bridge.updateNow()
         wait_until(lambda: bool(applied))
@@ -197,3 +200,78 @@ def test_one_button_on_a_package_that_cannot_swap_opens_the_page_instead(
 
     open_page.assert_called_once()
     assert update_bridge.state == "idle", "không được tải gì khi gói không tự tráo được"
+
+
+def test_one_button_on_an_appimage_replaces_the_running_file(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bản AppImage tự lên bản mới được: tải đúng file `.AppImage` (không phải `.zip`), kiểm
+    băm, ghi đè chính file đang chạy rồi mở lại.
+
+    Trước đây kiểu này chỉ mở trang tải. Nếu nó lặng lẽ quay về đường `.zip`, người dùng
+    AppImage tải 100 MB để rồi nhận một câu lỗi.
+    """
+    from unittest.mock import patch
+
+    running = tmp_path / "Nostalgia.AppImage"
+    running.write_bytes(b"ban cu")
+    package_name = "nostalgia-9.9.9-linux-x64.AppImage"
+    publish_release(
+        server, server_state, make_bundle("moi"), extra_assets={package_name: b"ban moi"}
+    )
+    monkeypatch.setenv("APPIMAGE", str(running))
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+
+    reopened: list[Path] = []
+    with (
+        patch(
+            "nostalgia.facade.updates.detect_install_kind",
+            return_value="appimage",
+        ),
+        patch("nostalgia.facade.updates.relaunch", side_effect=reopened.append),
+        # applyAndRestart gọi os._exit để thoát ngay; trong test thì nó giết luôn pytest.
+        patch("os._exit"),
+    ):
+        update_bridge.checkNow()
+        wait_for_state(update_bridge, "available")
+        update_bridge.updateNow()
+        wait_until(lambda: running.read_bytes() == b"ban moi")
+
+    assert reopened == [running], "thay file xong phải mở lại launcher"
+
+
+def test_one_button_on_a_deb_install_hands_the_package_to_the_system(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Cài bằng `.deb` (thư mục cài chủ root): tải `.deb`, nhờ `pkexec apt-get` cài đè."""
+    from unittest.mock import patch
+
+    package_name = "nostalgia_9.9.9_amd64.deb"
+    publish_release(
+        server, server_state, make_bundle("moi"), extra_assets={package_name: b"noi dung deb"}
+    )
+    launcher = make_launcher(server, tmp_path, certificate_pair[0])
+    update_bridge = UpdateBridge(launcher, check_enabled=lambda: False)
+
+    installed: list[Path] = []
+    with (
+        patch("nostalgia.facade.updates.detect_install_kind", return_value="readonly"),
+        patch("nostalgia.facade.updates.install_system_package", side_effect=installed.append),
+        patch("nostalgia.facade.updates.relaunch"),
+        patch("os._exit"),
+    ):
+        update_bridge.checkNow()
+        wait_for_state(update_bridge, "available")
+        update_bridge.updateNow()
+        wait_until(lambda: bool(installed))
+
+    assert installed[0].name == package_name
+    assert installed[0].read_bytes() == b"noi dung deb"

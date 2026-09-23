@@ -52,6 +52,10 @@ class FakeUpdateBridge(QObject):
     def installKind(self) -> str:
         return "frozen"
 
+    @Property(bool, constant=True)
+    def canSelfUpdate(self) -> bool:
+        return True
+
     @Property(float, notify=stateChanged)
     def progressFraction(self) -> float:
         return 0.5

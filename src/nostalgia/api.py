@@ -34,7 +34,7 @@ from nostalgia.facade.nos_client import NosClientOperations
 from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.skins import SkinOperations
-from nostalgia.facade.updates import StagedUpdate, UpdateOperations
+from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
 from nostalgia.instance.server_list import RecentServer
@@ -69,6 +69,7 @@ class Launcher(
 
 
 __all__ = [
+    "SELF_UPDATING_KINDS",
     "Account",
     "ContentTarget",
     "ContentUpdate",

@@ -29,8 +29,14 @@ def make_bundle(marker: str) -> bytes:
 
 
 def publish_release(
-    server: LocalHttpsServer, state: ServerState, bundle: bytes, *, sums: bool = True
+    server: LocalHttpsServer,
+    state: ServerState,
+    bundle: bytes,
+    *,
+    sums: bool = True,
+    extra_assets: dict[str, bytes] | None = None,
 ) -> str:
+    """`extra_assets` là gói hệ thống (.AppImage/.deb/.rpm) đi kèm gói .zip, như bản thật."""
     asset_name = f"nostalgia-{RELEASE_VERSION}-linux-x64.zip"
     # GitHub trả 302 từ browser_download_url sang CDN: máy chủ giả làm y như vậy.
     state.add(f"/cdn/{asset_name}", bundle)
@@ -42,9 +48,22 @@ def publish_release(
             "size": len(bundle),
         }
     ]
+    for name, payload in (extra_assets or {}).items():
+        state.add(f"/cdn/{name}", payload)
+        release_assets.append(
+            {
+                "name": name,
+                "browser_download_url": server.url(f"/cdn/{name}"),
+                "size": len(payload),
+            }
+        )
     if sums:
-        digest = hashlib.sha256(bundle).hexdigest()
-        state.add("/sums", f"{digest}  {asset_name}\n".encode())
+        lines = [f"{hashlib.sha256(bundle).hexdigest()}  {asset_name}"]
+        lines += [
+            f"{hashlib.sha256(payload).hexdigest()}  {name}"
+            for name, payload in (extra_assets or {}).items()
+        ]
+        state.add("/sums", ("\n".join(lines) + "\n").encode())
         release_assets.append(
             {"name": "SHA256SUMS", "browser_download_url": server.url("/sums"), "size": 80}
         )

@@ -12,7 +12,13 @@ from collections.abc import Callable
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
-from nostalgia.api import Launcher, LauncherRelease, Progress, StagedUpdate
+from nostalgia.api import (
+    SELF_UPDATING_KINDS,
+    Launcher,
+    LauncherRelease,
+    Progress,
+    StagedUpdate,
+)
 from nostalgia.ui.worker import WorkerBridge
 
 STARTUP_CHECK_DELAY_MS = 3000
@@ -66,6 +72,14 @@ class UpdateBridge(WorkerBridge):
     @Property(str, constant=True)
     def installKind(self) -> str:
         return self._launcher.launcher_install_kind()
+
+    @Property(bool, constant=True)
+    def canSelfUpdate(self) -> bool:
+        """Kiểu cài này tự lên bản mới được (tráo thư mục / thay .AppImage / cài đè .deb)?
+
+        QML hỏi cái này chứ đừng so `installKind === "frozen"`: thêm một kiểu tự cập nhật
+        được mà quên sửa QML thì nút lặng lẽ biến thành "Mở trang tải", không gì đỏ."""
+        return self._launcher.launcher_install_kind() in SELF_UPDATING_KINDS
 
     @Property(float, notify=progressChanged)
     def progressFraction(self) -> float:
@@ -123,10 +137,11 @@ class UpdateBridge(WorkerBridge):
     def updateNow(self) -> None:
         """MỘT nút cho cả việc: tải xong thì tự áp và mở lại, người dùng không bấm gì thêm.
 
-        Gói không tự tráo được (mã nguồn, .deb/.rpm/AppImage, macOS .app) thì `applyAndRestart`
-        sẽ về `failed` — nên ở đó mở thẳng trang tải thay vì tải một gói rồi báo lỗi.
+        Gói `.zip` tráo thư mục, AppImage thay chính file đang chạy, `.deb`/`.rpm` nhờ trình
+        quản lý gói cài đè. Kiểu không tự lên được (mã nguồn, macOS .app) thì mở thẳng trang
+        tải, thay vì tải cả gói rồi mới báo không cài được.
         """
-        if self._launcher.launcher_install_kind() != "frozen":
+        if self._launcher.launcher_install_kind() not in SELF_UPDATING_KINDS:
             self.openReleasePage()
             return
         self._apply_when_ready = True

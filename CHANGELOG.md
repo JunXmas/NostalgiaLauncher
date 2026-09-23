@@ -9,8 +9,13 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
   tải chỉ nằm trong CÀI ĐẶT → CẬP NHẬT nên gần như không ai thấy. Đóng được bằng ✕; đóng rồi
   thì im tới lần mở launcher sau.
 - **Cập nhật chỉ còn một nút.** Bấm "Cập nhật ngay" là launcher tải, tự cài, tự tắt và mở
-  lại — không phải bấm lần thứ hai. Bản cài kiểu `.deb`/`.rpm`/AppImage/macOS `.app` không tự
-  tráo được thì mở thẳng trang tải thay vì tải một gói rồi mới báo lỗi.
+  lại — không phải bấm lần thứ hai. Bản macOS `.app` và bản chạy từ mã nguồn không tự cài
+  được thì mở thẳng trang tải, thay vì tải một gói rồi mới báo lỗi.
+- **Bản AppImage và bản `.deb`/`.rpm` giờ cũng tự cập nhật được.** Launcher tải đúng loại gói
+  hệ thống của bạn (không còn tải `.zip` rồi mới báo không cài được): AppImage thay thẳng file
+  đang chạy, `.deb`/`.rpm` nhờ trình quản lý gói cài đè qua một hộp thoại xin mật khẩu của hệ
+  điều hành. Mọi gói đều phải khớp `SHA256SUMS` mới được cài. Máy không có `pkexec` hay bạn bấm
+  Huỷ thì launcher nói rõ, không âm thầm coi như đã cập nhật.
 
 ## 1.0.14 — 2026-09-21
 

@@ -9,7 +9,7 @@ Panel {
     id: panel
     title: "CẬP NHẬT"
     readonly property string state: updateBridge.state
-    readonly property bool frozen: updateBridge.installKind === "frozen"
+    readonly property bool canSelfUpdate: updateBridge.canSelfUpdate
     implicitHeight: panel.contentTop + column.implicitHeight + Theme.pad
     height: implicitHeight
 
@@ -46,7 +46,7 @@ Panel {
                 objectName: "updateNowButton"
                 visible: panel.state === "available"
                 // Một nút cho cả việc: tải → tráo → mở lại (xem UpdateBanner.qml).
-                label: panel.frozen ? "⬇  Cập nhật ngay" : "Mở trang tải"
+                label: panel.canSelfUpdate ? "⬇  Cập nhật ngay" : "Mở trang tải"
                 onClicked: updateBridge.updateNow()
             }
             Text {
@@ -75,7 +75,7 @@ Panel {
             color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
         }
         Text {
-            visible: !panel.frozen
+            visible: !panel.canSelfUpdate
             width: Math.min(parent.width, 720)
             wrapMode: Text.WordWrap
             text: updateBridge.installKind === "app"
