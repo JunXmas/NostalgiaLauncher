@@ -16,8 +16,10 @@ from nostalgia.account.store import (
     save_accounts,
     upsert_account,
 )
+from nostalgia.auth.device_code import DeviceCode
 from nostalgia.auth.ely import sign_in_ely
 from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, resolve_client_id, sign_in
+from nostalgia.auth.qr import QrCode, encode_qr
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
@@ -74,6 +76,15 @@ class AccountOperations(LauncherContext):
                 cancel_token=cancel_token,
             )
         return self._store(build_ely_account(login))
+
+    @staticmethod
+    def device_code_qr(device_code: DeviceCode) -> QrCode:
+        """Mã QR của `device_code.verification_url`, để hiển thị cạnh mã 8 ký tự.
+
+        Thuần — không chạm mạng hay đĩa — nên không cần `self`; giao diện quét bằng điện
+        thoại để khỏi gõ tay URL, mã vẫn phải gõ vì Microsoft không nhúng nó vào URL.
+        """
+        return encode_qr(device_code.verification_url)
 
     def remove_account(self, player_name: str) -> None:
         accounts = self.list_accounts()
