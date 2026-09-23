@@ -5,27 +5,109 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nostalgia Launcher — Tải xuống</title>
 <meta name="description" content="Minecraft launcher: tài khoản, instance, mod, LAN qua relay. Trang tự dò hệ điều hành và đưa đúng một nút tải.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0d0b'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%234ade80'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2359c96f'/%3E%3Crect y='16' width='32' height='16' fill='%236b4a2f'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="hero">
-  <div class="mark" aria-hidden="true"></div>
-  <h1>Nostalgia Launcher</h1>
-  <p class="tagline">Tài khoản, instance, mod, chơi LAN qua relay — một launcher, không rườm rà.</p>
+
+<svg class="icon-defs" aria-hidden="true">
+  <symbol id="icon-grass" viewBox="0 0 24 24">
+    <rect x="1" y="1" width="22" height="22" rx="2" fill="#6b4a2f"/>
+    <rect x="1" y="1" width="22" height="9" rx="2" fill="#59c96f"/>
+    <rect x="1" y="7" width="22" height="3" fill="#3f8f4f"/>
+  </symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24">
+    <path d="M12 3v11m0 0l-4.5-4.5M12 14l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="icon-craft" viewBox="0 0 24 24">
+    <rect x="2" y="8" width="7" height="8" fill="#8a5a34"/>
+    <rect x="9" y="8" width="6" height="8" fill="#59c96f"/>
+    <rect x="15" y="8" width="7" height="8" fill="#3f8f4f"/>
+    <rect x="2" y="16" width="20" height="4" fill="#6b4a2f"/>
+  </symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24">
+    <path d="M6 4l14 8-14 8V4z" fill="currentColor"/>
+  </symbol>
+</svg>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <svg class="icon" aria-hidden="true"><use href="#icon-grass"></use></svg>
+      <span class="brand-name">Nostalgia</span>
+    </a>
+    <nav class="nav-links" aria-label="Điều hướng chính">
+      <a href="#top" class="nav-link is-active" aria-current="page">Trang chủ</a>
+      <a href="#download" class="nav-link">Tải xuống</a>
+      <a href="https://github.com/JunXmas/NostalgiaLauncher#readme" class="nav-link">Hướng dẫn</a>
+    </nav>
+    <a class="btn-outline" href="https://github.com/JunXmas/NostalgiaLauncher">GitHub <span aria-hidden="true">↗</span></a>
+  </div>
 </header>
 
 <main>
-  <section id="download" class="download" aria-live="polite">
-    <p id="download-status" class="status">Đang dò bản mới nhất…</p>
-    <a id="primary-download" class="btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
-      <span id="primary-label">Tải xuống</span>
-      <span id="primary-meta" class="btn-meta"></span>
-    </a>
-    <details id="other-files" hidden>
-      <summary>Hệ điều hành khác / file khác</summary>
-      <ul id="other-files-list"></ul>
-    </details>
+  <section id="top" class="hero" style="background-image:url('hero.jpg')">
+    <div class="glass-card">
+      <h1 class="pixel-title">Nostalgia<br>Launcher</h1>
+      <p class="tagline">Thế giới quen thuộc. Khởi đầu mới.</p>
+      <p class="subtitle">Chọn bản chơi. Thêm mod. Bắt đầu khám phá.</p>
+
+      <div id="download" class="download-block" aria-live="polite">
+        <p id="download-status" class="status">Đang dò bản mới nhất…</p>
+
+        <a id="primary-download" class="btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
+          <span aria-hidden="true">⬇</span>
+          <span id="primary-label">Tải xuống</span>
+          <span id="primary-meta" class="btn-meta"></span>
+        </a>
+
+        <div class="secondary-row">
+          <a id="linux-download" class="btn-secondary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
+            <span aria-hidden="true">🐧</span> Linux
+          </a>
+          <a id="macos-download" class="btn-secondary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
+            <span aria-hidden="true">🍎</span> macOS
+          </a>
+        </div>
+
+        <a class="all-releases-link" href="https://github.com/JunXmas/NostalgiaLauncher/releases">Xem tất cả bản tải →</a>
+
+        <details id="other-files" hidden>
+          <summary>Hệ điều hành khác / file khác</summary>
+          <ul id="other-files-list"></ul>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps">
+    <h2 class="pixel-title-sm">Vào game trong 3 bước</h2>
+    <div class="steps-grid">
+      <div class="step">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+        <div class="step-body">
+          <span class="step-num">01</span>
+          <h3>Tải launcher</h3>
+          <p>Chọn hệ điều hành của bạn</p>
+        </div>
+      </div>
+      <div class="step">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-craft"></use></svg>
+        <div class="step-body">
+          <span class="step-num">02</span>
+          <h3>Tạo bản chơi</h3>
+          <p>Chọn phiên bản và mod yêu thích</p>
+        </div>
+      </div>
+      <div class="step">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-play"></use></svg>
+        <div class="step-body">
+          <span class="step-num">03</span>
+          <h3>Bắt đầu chơi</h3>
+          <p>Mở thế giới của riêng bạn</p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="showcase">
@@ -37,7 +119,15 @@
 </main>
 
 <footer>
-  <a href="https://github.com/JunXmas/NostalgiaLauncher">Mã nguồn trên GitHub</a>
+  <div class="footer-brand">
+    <svg class="icon" aria-hidden="true"><use href="#icon-grass"></use></svg>
+    <span>Nostalgia Launcher</span>
+    <span class="footer-disclaimer">Dự án độc lập, không liên kết với Mojang hoặc Microsoft.</span>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/JunXmas/NostalgiaLauncher#readme">Hướng dẫn cài đặt</a>
+    <a class="btn-outline" href="https://github.com/JunXmas/NostalgiaLauncher">GitHub <span aria-hidden="true">↗</span></a>
+  </div>
 </footer>
 
 <script src="app.js"></script>

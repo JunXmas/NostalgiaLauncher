@@ -63,8 +63,8 @@ function showFallback(statusText) {
   document.getElementById("primary-meta").textContent = "";
 }
 
-function renderOtherFiles(assets, primaryName) {
-  const rest = assets.filter((a) => a.name !== primaryName && a.name !== "SHA256SUMS");
+function renderOtherFiles(assets, shownNames) {
+  const rest = assets.filter((a) => !shownNames.includes(a.name) && a.name !== "SHA256SUMS");
   if (rest.length === 0) return;
   const list = document.getElementById("other-files-list");
   for (const a of rest) {
@@ -76,6 +76,18 @@ function renderOtherFiles(assets, primaryName) {
     list.appendChild(li);
   }
   document.getElementById("other-files").hidden = false;
+}
+
+// Gắn nút phụ (Linux/macOS) trỏ đúng asset của hệ đó trong bản mới nhất — không trỏ
+// chung vào trang Releases. Ẩn nút nếu bản phát hành không có asset cho hệ đó.
+function wireSecondaryButton(id, assets, version, os, arch) {
+  const el = document.getElementById(id);
+  const wantedName = primaryAssetName(version, os, arch);
+  const asset = assets.find((a) => a.name === wantedName);
+  if (!asset) return null;
+  el.href = asset.browser_download_url;
+  el.hidden = false;
+  return asset.name;
 }
 
 async function main() {
@@ -94,7 +106,7 @@ async function main() {
   const assets = release.assets || [];
   if (!os || assets.length === 0) {
     showFallback("Không nhận diện được hệ điều hành — chọn file phù hợp bên dưới.");
-    renderOtherFiles(assets, null);
+    renderOtherFiles(assets, []);
     return;
   }
 
@@ -106,7 +118,7 @@ async function main() {
 
   if (!asset) {
     showFallback(`Không thấy file cho hệ điều hành này trong bản ${release.tag_name}.`);
-    renderOtherFiles(assets, null);
+    renderOtherFiles(assets, []);
     return;
   }
 
@@ -116,7 +128,17 @@ async function main() {
   document.getElementById("primary-label").textContent = labelFor(asset.name);
   document.getElementById("primary-meta").textContent = humanSize(asset.size);
 
-  renderOtherFiles(assets, asset.name);
+  const shownNames = [asset.name];
+  if (os !== "linux") {
+    const n = wireSecondaryButton("linux-download", assets, release.tag_name, "linux", "x64");
+    if (n) shownNames.push(n);
+  }
+  if (os !== "macos") {
+    const n = wireSecondaryButton("macos-download", assets, release.tag_name, "macos", "arm64");
+    if (n) shownNames.push(n);
+  }
+
+  renderOtherFiles(assets, shownNames);
 }
 
 main();
