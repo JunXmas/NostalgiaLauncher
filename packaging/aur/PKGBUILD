@@ -1,0 +1,48 @@
+# Maintainer: JunXmas <JunXmas@users.noreply.github.com>
+# Gói -bin: lấy tarball PyInstaller dựng sẵn từ GitHub Releases, không build lại từ
+# nguồn (nguồn Python + Qt/PySide6 build rất nặng, không hợp AUR). depends ánh xạ 1:1
+# từ packaging/linux/debian-control (đã kiểm chạy thật), không đoán thêm.
+pkgname=nostalgia-bin
+pkgver=1.0.15
+pkgrel=1
+pkgdesc="Minecraft launcher: accounts, Fabric/Forge/Quilt/NeoForge instances, mod library, LAN relay"
+arch=('x86_64')
+url="https://github.com/JunXmas/NostalgiaLauncher"
+license=('GPL-3.0-only')
+depends=(
+    'dbus'
+    'fontconfig'
+    'glib2'
+    'libglvnd'
+    'libxcb'
+    'libxkbcommon'
+    'xcb-util-cursor'
+    'xcb-util-image'
+    'xcb-util-keysyms'
+    'xcb-util-renderutil'
+    'xcb-util-wm'
+)
+provides=('nostalgia')
+conflicts=('nostalgia')
+options=('!strip')
+source=(
+    "nostalgia-$pkgver-linux-x64.tar.gz::https://github.com/JunXmas/NostalgiaLauncher/releases/download/v$pkgver/nostalgia-$pkgver-linux-x64.tar.gz"
+    "nostalgia.desktop::https://raw.githubusercontent.com/JunXmas/NostalgiaLauncher/v$pkgver/packaging/linux/nostalgia.desktop"
+    "nostalgia.png::https://raw.githubusercontent.com/JunXmas/NostalgiaLauncher/v$pkgver/packaging/icons/nostalgia-256.png"
+    "LICENSE::https://raw.githubusercontent.com/JunXmas/NostalgiaLauncher/v$pkgver/LICENSE"
+)
+sha256sums=(
+    '6c28351aebe4b93cc8972b18fc8af7e992c6cd38f0b8631f6dc65e10d7fd9e66'
+    '8748ac95928cff11bf44d25d942bb95ecf1dde357be0de0f8848d51f5e2780ed'
+    '6c2ee4d1a91a572c9b197eaf8e9ef1f8e52c952d7e0d19c9db5298e101b73f99'
+    'e57f1c320b8cf8798a7d2ff83a6f9e06a33a03585f6e065fea97f1d86db84052'
+)
+
+package() {
+    install -dm755 "$pkgdir/opt/nostalgia" "$pkgdir/usr/bin"
+    cp -a "$srcdir/Nostalgia/." "$pkgdir/opt/nostalgia/"
+    ln -s /opt/nostalgia/nostalgia-ui "$pkgdir/usr/bin/nostalgia-ui"
+    install -Dm644 "$srcdir/nostalgia.desktop" "$pkgdir/usr/share/applications/nostalgia.desktop"
+    install -Dm644 "$srcdir/nostalgia.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/nostalgia.png"
+    install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
