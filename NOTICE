@@ -1,0 +1,39 @@
+Nostalgia Launcher
+Copyright (C) 2026 JunXmas <minejunbob@gmail.com>
+
+Chương trình này là phần mềm tự do: bạn được quyền phát hành lại và/hoặc sửa đổi nó theo
+các điều khoản của Giấy phép Công cộng Affero GNU (AGPL) phiên bản 3, do Free Software
+Foundation công bố. Toàn văn nằm ở file LICENSE.
+
+Chương trình được phát hành với hy vọng nó có ích, nhưng KHÔNG KÈM BẤT KỲ BẢO ĐẢM NÀO.
+
+---
+
+## Phạm vi bản quyền
+
+Bản quyền trên mã nguồn trong kho này thuộc về JunXmas, trừ những phần ghi rõ dưới đây.
+Copy mã nguồn của dự án vào phần mềm khác mà không tuân thủ AGPL-3.0 là vi phạm bản quyền.
+
+Xin nói rõ điều AGPL-3.0 KHÔNG cấm: tự viết lại một tính năng tương tự. Bản quyền bảo vệ
+cách viết code, không bảo vệ ý tưởng. Ai nhìn launcher này rồi tự viết phần mềm của họ thì
+hoàn toàn hợp pháp — dự án chấp nhận điều đó.
+
+## Thành phần của bên khác
+
+- **Minecraft** là nhãn hiệu của Mojang Studios / Microsoft. Dự án này KHÔNG liên kết,
+  không được tài trợ, cũng không được Mojang hay Microsoft xác nhận.
+- **Key art** trong `src/nostalgia/ui/qml/assets/keyart/` thuộc về Mojang, chỉ dùng để minh
+  hoạ phi thương mại. Ghi công từng file ở
+  `src/nostalgia/ui/qml/assets/keyart/CREDITS.md`.
+- **Texture khối** dùng cho icon thanh bên được đọc trực tiếp từ bản Minecraft do chính
+  người dùng đã cài trên máy họ, lúc chạy. Không có texture nào của Mojang nằm trong kho
+  này hay trong bộ cài.
+- **PySide6 / Qt** là phụ thuộc TUỲ CHỌN (LGPL-3.0), liên kết động và không kèm trong mã
+  nguồn. Lõi launcher không phụ thuộc thư viện ngoài nào.
+- **Asset giao diện Aero** dựng theo bộ "Aero UI (Windows 7)" trên Figma, giấy phép
+  CC BY 4.0.
+
+## Phần máy chủ
+
+Relay chơi chung và proxy CurseForge chạy trên Cloudflare Worker của dự án; mã của chúng
+giữ riêng và không thuộc phạm vi giấy phép này. Xem `cloudflare/README.md`.

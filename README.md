@@ -247,10 +247,15 @@ thư viện ngoài; 770 test; mỗi file ≤ 200 dòng. Chi tiết từng bản 
 ## License
 
 **AGPL-3.0.** You may use, study, change and share this launcher freely — and if you distribute a
-modified version, it must stay open under the same license. Section 13 goes one step further: if
-you run a modified version as a network service (the multiplayer relay in `cloudflare/`, for
-instance), users of that service must be offered its source too. That is on purpose: this project
-should never end up as the closed part of someone else's product, on disk or on a server.
+modified version, it must stay open under the same license. Section 13 goes one step further: run
+a modified version as a network service and its users must be offered the source too. That is on
+purpose: this project should never end up as the closed part of someone else's product, on disk
+or on a server.
+
+**Every line that runs on your machine is here.** This program holds your Microsoft login token;
+software like that has no business being closed. The only pieces kept private are the two
+Cloudflare Workers the project operates (they hold an API key) — what they do, and why you do
+not have to trust them, is in [`cloudflare/README.md`](cloudflare/README.md).
 
 Minecraft is a trademark of Mojang Studios / Microsoft. The key art in
 `src/nostalgia/ui/qml/assets/keyart/` belongs to Mojang and is used for non-commercial
