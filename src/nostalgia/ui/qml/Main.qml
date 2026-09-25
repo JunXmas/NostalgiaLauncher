@@ -95,7 +95,7 @@ Item {
             anchors { fill: parent; margins: 14 }
             text: banner.message
             color: "white"
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontBody
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }

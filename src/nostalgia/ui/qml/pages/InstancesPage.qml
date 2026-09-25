@@ -30,10 +30,10 @@ Item {
         Column {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             spacing: 3
-            Text { text: "Bản chơi"; color: Theme.text; font.pixelSize: 24; font.bold: true }
+            PageTitle { caption: "Bản chơi" }
             Text {
                 text: bridge.instances.length + " bản chơi  ·  mỗi bản một thư mục riêng, kho tải dùng chung"
-                color: Theme.textMuted; font.pixelSize: 12
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
         }
         Row {
@@ -59,7 +59,7 @@ Item {
         Text {
             visible: bridge.instances.length === 0
             text: "Chưa có bản chơi nào. Bấm “Tạo mới” để chọn phiên bản và loader."
-            color: Theme.textMuted; font.pixelSize: 12
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
 
         Grid {
@@ -128,9 +128,9 @@ Item {
             border.color: Theme.accent; border.width: 2; radius: Theme.radius
             Column {
                 anchors.centerIn: parent; spacing: 8
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "⤓"; color: Theme.accent; font.pixelSize: 40 }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Thả để nhập modpack"; color: Theme.text; font.pixelSize: 18; font.bold: true }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: ".mrpack (Modrinth) hoặc .zip (CurseForge) — tạo thành một bản chơi mới"; color: Theme.textMuted; font.pixelSize: 12 }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "⤓"; color: Theme.accent; font.pixelSize: Theme.fontHero }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Thả để nhập modpack"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: ".mrpack (Modrinth) hoặc .zip (CurseForge) — tạo thành một bản chơi mới"; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
             }
         }
     }

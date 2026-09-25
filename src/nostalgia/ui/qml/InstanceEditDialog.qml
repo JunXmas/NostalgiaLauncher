@@ -40,33 +40,33 @@ Item {
         Column {
             anchors { fill: parent; margins: 26 }
             spacing: 12
-            Text { text: "Sửa bản chơi"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+            Text { text: "Sửa bản chơi"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 text: (dialog.instance.instanceId || "") + "  ·  " + (dialog.instance.versionId || "")
-                color: Theme.textMuted; font.pixelSize: 11; font.family: "monospace"
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; font.family: "monospace"
             }
             Text {
                 width: parent.width; elide: Text.ElideMiddle
                 text: "Thư mục chơi: " + (dialog.instance.gameDir || "")
-                color: Theme.textMuted; font.pixelSize: 11
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
-            Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+            Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
             TextField { id: nameField; width: parent.width; placeholder: "Tên hiển thị"; onAccepted: dialog.save() }
             Row {
                 spacing: 12
                 Column {
                     spacing: 6
-                    Text { text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                    Text { text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                     TextField { id: heapField; width: 130; placeholder: "mặc định" }
                 }
                 Column {
                     spacing: 6
-                    Text { text: "CỬA SỔ RỘNG"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                    Text { text: "CỬA SỔ RỘNG"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                     TextField { id: widthField; width: 130; placeholder: "mặc định" }
                 }
                 Column {
                     spacing: 6
-                    Text { text: "CỬA SỔ CAO"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                    Text { text: "CỬA SỔ CAO"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                     TextField { id: heightField; width: 130; placeholder: "mặc định" }
                 }
             }

@@ -19,13 +19,13 @@ Panel {
     Column {
         anchors.fill: parent
         spacing: 5
-        Text { text: "THẾ GIỚI"; color: Theme.textMuted; font.pixelSize: 10; font.bold: true; font.letterSpacing: 1.2 }
+        Text { text: "THẾ GIỚI"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2 }
         Text {
             objectName: "continueEmpty"
             visible: root.worlds.length === 0
             width: parent.width; wrapMode: Text.WordWrap
             text: "Chưa có thế giới nào — vào game tạo một thế giới rồi quay lại đây."
-            color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.25
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }
         Repeater {
             model: root.worlds.slice(0, 3)
@@ -40,14 +40,14 @@ Panel {
         }
         Text {
             topPadding: 6
-            text: "SERVER"; color: Theme.textMuted; font.pixelSize: 10; font.bold: true; font.letterSpacing: 1.2
+            text: "SERVER"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2
         }
         Text {
             objectName: "continueServerEmpty"
             visible: root.servers.length === 0
             width: parent.width; wrapMode: Text.WordWrap
             text: "Chưa có server nào — thêm trong game (Multiplayer → Add Server) rồi quay lại đây."
-            color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.25
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }
         Repeater {
             model: root.servers.slice(0, 3)

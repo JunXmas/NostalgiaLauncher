@@ -33,14 +33,14 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: rightColumn.left; margins: Theme.gap }
         height: 58
-        Text {
+        PageTitle {
             anchors { left: parent.left; top: parent.top }
-            text: "Tài khoản"; color: Theme.text; font.pixelSize: 22; font.bold: true
+            caption: "Tài khoản"
         }
         Text {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
             text: "Quản lý tài khoản Minecraft: premium (Microsoft) và non-premium (Ely.by)."
-            color: Theme.textMuted; font.pixelSize: 12
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         ActionButton {
             objectName: "addAccountButton"
@@ -75,26 +75,26 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter; spacing: 3
                         Row {
                             spacing: 8
-                            Text { text: modelData.playerName; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                            Text { text: modelData.playerName; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
                             Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: kindText.width + 12; height: 16; radius: 4
+                                width: kindText.width + 12; height: 16; radius: 0
                                 color: modelData.accountKind === "microsoft" ? "#1d4d13" : Theme.surfaceHigh
                                 border.color: Theme.border
                                 Text { id: kindText; anchors.centerIn: parent; text: modelData.kindLabel
-                                       color: Theme.text; font.pixelSize: 9; font.bold: true; font.letterSpacing: 0.8 }
+                                       color: Theme.text; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 0.8 }
                             }
                         }
-                        Text { text: modelData.playerUuid.slice(0, 8) + "···"; color: Theme.textMuted; font.pixelSize: 10; font.family: "monospace" }
+                        Text { text: modelData.playerUuid.slice(0, 8) + "···"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace" }
                     }
                 }
                 Text {
                     anchors { right: parent.right; rightMargin: 40; verticalCenter: parent.verticalCenter }
-                    visible: row.active; text: "✓"; color: Theme.accent; font.pixelSize: 16; font.bold: true
+                    visible: row.active; text: "✓"; color: Theme.accent; font.pixelSize: Theme.fontHeading; font.bold: true
                 }
                 Text {
                     anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
-                    text: "✕"; font.pixelSize: 12
+                    text: "✕"; font.pixelSize: Theme.fontBody
                     color: removeArea.containsMouse ? Theme.danger : Theme.textMuted
                     opacity: rowHover.containsMouse ? 1 : 0
                     MouseArea { id: removeArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true
@@ -108,7 +108,7 @@ Item {
         }
         Text {
             visible: page.allAccounts.length === 0
-            text: "Chưa có tài khoản — bấm Thêm tài khoản."; color: Theme.textMuted; font.pixelSize: 12
+            text: "Chưa có tài khoản — bấm Thêm tài khoản."; color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
 
@@ -140,23 +140,23 @@ Item {
         }
         Text {
             anchors { left: parent.left; leftMargin: 14; verticalCenter: figure.verticalCenter }
-            text: "‹"; color: Theme.text; font.pixelSize: 30
+            text: "‹"; color: Theme.text; font.pixelSize: Theme.fontHero
             MouseArea { anchors.fill: parent; anchors.margins: -10; cursorShape: Qt.PointingHandCursor; onClicked: page.facing = (page.facing + 3) % 4 }
         }
         Text {
             anchors { right: parent.right; rightMargin: 14; verticalCenter: figure.verticalCenter }
-            text: "›"; color: Theme.text; font.pixelSize: 30
+            text: "›"; color: Theme.text; font.pixelSize: Theme.fontHero
             MouseArea { anchors.fill: parent; anchors.margins: -10; cursorShape: Qt.PointingHandCursor; onClicked: page.facing = (page.facing + 1) % 4 }
         }
         Column {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 26 }
             spacing: 6
             Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.hasShown ? page.shown.playerName : "Chưa chọn"
-                   color: Theme.text; font.pixelSize: 16; font.bold: true }
+                   color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
-                   text: page.hasShown ? page.shown.playerUuid : ""; color: Theme.textMuted; font.pixelSize: 9; font.family: "monospace" }
+                   text: page.hasShown ? page.shown.playerUuid : ""; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace" }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
-                   text: page.hasShown ? page.shown.kindLabel + (page.shownSlim ? "  ·  Slim" : "  ·  Wide") : ""; color: Theme.accent; font.pixelSize: 10; font.letterSpacing: 1 }
+                   text: page.hasShown ? page.shown.kindLabel + (page.shownSlim ? "  ·  Slim" : "  ·  Wide") : ""; color: Theme.accent; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1 }
         }
     }
 

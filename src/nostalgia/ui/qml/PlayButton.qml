@@ -71,7 +71,7 @@ Column {
         Text {
             anchors.centerIn: parent
             text: "Chưa có bản chơi — bấm để tạo"
-            color: Theme.textMuted; font.pixelSize: 12
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         HoverHandler { id: createHover; cursorShape: Qt.PointingHandCursor }
         TapHandler { onTapped: root.createRequested() }

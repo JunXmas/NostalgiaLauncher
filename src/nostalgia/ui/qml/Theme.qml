@@ -33,8 +33,36 @@ QtObject {
     readonly property color blockTrack:   "#2b2c2d"
     readonly property color blockGlint:   "#33ffffff"
 
-    readonly property int radius:        14
-    readonly property int radiusSmall:   9
+    /* Chữ.
+
+       Hai họ font, mỗi họ một việc. `sans` cho mọi thứ đọc được; `pixel` CHỈ cho nhãn viết
+       hoa ngắn — nó không có kiểu đậm nên đặt vào đoạn văn là mất luôn cấp bậc chữ, và dấu
+       tiếng Việt chồng cao làm dòng chữ gồ ghề.
+
+       Năm bậc, không hơn. Trước khi gom, 57 file QML rải tay 18 cỡ chữ khác nhau: mỗi trang
+       viết ở một thời điểm nên nhặt một cỡ cho cùng một vai trò, và đó chính là thứ làm các
+       tab nhìn không giống nhau. Cùng lý do bảng màu đã gom ở trên. */
+    readonly property string sans:  "Inter"
+    readonly property string pixel: "Minecraft F2D V1.42"
+    readonly property string mono:  "monospace"
+
+    readonly property int fontHero:    30   // câu chào trang chủ
+    readonly property int fontTitle:   18   // tiêu đề hộp thoại
+    readonly property int fontHeading: 13   // tên thẻ, tên mục
+    readonly property int fontBody:    12   // chữ đọc chính
+    readonly property int fontLabel:   10   // nhãn viết hoa, chú thích
+
+    // Giãn chữ: chỉ hai giá trị. Giãn rộng làm chữ thường khó đọc — nó chỉ hợp nhãn hoa ngắn.
+    readonly property real trackLabel: 1.2
+    readonly property real trackBody:  0
+
+    /* Góc vuông, không bo.
+
+       Đo trên chính CSS của minecraft.net: `border-radius: 0` xuất hiện 57 lần, và không có
+       một giá trị bo nào khác ngoài `50%` cho bốn hình tròn. Mọi thứ ở đó đều là khối vuông.
+       Giữ hai tên cũ để 10 chỗ đang dùng không phải sửa một lượt, nhưng giá trị nay là 0. */
+    readonly property int radius:        0
+    readonly property int radiusSmall:   0
     readonly property int gap:           14
     readonly property int pad:           18
 

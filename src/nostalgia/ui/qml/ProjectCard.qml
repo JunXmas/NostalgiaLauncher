@@ -36,13 +36,13 @@ Rectangle {
         Text {
             width: parent.width
             text: project.title || ""
-            color: hover.hovered ? Theme.accent : Theme.text; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight
+            color: hover.hovered ? Theme.accent : Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true; elide: Text.ElideRight
             Behavior on color { ColorAnimation { duration: Theme.quick } }
         }
         Text {
             width: parent.width
             text: project.description || ""
-            color: Theme.textMuted; font.pixelSize: 11
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
             wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
         }
     }
@@ -52,20 +52,20 @@ Rectangle {
         Repeater {
             model: (project.loaders || []).slice(0, 3)
             Rectangle {
-                width: loaderText.width + 14; height: 18; radius: 5
+                width: loaderText.width + 14; height: 18; radius: 0
                 color: Theme.accentSoft
-                Text { id: loaderText; anchors.centerIn: parent; text: modelData; color: Theme.accent; font.pixelSize: 10 }
+                Text { id: loaderText; anchors.centerIn: parent; text: modelData; color: Theme.accent; font.pixelSize: Theme.fontLabel }
             }
         }
     }
     Row {
         anchors { right: parent.right; rightMargin: 14; bottom: parent.bottom; bottomMargin: 14 }
         spacing: 12
-        Text { text: "⬇ " + Theme.compact(project.downloads || 0); color: Theme.accent; font.pixelSize: 11 }
+        Text { text: "⬇ " + Theme.compact(project.downloads || 0); color: Theme.accent; font.pixelSize: Theme.fontBody }
         // CurseForge không có "theo dõi": không vẽ số 0 giả.
         Text {
             visible: (project.source || "modrinth") === "modrinth"
-            text: "♥ " + Theme.compact(project.follows || 0); color: Theme.textMuted; font.pixelSize: 11
+            text: "♥ " + Theme.compact(project.follows || 0); color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
     ActionButton {

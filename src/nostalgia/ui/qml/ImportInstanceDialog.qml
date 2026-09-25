@@ -57,11 +57,11 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Nhập bản chơi"
-                color: Theme.text; font.pixelSize: 18; font.bold: true
+                color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true
             }
             Text {
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                text: "✕"; color: closeHover.hovered ? Theme.text : Theme.textMuted; font.pixelSize: 16
+                text: "✕"; color: closeHover.hovered ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontHeading
                 HoverHandler { id: closeHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: if (!importBridge.busy) dialog.close() }
             }
@@ -87,7 +87,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label
-                        color: active ? Theme.accent : Theme.text; font.pixelSize: 12; font.bold: active
+                        color: active ? Theme.accent : Theme.text; font.pixelSize: Theme.fontBody; font.bold: active
                     }
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                     TapHandler { onTapped: { dialog.currentTab = modelData.idx; notifier.playUi("nav"); } }
@@ -110,7 +110,7 @@ Item {
                 anchors { left: parent.left; right: parent.right }
                 spacing: 16
 
-                Text { text: "Chọn file modpack (.mrpack hoặc .zip) từ máy tính"; color: Theme.textMuted; font.pixelSize: 12 }
+                Text { text: "Chọn file modpack (.mrpack hoặc .zip) từ máy tính"; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
 
                 ActionButton {
                     width: 200; height: 40
@@ -122,7 +122,7 @@ Item {
                 Text {
                     visible: importBridge.busy
                     text: bridge.progressText
-                    color: Theme.textMuted; font.pixelSize: 11
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
 
@@ -137,7 +137,7 @@ Item {
                           ? "Đang quét..."
                           : importBridge.scanResults.length === 0 ? "Không tìm thấy launcher nào trên máy."
                           : importBridge.scanResults.length + " bản chơi tìm thấy"
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ActionButton {
                     primary: false; label: "Quét lại"
@@ -151,18 +151,18 @@ Item {
                     clip: true; spacing: 6
                     model: importBridge.scanResults
                     delegate: Rectangle {
-                        width: ListView.view.width; height: 52; radius: 7
+                        width: ListView.view.width; height: 52; radius: 0
                         color: launcherHover.hovered ? Theme.surfaceHigh : Theme.surface
                         border.color: Theme.border
                         Column {
                             anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
                             spacing: 2
-                            Text { text: modelData.instanceName; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                            Text { text: modelData.instanceName; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
                             Row {
                                 spacing: 8
-                                Text { text: modelData.launcher; color: Theme.accent; font.pixelSize: 10 }
-                                Text { text: modelData.gameVersion || "?"; color: Theme.textMuted; font.pixelSize: 10 }
-                                Text { text: modelData.loaderKind !== "vanilla" ? modelData.loaderKind : ""; color: Theme.textMuted; font.pixelSize: 10 }
+                                Text { text: modelData.launcher; color: Theme.accent; font.pixelSize: Theme.fontLabel }
+                                Text { text: modelData.gameVersion || "?"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
+                                Text { text: modelData.loaderKind !== "vanilla" ? modelData.loaderKind : ""; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
                             }
                         }
                         ActionButton {

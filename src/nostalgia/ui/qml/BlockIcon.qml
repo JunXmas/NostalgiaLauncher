@@ -41,7 +41,7 @@ Item {
         visible: !root.ready
         text: root.glyph
         color: root.glyphColor
-        font.pixelSize: 17
+        font.pixelSize: Theme.fontTitle
         Behavior on color { ColorAnimation { duration: Theme.quick } }
     }
 

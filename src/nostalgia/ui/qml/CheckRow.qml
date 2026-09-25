@@ -56,7 +56,7 @@ Item {
             anchors.centerIn: face
             text: "✓"
             color: "white"
-            font.pixelSize: 13; font.bold: true
+            font.pixelSize: Theme.fontHeading; font.bold: true
             style: Text.Raised; styleColor: "#60000000"
             // Bắt đầu ở 0 và để hoạt ảnh đẩy lên: nếu để 1 rồi mới thu về, khung hình đầu
             // tiên đã kịp hiện một dấu tick to đùng.
@@ -95,7 +95,7 @@ Item {
         anchors { left: box.right; leftMargin: 9; right: parent.right; verticalCenter: parent.verticalCenter }
         text: root.label
         color: root.checked ? Theme.text : Theme.textMuted
-        font.pixelSize: 12; elide: Text.ElideRight
+        font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         Behavior on color { ColorAnimation { duration: Theme.quick } }
     }
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

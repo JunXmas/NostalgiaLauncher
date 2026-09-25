@@ -46,12 +46,12 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
             Row {
-                Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
-                Text { text: "GIA"; color: Theme.accent; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
+                Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
+                Text { text: "GIA"; color: Theme.accent; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
             }
             Text {
                 text: Tr.text("tagline")
-                color: Theme.textMuted; font.pixelSize: 8; font.letterSpacing: 1.4
+                color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.4
             }
         }
     }
@@ -84,27 +84,27 @@ Rectangle {
             anchors { top: parent.top; left: parent.left; margins: 12 }
             spacing: 10
             Rectangle {
-                width: 38; height: 38; radius: 7
+                width: 38; height: 38; radius: 0
                 color: root.playerName ? Theme.accentDeep : Theme.border
                 Text {
                     anchors.centerIn: parent
                     text: root.playerName ? root.playerName.charAt(0).toUpperCase() : "?"
-                    color: "white"; font.pixelSize: 17; font.bold: true
+                    color: "white"; font.pixelSize: Theme.fontTitle; font.bold: true
                 }
             }
             Column {
                 spacing: 3
                 Text { text: root.playerName ? Tr.text("hello_prefix") : Tr.text("not_signed_in")
-                       color: Theme.textMuted; font.pixelSize: 10 }
+                       color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
                 Text { text: root.playerName ? root.playerName : "—"
-                       color: Theme.text; font.pixelSize: 14; font.bold: true }
+                       color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             }
         }
 
         Rectangle {
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 }
             height: 28
-            radius: 6
+            radius: 0
             color: Theme.surface
             Row {
                 anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }
@@ -119,7 +119,7 @@ Rectangle {
                     text: !root.playerName ? Tr.text("add_on_right")
                           : root.accountKind === "microsoft" ? Tr.text("account_microsoft")
                           : root.accountKind === "ely" ? Tr.text("account_ely") : Tr.text("account_offline")
-                    color: Theme.textMuted; font.pixelSize: 10
+                    color: Theme.textMuted; font.pixelSize: Theme.fontLabel
                 }
             }
         }
@@ -129,6 +129,6 @@ Rectangle {
         id: footer
         anchors { left: parent.left; bottom: parent.bottom; margins: 20 }
         spacing: 12
-        Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: 10 }
+        Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
     }
 }

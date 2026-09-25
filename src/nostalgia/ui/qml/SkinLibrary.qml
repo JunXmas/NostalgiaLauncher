@@ -22,11 +22,11 @@ Item {
         width: parent.width; height: 30; spacing: 12
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: "THƯ VIỆN SKIN"; color: Theme.accent; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.2
+            text: "THƯ VIỆN SKIN"; color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 1.2
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: library.entries.length + " skin"; color: Theme.textMuted; font.pixelSize: 11
+            text: library.entries.length + " skin"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         Item { width: header.width - 330; height: 1 }
         CheckRow {
@@ -60,12 +60,12 @@ Item {
                     SkinFace { size: 44; source: modelData.skinFile; anchors.horizontalCenter: parent.horizontalCenter }
                     Text {
                         width: card.width - 16; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
-                        text: modelData.name; color: Theme.text; font.pixelSize: 11; font.bold: true
+                        text: modelData.name; color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: card.inUse ? "Đang dùng" : modelData.sourceLabel + (modelData.slim ? " · slim" : "")
-                        color: card.inUse ? Theme.accent : Theme.textMuted; font.pixelSize: 10
+                        color: card.inUse ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
                     }
                 }
                 Rectangle {
@@ -96,7 +96,7 @@ Item {
         visible: library.entries.length === 0
         anchors { top: header.bottom; topMargin: 14; left: parent.left }
         text: "Chưa có skin nào. Bấm \"Thêm skin\" để chọn file PNG; skin tải về cho tài khoản Microsoft/Ely.by cũng tự vào đây."
-        color: Theme.textMuted; font.pixelSize: 11
+        color: Theme.textMuted; font.pixelSize: Theme.fontBody
     }
 
     FileDialog {

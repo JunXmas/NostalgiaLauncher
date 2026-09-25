@@ -61,7 +61,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
             text: root.checked ? "I" : "O"
             color: "white"
-            font.pixelSize: 12; font.bold: true
+            font.pixelSize: Theme.fontBody; font.bold: true
             style: Text.Raised; styleColor: "#40000000"
         }
         // Núm: khối sáng vuông chiếm đúng một nửa, trượt sang phải khi bật.

@@ -12,9 +12,9 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 50
-        Text {
+        PageTitle {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-            text: "Cài đặt"; color: Theme.text; font.pixelSize: 22; font.bold: true
+            caption: "Cài đặt"
         }
     }
 
@@ -33,15 +33,15 @@ Item {
             spacing: 14
             Row {
                 spacing: 10
-                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: 12; width: 160 }
-                Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: 12 }
+                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160 }
+                Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody }
             }
             Row {
                 spacing: 10
-                Text { text: "Thư mục dữ liệu"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Thư mục dữ liệu"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Text {
-                    text: settingsBridge.dataDir; color: Theme.text; font.pixelSize: 12
+                    text: settingsBridge.dataDir; color: Theme.text; font.pixelSize: Theme.fontBody
                     elide: Text.ElideMiddle; width: Math.min(520, page.width - 360)
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -49,12 +49,12 @@ Item {
             }
             Row {
                 spacing: 10
-                Text { text: "Thư mục lưu bản chơi"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Thư mục lưu bản chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Text {
                     objectName: "gameDirRootText"
                     text: settingsBridge.defaultGameDirRoot || (settingsBridge.dataDir + "/instances  (mặc định)")
-                    color: settingsBridge.defaultGameDirRoot ? Theme.text : Theme.textMuted; font.pixelSize: 12
+                    color: settingsBridge.defaultGameDirRoot ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
                     elide: Text.ElideMiddle; width: Math.min(420, page.width - 520)
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -71,7 +71,7 @@ Item {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
                 color: Theme.danger
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontBody
                 lineHeight: 1.3
                 Connections {
                     target: settingsBridge
@@ -83,7 +83,7 @@ Item {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
                 text: "Bản chơi mới (tạo mới, cài modpack, nhập file, kéo-thả) sẽ đặt mods/saves ở thư mục này; kho chung (versions, libraries, assets, Java) vẫn ở thư mục dữ liệu. Bản chơi đã có không bị chuyển."
-                color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
 
@@ -91,12 +91,12 @@ Item {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
                 text: "Thư viện mod và modpack duyệt CurseForge qua máy chủ của Nostalgia, không cần khoá API."
-                color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Row {
                 spacing: 10
-                Text { text: "Âm thanh thông báo"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Âm thanh thông báo"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Toggle {
                     objectName: "notificationSoundToggle"
@@ -107,12 +107,12 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản."
-                    color: Theme.textMuted; font.pixelSize: 11
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Row {
                 spacing: 10
-                Text { text: "Âm thanh giao diện"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Âm thanh giao diện"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Toggle {
                     objectName: "uiSoundToggle"
@@ -123,13 +123,13 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ."
-                    color: Theme.textMuted; font.pixelSize: 11
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Row {
                 spacing: 10
-                Text { text: "Thu gọn vào khay khi chơi"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Thu gọn vào khay khi chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Toggle {
                     objectName: "hideWhenGameRunningToggle"
@@ -140,12 +140,12 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM."
-                    color: Theme.textMuted; font.pixelSize: 11
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Row {
                 spacing: 10
-                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                        anchors.verticalCenter: parent.verticalCenter }
                 Toggle {
                     objectName: "discordToggle"
@@ -165,14 +165,14 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: presenceBridge.statusText
-                    color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: 11
+                    color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
                 text: "Khi game chạy, hồ sơ Discord hiện \"Đang chơi <bản chơi>\" kèm thời gian. Cần Discord đang mở và một Application ID tự tạo tại discord.com/developers (Applications → New Application → General Information)."
-                color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
         }
     }

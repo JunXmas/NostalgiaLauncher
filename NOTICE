@@ -32,6 +32,14 @@ hoàn toàn hợp pháp — dự án chấp nhận điều đó.
   nguồn. Lõi launcher không phụ thuộc thư viện ngoài nào.
 - **Asset giao diện Aero** dựng theo bộ "Aero UI (Windows 7)" trên Figma, giấy phép
   CC BY 4.0.
+- **Font đóng kèm** ở `src/nostalgia/ui/qml/assets/fonts/`, cả hai đều SIL Open Font
+  License 1.1 — giấy phép này BẮT BUỘC phát hành kèm bản quyền, nên bản gốc nằm ngay cạnh
+  file font (`Inter-OFL.txt`, `MinecraftF2D-OFL.txt`) và `tests/ui/test_fonts.py` gác cho
+  chúng không biến mất:
+  - **Inter** (Rasmus Andersson) — chữ đọc.
+  - **Minecraft F2D v1.42** — nhãn viết hoa. Font tự làm theo phong cách Minecraft, KHÔNG
+    phải font của Mojang; chọn nó vì nó là font kiểu pixel duy nhất tìm được phủ đủ 74 ký
+    tự có dấu tiếng Việt.
 
 ## Phần máy chủ
 

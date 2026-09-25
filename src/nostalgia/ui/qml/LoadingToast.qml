@@ -38,7 +38,7 @@ Rectangle {
         Repeater {
             model: 8
             Rectangle {
-                width: 3; height: 7; radius: 1.5
+                width: 3; height: 7; radius: 0
                 x: spinner.width / 2 - width / 2; y: 0
                 color: Theme.accent
                 opacity: 0.25 + 0.75 * index / 7
@@ -57,19 +57,19 @@ Rectangle {
         Text {
             width: parent.width
             text: toast.activity
-            color: Theme.text; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight
+            color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true; elide: Text.ElideRight
         }
         Text {
             width: parent.width
             visible: bridge.progressText.length > 0
             text: bridge.progressText
-            color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Rectangle {
-            width: parent.width; height: 3; radius: 1.5
+            width: parent.width; height: 3; radius: 0
             color: Theme.border
             Rectangle {
-                height: parent.height; radius: 1.5
+                height: parent.height; radius: 0
                 width: toast.hasFraction ? parent.width * bridge.progressFraction : parent.width
                 color: Theme.accent
                 opacity: toast.hasFraction ? 1 : 0.35

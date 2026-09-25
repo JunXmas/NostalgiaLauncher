@@ -82,20 +82,20 @@ Item {
             spacing: 12
 
             Rectangle {
-                width: 30; height: 30; radius: 7
+                width: 30; height: 30; radius: 0
                 anchors.verticalCenter: parent.verticalCenter
                 color: hover.hovered ? Theme.accent : Theme.accentDeep
                 Behavior on color { ColorAnimation { duration: Theme.quick } }
-                Text { anchors.centerIn: parent; text: root.glyph; color: "white"; font.pixelSize: 14 }
+                Text { anchors.centerIn: parent; text: root.glyph; color: "white"; font.pixelSize: Theme.fontHeading }
             }
             Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 Text {
                     text: root.title
-                    color: Theme.text; font.pixelSize: 12; font.bold: true; font.letterSpacing: 0.8
+                    color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 0.8
                 }
-                Text { text: root.subtitle; color: Theme.textMuted; font.pixelSize: 10 }
+                Text { text: root.subtitle; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
             }
         }
 

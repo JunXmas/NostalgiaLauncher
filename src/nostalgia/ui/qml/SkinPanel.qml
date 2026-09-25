@@ -21,7 +21,7 @@ Panel {
                 Text {
                     text: modelData.label
                     color: skinPanel.tab === modelData.key ? Theme.accent : Theme.textMuted
-                    font.pixelSize: 13; font.bold: skinPanel.tab === modelData.key
+                    font.pixelSize: Theme.fontHeading; font.bold: skinPanel.tab === modelData.key
                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: skinPanel.tab = modelData.key }
                 }
             }
@@ -34,7 +34,7 @@ Panel {
                   : skinPanel.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới."
                   : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Đổi skin/cape thật tại ely.by → Skins (bạn bè trong game thấy nhờ authlib-injector); \"Thêm skin\" chỉ đổi ảnh hiện trong launcher."
                   : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher."
-            color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
         ActionButton {
             visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind !== "offline"
@@ -51,7 +51,7 @@ Panel {
             id: uploadStatus
             visible: text !== ""
             color: uploadStatus.isError ? Theme.danger : Theme.accent
-            font.pixelSize: 11
+            font.pixelSize: Theme.fontBody
             property bool isError: false
             Connections {
                 target: accountBridge
@@ -70,7 +70,7 @@ Panel {
                 }
                 Text {
                     visible: !(skinPanel.hasShown && skinPanel.shown.capeFile !== "")
-                    anchors.centerIn: parent; text: "Không có cape"; color: Theme.textMuted; font.pixelSize: 11
+                    anchors.centerIn: parent; text: "Không có cape"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
         }

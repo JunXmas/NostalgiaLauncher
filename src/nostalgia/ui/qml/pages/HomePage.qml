@@ -75,24 +75,61 @@ Item {
         onNavigateToLibrary: function (contentKind) { page.navigateToLibrary(contentKind); }
     }
 
-    // ----- góc trên trái: lời chào; góc trên phải của vùng giữa: hai pill -----
-    Column {
-        anchors { left: parent.left; top: parent.top; margins: Theme.gap; leftMargin: 28; topMargin: 22 }
-        spacing: 3
-        Text {
-            text: greeting(); color: Theme.text; font.pixelSize: 13; style: Text.Raised; styleColor: "#80000000"
-            function greeting() {
-                var hour = new Date().getHours();
-                if (hour < 11) return "Chào buổi sáng!";
-                if (hour < 18) return "Chào buổi chiều!";
-                return "Chào buổi tối!";
-            }
+    /* ----- góc trên trái: lời chào -----
+
+       Chữ đặt thẳng lên ảnh sao thì không đọc được, dù có đổ bóng: nền phía sau lúc sáng lúc
+       tối tuỳ chỗ. minecraft.net xử đúng chuyện này — chữ hero của họ nằm trên một hộp đặc
+       mờ, góc vuông, tràn hẳn ra mép trái. Làm theo: hộp bám mép trái màn hình. */
+    Rectangle {
+        id: greetingBox
+        anchors { left: parent.left; top: parent.top; topMargin: 18 }
+        width: greetingText.width + 52
+        height: greetingText.height + 34
+        color: "#d40b100d"
+
+        // Vạch xanh dọc mép trái — cùng dấu hiệu với tiêu đề thẻ ở Panel.qml.
+        Rectangle {
+            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+            width: 3
+            color: Theme.accent
         }
-        Text { text: "Hôm nay chơi gì?"; color: Theme.text; font.pixelSize: 26; font.bold: true
-               style: Text.Raised; styleColor: "#80000000" }
-        Text {
-            text: bridge.instances.length > 0 ? "Tiếp tục cuộc phiêu lưu của bạn." : "Tạo một bản chơi để bắt đầu."
-            color: Theme.accent; font.pixelSize: 13; style: Text.Raised; styleColor: "#80000000"
+        Rectangle {
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            height: 1
+            color: "#1cffffff"
+        }
+
+        Column {
+            id: greetingText
+            anchors { left: parent.left; leftMargin: 28; verticalCenter: parent.verticalCenter }
+            spacing: 4
+
+            Text {
+                text: greeting()
+                color: Theme.accent
+                font.family: Theme.pixel
+                font.pixelSize: Theme.fontLabel
+                font.letterSpacing: Theme.trackLabel
+                function greeting() {
+                    var hour = new Date().getHours();
+                    if (hour < 11) return "CHÀO BUỔI SÁNG";
+                    if (hour < 18) return "CHÀO BUỔI CHIỀU";
+                    return "CHÀO BUỔI TỐI";
+                }
+            }
+            Text {
+                text: "HÔM NAY CHƠI GÌ?"
+                color: Theme.text
+                font.family: Theme.pixel
+                font.pixelSize: Theme.fontHero
+                font.letterSpacing: 1
+            }
+            Text {
+                text: bridge.instances.length > 0 ? "Tiếp tục cuộc phiêu lưu của bạn."
+                                                  : "Tạo một bản chơi để bắt đầu."
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontBody
+            }
         }
     }
     Row {
@@ -174,7 +211,7 @@ Item {
                 id: listTitle
                 anchors { left: parent.left; top: parent.top }
                 text: "BẢN CHƠI CỦA TÔI"
-                color: Theme.text; font.pixelSize: 14; font.bold: true; font.letterSpacing: 1.2
+                color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true; font.letterSpacing: 1.2
             }
             Row {
                 anchors { right: parent.right; top: parent.top; topMargin: -4 }
@@ -187,7 +224,7 @@ Item {
                 visible: page.visibleInstances().length === 0
                 text: bridge.instances.length === 0 ? "Chưa có bản chơi nào."
                                                     : "Không có bản chơi nào khớp \"" + page.search + "\"."
-                color: Theme.textMuted; font.pixelSize: 12
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             ListView {
                 id: strip

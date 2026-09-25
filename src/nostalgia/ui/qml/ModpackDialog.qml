@@ -30,11 +30,11 @@ Item {
         Column {
             anchors { fill: parent; margins: 26 }
             spacing: 14
-            Text { text: "Cài modpack thành bản chơi"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+            Text { text: "Cài modpack thành bản chơi"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
                 text: dialog.packTitle + " sẽ thành một bản chơi mới với đúng loader và phiên bản mà pack yêu cầu. Có thể mất vài phút."
-                color: Theme.textMuted; font.pixelSize: 12
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             TextField { id: nameField; width: parent.width; placeholder: dialog.packTitle }
             Row {
@@ -47,7 +47,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 260; elide: Text.ElideMiddle
                     text: dialog.gameDirUrl ? dialog.gameDirPath : "mặc định"
-                    color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 11
+                    color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Row {

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import cast
 
 from PySide6.QtCore import QObject, QSize, QUrl
-from PySide6.QtGui import QGuiApplication, QIcon, QSurfaceFormat
+from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication, QIcon, QSurfaceFormat
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
@@ -42,6 +42,10 @@ logger = logging.getLogger(__name__)
 
 MULTISAMPLE_COUNT = 4
 
+# Phải khớp `Theme.sans`. Một chỗ đổi tên font mà quên chỗ kia thì chữ rơi về font hệ thống
+# lặng lẽ — `tests/ui/test_fonts.py` gác cho hai giá trị này bằng nhau.
+SANS_FAMILY = "Inter"
+
 
 def enable_multisampling() -> None:
     """Bật khử răng cưa toàn cảnh (MSAA 4x).
@@ -65,12 +69,38 @@ def enable_multisampling() -> None:
     QSurfaceFormat.setDefaultFormat(surface_format)
 
 
+def load_fonts() -> None:
+    """Nạp font đóng kèm, để mọi máy hiện chữ giống nhau.
+
+    Không nhúng thì Qt rơi về font mặc định hệ thống — mỗi bản Linux một kiểu, và bản nào
+    thiếu dấu tiếng Việt thì chữ nhảy font giữa câu. Cả hai họ dưới đây đều đo được
+    **phủ đủ 74 ký tự có dấu** bằng `QRawFont.supportsCharacter`.
+
+    Inter cho chữ đọc, Minecraft F2D cho nhãn viết hoa — đúng cách minecraft.net làm:
+    tiêu đề kiểu pixel, thân bài font thường. F2D chỉ có một kiểu Regular, nên nó chỉ dùng
+    được ở nhãn ngắn; đặt nó cho cả đoạn văn là chữ sẽ gồ ghề và không phân được cấp bậc.
+    """
+    fonts_dir = QML_DIR / "assets" / "fonts"
+    for path in sorted(fonts_dir.glob("*.[ot]tf")):
+        if QFontDatabase.addApplicationFont(str(path)) < 0:
+            # Mất font là mất cả diện mạo — cả một bước chết thì phải nghe được.
+            logger.warning("không nạp được font %s, giao diện sẽ rơi về font hệ thống", path.name)
+
+    # Đặt mặc định ở tầng ứng dụng thay vì khai `font.family` ở từng file QML: 57 file không
+    # phải sửa, và chỗ nào quên cũng vẫn đúng font. `instance()` khai kiểu trả về là
+    # QCoreApplication (không có font) — chỉ bản QGuiApplication mới đặt được.
+    application = QGuiApplication.instance()
+    if isinstance(application, QGuiApplication):
+        application.setFont(QFont(SANS_FAMILY))
+
+
 def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     """Dựng khung nhìn và cầu nối.
 
     Tách khỏi `main` để test dựng được mà không phải chạy vòng lặp sự kiện — và để bộ chụp
     ảnh dùng lại đúng đường mà người dùng đi, chứ không dựng một bản riêng cho ảnh đẹp.
     """
+    load_fonts()
     view = QQuickView()
     view.engine().addImportPath(str(QML_DIR))
     # Icon cửa sổ / thanh tác vụ: cùng chiếc lá với logo ở thanh bên và icon bộ cài.

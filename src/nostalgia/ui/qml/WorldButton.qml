@@ -55,7 +55,7 @@ Item {
                 anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
                 spacing: 8
                 Rectangle {
-                    width: 20; height: 20; radius: 4
+                    width: 20; height: 20; radius: 0
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.accentSoft; border.color: Theme.accent
                     clip: true
@@ -68,7 +68,7 @@ Item {
                     }
                     Text {
                         anchors.centerIn: parent; visible: !root.iconReady
-                        text: root.glyph; color: Theme.accent; font.pixelSize: 11
+                        text: root.glyph; color: Theme.accent; font.pixelSize: Theme.fontBody
                     }
                 }
                 Column {
@@ -76,12 +76,12 @@ Item {
                     Text {
                         width: root.textWidth; elide: Text.ElideRight
                         text: root.worldName; color: root.clickable ? "white" : "#b9b9b9"
-                        font.pixelSize: 11; font.bold: true
+                        font.pixelSize: Theme.fontBody; font.bold: true
                         style: Text.Raised; styleColor: "#40000000"
                     }
                     Text {
                         width: root.textWidth; elide: Text.ElideRight
-                        text: root.detail; color: "#d8cdb8"; font.pixelSize: 9
+                        text: root.detail; color: "#d8cdb8"; font.pixelSize: Theme.fontLabel
                     }
                 }
             }

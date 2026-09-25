@@ -78,7 +78,7 @@ Rectangle {
             Repeater {
                 model: 3
                 Rectangle {
-                    width: 16; height: 16; radius: 3
+                    width: 16; height: 16; radius: 0
                     color: Theme.accent
                     opacity: 0.10 + index * 0.05
                 }
@@ -87,10 +87,10 @@ Rectangle {
 
         Rectangle {
             anchors { left: parent.left; top: parent.top; margins: 10 }
-            width: 30; height: 30; radius: 8
+            width: 30; height: 30; radius: 0
             color: playHover.hovered ? Theme.accent : "#b3000000"
             Behavior on color { ColorAnimation { duration: Theme.quick } }
-            Text { anchors.centerIn: parent; text: "▶"; color: "white"; font.pixelSize: 12 }
+            Text { anchors.centerIn: parent; text: "▶"; color: "white"; font.pixelSize: Theme.fontBody }
             HoverHandler { id: playHover; cursorShape: Qt.PointingHandCursor }
             TapHandler { enabled: root.playable; onTapped: root.playRequested() }
         }
@@ -101,7 +101,7 @@ Rectangle {
         anchors { right: parent.right; rightMargin: 48; top: thumb.bottom; topMargin: 14 }
         visible: root.editable
         opacity: hover.hovered ? 1 : 0
-        text: "⚙"; font.pixelSize: 13
+        text: "⚙"; font.pixelSize: Theme.fontHeading
         color: editHover.hovered ? Theme.accent : Theme.textMuted
         Behavior on opacity { NumberAnimation { duration: Theme.quick } }
         HoverHandler { id: editHover; cursorShape: Qt.PointingHandCursor }
@@ -113,14 +113,14 @@ Rectangle {
         anchors { right: parent.right; top: thumb.bottom; margins: 10 }
         visible: root.removable
         opacity: hover.hovered ? 1 : 0
-        width: removeText.width + 16; height: 24; radius: 6
+        width: removeText.width + 16; height: 24; radius: 0
         color: root.confirmingRemove ? Theme.danger : "transparent"
         Behavior on opacity { NumberAnimation { duration: Theme.quick } }
         Text {
             id: removeText
             anchors.centerIn: parent
             text: root.confirmingRemove ? "Gỡ?" : "🗑"
-            font.pixelSize: 12; font.bold: root.confirmingRemove
+            font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
             color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
         }
         HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }
@@ -136,14 +136,14 @@ Rectangle {
         anchors { top: thumb.bottom; left: parent.left; right: parent.right; margins: 14 }
         spacing: 6
         Text {
-            text: root.label; color: Theme.text; font.pixelSize: 14; font.bold: true
+            text: root.label; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true
             width: parent.width; elide: Text.ElideRight
         }
         Text {
             // 💾 đứng đầu: bản chơi này nằm ở thư mục riêng (ổ khác), không bị đuôi dài che mất.
             text: (root.customGameDir ? "💾  " : "") + root.loaderLabel + "  ·  " + root.versionId
             width: parent.width; elide: Text.ElideRight
-            color: Theme.textMuted; font.pixelSize: 11
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         Text {
             objectName: "instanceStats"
@@ -153,7 +153,7 @@ Rectangle {
                   + (root.launchCount > 0 ? "  ·  ▶ " + root.launchCount : "")
                   + "  ·  🌍 " + root.worldCount + "  ·  ⚙ " + root.modCount
             width: parent.width; elide: Text.ElideRight
-            color: root.launchCount > 0 ? Theme.accent : Theme.textMuted; font.pixelSize: 10
+            color: root.launchCount > 0 ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
         }
     }
 

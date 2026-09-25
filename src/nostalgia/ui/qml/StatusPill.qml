@@ -23,7 +23,7 @@ Rectangle {
         Text {
             visible: root.glyph.length > 0
             anchors.verticalCenter: parent.verticalCenter
-            text: root.glyph; color: Theme.accent; font.pixelSize: 13
+            text: root.glyph; color: Theme.accent; font.pixelSize: Theme.fontHeading
         }
         Rectangle {
             visible: root.glyph.length === 0
@@ -39,7 +39,7 @@ Rectangle {
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.text; color: Theme.text; font.pixelSize: 12
+            text: root.text; color: Theme.text; font.pixelSize: Theme.fontBody
         }
     }
 }

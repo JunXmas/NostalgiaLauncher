@@ -37,7 +37,7 @@ Item {
                     width: (parent.width - 14) / 2
                     spacing: 4
                     opacity: root.loadersEnabled ? 1 : 0.4
-                    Text { text: "LOADERS"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.4; font.bold: true }
+                    Text { text: "LOADERS"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.4; font.bold: true }
                     Item { width: 1; height: 4 }
                     Repeater {
                         model: root.loaderNames
@@ -54,18 +54,18 @@ Item {
                 Column {
                     width: (parent.width - 14) / 2 - 15
                     spacing: 2
-                    Text { text: "SORT"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.4; font.bold: true }
+                    Text { text: "SORT"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.4; font.bold: true }
                     Item { width: 1; height: 4 }
                     Repeater {
                         model: root.sortLabels
                         Rectangle {
                             readonly property bool selected: index === root.sortIndex
-                            width: parent.width; height: 26; radius: 6
+                            width: parent.width; height: 26; radius: 0
                             color: selected ? Theme.accentSoft : "transparent"
                             Text {
                                 anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
                                 text: modelData
-                                color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 12
+                                color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody
                             }
                             HoverHandler { cursorShape: Qt.PointingHandCursor }
                             TapHandler { onTapped: { root.sortIndex = index; root.changed(); } }
@@ -78,7 +78,7 @@ Item {
                 visible: root.singleOnly
                 width: parent.width; wrapMode: Text.WordWrap
                 text: "CurseForge chỉ lọc theo loader và phiên bản ĐẦU TIÊN được tick."
-                color: Theme.accent; font.pixelSize: 10
+                color: Theme.accent; font.pixelSize: Theme.fontLabel
             }
 
             Rectangle { width: parent.width; height: 1; color: Theme.border }
@@ -88,18 +88,18 @@ Item {
                 spacing: 8
                 Row {
                     width: parent.width
-                    Text { text: "GAME VERSION"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.4; font.bold: true
+                    Text { text: "GAME VERSION"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.4; font.bold: true
                            anchors.verticalCenter: parent.verticalCenter }
                     Item { width: parent.width - 150; height: 1 }
                     Rectangle {
                         visible: contentBridge.selectedGameVersions.length > 0
-                        width: countText.width + 22; height: 20; radius: 10
+                        width: countText.width + 22; height: 20; radius: 0
                         color: Theme.accentSoft; border.color: Theme.accent
                         Row {
                             id: countText
                             anchors.centerIn: parent; spacing: 5
-                            Text { text: contentBridge.selectedGameVersions.length; color: Theme.accent; font.pixelSize: 10; font.bold: true }
-                            Text { text: "✕"; color: Theme.accent; font.pixelSize: 10 }
+                            Text { text: contentBridge.selectedGameVersions.length; color: Theme.accent; font.pixelSize: Theme.fontLabel; font.bold: true }
+                            Text { text: "✕"; color: Theme.accent; font.pixelSize: Theme.fontLabel }
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: { contentBridge.clearGameVersions(); root.changed(); } }
@@ -128,7 +128,7 @@ Item {
                 Text {
                     visible: catalogBridge.releasedVersions.length === 0
                     text: catalogBridge.busy ? "Đang tải danh mục..." : "Không tải được danh mục phiên bản."
-                    color: Theme.textMuted; font.pixelSize: 11
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
         }

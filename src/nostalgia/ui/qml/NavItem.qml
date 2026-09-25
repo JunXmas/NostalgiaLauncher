@@ -27,7 +27,7 @@ Item {
             x: 0
             width: 3
             height: root.selected ? parent.height * 0.55 : 0
-            radius: 2
+            radius: 0
             color: Theme.accent
             Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         }
@@ -53,9 +53,11 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
-            font.pixelSize: 13
-            font.letterSpacing: 1.1
-            font.bold: root.selected
+            // Tên mục là nhãn hoa ngắn: dùng font pixel. F2D không có kiểu đậm nên mục đang
+            // chọn phân biệt bằng MÀU và vạch xanh bên trái, không bằng nét dày.
+            font.family: Theme.pixel
+            font.pixelSize: Theme.fontHeading
+            font.letterSpacing: Theme.trackLabel
             color: root.selected ? Theme.text : Theme.textMuted
             Behavior on color { ColorAnimation { duration: Theme.quick } }
         }

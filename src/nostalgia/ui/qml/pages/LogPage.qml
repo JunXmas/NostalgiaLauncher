@@ -26,9 +26,9 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 58
-        Text {
+        PageTitle {
             anchors { left: parent.left; top: parent.top }
-            text: "Nhật ký"; color: Theme.text; font.pixelSize: 22; font.bold: true
+            caption: "Nhật ký"
         }
         Row {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
@@ -41,7 +41,7 @@ Item {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: logList.count + " dòng"; color: Theme.textMuted; font.pixelSize: 12
+                text: logList.count + " dòng"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
         }
         Row {
@@ -50,10 +50,10 @@ Item {
             Repeater {
                 model: [{ key: "info", text: "Tất cả" }, { key: "warn", text: "Cảnh báo+" }, { key: "error", text: "Lỗi" }]
                 Rectangle {
-                    width: chipText.width + 22; height: 30; radius: 15
+                    width: chipText.width + 22; height: 30; radius: 0
                     color: page.minimumLevel === modelData.key ? Theme.accentSoft : Theme.surface
                     border.color: page.minimumLevel === modelData.key ? Theme.accent : Theme.border
-                    Text { id: chipText; anchors.centerIn: parent; text: modelData.text; color: Theme.text; font.pixelSize: 12 }
+                    Text { id: chipText; anchors.centerIn: parent; text: modelData.text; color: Theme.text; font.pixelSize: Theme.fontBody }
                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.minimumLevel = modelData.key }
                 }
             }
@@ -87,7 +87,7 @@ Item {
                 visible: shown
                 text: model.text
                 color: page.colorFor(model.level)
-                font.family: "monospace"; font.pixelSize: 11
+                font.family: "monospace"; font.pixelSize: Theme.fontBody
                 wrapMode: Text.WrapAnywhere
                 textFormat: Text.PlainText
             }
@@ -96,7 +96,7 @@ Item {
             visible: logList.count === 0
             anchors.centerIn: parent
             text: bridge.gameRunning ? "Đang chờ dòng đầu tiên..." : "Chưa có nhật ký. Bấm CHƠI, output của game sẽ hiện ở đây."
-            color: Theme.textMuted; font.pixelSize: 12
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
 }

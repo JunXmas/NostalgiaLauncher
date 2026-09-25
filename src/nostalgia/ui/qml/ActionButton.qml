@@ -52,7 +52,12 @@ Item {
             anchors.centerIn: parent
             text: root.label
             color: !root.clickable ? "#b9b9b9" : "white"
-            font.pixelSize: root.fontSize; font.bold: true
+            // Font pixel CHỈ cho nhãn viết hoa ("CHƠI ▶", "DỪNG ■"). Nhãn có chữ thường
+            // ("Đăng nhập Microsoft") đặt vào F2D thì chật và khó đọc — chữ thường của font
+            // pixel thấp, dấu tiếng Việt chồng lên làm dòng gồ ghề.
+            font.family: root.label === root.label.toUpperCase() ? Theme.pixel : Theme.sans
+            font.pixelSize: root.fontSize
+            font.letterSpacing: Theme.trackLabel
             style: Text.Raised; styleColor: "#40000000"
         }
     }

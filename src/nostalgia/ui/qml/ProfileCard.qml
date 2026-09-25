@@ -54,11 +54,11 @@ Panel {
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
-                        Text { text: modelData.playerName; color: Theme.text; font.pixelSize: 12; font.bold: true }
+                        Text { text: modelData.playerName; color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true }
                         Text {
                             text: modelData.accountKind === "microsoft" ? "Microsoft"
                                   : modelData.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến"
-                            color: Theme.textMuted; font.pixelSize: 10
+                            color: Theme.textMuted; font.pixelSize: Theme.fontLabel
                         }
                     }
                 }
@@ -67,7 +67,7 @@ Panel {
                 Text {
                     visible: root.expanded || !root.collapsible
                     anchors { right: parent.right; rightMargin: accountRow.hasToggle ? 50 : 10; verticalCenter: parent.verticalCenter }
-                    text: "✕"; font.pixelSize: 11
+                    text: "✕"; font.pixelSize: Theme.fontBody
                     color: removeHover.hovered ? Theme.danger : Theme.textMuted
                     opacity: rowHover.hovered ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
@@ -80,13 +80,13 @@ Panel {
                     objectName: "profileChevron"
                     visible: accountRow.hasToggle
                     anchors { right: parent.right; rightMargin: 6; verticalCenter: parent.verticalCenter }
-                    width: 38; height: 26; radius: 3
+                    width: 38; height: 26; radius: 0
                     color: toggleHover.hovered ? "#5a5247" : "#4a443c"
                     border.color: "#2e2a25"; border.width: 2
                     Text {
                         anchors.centerIn: parent
                         text: root.expanded ? "▴" : "▾ " + root.accounts.length
-                        color: "#e8dcc8"; font.pixelSize: 11; font.bold: true
+                        color: "#e8dcc8"; font.pixelSize: Theme.fontBody; font.bold: true
                     }
                     HoverHandler { id: toggleHover; cursorShape: Qt.PointingHandCursor }
                     TapHandler { onTapped: root.expanded = !root.expanded }
@@ -106,7 +106,7 @@ Panel {
             visible: root.accounts.length === 0
             width: parent.width
             text: "Chưa có tài khoản."
-            color: Theme.textMuted; font.pixelSize: 11
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
 
         Item { width: 1; height: 4 }

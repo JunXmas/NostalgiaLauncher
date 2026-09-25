@@ -45,7 +45,7 @@ Item {
             anchors { left: parent.left; leftMargin: 11; right: badgePill.left; rightMargin: 8; verticalCenter: parent.verticalCenter }
             text: root.currentText || root.placeholder
             color: root.currentText ? Theme.text : Theme.textMuted
-            font.pixelSize: 12; elide: Text.ElideRight
+            font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Rectangle {
             id: badgePill
@@ -54,20 +54,20 @@ Item {
             anchors { right: arrow.left; rightMargin: visible ? 8 : 0; verticalCenter: parent.verticalCenter }
             width: visible ? badgeText.width + 14 : 0
             height: 20
-            radius: 10
+            radius: 0
             color: Theme.accentSoft
             border.color: Theme.border
             Text {
                 id: badgeText
                 anchors.centerIn: parent
                 text: root.badge
-                color: Theme.accent; font.pixelSize: 11; font.bold: true
+                color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true
             }
         }
         Text {
             id: arrow
             anchors { right: parent.right; rightMargin: 11; verticalCenter: parent.verticalCenter }
-            text: "⌄"; color: Theme.textMuted; font.pixelSize: 14
+            text: "⌄"; color: Theme.textMuted; font.pixelSize: Theme.fontHeading
             rotation: (root.open !== root.dropUp) ? 180 : 0
             Behavior on rotation { NumberAnimation { duration: Theme.quick } }
         }
@@ -115,7 +115,7 @@ Item {
             delegate: Rectangle {
                 width: ListView.view.width
                 height: 32
-                radius: 6
+                radius: 0
                 color: rowHover.containsMouse ? Theme.accentSoft : "transparent"
                 Text {
                     anchors {
@@ -125,7 +125,7 @@ Item {
                     }
                     text: modelData
                     color: index === root.currentIndex ? Theme.accent : Theme.text
-                    font.pixelSize: 12; elide: Text.ElideRight
+                    font.pixelSize: Theme.fontBody; elide: Text.ElideRight
                 }
                 Text {
                     id: mark
@@ -134,7 +134,7 @@ Item {
                     width: visible ? implicitWidth : 0
                     anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
                     text: root.markLabel
-                    color: Theme.accent; font.pixelSize: 11; font.bold: true
+                    color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true
                 }
                 MouseArea {
                     id: rowHover

@@ -143,11 +143,11 @@ Item {
 
                     Column {
                         spacing: 2
-                        Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+                        Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
                         Text {
                             text: dialog.loaderLabel + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
                                   + (dialog.loaderVersion ? "  ·  " + dialog.loaderVersion : "")
-                            color: Theme.accent; font.pixelSize: 11
+                            color: Theme.accent; font.pixelSize: Theme.fontBody
                         }
                     }
 
@@ -165,7 +165,7 @@ Item {
 
                     Column {
                         spacing: 5; width: parent.width
-                        Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { text: "TÊN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                         TextField {
                             id: nameField; width: parent.width
                             placeholder: dialog.gameVersion ? dialog.defaultName : "Để trống = tự động"
@@ -174,7 +174,7 @@ Item {
 
                     Column {
                         spacing: 5; width: parent.width
-                        Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                         // Bấm để chọn ổ khác cho mods/saves của bản chơi này (kho chung vẫn ở data_dir).
                         Rectangle {
                             objectName: "gameDirPicker"
@@ -185,13 +185,13 @@ Item {
                                 text: dialog.gameDirUrl ? dialog.gameDirPath
                                       : (settingsBridge.defaultGameDirRoot ? "Mặc định: " + settingsBridge.defaultGameDirRoot + "/…" : "Mặc định trong instances/ — bấm để chọn ổ khác")
                                 elide: Text.ElideMiddle
-                                color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: 12
+                                color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
                             }
                             Text {
                                 id: clearFolder
                                 visible: dialog.gameDirUrl !== ""
                                 anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
-                                text: "✕"; color: Theme.textMuted; font.pixelSize: 11
+                                text: "✕"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
                                 TapHandler { onTapped: dialog.gameDirUrl = "" }
                             }
                             HoverHandler { id: folderHover; cursorShape: Qt.PointingHandCursor }
@@ -201,7 +201,7 @@ Item {
 
                     Column {
                         spacing: 5; width: parent.width
-                        Text { text: "LOADER"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { text: "LOADER"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                         Grid {
                             id: loaderGrid
                             objectName: "loaderRow"
@@ -224,7 +224,7 @@ Item {
                                         Text {
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             text: modelData.label; color: selected ? Theme.accent : Theme.text
-                                            font.pixelSize: 11; font.bold: selected
+                                            font.pixelSize: Theme.fontBody; font.bold: selected
                                         }
                                     }
                                     HoverHandler { cursorShape: Qt.PointingHandCursor }
@@ -247,7 +247,7 @@ Item {
 
                     Row {
                         spacing: 10
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                         TextField { id: heapField; width: 110; placeholder: "mặc định" }
                     }
 
@@ -258,25 +258,25 @@ Item {
                         visible: !bridge.busy && dialog.missingStep.length > 0
                         width: parent.width
                         text: "Còn thiếu: " + dialog.missingStep
-                        color: Theme.accent; font.pixelSize: 11; wrapMode: Text.WordWrap
+                        color: Theme.accent; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
                         visible: !bridge.busy && dialog.isPreset
                         width: parent.width
                         text: "Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi."
-                        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
                         visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
                         width: parent.width
                         text: "Forge/NeoForge cài bằng installer chính thức; có thể mất vài phút."
-                        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.WordWrap
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
                         visible: bridge.busy
                         width: parent.width
                         text: bridge.progressText
-                        color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
                     }
                     ActionButton {
                         width: parent.width
@@ -308,7 +308,7 @@ Item {
                     text: dialog.needsLoaderStep && dialog.gameVersion
                           ? "CHỌN PHIÊN BẢN " + dialog.loaderLabel.toUpperCase() + " CHO " + dialog.gameVersion
                           : "CHỌN PHIÊN BẢN MINECRAFT"
-                    color: Theme.textMuted; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.2
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 1.2
                 }
                 ActionButton {
                     visible: dialog.needsLoaderStep && dialog.gameVersion
@@ -319,7 +319,7 @@ Item {
             }
             Text {
                 anchors { right: parent.right; top: parent.top; topMargin: 4 }
-                text: "✕"; color: closeHover.hovered ? Theme.text : Theme.textMuted; font.pixelSize: 16
+                text: "✕"; color: closeHover.hovered ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontHeading
                 HoverHandler { id: closeHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: if (!bridge.busy) dialog.close() }
             }
@@ -332,7 +332,7 @@ Item {
                 Text {
                     visible: dialog.released.length === 0
                     text: catalogBridge.busy ? "Đang tải danh mục phiên bản..." : "Không tải được danh mục."
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ActionButton {
                     y: 30
@@ -430,13 +430,13 @@ Item {
                                     anchors { left: parent.left; leftMargin: 18; bottom: parent.bottom; bottomMargin: 14 }
                                     opacity: card.lit ? 1 : 0.75
                                     Behavior on opacity { NumberAnimation { duration: Theme.normal } }
-                                    Text { text: modelData.major; color: Theme.text; font.pixelSize: 28; font.bold: true
+                                    Text { text: modelData.major; color: Theme.text; font.pixelSize: Theme.fontHero; font.bold: true
                                            style: Text.Raised; styleColor: "#80000000" }
-                                    Text { text: modelData.count + " phiên bản"; color: Theme.text; font.pixelSize: 12; opacity: 0.85 }
+                                    Text { text: modelData.count + " phiên bản"; color: Theme.text; font.pixelSize: Theme.fontBody; opacity: 0.85 }
                                 }
                                 Text {
                                     anchors { right: parent.right; rightMargin: 16; bottom: parent.bottom; bottomMargin: 12 }
-                                    text: card.expanded ? "▲" : "▼"; color: Theme.text; font.pixelSize: 12; opacity: 0.8
+                                    text: card.expanded ? "▲" : "▼"; color: Theme.text; font.pixelSize: Theme.fontBody; opacity: 0.8
                                 }
                                 HoverHandler { id: artHover; cursorShape: Qt.PointingHandCursor }
                                 TapHandler {
@@ -487,7 +487,7 @@ Item {
                                                         height: 2; color: versionCell.selected ? "#66ffffff" : "#33ffffff" }
                                             Text { id: versionText; anchors.centerIn: parent; text: modelData.versionId
                                                    color: versionCell.selected ? "white" : "#e8dcc8"
-                                                   font.pixelSize: 12; font.bold: true
+                                                   font.pixelSize: Theme.fontBody; font.bold: true
                                                    style: Text.Raised; styleColor: "#40000000" }
                                         }
                                         HoverHandler { id: versionHover; cursorShape: versionCell.supported ? Qt.PointingHandCursor : Qt.ArrowCursor }
@@ -508,7 +508,7 @@ Item {
                 Text {
                     visible: catalogBridge.loaderVersions.length === 0
                     text: catalogBridge.busy ? "Đang lấy danh sách bản loader..." : "Không có bản loader cho phiên bản này."
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ListView {
                     anchors.fill: parent
@@ -516,18 +516,18 @@ Item {
                     model: catalogBridge.loaderVersions
                     delegate: Rectangle {
                         readonly property bool selected: modelData.loaderVersion === dialog.loaderVersion
-                        width: ListView.view.width; height: 38; radius: 7
+                        width: ListView.view.width; height: 38; radius: 0
                         color: selected ? Theme.accentSoft : Theme.surfaceHigh
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
                             anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                            text: modelData.loaderVersion; color: Theme.text; font.pixelSize: 12; font.family: "monospace"
+                            text: modelData.loaderVersion; color: Theme.text; font.pixelSize: Theme.fontBody; font.family: "monospace"
                         }
                         Rectangle {
                             anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                             visible: modelData.stable
-                            width: stableText.width + 14; height: 18; radius: 4; color: Theme.accentDeep
-                            Text { id: stableText; anchors.centerIn: parent; text: "ổn định"; color: "white"; font.pixelSize: 9 }
+                            width: stableText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
+                            Text { id: stableText; anchors.centerIn: parent; text: "ổn định"; color: "white"; font.pixelSize: Theme.fontLabel }
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: dialog.loaderVersion = modelData.loaderVersion }

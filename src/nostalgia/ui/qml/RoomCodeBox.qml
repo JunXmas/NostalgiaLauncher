@@ -34,7 +34,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: cell.character.length > 0 ? cell.character : "·"
                     color: cell.character.length > 0 ? Theme.text : Theme.textMuted
-                    font.pixelSize: 20; font.bold: true; font.family: "monospace"
+                    font.pixelSize: Theme.fontTitle; font.bold: true; font.family: "monospace"
                     transform: Rotation { id: tilt; origin.x: glyph.width / 2; origin.y: glyph.height / 2; axis { x: 1; y: 0; z: 0 } }
                 }
                 SequentialAnimation {

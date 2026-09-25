@@ -33,7 +33,7 @@ Rectangle {
         spacing: 12
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: "⬆"; color: Theme.accent; font.pixelSize: 15; font.bold: true
+            text: "⬆"; color: Theme.accent; font.pixelSize: Theme.fontHeading; font.bold: true
         }
         Text {
             objectName: "updateBannerText"
@@ -44,7 +44,7 @@ Rectangle {
                   : updateBridge.state === "ready"
                   ? "Đang cài bản " + updateBridge.latestVersion + ", launcher sắp mở lại…"
                   : "Có bản mới " + updateBridge.latestVersion
-            color: Theme.text; font.pixelSize: 13; font.bold: true
+            color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true
         }
     }
 
@@ -62,7 +62,7 @@ Rectangle {
         Text {
             objectName: "updateBannerDismiss"
             anchors.verticalCenter: parent.verticalCenter
-            text: "✕"; color: Theme.textMuted; font.pixelSize: 14
+            text: "✕"; color: Theme.textMuted; font.pixelSize: Theme.fontHeading
             MouseArea {
                 anchors { fill: parent; margins: -8 }
                 cursorShape: Qt.PointingHandCursor
