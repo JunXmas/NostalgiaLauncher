@@ -17,13 +17,15 @@ Rectangle {
     property var entries: _buildEntries()
     function _buildEntries() {
         return [
-            { label: Tr.text("home"),        glyph: "⌂" },
-            { label: Tr.text("instances"),   glyph: "⛏" },
-            { label: Tr.text("library"),     glyph: "⚙" },
-            { label: Tr.text("accounts"),    glyph: "☺" },
-            { label: Tr.text("multiplayer"), glyph: "⛶" },
-            { label: Tr.text("log"),         glyph: "≡" },
-            { label: Tr.text("settings"),    glyph: "☸" }
+            // `block` là icon chính (dải sprite khối xoay); `glyph` là dự phòng lúc dải
+            // chưa sinh xong hoặc sinh hỏng.
+            { label: Tr.text("home"),        glyph: "⌂", block: "grass" },
+            { label: Tr.text("instances"),   glyph: "⛏", block: "crafting" },
+            { label: Tr.text("library"),     glyph: "⚙", block: "bookshelf" },
+            { label: Tr.text("accounts"),    glyph: "☺", block: "diamond" },
+            { label: Tr.text("multiplayer"), glyph: "⛶", block: "command" },
+            { label: Tr.text("log"),         glyph: "≡", block: "chest" },
+            { label: Tr.text("settings"),    glyph: "☸", block: "redstone" }
         ];
     }
 
@@ -63,6 +65,7 @@ Rectangle {
             NavItem {
                 label: modelData.label
                 glyph: modelData.glyph
+                block: modelData.block
                 selected: index === root.currentIndex
                 onClicked: { if (index !== root.currentIndex) notifier.playUi("nav"); root.currentIndex = index; }
             }

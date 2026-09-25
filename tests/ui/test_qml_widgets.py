@@ -19,7 +19,7 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import Q_ARG, QMetaObject, QObject, Qt, QUrl
+from PySide6.QtCore import Q_ARG, QEventLoop, QMetaObject, QObject, Qt, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 
@@ -155,3 +155,108 @@ def test_a_zero_width_range_does_not_divide_by_zero() -> None:
     assert slider.property("fraction") == 0
     call(slider, "moveTo", 120.0)
     assert slider.property("value") == pytest.approx(4.0)
+
+
+def run_animation(milliseconds: int) -> None:
+    """Chạy vòng lặp sự kiện thật `milliseconds` ms.
+
+    Hoạt ảnh chỉ tồn tại giữa hai khung hình; `processEvents()` một lần không thấy gì.
+    Đoạn QML tự ghi lại đỉnh/đáy trong lúc chạy — không phải đoán đúng thời điểm chụp.
+    """
+    loop = QEventLoop()
+    QTimer.singleShot(milliseconds, loop.quit)
+    loop.exec()
+
+
+def test_the_check_tick_springs_past_full_size_before_settling() -> None:
+    """Dấu tick phải NHẢY RA: phóng quá cỡ rồi co về 1.
+
+    Chỉ kiểm "cuối cùng bằng 1" thì một phép gán thẳng `scale: 1` cũng xanh, mà như thế là
+    tick hiện đột ngột — đúng thứ cần tránh. Nên gác ở chỗ đỉnh vượt 1.
+    """
+    scene = build(
+        "import QtQuick\n"
+        "Item { property real peak: 0\n"
+        '  CheckRow { id: row; objectName: "probe"; label: "x"; checked: false }\n'
+        '  Binding { target: parent; property: "ignored"; value: 0 }\n'
+        "  Timer { interval: 8; repeat: true; running: true\n"
+        "    onTriggered: { if (row.tickScale > parent.peak) parent.peak = row.tickScale } } }"
+    )
+    row = find(scene, "probe")
+    tick = find(row, "checkTick")
+    assert tick.property("scale") == 0, "chưa tick thì dấu tick không được hiện"
+
+    row.setProperty("checked", True)
+    run_animation(400)
+    peak = float(scene.property("peak"))
+
+    assert peak > 1.08, f"dấu tick KHÔNG nảy ra (đỉnh chỉ {peak:.3f}, chờ vượt 1)"
+    assert tick.property("scale") == pytest.approx(1.0, abs=0.01), "nảy xong phải về đúng cỡ"
+
+
+def test_unticking_shrinks_away_without_bouncing() -> None:
+    """Nảy lúc BIẾN MẤT trông như lỗi vẽ. Chiều tắt phải co thẳng.
+
+    Gác ở cỡ ÂM chứ không ở cỡ vượt 1: một `OutBack` đặt nhầm cho chiều tắt sẽ vọt
+    xuống **dưới** 0 (dấu tick lộn ngược một nhịp) chứ không vọt lên trên 1.
+    """
+    scene = build(
+        "import QtQuick\n"
+        "Item { property real dip: 1\n"
+        '  CheckRow { id: row; objectName: "probe"; label: "x"; checked: true }\n'
+        "  Timer { interval: 8; repeat: true; running: true\n"
+        "    onTriggered: { if (row.tickScale < parent.dip) parent.dip = row.tickScale } } }"
+    )
+    row = find(scene, "probe")
+    run_animation(250)          # để nó lên tới 1 trước
+    scene.setProperty("dip", 1.0)
+    row.setProperty("checked", False)
+    run_animation(300)
+    dip = float(scene.property("dip"))
+
+    assert dip >= -0.005, f"dấu tick NẢY NGƯỢC lúc biến mất (xuống tới {dip:.3f})"
+    assert find(row, "checkTick").property("scale") == pytest.approx(0.0, abs=0.01)
+
+
+def test_the_dropdown_tray_overshoots_then_settles_into_place() -> None:
+    """Khay phải trượt QUÁ đà rồi khựng về đúng bố cục.
+
+    Chỉ kiểm chiều cao cuối cùng thì một `NumberAnimation` phẳng lì cũng xanh — mà đó
+    chính là cái trượt đều đều cần thay. Nên gác ở chỗ vượt chiều cao đích.
+    """
+    scene = build(
+        "import QtQuick\n"
+        "Item { property real peak: 0\n"
+        '  Dropdown { id: drop; objectName: "probe"; model: ["a", "b", "c"] }\n'
+        "  Timer { interval: 8; repeat: true; running: true\n"
+        "    onTriggered: { if (drop.trayHeight > parent.peak) parent.peak = drop.trayHeight } } }"
+    )
+    drop = find(scene, "probe")
+    settled = 3 * 32 + 8
+
+    drop.setProperty("open", True)
+    run_animation(500)
+    peak = float(scene.property("peak"))
+
+    assert peak > settled + 4, f"khay KHÔNG vọt quá đà (đỉnh {peak}, đích {settled})"
+    assert drop.property("trayHeight") == pytest.approx(settled), "vọt xong phải về đúng bố cục"
+
+
+def test_closing_the_dropdown_does_not_bounce_below_zero() -> None:
+    """Chiều đóng vọt xuống dưới 0 bị Qt kẹp lại, thành một nhịp khay đứng hình."""
+    scene = build(
+        "import QtQuick\n"
+        "Item { property real dip: 9999\n"
+        '  Dropdown { id: drop; objectName: "probe"; model: ["a", "b", "c"]; open: true }\n'
+        "  Timer { interval: 8; repeat: true; running: true\n"
+        "    onTriggered: { if (drop.trayHeight < parent.dip) parent.dip = drop.trayHeight } } }"
+    )
+    drop = find(scene, "probe")
+    run_animation(500)
+    scene.setProperty("dip", 9999.0)
+
+    drop.setProperty("open", False)
+    run_animation(400)
+
+    assert float(scene.property("dip")) >= -0.01, "khay nảy ngược xuống dưới 0 khi đóng"
+    assert drop.property("trayHeight") == pytest.approx(0.0, abs=0.01)

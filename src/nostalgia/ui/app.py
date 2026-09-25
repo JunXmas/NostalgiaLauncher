@@ -13,13 +13,14 @@ from pathlib import Path
 from typing import cast
 
 from PySide6.QtCore import QObject, QSize, QUrl
-from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtGui import QGuiApplication, QIcon, QSurfaceFormat
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
+from nostalgia.ui.block_bridge import BlockIconBridge
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
@@ -37,6 +38,31 @@ os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
 QML_DIR = Path(__file__).resolve().parent / "qml"
 
 logger = logging.getLogger(__name__)
+
+
+MULTISAMPLE_COUNT = 4
+
+
+def enable_multisampling() -> None:
+    """Bật khử răng cưa toàn cảnh (MSAA 4x).
+
+    Phải gọi **trước** khi dựng `QApplication`: định dạng mặt vẽ mặc định được chốt lúc
+    ngữ cảnh đồ hoạ ra đời, đặt sau thì không có tác dụng và cũng không báo lỗi.
+
+    **Đo được: không đổi gì trên máy này.** `bench/ui_edge_quality.py` cho ra CÙNG một con
+    số với samples=4 và samples=0, ở cả ba cảnh: giao diện tĩnh (2051), thanh bên có icon
+    khối (1555), và dấu tick đang xoay giữa chừng hoạt ảnh (105). Lý do: Qt đã tự khử răng
+    cưa góc bo của `Rectangle`, và vẽ chữ bằng distance field — MSAA không còn gì để làm.
+    Máy này cũng không có GL phần cứng (amdgpu init hỏng, rơi về llvmpipe), nên con số trên
+    chỉ nói về đường vẽ phần mềm.
+
+    Giữ lại vì nó vô hại và là mặc định đúng trên máy có GPU thật, nhưng ĐỪNG tin rằng nó
+    đang làm gì: độ nét thật của icon khối đến từ chỗ khác — `blocks.SUPERSAMPLE`, vẽ gấp
+    ba rồi thu nhỏ, và đó là thứ đo được.
+    """
+    surface_format = QSurfaceFormat.defaultFormat()
+    surface_format.setSamples(MULTISAMPLE_COUNT)
+    QSurfaceFormat.setDefaultFormat(surface_format)
 
 
 def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
@@ -57,6 +83,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
+    context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
     settings_bridge = SettingsBridge(launcher, parent=view)
     context.setContextProperty("settingsBridge", settings_bridge)
     notifier = build_notifier(launcher, bridge, settings_bridge, view)
@@ -166,6 +193,7 @@ def build_tray(
 
 def main(argv: list[str] | None = None) -> int:
     """Mở cửa sổ. Trả về mã thoát của vòng lặp sự kiện Qt."""
+    enable_multisampling()
     qt_application = QApplication(argv if argv is not None else sys.argv)
     qt_application.setApplicationName("Nostalgia Launcher")
     qt_application.setApplicationVersion(__version__)

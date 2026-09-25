@@ -19,7 +19,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from nostalgia.api import Launcher
-from nostalgia.ui.app import build_view
+from nostalgia.ui.app import build_view, enable_multisampling
 
 SETTLE_MILLISECONDS = 1500
 GIVE_UP_MILLISECONDS = 20_000
@@ -32,6 +32,9 @@ def main(argv: list[str]) -> int:
     data_dir = Path(argv[1])
     output = Path(argv[2])
 
+    # Trước QApplication, đúng thứ tự mà app thật dùng — nếu không, ảnh đo được sẽ
+    # không phải thứ người dùng nhìn thấy.
+    enable_multisampling()
     qt_application = QApplication(["ui-screenshot"])
     qt_application.setApplicationVersion("0.1.0")
     view, _bridge = build_view(Launcher.for_data_dir(data_dir, data_dir.parent / "config"))

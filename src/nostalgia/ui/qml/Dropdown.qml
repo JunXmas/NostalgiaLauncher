@@ -25,6 +25,9 @@ Item {
     // nằm trong cây thì thứ tự vẽ của cha (vd cột nút CHƠI) quyết định, và các hàng đè lên thẻ
     // hero từng bị thẻ hero hứng mất cú bấm. Toạ độ tính lại mỗi lần mở.
     property point origin: Qt.point(0, 0)
+    // Chiều cao khay lúc này, lộ ra để test lấy mẫu giữa chừng hoạt ảnh. Khay nằm ở
+    // contentItem của cửa sổ nên test không với tới nó qua cây con được.
+    readonly property real trayHeight: popup.height
     onOpenChanged: if (open) origin = root.mapToItem(null, 0, 0)
 
     height: 34
@@ -91,7 +94,18 @@ Item {
         color: Theme.surfaceHigh
         border.color: Theme.border
         border.width: 1
-        Behavior on height { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
+        /* Mở: bung QUÁ chiều cao đích một đoạn rồi khựng lại và co về đúng bố cục
+           (OutBack lo đoạn vọt). Khay có nền đặc nên đoạn vọt không lộ khoảng trống,
+           chỉ thấy nó "nảy ra".
+           Đóng: co thẳng (InCubic). OutBack chiều này sẽ vọt xuống DƯỚI 0 — Qt kẹp lại
+           thành một nhịp đứng hình trông như khay bị kẹt. */
+        Behavior on height {
+            NumberAnimation {
+                duration: root.open ? Theme.normal : Theme.quick
+                easing.type: root.open ? Easing.OutBack : Easing.InCubic
+                easing.overshoot: 1.9
+            }
+        }
         MouseArea { anchors.fill: parent }  // nuốt bấm vào khe/viền khay, không lọt xuống dưới
 
         ListView {
