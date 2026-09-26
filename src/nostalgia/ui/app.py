@@ -31,6 +31,7 @@ from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.update_bridge import UpdateBridge
+from nostalgia.ui.worker import wait_for_background
 
 # TranslationProvider.qml đọc từ điển i18n/*.json bằng XMLHttpRequest; Qt6 chặn mặc định.
 os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
@@ -261,8 +262,14 @@ def main(argv: list[str] | None = None) -> int:
         # Workflow release chạy gói đóng sẵn trên cả ba hệ với biến này: dựng xong cửa sổ
         # (QML nạp, cầu nối, tài nguyên) là đủ bằng chứng gói chạy — không vào vòng lặp.
         print("smoke ok")
+        wait_for_background()
         return 0
-    return qt_application.exec()
+    code = qt_application.exec()
+    # Luồng nền là daemon: Python tắt KHÔNG đợi chúng. Một luồng đang gọi Qt lúc interpreter
+    # tắt thì Qt gỡ mutex dưới chân nó — heap hỏng, abort, và người dùng thấy launcher sập
+    # lúc thoát dù đã làm xong việc. Đợi có giới hạn: quá hạn thì thà thoát cứng còn hơn treo.
+    wait_for_background()
+    return code
 
 
 if __name__ == "__main__":

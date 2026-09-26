@@ -8,11 +8,27 @@ from __future__ import annotations
 
 import contextlib
 import threading
+import time
 from collections.abc import Callable
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal
 
 from nostalgia.errors import NostalgiaError
+
+# Mọi luồng nền đang sống. Chúng là daemon nên Python tắt không đợi chúng — và một luồng
+# đang GỌI QT lúc interpreter tắt thì Qt gỡ mutex dưới chân nó: "mutex lock failure", heap
+# hỏng, abort. Người dùng thấy launcher "sập lúc thoát" dù đã làm xong việc.
+_live_threads: list[threading.Thread] = []
+_live_lock = threading.Lock()
+
+
+def wait_for_background(timeout: float = 5.0) -> None:
+    """Đợi luồng nền xong trước khi thoát. Gọi ở cuối `main()`."""
+    with _live_lock:
+        threads = list(_live_threads)
+    deadline = time.monotonic() + timeout
+    for thread in threads:
+        thread.join(max(0.0, deadline - time.monotonic()))
 
 
 class WorkerBridge(QObject):
@@ -68,8 +84,18 @@ class WorkerBridge(QObject):
                     self.failed.emit(message)
                 self._set_busy(False)
 
+        def tracked() -> None:
+            try:
+                guarded()
+            finally:
+                with _live_lock:
+                    _live_threads.remove(thread)
+
         self._set_busy(True)
-        threading.Thread(target=guarded, daemon=True).start()
+        thread = threading.Thread(target=tracked, daemon=True)
+        with _live_lock:
+            _live_threads.append(thread)
+        thread.start()
 
     def _set_busy(self, busy: bool) -> None:
         if self._busy != busy:
