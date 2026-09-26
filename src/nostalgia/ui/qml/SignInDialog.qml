@@ -35,11 +35,11 @@ Item {
         Column {
             anchors { fill: parent; margins: 26 }
             spacing: 14
-            Text { text: "Đăng nhập Microsoft"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+            Text { text: "Đăng nhập Microsoft"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
                 text: "Mở trang bên dưới, nhập mã này rồi đăng nhập bằng tài khoản Microsoft có Minecraft. Hộp này tự đóng khi xong."
-                color: Theme.textMuted; font.pixelSize: 12
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Rectangle {
                 width: parent.width; height: 64; radius: Theme.radiusSmall
@@ -49,11 +49,11 @@ Item {
                     anchors.centerIn: parent
                     text: dialog.userCode
                     readOnly: true; selectByMouse: true
-                    color: Theme.accent; font.pixelSize: 30; font.bold: true; font.letterSpacing: 6
+                    color: Theme.accent; font.pixelSize: Theme.fontHero; font.bold: true; font.letterSpacing: 6
                     font.family: "monospace"
                 }
             }
-            Text { text: dialog.verificationUrl; color: Theme.textMuted; font.pixelSize: 11 }
+            Text { text: dialog.verificationUrl; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
             Row {
                 spacing: 8
                 ActionButton {

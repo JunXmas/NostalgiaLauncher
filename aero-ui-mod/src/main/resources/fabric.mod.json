@@ -9,7 +9,7 @@
     "homepage": "https://github.com/JunXmas/NostalgiaLauncher",
     "sources": "https://github.com/JunXmas/NostalgiaLauncher"
   },
-  "license": "GPL-3.0",
+  "license": "AGPL-3.0",
   "icon": "assets/nos-client/icon.png",
   "environment": "client",
   "entrypoints": {

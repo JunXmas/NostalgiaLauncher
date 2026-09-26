@@ -38,7 +38,7 @@ Item {
             id: contentColumn
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
             spacing: 14
-            Text { text: "Thêm tài khoản"; color: Theme.text; font.pixelSize: 18; font.bold: true }
+            Text { text: "Thêm tài khoản"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
 
             // ----- chọn loại -----
             Column {
@@ -55,8 +55,8 @@ Item {
                         Column {
                             anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
                             spacing: 3
-                            Text { text: modelData.title; color: Theme.text; font.pixelSize: 13; font.bold: true }
-                            Text { text: modelData.text; color: Theme.textMuted; font.pixelSize: 11 }
+                            Text { text: modelData.title; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
+                            Text { text: modelData.text; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
                         }
                         MouseArea {
                             id: pickArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -72,22 +72,33 @@ Item {
             // ----- Ely.by -----
             Column {
                 visible: dialog.mode === "ely"; width: parent.width; spacing: 10
-                Text { text: "ELY.BY — EMAIL HOẶC TÊN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                Text { text: "ELY.BY — EMAIL HOẶC TÊN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: emailField; objectName: "elyEmailField"; width: parent.width; placeholder: "ban@example.com" }
-                Text { text: "MẬT KHẨU"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                Text { text: "MẬT KHẨU"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: passwordField; objectName: "elyPasswordField"; width: parent.width; placeholder: "••••••••"; echoMode: TextInput.Password; onAccepted: dialog.submitEly() }
-                Text { visible: dialog.needsTotp; text: "MÃ 2FA"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                Text { visible: dialog.needsTotp; text: "MÃ 2FA"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: totpField; visible: dialog.needsTotp; width: 160; placeholder: "123456"; onAccepted: dialog.submitEly() }
-                Text { visible: dialog.failure !== ""; width: parent.width; wrapMode: Text.WordWrap; text: dialog.failure; color: Theme.danger; font.pixelSize: 11 }
+                Text { visible: dialog.failure !== ""; width: parent.width; wrapMode: Text.WordWrap; text: dialog.failure; color: Theme.danger; font.pixelSize: Theme.fontBody }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "Chưa có tài khoản? Đăng ký miễn phí tại ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu."
-                    color: Theme.textMuted; font.pixelSize: 11
+                    text: "Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Row {
                     spacing: 8
                     ActionButton { objectName: "elySignInButton"; label: accountBridge.busy ? "Đang đăng nhập..." : "Đăng nhập"
                                    clickable: !accountBridge.busy && emailField.text.trim() !== "" && passwordField.text !== ""; onClicked: dialog.submitEly() }
+                    /* Đăng ký phải mở trình duyệt, không có cách nào khác: ely.by đòi xác nhận
+                       email. Dựng form đăng ký trong launcher chỉ là đẩy họ ra trình duyệt
+                       chậm hơn một bước, và là một chỗ nữa để mật khẩu đi qua tay ta. */
+                    ActionButton {
+                        objectName: "elyRegisterButton"
+                        primary: false; label: "Đăng ký ↗"
+                        /* account.ely.by, KHÔNG phải ely.by: ely.by là catalog skin, mọi
+                           thứ tài khoản nằm ở subdomain kia. `ely.by/register` ra 404. */
+                        readonly property url target: "https://account.ely.by/register"
+                        onClicked: Qt.openUrlExternally(target)
+                    }
                     ActionButton { primary: false; label: "Quay lại"; onClicked: dialog.mode = "pick" }
                 }
             }
@@ -95,7 +106,7 @@ Item {
             // ----- ngoại tuyến -----
             Column {
                 visible: dialog.mode === "offline"; width: parent.width; spacing: 10
-                Text { text: "TÊN NGOẠI TUYẾN"; color: Theme.textMuted; font.pixelSize: 10; font.letterSpacing: 1.2 }
+                Text { text: "TÊN NGOẠI TUYẾN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: nameField; width: parent.width; placeholder: "vd. Steve"; onAccepted: dialog.submitOffline() }
                 Row {
                     spacing: 8

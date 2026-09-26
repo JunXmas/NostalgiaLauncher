@@ -113,3 +113,34 @@ def test_tampered_injector_is_refused(
     with pytest.raises(IntegrityError, match="sha256"):
         launcher._authlib_arguments(account)
     assert not list((launcher.paths.data_dir / "authlib-injector").glob("*.jar"))
+
+
+def test_skin_support_is_fetched_before_play_and_reported(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Jar tải ngay lúc thêm tài khoản, không đợi tới lúc bấm CHƠI — và trạng thái đọc được
+    từ đĩa để trang TÀI KHOẢN nói cho người dùng biết skin đã hiện được trong game chưa."""
+    launcher = make_ely_launcher(server, server_state, tmp_path, certificate_pair)
+    assert launcher.skin_support_ready() is False
+
+    launcher.prefetch_skin_support()
+
+    assert launcher.skin_support_ready() is True
+
+
+def test_a_dead_network_costs_the_skin_not_the_session(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Chưa từng tải được jar mà mạng chết: trả `()` để game vẫn chạy (mất skin), chứ không
+    ném lỗi lên và giết cả buổi chơi. Khác hẳn `IntegrityError` ở test trên — cái đó phải nổi."""
+    launcher = make_ely_launcher(server, server_state, tmp_path, certificate_pair)
+    account = launcher.add_ely_account("jun@example.com", "x")
+    server_state.routes["/authlib/latest.json"].status = 503
+
+    assert launcher._authlib_arguments(account) == ()

@@ -35,6 +35,7 @@ class AccountBridge(WorkerBridge):
     skinUploaded = Signal(str)
     skinUploadFailed = Signal(str)
     libraryChanged = Signal()
+    skinSupportChanged = Signal()
     _skinsRefreshed = Signal()
 
     def __init__(
@@ -195,6 +196,15 @@ class AccountBridge(WorkerBridge):
 
         self.run_in_background(work, "Upload skin")
 
+    @Property(bool, notify=skinSupportChanged)
+    def skinSupportReady(self) -> bool:
+        """Skin Ely.by đã hiện được trong game chưa (jar authlib-injector có trên đĩa chưa).
+
+        Chỉ để NÓI cho người dùng biết, không để chặn gì: thiếu jar thì game vẫn chạy, chỉ mất
+        skin. Đọc đĩa chứ không chạm mạng nên gọi bao nhiêu lần cũng được.
+        """
+        return self._launcher.skin_support_ready()
+
     # ----- Ely.by -----
 
     @Slot(str, str, str)
@@ -212,8 +222,26 @@ class AccountBridge(WorkerBridge):
             self._main_bridge.setActiveAccount(account.player_name)
             self._main_bridge.announce_accounts_changed()
             self.elySignedIn.emit(account.player_name)
+            self._prefetch_skin_support()
 
         self.run_in_background(work, "Đăng nhập Ely.by")
+
+    def _prefetch_skin_support(self) -> None:
+        """Tải authlib-injector NGAY ở đây, không đợi tới lúc bấm CHƠI.
+
+        Cùng luồng nền với việc đăng nhập nên không chặn giao diện, và đây là lúc đúng: người
+        dùng vừa nhập mật khẩu xong nên chắc chắn đang có mạng và đang chờ sẵn. Để tới lúc bấm
+        CHƠI thì một lỗi mạng ở đó đọc ra "launcher hỏng" — họ không nối được việc chơi game
+        với việc tải một file mà họ chưa từng nghe tên.
+
+        Hỏng thì chỉ `warning`: skin không hiện là mất một tiện nghi, không phải mất buổi chơi,
+        và `_authlib_arguments` lúc chạy game sẽ thử lại.
+        """
+        try:
+            self._launcher.prefetch_skin_support()
+        except NostalgiaError:
+            logger.warning("chưa tải sẵn được authlib-injector cho skin Ely.by", exc_info=True)
+        self.skinSupportChanged.emit()
 
 
 def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:

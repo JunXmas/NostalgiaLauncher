@@ -1,6 +1,10 @@
 import QtQuick
 
-/* Nút chơi lớn, kèm hộp chọn bản chơi dính liền bên dưới — đúng bố cục bản mẫu. */
+/* Nút chơi lớn, kèm hộp chọn bản chơi dính liền bên dưới — đúng bố cục bản mẫu.
+
+   Khi còn thiếu thứ gì để chơi được, khối này KHÔNG chỉ làm mờ nút: nó nói thiếu gì và đưa
+   luôn nút đi làm việc đó. Nút xám câm là lý do người dùng bỏ đi — họ không đoán ra rằng
+   phải thêm tài khoản, vì chỗ thêm tài khoản nằm ở trang khác. */
 Column {
     id: root
     property var instances: []
@@ -8,10 +12,13 @@ Column {
     property bool playable: true
     // Game đang chạy: cùng nút đó thành DỪNG (đỏ), bấm là kill tiến trình game.
     property bool running: false
+    // "account" | "instance" | "" — thứ còn thiếu, do trang chủ tính và truyền xuống.
+    property string missingKind: ""
     signal clicked()
     signal stopRequested()
     signal picked(int index)
     signal createRequested()
+    signal addAccountRequested()
 
     // Thứ tự hiện trong khay: bản vừa chơi gần nhất lên đầu, còn lại giữ nguyên thứ tự chữ
     // cái của `instances`. Mảng này là chỉ số TRONG `instances`, nên `picked()` vẫn phát ra
@@ -43,10 +50,11 @@ Column {
         onClicked: root.running ? root.stopRequested() : root.clicked()
     }
 
-    // Có bản chơi: hộp chọn. Chưa có: một dòng dẫn sang trang tạo.
+    // Có bản chơi VÀ có tài khoản: hộp chọn bản. Còn thiếu thì thay bằng khối hành động
+    // bên dưới — hộp chọn lúc đó chỉ là thứ gây nhiễu, vì chọn xong vẫn không chơi được.
     Dropdown {
         objectName: "homeInstancePicker"
-        visible: root.instances.length > 0
+        visible: root.instances.length > 0 && root.missingKind !== "account"
         dropUp: true
         width: parent.width
         height: 40
@@ -61,19 +69,37 @@ Column {
         currentIndex: root.order.indexOf(root.chosenIndex)
         onActivated: function (position) { root.picked(root.order[position]); }
     }
+    /* Khối "còn thiếu": nói thiếu gì, và nút bấm đi làm đúng việc đó.
+
+       Một việc một lúc — thiếu cả tài khoản lẫn bản chơi thì hỏi tài khoản trước, vì tạo bản
+       chơi xong mà chưa đăng nhập thì vẫn không bấm CHƠI được. */
     Rectangle {
-        visible: root.instances.length === 0
+        objectName: "missingAction"
+        visible: root.missingKind !== ""
         width: parent.width
-        height: 40
+        height: 66
         radius: Theme.radiusSmall
-        color: createHover.hovered ? Theme.surfaceHigh : "#d9111713"
-        border.color: Theme.border
-        Text {
-            anchors.centerIn: parent
-            text: "Chưa có bản chơi — bấm để tạo"
-            color: Theme.textMuted; font.pixelSize: 12
+        color: "#d9111713"
+        border.color: Theme.accent
+        border.width: 2
+
+        Column {
+            anchors { left: parent.left; right: parent.right; margins: 10; verticalCenter: parent.verticalCenter }
+            spacing: 7
+            Text {
+                width: parent.width
+                text: root.missingKind === "account" ? "Cần một tài khoản để chơi"
+                                                     : "Chưa có bản chơi nào"
+                color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true
+            }
+            ActionButton {
+                objectName: "missingActionButton"
+                width: parent.width
+                height: 30
+                label: root.missingKind === "account" ? "Thêm tài khoản" : "Tạo bản chơi"
+                onClicked: root.missingKind === "account" ? root.addAccountRequested()
+                                                          : root.createRequested()
+            }
         }
-        HoverHandler { id: createHover; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: root.createRequested() }
     }
 }

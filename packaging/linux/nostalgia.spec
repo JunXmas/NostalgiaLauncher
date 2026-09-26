@@ -10,7 +10,7 @@ Name:           nostalgia
 Version:        @VERSION@
 Release:        1
 Summary:        Nostalgia Launcher - Minecraft launcher
-License:        GPL-3.0-only
+License:        AGPL-3.0-only
 URL:            https://github.com/JunXmas/NostalgiaLauncher
 AutoReqProv:    no
 Requires:       xcb-util-cursor, libxkbcommon, mesa-libEGL, mesa-libGL, fontconfig, dbus-libs, glib2

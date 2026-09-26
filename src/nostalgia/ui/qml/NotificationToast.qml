@@ -50,14 +50,14 @@ Item {
 
         Rectangle {
             id: glyphBox
-            width: 36; height: 36; radius: 8
+            width: 36; height: 36; radius: 0
             anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
             color: card.eventKind === "crashed" ? "#3a1c1e" : Theme.accentSoft
             Text {
                 anchors.centerIn: parent
                 text: card.eventKind === "started" ? "▶" : card.eventKind === "crashed" ? "✕"
                       : card.eventKind === "installed" ? "✓" : card.eventKind === "update" ? "⬆" : "■"
-                color: card.accentColor; font.pixelSize: 15; font.bold: true
+                color: card.accentColor; font.pixelSize: Theme.fontHeading; font.bold: true
             }
         }
         Column {
@@ -67,12 +67,12 @@ Item {
                 objectName: "notificationTitle"
                 width: parent.width
                 text: card.shown ? root.current.title : ""
-                color: Theme.text; font.pixelSize: 12; font.bold: true; elide: Text.ElideRight
+                color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true; elide: Text.ElideRight
             }
             Text {
                 width: parent.width
                 text: card.shown ? root.current.detail : ""
-                color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
             }
         }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.showNext() }

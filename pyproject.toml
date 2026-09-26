@@ -4,13 +4,14 @@ version = "1.0.15"
 description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"
-# GPL-3.0: ai fork và phân phối cũng phải mở mã theo cùng giấy phép — dự án không thể bị gói
-# vào sản phẩm thương mại đóng.
-license = { text = "GPL-3.0-only" }
+# AGPL-3.0: như GPL-3.0, cộng thêm điều 13 — ai chạy bản đã sửa cho người khác dùng QUA MẠNG
+# cũng phải mở mã, dù không phát hành file nào. Bịt lỗ hổng dịch vụ, và là hàng rào mạnh nhất
+# tồn tại với các hãng lớn: nhiều hãng cấm nhân viên đụng vào mã AGPL.
+license = { text = "AGPL-3.0-only" }
 authors = [{ name = "JunXmas" }]
 keywords = ["minecraft", "launcher", "modrinth", "curseforge", "fabric", "forge", "pyside6"]
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Games/Entertainment",

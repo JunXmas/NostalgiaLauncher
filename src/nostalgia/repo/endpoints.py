@@ -51,7 +51,8 @@ FORGE_PROMOTIONS_URL = (
 )
 NEOFORGE_MAVEN_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
 
-# Relay chơi chung (Cloudflare Worker + Durable Object). Mã ở cloudflare/multiplayer-relay/.
+# Relay chơi chung (Cloudflare Worker + Durable Object). Mã ở kho riêng — xem cloudflare/README.md.
+# Đổi được sang Worker của bạn: địa chỉ chỉ nằm ở đúng đây.
 MULTIPLAYER_RELAY_URL = "wss://nostalgia-multiplayer-relay.junbob.workers.dev"
 
 # Hồ sơ công khai (skin/cape) theo UUID, không cần đăng nhập.

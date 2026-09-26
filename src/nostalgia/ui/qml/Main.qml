@@ -9,10 +9,17 @@ Item {
     id: window
     implicitWidth: 1360
     implicitHeight: 860
-    // Loại nội dung mà Thư viện nên mở sẵn (thẻ TÀI NGUYÊN trên hero đặt "resourcepack").
-    property string libraryKind: ""
+    /* Nền pha một chút màu của tab đang mở, và chuyển màu chứ không nhảy.
 
-    Rectangle { anchors.fill: parent; color: Theme.background }
+       Chỉ 6% — đủ để cả khung hình nghiêng về sắc của tab, chưa đủ để thành một nền có màu
+       (nền màu mạnh làm chữ và thẻ mất tương phản). `Behavior` ở đây chứ không ở `Theme.qml`:
+       Theme là singleton readonly, ràng buộc trong đó không gắn Behavior được — và đằng nào
+       cũng chỉ có một chỗ vẽ nền. */
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.mix(Theme.background, Theme.accent, 0.06)
+        Behavior on color { ColorAnimation { duration: Theme.slow; easing.type: Easing.OutCubic } }
+    }
 
     Sidebar {
         id: sidebar
@@ -20,10 +27,14 @@ Item {
         width: window.width < 1100 ? 190 : 232
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.activePlayerName
-        accountKind: {
-            var chosen = bridge.accounts.find(function (account) { return account.playerName === bridge.activePlayerName; });
-            return chosen ? chosen.accountKind : "";
-        }
+        // Lấy từ `accountBridge` chứ không `bridge`: hàng ở đây có kèm `skinFile`, và nó tự
+        // dựng lại khi skin tải xong (`skinsChanged`) — tra hai nơi thì đầu và loại tài khoản
+        // sẽ lệch nhịp nhau.
+        readonly property var activeAccount: accountBridge.accounts.find(function (account) {
+            return account.playerName === bridge.activePlayerName;
+        }) || null
+        accountKind: activeAccount ? activeAccount.accountKind : ""
+        skinFile: activeAccount ? activeAccount.skinFile : ""
     }
 
     // Đổi trang bằng mờ dần chứ không nhảy phắt: mắt bám được chỗ mình vừa bấm.
@@ -45,12 +56,11 @@ Item {
             opacity: 0
             onLoaded: fadeIn.restart()
 
-            // Thẻ trên hero bấm được: chúng đổi trang y như bấm ở thanh bên.
+            // Khối "còn thiếu" ở trang chủ đổi trang y như bấm ở thanh bên.
             Connections {
                 target: pageLoader.item
                 ignoreUnknownSignals: true
                 function onNavigate(pageIndex) { sidebar.currentIndex = pageIndex; }
-                function onNavigateToLibrary(contentKind) { window.libraryKind = contentKind; sidebar.currentIndex = 2; }
             }
 
             NumberAnimation on opacity {
@@ -95,7 +105,7 @@ Item {
             anchors { fill: parent; margins: 14 }
             text: banner.message
             color: "white"
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontBody
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }

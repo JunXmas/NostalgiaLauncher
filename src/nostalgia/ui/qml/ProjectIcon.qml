@@ -6,7 +6,7 @@ Rectangle {
     property string source: ""
     property string fallbackText: "?"
 
-    width: 44; height: 44; radius: 10
+    width: 44; height: 44; radius: 0
     color: Theme.accentSoft
     clip: true
 
@@ -22,6 +22,6 @@ Rectangle {
         anchors.centerIn: parent
         visible: picture.status !== Image.Ready
         text: root.fallbackText.charAt(0).toUpperCase()
-        color: Theme.accent; font.pixelSize: 18; font.bold: true
+        color: Theme.accent; font.pixelSize: Theme.fontTitle; font.bold: true
     }
 }

@@ -21,14 +21,14 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 58
-        Text {
+        PageTitle {
             anchors { left: parent.left; top: parent.top }
-            text: "Chơi chung"; color: Theme.text; font.pixelSize: 22; font.bold: true
+            caption: "Chơi chung"
         }
         Text {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
             text: "Không cần thuê server, không cần mod, khác mạng vẫn chơi được."
-            color: Theme.textMuted; font.pixelSize: 12
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
 
@@ -37,10 +37,10 @@ Item {
         anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 4 }
         height: page.failure ? 34 : 0
         visible: page.failure !== ""
-        radius: 6; color: "#33ff5555"; border.color: "#80ff5555"
+        radius: 0; color: "#33ff5555"; border.color: "#80ff5555"
         Text {
             anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-            text: page.failure; color: Theme.text; font.pixelSize: 12
+            text: page.failure; color: Theme.text; font.pixelSize: Theme.fontBody
         }
     }
 
@@ -63,7 +63,7 @@ Item {
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
                     text: "1. Chạy game, vào world.\n2. Bấm Esc → Open to LAN → Start LAN World.\n3. Bấm Mở phòng ở đây rồi đọc mã cho bạn."
-                    color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.35
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.35
                 }
                 ActionButton {
                     objectName: "hostButton"
@@ -79,15 +79,15 @@ Item {
                 }
                 Column {
                     visible: hostPanel.hosting; spacing: 10; width: parent.width
-                    Text { text: "Mã phòng — gửi cho bạn:"; color: Theme.textMuted; font.pixelSize: 12 }
+                    Text { text: "Mã phòng — gửi cho bạn:"; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
                     Rectangle {
-                        width: parent.width; height: 56; radius: 8
+                        width: parent.width; height: 56; radius: 0
                         color: "#1a2b1f"; border.color: Theme.accent
                         Text {
                             objectName: "roomCodeText"
                             anchors.centerIn: parent
                             text: multiplayerBridge.roomCodeSpaced
-                            color: Theme.text; font.pixelSize: 22; font.bold: true; font.letterSpacing: 2
+                            color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 2
                             font.family: "monospace"
                         }
                     }
@@ -110,7 +110,7 @@ Item {
                     Text {
                         width: parent.width; wrapMode: Text.WordWrap
                         text: "Mã chỉ sống khi phòng mở. Khoá phòng khi đủ người: ai có mã cũng không vào thêm được."
-                        color: Theme.textMuted; font.pixelSize: 11
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
             }
@@ -129,7 +129,7 @@ Item {
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
                     text: "1. Nhập mã bạn gửi rồi bấm Vào phòng.\n2. Chạy game → Multiplayer: world của bạn hiện trong danh sách LAN.\n3. Bấm vào để chơi. Xong thì bấm Rời phòng."
-                    color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.35
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.35
                 }
                 Column {
                     visible: !joinPanel.joined; spacing: 10
@@ -158,7 +158,7 @@ Item {
                     }
                     Text {
                         text: codeField.complete ? "Đủ 18 ký tự — bấm Vào phòng hoặc Enter." : "Gõ hoặc dán mã bạn gửi: 3 nhóm, mỗi nhóm 6 ký tự."
-                        color: Theme.textMuted; font.pixelSize: 11
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
                 Column {
@@ -169,7 +169,7 @@ Item {
                     }
                     Text {
                         text: "Cổng cục bộ 127.0.0.1:" + multiplayerBridge.localPort + " — chỉ máy này thấy."
-                        color: Theme.textMuted; font.pixelSize: 11
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                     ActionButton { primary: false; label: "Rời phòng"; onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
                 }

@@ -70,3 +70,27 @@ def test_two_factor_is_a_signal_not_a_failure(
     account_bridge.signInEly("jun@example.com", "x", "")
     wait_until(lambda: bool(events) and not account_bridge.busy)
     assert events == ["2fa"] and launcher.list_accounts() == ()
+
+
+def test_ely_sign_in_fetches_skin_support_right_away(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Tải authlib-injector ngay sau khi đăng nhập, không đợi tới lúc bấm CHƠI: lúc này người
+    dùng vừa nhập mật khẩu nên chắc chắn có mạng và đang chờ sẵn, còn một lỗi mạng ở nút CHƠI
+    thì đọc ra "launcher hỏng"."""
+    launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher = replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
+    main_bridge = LauncherBridge(launcher)
+    account_bridge = AccountBridge(launcher, main_bridge)
+    assert account_bridge.skinSupportReady is False
+
+    signed: list[str] = []
+    account_bridge.elySignedIn.connect(signed.append)
+    account_bridge.signInEly("jun@example.com", "x", "")
+    wait_until(lambda: bool(signed) and not account_bridge.busy)
+
+    wait_until(lambda: account_bridge.skinSupportReady)
+    assert account_bridge.skinSupportReady is True

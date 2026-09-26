@@ -14,8 +14,8 @@ from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickItem
 from PySide6.QtTest import QTest
+from qml_tree import find_item
 from test_bridges import wait_until
-from test_home_layout import find_item
 from test_qml import make_launcher
 
 from nbt_fixture import write_world

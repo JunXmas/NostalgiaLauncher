@@ -62,11 +62,11 @@ Item {
             id: contentColumn
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
             spacing: 14
-            Text { text: dialog.title; color: Theme.text; font.pixelSize: 17; font.bold: true }
+            Text { text: dialog.title; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 objectName: "confirmMessage"
                 width: parent.width; wrapMode: Text.WordWrap
-                text: dialog.message; color: Theme.textMuted; font.pixelSize: 12; lineHeight: 1.3
+                text: dialog.message; color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Row {
                 anchors.right: parent.right

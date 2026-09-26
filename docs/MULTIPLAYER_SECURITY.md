@@ -1,9 +1,12 @@
 # CHƠI CHUNG — mô hình đe doạ và luật thiết kế
 
 Viết TRƯỚC khi code, từ hai nguồn: rà mã multiplayer của launcher cũ (nhánh
-`harden/multiplayer-auth`, relay `cloudflare/multiplayer-relay/`) và tra cứu lớp tấn công đã
-biết với "LAN qua relay" (e4mc, playit.gg) cùng hạn mức Cloudflare. Mỗi luật ở §3 phải có test
-gác; §4 liệt kê tên test.
+`harden/multiplayer-auth`, relay) và tra cứu lớp tấn công đã biết với "LAN qua relay"
+(e4mc, playit.gg) cùng hạn mức Cloudflare. Mỗi luật ở §3 phải có test gác; §4 liệt kê tên test.
+
+Mã relay nằm ở kho riêng (xem [`cloudflare/README.md`](../cloudflare/README.md)). Điều đó
+không làm yếu file này: luật L8 nói thẳng **relay không phải nơi tin cậy**, nên mọi bảo đảm
+quan trọng đều nằm ở phía client và kiểm được bằng test trong chính kho này.
 
 ## 1. Kiến trúc (giữ từ bản cũ)
 

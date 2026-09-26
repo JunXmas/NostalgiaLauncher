@@ -25,6 +25,9 @@ Item {
     // nằm trong cây thì thứ tự vẽ của cha (vd cột nút CHƠI) quyết định, và các hàng đè lên thẻ
     // hero từng bị thẻ hero hứng mất cú bấm. Toạ độ tính lại mỗi lần mở.
     property point origin: Qt.point(0, 0)
+    // Chiều cao khay lúc này, lộ ra để test lấy mẫu giữa chừng hoạt ảnh. Khay nằm ở
+    // contentItem của cửa sổ nên test không với tới nó qua cây con được.
+    readonly property real trayHeight: popup.height
     onOpenChanged: if (open) origin = root.mapToItem(null, 0, 0)
 
     height: 34
@@ -42,7 +45,7 @@ Item {
             anchors { left: parent.left; leftMargin: 11; right: badgePill.left; rightMargin: 8; verticalCenter: parent.verticalCenter }
             text: root.currentText || root.placeholder
             color: root.currentText ? Theme.text : Theme.textMuted
-            font.pixelSize: 12; elide: Text.ElideRight
+            font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Rectangle {
             id: badgePill
@@ -51,20 +54,20 @@ Item {
             anchors { right: arrow.left; rightMargin: visible ? 8 : 0; verticalCenter: parent.verticalCenter }
             width: visible ? badgeText.width + 14 : 0
             height: 20
-            radius: 10
+            radius: 0
             color: Theme.accentSoft
             border.color: Theme.border
             Text {
                 id: badgeText
                 anchors.centerIn: parent
                 text: root.badge
-                color: Theme.accent; font.pixelSize: 11; font.bold: true
+                color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true
             }
         }
         Text {
             id: arrow
             anchors { right: parent.right; rightMargin: 11; verticalCenter: parent.verticalCenter }
-            text: "⌄"; color: Theme.textMuted; font.pixelSize: 14
+            text: "⌄"; color: Theme.textMuted; font.pixelSize: Theme.fontHeading
             rotation: (root.open !== root.dropUp) ? 180 : 0
             Behavior on rotation { NumberAnimation { duration: Theme.quick } }
         }
@@ -91,7 +94,18 @@ Item {
         color: Theme.surfaceHigh
         border.color: Theme.border
         border.width: 1
-        Behavior on height { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
+        /* Mở: bung QUÁ chiều cao đích một đoạn rồi khựng lại và co về đúng bố cục
+           (OutBack lo đoạn vọt). Khay có nền đặc nên đoạn vọt không lộ khoảng trống,
+           chỉ thấy nó "nảy ra".
+           Đóng: co thẳng (InCubic). OutBack chiều này sẽ vọt xuống DƯỚI 0 — Qt kẹp lại
+           thành một nhịp đứng hình trông như khay bị kẹt. */
+        Behavior on height {
+            NumberAnimation {
+                duration: root.open ? Theme.normal : Theme.quick
+                easing.type: root.open ? Easing.OutBack : Easing.InCubic
+                easing.overshoot: 1.9
+            }
+        }
         MouseArea { anchors.fill: parent }  // nuốt bấm vào khe/viền khay, không lọt xuống dưới
 
         ListView {
@@ -101,7 +115,7 @@ Item {
             delegate: Rectangle {
                 width: ListView.view.width
                 height: 32
-                radius: 6
+                radius: 0
                 color: rowHover.containsMouse ? Theme.accentSoft : "transparent"
                 Text {
                     anchors {
@@ -111,7 +125,7 @@ Item {
                     }
                     text: modelData
                     color: index === root.currentIndex ? Theme.accent : Theme.text
-                    font.pixelSize: 12; elide: Text.ElideRight
+                    font.pixelSize: Theme.fontBody; elide: Text.ElideRight
                 }
                 Text {
                     id: mark
@@ -120,7 +134,7 @@ Item {
                     width: visible ? implicitWidth : 0
                     anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
                     text: root.markLabel
-                    color: Theme.accent; font.pixelSize: 11; font.bold: true
+                    color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true
                 }
                 MouseArea {
                     id: rowHover

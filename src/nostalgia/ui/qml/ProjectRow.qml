@@ -28,30 +28,30 @@ Rectangle {
         spacing: 3
         Row {
             spacing: 8
-            Text { text: project.title || ""; color: Theme.text; font.pixelSize: 13; font.bold: true }
+            Text { text: project.title || ""; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             Text {
                 visible: !!project.author
                 text: "· " + (project.author || "")
-                color: Theme.textMuted; font.pixelSize: 11
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 anchors.baseline: parent.children[0].baseline
             }
         }
         Text {
             width: parent.width
             text: project.description || ""
-            color: Theme.textMuted; font.pixelSize: 11; elide: Text.ElideRight
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Row {
             spacing: 6
             Repeater {
                 model: project.loaders || []
                 Rectangle {
-                    width: loaderText.width + 12; height: 16; radius: 4
+                    width: loaderText.width + 12; height: 16; radius: 0
                     color: Theme.accentSoft
                     Text {
                         id: loaderText
                         anchors.centerIn: parent
-                        text: modelData; color: Theme.accent; font.pixelSize: 9
+                        text: modelData; color: Theme.accent; font.pixelSize: Theme.fontLabel
                     }
                 }
             }
@@ -65,12 +65,12 @@ Rectangle {
         Text {
             anchors.right: parent.right
             text: "⬇ " + Theme.compact(project.downloads || 0)
-            color: Theme.accent; font.pixelSize: 11
+            color: Theme.accent; font.pixelSize: Theme.fontBody
         }
         Text {
             anchors.right: parent.right
             text: "♥ " + Theme.compact(project.follows || 0)
-            color: Theme.textMuted; font.pixelSize: 11
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
 

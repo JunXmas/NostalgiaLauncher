@@ -13,7 +13,7 @@ skins, friends, updates — is already taken care of.
 ![Qt](https://img.shields.io/badge/UI-PySide6%20%2B%20QML-41CD52?logo=qt&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-770%20passing-2ea44f)
 ![Dependencies](https://img.shields.io/badge/core%20runtime%20deps-0-blueviolet)
-![License](https://img.shields.io/badge/License-GPL--3.0-blue)
+![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
 ![Linux](https://img.shields.io/badge/Linux-x64-FCC624?logo=linux&logoColor=black)
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D6?logo=windows&logoColor=white)
 
@@ -246,9 +246,16 @@ thư viện ngoài; 770 test; mỗi file ≤ 200 dòng. Chi tiết từng bản 
 
 ## License
 
-**GPL-3.0.** You may use, study, change and share this launcher freely — and if you distribute a
-modified version, it must stay open under the same license. That is on purpose: this project
-should never end up as the closed part of someone else's product.
+**AGPL-3.0.** You may use, study, change and share this launcher freely — and if you distribute a
+modified version, it must stay open under the same license. Section 13 goes one step further: run
+a modified version as a network service and its users must be offered the source too. That is on
+purpose: this project should never end up as the closed part of someone else's product, on disk
+or on a server.
+
+**Every line that runs on your machine is here.** This program holds your Microsoft login token;
+software like that has no business being closed. The only pieces kept private are the two
+Cloudflare Workers the project operates (they hold an API key) — what they do, and why you do
+not have to trust them, is in [`cloudflare/README.md`](cloudflare/README.md).
 
 Minecraft is a trademark of Mojang Studios / Microsoft. The key art in
 `src/nostalgia/ui/qml/assets/keyart/` belongs to Mojang and is used for non-commercial

@@ -32,14 +32,14 @@ Rectangle {
         Text {
             width: parent.width
             text: installedContent.label || ""
-            color: Theme.text; font.pixelSize: 13; font.bold: true; elide: Text.ElideRight
+            color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true; elide: Text.ElideRight
         }
         Text {
             width: parent.width
             text: (installedContent.fileName || "")
                   + (installedContent.versionNumber ? "  ·  v" + installedContent.versionNumber : "")
                   + "  ·  " + Theme.fileSize(installedContent.fileSize || 0)
-            color: Theme.textMuted; font.pixelSize: 10; font.family: "monospace"; elide: Text.ElideRight
+            color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace"; elide: Text.ElideRight
         }
     }
     Row {
@@ -61,7 +61,7 @@ Rectangle {
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: "🗑"; font.pixelSize: 14
+            text: "🗑"; font.pixelSize: Theme.fontHeading
             color: trashHover.hovered ? Theme.danger : Theme.textMuted
             opacity: hover.hovered ? 1 : 0.35
             Behavior on opacity { NumberAnimation { duration: Theme.quick } }

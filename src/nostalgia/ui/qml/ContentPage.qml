@@ -46,10 +46,6 @@ Item {
     Component.onCompleted: {
         if (!contentBridge.instanceId && bridge.instances.length > 0)
             contentBridge.selectInstance(bridge.instances[0].instanceId);
-        // Thẻ TÀI NGUYÊN trên hero đặt loại cần mở; dùng xong xoá để lần sau mở bình thường.
-        var wanted = page.kinds.indexOf(window.libraryKind);
-        if (wanted >= 0) kindTabs.currentIndex = wanted;
-        window.libraryKind = "";
         page.refresh();
     }
     Connections {
@@ -69,9 +65,9 @@ Item {
         z: 10
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 50
-        Text {
+        PageTitle {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-            text: page.title; color: Theme.text; font.pixelSize: 22; font.bold: true
+            caption: page.title
         }
         TabBar {
             id: modeTabs
@@ -86,7 +82,7 @@ Item {
             spacing: 8
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Cài vào"; color: Theme.textMuted; font.pixelSize: 11
+                text: "Cài vào"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Dropdown {
                 width: 250
@@ -113,14 +109,14 @@ Item {
                     model: [{ key: "modrinth", label: "Modrinth" }, { key: "curseforge", label: "CurseForge" }]
                     Rectangle {
                         readonly property bool selected: modelData.key === contentBridge.source
-                        width: sourceText.width + 26; height: 28; radius: 14
+                        width: sourceText.width + 26; height: 28; radius: 0
                         color: selected ? Theme.accentSoft : "transparent"
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
                             id: sourceText
                             anchors.centerIn: parent
                             text: modelData.label
-                            color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 12; font.bold: parent.selected
+                            color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody; font.bold: parent.selected
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: contentBridge.setSource(modelData.key) }
@@ -131,14 +127,14 @@ Item {
                     model: page.kinds
                     Rectangle {
                         readonly property bool selected: index === kindTabs.currentIndex
-                        width: kindText.width + 26; height: 28; radius: 14
+                        width: kindText.width + 26; height: 28; radius: 0
                         color: selected ? Theme.accentSoft : "transparent"
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
                             id: kindText
                             anchors.centerIn: parent
                             text: page.kindLabels[modelData]
-                            color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 12; font.bold: parent.selected
+                            color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody; font.bold: parent.selected
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: kindTabs.currentIndex = index }
@@ -174,9 +170,9 @@ Item {
                             model: ["▦", "☰"]
                             Rectangle {
                                 readonly property bool selected: (index === 0) === page.gridMode
-                                width: 32; height: 32; radius: 6
+                                width: 32; height: 32; radius: 0
                                 color: selected ? Theme.accentSoft : Theme.surfaceHigh
-                                Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 14 }
+                                Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontHeading }
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                                 TapHandler { onTapped: page.gridMode = (index === 0) }
                             }
@@ -187,7 +183,7 @@ Item {
                     id: countLine
                     anchors { top: searchRow.bottom; topMargin: 8; horizontalCenter: parent.horizontalCenter }
                     text: contentBridge.searching ? "Đang tìm..." : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), "f", 0) + " kết quả"
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Rectangle {
                     // Dải shimmer 2 px khi đang tìm, như bản mẫu.
@@ -219,13 +215,13 @@ Item {
                     Text {
                         visible: !contentBridge.searching && contentBridge.results.length === 0
                         text: "Không có kết quả."
-                        color: Theme.textMuted; font.pixelSize: 12
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                     Text {
                         anchors { top: parent.top; right: parent.right }
                         visible: page.modsBlocked && contentBridge.results.length > 0
                         text: "Bản chơi đích không có mod loader — chọn bản Fabric/Forge/NeoForge để cài."
-                        color: Theme.accent; font.pixelSize: 11
+                        color: Theme.accent; font.pixelSize: Theme.fontBody
                     }
                     GridView {
                         anchors.fill: parent
@@ -301,9 +297,9 @@ Item {
                             model: ["▦", "☰"]
                             Rectangle {
                                 readonly property bool selected: (index === 0) === page.gridMode
-                                width: 32; height: 32; radius: 6
+                                width: 32; height: 32; radius: 0
                                 color: selected ? Theme.accentSoft : Theme.surfaceHigh
-                                Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: 14 }
+                                Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontHeading }
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                                 TapHandler { onTapped: page.gridMode = (index === 0) }
                             }
@@ -332,13 +328,13 @@ Item {
                     anchors { top: installedSearchRow.bottom; topMargin: 16; left: parent.left }
                     text: contentBridge.installedShownCount + " / " + contentBridge.installed.length + " " + page.kindLabels[page.kind].toLowerCase()
                           + (page.hasInstance ? " trong " + contentBridge.instanceId : "")
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Text {
                     id: identifiedNote
                     anchors { top: installedActions.bottom; topMargin: 6; right: parent.right }
                     visible: false
-                    color: Theme.accent; font.pixelSize: 11
+                    color: Theme.accent; font.pixelSize: Theme.fontBody
                     Timer { id: hideNote; interval: 5000; onTriggered: identifiedNote.visible = false }
                 }
                 Text {
@@ -347,7 +343,7 @@ Item {
                     text: !page.hasInstance ? "Tạo một bản chơi trước."
                         : contentBridge.installed.length === 0 ? "Chưa cài gì. Sang tab Duyệt Modrinth để thêm."
                         : "Không có mục nào khớp."
-                    color: Theme.textMuted; font.pixelSize: 12
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 GridView {
                     id: installedGrid

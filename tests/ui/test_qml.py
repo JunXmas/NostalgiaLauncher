@@ -106,76 +106,6 @@ def test_nothing_is_busy_before_anything_starts(tmp_path: Path) -> None:
     assert bridge.progressFraction == 0.0
 
 
-def find_hero_cards(view: QQuickView) -> list[object]:
-    from PySide6.QtCore import QObject
-
-    root_item = view.rootObject()
-    assert root_item is not None
-    return list(root_item.findChildren(QObject, "heroCard"))
-
-
-def test_every_card_on_the_hero_points_at_a_real_page(tmp_path: Path) -> None:
-    """Các thẻ nổi phải bấm được thật, và mỗi thẻ phải dẫn tới ĐÚNG trang của nó.
-
-    Chỉ kiểm "bấm xong có gì đó xảy ra" là chưa đủ: một thẻ dẫn nhầm trang vẫn qua được kiểu
-    kiểm đó. Ở đây đọc thẳng đích của từng thẻ.
-    """
-    view, _bridge = build_view(make_launcher(tmp_path))
-    cards = find_hero_cards(view)
-
-    assert len(cards) == 6, "bản mẫu có sáu thẻ nổi"
-    targets = sorted(card.property("pageIndex") for card in cards)
-    # Thư viện gộp mod + shader + gói tài nguyên, nên hai thẻ MOD và TÀI NGUYÊN cùng mở
-    # trang 2; thẻ TÀI NGUYÊN mở sẵn chip Gói tài nguyên.
-    assert targets == [1, 2, 2, 3, 4, 6], "sáu thẻ phải dẫn tới năm trang thật của thanh bên"
-    assert all(card.property("title") for card in cards), "thẻ nào cũng phải có nhãn"
-
-
-def test_activating_a_card_actually_changes_the_page(tmp_path: Path) -> None:
-    """Bấm thẻ phải đổi trang y như bấm ở thanh bên — nếu không thì nó chỉ là hình trang trí."""
-    from PySide6.QtCore import QObject
-
-    view, _bridge = build_view(make_launcher(tmp_path))
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None, "không tìm thấy thanh bên"
-
-    cards = find_hero_cards(view)
-    multiplayer = next(card for card in cards if card.property("title") == "CHƠI CHUNG")
-    multiplayer.activated.emit()
-
-    assert sidebar.property("currentIndex") == 4
-
-
-def test_hero_cards_sit_inside_the_photo_and_never_overlap(tmp_path: Path) -> None:
-    """Mỗi thẻ neo vào một công trình trong ảnh, nên toạ độ neo phải nằm trong ảnh, và hai
-    thẻ không được đè lên nhau — đè là mất chữ, mà chỉ soi mắt mới thấy. Test này thay mắt.
-    """
-    view, _bridge = build_view(make_launcher(tmp_path))
-    cards = find_hero_cards(view)
-    rectangles: list[tuple[float, float, float, float]] = []
-    for card in cards:
-        assert 0.0 < card.property("landmarkX") < 1.0
-        assert 0.0 < card.property("landmarkY") < 1.0
-        # Chỉ so phần thân thẻ: que nối được phép chạy qua khoảng trống giữa các thẻ.
-        left = card.property("x")
-        top = card.property("y") + (card.property("stemLength") if card.property("below") else 0)
-        rectangles.append(
-            (left, top, left + card.property("width"), top + card.property("cardHeight"))
-        )
-
-    for index, first in enumerate(rectangles):
-        for second in rectangles[index + 1 :]:
-            separated = (
-                first[2] <= second[0]
-                or second[2] <= first[0]
-                or first[3] <= second[1]
-                or second[3] <= first[1]
-            )
-            assert separated, f"hai thẻ nổi đè nhau: {first} và {second}"
-
-
 def test_clicking_a_loader_button_keeps_the_create_dialog_open(tmp_path: Path) -> None:
     """Lỗi thật đã gặp: bấm nút loader trong hộp tạo bản chơi thì hộp đóng luôn, vì TapHandler
     không nuốt sự kiện và cú bấm lọt xuống màn tối "bấm ra ngoài thì đóng". Bấm chuột thật."""
@@ -256,28 +186,6 @@ def test_create_button_explains_what_is_missing_and_name_is_optional(tmp_path: P
     QGuiApplication.processEvents()
     assert dialog.property("missingStep") == ""
     assert dialog.property("canCreate") is True
-
-
-def test_the_resources_card_opens_the_library_on_resource_packs(tmp_path: Path) -> None:
-    """Gộp trang TÀI NGUYÊN vào Thư viện không được làm mất lối tắt: thẻ trên hero mở Thư viện
-    với chip Gói tài nguyên chọn sẵn."""
-    from PySide6.QtCore import QObject
-
-    view, _bridge = build_view(make_launcher(tmp_path))
-    root_item = view.rootObject()
-    assert root_item is not None
-    resources = next(
-        card for card in find_hero_cards(view) if card.property("title") == "TÀI NGUYÊN"
-    )
-    resources.activated.emit()
-    for _ in range(50):
-        QGuiApplication.processEvents()
-        library = root_item.findChild(QObject, "contentPage")
-        if library is not None and library.property("kind") == "resourcepack":
-            break
-    assert library is not None
-    assert library.property("kind") == "resourcepack"
-    assert root_item.property("libraryKind") == "", "dùng xong phải xoá để lần sau mở bình thường"
 
 
 def test_bench_scripts_build_a_qapplication_not_a_qguiapplication() -> None:

@@ -20,7 +20,7 @@ Rectangle {
         anchors { fill: parent; leftMargin: 11; rightMargin: 11 }
         verticalAlignment: TextInput.AlignVCenter
         color: Theme.text
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontBody
         clip: true
         selectByMouse: true
         onAccepted: root.accepted()
@@ -29,6 +29,6 @@ Rectangle {
         anchors { left: parent.left; leftMargin: 11; verticalCenter: parent.verticalCenter }
         visible: input.text.length === 0
         text: root.placeholder
-        color: Theme.textMuted; font.pixelSize: 12
+        color: Theme.textMuted; font.pixelSize: Theme.fontBody
     }
 }

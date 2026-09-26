@@ -13,13 +13,14 @@ from pathlib import Path
 from typing import cast
 
 from PySide6.QtCore import QObject, QSize, QUrl
-from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication, QIcon, QSurfaceFormat
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
+from nostalgia.ui.block_bridge import BlockIconBridge
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
@@ -39,12 +40,67 @@ QML_DIR = Path(__file__).resolve().parent / "qml"
 logger = logging.getLogger(__name__)
 
 
+MULTISAMPLE_COUNT = 4
+
+# Phải khớp `Theme.sans`. Một chỗ đổi tên font mà quên chỗ kia thì chữ rơi về font hệ thống
+# lặng lẽ — `tests/ui/test_fonts.py` gác cho hai giá trị này bằng nhau.
+SANS_FAMILY = "Inter"
+
+
+def enable_multisampling() -> None:
+    """Bật khử răng cưa toàn cảnh (MSAA 4x).
+
+    Phải gọi **trước** khi dựng `QApplication`: định dạng mặt vẽ mặc định được chốt lúc
+    ngữ cảnh đồ hoạ ra đời, đặt sau thì không có tác dụng và cũng không báo lỗi.
+
+    **Đo được: không đổi gì trên máy này.** `bench/ui_edge_quality.py` cho ra CÙNG một con
+    số với samples=4 và samples=0, ở cả ba cảnh: giao diện tĩnh (2051), thanh bên có icon
+    khối (1555), và dấu tick đang xoay giữa chừng hoạt ảnh (105). Lý do: Qt đã tự khử răng
+    cưa góc bo của `Rectangle`, và vẽ chữ bằng distance field — MSAA không còn gì để làm.
+    Máy này cũng không có GL phần cứng (amdgpu init hỏng, rơi về llvmpipe), nên con số trên
+    chỉ nói về đường vẽ phần mềm.
+
+    Giữ lại vì nó vô hại và là mặc định đúng trên máy có GPU thật, nhưng ĐỪNG tin rằng nó
+    đang làm gì: độ nét thật của icon khối đến từ chỗ khác — `blocks.SUPERSAMPLE`, vẽ gấp
+    ba rồi thu nhỏ, và đó là thứ đo được.
+    """
+    surface_format = QSurfaceFormat.defaultFormat()
+    surface_format.setSamples(MULTISAMPLE_COUNT)
+    QSurfaceFormat.setDefaultFormat(surface_format)
+
+
+def load_fonts() -> None:
+    """Nạp font đóng kèm, để mọi máy hiện chữ giống nhau.
+
+    Không nhúng thì Qt rơi về font mặc định hệ thống — mỗi bản Linux một kiểu, và bản nào
+    thiếu dấu tiếng Việt thì chữ nhảy font giữa câu. Cả hai họ dưới đây đều đo được
+    **phủ đủ 74 ký tự có dấu** bằng `QRawFont.supportsCharacter`.
+
+    Inter cho chữ đọc, Minecraft F2D cho nhãn viết hoa — đúng cách minecraft.net làm:
+    tiêu đề kiểu pixel, thân bài font thường. F2D chỉ có một kiểu Regular, nên nó chỉ dùng
+    được ở nhãn ngắn; đặt nó cho cả đoạn văn là chữ sẽ gồ ghề và không phân được cấp bậc.
+    """
+    fonts_dir = QML_DIR / "assets" / "fonts"
+    for path in sorted(fonts_dir.glob("*.[ot]tf")):
+        if QFontDatabase.addApplicationFont(str(path)) < 0:
+            # Mất font là mất cả diện mạo — cả một bước chết thì phải nghe được.
+            logger.warning("không nạp được font %s, giao diện sẽ rơi về font hệ thống", path.name)
+
+    # Đặt mặc định ở tầng ứng dụng thay vì khai `font.family` ở từng file QML: 57 file không
+    # phải sửa, và chỗ nào quên cũng vẫn đúng font. `instance()` khai kiểu trả về là
+    # QCoreApplication (không có font) — chỉ bản QGuiApplication mới đặt được.
+    application = QGuiApplication.instance()
+    if isinstance(application, QGuiApplication):
+        application.setFont(QFont(SANS_FAMILY))
+
+
 def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     """Dựng khung nhìn và cầu nối.
 
     Tách khỏi `main` để test dựng được mà không phải chạy vòng lặp sự kiện — và để bộ chụp
     ảnh dùng lại đúng đường mà người dùng đi, chứ không dựng một bản riêng cho ảnh đẹp.
     """
+    load_fonts()
     view = QQuickView()
     view.engine().addImportPath(str(QML_DIR))
     # Icon cửa sổ / thanh tác vụ: cùng chiếc lá với logo ở thanh bên và icon bộ cài.
@@ -57,6 +113,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
+    context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
     settings_bridge = SettingsBridge(launcher, parent=view)
     context.setContextProperty("settingsBridge", settings_bridge)
     notifier = build_notifier(launcher, bridge, settings_bridge, view)
@@ -140,7 +197,7 @@ def build_tray(
     tray.setToolTip("Nostalgia Launcher")
     menu = QMenu()
     show_action = menu.addAction("Hiện lại Launcher")
-    show_action.triggered.connect(lambda: view.show())
+    show_action.triggered.connect(lambda: show_window())
     stop_action = menu.addAction("Dừng game")
     stop_action.triggered.connect(bridge.stopGame)
     menu.addSeparator()
@@ -150,14 +207,37 @@ def build_tray(
         quit_action.triggered.connect(running_app.quit)
     tray.setContextMenu(menu)
 
+    # Ta CÓ tự ẩn cửa sổ đi hay không. Không tra `view.isVisible()` thay được: lúc game tắt,
+    # cửa sổ do người dùng tự thu nhỏ cũng báo là không hiện, và hiện nó lên là giật mất tiêu
+    # điểm của thứ họ đang làm.
+    hidden_by_us = False
+
+    def show_window() -> None:
+        """Hiện cửa sổ và bỏ cờ: người dùng đã tự gọi nó ra thì lúc game tắt không gọi lần nữa."""
+        nonlocal hidden_by_us
+        view.show()
+        hidden_by_us = False
+
     def on_game_started(_instance_id: str) -> None:
+        nonlocal hidden_by_us
         if settings_bridge.hideWhenGameRunning:
             view.hide()
             tray.show()
+            hidden_by_us = True
 
     def on_game_stopped(_exit_code: int) -> None:
+        """Chỉ hiện lại cửa sổ mà CHÍNH TA đã ẩn.
+
+        Trước đây gọi `view.show()` vô điều kiện. Tắt "ẩn khi chơi" thì cửa sổ chưa từng bị
+        ẩn, nên đó là lệnh map lại một cửa sổ đang hiện — X11 giao cho trình quản lý cửa sổ
+        quyết, và Cinnamon trả về trạng thái THU NHỎ. Bấm DỪNG xong launcher tự thu nhỏ, đúng
+        lúc người dùng đang nhìn nó.
+        """
+        nonlocal hidden_by_us
         tray.hide()
-        view.show()
+        if hidden_by_us:
+            view.show()
+            hidden_by_us = False
 
     bridge.gameStarted.connect(on_game_started)
     bridge.gameStopped.connect(on_game_stopped)
@@ -166,6 +246,7 @@ def build_tray(
 
 def main(argv: list[str] | None = None) -> int:
     """Mở cửa sổ. Trả về mã thoát của vòng lặp sự kiện Qt."""
+    enable_multisampling()
     qt_application = QApplication(argv if argv is not None else sys.argv)
     qt_application.setApplicationName("Nostalgia Launcher")
     qt_application.setApplicationVersion(__version__)

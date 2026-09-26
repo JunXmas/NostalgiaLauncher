@@ -38,12 +38,12 @@ Rectangle {
         Text {
             width: parent.width
             text: installedContent.label || ""
-            color: hover.hovered ? Theme.accent : Theme.text; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight
+            color: hover.hovered ? Theme.accent : Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true; elide: Text.ElideRight
         }
         Text {
             width: parent.width
             text: installedContent.fileName || ""
-            color: Theme.textMuted; font.pixelSize: 10; font.family: "monospace"; elide: Text.ElideRight
+            color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace"; elide: Text.ElideRight
         }
     }
     Row {
@@ -51,22 +51,22 @@ Rectangle {
         spacing: 6
         Rectangle {
             visible: !!installedContent.versionNumber
-            width: versionText.width + 14; height: 18; radius: 5; color: Theme.accentSoft
-            Text { id: versionText; anchors.centerIn: parent; text: "v" + installedContent.versionNumber; color: Theme.accent; font.pixelSize: 10 }
+            width: versionText.width + 14; height: 18; radius: 0; color: Theme.accentSoft
+            Text { id: versionText; anchors.centerIn: parent; text: "v" + installedContent.versionNumber; color: Theme.accent; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
-            width: sizeText.width + 14; height: 18; radius: 5; color: Theme.surfaceHigh; border.color: Theme.border
-            Text { id: sizeText; anchors.centerIn: parent; text: Theme.fileSize(installedContent.fileSize || 0); color: Theme.textMuted; font.pixelSize: 10 }
+            width: sizeText.width + 14; height: 18; radius: 0; color: Theme.surfaceHigh; border.color: Theme.border
+            Text { id: sizeText; anchors.centerIn: parent; text: Theme.fileSize(installedContent.fileSize || 0); color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
             visible: !installedContent.enabled
-            width: offText.width + 14; height: 18; radius: 5; color: Theme.surfaceHigh; border.color: Theme.border
-            Text { id: offText; anchors.centerIn: parent; text: "đã tắt"; color: Theme.textMuted; font.pixelSize: 10 }
+            width: offText.width + 14; height: 18; radius: 0; color: Theme.surfaceHigh; border.color: Theme.border
+            Text { id: offText; anchors.centerIn: parent; text: "đã tắt"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
             visible: root.hasUpdate
-            width: updateText.width + 14; height: 18; radius: 5; color: Theme.accentDeep
-            Text { id: updateText; anchors.centerIn: parent; text: "mới: " + (installedContent.latestVersion || ""); color: "white"; font.pixelSize: 10 }
+            width: updateText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
+            Text { id: updateText; anchors.centerIn: parent; text: "mới: " + (installedContent.latestVersion || ""); color: "white"; font.pixelSize: Theme.fontLabel }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: root.updateRequested(installedContent.fileName) }
         }
@@ -83,12 +83,12 @@ Rectangle {
         }
         Rectangle {
             anchors.right: parent.right
-            width: removeText.width + 16; height: 24; radius: 6
+            width: removeText.width + 16; height: 24; radius: 0
             color: root.confirmingRemove ? Theme.danger : "transparent"
             Text {
                 id: removeText
                 anchors.centerIn: parent
-                text: root.confirmingRemove ? "Gỡ?" : "🗑"; font.pixelSize: 12; font.bold: root.confirmingRemove
+                text: root.confirmingRemove ? "Gỡ?" : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
                 color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
             }
             HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }

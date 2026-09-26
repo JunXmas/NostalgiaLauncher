@@ -6,8 +6,16 @@ Rectangle {
     property int currentIndex: 0
     property string playerName: ""
     property string accountKind: ""
+    // Đường dẫn file skin của tài khoản đang dùng; rỗng = chưa tải xong, lúc đó vẽ chữ cái đầu.
+    property string skinFile: ""
 
     color: Theme.surface
+
+    // Thanh bên là nơi DUY NHẤT nói cho Theme biết đang ở tab nào — và nó cũng là nơi duy
+    // nhất biết điều đó. Đặt ở đây thay vì để từng trang tự khai: trang tự khai thì trang
+    // quên khai sẽ mang màu của trang trước, lỗi âm thầm không ai thấy.
+    onCurrentIndexChanged: Theme.page = root.currentIndex
+    Component.onCompleted: Theme.page = root.currentIndex
 
     Connections {
         target: Tr
@@ -17,13 +25,15 @@ Rectangle {
     property var entries: _buildEntries()
     function _buildEntries() {
         return [
-            { label: Tr.text("home"),        glyph: "⌂" },
-            { label: Tr.text("instances"),   glyph: "⛏" },
-            { label: Tr.text("library"),     glyph: "⚙" },
-            { label: Tr.text("accounts"),    glyph: "☺" },
-            { label: Tr.text("multiplayer"), glyph: "⛶" },
-            { label: Tr.text("log"),         glyph: "≡" },
-            { label: Tr.text("settings"),    glyph: "☸" }
+            // `block` là icon chính (dải sprite khối xoay); `glyph` là dự phòng lúc dải
+            // chưa sinh xong hoặc sinh hỏng.
+            { label: Tr.text("home"),        glyph: "⌂", block: "grass" },
+            { label: Tr.text("instances"),   glyph: "⛏", block: "crafting" },
+            { label: Tr.text("library"),     glyph: "⚙", block: "bookshelf" },
+            { label: Tr.text("accounts"),    glyph: "☺", block: "diamond" },
+            { label: Tr.text("multiplayer"), glyph: "⛶", block: "command" },
+            { label: Tr.text("log"),         glyph: "≡", block: "chest" },
+            { label: Tr.text("settings"),    glyph: "☸", block: "redstone" }
         ];
     }
 
@@ -44,12 +54,15 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
             Row {
-                Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
-                Text { text: "GIA"; color: Theme.accent; font.pixelSize: 17; font.bold: true; font.letterSpacing: 1.2 }
+                Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
+                // Lục cố định, KHÔNG theo `Theme.accent`: tên sản phẩm là thứ duy nhất trên
+                // màn hình không được đổi màu theo tab. Nó cùng màu với chiếc lá ở logo bên
+                // trái, và nhận ra được ở mọi trang.
+                Text { text: "GIA"; color: Theme.brand; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
             }
             Text {
                 text: Tr.text("tagline")
-                color: Theme.textMuted; font.pixelSize: 8; font.letterSpacing: 1.4
+                color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.4
             }
         }
     }
@@ -63,6 +76,10 @@ Rectangle {
             NavItem {
                 label: modelData.label
                 glyph: modelData.glyph
+                block: modelData.block
+                // Màu của mục thứ `index` — cùng một bảng mà `Theme.accent` lấy ra, nên mục
+                // được chọn ở thanh bên và cả trang bên phải luôn cùng sắc.
+                tint: Theme.accents[index]
                 selected: index === root.currentIndex
                 onClicked: { if (index !== root.currentIndex) notifier.playUi("nav"); root.currentIndex = index; }
             }
@@ -80,28 +97,40 @@ Rectangle {
         Row {
             anchors { top: parent.top; left: parent.left; margins: 12 }
             spacing: 10
+            /* Đầu nhân vật cắt từ chính file skin, như trang TÀI KHOẢN.
+               Chữ cái đầu chỉ là dự phòng: skin tải nền nên vài nhịp đầu `skinFile` còn rỗng,
+               và tài khoản ngoại tuyến chưa chọn skin thì cũng không có file. */
             Rectangle {
-                width: 38; height: 38; radius: 7
+                objectName: "sidebarAvatar"
+                width: 38; height: 38; radius: 0
                 color: root.playerName ? Theme.accentDeep : Theme.border
                 Text {
                     anchors.centerIn: parent
+                    visible: root.skinFile.length === 0
                     text: root.playerName ? root.playerName.charAt(0).toUpperCase() : "?"
-                    color: "white"; font.pixelSize: 17; font.bold: true
+                    color: "white"; font.pixelSize: Theme.fontTitle; font.bold: true
+                }
+                SkinFace {
+                    objectName: "sidebarSkinFace"
+                    anchors.centerIn: parent
+                    visible: root.skinFile.length > 0
+                    size: 32
+                    source: root.skinFile
                 }
             }
             Column {
                 spacing: 3
                 Text { text: root.playerName ? Tr.text("hello_prefix") : Tr.text("not_signed_in")
-                       color: Theme.textMuted; font.pixelSize: 10 }
+                       color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
                 Text { text: root.playerName ? root.playerName : "—"
-                       color: Theme.text; font.pixelSize: 14; font.bold: true }
+                       color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             }
         }
 
         Rectangle {
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 }
             height: 28
-            radius: 6
+            radius: 0
             color: Theme.surface
             Row {
                 anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }
@@ -116,7 +145,7 @@ Rectangle {
                     text: !root.playerName ? Tr.text("add_on_right")
                           : root.accountKind === "microsoft" ? Tr.text("account_microsoft")
                           : root.accountKind === "ely" ? Tr.text("account_ely") : Tr.text("account_offline")
-                    color: Theme.textMuted; font.pixelSize: 10
+                    color: Theme.textMuted; font.pixelSize: Theme.fontLabel
                 }
             }
         }
@@ -126,6 +155,6 @@ Rectangle {
         id: footer
         anchors { left: parent.left; bottom: parent.bottom; margins: 20 }
         spacing: 12
-        Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: 10 }
+        Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
     }
 }

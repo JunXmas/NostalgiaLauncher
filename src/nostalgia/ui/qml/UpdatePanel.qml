@@ -19,9 +19,9 @@ Panel {
         spacing: 12
         Row {
             spacing: 10
-            Text { text: "Đang dùng"; color: Theme.textMuted; font.pixelSize: 12; width: 160
+            Text { text: "Đang dùng"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
                    anchors.verticalCenter: parent.verticalCenter }
-            Text { text: "v" + settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: 12
+            Text { text: "v" + settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody
                    anchors.verticalCenter: parent.verticalCenter }
             Item { width: 24; height: 1 }
             Toggle {
@@ -30,7 +30,7 @@ Panel {
                 checked: settingsBridge.autoUpdateCheck
                 onToggled: function (checked) { settingsBridge.setAutoUpdateCheck(checked); }
             }
-            Text { text: "Tự kiểm bản mới khi mở launcher"; color: Theme.textMuted; font.pixelSize: 11
+            Text { text: "Tự kiểm bản mới khi mở launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
                    anchors.verticalCenter: parent.verticalCenter }
         }
         Row {
@@ -55,14 +55,14 @@ Panel {
                 text: updateBridge.message
                 color: panel.state === "failed" ? Theme.danger
                        : panel.state === "available" || panel.state === "ready" ? Theme.accent : Theme.textMuted
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontBody
             }
         }
         Rectangle {
             visible: panel.state === "downloading"
-            width: Math.min(parent.width, 420); height: 4; radius: 2; color: Theme.border
+            width: Math.min(parent.width, 420); height: 4; radius: 0; color: Theme.border
             Rectangle {
-                height: parent.height; radius: 2; color: Theme.accent
+                height: parent.height; radius: 0; color: Theme.accent
                 width: parent.width * updateBridge.progressFraction
                 Behavior on width { NumberAnimation { duration: Theme.quick } }
             }
@@ -72,7 +72,7 @@ Panel {
             width: Math.min(parent.width, 720)
             wrapMode: Text.WordWrap; maximumLineCount: 6; elide: Text.ElideRight
             text: updateBridge.releaseNotes
-            color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
         Text {
             visible: !panel.canSelfUpdate
@@ -81,7 +81,7 @@ Panel {
             text: updateBridge.installKind === "app"
                   ? "Gói macOS (.app): launcher chỉ báo có bản mới; tải .dmg mới từ trang release rồi kéo đè vào Applications."
                   : "Đang chạy từ mã nguồn: launcher chỉ báo có bản mới; cập nhật bằng git pull + uv sync. Gói đóng sẵn Linux/Windows (tải từ trang release) thì tự cài và mở lại."
-            color: Theme.textMuted; font.pixelSize: 11; lineHeight: 1.3
+            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
     }
 }
