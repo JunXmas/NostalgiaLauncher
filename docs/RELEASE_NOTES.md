@@ -1,4 +1,11 @@
-Bản vá cho 1.1.0 — hai lỗi được sửa và một tính năng cũ quay lại.
+Bản vá cho 1.1.0 — ba lỗi được sửa và một tính năng cũ quay lại.
+
+## CHƠI CHUNG vào được phòng thật sự
+
+Trước đây world của bạn hiện trong tab LAN của Minecraft nhưng bấm vào là "Connection
+Refused": Minecraft nối qua IP card mạng (192.168.x) còn proxy của launcher chỉ nghe
+127.0.0.1. Proxy nay nhận kết nối từ chính máy bạn qua mọi card mạng — và vẫn đóng sập
+cửa với bất kỳ máy nào khác cùng LAN. Đã kiểm trọn vòng trên máy thật qua relay đang chạy.
 
 ## ⚠ Windows: bản này cần cài tay MỘT lần
 

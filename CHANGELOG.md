@@ -5,7 +5,16 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## 1.1.1 — 2026-09-26
 
-Hai lỗi được vá và một tính năng cũ quay lại.
+Ba lỗi được vá và một tính năng cũ quay lại.
+
+### CHƠI CHUNG vào được phòng thật sự
+
+World của bạn hiện trong tab LAN nhưng bấm vào là "Connection Refused". Minecraft nối tới
+`<IP nguồn beacon>:<cổng>` — nguồn multicast là IP card LAN (192.168.x) — còn proxy của
+launcher chỉ nghe 127.0.0.1 nên từ chối đúng kết nối nó tồn tại để phục vụ. Mọi test cũ nối
+thẳng loopback nên xanh hết; chỉ máy thật mới lộ. Proxy nay nghe mọi interface IPv4 nhưng
+**đóng ngay mọi kết nối không phải từ chính máy này** (luật bảo mật L7 dạng mới), và đã kiểm
+trọn vòng beacon → IP LAN → relay thật → world trên máy thật.
 
 ### Tự cập nhật trên Windows chạy lại được
 
