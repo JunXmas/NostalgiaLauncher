@@ -36,11 +36,24 @@ Panel {
                   : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher."
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
-        ActionButton {
-            visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind !== "offline"
-            primary: false
-            label: "⟳  Làm mới"
-            onClicked: accountBridge.refreshSkins()
+        Row {
+            spacing: 8
+            ActionButton {
+                visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind !== "offline"
+                primary: false
+                label: "⟳  Làm mới"
+                onClicked: accountBridge.refreshSkins()
+            }
+            /* Đổi skin THẬT của tài khoản Ely chỉ làm được ở ely.by — launcher không có API
+               upload cho họ (khác Microsoft, có). "Thêm skin" bên dưới chỉ đổi ảnh launcher
+               hiện, người chơi khác trong game vẫn thấy skin cũ. Không có nút này thì họ đổi
+               trong thư viện, thấy nhân vật đổi ngay trước mắt, và tưởng là xong. */
+            ActionButton {
+                objectName: "elySkinSiteButton"
+                visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind === "ely"
+                label: "Đổi skin ở ely.by ↗"
+                onClicked: Qt.openUrlExternally("https://ely.by/skins")
+            }
         }
         SkinLibrary {
             width: parent.width

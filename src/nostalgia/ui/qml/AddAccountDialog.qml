@@ -81,13 +81,21 @@ Item {
                 Text { visible: dialog.failure !== ""; width: parent.width; wrapMode: Text.WordWrap; text: dialog.failure; color: Theme.danger; font.pixelSize: Theme.fontBody }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "Chưa có tài khoản? Đăng ký miễn phí tại ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu."
+                    text: "Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu."
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Row {
                     spacing: 8
                     ActionButton { objectName: "elySignInButton"; label: accountBridge.busy ? "Đang đăng nhập..." : "Đăng nhập"
                                    clickable: !accountBridge.busy && emailField.text.trim() !== "" && passwordField.text !== ""; onClicked: dialog.submitEly() }
+                    /* Đăng ký phải mở trình duyệt, không có cách nào khác: ely.by đòi xác nhận
+                       email. Dựng form đăng ký trong launcher chỉ là đẩy họ ra trình duyệt
+                       chậm hơn một bước, và là một chỗ nữa để mật khẩu đi qua tay ta. */
+                    ActionButton {
+                        objectName: "elyRegisterButton"
+                        primary: false; label: "Đăng ký ↗"
+                        onClicked: Qt.openUrlExternally("https://ely.by/register")
+                    }
                     ActionButton { primary: false; label: "Quay lại"; onClicked: dialog.mode = "pick" }
                 }
             }

@@ -182,3 +182,43 @@ def test_the_use_button_never_appears_under_the_cursor(
     for button in buttons:
         assert button.isVisible() is True, "nút Dùng bật/tắt bằng visible — sẽ chớp khi trỏ vào"
         assert button.opacity() == 0.0, "chưa trỏ vào hàng nào thì nút phải trong suốt"
+
+
+def test_ely_account_gets_a_link_to_change_its_real_skin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Đổi skin THẬT của tài khoản Ely chỉ làm được ở ely.by — launcher không có API upload
+    cho họ (khác Microsoft, có). Không có nút này thì họ đổi trong thư viện, thấy nhân vật đổi
+    ngay trước mắt, và tưởng người chơi khác trong game cũng thấy."""
+    root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
+    link = find_item(root_item, "elySkinSiteButton")
+    assert link is not None
+
+    # Đang chọn JunSlayest (microsoft): nút phải ẩn, vì Microsoft upload thẳng được.
+    assert link.isVisible() is False
+
+    page = find_item(root_item, "accountsPage")
+    assert page is not None
+    page.setProperty("shownName", "JunEly")
+    QGuiApplication.processEvents()
+
+    assert link.isVisible() is True, "tài khoản Ely phải có đường ra ely.by để đổi skin thật"
+
+
+def test_ely_sign_in_offers_a_way_to_get_an_account(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Hộp đăng nhập Ely chỉ có ô email + mật khẩu: người chưa có tài khoản đứng đó không biết
+    lấy đâu ra. Đăng ký phải mở trình duyệt — ely.by đòi xác nhận email, dựng form trong
+    launcher chỉ là một chỗ nữa cho mật khẩu đi qua tay ta."""
+    root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
+    dialog = find_item(root_item, "addAccountDialog")
+    assert dialog is not None
+    register = find_item(root_item, "elyRegisterButton")
+    assert register is not None
+
+    dialog.setProperty("visible", True)
+    dialog.setProperty("mode", "ely")
+    QGuiApplication.processEvents()
+
+    assert register.isVisible() is True, "nhánh Ely phải có nút đăng ký cạnh nút đăng nhập"
