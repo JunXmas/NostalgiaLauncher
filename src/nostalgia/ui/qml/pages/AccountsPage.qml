@@ -108,6 +108,16 @@ Item {
                     anchors { right: parent.right; rightMargin: 40; verticalCenter: parent.verticalCenter }
                     visible: row.active; text: "✓"; color: Theme.accent; font.pixelSize: Theme.fontHeading; font.bold: true
                 }
+                /* Nút chuyển tài khoản. Bấm cả hàng cũng chuyển được và vẫn giữ, nhưng đó là
+                   thứ không ai đoán ra: hàng không trông giống nút, và dấu ✓ chỉ nói hàng NÀO
+                   đang dùng chứ không nói làm sao đổi sang hàng khác. */
+                ActionButton {
+                    objectName: "useAccountButton"
+                    anchors { right: parent.right; rightMargin: 40; verticalCenter: parent.verticalCenter }
+                    visible: !row.active && rowHover.containsMouse
+                    height: 26; fontSize: 11; label: "Dùng"
+                    onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
+                }
                 Text {
                     anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
                     text: "✕"; font.pixelSize: Theme.fontBody
@@ -129,6 +139,7 @@ Item {
     }
 
     SkinPanel {
+        objectName: "skinPanel"
         anchors { top: listPanel.bottom; left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap; topMargin: 10 }
         shown: page.shown; hasShown: page.hasShown
     }

@@ -17,27 +17,37 @@ Item {
 
     implicitHeight: header.height + 10 + Math.max(grid.implicitHeight, 40)
 
-    Row {
+    /* Nhan trái neo trái, nút phải neo phải — KHÔNG dùng một Row với spacer `width - 330`.
+       Cái đệm cứng đó chỉ đúng ở đúng một bề rộng: hẹp hơn thì nó âm và nút tràn ra ngoài ô,
+       rộng hơn thì hai nút trôi vào giữa. Neo hai đầu thì mọi bề rộng đều đúng. */
+    Item {
         id: header
-        width: parent.width; height: 30; spacing: 12
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: "THƯ VIỆN SKIN"; color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 1.2
+        width: parent.width; height: 30
+        Row {
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+            spacing: 12
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "THƯ VIỆN SKIN"; color: Theme.accent; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 1.2
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: library.entries.length + " skin"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+            }
         }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: library.entries.length + " skin"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
-        }
-        Item { width: header.width - 330; height: 1 }
-        CheckRow {
-            anchors.verticalCenter: parent.verticalCenter
-            label: "Slim"; checked: library.slimImport
-            onToggled: library.slimImport = !library.slimImport
-        }
-        ActionButton {
-            objectName: "importSkinButton"
-            label: "📁  Thêm skin"
-            onClicked: importDialog.open()
+        Row {
+            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+            spacing: 12
+            CheckRow {
+                anchors.verticalCenter: parent.verticalCenter
+                label: "Slim"; checked: library.slimImport
+                onToggled: library.slimImport = !library.slimImport
+            }
+            ActionButton {
+                objectName: "importSkinButton"
+                label: "📁  Thêm skin"
+                onClicked: importDialog.open()
+            }
         }
     }
 

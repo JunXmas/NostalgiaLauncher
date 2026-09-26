@@ -18,6 +18,7 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 from PySide6.QtCore import QObject, qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtQuick import QQuickItem
 from qml_tree import find_item
 from test_qml import make_launcher
 
@@ -98,3 +99,70 @@ def test_ely_row_goes_back_to_the_uuid_once_support_is_there(
     (tmp_path / "data" / "authlib-injector").mkdir(parents=True)
     (tmp_path / "data" / "authlib-injector" / "authlib-injector-9.9.9.jar").write_bytes(b"PK")
     assert "đang tải hỗ trợ" not in _ely_account_detail(tmp_path, monkeypatch)
+
+
+def _accounts_page_at(
+    width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> QQuickItem:
+    launcher = make_launcher(tmp_path)
+    save_accounts(
+        launcher.paths.accounts_json,
+        (
+            replace(build_offline_account("JunSlayest"), account_kind=MICROSOFT),
+            replace(build_offline_account("JunEly"), account_kind=ELY),
+        ),
+    )
+    monkeypatch.setattr(Launcher, "refresh_skin", Launcher.describe_skin)
+    view, _bridge = build_view(launcher)
+    view.resize(width, 768)
+    view.show()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 3)
+    QGuiApplication.processEvents()
+    return root_item
+
+
+@pytest.mark.parametrize("width", [1366, 1920])
+def test_add_skin_button_stays_inside_its_panel(
+    width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nút "Thêm skin" từng lọt ra ngoài mép phải ô Skin: hàng tiêu đề dùng một `Item` đệm
+    rộng `header.width - 330`, con số chỉ đúng ở đúng một bề rộng cửa sổ. Neo nút vào mép
+    phải thì mọi bề rộng đều đúng — nên test đo ở hai bề rộng."""
+    root_item = _accounts_page_at(width, tmp_path, monkeypatch)
+    button = find_item(root_item, "importSkinButton")
+    assert button is not None
+
+    panel = find_item(root_item, "skinPanel")
+    assert panel is not None
+
+    right_edge = button.mapToItem(root_item, button.width(), 0).x()
+    panel_right = panel.mapToItem(root_item, panel.width(), 0).x()
+
+    assert right_edge <= panel_right, (
+        f"nút tràn {right_edge - panel_right:.0f} px ra ngoài ô Skin ở bề rộng {width}"
+    )
+
+
+def test_every_inactive_account_offers_a_way_to_switch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bấm cả hàng vẫn chuyển được, nhưng không ai đoán ra: hàng không trông giống nút và
+    dấu ✓ chỉ nói hàng NÀO đang dùng, không nói làm sao đổi sang hàng khác."""
+    root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
+    buttons: list[QQuickItem] = []
+    _collect(root_item, "useAccountButton", buttons)
+
+    assert len(buttons) == 2, "mỗi hàng tài khoản phải có một nút Dùng"
+
+
+def _collect(node: QQuickItem, name: str, found: list[QQuickItem]) -> None:
+    """Như `find_item` nhưng gom hết. Phải đi `childItems()` chứ không đi cây QObject: delegate
+    của `ListView` không có cha QObject nên `children()` không thấy hàng tài khoản nào."""
+    if node.objectName() == name:
+        found.append(node)
+    for child in node.childItems():
+        _collect(child, name, found)
