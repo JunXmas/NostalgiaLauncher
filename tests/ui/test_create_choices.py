@@ -102,3 +102,25 @@ def test_the_play_block_says_what_is_missing(tmp_path: Path) -> None:
     QGuiApplication.processEvents()
     assert home.property("missingKind") == "", "đủ tài khoản và bản chơi thì không còn thiếu gì"
     assert play.findChild(QObject, "missingAction").property("visible") is False
+
+
+def test_the_sidebar_shows_the_face_from_the_skin_file(tmp_path: Path) -> None:
+    """Ô tài khoản góc dưới trái vẽ đầu nhân vật cắt từ chính file skin. Chữ cái đầu chỉ là
+    dự phòng cho lúc skin chưa tải xong — hiện cả hai thì thành chữ đè lên mặt."""
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    launcher.add_offline_account("Jun")
+    view, _bridge = build_view(launcher)
+    QGuiApplication.processEvents()
+    root_item = view.rootObject()
+    assert root_item is not None
+    face = root_item.findChild(QObject, "sidebarSkinFace")
+    assert face is not None, "không tìm thấy ô mặt ở thanh bên"
+
+    assert face.property("visible") is True, "tài khoản ngoại tuyến vẫn có skin Steve/Alex"
+    assert str(face.property("source")).endswith(".png")
+    letter = next(
+        child
+        for child in root_item.findChild(QObject, "sidebarAvatar").children()
+        if child.property("text") is not None and str(child.property("text")) == "J"
+    )
+    assert letter.property("visible") is False, "có mặt rồi thì không vẽ chữ cái đầu nữa"

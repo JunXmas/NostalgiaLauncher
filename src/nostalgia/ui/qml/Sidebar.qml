@@ -6,6 +6,8 @@ Rectangle {
     property int currentIndex: 0
     property string playerName: ""
     property string accountKind: ""
+    // Đường dẫn file skin của tài khoản đang dùng; rỗng = chưa tải xong, lúc đó vẽ chữ cái đầu.
+    property string skinFile: ""
 
     color: Theme.surface
 
@@ -95,13 +97,25 @@ Rectangle {
         Row {
             anchors { top: parent.top; left: parent.left; margins: 12 }
             spacing: 10
+            /* Đầu nhân vật cắt từ chính file skin, như trang TÀI KHOẢN.
+               Chữ cái đầu chỉ là dự phòng: skin tải nền nên vài nhịp đầu `skinFile` còn rỗng,
+               và tài khoản ngoại tuyến chưa chọn skin thì cũng không có file. */
             Rectangle {
+                objectName: "sidebarAvatar"
                 width: 38; height: 38; radius: 0
                 color: root.playerName ? Theme.accentDeep : Theme.border
                 Text {
                     anchors.centerIn: parent
+                    visible: root.skinFile.length === 0
                     text: root.playerName ? root.playerName.charAt(0).toUpperCase() : "?"
                     color: "white"; font.pixelSize: Theme.fontTitle; font.bold: true
+                }
+                SkinFace {
+                    objectName: "sidebarSkinFace"
+                    anchors.centerIn: parent
+                    visible: root.skinFile.length > 0
+                    size: 32
+                    source: root.skinFile
                 }
             }
             Column {

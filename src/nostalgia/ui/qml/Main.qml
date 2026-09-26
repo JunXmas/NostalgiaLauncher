@@ -27,10 +27,14 @@ Item {
         width: window.width < 1100 ? 190 : 232
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.activePlayerName
-        accountKind: {
-            var chosen = bridge.accounts.find(function (account) { return account.playerName === bridge.activePlayerName; });
-            return chosen ? chosen.accountKind : "";
-        }
+        // Lấy từ `accountBridge` chứ không `bridge`: hàng ở đây có kèm `skinFile`, và nó tự
+        // dựng lại khi skin tải xong (`skinsChanged`) — tra hai nơi thì đầu và loại tài khoản
+        // sẽ lệch nhịp nhau.
+        readonly property var activeAccount: accountBridge.accounts.find(function (account) {
+            return account.playerName === bridge.activePlayerName;
+        }) || null
+        accountKind: activeAccount ? activeAccount.accountKind : ""
+        skinFile: activeAccount ? activeAccount.skinFile : ""
     }
 
     // Đổi trang bằng mờ dần chứ không nhảy phắt: mắt bám được chỗ mình vừa bấm.
