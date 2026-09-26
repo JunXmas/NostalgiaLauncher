@@ -30,13 +30,38 @@ Rectangle {
     implicitHeight: 198
     radius: Theme.radius
     color: hover.hovered ? Theme.surfaceHigh : Theme.surface
-    border.color: hover.hovered ? Theme.accent : Theme.border
-    border.width: 1
+    /* Nét mực tối 2 px, cùng công thức `Panel.qml` — không phải viền 1 px màu `border` như
+       trước. Thẻ trước đây là mảng màu phẳng nằm bẹt giữa những thẻ Panel nổi lên quanh nó;
+       lệch ấy đọc ra "thẻ này chưa làm xong", dù không ai chỉ ra được vì sao. */
+    border.width: 2
+    border.color: hover.hovered ? Theme.accent : Qt.darker(Theme.background, 1.7)
     opacity: 0
     scale: 0.97
 
     Behavior on color { ColorAnimation { duration: Theme.quick } }
     Behavior on border.color { ColorAnimation { duration: Theme.quick } }
+
+    /* Trỏ vào thì thẻ NHẤC LÊN 3 px chứ chỉ đổi màu như trước.
+       Dịch bằng `transform` chứ không bằng `y`: Grid và ListView là nơi đặt vị trí, gán `y`
+       là phá bố cục của chúng. */
+    transform: Translate {
+        y: hover.hovered ? -3 : 0
+        Behavior on y { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
+    }
+
+    /* Cạnh dưới dày 5 px, như cạnh của `ActionButton`: bề dày là thứ nói "đây là khối đặc",
+       chuyển sắc chỉ nói "có ánh sáng rọi vào". Cần cả hai mới ra chiều sâu.
+
+       Pha 45% sắc tab vào chứ không tô xám suông: xám đặt cạnh nét mực (`darker(background,
+       1.7)`) thì hai màu gần như trùng nhau và cạnh biến mất — chụp ảnh ra mới thấy, đọc mã
+       hex thì không. */
+    Rectangle {
+        objectName: "cardEdge"
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 2 }
+        height: 5
+        color: Theme.mix(Theme.surface, Qt.darker(Theme.accent, hover.hovered ? 1.7 : 2.6), 0.45)
+        Behavior on color { ColorAnimation { duration: Theme.quick } }
+    }
 
     // Xuất hiện: mờ dần và phóng nhẹ. Không đụng x/y vì Grid mới là nơi đặt vị trí.
     Component.onCompleted: appear.start()
@@ -51,13 +76,31 @@ Rectangle {
     // Ô ảnh: chưa có ảnh riêng cho từng bản chơi nên dùng một mảng màu, không mượn ảnh giả.
     Rectangle {
         id: thumb
-        anchors { top: parent.top; left: parent.left; right: parent.right; margins: 1 }
+        anchors { top: parent.top; left: parent.left; right: parent.right; margins: 2 }
         height: 92
         radius: Theme.radius
         clip: true  // MicaBackdrop có lề âm: không clip là nền tràn ra ngoài thẻ, đè cả tiêu đề
+        /* Pha từ `Theme.accent` chứ không phải hai mã lục viết cứng như trước: lục cố định
+           nghĩa là ở sáu tab kia ô ảnh lệch tông với mọi thứ quanh nó. */
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#243a2c" }
-            GradientStop { position: 1.0; color: "#16211a" }
+            GradientStop { position: 0.0; color: Theme.mix(Theme.surfaceHigh, Theme.accent, 0.22) }
+            GradientStop { position: 1.0; color: Qt.darker(Theme.background, 1.25) }
+        }
+
+        /* Viền trong NGƯỢC chiều với thẻ: tối ở trên/trái, sáng ở dưới/phải. Đảo chiều ánh
+           sáng là toàn bộ mẹo làm ô ảnh đọc ra một HỐC khoét vào mặt thẻ, trong khi thẻ đọc ra
+           khối nhô lên. Cùng một nguồn sáng, hai hình trái dấu. */
+        Rectangle {
+            anchors { left: parent.left; right: parent.right; top: parent.top }
+            height: 2; color: "#66000000"
+        }
+        Rectangle {
+            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+            width: 1; color: "#4d000000"
+        }
+        Rectangle {
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            height: 1; color: "#1fffffff"
         }
 
         // Có icon (modpack) thì làm nền mica từ nó, và vẽ icon rõ ở giữa.
@@ -156,6 +199,9 @@ Rectangle {
             color: root.launchCount > 0 ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
         }
     }
+
+    // Cuối file: viền trong phải nằm TRÊN ô ảnh, không thì ô ảnh đè mất mép sáng ở đỉnh thẻ.
+    Bevel {}
 
     HoverHandler { id: hover; onHoveredChanged: if (!hovered) root.confirmingRemove = false }
 }

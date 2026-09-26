@@ -26,7 +26,7 @@ Item {
     readonly property var chosen: bridge.instances.length > 0
                                   ? bridge.instances[Math.min(chosenIndex, bridge.instances.length - 1)] : null
     readonly property int rightColumnWidth: page.width < 900 ? 240 : 296
-    readonly property int instanceStripHeight: 78 + 168 + Theme.pad
+    readonly property int instanceStripHeight: 78 + 178 + Theme.pad
 
     function visibleInstances() {
         if (!page.search) return bridge.instances;
@@ -229,7 +229,7 @@ Item {
                 spacing: Theme.gap
                 model: page.visibleInstances()
                 delegate: InstanceCard {
-                    width: 230; height: 168
+                    width: 230; height: 178
                     label: modelData.label
                     versionId: modelData.versionId
                     playtimeText: modelData.playtimeText; launchCount: modelData.launchCount

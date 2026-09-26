@@ -37,38 +37,9 @@ Rectangle {
     border.width: 2
     border.color: Qt.darker(Theme.background, 1.7)
 
-    // Chuyển sắc mặt thẻ: sáng dần lên phía trên, như ánh sáng rọi từ trên xuống một khối đặc.
-    Rectangle {
-        anchors.fill: parent
-        visible: !root.translucent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#14ffffff" }
-            GradientStop { position: 0.55; color: "#00ffffff" }
-            GradientStop { position: 1.0; color: "#14000000" }
-        }
-    }
-
-    // Viền trong hai tông — cái làm thẻ nổi lên thành khối.
-    Rectangle {
-        anchors { left: parent.left; right: parent.right; top: parent.top }
-        height: 1
-        color: "#26ffffff"
-    }
-    Rectangle {
-        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-        width: 1
-        color: "#18ffffff"
-    }
-    Rectangle {
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-        height: 1
-        color: "#40000000"
-    }
-    Rectangle {
-        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-        width: 1
-        color: "#30000000"
-    }
+    // Chuyển sắc mặt + viền trong hai tông — cái làm thẻ nổi lên thành khối. Thẻ kính nằm
+    // trên ảnh nền chỉ lấy viền: tô thêm chuyển sắc lên nền mờ là mất luôn vẻ trong.
+    Bevel { faceOnly: root.translucent }
 
     // Tiêu đề: nhãn hoa bằng font pixel, trên một vạch xanh ngắn. Vạch làm mắt bắt được đầu
     // thẻ ngay cả khi liếc nhanh — chữ không thôi thì mọi thẻ nhìn như nhau.
