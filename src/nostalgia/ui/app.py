@@ -197,7 +197,7 @@ def build_tray(
     tray.setToolTip("Nostalgia Launcher")
     menu = QMenu()
     show_action = menu.addAction("Hiện lại Launcher")
-    show_action.triggered.connect(lambda: view.show())
+    show_action.triggered.connect(lambda: show_window())
     stop_action = menu.addAction("Dừng game")
     stop_action.triggered.connect(bridge.stopGame)
     menu.addSeparator()
@@ -207,14 +207,37 @@ def build_tray(
         quit_action.triggered.connect(running_app.quit)
     tray.setContextMenu(menu)
 
+    # Ta CÓ tự ẩn cửa sổ đi hay không. Không tra `view.isVisible()` thay được: lúc game tắt,
+    # cửa sổ do người dùng tự thu nhỏ cũng báo là không hiện, và hiện nó lên là giật mất tiêu
+    # điểm của thứ họ đang làm.
+    hidden_by_us = False
+
+    def show_window() -> None:
+        """Hiện cửa sổ và bỏ cờ: người dùng đã tự gọi nó ra thì lúc game tắt không gọi lần nữa."""
+        nonlocal hidden_by_us
+        view.show()
+        hidden_by_us = False
+
     def on_game_started(_instance_id: str) -> None:
+        nonlocal hidden_by_us
         if settings_bridge.hideWhenGameRunning:
             view.hide()
             tray.show()
+            hidden_by_us = True
 
     def on_game_stopped(_exit_code: int) -> None:
+        """Chỉ hiện lại cửa sổ mà CHÍNH TA đã ẩn.
+
+        Trước đây gọi `view.show()` vô điều kiện. Tắt "ẩn khi chơi" thì cửa sổ chưa từng bị
+        ẩn, nên đó là lệnh map lại một cửa sổ đang hiện — X11 giao cho trình quản lý cửa sổ
+        quyết, và Cinnamon trả về trạng thái THU NHỎ. Bấm DỪNG xong launcher tự thu nhỏ, đúng
+        lúc người dùng đang nhìn nó.
+        """
+        nonlocal hidden_by_us
         tray.hide()
-        view.show()
+        if hidden_by_us:
+            view.show()
+            hidden_by_us = False
 
     bridge.gameStarted.connect(on_game_started)
     bridge.gameStopped.connect(on_game_stopped)

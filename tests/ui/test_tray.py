@@ -73,6 +73,57 @@ def test_tray_does_not_hide_window_when_setting_is_disabled(tmp_path: Path) -> N
     assert tray.isVisible() is False
 
 
+class ShowCountingView(QQuickView):
+    """Đếm số lần `show()`. `isVisible()` không gác được bug này: cửa sổ bị thu nhỏ vẫn báo
+    là đang hiện, nên chỉ đếm lời gọi mới thấy lệnh thừa."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.show_calls = 0
+
+    def show(self) -> None:
+        self.show_calls += 1
+        super().show()
+
+
+def test_stopping_the_game_leaves_a_window_we_never_hid_alone(tmp_path: Path) -> None:
+    """Tắt "ẩn khi chơi" thì cửa sổ chưa từng bị ẩn — gọi `show()` lúc game tắt là lệnh map
+    lại một cửa sổ đang hiện, và X11 giao cho trình quản lý cửa sổ quyết. Cinnamon trả về
+    trạng thái THU NHỎ: bấm DỪNG xong launcher tự thu nhỏ trước mắt người dùng."""
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    view = ShowCountingView()
+    view.show()
+    bridge = LauncherBridge(launcher, parent=view)
+    settings_bridge = SettingsBridge(launcher, parent=view)
+    settings_bridge.setHideWhenGameRunning(False)
+    build_tray(view, bridge, settings_bridge)
+
+    before = view.show_calls
+    bridge.gameStarted.emit("instance-1")
+    bridge.gameStopped.emit(0)
+
+    assert view.show_calls == before, "không được gọi show() lên cửa sổ ta chưa hề ẩn"
+
+
+def test_the_window_we_hid_does_come_back(tmp_path: Path) -> None:
+    """Mặt kia của cùng một luật: đã tự ẩn thì phải tự hiện lại, không thì launcher mất tăm."""
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    view = ShowCountingView()
+    view.show()
+    bridge = LauncherBridge(launcher, parent=view)
+    settings_bridge = SettingsBridge(launcher, parent=view)
+    assert settings_bridge.hideWhenGameRunning is True
+    build_tray(view, bridge, settings_bridge)
+
+    bridge.gameStarted.emit("instance-1")
+    assert view.isVisible() is False
+    before = view.show_calls
+    bridge.gameStopped.emit(0)
+
+    assert view.show_calls == before + 1
+    assert view.isVisible() is True
+
+
 def test_tray_menu_actions(tmp_path: Path) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     view = QQuickView()

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from nostalgia.account.model import ELY, Account, to_player_profile
-from nostalgia.errors import InstanceError
+from nostalgia.errors import InstanceError, NetworkError
 from nostalgia.facade.accounts import AccountOperations
 from nostalgia.install.assets import load_installed_asset_index
 from nostalgia.instance.store import game_dir_of, load_instance
@@ -21,6 +22,8 @@ from nostalgia.launch.tuning import DEFAULT_MAX_HEAP_MEGABYTES, JvmTuning
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.version.meta import VersionMeta
+
+logger = logging.getLogger(__name__)
 
 
 class PlayOperations(AccountOperations):
@@ -72,14 +75,48 @@ class PlayOperations(AccountOperations):
         )
         return start_game(command, on_output=on_output)
 
+    def prefetch_skin_support(self) -> Path:
+        """Tải sẵn authlib-injector — thứ làm skin Ely.by hiện trong game. CHẠM MẠNG.
+
+        Gọi ngay sau khi thêm tài khoản Ely, chứ không đợi tới lúc bấm CHƠI: lúc vừa đăng nhập
+        thì người dùng đang cầm mạng và đang chờ sẵn, còn lúc bấm CHƠI họ đang nôn nóng vào
+        game và một lỗi mạng ở đó đọc ra "launcher hỏng".
+        """
+        with self.make_http_client() as http_client:
+            return ensure_authlib_injector(
+                http_client, self._authlib_dir, endpoints=self.auth_endpoints
+            )
+
+    def skin_support_ready(self) -> bool:
+        """Đã có jar trên đĩa chưa. KHÔNG chạm mạng — chỉ để hiện trạng thái, không để quyết."""
+        return any(self._authlib_dir.glob("authlib-injector-*.jar"))
+
+    @property
+    def _authlib_dir(self) -> Path:
+        return self.paths.data_dir / "authlib-injector"
+
     def _authlib_arguments(self, account: Account) -> tuple[str, ...]:
-        """Tài khoản Ely.by: game hỏi skin/phiên qua Ely thay vì Mojang → tiêm authlib-injector."""
+        """Tài khoản Ely.by: game hỏi skin/phiên qua Ely thay vì Mojang → tiêm authlib-injector.
+
+        MẠNG hỏng thì KHÔNG chặn: trả về `()` và game chạy bình thường, chỉ mất skin. Thiếu
+        skin không đáng đánh đổi cả buổi chơi — và `ensure_authlib_injector` đã tự lùi về jar
+        cũ trên đĩa, nên tới được đây nghĩa là chưa từng tải được lần nào.
+
+        `IntegrityError` thì KHÔNG nuốt. Băm không khớp nghĩa là file tải về không phải thứ
+        trang chủ công bố, và đây là mã sắp chạy trong JVM game — đó là tín hiệu bảo mật, phải
+        nổi lên tới người dùng chứ không phải một dòng nhật ký rồi chơi tiếp như không có gì.
+        """
         if account.account_kind != ELY:
             return ()
-        with self.make_http_client() as http_client:
-            jar_path = ensure_authlib_injector(
-                http_client, self.paths.data_dir / "authlib-injector", endpoints=self.auth_endpoints
+        try:
+            jar_path = self.prefetch_skin_support()
+        except NetworkError:
+            logger.warning(
+                "chưa tải được authlib-injector — skin Ely.by sẽ không hiện trong game",
+                exc_info=True,
             )
+            return ()
+        with self.make_http_client() as http_client:
             metadata = fetch_api_metadata(http_client, self.auth_endpoints.ely_authlib_root_url)
         return authlib_jvm_arguments(jar_path, self.auth_endpoints.ely_authlib_root_url, metadata)
 

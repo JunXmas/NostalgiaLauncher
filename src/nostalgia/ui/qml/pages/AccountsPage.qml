@@ -85,7 +85,23 @@ Item {
                                        color: Theme.text; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 0.8 }
                             }
                         }
-                        Text { text: modelData.playerUuid.slice(0, 8) + "···"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace" }
+                        /* Tài khoản Ely.by nói luôn skin đã hiện được trong game chưa.
+
+                           Skin Ely cần authlib-injector — một javaagent JVM, KHÔNG phải mod:
+                           launcher tự tải và tự tiêm, người dùng không bấm gì. Nhưng "tự động"
+                           mà im lặng thì lúc nó hỏng người dùng chỉ thấy skin biến mất và không
+                           có chỗ nào để nhìn. Nên nói trạng thái, và chỉ nói — không có nút, vì
+                           không có gì để họ bấm. */
+                        Text {
+                            objectName: "accountDetail"
+                            readonly property bool waitingForSkinSupport:
+                                modelData.accountKind === "ely" && !accountBridge.skinSupportReady
+                            text: waitingForSkinSupport ? "Skin trong game: đang tải hỗ trợ…"
+                                                        : modelData.playerUuid.slice(0, 8) + "···"
+                            color: waitingForSkinSupport ? Theme.warning : Theme.textMuted
+                            font.pixelSize: Theme.fontLabel
+                            font.family: waitingForSkinSupport ? Theme.sans : "monospace"
+                        }
                     }
                 }
                 Text {
