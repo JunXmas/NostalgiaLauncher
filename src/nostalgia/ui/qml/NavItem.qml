@@ -15,6 +15,8 @@ Item {
        thì cả bảy mục cùng một màu và không còn nhận ra mục nào là mục nào. Mỗi mục giữ màu
        của chính nó, kể cả lúc không được chọn — đó là thứ làm thanh bên đọc được bằng màu. */
     property color tint: Theme.accent
+    // Thu gọn: chỉ icon, không chữ — thanh bên hẹp thành cột khối.
+    property bool compact: false
     signal clicked()
 
     implicitHeight: 46
@@ -48,7 +50,8 @@ Item {
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: 18
+        // Thu gọn thì icon đứng giữa cột; 22 là bề rộng của BlockIcon.
+        anchors.leftMargin: root.compact ? Math.round((root.width - 22) / 2) : 18
         spacing: 14
 
         BlockIcon {
@@ -63,6 +66,7 @@ Item {
             spinning: hover.hovered
         }
         Text {
+            visible: !root.compact
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
             // Tên mục là nhãn hoa ngắn: dùng font pixel. F2D không có kiểu đậm nên mục đang

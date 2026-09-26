@@ -39,5 +39,11 @@
   "notification_sound_desc": "Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản.",
   "ui_sound": "Âm thanh giao diện",
   "ui_sound_desc": "Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ.",
-  "language": "Ngôn ngữ"
+  "language": "Ngôn ngữ",
+  "planet_library_hint": "Mod, gói & shader",
+  "planet_accounts_hint": "Skin, đăng nhập",
+  "planet_multiplayer_hint": "Chơi cùng bạn bè",
+  "planet_log_hint": "Log game trực tiếp",
+  "planet_settings_hint": "Tuỳ chọn launcher",
+  "collapse_sidebar": "THU GỌN"
 }

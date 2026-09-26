@@ -24,7 +24,9 @@ Item {
     Sidebar {
         id: sidebar
         objectName: "sidebar"
-        width: window.width < 1100 ? 190 : 232
+        // Thu gọn còn cột icon 64 px; nội dung trượt theo chứ không nhảy.
+        width: collapsed ? 64 : (window.width < 1100 ? 190 : 232)
+        Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.activePlayerName
         // Lấy từ `accountBridge` chứ không `bridge`: hàng ở đây có kèm `skinFile`, và nó tự
@@ -55,6 +57,16 @@ Item {
             source: content.pageFor(sidebar.currentIndex)
             opacity: 0
             onLoaded: fadeIn.restart()
+
+            // Trang chủ cần biết thanh bên đang thu gọn để bày các thẻ hành tinh.
+            // Binding một chiều từ đây thay vì trang tự với sang sidebar: trang không
+            // được biết sidebar tồn tại (các trang khác không có property này).
+            Binding {
+                target: pageLoader.item
+                property: "sidebarCollapsed"
+                value: sidebar.collapsed
+                when: pageLoader.item !== null && pageLoader.item.hasOwnProperty("sidebarCollapsed")
+            }
 
             // Khối "còn thiếu" ở trang chủ đổi trang y như bấm ở thanh bên.
             Connections {

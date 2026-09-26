@@ -39,5 +39,11 @@
   "notification_sound_desc": "Short chime when a game starts, exits, or a version finishes downloading.",
   "ui_sound": "Interface sound",
   "ui_sound_desc": "Soft Xbox 360 / Steam Big Picture blip on page switch, button press, card expand.",
-  "language": "Language"
+  "language": "Language",
+  "planet_library_hint": "Mods, packs & shaders",
+  "planet_accounts_hint": "Skins, sign-in",
+  "planet_multiplayer_hint": "Play with friends",
+  "planet_log_hint": "Live game log",
+  "planet_settings_hint": "Launcher options",
+  "collapse_sidebar": "COLLAPSE"
 }

@@ -171,12 +171,17 @@ def test_the_icon_falls_back_to_a_glyph_until_the_strip_exists() -> None:
 
 
 def test_hovering_spins_the_block_up_to_a_ceiling() -> None:
-    """Tăng tốc dần rồi CHẠM TRẦN. Bỏ kẹp `vmax` thì khối quay loạn thành vệt mờ."""
+    """Tăng tốc dần rồi CHẠM TRẦN. Bỏ kẹp `vmax` thì khối quay loạn thành vệt mờ.
+
+    Mẫu "sớm" bắt ở lần ĐẦU velocity vượt 0, không phải ở mốc đồng hồ cứng: máy CI bận
+    thì 120 ms đầu animation chưa kịp tick một khung nào và mẫu đọc ra 0 — flaky."""
     scene = build(
         "import QtQuick\n"
         "Item { property real early: -1\n"
         '  BlockIcon { id: icon; objectName: "probe"; block: "grass"; spinning: true }\n'
-        "  Timer { interval: 120; running: true; onTriggered: parent.early = icon.velocity } }"
+        "  Timer { interval: 16; running: parent.early < 0; repeat: true\n"
+        "          onTriggered: if (icon.velocity > 0 && icon.velocity < icon.vmax)"
+        " parent.early = icon.velocity } }"
     )
     icon = find(scene, "probe")
     run_animation(2500)

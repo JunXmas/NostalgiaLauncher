@@ -17,6 +17,9 @@ Item {
     id: page
     objectName: "homePage"
     property string search: ""
+    // Main ghi vào (Binding có `when`): thanh bên thu gọn thì sáu mục của nó hiện thành
+    // thẻ neo vào các hành tinh trong ảnh hero — xem PlanetNav.qml.
+    property bool sidebarCollapsed: false
     // Mặc định là bản vừa chơi gần nhất, không phải mục đầu bảng chữ cái. Đây là một
     // binding: `onPicked` gán đè sẽ phá nó, nên lựa chọn tay của người dùng được giữ
     // nguyên trong phiên.
@@ -79,6 +82,20 @@ Item {
             GradientStop { position: 0.55; color: "#8c0e121b" }
             GradientStop { position: 1.00; color: "#e60c1017" }
         }
+    }
+
+    /* ----- thẻ hành tinh: chỉ khi thanh bên thu gọn -----
+
+       Bản 1.0.x có sáu thẻ này thường trực và bị bỏ ở 1.0.14 vì trùng đường đi với thanh
+       bên. Nay chúng là MẶT KIA của cùng đồng xu: thanh bên thu gọn còn cột icon thì sáu
+       mục của nó bay ra từ các hành tinh — không lúc nào có hai đường cùng hình dạng.
+       Nằm trên ảnh + lớp phủ, dưới các panel nghiệp vụ (khối CHƠI, cột phải, dải bản chơi). */
+    PlanetNav {
+        objectName: "planetNav"
+        anchors.fill: parent
+        visible: page.sidebarCollapsed
+        reservedRight: rightColumn.width + Theme.gap * 2
+        onNavigate: function (pageIndex) { page.navigate(pageIndex); }
     }
 
     /* ----- góc trên trái: lời chào -----

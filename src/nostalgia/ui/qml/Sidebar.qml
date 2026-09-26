@@ -8,6 +8,10 @@ Rectangle {
     property string accountKind: ""
     // Đường dẫn file skin của tài khoản đang dùng; rỗng = chưa tải xong, lúc đó vẽ chữ cái đầu.
     property string skinFile: ""
+    /* Thu gọn: chỉ còn cột icon. Ở trang chủ, sáu mục điều hướng khi đó hiện thành thẻ neo
+       vào các hành tinh trong ảnh hero (PlanetNav) — thu gọn không phải là mất đường đi,
+       mà là đổi thanh bên lấy bầu trời. Trạng thái sống theo phiên, không ghi đĩa. */
+    property bool collapsed: false
 
     color: Theme.surface
 
@@ -39,7 +43,7 @@ Rectangle {
 
     Row {
         id: brand
-        anchors { top: parent.top; left: parent.left; margins: 20 }
+        anchors { top: parent.top; left: parent.left; margins: root.collapsed ? 14 : 20 }
         spacing: 11
 
         // Logo khối lá Minecraft của jun (packaging/icons/nostalgia-source.png → assets/logo.png),
@@ -51,6 +55,7 @@ Rectangle {
             sourceSize: Qt.size(68, 68); smooth: true; mipmap: true
         }
         Column {
+            visible: !root.collapsed
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
             Row {
@@ -77,6 +82,7 @@ Rectangle {
                 label: modelData.label
                 glyph: modelData.glyph
                 block: modelData.block
+                compact: root.collapsed
                 // Màu của mục thứ `index` — cùng một bảng mà `Theme.accent` lấy ra, nên mục
                 // được chọn ở thanh bên và cả trang bên phải luôn cùng sắc.
                 tint: Theme.accents[index]
@@ -84,13 +90,24 @@ Rectangle {
                 onClicked: { if (index !== root.currentIndex) notifier.playUi("nav"); root.currentIndex = index; }
             }
         }
+
+        // Nút thu gọn/mở rộng, cùng hàng lối với các mục trên nó.
+        NavItem {
+            objectName: "collapseToggle"
+            label: root.collapsed ? "" : Tr.text("collapse_sidebar")
+            glyph: root.collapsed ? "»" : "«"
+            compact: root.collapsed
+            tint: Theme.textMuted
+            onClicked: root.collapsed = !root.collapsed
+        }
     }
 
     // Thẻ tài khoản. Chưa đăng nhập thì nói thẳng là chưa, không vẽ người giả.
+    // Thu gọn thì chỉ còn ô avatar — tên và loại tài khoản không nhét vừa cột icon.
     Rectangle {
         id: accountCard
-        anchors { left: parent.left; right: parent.right; bottom: footer.top; margins: 14; bottomMargin: 16 }
-        height: 96
+        anchors { left: parent.left; right: parent.right; bottom: footer.top; margins: root.collapsed ? 8 : 14; bottomMargin: 16 }
+        height: root.collapsed ? 54 : 96
         radius: Theme.radiusSmall
         color: Theme.surfaceHigh
 
@@ -119,6 +136,7 @@ Rectangle {
                 }
             }
             Column {
+                visible: !root.collapsed
                 spacing: 3
                 Text { text: root.playerName ? Tr.text("hello_prefix") : Tr.text("not_signed_in")
                        color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
@@ -128,6 +146,7 @@ Rectangle {
         }
 
         Rectangle {
+            visible: !root.collapsed
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 }
             height: 28
             radius: 0
@@ -153,6 +172,7 @@ Rectangle {
 
     Row {
         id: footer
+        visible: !root.collapsed
         anchors { left: parent.left; bottom: parent.bottom; margins: 20 }
         spacing: 12
         Text { text: "v" + Qt.application.version; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
