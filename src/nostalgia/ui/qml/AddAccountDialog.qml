@@ -94,7 +94,10 @@ Item {
                     ActionButton {
                         objectName: "elyRegisterButton"
                         primary: false; label: "Đăng ký ↗"
-                        onClicked: Qt.openUrlExternally("https://ely.by/register")
+                        /* account.ely.by, KHÔNG phải ely.by: ely.by là catalog skin, mọi
+                           thứ tài khoản nằm ở subdomain kia. `ely.by/register` ra 404. */
+                        readonly property url target: "https://account.ely.by/register"
+                        onClicked: Qt.openUrlExternally(target)
                     }
                     ActionButton { primary: false; label: "Quay lại"; onClicked: dialog.mode = "pick" }
                 }

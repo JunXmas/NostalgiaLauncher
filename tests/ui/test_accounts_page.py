@@ -222,3 +222,17 @@ def test_ely_sign_in_offers_a_way_to_get_an_account(
     QGuiApplication.processEvents()
 
     assert register.isVisible() is True, "nhánh Ely phải có nút đăng ký cạnh nút đăng nhập"
+
+
+def test_ely_links_point_at_the_account_site_not_the_skin_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`ely.by` là catalog skin của người khác; mọi thứ tài khoản nằm ở `account.ely.by`.
+    Đoán sai một lần rồi: `ely.by/register` trả 404 ngay trước mặt jun. Không chạm mạng —
+    chỉ gác cái tên miền, vì đó mới là chỗ đã sai."""
+    root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
+    for name in ("elyRegisterButton", "elySkinSiteButton"):
+        button = find_item(root_item, name)
+        assert button is not None
+        target = button.property("target").toString()
+        assert target.startswith("https://account.ely.by/"), f"{name} trỏ sai chỗ: {target}"

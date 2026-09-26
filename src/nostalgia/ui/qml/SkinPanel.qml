@@ -52,7 +52,10 @@ Panel {
                 objectName: "elySkinSiteButton"
                 visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind === "ely"
                 label: "Đổi skin ở ely.by ↗"
-                onClicked: Qt.openUrlExternally("https://ely.by/skins")
+                /* account.ely.by, KHÔNG phải ely.by/skins: chỗ kia là catalog skin của
+                   người khác, xem thì được mà đổi skin của mình thì không. */
+                readonly property url target: "https://account.ely.by/profile/change-skin"
+                onClicked: Qt.openUrlExternally(target)
             }
         }
         SkinLibrary {
