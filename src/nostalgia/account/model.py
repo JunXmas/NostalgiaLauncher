@@ -37,6 +37,17 @@ class Account:
     client_token: str = ""
     expires_at: float = 0.0
 
+    @property
+    def account_id(self) -> str:
+        """Khoá định danh: `kind:uuid`. KHÔNG phải tên.
+
+        Tên trùng được — một người có cả Microsoft lẫn Ely cùng tên là chuyện thường, và đã
+        xảy ra trên máy jun. Khoá theo tên thì hai tài khoản hoá một: chọn cái này chạy cái
+        kia, và gỡ một cái xoá cả hai. `upsert_account` vốn đã khớp theo (kind, uuid) — đây
+        chỉ là đặt tên cho đúng khoá đó để phần còn lại dùng chung.
+        """
+        return f"{self.account_kind}:{self.player_uuid}"
+
     def __repr__(self) -> str:
         """Che CẢ HAI vé. `repr` hay rơi vào log và vào thông báo lỗi.
 

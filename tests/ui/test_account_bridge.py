@@ -37,8 +37,8 @@ def test_accounts_carry_a_drawable_skin_and_ely_sign_in_activates(
     assert len(rows) == 1 and rows[0]["kindLabel"] == "NGOẠI TUYẾN"
     assert rows[0]["skinFile"].startswith("file://") and rows[0]["skinFile"].endswith(".png")
     assert rows[0]["isDefaultSkin"] is True and rows[0]["capeFile"] == ""
-    assert account_bridge.accountNamed("Dinnerbone")["playerName"] == "Dinnerbone"
-    assert account_bridge.accountNamed("ai-do") == {}
+    assert account_bridge.accountWithId(rows[0]["accountId"])["playerName"] == "Dinnerbone"
+    assert account_bridge.accountWithId("ai-do") == {}
 
     signed: list[str] = []
     account_bridge.elySignedIn.connect(signed.append)
@@ -46,7 +46,10 @@ def test_accounts_carry_a_drawable_skin_and_ely_sign_in_activates(
     wait_until(lambda: bool(signed) and not account_bridge.busy)
     assert signed == [fake_ely.ELY_NAME]
     assert main_bridge.activePlayerName == fake_ely.ELY_NAME
-    assert account_bridge.accountNamed(fake_ely.ELY_NAME)["kindLabel"] == "ELY.BY"
+    ely_row = next(
+        account for account in account_bridge.accounts if account["accountKind"] == "ely"
+    )
+    assert account_bridge.accountWithId(ely_row["accountId"])["kindLabel"] == "ELY.BY"
     assert "mat-khau" not in launcher.paths.accounts_json.read_text()
 
 

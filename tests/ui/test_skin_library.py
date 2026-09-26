@@ -24,7 +24,7 @@ PNG_HEADER = b"\x89PNG\r\n\x1a\n" + b"\x00" * 40
 
 def test_import_apply_and_remove_through_the_bridge(tmp_path: Path) -> None:
     launcher = make_launcher(tmp_path)
-    launcher.add_offline_account("Jun")
+    jun_id = launcher.add_offline_account("Jun").account_id
     main_bridge = LauncherBridge(launcher)
     account_bridge = AccountBridge(launcher, main_bridge)
     assert account_bridge.skinLibrary == []
@@ -36,20 +36,20 @@ def test_import_apply_and_remove_through_the_bridge(tmp_path: Path) -> None:
     [row] = account_bridge.skinLibrary
     assert (row["name"], row["slim"], row["sourceLabel"]) == ("ao-xanh", True, "Tự nhập")
     assert row["skinFile"].startswith("file://")
-    assert account_bridge.accountNamed("Jun")["skinDigest"] == "", "chưa dùng skin nào"
+    assert account_bridge.accountWithId(jun_id)["skinDigest"] == "", "chưa dùng skin nào"
 
     applied: list[str] = []
     account_bridge.skinUploaded.connect(applied.append)
-    account_bridge.applyLibrarySkin("Jun", row["entryId"])
-    wait_until(lambda: applied == ["Jun"] and not account_bridge.busy)
-    wait_until(lambda: account_bridge.accountNamed("Jun")["skinDigest"] == row["entryId"])
-    shown = account_bridge.accountNamed("Jun")
+    account_bridge.applyLibrarySkin(jun_id, row["entryId"])
+    wait_until(lambda: applied == [jun_id] and not account_bridge.busy)
+    wait_until(lambda: account_bridge.accountWithId(jun_id)["skinDigest"] == row["entryId"])
+    shown = account_bridge.accountWithId(jun_id)
     assert shown["slim"] is True and shown["isDefaultSkin"] is False
     assert Path(QUrl(shown["skinFile"]).toLocalFile()).read_bytes() == skin_file.read_bytes()
 
     account_bridge.removeLibrarySkin(row["entryId"])
     assert account_bridge.skinLibrary == []
-    assert account_bridge.accountNamed("Jun")["isDefaultSkin"] is False, (
+    assert account_bridge.accountWithId(jun_id)["isDefaultSkin"] is False, (
         "gỡ khỏi kho không đụng skin đang dùng"
     )
 
@@ -58,18 +58,18 @@ def test_add_skin_for_a_non_microsoft_account_stores_and_applies_at_once(tmp_pat
     """Một nút "Thêm skin" thay cho hai nút cũ (Tuỳ chỉnh / Tải skin lên): tài khoản không phải
     Microsoft thì file vào kho VÀ được dùng ngay, không cần bấm thêm "Dùng"."""
     launcher = make_launcher(tmp_path)
-    launcher.add_offline_account("Jun")
+    jun_id = launcher.add_offline_account("Jun").account_id
     account_bridge = AccountBridge(launcher, LauncherBridge(launcher))
     skin_file = tmp_path / "ao-do.png"
     skin_file.write_bytes(PNG_HEADER + b"do")
 
     applied: list[str] = []
     account_bridge.skinUploaded.connect(applied.append)
-    account_bridge.addSkin("Jun", QUrl.fromLocalFile(str(skin_file)).toString(), False)
-    wait_until(lambda: applied == ["Jun"] and not account_bridge.busy)
+    account_bridge.addSkin(jun_id, QUrl.fromLocalFile(str(skin_file)).toString(), False)
+    wait_until(lambda: applied == [jun_id] and not account_bridge.busy)
     [row] = account_bridge.skinLibrary
-    wait_until(lambda: account_bridge.accountNamed("Jun")["skinDigest"] == row["entryId"])
-    assert account_bridge.accountNamed("Jun")["isDefaultSkin"] is False
+    wait_until(lambda: account_bridge.accountWithId(jun_id)["skinDigest"] == row["entryId"])
+    assert account_bridge.accountWithId(jun_id)["isDefaultSkin"] is False
 
 
 def test_library_grid_renders_entries(tmp_path: Path) -> None:

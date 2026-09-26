@@ -75,19 +75,21 @@ class AccountOperations(LauncherContext):
             )
         return self._store(build_ely_account(login))
 
-    def remove_account(self, player_name: str) -> None:
+    def remove_account(self, account_id: str) -> None:
+        """Gỡ một tài khoản. Nhận `account_id` (`kind:uuid`) hoặc tên; tên trùng thì gỡ cái
+        đầu tiên, nên giao diện luôn truyền `account_id`."""
         accounts = self.list_accounts()
-        if find_account(accounts, player_name) is None:
-            message = f"không có tài khoản {player_name!r}"
+        if find_account(accounts, account_id) is None:
+            message = f"không có tài khoản {account_id!r}"
             raise AccountError(message)
-        save_accounts(self.paths.accounts_json, remove_account(accounts, player_name))
+        save_accounts(self.paths.accounts_json, remove_account(accounts, account_id))
 
     def _require_account(
-        self, player_name: str, client_id: str, cancel_token: CancelToken | None
+        self, account_id: str, client_id: str, cancel_token: CancelToken | None
     ) -> Account:
-        account = find_account(self.list_accounts(), player_name)
+        account = find_account(self.list_accounts(), account_id)
         if account is None:
-            message = f"không có tài khoản {player_name!r}"
+            message = f"không có tài khoản {account_id!r}"
             raise AccountError(message)
         if account.account_kind == ELY:
             with self.make_http_client() as http_client:

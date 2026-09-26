@@ -197,7 +197,10 @@ def test_ely_account_gets_a_link_to_change_its_real_skin(
 
     page = find_item(root_item, "accountsPage")
     assert page is not None
-    page.setProperty("shownName", "JunEly")
+    ely_row = next(
+        account for account in page.property("allAccounts") if account["accountKind"] == "ely"
+    )
+    page.setProperty("shownId", ely_row["accountId"])
     QGuiApplication.processEvents()
 
     assert link.isVisible() is True, "tài khoản Ely phải có đường ra ely.by để đổi skin thật"
@@ -234,3 +237,41 @@ def test_ely_links_point_at_the_account_site_not_the_skin_catalog(
         assert button is not None
         target = button.property("target").toString()
         assert target.startswith("https://account.ely.by/"), f"{name} trỏ sai chỗ: {target}"
+
+
+def test_two_accounts_with_the_same_name_still_show_the_use_button(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Đúng cấu hình trong `accounts.json` của jun: một Microsoft và một Ely CÙNG tên
+    "JunSlayest". Khi "đang dùng" so bằng TÊN thì cả hai hàng đều tự nhận là đang dùng, nên
+    nút Dùng (`!row.active`) trong suốt ở mọi hàng — launcher trông như không có nút chuyển
+    tài khoản, và không có cách nào chọn cái còn lại."""
+    launcher = make_launcher(tmp_path)
+    save_accounts(
+        launcher.paths.accounts_json,
+        (
+            replace(build_offline_account("JunSlayest"), account_kind=MICROSOFT),
+            replace(
+                build_offline_account("JunSlayest"),
+                account_kind=ELY,
+                player_uuid="3e33b6c8-0000-4000-8000-000000000000",
+            ),
+        ),
+    )
+    monkeypatch.setattr(Launcher, "refresh_skin", Launcher.describe_skin)
+    view, _bridge = build_view(launcher)
+    view.resize(1366, 768)
+    view.show()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 3)
+    QGuiApplication.processEvents()
+
+    rows: list[QQuickItem] = []
+    _collect(root_item, "accountRow", rows)
+    assert len(rows) == 2, "hai tài khoản trùng tên vẫn là hai hàng"
+
+    active = [row for row in rows if row.property("active")]
+    assert len(active) == 1, "chỉ một tài khoản được là tài khoản đang dùng"

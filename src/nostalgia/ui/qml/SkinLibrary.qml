@@ -91,7 +91,7 @@ Item {
                     ActionButton {
                         visible: !card.inUse && library.hasShown
                         height: 24; fontSize: 10; label: "Dùng"
-                        onClicked: accountBridge.applyLibrarySkin(library.shown.playerName, modelData.entryId)
+                        onClicked: accountBridge.applyLibrarySkin(library.shown.accountId, modelData.entryId)
                     }
                     ActionButton {
                         primary: false; height: 24; fontSize: 10; label: "✕"
@@ -113,6 +113,6 @@ Item {
         id: importDialog
         title: "Chọn file skin PNG"
         nameFilters: ["Ảnh PNG (*.png)"]
-        onAccepted: accountBridge.addSkin(library.hasShown ? library.shown.playerName : "", selectedFile, library.slimImport)
+        onAccepted: accountBridge.addSkin(library.hasShown ? library.shown.accountId : "", selectedFile, library.slimImport)
     }
 }

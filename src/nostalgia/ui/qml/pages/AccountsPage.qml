@@ -8,7 +8,10 @@ import "../"
 Item {
     id: page
     objectName: "accountsPage"
-    property string shownName: bridge.activePlayerName
+    /* Khoá theo `accountId` (`kind:uuid`), KHÔNG theo tên: một người có cả Microsoft lẫn Ely
+       cùng tên là chuyện thường. Khoá theo tên thì hai hàng hoá một — cả hai cùng "đang dùng",
+       nút Dùng trong suốt ở mọi hàng, và không còn cách nào chọn cái kia. */
+    property string shownId: bridge.activeAccountId
     property int facing: 0
     // Bind một lần — QML chỉ đọc property `accounts` đúng 1 lần mỗi khi signal phát.
     readonly property var allAccounts: accountBridge.accounts
@@ -18,11 +21,11 @@ Item {
     readonly property string shownSkinFile: hasShown ? shown.skinFile : ""
     readonly property bool shownSlim: hasShown ? shown.slim : false
 
-    function _refreshShown() { page.shown = accountBridge.accountNamed(page.shownName); }
-    onShownNameChanged: _refreshShown()
+    function _refreshShown() { page.shown = accountBridge.accountWithId(page.shownId); }
+    onShownIdChanged: _refreshShown()
     Connections {
         target: bridge
-        function onActiveAccountChanged() { page.shownName = bridge.activePlayerName; }
+        function onActiveAccountChanged() { page.shownId = bridge.activeAccountId; }
     }
     Connections {
         target: accountBridge
@@ -62,8 +65,9 @@ Item {
             model: page.allAccounts
             delegate: Rectangle {
                 id: row
-                readonly property bool active: modelData.playerName === bridge.activePlayerName
-                readonly property bool shownHere: modelData.playerName === page.shownName
+                objectName: "accountRow"
+                readonly property bool active: modelData.accountId === bridge.activeAccountId
+                readonly property bool shownHere: modelData.accountId === page.shownId
                 width: ListView.view.width; height: 54; radius: Theme.radiusSmall
                 /* Hover của cả hàng đo bằng `HoverHandler` chứ không bằng `containsMouse` của
                    MouseArea: handler CHỒNG nhau được, nên nút Dùng nằm đè lên vẫn không cướp
@@ -129,7 +133,7 @@ Item {
                     enabled: opacity > 0
                     height: 26; fontSize: 11; label: "Dùng"
                     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
-                    onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
+                    onClicked: { page.shownId = modelData.accountId; bridge.setActiveAccount(modelData.accountId); }
                 }
                 Text {
                     anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
@@ -137,11 +141,11 @@ Item {
                     color: removeArea.containsMouse ? Theme.danger : Theme.textMuted
                     opacity: rowHovered.hovered ? 1 : 0
                     MouseArea { id: removeArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor; onClicked: bridge.removeAccount(modelData.playerName) }
+                                cursorShape: Qt.PointingHandCursor; onClicked: bridge.removeAccount(modelData.accountId) }
                 }
                 MouseArea {
                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor; z: -1
-                    onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
+                    onClicked: { page.shownId = modelData.accountId; bridge.setActiveAccount(modelData.accountId); }
                 }
             }
         }

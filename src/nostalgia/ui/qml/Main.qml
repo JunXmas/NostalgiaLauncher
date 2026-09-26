@@ -31,7 +31,7 @@ Item {
         // dựng lại khi skin tải xong (`skinsChanged`) — tra hai nơi thì đầu và loại tài khoản
         // sẽ lệch nhịp nhau.
         readonly property var activeAccount: accountBridge.accounts.find(function (account) {
-            return account.playerName === bridge.activePlayerName;
+            return account.accountId === bridge.activeAccountId;
         }) || null
         accountKind: activeAccount ? activeAccount.accountKind : ""
         skinFile: activeAccount ? activeAccount.skinFile : ""

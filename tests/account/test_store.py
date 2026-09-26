@@ -191,3 +191,25 @@ def test_saving_creates_the_config_directory(tmp_path: Path) -> None:
     save_accounts(paths.accounts_json, make_accounts())
 
     assert paths.accounts_json.exists()
+
+
+def test_two_accounts_can_share_a_name_and_still_be_told_apart() -> None:
+    """Một người chơi có thể có cả Microsoft lẫn Ely cùng tên — jun có thật trong
+    `accounts.json` của mình. Tra theo tên thì cả hai ra CÙNG một bản ghi, nên launcher
+    chạy game bằng tài khoản sai và không có cách nào chọn cái kia."""
+    microsoft = Account(player_name="JunSlayest", player_uuid="mc-1", account_kind=MICROSOFT)
+    ely = Account(player_name="JunSlayest", player_uuid="ely-1", account_kind=ELY)
+    accounts = (microsoft, ely)
+
+    assert microsoft.account_id != ely.account_id
+    assert find_account(accounts, microsoft.account_id) == microsoft
+    assert find_account(accounts, ely.account_id) == ely
+
+
+def test_removing_by_account_id_leaves_the_namesake_alone() -> None:
+    """Gỡ một tài khoản là việc không lùi được. Khớp theo tên thì gỡ 'JunSlayest' xoá luôn
+    cả hai — mất vé Microsoft mà người dùng chỉ định bỏ tài khoản Ely."""
+    microsoft = Account(player_name="JunSlayest", player_uuid="mc-1", account_kind=MICROSOFT)
+    ely = Account(player_name="JunSlayest", player_uuid="ely-1", account_kind=ELY)
+
+    assert remove_account((microsoft, ely), ely.account_id) == (microsoft,)

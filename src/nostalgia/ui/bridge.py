@@ -35,7 +35,7 @@ class LauncherBridge(InstanceBridge):
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(launcher, parent)
-        self._active_player_name = ""
+        self._active_account_id = ""
         self._sign_in_cancel: CancelToken | None = None
         self._game_running = False
         # Tiến trình game đang chạy (để nút DỪNG gửi tín hiệu) và cờ "người dùng tự dừng" —
@@ -81,17 +81,29 @@ class LauncherBridge(InstanceBridge):
             for account in self.accounts_snapshot()
         ]
 
+    def active_account(self) -> Account | None:
+        """Tài khoản sẽ dùng khi bấm CHƠI: cái người dùng chọn, không thì cái đầu danh sách."""
+        accounts = self.accounts_snapshot()
+        chosen = next((a for a in accounts if a.account_id == self._active_account_id), None)
+        return chosen or (accounts[0] if accounts else None)
+
+    @Property(str, notify=activeAccountChanged)
+    def activeAccountId(self) -> str:
+        """Khoá định danh, KHÔNG phải tên: jun có Microsoft và Ely cùng tên "JunSlayest", nên
+        khoá theo tên thì cả hai hàng đều tự nhận là đang dùng — nút Dùng biến mất khỏi mọi
+        hàng và không còn cách nào chọn cái kia."""
+        account = self.active_account()
+        return account.account_id if account is not None else ""
+
     @Property(str, notify=activeAccountChanged)
     def activePlayerName(self) -> str:
-        """Tài khoản sẽ dùng khi bấm CHƠI: cái người dùng chọn, không thì cái đầu danh sách."""
-        names = [account.player_name for account in self.accounts_snapshot()]
-        if self._active_player_name in names:
-            return self._active_player_name
-        return names[0] if names else ""
+        """Tên để hiện lên màn hình. Chọn tài khoản thì dùng `activeAccountId`."""
+        account = self.active_account()
+        return account.player_name if account is not None else ""
 
     @Slot(str)
-    def setActiveAccount(self, player_name: str) -> None:
-        self._active_player_name = player_name
+    def setActiveAccount(self, account_id: str) -> None:
+        self._active_account_id = account_id
         self.activeAccountChanged.emit()
 
     @Property(QObject, constant=True)
@@ -108,8 +120,8 @@ class LauncherBridge(InstanceBridge):
     @Slot(str)
     def addOfflineAccount(self, player_name: str) -> None:
         def work() -> None:
-            self._launcher.add_offline_account(player_name)
-            self._active_player_name = player_name
+            account = self._launcher.add_offline_account(player_name)
+            self._active_account_id = account.account_id
             self.announce_accounts_changed()
 
         self.run_in_background(work, "Thêm tài khoản")
@@ -130,7 +142,7 @@ class LauncherBridge(InstanceBridge):
                 )
             finally:
                 self._sign_in_cancel = None
-            self._active_player_name = account.player_name
+            self._active_account_id = account.account_id
             self.announce_accounts_changed()
             self.signInFinished.emit(account.player_name)
 
@@ -142,12 +154,12 @@ class LauncherBridge(InstanceBridge):
             self._sign_in_cancel.cancel()
 
     @Slot(str)
-    def removeAccount(self, player_name: str) -> None:
+    def removeAccount(self, account_id: str) -> None:
         def work() -> None:
-            self._launcher.remove_account(player_name)
+            self._launcher.remove_account(account_id)
             self.announce_accounts_changed()
 
-        self.run_in_background(work, f"Gỡ tài khoản {player_name}")
+        self.run_in_background(work, "Gỡ tài khoản")
 
     @Slot(str)
     def play(self, instance_id: str) -> None:
@@ -176,7 +188,9 @@ class LauncherBridge(InstanceBridge):
         self._launch(instance_id, server_address=server_address)
 
     def _launch(self, instance_id: str, world_folder: str = "", server_address: str = "") -> None:
-        player_name = str(self.activePlayerName)
+        # Khoá định danh chứ không phải tên: hai tài khoản trùng tên thì lõi tra theo tên sẽ
+        # trả về cái đầu tiên, và người dùng chơi bằng tài khoản họ không chọn.
+        account_id = str(self.activeAccountId)
 
         def work() -> None:
             # Bù phần thiếu TRƯỚC khi chạy: bản cài hụt một jar thì JVM chết ngay với mã 1 và
@@ -203,7 +217,7 @@ class LauncherBridge(InstanceBridge):
             self._game_log.reset()
             game = self._launcher.launch_instance(
                 instance_id,
-                player_name,
+                account_id,
                 world_folder=world_folder,
                 server_address=server_address,
                 on_output=self._game_log.receive,

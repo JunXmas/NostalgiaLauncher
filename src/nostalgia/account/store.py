@@ -64,11 +64,19 @@ def save_accounts(path: Path, accounts: tuple[Account, ...]) -> None:
     atomic_write_json(path, document, private=True)
 
 
-def find_account(accounts: tuple[Account, ...], player_name: str) -> Account | None:
-    """Tra theo tên, không phân biệt hoa thường — người dùng gõ tay tên này."""
-    wanted = player_name.casefold()
+def find_account(accounts: tuple[Account, ...], wanted: str) -> Account | None:
+    """Tra theo `account_id` (`kind:uuid`), hoặc theo tên nếu không khớp cái nào.
+
+    Hai đường vì hai loại người gọi: giao diện giữ `account_id` nên chỉ đúng một tài khoản
+    khớp, còn dòng lệnh (`--account Jun`) thì người dùng gõ tay cái tên. Tên trùng thì đường
+    thứ hai trả về cái đầu tiên — không tránh được, nhưng giao diện không đi đường đó.
+    """
     for account in accounts:
-        if account.player_name.casefold() == wanted:
+        if account.account_id == wanted:
+            return account
+    folded = wanted.casefold()
+    for account in accounts:
+        if account.player_name.casefold() == folded:
             return account
     return None
 
@@ -96,10 +104,16 @@ def upsert_account(accounts: tuple[Account, ...], account: Account) -> tuple[Acc
     return (*accounts, account)
 
 
-def remove_account(accounts: tuple[Account, ...], player_name: str) -> tuple[Account, ...]:
-    """Bỏ một tài khoản. Không có thì trả về nguyên vẹn — người gọi tự quyết có báo hay không."""
-    wanted = player_name.casefold()
-    return tuple(account for account in accounts if account.player_name.casefold() != wanted)
+def remove_account(accounts: tuple[Account, ...], wanted: str) -> tuple[Account, ...]:
+    """Bỏ MỘT tài khoản (`account_id` hoặc tên). Không có thì trả về nguyên vẹn.
+
+    Bỏ đúng một, không bỏ mọi cái trùng tên: gỡ tài khoản là việc không lùi được, và xoá
+    nhầm cái Microsoft là mất vé đăng nhập.
+    """
+    doomed = find_account(accounts, wanted)
+    if doomed is None:
+        return accounts
+    return tuple(account for account in accounts if not _same_identity(account, doomed))
 
 
 def _parse_account(fields: dict[str, JsonValue]) -> Account | None:

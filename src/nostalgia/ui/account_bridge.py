@@ -45,7 +45,7 @@ class AccountBridge(WorkerBridge):
         self._launcher = launcher
         self._main_bridge = main_bridge
         self._rows: list[dict[str, Any]] = []
-        self._row_by_name: dict[str, dict[str, Any]] = {}
+        self._row_by_id: dict[str, dict[str, Any]] = {}
         self._stale = True
         # Gộp tín hiệu: mọi thay đổi chỉ đánh dấu cũ và khởi timer; timer 0 ms bắn một lần ở
         # cuối nhịp sự kiện, nên QML dựng lại danh sách đúng một lần dù nhiều tín hiệu tới.
@@ -67,7 +67,7 @@ class AccountBridge(WorkerBridge):
         if not self._stale:
             return
         self._rows = [_describe(self._launcher, a) for a in self._main_bridge.accounts_snapshot()]
-        self._row_by_name = {row["playerName"]: row for row in self._rows}
+        self._row_by_id = {row.get("accountId", ""): row for row in self._rows}
         self._stale = False
 
     @Property(list, notify=skinsChanged)
@@ -76,9 +76,11 @@ class AccountBridge(WorkerBridge):
         return self._rows
 
     @Slot(str, result="QVariant")
-    def accountNamed(self, player_name: str) -> dict[str, Any]:
+    def accountWithId(self, account_id: str) -> dict[str, Any]:
+        """Tra theo `account_id` chứ không theo tên: hai tài khoản trùng tên là chuyện thường
+        (Microsoft + Ely cùng một người), và tra theo tên thì cái thứ hai không tồn tại."""
         self._ensure_rows()
-        return self._row_by_name.get(player_name, {})
+        return self._row_by_id.get(account_id, {})
 
     # ----- kho skin -----
 
@@ -98,13 +100,13 @@ class AccountBridge(WorkerBridge):
         ]
 
     @Slot(str, str, bool)
-    def addSkin(self, player_name: str, file_url: str, slim: bool) -> None:
+    def addSkin(self, account_id: str, file_url: str, slim: bool) -> None:
         """Một nút "Thêm skin" cho mọi loại tài khoản: Microsoft thì upload lên Mojang (và tự
         vào kho); loại khác thì cất vào kho rồi dùng ngay trong launcher; chưa chọn tài khoản
         thì chỉ cất vào kho."""
-        account = self._find_account(player_name)
+        account = self._find_account(account_id)
         if account is not None and account.account_kind == MICROSOFT:
-            self.uploadSkin(player_name, file_url, slim)
+            self.uploadSkin(account_id, file_url, slim)
             return
         skin_path = Path(QUrl(file_url).toLocalFile())
 
@@ -116,24 +118,24 @@ class AccountBridge(WorkerBridge):
                     return
                 self._launcher.apply_library_skin(account, skin_entry.entry_id)
                 self._skinsRefreshed.emit()
-                self.skinUploaded.emit(player_name)
+                self.skinUploaded.emit(account_id)
             except NostalgiaError as exc:
                 self.skinUploadFailed.emit(str(exc))
 
         self.run_in_background(work, "Thêm skin")
 
     @Slot(str, str)
-    def applyLibrarySkin(self, player_name: str, entry_id: str) -> None:
-        account = self._find_account(player_name)
+    def applyLibrarySkin(self, account_id: str, entry_id: str) -> None:
+        account = self._find_account(account_id)
         if account is None:
-            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
+            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {account_id}")
             return
 
         def work() -> None:
             try:
                 self._launcher.apply_library_skin(account, entry_id)
                 self._skinsRefreshed.emit()
-                self.skinUploaded.emit(player_name)
+                self.skinUploaded.emit(account_id)
             except NostalgiaError as exc:
                 self.skinUploadFailed.emit(str(exc))
 
@@ -144,9 +146,9 @@ class AccountBridge(WorkerBridge):
         self._launcher.remove_library_skin(entry_id)
         self.libraryChanged.emit()
 
-    def _find_account(self, player_name: str) -> Account | None:
+    def _find_account(self, account_id: str) -> Account | None:
         return next(
-            (a for a in self._main_bridge.accounts_snapshot() if a.player_name == player_name),
+            (a for a in self._main_bridge.accounts_snapshot() if a.account_id == account_id),
             None,
         )
 
@@ -178,20 +180,20 @@ class AccountBridge(WorkerBridge):
         self.run_in_background(work, activity)
 
     @Slot(str, str, bool)
-    def uploadSkin(self, player_name: str, file_url: str, slim: bool) -> None:
+    def uploadSkin(self, account_id: str, file_url: str, slim: bool) -> None:
         skin_path = Path(QUrl(file_url).toLocalFile())
-        account = self._find_account(player_name)
+        account = self._find_account(account_id)
         if account is None:
-            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {player_name}")
+            self.skinUploadFailed.emit(f"không tìm thấy tài khoản {account_id}")
             return
 
         def work() -> None:
             try:
                 self._launcher.upload_skin(account, skin_path, slim=slim)
                 self._skinsRefreshed.emit()
-                self.skinUploaded.emit(player_name)
+                self.skinUploaded.emit(account_id)
             except NostalgiaError as exc:
-                logger.warning("upload skin thất bại cho %s: %s", player_name, exc)
+                logger.warning("upload skin thất bại cho %s: %s", account_id, exc)
                 self.skinUploadFailed.emit(str(exc))
 
         self.run_in_background(work, "Upload skin")
@@ -219,7 +221,7 @@ class AccountBridge(WorkerBridge):
             except TwoFactorRequired:
                 self.twoFactorRequired.emit()
                 return
-            self._main_bridge.setActiveAccount(account.player_name)
+            self._main_bridge.setActiveAccount(account.account_id)
             self._main_bridge.announce_accounts_changed()
             self.elySignedIn.emit(account.player_name)
             self._prefetch_skin_support()
@@ -248,8 +250,14 @@ def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:
     try:
         skin = launcher.describe_skin(account)
     except NostalgiaError:
-        return {"playerName": account.player_name, "skinFile": "", "capeFile": ""}
+        return {
+            "accountId": account.account_id,
+            "playerName": account.player_name,
+            "skinFile": "",
+            "capeFile": "",
+        }
     return {
+        "accountId": account.account_id,
         "playerName": account.player_name,
         "playerUuid": account.player_uuid,
         "accountKind": account.account_kind,

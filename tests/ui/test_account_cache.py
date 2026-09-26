@@ -27,7 +27,7 @@ def test_reading_accounts_many_times_touches_the_disk_once(
 ) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     launcher.add_offline_account("Jun")
-    launcher.add_offline_account("Notch")
+    notch_id = launcher.add_offline_account("Notch").account_id
     reads: list[int] = []
     original = Launcher.list_accounts
 
@@ -42,8 +42,8 @@ def test_reading_accounts_many_times_touches_the_disk_once(
     for _ in range(20):
         assert len(main_bridge.accounts) == 2
         assert main_bridge.activePlayerName == "Jun"
-        assert account_bridge.accountNamed("Notch")["playerName"] == "Notch"
-    main_bridge.setActiveAccount("Notch")
+        assert account_bridge.accountWithId(notch_id)["playerName"] == "Notch"
+    main_bridge.setActiveAccount(notch_id)
     assert main_bridge.activePlayerName == "Notch"
     assert len(reads) == 1, "đổi tài khoản đang chọn không phải là lý do để đọc lại đĩa"
 
@@ -51,5 +51,7 @@ def test_reading_accounts_many_times_touches_the_disk_once(
     wait_until(lambda: len(main_bridge.accounts) == 3 and not main_bridge.busy)
     # Lõi đọc một lần để ghi (đọc-sửa-ghi), cầu nối nạp lại một lần: không hơn.
     assert len(reads) == 3, "thêm tài khoản: cầu nối chỉ nạp lại đúng một lần"
-    wait_until(lambda: account_bridge.accountNamed("Dinnerbone") != {})
+    wait_until(
+        lambda: any(account["playerName"] == "Dinnerbone" for account in account_bridge.accounts)
+    )
     assert account_bridge.busy is False, "tài khoản ngoại tuyến không có skin để tải"

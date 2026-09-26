@@ -32,7 +32,7 @@ class PlayOperations(AccountOperations):
     def launch_instance(
         self,
         instance_id: str,
-        player_name: str,
+        account_id: str,
         *,
         client_id: str = "",
         world_folder: str = "",
@@ -46,7 +46,7 @@ class PlayOperations(AccountOperations):
         (tên thư mục trong saves/) đưa game vào thẳng thế giới đó — chỉ tác dụng từ 1.20.
         """
         instance = load_instance(self.paths, instance_id)
-        account = self._require_account(player_name, client_id, cancel_token)
+        account = self._require_account(account_id, client_id, cancel_token)
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         java_binary = resolve_installed_java_binary(version_meta, self.platform, self.paths)
         if java_binary is None:
