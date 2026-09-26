@@ -12,7 +12,17 @@ Item {
     // Loại nội dung mà Thư viện nên mở sẵn (thẻ TÀI NGUYÊN trên hero đặt "resourcepack").
     property string libraryKind: ""
 
-    Rectangle { anchors.fill: parent; color: Theme.background }
+    /* Nền pha một chút màu của tab đang mở, và chuyển màu chứ không nhảy.
+
+       Chỉ 6% — đủ để cả khung hình nghiêng về sắc của tab, chưa đủ để thành một nền có màu
+       (nền màu mạnh làm chữ và thẻ mất tương phản). `Behavior` ở đây chứ không ở `Theme.qml`:
+       Theme là singleton readonly, ràng buộc trong đó không gắn Behavior được — và đằng nào
+       cũng chỉ có một chỗ vẽ nền. */
+    Rectangle {
+        anchors.fill: parent
+        color: Theme.mix(Theme.background, Theme.accent, 0.06)
+        Behavior on color { ColorAnimation { duration: Theme.slow; easing.type: Easing.OutCubic } }
+    }
 
     Sidebar {
         id: sidebar

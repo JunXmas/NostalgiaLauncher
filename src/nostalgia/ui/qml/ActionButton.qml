@@ -15,13 +15,18 @@ Item {
 
     readonly property int edge: 4         // cạnh dưới "khối"
     readonly property int pressDrop: press.pressed && root.clickable ? 3 : 0
+    // Nút chính mang màu của tab đang mở (`Theme.accent`), không còn sắc lục viết cứng: nút
+    // và tiêu đề trang nằm cùng một màn hình nên phải cùng một màu. Dịu đi một bậc so với
+    // chữ tiêu đề — mặt nút là mảng màu lớn, để nguyên độ bão hoà thì chói.
+    readonly property color baseFace: Qt.darker(Theme.accent, 1.35)
     readonly property color faceColor: !root.clickable ? "#5a5b5c"
                                       : root.danger ? (hover.hovered ? "#d4413c" : "#b8332f")
-                                      : root.primary ? (hover.hovered ? "#4f9a36" : "#3c8527")
+                                      : root.primary ? (hover.hovered ? Qt.lighter(baseFace, 1.22)
+                                                                     : baseFace)
                                                      : (hover.hovered ? "#5a5c5e" : "#48494a")
     readonly property color edgeColor: !root.clickable ? "#3b3c3d"
                                       : root.danger ? "#5e1614"
-                                      : root.primary ? "#1d4d13" : "#2b2c2d"
+                                      : root.primary ? Qt.darker(Theme.accent, 2.4) : "#2b2c2d"
     readonly property color glintColor: root.primary ? "#66ffffff" : "#33ffffff"
 
     height: 36

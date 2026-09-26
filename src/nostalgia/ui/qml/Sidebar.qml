@@ -9,6 +9,12 @@ Rectangle {
 
     color: Theme.surface
 
+    // Thanh bên là nơi DUY NHẤT nói cho Theme biết đang ở tab nào — và nó cũng là nơi duy
+    // nhất biết điều đó. Đặt ở đây thay vì để từng trang tự khai: trang tự khai thì trang
+    // quên khai sẽ mang màu của trang trước, lỗi âm thầm không ai thấy.
+    onCurrentIndexChanged: Theme.page = root.currentIndex
+    Component.onCompleted: Theme.page = root.currentIndex
+
     Connections {
         target: Tr
         function onLanguageChanged() { root.entries = root._buildEntries(); }
@@ -47,7 +53,10 @@ Rectangle {
             spacing: 2
             Row {
                 Text { text: "NOSTAL"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
-                Text { text: "GIA"; color: Theme.accent; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
+                // Lục cố định, KHÔNG theo `Theme.accent`: tên sản phẩm là thứ duy nhất trên
+                // màn hình không được đổi màu theo tab. Nó cùng màu với chiếc lá ở logo bên
+                // trái, và nhận ra được ở mọi trang.
+                Text { text: "GIA"; color: Theme.brand; font.pixelSize: Theme.fontTitle; font.bold: true; font.letterSpacing: 1.2 }
             }
             Text {
                 text: Tr.text("tagline")
@@ -66,6 +75,9 @@ Rectangle {
                 label: modelData.label
                 glyph: modelData.glyph
                 block: modelData.block
+                // Màu của mục thứ `index` — cùng một bảng mà `Theme.accent` lấy ra, nên mục
+                // được chọn ở thanh bên và cả trang bên phải luôn cùng sắc.
+                tint: Theme.accents[index]
                 selected: index === root.currentIndex
                 onClicked: { if (index !== root.currentIndex) notifier.playUi("nav"); root.currentIndex = index; }
             }

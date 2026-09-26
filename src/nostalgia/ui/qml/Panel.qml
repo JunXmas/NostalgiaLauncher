@@ -26,6 +26,17 @@ Rectangle {
 
     color: translucent ? "#d90f1512" : Theme.surface
 
+    /* Nét mực tối bao ngoài, 2 px.
+
+       Đây là thứ làm giao diện đọc ra "hoạt hình" chứ không phải "phẳng tối": tranh vẽ tay
+       bao mảng màu bằng nét, giao diện công cụ thì phân mảng bằng chênh lệch sắc độ. Viền
+       trong hai tông ở dưới vẫn giữ — nó tạo khối; nét này tạo đường. Hai thứ khác việc.
+
+       Tối hơn NỀN chứ không phải tối hơn mặt thẻ: nét phải bắt được cả khi thẻ nằm trên nền
+       và khi thẻ nằm chồng lên thẻ khác. */
+    border.width: 2
+    border.color: Qt.darker(Theme.background, 1.7)
+
     // Chuyển sắc mặt thẻ: sáng dần lên phía trên, như ánh sáng rọi từ trên xuống một khối đặc.
     Rectangle {
         anchors.fill: parent
@@ -68,7 +79,9 @@ Rectangle {
         spacing: 9
 
         Rectangle {
-            width: 3; height: 13; color: Theme.accent
+            // 4 px, khớp vạch mục thanh bên: cùng một vai trò "đây là đầu một khối" thì phải
+            // cùng một độ dày, nếu không hai chỗ nhìn như hai hệ thống khác nhau.
+            width: 4; height: 14; color: Theme.accent
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {

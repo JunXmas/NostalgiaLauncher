@@ -91,6 +91,36 @@ def test_no_qml_file_hard_codes_a_font_size() -> None:
     assert not offenders, "cỡ chữ viết tay, phải dùng Theme.font*:\n" + "\n".join(offenders)
 
 
+def test_theme_has_one_accent_per_sidebar_entry() -> None:
+    """Bảng `Theme.accents` phải có đúng bằng số mục ở thanh bên.
+
+    Màu nhấn nay tra theo chỉ số tab. Thêm một mục vào Sidebar mà quên thêm màu thì mục mới
+    lặng lẽ mượn màu của mục cuối — `Math.min` trong Theme.qml giữ cho nó không crash, nên
+    không có gì báo lỗi, chỉ có hai tab trùng sắc. Bớt một mục thì thừa một màu chết.
+    """
+    theme = (QML_DIR / "Theme.qml").read_text(encoding="utf-8")
+    block = re.search(r"property var accents:\s*\[(.*?)\]", theme, re.S)
+    assert block, "không tìm thấy `property var accents` trong Theme.qml"
+    accents = re.findall(r'"#[0-9a-fA-F]{6}"', block.group(1))
+
+    sidebar = (QML_DIR / "Sidebar.qml").read_text(encoding="utf-8")
+    entries = re.findall(r"\{\s*label:\s*Tr\.text\(", sidebar)
+
+    assert len(accents) == len(entries), (
+        f"{len(accents)} màu nhấn cho {len(entries)} mục thanh bên"
+    )
+
+
+def test_accents_are_all_distinct() -> None:
+    """Hai tab cùng màu thì màu hết là chỉ dẫn — đó là toàn bộ lý do có bảng này."""
+    theme = (QML_DIR / "Theme.qml").read_text(encoding="utf-8")
+    block = re.search(r"property var accents:\s*\[(.*?)\]", theme, re.S)
+    assert block
+    accents = [c.lower() for c in re.findall(r'"#[0-9a-fA-F]{6}"', block.group(1))]
+    duplicates = {c for c in accents if accents.count(c) > 1}
+    assert not duplicates, f"màu nhấn trùng nhau: {duplicates}"
+
+
 def test_theme_pixel_family_matches_the_bundled_file() -> None:
     """`Theme.pixel` phải khớp tên họ THẬT bên trong file .otf, không phải tên file.
 
