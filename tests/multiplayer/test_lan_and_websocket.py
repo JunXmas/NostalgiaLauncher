@@ -12,6 +12,7 @@ import pytest
 from fake_relay import FakeRelay
 
 from nostalgia.errors import MultiplayerError
+from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.lan import (
     MULTICAST_GROUP,
     MULTICAST_PORT,
@@ -19,6 +20,7 @@ from nostalgia.multiplayer.lan import (
     _interface_ipv4_addresses,
     build_beacon,
     detect_open_to_lan,
+    is_local_peer,
     parse_lan_beacon,
 )
 from nostalgia.net.websocket import MAX_FRAME_BYTES, WebSocketClient
@@ -168,6 +170,39 @@ def test_frame_caps() -> None:
         assert await host.receive() == b""
         assert host.closed
         await joiner.close()
+        await relay.stop()
+
+    asyncio.run(scenario())
+
+
+def test_is_local_peer_accepts_this_machine_and_rejects_neighbours() -> None:
+    """Nửa "từ chối" của luật L7 mới: proxy nghe mọi interface nên PHẢI phân biệt được
+    kết nối của chính máy này (loopback, IP card LAN) với hàng xóm cùng LAN."""
+    local = frozenset({"127.0.0.1", "192.168.1.17"})
+    assert is_local_peer("127.0.0.1", local)
+    assert is_local_peer("127.0.53.1", local)
+    assert is_local_peer("192.168.1.17", local)
+    assert not is_local_peer("192.168.1.44", local), "hàng xóm cùng LAN phải bị đóng cửa"
+    assert not is_local_peer("", local)
+
+
+def test_bridge_serve_slams_the_door_on_foreign_peers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Chốt cửa phải NỐI DÂY trong `_serve` và đóng TRƯỚC khi mở gì tới relay: giả một peer
+    lạ bằng cách vá `is_local_peer` (test thật không thể nối từ IP của máy khác)."""
+
+    async def scenario() -> None:
+        relay = FakeRelay()
+        await relay.start()
+        joiner = JoinerBridge(relay.url, "ROOM02", "S" * 12)
+        await joiner.start()
+        monkeypatch.setattr("nostalgia.multiplayer.bridge.is_local_peer", lambda *_: False)
+        reader, writer = await asyncio.open_connection("127.0.0.1", joiner.local_port)
+        assert await asyncio.wait_for(reader.read(1), 3) == b"", "peer lạ phải bị đóng ngay"
+        assert "ROOM02" not in relay.rooms, "bị từ chối thì không được chạm tới relay"
+        writer.close()
+        await joiner.stop()
         await relay.stop()
 
     asyncio.run(scenario())

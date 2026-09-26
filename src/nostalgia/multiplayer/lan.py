@@ -79,6 +79,17 @@ def _interface_ipv4_addresses_via_udp_connect() -> set[str]:
     return found
 
 
+def is_local_peer(peer_host: str, local_hosts: frozenset[str]) -> bool:
+    """Kết nối TCP này có phải từ CHÍNH máy này không (loopback hoặc IP của một card mạng).
+
+    Minecraft nối tới `<IP nguồn beacon>:<port>` — và nguồn của beacon multicast là IP card
+    LAN (192.168.x), không phải 127.0.0.1, vì Java join nhóm trên card theo route mặc định.
+    Nên proxy joiner phải nhận kết nối đến qua IP LAN của chính máy; hàng xóm cùng LAN nối
+    vào thì peer là IP CỦA HỌ → đóng. Giả nguồn TCP qua LAN cần đoạt được bắt tay ba bước —
+    không nằm trong mô hình đe doạ của một launcher (luật L7, docs/MULTIPLAYER_SECURITY.md)."""
+    return peer_host.startswith("127.") or peer_host in local_hosts
+
+
 def parse_lan_beacon(
     datagram: bytes, source_host: str, local_hosts: frozenset[str] = frozenset({"127.0.0.1"})
 ) -> LanWorld | None:

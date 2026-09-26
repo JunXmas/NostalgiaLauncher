@@ -1,17 +1,29 @@
-"""Phía JOINER: proxy TCP cục bộ. Minecraft nối vào `127.0.0.1:<local_port>`, mỗi kết nối mở
-một WebSocket `role=join` tới relay, bắt tay bằng `JoinerGate`, rồi bơm byte hai chiều.
+"""Phía JOINER: proxy TCP cục bộ. Minecraft nối vào proxy, mỗi kết nối mở một WebSocket
+`role=join` tới relay, bắt tay bằng `JoinerGate`, rồi bơm byte hai chiều.
 
-Bind cứng loopback, cổng do hệ điều hành cấp (luật L7). Bắt tay hỏng → đóng, không hạ cấp.
+Vì sao KHÔNG bind cứng 127.0.0.1 (bug làm CHƠI CHUNG chết trên máy thật, 2026-09-26):
+Minecraft dò LAN bằng cách ghép `<IP NGUỒN của beacon>:<cổng trong [AD]>` — và nguồn của
+datagram multicast là IP card LAN (192.168.x), không phải loopback. World hiện trong tab
+LAN nhưng bấm vào là ConnectionRefused vì proxy chỉ nghe loopback. Mọi test cũ nối thẳng
+127.0.0.1 nên đều xanh — chỉ máy thật với Minecraft thật mới lộ.
+
+Thay bind hẹp bằng CHỐT CỬA ở accept (luật L7 dạng mới): nghe mọi interface IPv4, nhưng
+kết nối nào có peer KHÔNG phải IP của chính máy này thì đóng ngay, trước khi chạm relay.
+Bắt tay hỏng → đóng, không hạ cấp.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 
 from nostalgia.multiplayer.gate import JoinerGate
 from nostalgia.multiplayer.handshake import HANDSHAKE_TIMEOUT_SECONDS
+from nostalgia.multiplayer.lan import is_local_peer, local_ipv4_addresses
 from nostalgia.net.websocket import TlsContext, WebSocketClient
+
+logger = logging.getLogger(__name__)
 
 READ_CHUNK = 65536
 
@@ -39,7 +51,11 @@ class JoinerBridge:
         return int(sockets[0].getsockname()[1]) if sockets else 0
 
     async def start(self) -> int:
-        self._server = await asyncio.start_server(self._serve, "127.0.0.1", 0)
+        # Nghe mọi interface IPv4 vì Minecraft nối qua IP LAN (xem docstring); chốt cửa nằm
+        # ở `_serve`. "0.0.0.0" tường minh, KHÔNG phải `None`: `None` mở hai socket (IPv6 rồi
+        # IPv4) với HAI cổng ephemeral khác nhau, còn beacon chỉ quảng cáo được một cổng —
+        # đúng cổng IPv6 thì IPv4 của Minecraft lại bị từ chối. Cổng vẫn do hệ điều hành cấp.
+        self._server = await asyncio.start_server(self._serve, "0.0.0.0", 0)
         return self.local_port
 
     async def probe(self) -> None:
@@ -59,6 +75,13 @@ class JoinerBridge:
             self._server = None
 
     async def _serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        # Chốt cửa L7: chỉ chính máy này. Không phải thì đóng TRƯỚC khi mở gì tới relay.
+        peer = writer.get_extra_info("peername")
+        peer_host = str(peer[0]) if peer else ""
+        if not is_local_peer(peer_host, local_ipv4_addresses()):
+            logger.warning("proxy CHƠI CHUNG từ chối kết nối không phải máy này: %s", peer_host)
+            writer.close()
+            return
         task = asyncio.current_task()
         if task is not None:
             self._handlers.add(task)

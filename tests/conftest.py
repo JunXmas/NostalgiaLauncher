@@ -110,6 +110,13 @@ def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.M
         if host in {"127.0.0.1", "::1", "localhost"}:
             real_connect(self, address)
             return
+        # IP của CHÍNH máy này (card LAN): gói không rời máy. Proxy CHƠI CHUNG phải nhận
+        # kết nối qua IP LAN (Minecraft nối tới nguồn beacon multicast) nên test cần đường này.
+        from nostalgia.multiplayer.lan import local_ipv4_addresses
+
+        if isinstance(host, str) and host in local_ipv4_addresses():
+            real_connect(self, address)
+            return
         message = (
             f"test không đánh dấu `network` nhưng đang gọi ra {address!r}. "
             "Dùng máy chủ cục bộ trong tests/, hoặc đánh dấu @pytest.mark.network."

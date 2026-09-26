@@ -11,6 +11,7 @@ from test_gate import MC_HANDSHAKE
 
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.host import HostRelay
+from nostalgia.multiplayer.lan import local_ipv4_addresses
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
 
 
@@ -127,15 +128,23 @@ def test_locked_room_refuses_new_streams_but_keeps_current_players() -> None:
     asyncio.run(scenario())
 
 
-def test_bridge_binds_loopback_only_and_stop_ends_all_tasks() -> None:
+def test_bridge_accepts_lan_ip_of_this_machine_and_stop_ends_all_tasks() -> None:
+    """Bug máy thật 2026-09-26: Minecraft nối proxy qua IP CARD LAN (nguồn beacon multicast),
+    không phải 127.0.0.1 — bind cứng loopback là world hiện trong tab LAN nhưng vào là
+    ConnectionRefused. Proxy phải nhận qua IP LAN của chính máy; luật L7 chuyển từ bind hẹp
+    sang chốt cửa ở accept (test_bridge_rejects_foreign_peers gác nửa kia)."""
+
     async def scenario() -> None:
         relay, world = FakeRelay(), FakeWorld()
         await relay.start()
         await world.start()
         host, joiner = await setup(relay, world, make_room_code())
         assert isinstance(joiner._server, asyncio.Server)
-        assert joiner._server.sockets[0].getsockname()[0] == "127.0.0.1"
-        reader, writer = await asyncio.open_connection("127.0.0.1", joiner.local_port)
+        lan_ip = next(
+            (ip for ip in sorted(local_ipv4_addresses()) if not ip.startswith("127.")),
+            "127.0.0.1",  # máy CI không có card LAN thì đường loopback vẫn phải sống
+        )
+        reader, writer = await asyncio.open_connection(lan_ip, joiner.local_port)
         writer.write(MC_HANDSHAKE)
         await writer.drain()
         await asyncio.wait_for(reader.readexactly(len(MC_HANDSHAKE)), 3)

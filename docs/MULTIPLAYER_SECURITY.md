@@ -50,7 +50,7 @@ hay tự cài gì từ host sang joiner qua phòng, (ii) cảnh báo khi server 
 | L4 | **Byte đầu sau bắt tay phải là gói Handshake Minecraft hợp lệ** (VarInt length ≤ 300, packet id 0x00, next_state ∈ {1,2}). Không đúng → đóng stream. Chỉ chuyển tiếp byte, không diễn giải lệnh. | D | Bản cũ chuyển tiếp bất kỳ byte nào sau bắt tay. |
 | L5 | **Trần ở mọi bộ đệm.** Khung WS ≤ 1 MiB (đọc chunk 64 KiB nên không cần hơn), tổng gộp continuation ≤ 1 MiB, bộ đệm bắt tay ≤ 512 B, ≤ 32 stream chưa xác thực, timeout bắt tay 8 s, ≤ 16 joiner. | D, F | Bản cũ 16 MiB/khung — thừa 16 lần. |
 | L6 | **Phòng đóng mặc định, hết hạn khi host dừng.** Mã mới mỗi lần host; nút "khoá phòng" (không nhận stream mới). Không có mã ngắn "tương thích ngược" bỏ xác thực. | A, B | Bản cũ: mã ≤ 6 ký tự → secret rỗng → bỏ cửa xác thực. |
-| L7 | **Proxy cục bộ bind cứng `127.0.0.1:0`**; host chỉ nối `127.0.0.1:world_port`. Không có tham số đổi địa chỉ. | A | Bản cũ đúng — giữ. |
+| L7 | **Proxy joiner chỉ phục vụ CHÍNH máy này**: nghe `0.0.0.0:0` nhưng đóng ngay mọi kết nối có peer không phải loopback/IP của máy (`is_local_peer`, trước khi chạm relay). Host vẫn chỉ nối `127.0.0.1:world_port`. Không có tham số đổi địa chỉ. | A | Bind cứng loopback (đến 1.1.0) làm tính năng CHẾT trên máy thật: Minecraft nối tới `<nguồn beacon>:<cổng>` mà nguồn multicast là IP card LAN — world hiện trong tab LAN, vào là ConnectionRefused. Giả nguồn TCP qua LAN cần đoạt bắt tay ba bước — ngoài mô hình đe doạ. |
 | L8 | **Relay không phải nơi tin cậy.** Xác thực ở tầng ứng dụng; relay chỉ chặn lạm dụng rẻ: trần khung, rate-limit cả `role=host` lẫn `role=join`, cùng một mã đóng cho "không có host" và "bị rate-limit" để không thành oracle dò `room_id`. | A | Bản cũ trả 4004/4009 trước khi rate-limit → quét 31^6 phòng tự do. |
 | L9 | **Client WS kiểm `Sec-WebSocket-Accept`**, SNI + ALPN http/1.1, timeout nối 15 s. | F | Bản cũ chỉ tìm chuỗi "101". |
 | L10 | **Mọi luồng nền dừng được và có chủ.** Dừng phòng = huỷ task + đóng socket trong < 2 s; đóng launcher dừng phòng. | — | Bản cũ chỉ dừng khi `aboutToQuit`. |
@@ -67,6 +67,8 @@ mới vẫn tương thích relay đang chạy vì khung mux không đổi.
 - L4: `test_first_bytes_must_be_minecraft_handshake`
 - L5: `test_frame_caps`, `test_pending_streams_capped`
 - L6: `test_room_code_has_entropy`, `test_locked_room_refuses_new_streams`
-- L7: `test_bridge_binds_loopback_only`
+- L7: `test_bridge_accepts_lan_ip_of_this_machine_and_stop_ends_all_tasks`,
+  `test_is_local_peer_accepts_this_machine_and_rejects_neighbours`,
+  `test_bridge_serve_slams_the_door_on_foreign_peers`
 - L9: `test_websocket_accept_is_verified`
 - L10: `test_stop_ends_all_tasks`
