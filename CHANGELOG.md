@@ -3,6 +3,20 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.1.1 — 2026-09-26
+
+Bản vá một lỗi: **nút "Dùng" không bao giờ hiện** nếu bạn có hai tài khoản trùng tên
+(ví dụ một Microsoft và một Ely.by cùng tên "JunSlayest").
+
+- **Danh tính tài khoản khoá theo `account_id` (`kind:uuid`)**, không theo tên nữa. Trước
+  đây hai hàng trùng tên đều tự nhận là hàng "đang dùng", mà nút Dùng chỉ hiện ở hàng
+  *không* phải hàng đang dùng — nên nó trong suốt ở mọi hàng, mọi lúc.
+- **Bấm Dùng chạy đúng tài khoản đó.** `find_account` khớp `account_id` trước, tên sau;
+  trước đây tra theo tên và trả về cái đầu tiên, nên bấm Dùng ở hàng Ely.by vẫn chạy game
+  bằng tài khoản Microsoft. CLI `--account Jun` gõ tay vẫn dùng được như cũ.
+- **Xoá tài khoản chỉ gỡ đúng một.** Trước đây gỡ mọi hàng trùng tên — xoá tài khoản Ely.by
+  làm mất luôn vé đăng nhập Microsoft.
+
 ## 1.1.0 — 2026-09-26
 
 Một đợt làm lại giao diện. Bảy trang trước đây nhìn như một trang; giờ mỗi tab có sắc riêng,
