@@ -208,7 +208,7 @@ def test_unticking_shrinks_away_without_bouncing() -> None:
         "    onTriggered: { if (row.tickScale < parent.dip) parent.dip = row.tickScale } } }"
     )
     row = find(scene, "probe")
-    run_animation(250)          # để nó lên tới 1 trước
+    run_animation(250)  # để nó lên tới 1 trước
     scene.setProperty("dip", 1.0)
     row.setProperty("checked", False)
     run_animation(300)

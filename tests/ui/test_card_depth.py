@@ -34,7 +34,9 @@ def build_page_with_a_card(tmp_path: Path) -> QObject:
     view, _bridge = build_view(launcher)
     root_item = view.rootObject()
     assert root_item is not None
-    root_item.findChild(QObject, "sidebar").setProperty("currentIndex", 1)
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 1)
     QGuiApplication.processEvents()
     edge = find_item(root_item, "cardEdge")
     assert edge is not None, "thẻ bản chơi không có cạnh dưới — nó lại thành mảng phẳng"
@@ -52,6 +54,7 @@ def test_the_edge_stays_visible_against_the_ink_outline(tmp_path: Path) -> None:
     """Cạnh và nét mực nằm sát nhau. Cùng sắc độ thì cạnh biến mất — chỉ thấy khi chụp ảnh."""
     edge = build_page_with_a_card(tmp_path)
     card = edge.parent()
+    assert card is not None
 
     edge_colour = QColor(edge.property("color"))
     # `card.property("border")` trả về QQuickPen, PySide6 không đổi sang Python được.

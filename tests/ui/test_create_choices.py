@@ -36,11 +36,14 @@ def open_create_dialog(tmp_path: Path, preset_versions: list[str] | None = None)
         catalog_bridge.presetVersionsChanged.emit()
     root_item = view.rootObject()
     assert root_item is not None
-    root_item.findChild(QObject, "sidebar").setProperty("currentIndex", 1)
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 1)
     QGuiApplication.processEvents()
     dialog = root_item.findChild(QObject, "createDialog")
     assert dialog is not None, "không tìm thấy hộp tạo bản chơi"
-    dialog.openDialog()
+    # `openDialog` là hàm QML, mypy không thấy trên QObject.
+    dialog.openDialog()  # type: ignore[attr-defined]
     QGuiApplication.processEvents()
     return dialog
 
@@ -90,7 +93,9 @@ def test_the_play_block_says_what_is_missing(tmp_path: Path) -> None:
     assert home is not None and play is not None
 
     assert home.property("missingKind") == "account", "chưa đăng nhập thì hỏi tài khoản trước"
-    assert play.findChild(QObject, "missingAction").property("visible") is True
+    missing_action = play.findChild(QObject, "missingAction")
+    assert missing_action is not None
+    assert missing_action.property("visible") is True
 
     launcher.create_instance(Instance(instance_id="ban", version_id="1.21.1", display_name="B"))
     _bridge.instancesChanged.emit()
@@ -101,7 +106,7 @@ def test_the_play_block_says_what_is_missing(tmp_path: Path) -> None:
     _bridge.announce_accounts_changed()
     QGuiApplication.processEvents()
     assert home.property("missingKind") == "", "đủ tài khoản và bản chơi thì không còn thiếu gì"
-    assert play.findChild(QObject, "missingAction").property("visible") is False
+    assert missing_action.property("visible") is False
 
 
 def test_the_sidebar_shows_the_face_from_the_skin_file(tmp_path: Path) -> None:
@@ -118,9 +123,11 @@ def test_the_sidebar_shows_the_face_from_the_skin_file(tmp_path: Path) -> None:
 
     assert face.property("visible") is True, "tài khoản ngoại tuyến vẫn có skin Steve/Alex"
     assert str(face.property("source")).endswith(".png")
+    avatar = root_item.findChild(QObject, "sidebarAvatar")
+    assert avatar is not None
     letter = next(
         child
-        for child in root_item.findChild(QObject, "sidebarAvatar").children()
+        for child in avatar.children()
         if child.property("text") is not None and str(child.property("text")) == "J"
     )
     assert letter.property("visible") is False, "có mặt rồi thì không vẽ chữ cái đầu nữa"

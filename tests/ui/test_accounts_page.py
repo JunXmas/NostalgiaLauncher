@@ -101,9 +101,7 @@ def test_ely_row_goes_back_to_the_uuid_once_support_is_there(
     assert "đang tải hỗ trợ" not in _ely_account_detail(tmp_path, monkeypatch)
 
 
-def _accounts_page_at(
-    width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> QQuickItem:
+def _accounts_page_at(width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> QQuickItem:
     launcher = make_launcher(tmp_path)
     save_accounts(
         launcher.paths.accounts_json,

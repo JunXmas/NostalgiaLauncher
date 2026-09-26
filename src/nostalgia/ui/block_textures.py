@@ -49,6 +49,7 @@ FALLBACK_COLOURS: dict[str, tuple[QColor, QColor]] = {
     "redstone": (QColor(0xD4, 0x24, 0x24), QColor(0xBA, 0x1E, 0x1E)),
 }
 
+
 @dataclass(frozen=True)
 class BlockFaces:
     """Hai texture vuông của một khối: mặt trên và mặt bên."""

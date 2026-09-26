@@ -30,11 +30,11 @@ from nostalgia.ui.block_textures import (
 
 logger = logging.getLogger(__name__)
 
-FRAME_SIZE = 64          # cạnh mỗi khung, px
-FRAME_COUNT = 48         # số khung một vòng
-SUPERSAMPLE = 3          # vẽ gấp 3 rồi thu nhỏ: cạnh khối hết răng cưa
-TILT_DEGREES = 22.0      # nghiêng xuống, giống icon vật phẩm trong game
-START_DEGREES = 45.0     # khung 0 nhìn 3/4, không nhìn thẳng mặt
+FRAME_SIZE = 64  # cạnh mỗi khung, px
+FRAME_COUNT = 48  # số khung một vòng
+SUPERSAMPLE = 3  # vẽ gấp 3 rồi thu nhỏ: cạnh khối hết răng cưa
+TILT_DEGREES = 22.0  # nghiêng xuống, giống icon vật phẩm trong game
+START_DEGREES = 45.0  # khung 0 nhìn 3/4, không nhìn thẳng mặt
 
 # Khối đơn vị tâm ở gốc; mỗi mặt là 4 đỉnh thuận chiều kim đồng hồ khi nhìn từ ngoài.
 CUBE_FACES: dict[str, tuple[tuple[float, float, float], ...]] = {
@@ -54,7 +54,6 @@ FACE_SOURCE: dict[str, tuple[str, float]] = {
     "right": ("side", 0.62),
     "left": ("side", 0.62),
 }
-
 
 
 def _rotate(
@@ -99,8 +98,12 @@ def render_frame(faces: BlockFaces, angle_degrees: float, size: int) -> QImage:
         texture = shaded(faces.top if source_key == "top" else faces.side, brightness)
         transform = QTransform()
         source_quad = QPolygonF(
-            [QPointF(0, 0), QPointF(texture.width(), 0),
-             QPointF(texture.width(), texture.height()), QPointF(0, texture.height())]
+            [
+                QPointF(0, 0),
+                QPointF(texture.width(), 0),
+                QPointF(texture.width(), texture.height()),
+                QPointF(0, texture.height()),
+            ]
         )
         target_quad = QPolygonF([QPointF(x, y) for x, y in quad])
         if not QTransform.quadToQuad(source_quad, target_quad, transform):
@@ -153,9 +156,7 @@ def ensure_strips(cache_dir: Path, jar_path: Path | None) -> dict[str, Path]:
         if target.is_file():
             continue
         faces = (
-            faces_from_jar(jar_path, block)
-            if jar_path is not None and source == "jar"
-            else None
+            faces_from_jar(jar_path, block) if jar_path is not None and source == "jar" else None
         )
         if faces is None:
             faces = fallback_faces(block)

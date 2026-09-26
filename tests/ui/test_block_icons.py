@@ -25,6 +25,7 @@ from PySide6.QtQml import QQmlComponent, QQmlEngine
 from nostalgia.storage.paths import DataPaths
 from nostalgia.ui import blocks
 from nostalgia.ui.block_bridge import newest_client_jar
+from nostalgia.ui.block_textures import BLOCK_TEXTURES, fallback_faces
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -41,7 +42,7 @@ class FakeIcons(QObject):
 
     from PySide6.QtCore import Property
 
-    @Property("QVariant", constant=True)
+    @Property("QVariant", constant=True)  # type: ignore[arg-type]
     def strips(self) -> dict[str, str]:
         return self._strips
 
@@ -82,7 +83,7 @@ def test_the_rendered_cube_is_not_upside_down() -> None:
     Đảo dấu thì khối vẫn vẽ ra một hình lập phương trông hợp lý — chỉ là lộn ngược, và
     mắt người soi ảnh tĩnh rất dễ bỏ qua. Ở đây so độ sáng nên đảo dấu là đỏ ngay.
     """
-    frame = blocks.render_frame(blocks.fallback_faces("grass"), blocks.START_DEGREES, 64)
+    frame = blocks.render_frame(fallback_faces("grass"), blocks.START_DEGREES, 64)
 
     def brightness(y: int) -> float:
         row = [frame.pixelColor(x, y) for x in range(64)]
@@ -99,7 +100,7 @@ def test_the_rendered_cube_is_not_upside_down() -> None:
 def test_the_strip_holds_one_full_turn_of_distinct_frames() -> None:
     """Dải phải đủ `FRAME_COUNT` khung KHÁC nhau. Quên nhân góc theo chỉ số thì mọi khung
     giống hệt nhau, ảnh vẫn ra đúng kích thước và không có lỗi nào nổi lên."""
-    strip = blocks.render_strip(blocks.fallback_faces("diamond"))
+    strip = blocks.render_strip(fallback_faces("diamond"))
     assert strip.width() == blocks.FRAME_SIZE * blocks.FRAME_COUNT
     size = blocks.FRAME_SIZE
     first = strip.copy(0, 0, size, size)
@@ -116,7 +117,9 @@ def test_strips_come_from_the_jar_when_one_is_present(tmp_path: Path) -> None:
     jar = tmp_path / "client.jar"
     plate = QImage(16, 16, QImage.Format.Format_ARGB32)
     plate.fill(QColor(0xFF, 0x00, 0xFF))  # hồng cánh sen: không màu dự phòng nào giống
-    plate.save(str(tmp_path / "t.png"), "PNG")
+    # Stub PySide6 khai `format: bytes`, nhưng runtime chỉ nhận `str` — đưa bytes vào
+    # là ValueError. Tin runtime, không tin stub.
+    plate.save(str(tmp_path / "t.png"), "PNG")  # type: ignore[call-overload]
     with zipfile.ZipFile(jar, "w") as archive:
         for name in ("grass_block_top", "grass_block_side"):
             archive.write(tmp_path / "t.png", f"assets/minecraft/textures/block/{name}.png")
@@ -133,7 +136,7 @@ def test_strips_come_from_the_jar_when_one_is_present(tmp_path: Path) -> None:
 def test_no_jar_still_yields_every_icon(tmp_path: Path) -> None:
     """Chưa cài bản chơi nào thì vẫn phải đủ icon — launcher mới cài là đúng cảnh này."""
     made = blocks.ensure_strips(tmp_path / "cache", None)
-    assert set(made) == set(blocks.BLOCK_TEXTURES)
+    assert set(made) == set(BLOCK_TEXTURES)
     assert all(path.name.endswith("_code.png") for path in made.values())
 
 
@@ -160,8 +163,7 @@ def test_the_icon_falls_back_to_a_glyph_until_the_strip_exists() -> None:
     """Chưa sinh xong dải thì phải hiện chữ. Không có bước này thì thanh bên trống trơn
     trong suốt giây đầu mở launcher."""
     scene = build(
-        "import QtQuick\n"
-        'Item { BlockIcon { objectName: "probe"; block: "grass"; glyph: "⌂" } }'
+        'import QtQuick\nItem { BlockIcon { objectName: "probe"; block: "grass"; glyph: "⌂" } }'
     )
     icon = find(scene, "probe")
     assert icon.property("ready") is False

@@ -26,8 +26,12 @@ def test_font_files_are_present() -> None:
     """Thiếu file là mất diện mạo — và mất lặng lẽ, nên phải bắt ở đây."""
     missing = [
         name
-        for name in ("Inter-Regular.ttf", "Inter-Medium.ttf",
-                     "Inter-SemiBold.ttf", "MinecraftF2D.otf")
+        for name in (
+            "Inter-Regular.ttf",
+            "Inter-Medium.ttf",
+            "Inter-SemiBold.ttf",
+            "MinecraftF2D.otf",
+        )
         if not (FONTS_DIR / name).is_file()
     ]
     assert not missing, f"thiếu file font: {missing}"
@@ -106,9 +110,7 @@ def test_theme_has_one_accent_per_sidebar_entry() -> None:
     sidebar = (QML_DIR / "Sidebar.qml").read_text(encoding="utf-8")
     entries = re.findall(r"\{\s*label:\s*Tr\.text\(", sidebar)
 
-    assert len(accents) == len(entries), (
-        f"{len(accents)} màu nhấn cho {len(entries)} mục thanh bên"
-    )
+    assert len(accents) == len(entries), f"{len(accents)} màu nhấn cho {len(entries)} mục thanh bên"
 
 
 def test_accents_are_all_distinct() -> None:
