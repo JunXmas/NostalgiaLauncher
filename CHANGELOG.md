@@ -5,7 +5,33 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## 1.1.1 — 2026-09-26
 
-Bản vá một lỗi: **nút "Dùng" không bao giờ hiện** nếu bạn có hai tài khoản trùng tên
+Hai lỗi được vá và một tính năng cũ quay lại.
+
+### Tự cập nhật trên Windows chạy lại được
+
+Người dùng 1.0.15 Windows báo launcher không tự lên bản mới. Script tráo thư mục là
+batch chạy qua `cmd.exe`, và nó chết hoàn toàn im lặng theo ba đường cùng lúc:
+`timeout /t` thoát ngay khi stdin bị redirect (vòng chờ không ngủ giây nào), `cmd.exe`
+đọc script theo OEM codepage (tên người dùng có dấu tiếng Việt là đường dẫn thành rác),
+và `move` không thử lại khi Defender còn giữ file exe vài giây sau khi launcher thoát.
+
+- Script tráo nay là **PowerShell** (sẵn trên mọi Windows 10/11): ghi UTF-8 có BOM,
+  chờ PID có deadline, move thử lại 30 lần, chép hỏng thì trả lại thư mục cũ.
+- CI thêm job chạy test bộ tự cập nhật **trên Windows thật** — bug này sống sót được
+  vì mọi test Windows đều bị skip trên máy dev Linux.
+- **Người dùng 1.0.15–1.1.0 trên Windows cần cài tay bản này một lần** (tải
+  `setup.exe` hoặc `.zip` ở trang release) — bộ tự cập nhật của bản cũ chính là thứ
+  bị hỏng. Từ 1.1.1 trở đi tự cập nhật chạy bình thường.
+
+### Thẻ hành tinh quay lại — khi thanh bên thu gọn
+
+Thanh bên có nút **THU GỌN**: gọn còn cột icon, và ở trang chủ sáu mục điều hướng
+bay ra thành sáu thẻ neo vào các hành tinh trong ảnh nền. Rê chuột là thẻ nhấc lên
+và **hành tinh sáng quầng**. Mở thanh bên lại thì thẻ nhường chỗ — không lúc nào có
+hai đường đi trùng nhau (lý do bộ thẻ cũ bị bỏ ở 1.0.14).
+
+### Nút "Dùng" không bao giờ hiện nếu hai tài khoản trùng tên
+
 (ví dụ một Microsoft và một Ely.by cùng tên "JunSlayest").
 
 - **Danh tính tài khoản khoá theo `account_id` (`kind:uuid`)**, không theo tên nữa. Trước

@@ -9,8 +9,9 @@ import QtQuick
   kích thước cửa sổ thì chấm neo vẫn đứng đúng hành tinh. `pivot` là vị trí ưu tiên của chấm
   neo trên bề ngang thẻ; thẻ bị đẩy vào vùng trống thì dịch, chấm neo đứng yên.
 
-  Rê chuột: thẻ NHẤC LÊN và hành tinh GLOW — quầng sáng là ảnh PNG toả tròn (assets/glow.png,
-  sinh bằng script trong repo) vì máy không có GL phần cứng thì shader vẽ ra ảnh trắng.
+  Rê chuột: thẻ NHẤC LÊN và hành tinh GLOW — quầng sáng là ảnh PNG toả tròn
+  (assets/glow.png: trắng, alpha = (1-d)^1.5, 256px — sinh một lần bằng stdlib Python)
+  vì máy không có GL phần cứng thì shader vẽ ra ảnh trắng, không dùng Glow của Qt5Compat.
   Không có hoạt ảnh vô hạn: glow chỉ chuyển khi hover đổi, đứng yên tốn 0% CPU.
 */
 Item {
