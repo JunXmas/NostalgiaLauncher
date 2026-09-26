@@ -9,9 +9,6 @@ Item {
     id: window
     implicitWidth: 1360
     implicitHeight: 860
-    // Loại nội dung mà Thư viện nên mở sẵn (thẻ TÀI NGUYÊN trên hero đặt "resourcepack").
-    property string libraryKind: ""
-
     /* Nền pha một chút màu của tab đang mở, và chuyển màu chứ không nhảy.
 
        Chỉ 6% — đủ để cả khung hình nghiêng về sắc của tab, chưa đủ để thành một nền có màu
@@ -55,12 +52,11 @@ Item {
             opacity: 0
             onLoaded: fadeIn.restart()
 
-            // Thẻ trên hero bấm được: chúng đổi trang y như bấm ở thanh bên.
+            // Khối "còn thiếu" ở trang chủ đổi trang y như bấm ở thanh bên.
             Connections {
                 target: pageLoader.item
                 ignoreUnknownSignals: true
                 function onNavigate(pageIndex) { sidebar.currentIndex = pageIndex; }
-                function onNavigateToLibrary(contentKind) { window.libraryKind = contentKind; sidebar.currentIndex = 2; }
             }
 
             NumberAnimation on opacity {

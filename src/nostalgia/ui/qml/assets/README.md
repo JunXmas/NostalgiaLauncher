@@ -7,5 +7,5 @@ bị chê mờ), **không cắt**: ảnh làm nền cho toàn vùng nội dung c
 "cover" nên hai bên có thể bị xén tuỳ tỉ lệ cửa sổ. `Image` vẽ với `mipmap: true` vì ảnh luôn
 bị thu nhỏ.
 
-Toạ độ công trình trong `HeroPanel.qml` là phần trăm trên ảnh gốc; `HeroPanel` tự ánh xạ qua
-phép cắt cover. Đổi ảnh là phải đo lại.
+Không còn thẻ nào neo vào công trình trong ảnh, nên đổi ảnh không phải đo lại toạ độ — chỉ cần
+nó vẫn đủ tối ở đáy để dải bản chơi đọc được.

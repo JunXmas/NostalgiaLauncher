@@ -2,9 +2,16 @@ import QtQuick
 import "../"
 
 /*
-  Trang chủ: ảnh làng phủ kín vùng nội dung; mọi thứ khác là tấm kính nổi trên ảnh — lời chào
-  và pill trạng thái ở góc trên trái, cột thông tin bên phải, dải bản chơi dưới cùng, và sáu
-  thẻ neo vào công trình trong ảnh. Nút CHƠI đứng giữa khoảng trống trước dải bản chơi.
+  Trang chủ: ảnh làng phủ kín vùng nội dung, mọi thứ khác nổi trên ảnh — lời chào góc trên
+  trái, khối CHƠI ở giữa, cột CHƠI TIẾP + BẠN BÈ bên phải, dải bản chơi dưới cùng.
+
+  KHÔNG còn sáu thẻ neo vào công trình trong ảnh. Chúng dẫn tới đúng những trang mà thanh bên
+  đã dẫn tới, nên người dùng có hai đường đi khác hình dạng cho cùng một đích — và trên ảnh
+  sao thì chúng che mất chính thứ làm trang chủ đẹp. Thanh bên là đường duy nhất để chuyển
+  trang; trang chủ chỉ còn việc của riêng nó là CHƠI.
+
+  Ô HỒ SƠ cũng bỏ: thanh bên đã có thẻ tài khoản ở chân, và trang TÀI KHOẢN làm việc đó đầy
+  đủ hơn. Cần đăng nhập thì khối CHƠI nói ngay tại chỗ.
 */
 Item {
     id: page
@@ -15,7 +22,6 @@ Item {
     // nguyên trong phiên.
     property int chosenIndex: page.lastPlayedIndex()
     signal navigate(int pageIndex)
-    signal navigateToLibrary(string contentKind)
 
     readonly property var chosen: bridge.instances.length > 0
                                   ? bridge.instances[Math.min(chosenIndex, bridge.instances.length - 1)] : null
@@ -46,6 +52,10 @@ Item {
     function playChosen() {
         if (page.chosen && bridge.activePlayerName) bridge.play(page.chosen.instanceId);
     }
+    /* Thứ còn thiếu để bấm CHƠI được. Tài khoản trước bản chơi: tạo bản chơi xong mà chưa
+       đăng nhập thì vẫn chưa chơi được, nên hỏi cái chặn trước. */
+    readonly property string missingKind: bridge.activePlayerName.length === 0 ? "account"
+                                        : bridge.instances.length === 0 ? "instance" : ""
 
     // ----- ảnh nền phủ kín, tối dần về đáy để chữ và kính nổi rõ -----
     // Ảnh 2528 px, luôn bị thu nhỏ: mipmap để Qt lọc đúng khi thu (không mipmap là lấy mẫu
@@ -57,22 +67,18 @@ Item {
         fillMode: Image.PreserveAspectCrop
         smooth: true; mipmap: true
     }
+    /* Lớp phủ đậm hơn hẳn bản cũ (#26/#33/#c0).
+
+       Ảnh dải ngân hà có nhiễu sao khắp khung, nên chữ trắng đặt lên bất kỳ đâu cũng có chỗ
+       tương phản kém. Đậm hơn là đổi ảnh từ "hình chính" thành "phông nền", và đó đúng là
+       vai trò của nó — thứ phải đọc được là chữ, không phải từng ngôi sao. */
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.00; color: "#26000000" }
-            GradientStop { position: 0.55; color: "#33000000" }
-            GradientStop { position: 1.00; color: "#c0080c09" }
+            GradientStop { position: 0.00; color: "#73101520" }
+            GradientStop { position: 0.55; color: "#8c0e121b" }
+            GradientStop { position: 1.00; color: "#e60c1017" }
         }
-    }
-
-    HeroPanel {
-        anchors.fill: parent
-        photo: photo
-        instanceCount: bridge.instances.length
-        reservedRight: page.rightColumnWidth + Theme.gap * 2
-        onNavigate: function (pageIndex) { page.navigate(pageIndex); }
-        onNavigateToLibrary: function (contentKind) { page.navigateToLibrary(contentKind); }
     }
 
     /* ----- góc trên trái: lời chào -----
@@ -144,18 +150,21 @@ Item {
         }
     }
 
-    // ----- nút CHƠI: giữa vùng trái, ngay trên dải bản chơi -----
+    // ----- khối CHƠI: giữa vùng trái, ngay trên dải bản chơi -----
     PlayButton {
+        objectName: "playBlock"
         anchors { bottom: instanceStrip.top; bottomMargin: 22 }
         x: Math.round((rightColumn.x - width) / 2)
         playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
         running: bridge.gameRunning
         instances: bridge.instances
         chosenIndex: page.chosenIndex
+        missingKind: page.missingKind
         onClicked: page.playChosen()
         onStopRequested: bridge.stopGame()
         onPicked: function (index) { page.chosenIndex = index; }
         onCreateRequested: page.navigate(1)
+        onAddAccountRequested: page.navigate(3)
     }
 
     // ----- cột phải: kính nổi trên ảnh -----
@@ -165,24 +174,10 @@ Item {
         anchors { top: parent.top; right: parent.right; margins: Theme.gap; topMargin: 76 }
         spacing: Theme.gap
 
-        ProfileCard {
-            id: profileCard
-            objectName: "profileCard"
-            width: parent.width
-            height: implicitHeight
-            Behavior on height { NumberAnimation { duration: Theme.quick } }
-            translucent: true
-            accounts: bridge.accounts
-            activePlayerName: bridge.activePlayerName
-            onAddAccountRequested: function (name) { if (name) bridge.addOfflineAccount(name); }
-            onMicrosoftSignInRequested: bridge.signInMicrosoft()
-            onAccountChosen: function (name) { bridge.setActiveAccount(name); }
-            onRemoveRequested: function (name) { bridge.removeAccount(name); }
-        }
         ContinueCard {
             objectName: "continueCard"
             width: parent.width
-            height: Math.min(340, page.height - 380)
+            height: Math.min(340, page.height - 260)
             translucent: true
             worlds: bridge.recentWorlds
             servers: bridge.recentServers
