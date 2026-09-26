@@ -166,3 +166,19 @@ def _collect(node: QQuickItem, name: str, found: list[QQuickItem]) -> None:
         found.append(node)
     for child in node.childItems():
         _collect(child, name, found)
+
+
+def test_the_use_button_never_appears_under_the_cursor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nút Dùng nằm đè lên vùng hover của hàng. Cho nó `visible` theo hover thì nó hiện ra
+    ngay dưới con trỏ — một item vừa xuất hiện dưới con trỏ là một lần tính lại hover, và
+    mắt thấy nút chớp. Nên nút phải LUÔN nằm trong cây, chỉ mờ đi bằng `opacity`."""
+    root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
+    buttons: list[QQuickItem] = []
+    _collect(root_item, "useAccountButton", buttons)
+    assert buttons, "không tìm thấy nút Dùng nào"
+
+    for button in buttons:
+        assert button.isVisible() is True, "nút Dùng bật/tắt bằng visible — sẽ chớp khi trỏ vào"
+        assert button.opacity() == 0.0, "chưa trỏ vào hàng nào thì nút phải trong suốt"

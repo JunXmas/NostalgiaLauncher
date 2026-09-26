@@ -65,7 +65,12 @@ Item {
                 readonly property bool active: modelData.playerName === bridge.activePlayerName
                 readonly property bool shownHere: modelData.playerName === page.shownName
                 width: ListView.view.width; height: 54; radius: Theme.radiusSmall
-                color: active ? Theme.accentSoft : (rowHover.containsMouse ? Theme.surfaceHigh : "transparent")
+                /* Hover của cả hàng đo bằng `HoverHandler` chứ không bằng `containsMouse` của
+                   MouseArea: handler CHỒNG nhau được, nên nút Dùng nằm đè lên vẫn không cướp
+                   mất hover của hàng. MouseArea thì độc quyền — con trỏ vào nút là hàng mất
+                   hover, nút ẩn đi, hàng lại có hover… vòng lặp, và mắt thấy nó chớp. */
+                HoverHandler { id: rowHovered }
+                color: active ? Theme.accentSoft : (rowHovered.hovered ? Theme.surfaceHigh : "transparent")
                 border.color: active ? Theme.accent : (shownHere ? Theme.border : "transparent")
                 Row {
                     anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
@@ -110,24 +115,32 @@ Item {
                 }
                 /* Nút chuyển tài khoản. Bấm cả hàng cũng chuyển được và vẫn giữ, nhưng đó là
                    thứ không ai đoán ra: hàng không trông giống nút, và dấu ✓ chỉ nói hàng NÀO
-                   đang dùng chứ không nói làm sao đổi sang hàng khác. */
+                   đang dùng chứ không nói làm sao đổi sang hàng khác.
+
+                   Mờ/tỏ bằng `opacity`, KHÔNG bằng `visible` — giống dấu ✕ ngay dưới. Nút nằm
+                   đè lên vùng hover của hàng; cho nó `visible` theo hover thì nó hiện ra ngay
+                   dưới con trỏ, và một item vừa xuất hiện dưới con trỏ là một lần tính lại
+                   hover. Để nút luôn có mặt thì không có gì xuất hiện cả. `enabled` khoá lại
+                   cho khỏi bấm nhầm vào nút đang trong suốt. */
                 ActionButton {
                     objectName: "useAccountButton"
                     anchors { right: parent.right; rightMargin: 40; verticalCenter: parent.verticalCenter }
-                    visible: !row.active && rowHover.containsMouse
+                    opacity: !row.active && rowHovered.hovered ? 1 : 0
+                    enabled: opacity > 0
                     height: 26; fontSize: 11; label: "Dùng"
+                    Behavior on opacity { NumberAnimation { duration: Theme.quick } }
                     onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
                 }
                 Text {
                     anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
                     text: "✕"; font.pixelSize: Theme.fontBody
                     color: removeArea.containsMouse ? Theme.danger : Theme.textMuted
-                    opacity: rowHover.containsMouse ? 1 : 0
+                    opacity: rowHovered.hovered ? 1 : 0
                     MouseArea { id: removeArea; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor; onClicked: bridge.removeAccount(modelData.playerName) }
                 }
                 MouseArea {
-                    id: rowHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; z: -1
+                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor; z: -1
                     onClicked: { page.shownName = modelData.playerName; bridge.setActiveAccount(modelData.playerName); }
                 }
             }
