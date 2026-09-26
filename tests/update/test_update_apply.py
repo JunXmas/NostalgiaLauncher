@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -25,7 +26,13 @@ from nostalgia.update.apply import (
     write_swap_script,
 )
 
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="script sh chỉ chạy trên POSIX")
+# Test script sh cần POSIX; test PowerShell cần powershell/pwsh. KHÔNG skip cả file:
+# bug 1.0.15 sống sót được chính vì mọi test Windows đều bị skip trên máy dev Linux.
+posix_only = pytest.mark.skipif(os.name == "nt", reason="script sh chỉ chạy trên POSIX")
+_POWERSHELL = shutil.which("powershell") or shutil.which("pwsh")
+needs_powershell = pytest.mark.skipif(
+    _POWERSHELL is None, reason="máy không có powershell/pwsh để chạy script thật"
+)
 
 
 def make_tree(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -41,6 +48,7 @@ def make_tree(tmp_path: Path) -> tuple[Path, Path, Path]:
     return install, staged, marker
 
 
+@posix_only
 def test_swap_waits_for_the_old_process_then_replaces_and_relaunches(tmp_path: Path) -> None:
     install, staged, marker = make_tree(tmp_path)
     sleeper = subprocess.Popen(["sleep", "0.3"])
@@ -62,6 +70,7 @@ def test_swap_waits_for_the_old_process_then_replaces_and_relaunches(tmp_path: P
     assert staged.is_dir(), "bản bung vẫn còn để lần sau không tải lại nếu cần"
 
 
+@posix_only
 def test_failed_copy_restores_the_old_install(tmp_path: Path) -> None:
     install, _staged, marker = make_tree(tmp_path)
     missing_staged = tmp_path / "updates" / "khong-ton-tai"
@@ -75,11 +84,12 @@ def test_failed_copy_restores_the_old_install(tmp_path: Path) -> None:
     assert not marker.exists()
 
 
-def test_windows_launch_uses_create_no_window_not_detached_process(
+def test_windows_launch_uses_powershell_no_window_not_detached_process(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """JL-7: DETACHED_PROCESS không ẩn được console của `cmd.exe` (nó tự AllocConsole) và làm
-    CREATE_NO_WINDOW bị Windows lờ đi khi dùng chung — phải thay cờ, không phải thêm."""
+    """JL-7 + bug 1.0.15: phải là `powershell.exe -File` (batch qua `cmd.exe` chết ở
+    `timeout /t` khi stdin=DEVNULL và ở codepage với đường dẫn có dấu). Cờ vẫn là
+    CREATE_NO_WINDOW thay DETACHED_PROCESS — dùng chung là Windows lờ CREATE_NO_WINDOW đi."""
     captured: dict[str, object] = {}
 
     def fake_popen(argv: list[str], **kwargs: object) -> None:
@@ -88,24 +98,117 @@ def test_windows_launch_uses_create_no_window_not_detached_process(
 
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
 
-    launch_swap_script(tmp_path / "apply-update.cmd", windows=True)
+    launch_swap_script(tmp_path / "apply-update.ps1", windows=True)
 
+    argv = captured["argv"]
+    assert isinstance(argv, list)
+    assert argv[0] == "powershell.exe", "batch/cmd.exe là con đường của bug 1.0.15"
+    assert "-NoProfile" in argv and "-File" in argv
     flags = captured["kwargs"]["creationflags"]  # type: ignore[index]
     assert flags == CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
     assert flags & 0x00000008 == 0, "DETACHED_PROCESS (0x8) không được còn"
 
 
-def test_windows_script_and_source_install_kind() -> None:
-    plan = SwapPlan(
-        Path(r"C:\Nostalgia"),
-        Path(r"C:\Data\updates\0.2.0"),
-        Path(r"C:\Nostalgia\nostalgia-ui.exe"),
+def _windows_plan() -> SwapPlan:
+    # Đường dẫn có dấu tiếng Việt + khoảng trắng — đúng hình dạng cài mặc định
+    # (C:\Users\<tên>\AppData\Local\Programs) làm bản batch 1.0.15 chết ở codepage.
+    return SwapPlan(
+        Path(r"C:\Users\Tuấn Anh\AppData\Local\Programs\Nostalgia"),
+        Path(r"C:\Users\Tuấn Anh\AppData\Roaming\nostalgia\updates\1.1.1"),
+        Path(r"C:\Users\Tuấn Anh\AppData\Local\Programs\Nostalgia\nostalgia-ui.exe"),
         4242,
     )
-    script = render_swap_script(plan, windows=True)
-    assert "tasklist" in script and "4242" in script and "xcopy" in script
-    assert 'move "C:\\Nostalgia.old" "C:\\Nostalgia"' in script, "chép hỏng thì trả lại"
+
+
+def test_windows_script_is_powershell_not_batch() -> None:
+    script = render_swap_script(_windows_plan(), windows=True)
+    assert "Wait-Process" not in script, "chờ bằng vòng Get-Process để có deadline"
+    assert "Get-Process -Id 4242" in script
+    assert "Start-Sleep" in script
+    # Ba vết dao găm của bản batch — không được quay lại:
+    assert "timeout /t" not in script, "timeout.exe chết khi stdin bị redirect"
+    assert "xcopy" not in script and "@echo off" not in script
+    assert "Move-Item" in script and "Copy-Item" in script
+    assert "'C:\\Users\\Tuấn Anh\\AppData\\Local\\Programs\\Nostalgia'" in script
     assert detect_install_kind() == INSTALL_KIND_SOURCE, "test chạy từ mã nguồn, không phải gói"
+
+
+def test_windows_script_retries_the_move_and_restores_on_failed_copy() -> None:
+    """Defender giữ file exe vài giây sau khi tiến trình thoát → move phải thử lại;
+    chép hỏng thì trả lại thư mục cũ — người dùng không bao giờ mất launcher."""
+    script = render_swap_script(_windows_plan(), windows=True)
+    assert "$try -lt 30" in script, "move phải có vòng thử lại"
+    assert script.index("catch") < script.rindex("Move-Item"), "trong catch phải trả lại bản cũ"
+    assert "exit 1" in script
+
+
+def test_windows_script_written_with_bom(tmp_path: Path) -> None:
+    """PowerShell 5.1 đọc file không BOM theo ANSI codepage — đường dẫn có dấu thành rác."""
+    script_path = write_swap_script(_windows_plan(), tmp_path / "scripts", windows=True)
+    assert script_path.name == "apply-update.ps1"
+    raw = script_path.read_bytes()
+    assert raw.startswith(b"\xef\xbb\xbf"), "thiếu BOM UTF-8"
+    assert "Tuấn Anh" in raw.decode("utf-8-sig")
+
+
+@needs_powershell
+def test_powershell_swap_waits_replaces_and_restores(tmp_path: Path) -> None:
+    """Chạy script THẬT bằng PowerShell (pwsh trên Linux CI, powershell trên Windows):
+    chờ tiến trình, tráo thư mục, dọn bản cũ; và đường hỏng thì trả lại nguyên trạng."""
+    assert _POWERSHELL is not None
+    install = tmp_path / "Nostalgia thử ứ"  # khoảng trắng + dấu: đúng chỗ batch cũ chết
+    staged = tmp_path / "updates" / "1.1.1"
+    for directory, body in ((install, "cũ"), (staged, "mới")):
+        (directory / "lib").mkdir(parents=True)
+        (directory / "lib" / "core.dll").write_text(body, encoding="utf-8")
+        (directory / "nostalgia-ui.exe").write_text("", encoding="utf-8")
+
+    sleeper = subprocess.Popen(
+        [_POWERSHELL, "-NoProfile", "-Command", "Start-Sleep -Milliseconds 300"]
+    )
+    threading.Thread(target=sleeper.wait, daemon=True).start()
+    plan = SwapPlan(install, staged, install / "nostalgia-ui.exe", sleeper.pid)
+    # Start-Process cuối script sẽ fail (file .exe rỗng không chạy được trên Linux) — cắt
+    # dòng đó đi: điều test gác là CHỜ + TRÁO + DỌN, việc mở lại đã có test render gác chữ.
+    script = "\n".join(
+        line
+        for line in render_swap_script(plan, windows=True).splitlines()
+        if not line.startswith("Start-Process")
+    )
+    script_path = tmp_path / "apply-update.ps1"
+    script_path.write_text(script, encoding="utf-8-sig")
+
+    subprocess.run(
+        [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)],
+        check=True,
+        timeout=60,
+    )
+
+    assert (install / "lib" / "core.dll").read_text(encoding="utf-8") == "mới"
+    assert not install.with_name(install.name + ".old").exists(), "bản cũ phải được dọn"
+    assert staged.is_dir(), "bản bung vẫn còn để lần sau không tải lại nếu cần"
+
+
+@needs_powershell
+def test_powershell_failed_copy_restores_the_old_install(tmp_path: Path) -> None:
+    assert _POWERSHELL is not None
+    install = tmp_path / "Nostalgia"
+    (install / "lib").mkdir(parents=True)
+    (install / "lib" / "core.dll").write_text("cũ", encoding="utf-8")
+    missing_staged = tmp_path / "updates" / "khong-ton-tai"
+    plan = SwapPlan(install, missing_staged, install / "nostalgia-ui.exe", os.getpid() + 100_000)
+    script_path = tmp_path / "apply-update.ps1"
+    script_path.write_text(render_swap_script(plan, windows=True), encoding="utf-8-sig")
+
+    result = subprocess.run(
+        [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)],
+        timeout=60,
+    )
+
+    assert result.returncode == 1
+    assert (install / "lib" / "core.dll").read_text(encoding="utf-8") == "cũ", (
+        "thất bại thì bản cũ phải nguyên"
+    )
 
 
 def _make_frozen_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
@@ -131,8 +234,12 @@ def test_appimage_env_blocks_swap_even_if_writable(
     assert detect_install_kind() == INSTALL_KIND_APPIMAGE
 
 
-@pytest.mark.skipif(os.name == "nt", reason="chmod 0o555 không áp dụng kiểu POSIX trên Windows")
-@pytest.mark.skipif(os.geteuid() == 0, reason="root ghi được cả thư mục 0o555 — test vô nghĩa")
+# Một điều kiện gộp: `os.geteuid` không tồn tại trên Windows, tách hai decorator là nổ
+# ngay lúc pytest thu thập test trên runner Windows.
+@pytest.mark.skipif(
+    os.name == "nt" or os.geteuid() == 0,
+    reason="chmod 0o555 cần POSIX, và root thì ghi được cả thư mục 0o555",
+)
 def test_readonly_install_dir_blocks_swap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """JL-9: `install_dir` không có quyền ghi (`.deb`/`.rpm` ở `/opt` chủ root) — không tráo
     được."""

@@ -48,3 +48,18 @@ jobs:
         run: uv run pytest -m "not network" -q
       - name: Đóng gói thử
         run: uv build
+
+  # Bug 1.0.15 (updater Windows chết im lặng) sống sót được vì không test nào từng chạy
+  # trên Windows. Job này nhỏ: chỉ bộ tự cập nhật, chạy script tráo bằng PowerShell thật.
+  check-windows-updater:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Test bộ tự cập nhật trên Windows
+        run: uv run pytest tests/update -q

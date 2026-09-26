@@ -5,6 +5,16 @@ mở), nên launcher viết một script tráo thư mục rồi thoát; script c
 `install` → `install.old`, chép bản mới vào, xoá bản cũ, mở launcher mới. Chép hỏng thì trả
 lại thư mục cũ — người dùng không bao giờ bị mất launcher.
 
+Trên Windows script là POWERSHELL, không phải batch. Bản batch (đến 1.1.0) chết ba đường
+cùng lúc, và vì nó chạy sau khi launcher đã thoát nên chết hoàn toàn im lặng:
+  • `timeout /t` thoát ngay khi stdin bị redirect (launcher spawn `cmd.exe` với
+    stdin=DEVNULL) — vòng chờ không ngủ giây nào, quay hết 600 lượt rồi bỏ cuộc;
+  • batch ghi UTF-8 nhưng `cmd.exe` đọc theo OEM codepage — tên người dùng Windows có dấu
+    tiếng Việt là mọi đường dẫn trong script thành rác;
+  • `move` không thử lại khi Defender còn giữ file exe một nhịp sau khi tiến trình thoát.
+PowerShell 5.1 có sẵn trên mọi Windows 10/11, đọc UTF-8 có BOM đúng, `Wait-Process` chờ
+PID tử tế, `Start-Sleep` không đụng stdin.
+
 Chạy từ mã nguồn (`uv run nostalgia-ui`) thì không áp được: cập nhật là việc của `git pull`
 + `uv sync`; ở đây chỉ nói rõ điều đó.
 """
@@ -93,9 +103,22 @@ def detect_install_kind() -> str:
         return INSTALL_KIND_APP
     if os.environ.get("APPIMAGE"):
         return INSTALL_KIND_APPIMAGE
-    if not os.access(current_install_dir(), os.W_OK):
+    if not _dir_is_writable(current_install_dir()):
         return INSTALL_KIND_READONLY
     return INSTALL_KIND_FROZEN
+
+
+def _dir_is_writable(directory: Path) -> bool:
+    """Thử ghi THẬT một file tạm rồi xoá. `os.access(..., os.W_OK)` trên Windows chỉ nhìn
+    thuộc tính read-only chứ không nhìn ACL — cài toàn máy vào Program Files nó vẫn báo
+    "ghi được", rồi script tráo chết im lặng ở bước move."""
+    probe = directory / f".nostalgia-write-probe-{os.getpid()}"
+    try:
+        probe.touch()
+        probe.unlink()
+        return True
+    except OSError:
+        return False
 
 
 def current_install_dir() -> Path:
@@ -106,7 +129,7 @@ def current_install_dir() -> Path:
 def render_swap_script(plan: SwapPlan, *, windows: bool = os.name == "nt") -> str:
     """Nội dung script tráo thư mục cho hệ đang chạy."""
     if windows:
-        return _render_cmd(plan)
+        return _render_ps1(plan)
     return _render_sh(plan)
 
 
@@ -114,8 +137,13 @@ def write_swap_script(
     plan: SwapPlan, scripts_dir: Path, *, windows: bool = os.name == "nt"
 ) -> Path:
     ensure_dir(scripts_dir)
-    script_path = scripts_dir / ("apply-update.cmd" if windows else "apply-update.sh")
-    script_path.write_text(render_swap_script(plan, windows=windows), encoding="utf-8")
+    script_path = scripts_dir / ("apply-update.ps1" if windows else "apply-update.sh")
+    # utf-8-sig: PowerShell 5.1 đọc file KHÔNG BOM theo ANSI codepage — đường dẫn có dấu
+    # tiếng Việt (C:\Users\Tuấn\...) thành rác. BOM là cách duy nhất ép nó đọc UTF-8.
+    script_path.write_text(
+        render_swap_script(plan, windows=windows),
+        encoding="utf-8-sig" if windows else "utf-8",
+    )
     if not windows:
         set_executable(script_path)
     return script_path
@@ -124,13 +152,24 @@ def write_swap_script(
 def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") -> None:
     """Chạy script tách hẳn khỏi launcher, để launcher thoát mà script vẫn sống."""
     if windows:
-        # DETACHED_PROCESS (bỏ ở đây) chỉ nói "đừng kế thừa console của cha" — `cmd.exe` vẫn tự
-        # AllocConsole và Windows dựng một cửa sổ mới. CREATE_NO_WINDOW mới là cờ đúng, nhưng nó
-        # bị Windows lờ đi khi dùng chung DETACHED_PROCESS, nên phải THAY chứ không phải thêm.
-        # Bỏ DETACHED_PROCESS không làm script chết theo cha: Windows không có process-tree kill
-        # mặc định, và ở đây không gắn JobObject nào ràng script vào vòng đời launcher.
+        # DETACHED_PROCESS (bỏ ở đây) chỉ nói "đừng kế thừa console của cha" — tiến trình vẫn
+        # tự AllocConsole và Windows dựng một cửa sổ mới. CREATE_NO_WINDOW mới là cờ đúng,
+        # nhưng nó bị Windows lờ đi khi dùng chung DETACHED_PROCESS, nên phải THAY chứ không
+        # phải thêm. Bỏ DETACHED_PROCESS không làm script chết theo cha: Windows không có
+        # process-tree kill mặc định, và không có JobObject nào ràng script vào launcher.
+        #
+        # `powershell.exe` (5.1) chứ không `cmd.exe`: xem docstring đầu file — batch chết
+        # ở stdin=DEVNULL (timeout /t), ở codepage (đường dẫn có dấu), và không retry được.
         subprocess.Popen(
-            ["cmd.exe", "/c", str(script_path)],
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script_path),
+            ],
             creationflags=CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
             close_fds=True,
             stdin=subprocess.DEVNULL,
@@ -176,32 +215,57 @@ nohup {executable} </dev/null >/dev/null 2>&1 &
 """
 
 
-def _render_cmd(plan: SwapPlan) -> str:
-    install, staged = str(plan.install_dir), str(plan.staged_dir)
-    old = str(plan.install_dir.with_name(plan.install_dir.name + ".old"))
-    return f"""@echo off
-rem Nostalgia Launcher — tráo bản mới sau khi launcher cũ thoát. Tự sinh, đừng sửa tay.
-set tries=0
-:wait
-tasklist /FI "PID eq {plan.wait_pid}" 2>nul | find "{plan.wait_pid}" >nul
-if not errorlevel 1 (
-    set /a tries+=1
-    if %tries% gtr 600 exit /b 1
-    timeout /t 1 /nobreak >nul
-    goto wait
-)
-if exist "{old}" rmdir /s /q "{old}"
-move "{install}" "{old}" || exit /b 1
-xcopy "{staged}" "{install}\\" /E /I /H /Y >nul
-if errorlevel 1 (
-    rmdir /s /q "{install}"
-    move "{old}" "{install}"
-    exit /b 1
-)
-rmdir /s /q "{old}"
-start "" "{plan.executable}"
+def _render_ps1(plan: SwapPlan) -> str:
+    install, staged = _quote_ps(plan.install_dir), _quote_ps(plan.staged_dir)
+    old = _quote_ps(plan.install_dir.with_name(plan.install_dir.name + ".old"))
+    executable = _quote_ps(plan.executable)
+    # KHÔNG dùng `$PID` làm tên biến chờ — đó là biến tự động của PowerShell (PID của chính
+    # script). `Move-Item` có vòng thử lại vì Defender hay giữ file exe thêm vài giây sau
+    # khi tiến trình đã thoát — đúng lúc script này chạy.
+    return f"""# Nostalgia Launcher — tráo bản mới sau khi launcher cũ thoát. Tự sinh, đừng sửa tay.
+$ErrorActionPreference = 'Stop'
+$installDir = {install}
+$stagedDir = {staged}
+$oldDir = {old}
+$exePath = {executable}
+
+$deadline = (Get-Date).AddSeconds(60)
+while (Get-Process -Id {plan.wait_pid} -ErrorAction SilentlyContinue) {{
+    if ((Get-Date) -gt $deadline) {{ exit 1 }}
+    Start-Sleep -Milliseconds 200
+}}
+
+if (Test-Path -LiteralPath $oldDir) {{
+    Remove-Item -LiteralPath $oldDir -Recurse -Force
+}}
+$moved = $false
+for ($try = 0; $try -lt 30; $try++) {{
+    try {{
+        Move-Item -LiteralPath $installDir -Destination $oldDir -Force
+        $moved = $true
+        break
+    }} catch {{
+        Start-Sleep -Seconds 1
+    }}
+}}
+if (-not $moved) {{ exit 1 }}
+
+try {{
+    Copy-Item -LiteralPath $stagedDir -Destination $installDir -Recurse -Force
+}} catch {{
+    Remove-Item -LiteralPath $installDir -Recurse -Force -ErrorAction SilentlyContinue
+    Move-Item -LiteralPath $oldDir -Destination $installDir -Force
+    exit 1
+}}
+Remove-Item -LiteralPath $oldDir -Recurse -Force -ErrorAction SilentlyContinue
+Start-Process -FilePath $exePath
 """
 
 
 def _quote(path: Path) -> str:
     return "'" + str(path).replace("'", "'\\''") + "'"
+
+
+def _quote_ps(path: Path) -> str:
+    """Chuỗi đơn của PowerShell: chỉ cần nhân đôi dấu nháy đơn, không nội suy gì khác."""
+    return "'" + str(path).replace("'", "''") + "'"
