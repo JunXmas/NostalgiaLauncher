@@ -3,6 +3,54 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.1.0 — 2026-09-26
+
+Một đợt làm lại giao diện. Bảy trang trước đây nhìn như một trang; giờ mỗi tab có sắc riêng,
+chữ dùng font đóng kèm, và các thẻ nổi lên thay vì nằm phẳng.
+
+- **Mỗi tab một màu.** Trước chỉ một sắc lục dùng ở 94 chỗ. Nay bảy sắc lấy từ chính khối
+  icon của mục đó, nền pha 6% màu tab và chuyển mượt khi đổi trang. Hai màu phải dịch khỏi
+  tông gốc vì va nghĩa: CÀI ĐẶT (đá đỏ trùng màu báo lỗi) và CHƠI CHUNG (ngả đỏ cạnh màu
+  báo lỗi).
+- **Font đóng kèm, hình khối vuông.** Inter cho chữ đọc + Minecraft F2D cho nhãn viết hoa
+  (SIL OFL 1.1, cả hai đo được phủ đủ 74 ký tự có dấu tiếng Việt). Bo góc về 0 và thẻ vẽ
+  bằng cạnh vát — đo trên chính CSS của minecraft.net. Gom 221 chỗ viết tay cỡ chữ thành
+  5 bậc.
+- **Icon khối Minecraft xoay** khi rê chuột ở thanh bên: tăng tốc dần, rung từng cơn, rời
+  chuột thì hãm rồi quay về đúng khung 0. Texture lấy từ jar client của chính bạn (chỉ đọc);
+  không có jar thì vẽ bằng code. Lúc rảnh tốn 0,0% CPU.
+- **Thẻ bản chơi nổi lên**: nét mực 2 px, cạnh dưới dày, ô ảnh khoét lõm vào mặt thẻ, trỏ
+  vào thì nhấc lên 3 px.
+- **Thanh bên vẽ đầu nhân vật từ skin** thay vì một chữ cái trên nền màu.
+- **TẠO BẢN CHƠI gọn lại**: bản "Tối ưu hiệu năng" là thẻ riêng có chip ĐỀ XUẤT và chọn sẵn;
+  năm loader kia vẫn hiện đủ; chỉ RAM và thư mục gập vào "nâng cao". Chọn bản không hỗ trợ
+  thì **không còn bị xoá ngầm lựa chọn** — nút tạo bị chặn kèm dòng nói thiếu gì và một nút
+  thoát ngõ cụt.
+- **Trang chủ bỏ sáu thẻ trùng đường đi** với thanh bên (và che mất ảnh nền). Chưa có tài
+  khoản hoặc bản chơi thì khối CHƠI nói thiếu gì và đưa luôn nút đi làm việc đó, thay vì một
+  nút xám câm.
+
+### Tài khoản & skin Ely.by
+
+- **Tải sẵn hỗ trợ skin ngay lúc đăng nhập Ely.by**, không đợi tới lúc bấm CHƠI. Hàng tài
+  khoản nói "Skin trong game: đang tải hỗ trợ…" khi chưa xong. Lỗi mạng thì mất skin chứ
+  không mất buổi chơi.
+- **Nút Dùng để chuyển tài khoản** trên mọi hàng chưa chọn. Trước đây bấm cả hàng vẫn chuyển
+  được nhưng không có gì nói ra điều đó.
+- **Hai đường ra ely.by**: "Đăng ký ↗" cạnh nút đăng nhập, và "Đổi skin ở ely.by ↗" cho tài
+  khoản Ely — launcher không có API upload skin cho họ, nên "Thêm skin" chỉ đổi ảnh launcher
+  hiện, người chơi khác trong game vẫn thấy skin cũ.
+- Sửa: nút "Thêm skin" tràn 16 px ra ngoài ô Skin.
+- Sửa: bấm DỪNG lúc tắt "ẩn khi chơi" thì cửa sổ tự thu nhỏ.
+
+### Giấy phép
+
+- **GPL-3.0 → AGPL-3.0.** Điều 13 của AGPL buộc ai chạy bản đã sửa cho người khác dùng qua
+  mạng cũng phải mở mã. Kho có relay chơi chung — chỗ đó nếu chỉ GPL thì một fork đóng mã
+  chạy trên máy chủ được mà không vi phạm gì.
+- Phần máy chủ tách sang kho riêng. Mọi dòng chạy trên máy bạn vẫn công khai: gỡ gói ra là
+  đọc được, nên đóng nó chỉ mất lòng tin mà không bảo vệ được gì.
+
 ## 1.0.15 — 2026-09-23
 
 - **Dải báo bản mới ở đầu cửa sổ**, thấy ở mọi trang, kèm phần trăm lúc tải. Trước đây nút
