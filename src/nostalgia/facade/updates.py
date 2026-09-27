@@ -68,6 +68,10 @@ class UpdateOperations(LauncherContext):
         """`frozen` (gói PyInstaller, tự áp được) hay `source` (chạy từ mã nguồn)."""
         return detect_install_kind()
 
+    def donate_url(self) -> str:
+        """Trang ủng hộ. Không chạm mạng — chỉ trả địa chỉ cho giao diện mở trình duyệt."""
+        return self.endpoints.donate
+
     def launcher_update_asset(self, release: LauncherRelease) -> ReleaseAsset | None:
         """Gói phải tải cho kiểu cài của máy này: `.zip` onedir để tráo, hay `.AppImage`/
         `.deb`/`.rpm` để hệ thống cài hộ. Không có gói đúng thì None."""

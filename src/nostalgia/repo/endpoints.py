@@ -65,6 +65,11 @@ ELY_TEXTURES_URL = "https://skinsystem.ely.by/textures"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
 LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
 
+# Trang ủng hộ. Launcher miễn phí và không quảng cáo; đây là nút nằm im một chỗ trong CÀI ĐẶT,
+# không bao giờ tự bật lên và không chặn tính năng nào. Để ở đây thay vì nhúng thẳng vào QML
+# để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
+DONATE_URL = "https://github.com/sponsors/JunXmas"
+
 # Upload skin lên Mojang (PUT, cần Bearer token). Riêng biệt với session profile vì khác
 # endpoint hoàn toàn: profile đọc công khai, upload cần xác thực.
 SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
@@ -98,6 +103,7 @@ class Endpoints:
     ely_textures: str = ELY_TEXTURES_URL
     launcher_releases: str = LAUNCHER_RELEASES_URL
     skin_upload: str = SKIN_UPLOAD_URL
+    donate: str = DONATE_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()
