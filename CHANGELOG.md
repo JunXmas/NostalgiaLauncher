@@ -5,6 +5,28 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+### Windows: bấm cập nhật xong app không mở lại nữa — đã sửa
+
+Trên Windows, bấm **Cập nhật** làm launcher tắt rồi không bao giờ mở lại. Nguyên nhân: khi
+spawn script tráo, launcher không truyền `cwd=`, nên script kế thừa thư mục làm việc của
+launcher — mà lối tắt do Inno Setup tạo **không đặt `WorkingDir`**, nên Windows lấy mặc định
+là chính **thư mục cài**. Windows giữ handle chặn DELETE trên thư mục làm việc của mọi tiến
+trình đang sống, và đổi tên một thư mục cần quyền DELETE. Script tự khoá đúng thứ nó định
+dời: `Move-Item` ném "Access to the path is denied" cả 30 lần thử rồi `exit 1` — sau khi
+launcher đã `os._exit(0)`. Không còn ai mở lại nó.
+
+Ba lớp vá: launcher truyền `cwd=%TEMP%` khi spawn (Linux cũng vậy, vì script `rm -rf` chính
+thư mục cài); script tự `Set-Location` sang `%TEMP%` **trước** mọi `Move-Item`, phòng trường
+hợp chạy tay; và `Start-Process` mở lại launcher với `-WorkingDirectory` trỏ thẳng thư mục
+cài mới thay vì để nó kế thừa `%TEMP%`.
+
+Vì sao lỗi này sống qua nhiều bản: script chạy **sau** khi launcher thoát với stdout/stderr
+đổ vào `DEVNULL`, nên hỏng là hỏng câm và mỗi lần sửa đều là đoán từ triệu chứng. Nay script
+ghi nhật ký cạnh chính nó (`apply-update.log`) — có bước hỏng và câu lỗi thật. Test tái hiện
+bằng cách spawn script với `cwd` trong thư mục cài; nó **chỉ chạy trên Windows**, vì Linux
+không khoá thư mục theo cwd nên chạy ở máy dev là tự lừa mình — job `check-windows-updater`
+trong `ci.yml` là chỗ nó thực sự gác.
+
 ### Ô CỘNG ĐỒNG trên thanh bên
 
 Thanh bên có thêm một ô dẫn thẳng tới máy chủ Discord của Nostalgia. Trước đó địa chỉ ấy

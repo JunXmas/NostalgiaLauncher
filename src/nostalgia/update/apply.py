@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -149,6 +150,28 @@ def write_swap_script(
     return script_path
 
 
+def _neutral_cwd() -> str:
+    """Thư mục làm việc cho script tráo: phải nằm NGOÀI thư mục cài.
+
+    `tempfile.gettempdir()` chứ không `Path.home()`: thư mục tạm chắc chắn tồn tại và ghi
+    được trên mọi máy, còn home có thể là ổ mạng đang rớt. Không dùng thư mục cài cũng không
+    dùng thư mục updates — cả hai đều bị script đụng vào."""
+    return tempfile.gettempdir()
+
+
+def swap_log_path(script_path: Path) -> Path:
+    """Nhật ký của script tráo: cùng chỗ, cùng tên, đuôi `.log`.
+
+    Script chạy SAU khi launcher thoát, với stdout/stderr đổ vào DEVNULL — hỏng là hỏng câm.
+    Đó là lý do bug khoá thư mục sống qua nhiều bản: mỗi lần sửa đều là đoán từ triệu chứng
+    "tắt rồi không mở lại". File này để lần sau có bằng chứng thay vì suy diễn.
+
+    Script tự tính đường này bằng `$PSCommandPath` chứ không nhận nó như tham số — nó luôn
+    biết mình nằm đâu, nên không có chỗ nào truyền sai được. Hàm này là để MÃ GỌI (và test)
+    tìm lại file, phải khớp với công thức trong script."""
+    return script_path.with_suffix(".log")
+
+
 def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") -> None:
     """Chạy script tách hẳn khỏi launcher, để launcher thoát mà script vẫn sống."""
     if windows:
@@ -160,6 +183,13 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
         #
         # `powershell.exe` (5.1) chứ không `cmd.exe`: xem docstring đầu file — batch chết
         # ở stdin=DEVNULL (timeout /t), ở codepage (đường dẫn có dấu), và không retry được.
+        #
+        # `cwd=` BẮT BUỘC — đây là bug "tắt rồi không mở lại" của 1.1.x. Không truyền thì
+        # tiến trình con kế thừa thư mục làm việc của launcher, mà lối tắt Inno không đặt
+        # WorkingDir nên Windows lấy mặc định là THƯ MỤC CÀI. Windows giữ handle không cho
+        # DELETE trên thư mục làm việc của mọi tiến trình đang sống, nên `Move-Item` thư mục
+        # cài ném "Access to the path is denied" — script tự khoá đúng thứ nó định dời. Vòng
+        # thử lại 30 giây không cứu được vì nguyên nhân không bao giờ tự hết.
         subprocess.Popen(
             [
                 "powershell.exe",
@@ -170,6 +200,7 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
                 "-File",
                 str(script_path),
             ],
+            cwd=_neutral_cwd(),
             creationflags=CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
             close_fds=True,
             stdin=subprocess.DEVNULL,
@@ -181,8 +212,12 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
     # start_new_session=True gọi setsid() trước fork — an toàn hơn preexec_fn vì Python xử lý
     # trước khi exec, không bao giờ ném "Operation not permitted" (preexec_fn ném lỗi này
     # khi launcher đã là session leader, ví dụ chạy từ terminal hoặc .desktop file).
+    # cwd cũng đặt ra ngoài trên Linux, dù ở đây không có chuyện khoá thư mục như Windows:
+    # script `rm -rf` chính thư mục cài, nên tiến trình chạy với cwd đã bị xoá và launcher
+    # mới kế thừa cwd rỗng đó. Một dòng để hai hệ hành xử giống nhau.
     subprocess.Popen(
         ["/bin/sh", str(script_path)],
+        cwd=_neutral_cwd(),
         start_new_session=True,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
@@ -228,10 +263,29 @@ $installDir = {install}
 $stagedDir = {staged}
 $oldDir = {old}
 $exePath = {executable}
+# Nhật ký nằm cạnh chính script này ($PSCommandPath), không phải một đường dẫn truyền vào:
+# script luôn biết nó ở đâu, nên không có tham số nào để truyền sai. Xem swap_log_path().
+$logPath = [System.IO.Path]::ChangeExtension($PSCommandPath, '.log')
+
+# Ghi nhật ký: script này chạy sau khi launcher thoát, stdout/stderr đều DEVNULL. Không có
+# file này thì hỏng là hỏng câm, và lần sau lại phải đoán từ triệu chứng.
+function Log($m) {{
+    try {{
+        Add-Content -LiteralPath $logPath -Value "$(Get-Date -Format o) $m" -Encoding utf8
+    }} catch {{ }}
+}}
+Log "bắt đầu; cwd=$((Get-Location).Path); install=$installDir"
+
+# Đứng ra chỗ trung lập TRƯỚC KHI đụng vào thư mục cài. Windows giữ handle không cho DELETE
+# trên thư mục làm việc của tiến trình đang sống, nên nếu cwd nằm trong (hay LÀ) thư mục cài
+# thì Move-Item bên dưới ném "Access denied" mãi mãi — script tự khoá thứ nó định dời.
+# Launcher đã truyền cwd=%TEMP% khi spawn; dòng này là tầng phòng thủ thứ hai, cho cả trường
+# hợp ai đó chạy tay script từ trong thư mục cài.
+Set-Location -LiteralPath ([System.IO.Path]::GetTempPath())
 
 $deadline = (Get-Date).AddSeconds(60)
 while (Get-Process -Id {plan.wait_pid} -ErrorAction SilentlyContinue) {{
-    if ((Get-Date) -gt $deadline) {{ exit 1 }}
+    if ((Get-Date) -gt $deadline) {{ Log "hết 60s chờ PID {plan.wait_pid}"; exit 1 }}
     Start-Sleep -Milliseconds 200
 }}
 
@@ -239,26 +293,40 @@ if (Test-Path -LiteralPath $oldDir) {{
     Remove-Item -LiteralPath $oldDir -Recurse -Force
 }}
 $moved = $false
+$lastError = ''
 for ($try = 0; $try -lt 30; $try++) {{
     try {{
         Move-Item -LiteralPath $installDir -Destination $oldDir -Force
         $moved = $true
         break
     }} catch {{
+        $lastError = $_.Exception.Message
         Start-Sleep -Seconds 1
     }}
 }}
-if (-not $moved) {{ exit 1 }}
+if (-not $moved) {{ Log "không dời được thư mục cài sau 30 lần: $lastError"; exit 1 }}
 
 try {{
     Copy-Item -LiteralPath $stagedDir -Destination $installDir -Recurse -Force
 }} catch {{
+    Log "chép bản mới hỏng, trả lại bản cũ: $($_.Exception.Message)"
     Remove-Item -LiteralPath $installDir -Recurse -Force -ErrorAction SilentlyContinue
     Move-Item -LiteralPath $oldDir -Destination $installDir -Force
     exit 1
 }}
 Remove-Item -LiteralPath $oldDir -Recurse -Force -ErrorAction SilentlyContinue
-Start-Process -FilePath $exePath
+
+# -WorkingDirectory: không đặt thì launcher mới kế thừa cwd của script. Ta vừa Set-Location
+# sang %TEMP%, nên thiếu dòng này là app chạy với thư mục làm việc trỏ vào thư mục tạm — và
+# lần cập nhật SAU lại spawn script từ đó. Đặt thẳng vào thư mục cài mới cho đúng như lúc
+# người dùng bấm lối tắt.
+try {{
+    Start-Process -FilePath $exePath -WorkingDirectory $installDir
+    Log "xong, đã mở lại launcher"
+}} catch {{
+    Log "tráo xong nhưng KHÔNG mở lại được: $($_.Exception.Message)"
+    exit 1
+}}
 """
 
 
