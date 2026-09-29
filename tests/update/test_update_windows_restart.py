@@ -8,6 +8,7 @@ mục đang mở trong Explorer — sửa cwd không bịt được mấy cái �
 
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 from pathlib import Path
@@ -55,8 +56,10 @@ def test_powershell_reopens_the_launcher_when_the_stale_old_dir_cannot_be_remove
 
     Trước bản vá, Remove-Item nằm ngoài try với $ErrorActionPreference='Stop' — hỏng là
     script chết trước cả Move-Item, không log không Restart: đúng lại cảnh "tắt rồi không
-    mở lại". Giả lập khoá bằng thư mục con mất quyền ghi (chmod 555) — cùng hình dạng lỗi
-    "không xoá được con bên trong" mà Defender gây ra trên Windows."""
+    mở lại". Cách khoá `.old` PHẢI theo hệ: Windows là giữ handle file mở (Python mở không
+    share-delete — đúng cơ chế Defender giữ file; chmod thư mục KHÔNG chặn xoá trên
+    Windows, job check-windows-updater đã bắt được); POSIX thì ngược lại, handle mở không
+    chặn unlink, phải rút quyền ghi của thư mục cha (chmod 555)."""
     assert _POWERSHELL is not None
     install = tmp_path / "Nostalgia"
     (install / "lib").mkdir(parents=True)
@@ -64,20 +67,23 @@ def test_powershell_reopens_the_launcher_when_the_stale_old_dir_cannot_be_remove
     stale_old = tmp_path / "Nostalgia.old"
     locked = stale_old / "sub"
     locked.mkdir(parents=True)
-    (locked / "giu.dll").write_text("x", encoding="utf-8")
-    locked.chmod(0o555)
+    keeper = locked / "giu.dll"
+    keeper.write_text("x", encoding="utf-8")
     plan = SwapPlan(
         install, tmp_path / "staged", install / "nostalgia-ui.exe", os.getpid() + 100_000
     )
     script_path = tmp_path / "apply-update.ps1"
     script_path.write_text(render_swap_script(plan, windows=True), encoding="utf-8-sig")
-    try:
+    with contextlib.ExitStack() as stack:
+        if os.name == "nt":
+            stack.enter_context(keeper.open("rb"))
+        else:
+            locked.chmod(0o555)
+            stack.callback(locked.chmod, 0o755)
         result = subprocess.run(
             [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)],
             timeout=60,
         )
-    finally:
-        locked.chmod(0o755)
 
     assert result.returncode == 1
     assert (install / "lib" / "core.dll").read_text(encoding="utf-8") == "cũ"
