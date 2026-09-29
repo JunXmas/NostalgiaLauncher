@@ -3,6 +3,43 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.1.2 — 2026-09-29
+
+Ba lỗi trong THƯ VIỆN, tất cả đến từ một phản hồi của người chơi: "cài modpack không thấy
+được hết mọi thứ, mà phần lọc phiên bản thì vướng".
+
+### Modpack không còn bị ghim vào phiên bản của bản chơi đang chọn
+
+Chọn bản chơi xong thì bộ lọc nhảy về loader + phiên bản của bản chơi đó — hợp lý cho mod
+và shader, nhưng **sai hoàn toàn với modpack**: modpack *tạo ra* một bản chơi mới chứ không
+cài vào bản nào. Hậu quả là pack 1.7.10 bị giấu chỉ vì bản chơi đang chọn là 1.21, và người
+chơi tưởng kho chỉ có vài chục pack.
+
+Nay đổi chip loại thì bộ lọc mặc định tính lại theo loại đó, và modpack thì không lọc gì.
+Bộ lọc người dùng **tự** tick vẫn giữ nguyên khi đổi chip — chỉ bộ lọc mặc định mới bị đặt lại.
+
+### Danh mục phiên bản không còn bị cắt còn 60 mục
+
+Cột lọc cũ cắt danh mục Mojang (hơn 500 bản) xuống 60 cho vừa bề ngang cột, và không nói gì.
+Ai tìm bản cũ thì gõ mãi không ra. Khay mới cuộn được nên giữ nguyên cả danh mục.
+
+### Cột lọc dọc thành ba ô ngang thu gọn
+
+Cột trái 210px trải thẳng 4 loader cộng hàng chục phiên bản theo chiều dọc, đẩy phần **Sắp
+xếp** ra khỏi tầm mắt. Nay là ba ô cùng một dòng — **Mọi loader** / **Mọi phiên bản** /
+**Liên quan** — bấm mới bung khay, bấm ra ngoài thì đóng.
+
+- Ô đóng vẫn nói được đang lọc gì: một mục thì hiện tên nó, nhiều mục thì `1.21.4 +2`.
+- Dấu **✕** ngay trên ô xoá cả nhóm, không phải bỏ tick từng mục.
+- Khay phiên bản có ô tìm riêng.
+- Bỏ cột nên phần kết quả rộng thêm 234px, và số cột thẻ tính theo bề ngang thật thay vì
+  ghim cứng hai cột.
+
+### Nút Ủng hộ dự án trong CÀI ĐẶT
+
+Launcher miễn phí, không quảng cáo. Nút nằm im ở hàng "Phiên bản launcher" — không popup,
+không nhắc theo lịch, không chặn tính năng nào.
+
 ## 1.1.1 — 2026-09-26
 
 Ba lỗi được vá và một tính năng cũ quay lại.
