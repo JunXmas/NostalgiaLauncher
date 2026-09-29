@@ -37,6 +37,9 @@ Item {
                           function () { contentBridge.install(projectId); });
     }
     function refresh() {
+        // Bridge phải biết loại TRƯỚC khi tìm: modpack thả bộ lọc thừa hưởng từ bản chơi đích,
+        // nếu báo sau thì lần tìm này vẫn mang bộ lọc của loại cũ.
+        contentBridge.setKind(page.kind);
         // Đọc danh sách đã cài của ĐÚNG loại đang xem trước (đọc đĩa, rẻ): cờ "Đã cài" trên
         // thẻ duyệt và tab Đã cài đều lấy từ đó, nên đổi chip là phải đọc lại.
         if (page.hasInstance && page.kind !== "modpack") contentBridge.refreshInstalled(page.kind);
@@ -179,15 +182,28 @@ Item {
                         }
                     }
                 }
+                // Hàng lọc nằm NGANG dưới ô tìm: ba ô thu gọn thay cho cột dọc 210px cũ. Khay
+                // của mỗi ô treo lên cửa sổ nên z ở đây chỉ cần cao hơn phần kết quả.
+                FilterBar {
+                    id: filters
+                    z: 5
+                    anchors { top: searchRow.bottom; topMargin: 10; left: parent.left; right: countLine.left
+                              rightMargin: 12 }
+                    loadersEnabled: page.kind === "mod"
+                    versionsEnabled: true
+                    sortKeys: page.sortKeys; sortLabels: page.sortLabels
+                    onChanged: page.runSearch()
+                }
                 Text {
                     id: countLine
-                    anchors { top: searchRow.bottom; topMargin: 8; horizontalCenter: parent.horizontalCenter }
+                    anchors { top: searchRow.bottom; topMargin: 18; right: parent.right }
                     text: contentBridge.searching ? "Đang tìm..." : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), "f", 0) + " kết quả"
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Rectangle {
+                    id: shimmer
                     // Dải shimmer 2 px khi đang tìm, như bản mẫu.
-                    anchors { top: countLine.bottom; topMargin: 6; left: parent.left; right: parent.right }
+                    anchors { top: filters.bottom; topMargin: 8; left: parent.left; right: parent.right }
                     height: 2; color: Theme.border; visible: contentBridge.searching
                     Rectangle {
                         width: parent.width * 0.3; height: 2; color: Theme.accent
@@ -198,19 +214,9 @@ Item {
                     }
                 }
 
-                FilterSidebar {
-                    id: filters
-                    anchors { top: countLine.bottom; topMargin: 16; left: parent.left; bottom: parent.bottom }
-                    width: 210
-                    loadersEnabled: page.kind === "mod"
-                    sortKeys: page.sortKeys; sortLabels: page.sortLabels
-                    onChanged: page.runSearch()
-                }
-                Rectangle { anchors { top: filters.top; bottom: filters.bottom; left: filters.right; leftMargin: 10 } width: 1; color: Theme.border }
-
                 Item {
                     id: results
-                    anchors { top: countLine.bottom; topMargin: 16; left: filters.right; leftMargin: 24; right: parent.right; bottom: parent.bottom }
+                    anchors { top: filters.bottom; topMargin: 16; left: parent.left; right: parent.right; bottom: parent.bottom }
 
                     Text {
                         visible: !contentBridge.searching && contentBridge.results.length === 0
@@ -228,7 +234,11 @@ Item {
                         anchors.topMargin: page.modsBlocked ? 22 : 0
                         visible: page.gridMode
                         clip: true
-                        cellWidth: Math.floor(width / 2); cellHeight: 128
+                        // Bỏ cột lọc rồi nên phần này rộng gần gấp rưỡi: chia theo bề ngang
+                        // thật (thẻ không dưới 330px) chứ đừng ghim cứng hai cột, không thì
+                        // thẻ giãn ra thành hai dải dài ngoẵng.
+                        cellWidth: Math.floor(width / Math.max(2, Math.floor(width / 330)))
+                        cellHeight: 128
                         model: contentBridge.resultsModel
                         delegate: Item {
                             width: GridView.view.cellWidth; height: 128

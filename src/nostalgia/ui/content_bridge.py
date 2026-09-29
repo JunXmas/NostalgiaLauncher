@@ -14,13 +14,12 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from nostalgia.api import Launcher
 from nostalgia.content.model import ContentKind, ContentSource, Project, SortOrder
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.modpack_bridge import ModpackContentBridge
+from nostalgia.ui.filter_bridge import FilterContentBridge
 from nostalgia.ui.project_model import ProjectListModel
 
 
-class ContentBridge(ModpackContentBridge):
+class ContentBridge(FilterContentBridge):
     targetChanged = Signal()
-    filtersChanged = Signal()
     resultsChanged = Signal()
     searchingChanged = Signal()
     installFinished = Signal(str)
@@ -45,9 +44,6 @@ class ContentBridge(ModpackContentBridge):
         self._installing: set[str] = set()
         self._last_query: tuple[ContentKind, str, SortOrder] = ("mod", "", "relevance")
         self._source: ContentSource = "modrinth"
-        # Bộ lọc của cột trái. Rỗng nghĩa là không lọc theo tiêu chí đó.
-        self._loaders: list[str] = []
-        self._game_versions: list[str] = []
 
     # ----- bản chơi đang chọn -----
 
@@ -71,11 +67,8 @@ class ContentBridge(ModpackContentBridge):
         self._total_hits = 0
         self._installed_rows = []
         self._installed_model.sync([])
-        if self._target is not None:
-            self._loaders = (
-                [self._target.loader_kind] if self._target.loader_kind != "vanilla" else []
-            )
-            self._game_versions = [self._target.game_version]
+        self._filters_touched = False
+        self.apply_default_filters()
         self.targetChanged.emit()
         self.filtersChanged.emit()
         self.resultsChanged.emit()
@@ -97,31 +90,6 @@ class ContentBridge(ModpackContentBridge):
         self._total_hits = 0
         self.sourceChanged.emit()
         self.resultsChanged.emit()
-
-    # ----- bộ lọc -----
-
-    @Property(list, notify=filtersChanged)
-    def selectedLoaders(self) -> list[str]:
-        return list(self._loaders)
-
-    @Property(list, notify=filtersChanged)
-    def selectedGameVersions(self) -> list[str]:
-        return list(self._game_versions)
-
-    @Slot(str, bool)
-    def setLoaderSelected(self, loader_name: str, selected: bool) -> None:
-        self._loaders = _toggle(self._loaders, loader_name, selected)
-        self.filtersChanged.emit()
-
-    @Slot(str, bool)
-    def setGameVersionSelected(self, game_version: str, selected: bool) -> None:
-        self._game_versions = _toggle(self._game_versions, game_version, selected)
-        self.filtersChanged.emit()
-
-    @Slot()
-    def clearGameVersions(self) -> None:
-        self._game_versions = []
-        self.filtersChanged.emit()
 
     # ----- tìm kiếm -----
 
@@ -243,8 +211,3 @@ class ContentBridge(ModpackContentBridge):
 
         kind_label = {"mod": "mod", "resourcepack": "gói tài nguyên", "shader": "shader"}
         self.run_in_background(work, f"Cài {kind_label[project.content_kind]} {project.title}")
-
-
-def _toggle(values: list[str], value: str, selected: bool) -> list[str]:
-    without = [existing for existing in values if existing != value]
-    return [*without, value] if selected else without

@@ -181,3 +181,82 @@ def test_switching_source_clears_results_and_routes_to_curseforge(
     wait_until(lambda: not content_bridge.searching and len(content_bridge.results) == 1)
     assert content_bridge.results[0]["source"] == "curseforge"
     assert server_state.request_count("/cf/mods/search") == 1
+
+
+def test_modpack_kind_drops_the_filters_inherited_from_the_target_instance(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Phản hồi người chơi: tìm modpack thì kho bị lọc mất gần hết vì bộ lọc còn ghim phiên
+    bản của bản chơi đang chọn. Modpack TẠO RA bản chơi mới nên nó không thuộc phiên bản nào
+    — chuyển sang chip Modpack là bộ lọc thừa hưởng phải rơi đi, và quay lại Mod thì có lại.
+    """
+    import json
+    from urllib.parse import parse_qs, urlparse
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    target = fabric_target(launcher)
+    content_bridge = ContentBridge(launcher, LauncherBridge(launcher))
+    content_bridge.selectInstance(target.instance_id)
+    assert content_bridge.selectedGameVersions == [VERSION_ID]
+
+    content_bridge.setKind("modpack")
+
+    assert content_bridge.selectedGameVersions == []
+    assert content_bridge.selectedLoaders == []
+    content_bridge.search("modpack", "", "downloads")
+    wait_until(lambda: not content_bridge.searching)
+    query = parse_qs(urlparse(server_state.received_path("/modrinth/search")).query)
+    assert json.loads(query["facets"][0]) == [["project_type:modpack"]]
+
+    content_bridge.setKind("mod")
+
+    assert content_bridge.selectedGameVersions == [VERSION_ID]
+    assert content_bridge.selectedLoaders == ["fabric"]
+
+
+def test_a_filter_the_user_set_by_hand_survives_switching_kinds(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Mặt sau của luật trên: chỉ bộ lọc MẶC ĐỊNH mới được đặt lại. Người dùng tự tick 1.7.10
+    rồi đổi chip thì cái tick đó phải còn — nếu không, đổi chip là mất việc vừa làm."""
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    target = fabric_target(launcher)
+    content_bridge = ContentBridge(launcher, LauncherBridge(launcher))
+    content_bridge.selectInstance(target.instance_id)
+
+    content_bridge.clearGameVersions()
+    content_bridge.setGameVersionSelected("1.7.10", True)
+    content_bridge.setKind("modpack")
+
+    assert content_bridge.selectedGameVersions == ["1.7.10"]
+
+
+def test_clearing_loaders_widens_the_search_to_every_loader(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Ô lọc có dấu ✕ xoá cả nhóm; không có nó người dùng phải bỏ tick từng mục."""
+    import json
+    from urllib.parse import parse_qs, urlparse
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    target = fabric_target(launcher)
+    content_bridge = ContentBridge(launcher, LauncherBridge(launcher))
+    content_bridge.selectInstance(target.instance_id)
+    assert content_bridge.selectedLoaders == ["fabric"]
+
+    content_bridge.clearLoaders()
+    content_bridge.clearGameVersions()
+    content_bridge.search("mod", "", "downloads")
+    wait_until(lambda: not content_bridge.searching)
+
+    query = parse_qs(urlparse(server_state.received_path("/modrinth/search")).query)
+    assert json.loads(query["facets"][0]) == [["project_type:mod"]]
