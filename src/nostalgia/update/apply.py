@@ -30,6 +30,7 @@ from pathlib import Path
 
 from nostalgia.storage.files import ensure_dir, set_executable
 from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
+from nostalgia.update import swap_scripts
 
 INSTALL_KIND_FROZEN = "frozen"
 INSTALL_KIND_SOURCE = "source"
@@ -128,10 +129,11 @@ def current_install_dir() -> Path:
 
 
 def render_swap_script(plan: SwapPlan, *, windows: bool = os.name == "nt") -> str:
-    """Nội dung script tráo thư mục cho hệ đang chạy."""
+    """Nội dung script tráo thư mục cho hệ đang chạy. Phần chữ nằm ở `swap_scripts.py` —
+    tách ra vì hai script nhúng (kèm chú thích trong lòng chúng) vượt trần 200 dòng/file."""
     if windows:
-        return _render_ps1(plan)
-    return _render_sh(plan)
+        return swap_scripts.render_ps1(plan)
+    return swap_scripts.render_sh(plan)
 
 
 def write_swap_script(
@@ -212,12 +214,15 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
     # start_new_session=True gọi setsid() trước fork — an toàn hơn preexec_fn vì Python xử lý
     # trước khi exec, không bao giờ ném "Operation not permitted" (preexec_fn ném lỗi này
     # khi launcher đã là session leader, ví dụ chạy từ terminal hoặc .desktop file).
-    # cwd cũng đặt ra ngoài trên Linux, dù ở đây không có chuyện khoá thư mục như Windows:
-    # script `rm -rf` chính thư mục cài, nên tiến trình chạy với cwd đã bị xoá và launcher
-    # mới kế thừa cwd rỗng đó. Một dòng để hai hệ hành xử giống nhau.
+    #
+    # KHÔNG truyền `cwd=` ở đây, khác nhánh Windows. Linux không khoá thư mục theo cwd nên
+    # không có bug nào để sửa, và tự cập nhật trên Linux đang chạy đúng — đổi một đường đang
+    # chạy được mà không có ai báo lỗi chỉ là thêm chỗ để hỏng.
+    # ponytail: launcher mới vẫn kế thừa cwd trỏ vào thư mục cài mà script `rm -rf` — vô hại
+    # vì không có đường dẫn tương đối nào trong mã (game chạy với cwd=game_dir tuyệt đối).
+    # Thêm cwd khi nào thứ đó gây ra lỗi thật.
     subprocess.Popen(
         ["/bin/sh", str(script_path)],
-        cwd=_neutral_cwd(),
         start_new_session=True,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
@@ -225,124 +230,3 @@ def launch_swap_script(script_path: Path, *, windows: bool = os.name == "nt") ->
         close_fds=True,
         env=clean_child_env(),
     )
-
-
-def _render_sh(plan: SwapPlan) -> str:
-    install, staged = _quote(plan.install_dir), _quote(plan.staged_dir)
-    old = _quote(plan.install_dir.with_name(plan.install_dir.name + ".old"))
-    executable = _quote(plan.executable)
-    return f"""#!/bin/sh
-# Nostalgia Launcher — tráo bản mới sau khi launcher cũ thoát. Tự sinh, đừng sửa tay.
-set -u
-tries=0
-while kill -0 {plan.wait_pid} 2>/dev/null; do
-    tries=$((tries + 1)); [ "$tries" -gt 600 ] && exit 1
-    sleep 0.1
-done
-rm -rf {old}
-mv {install} {old} || exit 1
-if cp -R {staged} {install}; then
-    rm -rf {old}
-else
-    rm -rf {install}; mv {old} {install}; exit 1
-fi
-nohup {executable} </dev/null >/dev/null 2>&1 &
-"""
-
-
-def _render_ps1(plan: SwapPlan) -> str:
-    install, staged = _quote_ps(plan.install_dir), _quote_ps(plan.staged_dir)
-    old = _quote_ps(plan.install_dir.with_name(plan.install_dir.name + ".old"))
-    executable = _quote_ps(plan.executable)
-    # KHÔNG dùng `$PID` làm tên biến chờ — đó là biến tự động của PowerShell (PID của chính
-    # script). `Move-Item` có vòng thử lại vì Defender hay giữ file exe thêm vài giây sau
-    # khi tiến trình đã thoát — đúng lúc script này chạy.
-    return f"""# Nostalgia Launcher — tráo bản mới sau khi launcher cũ thoát. Tự sinh, đừng sửa tay.
-$ErrorActionPreference = 'Stop'
-$installDir = {install}
-$stagedDir = {staged}
-$oldDir = {old}
-$exePath = {executable}
-# Nhật ký nằm cạnh chính script này ($PSCommandPath), không phải một đường dẫn truyền vào:
-# script luôn biết nó ở đâu, nên không có tham số nào để truyền sai. Xem swap_log_path().
-$logPath = [System.IO.Path]::ChangeExtension($PSCommandPath, '.log')
-
-# Ghi nhật ký: script này chạy sau khi launcher thoát, stdout/stderr đều DEVNULL. Không có
-# file này thì hỏng là hỏng câm, và lần sau lại phải đoán từ triệu chứng.
-function Log($m) {{
-    try {{
-        Add-Content -LiteralPath $logPath -Value "$(Get-Date -Format o) $m" -Encoding utf8
-    }} catch {{ }}
-}}
-Log "bắt đầu; cwd=$([System.IO.Directory]::GetCurrentDirectory()); install=$installDir"
-
-# Đứng ra chỗ trung lập TRƯỚC KHI đụng vào thư mục cài. Windows giữ handle không cho DELETE
-# trên thư mục làm việc của tiến trình đang sống, nên nếu cwd nằm trong (hay LÀ) thư mục cài
-# thì Move-Item bên dưới ném "Access denied" mãi mãi — script tự khoá thứ nó định dời.
-# Launcher đã truyền cwd=%TEMP% khi spawn; hai dòng này là tầng phòng thủ thứ hai, cho cả
-# trường hợp ai đó chạy tay script từ trong thư mục cài.
-#
-# PHẢI gọi [System.IO.Directory]::SetCurrentDirectory. `Set-Location` MỘT MÌNH KHÔNG ĐỦ: nó
-# chỉ đổi "current location" của PowerShell provider (thứ $PWD trả về) chứ không đổi thư mục
-# làm việc thật của tiến trình ở mức Win32 — mà cái khoá DELETE nằm đúng ở mức Win32 đó.
-# Job check-windows-updater trên Windows thật đã bắt được: chỉ Set-Location thì Move-Item vẫn
-# "Access denied", test đỏ với returncode 1. Giữ cả hai dòng vì Set-Location là thứ mọi lệnh
-# PowerShell tương đối dùng, còn SetCurrentDirectory là thứ Windows thực sự nhìn.
-Set-Location -LiteralPath ([System.IO.Path]::GetTempPath())
-[System.IO.Directory]::SetCurrentDirectory([System.IO.Path]::GetTempPath())
-Log "đã ra chỗ trung lập; cwd=$([System.IO.Directory]::GetCurrentDirectory())"
-
-$deadline = (Get-Date).AddSeconds(60)
-while (Get-Process -Id {plan.wait_pid} -ErrorAction SilentlyContinue) {{
-    if ((Get-Date) -gt $deadline) {{ Log "hết 60s chờ PID {plan.wait_pid}"; exit 1 }}
-    Start-Sleep -Milliseconds 200
-}}
-
-if (Test-Path -LiteralPath $oldDir) {{
-    Remove-Item -LiteralPath $oldDir -Recurse -Force
-}}
-$moved = $false
-$lastError = ''
-for ($try = 0; $try -lt 30; $try++) {{
-    try {{
-        Move-Item -LiteralPath $installDir -Destination $oldDir -Force
-        $moved = $true
-        break
-    }} catch {{
-        $lastError = $_.Exception.Message
-        Start-Sleep -Seconds 1
-    }}
-}}
-if (-not $moved) {{ Log "không dời được thư mục cài sau 30 lần: $lastError"; exit 1 }}
-
-try {{
-    Copy-Item -LiteralPath $stagedDir -Destination $installDir -Recurse -Force
-}} catch {{
-    Log "chép bản mới hỏng, trả lại bản cũ: $($_.Exception.Message)"
-    Remove-Item -LiteralPath $installDir -Recurse -Force -ErrorAction SilentlyContinue
-    Move-Item -LiteralPath $oldDir -Destination $installDir -Force
-    exit 1
-}}
-Remove-Item -LiteralPath $oldDir -Recurse -Force -ErrorAction SilentlyContinue
-
-# -WorkingDirectory: không đặt thì launcher mới kế thừa cwd của script. Ta vừa Set-Location
-# sang %TEMP%, nên thiếu dòng này là app chạy với thư mục làm việc trỏ vào thư mục tạm — và
-# lần cập nhật SAU lại spawn script từ đó. Đặt thẳng vào thư mục cài mới cho đúng như lúc
-# người dùng bấm lối tắt.
-try {{
-    Start-Process -FilePath $exePath -WorkingDirectory $installDir
-    Log "xong, đã mở lại launcher"
-}} catch {{
-    Log "tráo xong nhưng KHÔNG mở lại được: $($_.Exception.Message)"
-    exit 1
-}}
-"""
-
-
-def _quote(path: Path) -> str:
-    return "'" + str(path).replace("'", "'\\''") + "'"
-
-
-def _quote_ps(path: Path) -> str:
-    """Chuỗi đơn của PowerShell: chỉ cần nhân đôi dấu nháy đơn, không nội suy gì khác."""
-    return "'" + str(path).replace("'", "''") + "'"

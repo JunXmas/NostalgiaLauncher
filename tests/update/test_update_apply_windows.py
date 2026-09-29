@@ -286,3 +286,6 @@ def test_windows_script_guards_the_working_directory_and_restart() -> None:
     assert "-WorkingDirectory $installDir" in restart, (
         "thiếu thì launcher mới kế thừa cwd %TEMP% của script"
     )
+
+
+# Các test "hỏng gì cũng mở lại launcher" nằm ở test_update_windows_restart.py.

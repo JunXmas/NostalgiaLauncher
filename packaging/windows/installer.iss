@@ -33,8 +33,15 @@ Name: "desktopicon"; Description: "Tạo lối tắt trên màn hình"; GroupDes
 Source: "..\..\dist\nostalgia-ui\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Nostalgia Launcher"; Filename: "{app}\nostalgia-ui.exe"
-Name: "{autodesktop}\Nostalgia Launcher"; Filename: "{app}\nostalgia-ui.exe"; Tasks: desktopicon
+; WorkingDir: {%TEMP} — KHÔNG để mặc định. Thiếu chỉ thị này thì Windows lấy thư mục chứa
+; .exe làm thư mục làm việc, tức chính {app}. Windows giữ handle chặn DELETE trên thư mục
+; làm việc của mọi tiến trình đang sống, và đổi tên một thư mục cần quyền DELETE — nên script
+; tự cập nhật không dời được {app} và launcher tắt rồi không mở lại (bug 1.1.x). Bộ cập nhật
+; đã tự chống ba lớp, dòng này bịt nguyên nhân ở gốc: launcher không bao giờ chạy với thư mục
+; làm việc trỏ vào thư mục cài nữa. Launcher không đọc/ghi gì theo đường tương đối nên đổi
+; thư mục làm việc không ảnh hưởng chức năng nào.
+Name: "{group}\Nostalgia Launcher"; Filename: "{app}\nostalgia-ui.exe"; WorkingDir: "{%TEMP}"
+Name: "{autodesktop}\Nostalgia Launcher"; Filename: "{app}\nostalgia-ui.exe"; WorkingDir: "{%TEMP}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\nostalgia-ui.exe"; Description: "Mở Nostalgia Launcher"; Flags: nowait postinstall skipifsilent

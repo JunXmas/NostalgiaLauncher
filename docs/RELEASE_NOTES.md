@@ -24,9 +24,15 @@ việc, nên Windows lấy mặc định là **chính thư mục cài**. Windows
 mục nào đang là thư mục làm việc của một tiến trình còn sống — script tự khoá đúng thứ nó
 định dời. Nó thử lại 30 lần trong 30 giây rồi bỏ cuộc, mà launcher đã thoát từ trước.
 
-Ba lớp vá: launcher chỉ định thư mục trung lập khi chạy script; script tự đứng ra chỗ trung
-lập trước khi đụng vào thư mục cài; và khi mở lại launcher thì chỉ rõ thư mục cài mới thay
-vì để nó thừa hưởng thư mục tạm.
+Các lớp vá: launcher chỉ định thư mục trung lập khi chạy script; script tự đứng ra chỗ trung
+lập trước khi đụng vào thư mục cài; khi mở lại launcher thì chỉ rõ thư mục cài mới thay vì
+để nó thừa hưởng thư mục tạm; và lối tắt của bộ cài từ nay đặt sẵn thư mục làm việc ra
+ngoài thư mục cài — nguyên nhân gốc bị bịt ngay từ lúc bấm lối tắt.
+
+Thêm nữa: từ nay **hỏng bước nào script cũng mở lại launcher** (miễn là thư mục cài còn
+lành). Trước đây bất cứ bước nào trục trặc — phần mềm diệt virus giữ file, ổ đầy, thư mục
+đang mở trong Explorer — là script bỏ đi im lặng và bạn ngồi nhìn màn hình trống. Nay xấu
+nhất bạn cũng chỉ mất bản cập nhật, không mất launcher.
 
 ### Và một lý do nữa để lỗi này không chết hẳn lần sau
 
