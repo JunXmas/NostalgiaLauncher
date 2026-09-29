@@ -46,6 +46,46 @@ def test_powershell_reopens_the_launcher_after_a_failed_copy(tmp_path: Path) -> 
     assert "thử mở lại launcher" in text, "trả lại bản cũ xong phải mở nó lên"
 
 
+@needs_powershell
+def test_powershell_reopens_the_launcher_when_the_stale_old_dir_cannot_be_removed(
+    tmp_path: Path,
+) -> None:
+    """`.old` sót từ lần trước mà không xoá được (Defender/Explorer giữ file): script phải
+    ghi nhật ký + mở lại bản cũ, KHÔNG được chết ngay tại Remove-Item.
+
+    Trước bản vá, Remove-Item nằm ngoài try với $ErrorActionPreference='Stop' — hỏng là
+    script chết trước cả Move-Item, không log không Restart: đúng lại cảnh "tắt rồi không
+    mở lại". Giả lập khoá bằng thư mục con mất quyền ghi (chmod 555) — cùng hình dạng lỗi
+    "không xoá được con bên trong" mà Defender gây ra trên Windows."""
+    assert _POWERSHELL is not None
+    install = tmp_path / "Nostalgia"
+    (install / "lib").mkdir(parents=True)
+    (install / "lib" / "core.dll").write_text("cũ", encoding="utf-8")
+    stale_old = tmp_path / "Nostalgia.old"
+    locked = stale_old / "sub"
+    locked.mkdir(parents=True)
+    (locked / "giu.dll").write_text("x", encoding="utf-8")
+    locked.chmod(0o555)
+    plan = SwapPlan(
+        install, tmp_path / "staged", install / "nostalgia-ui.exe", os.getpid() + 100_000
+    )
+    script_path = tmp_path / "apply-update.ps1"
+    script_path.write_text(render_swap_script(plan, windows=True), encoding="utf-8-sig")
+    try:
+        result = subprocess.run(
+            [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)],
+            timeout=60,
+        )
+    finally:
+        locked.chmod(0o755)
+
+    assert result.returncode == 1
+    assert (install / "lib" / "core.dll").read_text(encoding="utf-8") == "cũ"
+    text = swap_log_path(script_path).read_text(encoding="utf-8")
+    assert "không dọn được .old" in text, "phải ghi ĐÚNG bước hỏng, không chết câm"
+    assert "thử mở lại launcher" in text, "thư mục cài còn lành thì phải mở lại"
+
+
 def test_windows_script_does_not_leave_a_bare_exit_with_a_working_install() -> None:
     """Không đường thoát nào được bỏ đi im lặng khi thư mục cài còn lành.
 
@@ -54,7 +94,7 @@ def test_windows_script_does_not_leave_a_bare_exit_with_a_working_install() -> N
     được bản cũ (không còn gì mà mở). Mọi `exit 1` khác phải có `Restart` đứng trước nó."""
     lines = render_swap_script(_windows_plan(), windows=True).splitlines()
     exits = [i for i, line in enumerate(lines) if line.strip().startswith("exit 1")]
-    assert len(exits) == 3, f"số đường thoát đổi ({len(exits)}) — xem lại từng cái một"
+    assert len(exits) == 4, f"số đường thoát đổi ({len(exits)}) — xem lại từng cái một"
 
     for index in exits:
         before = "\n".join(lines[max(0, index - 6) : index])
