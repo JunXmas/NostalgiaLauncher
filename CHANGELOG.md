@@ -3,6 +3,20 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+### Ô CỘNG ĐỒNG trên thanh bên
+
+Thanh bên có thêm một ô dẫn thẳng tới máy chủ Discord của Nostalgia. Trước đó địa chỉ ấy
+không nằm ở đâu trong launcher — người chơi muốn hỏi một câu phải tự đi tìm.
+
+Ô nằm **dưới vạch ngăn**, tách khỏi bảy mục trên nó, và không sáng lên khi bấm: bảy mục kia
+đổi trang bên phải, ô này mở trình duyệt rồi người dùng vẫn đứng nguyên ở trang cũ. Hai loại
+hành vi khác nhau thì phải nhìn ra được *trước* khi bấm.
+
+Địa chỉ để ở `repo/endpoints.py` cạnh mọi địa chỉ khác, nên đổi lời mời chỉ phải sửa một
+dòng. Bản điện thoại dùng đúng link đó, ở mục CỘNG ĐỒNG trên rail dọc.
+
 ## 1.1.2 — 2026-09-29
 
 Ba lỗi trong THƯ VIỆN, tất cả đến từ một phản hồi của người chơi: "cài modpack không thấy
