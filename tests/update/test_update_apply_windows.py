@@ -221,7 +221,12 @@ def test_powershell_swaps_even_when_launched_from_inside_the_install_dir(
         timeout=90,
     )
 
-    assert result.returncode == 0, "cwd trong thư mục cài vẫn phải tráo được"
+    # Dán nhật ký vào lời báo lỗi: job này chạy trên runner Windows nên không ai gỡ tay được,
+    # mà "assert 1 == 0" một mình thì không nói script chết ở bước nào. Chính cái mù đó làm
+    # bug sống qua nhiều bản.
+    log = swap_log_path(script_path)
+    diary = log.read_text(encoding="utf-8") if log.exists() else "(không có nhật ký)"
+    assert result.returncode == 0, f"cwd trong thư mục cài vẫn phải tráo được. Nhật ký:\n{diary}"
     assert (install / "lib" / "core.dll").read_text(encoding="utf-8") == "mới"
 
 
@@ -268,6 +273,15 @@ def test_windows_script_guards_the_working_directory_and_restart() -> None:
     set_location = line_of("Set-Location")
     first_move = line_of("Move-Item")
     assert set_location < first_move, "Set-Location phải đứng TRƯỚC Move-Item, đứng sau thì vô dụng"
+
+    # `Set-Location` MỘT MÌNH không sửa được bug: nó đổi "current location" của provider
+    # PowerShell, không đổi thư mục làm việc của tiến trình ở mức Win32 — mà khoá DELETE nằm ở
+    # mức Win32. Bản vá đầu chỉ có Set-Location và job check-windows-updater đỏ với
+    # returncode 1. Gác riêng dòng này để đừng ai gỡ nó đi lần nữa.
+    set_win32_cwd = line_of("[System.IO.Directory]::SetCurrentDirectory")
+    assert set_win32_cwd < first_move, (
+        "chỉ Set-Location thì Windows vẫn khoá thư mục — phải SetCurrentDirectory ở mức Win32"
+    )
     restart = lines[line_of("Start-Process")]
     assert "-WorkingDirectory $installDir" in restart, (
         "thiếu thì launcher mới kế thừa cwd %TEMP% của script"

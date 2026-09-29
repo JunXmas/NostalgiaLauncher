@@ -16,9 +16,16 @@ dời: `Move-Item` ném "Access to the path is denied" cả 30 lần thử rồi
 launcher đã `os._exit(0)`. Không còn ai mở lại nó.
 
 Ba lớp vá: launcher truyền `cwd=%TEMP%` khi spawn (Linux cũng vậy, vì script `rm -rf` chính
-thư mục cài); script tự `Set-Location` sang `%TEMP%` **trước** mọi `Move-Item`, phòng trường
-hợp chạy tay; và `Start-Process` mở lại launcher với `-WorkingDirectory` trỏ thẳng thư mục
-cài mới thay vì để nó kế thừa `%TEMP%`.
+thư mục cài); script tự ra `%TEMP%` **trước** mọi `Move-Item`, phòng trường hợp chạy tay; và
+`Start-Process` mở lại launcher với `-WorkingDirectory` trỏ thẳng thư mục cài mới thay vì để
+nó kế thừa `%TEMP%`.
+
+Lớp thứ hai cần **hai** lệnh, không phải một: `Set-Location` chỉ đổi "current location" của
+provider PowerShell (thứ `$PWD` trả về), không đổi thư mục làm việc thật của tiến trình ở mức
+Win32 — mà handle khoá DELETE nằm đúng ở mức Win32 đó. Phải gọi thêm
+`[System.IO.Directory]::SetCurrentDirectory`. Bản vá đầu chỉ có `Set-Location` và **CI trên
+Windows thật đỏ** với `Move-Item` vẫn "Access denied"; máy dev Linux không cách nào nói ra
+được điều đó. Có gác riêng cho dòng này.
 
 Vì sao lỗi này sống qua nhiều bản: script chạy **sau** khi launcher thoát với stdout/stderr
 đổ vào `DEVNULL`, nên hỏng là hỏng câm và mỗi lần sửa đều là đoán từ triệu chứng. Nay script

@@ -274,14 +274,23 @@ function Log($m) {{
         Add-Content -LiteralPath $logPath -Value "$(Get-Date -Format o) $m" -Encoding utf8
     }} catch {{ }}
 }}
-Log "bắt đầu; cwd=$((Get-Location).Path); install=$installDir"
+Log "bắt đầu; cwd=$([System.IO.Directory]::GetCurrentDirectory()); install=$installDir"
 
 # Đứng ra chỗ trung lập TRƯỚC KHI đụng vào thư mục cài. Windows giữ handle không cho DELETE
 # trên thư mục làm việc của tiến trình đang sống, nên nếu cwd nằm trong (hay LÀ) thư mục cài
 # thì Move-Item bên dưới ném "Access denied" mãi mãi — script tự khoá thứ nó định dời.
-# Launcher đã truyền cwd=%TEMP% khi spawn; dòng này là tầng phòng thủ thứ hai, cho cả trường
-# hợp ai đó chạy tay script từ trong thư mục cài.
+# Launcher đã truyền cwd=%TEMP% khi spawn; hai dòng này là tầng phòng thủ thứ hai, cho cả
+# trường hợp ai đó chạy tay script từ trong thư mục cài.
+#
+# PHẢI gọi [System.IO.Directory]::SetCurrentDirectory. `Set-Location` MỘT MÌNH KHÔNG ĐỦ: nó
+# chỉ đổi "current location" của PowerShell provider (thứ $PWD trả về) chứ không đổi thư mục
+# làm việc thật của tiến trình ở mức Win32 — mà cái khoá DELETE nằm đúng ở mức Win32 đó.
+# Job check-windows-updater trên Windows thật đã bắt được: chỉ Set-Location thì Move-Item vẫn
+# "Access denied", test đỏ với returncode 1. Giữ cả hai dòng vì Set-Location là thứ mọi lệnh
+# PowerShell tương đối dùng, còn SetCurrentDirectory là thứ Windows thực sự nhìn.
 Set-Location -LiteralPath ([System.IO.Path]::GetTempPath())
+[System.IO.Directory]::SetCurrentDirectory([System.IO.Path]::GetTempPath())
+Log "đã ra chỗ trung lập; cwd=$([System.IO.Directory]::GetCurrentDirectory())"
 
 $deadline = (Get-Date).AddSeconds(60)
 while (Get-Process -Id {plan.wait_pid} -ErrorAction SilentlyContinue) {{
