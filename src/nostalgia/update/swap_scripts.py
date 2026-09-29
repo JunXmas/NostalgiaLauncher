@@ -118,7 +118,18 @@ while (Get-Process -Id {plan.wait_pid} -ErrorAction SilentlyContinue) {{
 }}
 
 if (Test-Path -LiteralPath $oldDir) {{
-    Remove-Item -LiteralPath $oldDir -Recurse -Force
+    # .old sót từ lần cập nhật trước: dòng dọn cuối script chạy SilentlyContinue nên có thể
+    # để lại, và Defender/Explorer có thể đang giữ file trong đó. PHẢI try/catch: với
+    # $ErrorActionPreference='Stop', Remove-Item hỏng ngoài try là script chết NGAY TẠI ĐÂY —
+    # trước cả Move-Item — không nhật ký, không mở lại. Đúng lại cảnh "tắt rồi không mở lại".
+    try {{
+        Remove-Item -LiteralPath $oldDir -Recurse -Force
+    }} catch {{
+        Log "không dọn được .old sót từ lần trước: $($_.Exception.Message)"
+        Log "Cách cứu: xoá tay $oldDir rồi bấm cập nhật lại."
+        Restart "không dọn được .old, bản cũ còn nguyên"
+        exit 1
+    }}
 }}
 $moved = $false
 $lastError = ''
