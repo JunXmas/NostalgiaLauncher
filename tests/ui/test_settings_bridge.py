@@ -44,6 +44,38 @@ def test_bridge_exposes_version_and_data_dir_only(tmp_path: Path) -> None:
     assert not {name for name in exposed if "urseforge" in name or "Key" in name}
 
 
+def test_donate_url_is_a_real_https_address(tmp_path: Path) -> None:
+    """Nút ủng hộ mở URL từ `repo/endpoints.py`, không phải chuỗi nhúng trong QML.
+
+    Gác chuyện dán nhầm đường dẫn cục bộ hay để trống: nút hiện ra nhưng bấm không đi đâu là
+    lỗi im lặng — người dùng tưởng app hỏng chứ không báo cho ai.
+    """
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    settings_bridge = SettingsBridge(launcher)
+    assert settings_bridge.donateUrl == launcher.donate_url()
+    assert settings_bridge.donateUrl.startswith("https://")
+
+
+def test_settings_page_shows_the_donate_button(tmp_path: Path) -> None:
+    """Nút phải có thật trên trang CÀI ĐẶT (index 6), không chỉ có ở cầu nối."""
+    from PySide6.QtCore import QObject
+    from PySide6.QtGui import QGuiApplication
+    from qml_tree import find_item
+
+    from nostalgia.ui.app import build_view
+
+    view, _bridge = build_view(Launcher.for_data_dir(tmp_path / "data", tmp_path / "config"))
+    view.show()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 6)
+    QGuiApplication.processEvents()
+
+    assert find_item(root_item, "donateButton") is not None, "trang CÀI ĐẶT thiếu nút ủng hộ"
+
+
 def test_valid_game_dir_root_saves_and_emits_changed(tmp_path: Path) -> None:
     """Đường dẫn hợp lệ → lưu xuống đĩa và phát gameDirRootChanged."""
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")

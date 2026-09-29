@@ -1,45 +1,40 @@
-Bản vá cho 1.1.0 — ba lỗi được sửa và một tính năng cũ quay lại.
+Bản vá cho 1.1.1 — dọn phần lọc trong THƯ VIỆN, từ một phản hồi của người chơi: "cài
+modpack không thấy được hết mọi thứ, mà phần lọc phiên bản thì vướng". Hoá ra đó là ba lỗi
+riêng biệt nằm cạnh nhau.
 
-## CHƠI CHUNG vào được phòng thật sự
+## Tìm modpack không còn bị ghim vào phiên bản của bản chơi đang chọn
 
-Trước đây world của bạn hiện trong tab LAN của Minecraft nhưng bấm vào là "Connection
-Refused": Minecraft nối qua IP card mạng (192.168.x) còn proxy của launcher chỉ nghe
-127.0.0.1. Proxy nay nhận kết nối từ chính máy bạn qua mọi card mạng — và vẫn đóng sập
-cửa với bất kỳ máy nào khác cùng LAN. Đã kiểm trọn vòng trên máy thật qua relay đang chạy.
+Chọn bản chơi xong thì bộ lọc tự nhảy về loader + phiên bản của bản chơi đó. Hợp lý cho mod
+và shader — chúng cài **vào** bản chơi. Nhưng **sai hoàn toàn với modpack**: modpack *tạo ra*
+một bản chơi mới. Hậu quả: bản chơi đang chọn là 1.21 thì mọi pack 1.7.10 bị giấu, và kho
+trông như chỉ có vài chục pack thay vì hơn mười tám nghìn.
 
-## ⚠ Windows: bản này cần cài tay MỘT lần
+Nay bấm chip **Modpack** là thả hết bộ lọc thừa hưởng. Bộ lọc bạn **tự** tick vẫn giữ nguyên
+khi đổi chip — chỉ bộ lọc mặc định mới bị đặt lại.
 
-Bộ tự cập nhật của 1.0.15–1.1.0 trên Windows bị hỏng (script tráo thư mục chết im lặng —
-xem bên dưới), nên nó không tự kéo được bản này về. Tải `nostalgia-1.1.1-windows-x64-setup.exe`
-(hoặc `.zip`) ở dưới và cài đè. Từ 1.1.1 trở đi tự cập nhật chạy bình thường.
+## Danh mục phiên bản không còn bị cắt còn 60 mục
 
-## Tự cập nhật trên Windows chạy lại được
+Cột lọc cũ cắt danh mục Mojang (hơn 500 bản) xuống 60 mục cho vừa bề ngang cột, và không nói
+một chữ nào về việc đã cắt. Ai tìm bản cũ thì cuộn mãi không ra. Khay mới cuộn được nên giữ
+nguyên cả danh mục, kèm ô tìm riêng bên trong.
 
-Script tráo thư mục cũ là batch chạy qua `cmd.exe`, chết theo ba đường cùng lúc và đều
-im lặng: `timeout /t` thoát ngay khi không có bàn phím gắn vào, `cmd.exe` đọc script sai
-bảng mã khi tên người dùng Windows có dấu tiếng Việt, và `move` bỏ cuộc khi Defender còn
-giữ file exe vài giây sau khi launcher thoát.
+## Cột lọc dọc thành ba ô ngang thu gọn
 
-Script nay là PowerShell (sẵn trên mọi Windows 10/11): đọc đúng UTF-8, chờ launcher cũ
-tắt có giới hạn thời gian, thử lại khi file còn bị giữ, và chép hỏng thì trả lại nguyên
-bản cũ — không bao giờ mất launcher. CI cũng chạy test bộ tự cập nhật trên Windows thật
-từ nay.
+Cột trái 210px trải thẳng 4 loader cộng hàng chục phiên bản theo chiều dọc, đẩy phần **Sắp
+xếp** ra khỏi tầm mắt. Nay là ba ô cùng một dòng — **Mọi loader** / **Mọi phiên bản** /
+**Liên quan** — bấm mới bung khay, bấm ra ngoài thì đóng.
 
-## Thẻ hành tinh quay lại — khi thanh bên thu gọn
+- Ô đóng vẫn nói được đang lọc gì: một mục thì hiện tên nó, nhiều mục thì `1.21.4 +2`.
+- Dấu **✕** ngay trên ô xoá cả nhóm, không phải bỏ tick từng mục.
+- Bỏ cột nên phần kết quả rộng thêm 234px, và số cột thẻ tính theo bề ngang cửa sổ thật thay
+  vì ghim cứng hai cột.
 
-Thanh bên có nút **THU GỌN** mới. Thu gọn còn cột icon, và ở trang chủ sáu mục điều hướng
-bay ra thành sáu thẻ neo vào các hành tinh trong ảnh nền vũ trụ. Rê chuột vào thẻ là thẻ
-nhấc lên và **hành tinh của nó sáng quầng**. Mở thanh bên lại thì các thẻ nhường chỗ.
+## Nút Ủng hộ dự án trong CÀI ĐẶT
 
-## Nút "Dùng" hiện lại khi hai tài khoản trùng tên
+Launcher miễn phí, không quảng cáo, không bản trả tiền. Nút nằm im ở hàng "Phiên bản
+launcher" — không popup, không nhắc theo lịch, không chặn tính năng nào.
 
-Nếu bạn đăng nhập một tài khoản Microsoft và một Ely.by **cùng tên**, trang TÀI KHOẢN
-không hiện nút **Dùng** ở đâu cả — cả hai hàng đều tự nhận là "đang dùng" vì danh tính
-khoá theo tên. Bản này khoá theo `account_id`:
+---
 
-- Nút Dùng hiện lại, và bấm nó chạy đúng tài khoản ở hàng đó (trước đây bấm ở hàng
-  Ely.by vẫn chạy game bằng tài khoản Microsoft).
-- Xoá tài khoản chỉ gỡ đúng một hàng — không mất vé đăng nhập của tài khoản trùng tên.
-- CLI `--account Ten` gõ tay vẫn dùng được như cũ.
-
-Không cần làm gì với dữ liệu — `accounts.json` cũ đọc được nguyên.
+Cập nhật: launcher tự tải bản này (trừ bản macOS `.app` và bản chạy từ mã nguồn — hai loại đó
+mở trang tải). Mọi gói đều phải khớp `SHA256SUMS` mới được cài.

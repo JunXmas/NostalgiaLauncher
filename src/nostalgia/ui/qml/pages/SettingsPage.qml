@@ -33,8 +33,23 @@ Item {
             spacing: 14
             Row {
                 spacing: 10
-                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160 }
-                Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody }
+                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody
+                       width: 120; anchors.verticalCenter: parent.verticalCenter }
+                // Trang CÀI ĐẶT không cuộn được, nên nút ủng hộ đi ghép vào hàng này thay vì
+                // thêm hàng mới — hàng cuối cùng đã chạm mép dưới ở cửa sổ 1360×860.
+                ActionButton {
+                    objectName: "donateButton"
+                    primary: false; label: "Ủng hộ dự án"
+                    anchors.verticalCenter: parent.verticalCenter
+                    onClicked: settingsBridge.openDonatePage()
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Launcher miễn phí, không quảng cáo. Ủng hộ là tuỳ tâm."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
             }
             Row {
                 spacing: 10

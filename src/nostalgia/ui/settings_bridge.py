@@ -134,6 +134,15 @@ class SettingsBridge(QObject):
     def dataDir(self) -> str:
         return str(self._launcher.paths.data_dir)
 
+    @Property(str, constant=True)
+    def donateUrl(self) -> str:
+        return self._launcher.donate_url()
+
+    @Slot()
+    def openDonatePage(self) -> None:
+        """Mở trang ủng hộ trong trình duyệt. Chỉ chạy khi người dùng tự bấm."""
+        QDesktopServices.openUrl(QUrl(self._launcher.donate_url()))
+
     @Slot()
     def openDataFolder(self) -> None:
         """Mở thư mục dữ liệu (versions/libraries/assets/instances) bằng trình quản lý file."""
