@@ -72,6 +72,10 @@ class UpdateOperations(LauncherContext):
         """Trang ủng hộ. Không chạm mạng — chỉ trả địa chỉ cho giao diện mở trình duyệt."""
         return self.endpoints.donate
 
+    def community_url(self) -> str:
+        """Discord cộng đồng. Không chạm mạng — chỉ trả địa chỉ cho giao diện mở trình duyệt."""
+        return self.endpoints.community
+
     def launcher_update_asset(self, release: LauncherRelease) -> ReleaseAsset | None:
         """Gói phải tải cho kiểu cài của máy này: `.zip` onedir để tráo, hay `.AppImage`/
         `.deb`/`.rpm` để hệ thống cài hộ. Không có gói đúng thì None."""
