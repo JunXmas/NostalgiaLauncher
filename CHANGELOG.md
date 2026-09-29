@@ -27,6 +27,23 @@ Win32 — mà handle khoá DELETE nằm đúng ở mức Win32 đó. Phải gọ
 Windows thật đỏ** với `Move-Item` vẫn "Access denied"; máy dev Linux không cách nào nói ra
 được điều đó. Có gác riêng cho dòng này.
 
+Và hai lớp bọc ngoài, vì cwd chỉ là MỘT lối làm move hỏng — Defender giữ file, ổ đầy, thư
+mục đang mở trong Explorer đều cho ra đúng cảnh "tắt rồi không mở lại" nếu script bỏ đi im
+lặng:
+
+- **Hỏng gì cũng mở lại launcher.** Move hỏng thì thư mục cài chưa bị đụng — mở bản cũ lên;
+  chép hỏng thì trả lại bản cũ rồi mở nó lên. Người dùng mất bản cập nhật là chuyện nhỏ, mất
+  launcher là chuyện lớn. Chỉ hai đường được phép không mở: launcher cũ không chịu thoát
+  (mở thêm là hai bản tranh nhau ghi dữ liệu), và đường hỏng-nặng không trả lại được bản cũ
+  (nhật ký ghi rõ thư mục `.old` nằm đâu để cứu tay). Có test gác từng đường.
+- **Lối tắt của bộ cài đặt `WorkingDir` ra ngoài thư mục cài** (`installer.iss`) — bịt
+  nguyên nhân ở gốc: launcher không bao giờ chạy với thư mục làm việc trỏ vào thư mục cài
+  nữa. Launcher không dùng đường dẫn tương đối nào (đã rà: mọi `open()` đều trên đường tuyệt
+  đối, game chạy với `cwd=game_dir`) nên đổi vô hại.
+
+Bản Linux **không đổi** — jun xác nhận tự cập nhật trên Linux chạy đúng, và đổi một đường
+đang chạy được không có ai báo lỗi chỉ là thêm chỗ để hỏng.
+
 Vì sao lỗi này sống qua nhiều bản: script chạy **sau** khi launcher thoát với stdout/stderr
 đổ vào `DEVNULL`, nên hỏng là hỏng câm và mỗi lần sửa đều là đoán từ triệu chứng. Nay script
 ghi nhật ký cạnh chính nó (`apply-update.log`) — có bước hỏng và câu lỗi thật. Test tái hiện
