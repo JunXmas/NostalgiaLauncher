@@ -91,6 +91,45 @@ Rectangle {
             }
         }
 
+        /* Discord cộng đồng: LIÊN KẾT RA NGOÀI, không phải điểm đến.
+
+           Nằm dưới vạch ngăn, tách khỏi bảy mục trên nó — bảy mục kia đổi trang bên phải,
+           ô này mở trình duyệt rồi người dùng vẫn đứng nguyên ở trang cũ. Hai loại hành vi
+           khác nhau thì phải nhìn ra được trước khi bấm, nên không sáng lên (`selected` luôn
+           false), không đụng `currentIndex`, không đụng `Theme.page`.
+
+           Màu `textMuted` chứ không màu thương hiệu Discord: bảng màu ở đây là của Nostalgia,
+           và một ô tím lạ giữa thanh bên sẽ đọc thành "mục quan trọng nhất" — sai hẳn cấp bậc.
+           Cùng lý do và cùng cách với `collapseToggle` ngay dưới. */
+        /* Vạch ngăn: hiện ở CẢ HAI chế độ. Thu gọn mà giấu vạch đi thì ở cột icon, cái
+           phong bì nằm sát ngay dưới bảy khối và đọc thành mục thứ tám — đúng thứ vạch này
+           sinh ra để chặn. Ôm trong một Item cao hơn để vạch có khoảng thở: nhịp 4 px của
+           Column là nhịp giữa các mục cùng loại, không phải nhịp giữa hai nhóm. */
+        Item {
+            width: parent.width
+            height: 15
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width; height: 1
+                color: Theme.border
+            }
+        }
+
+        NavItem {
+            objectName: "communityLink"
+            label: root.collapsed ? "" : Tr.text("community")
+            // Icon: phong bì = lời mời. Không có khối Minecraft nào nói được "Discord", và
+            // hai font nhúng đều không có ký tự này nên nó rơi về font hệ thống — đã chụp
+            // ảnh kiểm ở 22 px, đọc ra được.
+            glyph: "✉"
+            compact: root.collapsed
+            tint: Theme.textMuted
+            // Qua cầu nối chứ không `Qt.openUrlExternally` thẳng trong QML: URL phải sống ở
+            // `repo/endpoints.py` cạnh mọi địa chỉ khác (đúng như `donate_url`), để đổi lời
+            // mời chỉ sửa một dòng và test kiểm được — chuỗi ghi cứng trong QML thì không.
+            onClicked: settingsBridge.openCommunityPage()
+        }
+
         // Nút thu gọn/mở rộng, cùng hàng lối với các mục trên nó.
         NavItem {
             objectName: "collapseToggle"

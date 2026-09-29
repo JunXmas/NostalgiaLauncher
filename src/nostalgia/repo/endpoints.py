@@ -70,6 +70,11 @@ LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/
 # để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
 DONATE_URL = "https://github.com/sponsors/JunXmas"
 
+# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với DONATE_URL:
+# để ở đây thì đổi lời mời (hết hạn, đổi sang link vĩnh viễn) chỉ phải sửa một dòng, và test
+# kiểm được nó là địa chỉ thật chứ không phải chuỗi rỗng nhúng đâu đó trong QML.
+COMMUNITY_URL = "https://discord.gg/TTDqYmM89W"
+
 # Upload skin lên Mojang (PUT, cần Bearer token). Riêng biệt với session profile vì khác
 # endpoint hoàn toàn: profile đọc công khai, upload cần xác thực.
 SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
@@ -104,6 +109,7 @@ class Endpoints:
     launcher_releases: str = LAUNCHER_RELEASES_URL
     skin_upload: str = SKIN_UPLOAD_URL
     donate: str = DONATE_URL
+    community: str = COMMUNITY_URL
 
 
 DEFAULT_ENDPOINTS = Endpoints()

@@ -143,6 +143,15 @@ class SettingsBridge(QObject):
         """Mở trang ủng hộ trong trình duyệt. Chỉ chạy khi người dùng tự bấm."""
         QDesktopServices.openUrl(QUrl(self._launcher.donate_url()))
 
+    @Property(str, constant=True)
+    def communityUrl(self) -> str:
+        return self._launcher.community_url()
+
+    @Slot()
+    def openCommunityPage(self) -> None:
+        """Mở Discord cộng đồng trong trình duyệt. Chỉ chạy khi người dùng tự bấm."""
+        QDesktopServices.openUrl(QUrl(self._launcher.community_url()))
+
     @Slot()
     def openDataFolder(self) -> None:
         """Mở thư mục dữ liệu (versions/libraries/assets/instances) bằng trình quản lý file."""
