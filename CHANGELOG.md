@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.1.3 — 2026-09-29
 
 ### Windows: bấm cập nhật xong app không mở lại nữa — đã sửa
 

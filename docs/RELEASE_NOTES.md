@@ -1,40 +1,55 @@
-Bản vá cho 1.1.1 — dọn phần lọc trong THƯ VIỆN, từ một phản hồi của người chơi: "cài
-modpack không thấy được hết mọi thứ, mà phần lọc phiên bản thì vướng". Hoá ra đó là ba lỗi
-riêng biệt nằm cạnh nhau.
+Bản vá cho 1.1.2 — sửa lỗi tự cập nhật trên Windows, từ báo cáo của người chơi: bấm
+**Cập nhật** thì launcher tắt và không bao giờ mở lại.
 
-## Tìm modpack không còn bị ghim vào phiên bản của bản chơi đang chọn
+## ⚠️ Người dùng Windows: bản này phải cài TAY một lần
 
-Chọn bản chơi xong thì bộ lọc tự nhảy về loader + phiên bản của bản chơi đó. Hợp lý cho mod
-và shader — chúng cài **vào** bản chơi. Nhưng **sai hoàn toàn với modpack**: modpack *tạo ra*
-một bản chơi mới. Hậu quả: bản chơi đang chọn là 1.21 thì mọi pack 1.7.10 bị giấu, và kho
-trông như chỉ có vài chục pack thay vì hơn mười tám nghìn.
+Bản vá nằm trong 1.1.3, nhưng thứ chạy lúc bạn bấm cập nhật là bộ cập nhật của bản **đang
+cài** — tức bản còn lỗi. Nó vẫn sẽ tắt launcher rồi không mở lại.
 
-Nay bấm chip **Modpack** là thả hết bộ lọc thừa hưởng. Bộ lọc bạn **tự** tick vẫn giữ nguyên
-khi đổi chip — chỉ bộ lọc mặc định mới bị đặt lại.
+Cách cài: tải `nostalgia-1.1.3-windows-x64-setup.exe` ở dưới, chạy, cài đè lên bản cũ. Dữ
+liệu (tài khoản, bản chơi, mod, world) nằm ở `%APPDATA%\nostalgia` nên **không mất**.
 
-## Danh mục phiên bản không còn bị cắt còn 60 mục
+Từ 1.1.3 trở đi nút Cập nhật chạy đúng. Chỉ phải làm tay lần này.
 
-Cột lọc cũ cắt danh mục Mojang (hơn 500 bản) xuống 60 mục cho vừa bề ngang cột, và không nói
-một chữ nào về việc đã cắt. Ai tìm bản cũ thì cuộn mãi không ra. Khay mới cuộn được nên giữ
-nguyên cả danh mục, kèm ô tìm riêng bên trong.
+Người dùng Linux và macOS không bị lỗi này — cập nhật như thường.
 
-## Cột lọc dọc thành ba ô ngang thu gọn
+## Bấm cập nhật xong app không mở lại nữa — đã sửa
 
-Cột trái 210px trải thẳng 4 loader cộng hàng chục phiên bản theo chiều dọc, đẩy phần **Sắp
-xếp** ra khỏi tầm mắt. Nay là ba ô cùng một dòng — **Mọi loader** / **Mọi phiên bản** /
-**Liên quan** — bấm mới bung khay, bấm ra ngoài thì đóng.
+Launcher không tự ghi đè chính mình được trong lúc đang chạy, nên nó viết một script tráo
+thư mục, thoát, rồi script đổi tên thư mục cài và chép bản mới vào.
 
-- Ô đóng vẫn nói được đang lọc gì: một mục thì hiện tên nó, nhiều mục thì `1.21.4 +2`.
-- Dấu **✕** ngay trên ô xoá cả nhóm, không phải bỏ tick từng mục.
-- Bỏ cột nên phần kết quả rộng thêm 234px, và số cột thẻ tính theo bề ngang cửa sổ thật thay
-  vì ghim cứng hai cột.
+Chỗ sai: khi chạy script đó, launcher không nói cho nó biết phải đứng ở thư mục nào, nên
+script thừa hưởng thư mục làm việc của launcher. Lối tắt trên Desktop không đặt thư mục làm
+việc, nên Windows lấy mặc định là **chính thư mục cài**. Windows thì không cho đổi tên thư
+mục nào đang là thư mục làm việc của một tiến trình còn sống — script tự khoá đúng thứ nó
+định dời. Nó thử lại 30 lần trong 30 giây rồi bỏ cuộc, mà launcher đã thoát từ trước.
 
-## Nút Ủng hộ dự án trong CÀI ĐẶT
+Ba lớp vá: launcher chỉ định thư mục trung lập khi chạy script; script tự đứng ra chỗ trung
+lập trước khi đụng vào thư mục cài; và khi mở lại launcher thì chỉ rõ thư mục cài mới thay
+vì để nó thừa hưởng thư mục tạm.
 
-Launcher miễn phí, không quảng cáo, không bản trả tiền. Nút nằm im ở hàng "Phiên bản
-launcher" — không popup, không nhắc theo lịch, không chặn tính năng nào.
+### Và một lý do nữa để lỗi này không chết hẳn lần sau
+
+Script chạy sau khi launcher đã thoát, không có cửa sổ, không in ra đâu cả — hỏng là hỏng
+câm. Mọi lần sửa trước đều là đoán từ triệu chứng "tắt rồi không mở lại", vì không có gì
+khác để đọc.
+
+Nay script ghi nhật ký cạnh chính nó:
+`%APPDATA%\nostalgia\data\updates\apply-update.log`. Có giờ, có bước đang làm, và có câu lỗi
+thật của Windows. Lần sau nếu còn hỏng, gửi file đó là biết ngay chỗ nào — không phải đoán
+nữa.
+
+## Ô CỘNG ĐỒNG trên thanh bên
+
+Thanh bên có thêm một ô dẫn thẳng tới máy chủ Discord của Nostalgia. Trước đó địa chỉ ấy
+không nằm ở đâu trong launcher, muốn hỏi một câu phải tự đi tìm.
+
+Ô nằm dưới vạch ngăn, tách khỏi bảy mục trên nó, và không sáng lên khi bấm: bảy mục kia đổi
+trang bên phải, ô này mở trình duyệt rồi bạn vẫn đứng nguyên ở trang cũ. Bản điện thoại cũng
+có mục này trên rail dọc, cùng một link.
 
 ---
 
-Cập nhật: launcher tự tải bản này (trừ bản macOS `.app` và bản chạy từ mã nguồn — hai loại đó
-mở trang tải). Mọi gói đều phải khớp `SHA256SUMS` mới được cài.
+Cập nhật: Linux và macOS `.AppImage`/`.tar.gz` tự tải được bản này. Bản macOS `.app` và bản
+chạy từ mã nguồn mở trang tải như trước. **Windows: xem phần cảnh báo ở đầu.** Mọi gói đều
+phải khớp `SHA256SUMS` mới được cài.
