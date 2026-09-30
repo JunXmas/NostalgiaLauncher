@@ -185,9 +185,8 @@ def test_the_use_button_never_appears_under_the_cursor(
 def test_ely_account_gets_a_link_to_change_its_real_skin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Đổi skin THẬT của tài khoản Ely chỉ làm được ở ely.by — launcher không có API upload
-    cho họ (khác Microsoft, có). Không có nút này thì họ đổi trong thư viện, thấy nhân vật đổi
-    ngay trước mắt, và tưởng người chơi khác trong game cũng thấy."""
+    """Nút ra ely.by vẫn phải còn dù launcher đã upload thẳng được: nó là lối thoát khi
+    phiên web hỏng (trang ely.by đổi API ngầm) và là chỗ duy nhất đổi CAPE."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
     link = find_item(root_item, "elySkinSiteButton")
     assert link is not None

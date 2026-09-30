@@ -147,20 +147,21 @@ def test_ely_local_override_survives_refresh_when_remote_still_differs(
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
 ) -> None:
-    """JL-18 mục 5: apply_library_skin cục bộ không bị refresh_skin ghi đè im lặng, chừng nào
-    ely.by (server thật) chưa thật sự đổi theo."""
+    """JL-18 mục 5: bản đổi-cục-bộ từ launcher đời cũ (marker `.local-override` còn trên
+    đĩa) không bị refresh_skin ghi đè im lặng, chừng nào ely.by chưa thật sự đổi theo.
+
+    Từ khi có upload thật (`upload_skin_to_ely`) launcher không TẠO marker này nữa, nhưng
+    máy người dùng cũ vẫn còn nó — đường đọc phải sống tiếp."""
     launcher = _launcher_with_fake_ely(server, server_state, tmp_path, certificate_pair)
     server_state.add("/ely/skins/JunBob.png", b"skin-cu-tren-ely")
     account = Account(player_name="JunBob", player_uuid=PREMIUM_UUID, account_kind=ELY)
 
     library_entry_bytes = b"\x89PNG\r\n\x1a\nskin-moi-tu-thu-vien"
-    skin_path = tmp_path / "library-skin.png"
-    skin_path.write_bytes(library_entry_bytes)
-    skin_entry = launcher.import_skin(skin_path, name="cool-skin")
-    applied = launcher.apply_library_skin(account, skin_entry.entry_id)
-    assert applied.skin_path.read_bytes() == library_entry_bytes
-    marker = launcher.paths.skins_dir / "ely-junbob.local-override"
-    assert marker.is_file()
+    skins_dir = launcher.paths.skins_dir
+    skins_dir.mkdir(parents=True, exist_ok=True)
+    (skins_dir / "ely-junbob.png").write_bytes(library_entry_bytes)
+    marker = skins_dir / "ely-junbob.local-override"
+    marker.touch()
 
     refreshed = launcher.refresh_skin(account)
     assert refreshed.skin_path.read_bytes() == library_entry_bytes  # giữ nguyên, không bị đè
@@ -177,12 +178,11 @@ def test_ely_local_override_clears_once_remote_catches_up(
     account = Account(player_name="JunBob", player_uuid=PREMIUM_UUID, account_kind=ELY)
 
     library_entry_bytes = b"\x89PNG\r\n\x1a\nskin-da-dong-bo"
-    skin_path = tmp_path / "library-skin.png"
-    skin_path.write_bytes(library_entry_bytes)
-    skin_entry = launcher.import_skin(skin_path, name="cool-skin")
-    launcher.apply_library_skin(account, skin_entry.entry_id)
-    marker = launcher.paths.skins_dir / "ely-junbob.local-override"
-    assert marker.is_file()
+    skins_dir = launcher.paths.skins_dir
+    skins_dir.mkdir(parents=True, exist_ok=True)
+    (skins_dir / "ely-junbob.png").write_bytes(library_entry_bytes)
+    marker = skins_dir / "ely-junbob.local-override"
+    marker.touch()
 
     server_state.add("/ely/skins/JunBob.png", library_entry_bytes)  # server đã đồng bộ theo
     refreshed = launcher.refresh_skin(account)

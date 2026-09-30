@@ -35,6 +35,9 @@ MINECRAFT_PROFILE_URL = "https://api.minecraftservices.com/minecraft/profile"
 # Ely.by: máy chủ Yggdrasil cho tài khoản non-premium, và API root cho authlib-injector.
 ELY_AUTH_URL = "https://authserver.ely.by/auth"
 ELY_AUTHLIB_ROOT_URL = "https://authserver.ely.by/api/authlib-injector"
+# Hai gốc của luồng ĐỔI skin thật (đi đường web chính chủ — xem auth/ely_web.py).
+ELY_WEB_ACCOUNT_ROOT = "https://account.ely.by"
+ELY_WEB_SITE_ROOT = "https://ely.by"
 AUTHLIB_INJECTOR_LATEST_URL = "https://authlib-injector.yushi.moe/artifact/latest.json"
 
 # App Azure "Nostalgia Launcher" — Personal Microsoft accounts, đã được Microsoft duyệt cho
@@ -62,6 +65,8 @@ class AuthEndpoints:
     minecraft_profile_url: str = MINECRAFT_PROFILE_URL
     ely_auth_url: str = ELY_AUTH_URL
     ely_authlib_root_url: str = ELY_AUTHLIB_ROOT_URL
+    ely_web_account_root: str = ELY_WEB_ACCOUNT_ROOT
+    ely_web_site_root: str = ELY_WEB_SITE_ROOT
     authlib_injector_latest_url: str = AUTHLIB_INJECTOR_LATEST_URL
 
 

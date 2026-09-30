@@ -101,9 +101,10 @@ class AccountBridge(WorkerBridge):
 
     @Slot(str, str, bool)
     def addSkin(self, account_id: str, file_url: str, slim: bool) -> None:
-        """Một nút "Thêm skin" cho mọi loại tài khoản: Microsoft thì upload lên Mojang (và tự
-        vào kho); loại khác thì cất vào kho rồi dùng ngay trong launcher; chưa chọn tài khoản
-        thì chỉ cất vào kho."""
+        """Một nút "Thêm skin" cho mọi loại tài khoản: Microsoft upload lên Mojang, Ely.by
+        upload lên ely.by (qua apply_library_skin — cả hai đổi skin THẬT trong game); tài
+        khoản ngoại tuyến cất vào kho rồi dùng trong launcher; chưa chọn tài khoản thì chỉ
+        cất vào kho."""
         account = self._find_account(account_id)
         if account is not None and account.account_kind == MICROSOFT:
             self.uploadSkin(account_id, file_url, slim)

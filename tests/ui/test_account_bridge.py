@@ -28,7 +28,15 @@ def test_accounts_carry_a_drawable_skin_and_ely_sign_in_activates(
     certificate_pair: tuple[Path, Path],
 ) -> None:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
-    launcher = replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
+    web = fake_ely.publish_web(server, server_state)
+    launcher = replace(
+        launcher,
+        auth_endpoints=replace(
+            fake_ely.publish(server, server_state),
+            ely_web_account_root=web.account_root,
+            ely_web_site_root=web.site_root,
+        ),
+    )
     launcher.add_offline_account("Dinnerbone")
     main_bridge = LauncherBridge(launcher)
     account_bridge = AccountBridge(launcher, main_bridge)
@@ -60,7 +68,15 @@ def test_two_factor_is_a_signal_not_a_failure(
     certificate_pair: tuple[Path, Path],
 ) -> None:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
-    launcher = replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
+    web = fake_ely.publish_web(server, server_state)
+    launcher = replace(
+        launcher,
+        auth_endpoints=replace(
+            fake_ely.publish(server, server_state),
+            ely_web_account_root=web.account_root,
+            ely_web_site_root=web.site_root,
+        ),
+    )
     route = server_state.routes["/ely/auth/authenticate"]
     route.status = 401
     route.body = b'{"errorMessage":"Account protected with two factor auth."}'
@@ -85,7 +101,15 @@ def test_ely_sign_in_fetches_skin_support_right_away(
     dùng vừa nhập mật khẩu nên chắc chắn có mạng và đang chờ sẵn, còn một lỗi mạng ở nút CHƠI
     thì đọc ra "launcher hỏng"."""
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
-    launcher = replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
+    web = fake_ely.publish_web(server, server_state)
+    launcher = replace(
+        launcher,
+        auth_endpoints=replace(
+            fake_ely.publish(server, server_state),
+            ely_web_account_root=web.account_root,
+            ely_web_site_root=web.site_root,
+        ),
+    )
     main_bridge = LauncherBridge(launcher)
     account_bridge = AccountBridge(launcher, main_bridge)
     assert account_bridge.skinSupportReady is False

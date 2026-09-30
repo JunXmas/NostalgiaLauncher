@@ -25,7 +25,13 @@ def make_ely_launcher(
     certificate_pair: tuple[Path, Path],
 ) -> Launcher:
     launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
-    return replace(launcher, auth_endpoints=fake_ely.publish(server, server_state))
+    web = fake_ely.publish_web(server, server_state)
+    auth = replace(
+        fake_ely.publish(server, server_state),
+        ely_web_account_root=web.account_root,
+        ely_web_site_root=web.site_root,
+    )
+    return replace(launcher, auth_endpoints=auth)
 
 
 def test_sign_in_keeps_tokens_but_never_the_password(

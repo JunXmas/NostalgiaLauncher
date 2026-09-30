@@ -7,9 +7,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from nostalgia.account.model import ELY, MICROSOFT, Account
+from nostalgia.auth.ely_web import web_session_from_refresh_token
 from nostalgia.errors import AccountError, SkinError
 from nostalgia.facade.accounts import AccountOperations
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.skin.ely_web_upload import upload_skin_to_ely, wear_ely_skin
 from nostalgia.skin.library import (
     SkinEntry,
     add_to_library,
@@ -81,13 +83,16 @@ class SkinOperations(AccountOperations):
         remove_from_library(self.paths.skins_dir, entry_id)
 
     def apply_library_skin(self, account: Account, entry_id: str) -> PlayerSkin:
-        """Dùng một skin trong kho cho tài khoản: Microsoft thì upload lên Mojang (CHẠM MẠNG);
-        loại khác thì chỉ đổi ảnh hiện trong launcher (Ely.by đổi thật ở ely.by)."""
+        """Dùng một skin trong kho cho tài khoản: Microsoft upload lên Mojang, Ely.by upload
+        lên ely.by (cả hai CHẠM MẠNG — bạn bè trong game thấy skin mới); tài khoản ngoại
+        tuyến thì chỉ đổi ảnh hiện trong launcher."""
         skin_entry = find_entry(self.paths.skins_dir, entry_id)
         if skin_entry is None:
             raise SkinError("skin này không còn trong thư viện")
         if account.account_kind == MICROSOFT:
             return self.upload_skin(account, skin_entry.skin_path, slim=skin_entry.slim)
+        if account.account_kind == ELY:
+            return self.upload_skin_to_ely(account, skin_entry.skin_path)
         skins_dir = self.paths.skins_dir
         skins_dir.mkdir(parents=True, exist_ok=True)
         cache_key = _cache_key(account)
@@ -97,12 +102,49 @@ class SkinOperations(AccountOperations):
             marker.touch()
         else:
             marker.unlink(missing_ok=True)
-        if account.account_kind == ELY:
-            # Ely chỉ đổi skin thật qua web (upload.py); đây chỉ đổi ảnh trong launcher.
-            # `refresh_skin` kế tiếp KHÔNG được âm thầm ghi đè lựa chọn này — đánh dấu để
-            # `refresh_ely_skin` biết giữ lại cho tới khi server thật đồng bộ theo (JL-18 mục 5).
-            (skins_dir / f"{cache_key}.local-override").touch()
         return self.describe_skin(account)
+
+    def upload_skin_to_ely(
+        self,
+        account: Account,
+        skin_path: Path,
+        *,
+        cancel_token: CancelToken | None = None,
+    ) -> PlayerSkin:
+        """Đổi skin THẬT trên ely.by: upload vào kho skin của tài khoản rồi mặc nó. CHẠM MẠNG.
+
+        Cần phiên web (xem `auth/ely_web.py`): dựng từ `refresh_token` đã giữ lúc đăng nhập.
+        Không có / hết hạn thì ném `AccountError` bảo đăng nhập lại — giao diện dẫn người
+        dùng qua hộp đăng nhập Ely, KHÔNG lặng lẽ đổi mỗi ảnh trong launcher.
+        """
+        if account.account_kind != ELY:
+            raise AccountError("chỉ tài khoản Ely.by mới upload được skin lên ely.by")
+        if not account.refresh_token:
+            raise AccountError(
+                "phiên web Ely.by chưa có — đăng nhập lại tài khoản này để bật đổi skin"
+            )
+        skin_bytes = skin_path.read_bytes()
+        with self.make_http_client() as http_client:
+            web_session = web_session_from_refresh_token(
+                http_client,
+                account.refresh_token,
+                endpoints=self.ely_web_endpoints(),
+                cancel_token=cancel_token,
+            )
+            skin_id = upload_skin_to_ely(
+                http_client, web_session, skin_bytes, skin_path.name, cancel_token=cancel_token
+            )
+            wear_ely_skin(http_client, web_session, skin_id, cancel_token=cancel_token)
+            # Server đã đổi: tải lại từ skinsystem để cache launcher khớp game.
+            skin = refresh_ely_skin(
+                http_client,
+                self.paths.skins_dir,
+                account.player_name,
+                account.player_uuid,
+                endpoints=self.endpoints,
+            )
+        self._collect(skin_path, name=skin_path.stem, slim=skin.slim, source="upload")
+        return skin
 
     def _collect(self, skin_path: Path, *, name: str, slim: bool, source: str) -> None:
         """Cất vào kho; kho lỗi (ảnh lạ, đĩa đầy) không được làm hỏng việc chính."""
