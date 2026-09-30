@@ -22,6 +22,7 @@ from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.block_bridge import BlockIconBridge
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.cape_bridge import CapeBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.import_bridge import ImportBridge
@@ -113,6 +114,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("bridge", bridge)
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
+    context.setContextProperty("capeBridge", CapeBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
     settings_bridge = SettingsBridge(launcher, parent=view)

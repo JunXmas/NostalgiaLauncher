@@ -115,6 +115,7 @@ module = [
     "test_game_log",
     "test_settings_bridge",
     "test_tray",
+    "test_cape_bridge",
 ]
 disable_error_code = [
     "comparison-overlap",

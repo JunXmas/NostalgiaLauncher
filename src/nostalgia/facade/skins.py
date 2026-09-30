@@ -11,6 +11,7 @@ from nostalgia.auth.ely_web import web_session_from_refresh_token
 from nostalgia.errors import AccountError, SkinError
 from nostalgia.facade.accounts import AccountOperations
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.skin.capes import OwnedCape, list_owned_capes, set_active_cape
 from nostalgia.skin.ely_web_upload import upload_skin_to_ely, wear_ely_skin
 from nostalgia.skin.library import (
     SkinEntry,
@@ -179,6 +180,51 @@ class SkinOperations(AccountOperations):
             )
         self._collect(skin_path, name=skin_path.stem, slim=slim, source="upload")
         return skin
+
+    # ----- cape (chỉ Microsoft: Mojang có API, Ely.by không) -----
+
+    def list_capes(
+        self,
+        account: Account,
+        *,
+        client_id: str = "",
+        cancel_token: CancelToken | None = None,
+    ) -> tuple[OwnedCape, ...]:
+        """CHẠM MẠNG. Cape người chơi SỞ HỮU (đa số là rỗng — Mojang phát theo sự kiện)."""
+        if account.account_kind != MICROSOFT:
+            return ()
+        account = self._require_account(account.player_name, client_id, cancel_token)
+        with self.make_http_client() as http_client:
+            return list_owned_capes(
+                http_client,
+                account.access_token,
+                endpoints=self.endpoints,
+                cancel_token=cancel_token,
+            )
+
+    def set_cape(
+        self,
+        account: Account,
+        cape_id: str,
+        *,
+        client_id: str = "",
+        cancel_token: CancelToken | None = None,
+    ) -> PlayerSkin:
+        """CHẠM MẠNG. Mặc cape theo id (rỗng = gỡ), rồi tải lại texture để cache khớp game."""
+        if account.account_kind != MICROSOFT:
+            raise AccountError("chỉ tài khoản Microsoft mới đổi được cape qua Mojang")
+        account = self._require_account(account.player_name, client_id, cancel_token)
+        with self.make_http_client() as http_client:
+            set_active_cape(
+                http_client,
+                account.access_token,
+                cape_id,
+                endpoints=self.endpoints,
+                cancel_token=cancel_token,
+            )
+            return refresh_premium_skin(
+                http_client, self.paths.skins_dir, account.player_uuid, endpoints=self.endpoints
+            )
 
 
 def _cache_key(account: Account) -> str:
