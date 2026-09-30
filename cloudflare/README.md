@@ -35,3 +35,25 @@ doạ và 10 luật thiết kế. Điều quan trọng nhất kiểm được **
 
 Không thích chạy qua relay của dự án? `src/nostalgia/repo/endpoints.py` để địa chỉ ở một
 chỗ duy nhất — đổi sang Worker của bạn được, giao thức mô tả đủ trong file bảo mật ở trên.
+
+## `/donate` — số tài khoản nhận ủng hộ
+
+Endpoint thứ ba trên cùng Worker `nostalgia-backend`, và là endpoint đơn giản nhất: trả về
+số tài khoản hiện hành để đổi số **không phải ra bản launcher mới**.
+
+```
+GET https://nostalgia-backend.junbob.workers.dev/donate
+→ 200 {"bin": "970436", "number": "1234567890", "holder": "NGUYEN VAN A"}
+```
+
+Ba trường đều bắt buộc và đều là chuỗi; `bin` và `number` phải toàn chữ số. Thiếu một
+trường là launcher bỏ cả câu trả lời và dùng số ghim sẵn — một tài khoản nửa vời dựng ra mã
+QR mà app ngân hàng từ chối, tệ hơn hẳn số cũ vẫn quét được.
+
+**Không có endpoint này thì tính năng vẫn chạy.** Số tài khoản ghim trong
+`src/nostalgia/repo/endpoints.py`; Worker 404, 500, hay máy người dùng offline đều chỉ làm
+launcher giữ nguyên số ghim và ghi một dòng log `warning`. Gác bởi
+`tests/donate/test_donate_facade.py`.
+
+Không phải bí mật, nên không cần khoá: mã QR chuyển khoản dán ở quán cà phê cũng chính là
+ba trường này, và biết số tài khoản chỉ gửi tiền VÀO được chứ không rút ra.

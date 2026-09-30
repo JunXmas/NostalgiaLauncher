@@ -10,6 +10,7 @@ khoá riêng thì đặt biến môi trường (xem `settings/store.py`).
 
 from __future__ import annotations
 
+import base64
 from dataclasses import replace
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
@@ -18,6 +19,10 @@ from PySide6.QtGui import QDesktopServices
 from nostalgia import __version__
 from nostalgia.api import Launcher, Settings
 from nostalgia.errors import NostalgiaError
+
+# Mỗi ô mã QR vẽ bằng 4 pixel. Lưới cỡ 6 là 41 ô + viền 4 ô mỗi bên = (41+8)*4 = 196 px,
+# và QML vẽ đúng 196 px — không co giãn thì không ô nào rơi vào ranh giới pixel lẻ.
+QR_SCALE = 4
 
 
 class SettingsBridge(QObject):
@@ -135,6 +140,35 @@ class SettingsBridge(QObject):
     def openDonatePage(self) -> None:
         """Mở trang ủng hộ trong trình duyệt. Chỉ chạy khi người dùng tự bấm."""
         QDesktopServices.openUrl(QUrl(self._launcher.donate_url()))
+
+    @Property(str, constant=True)
+    def donateQr(self) -> str:
+        """Mã VietQR dạng `data:` URI để QML gán thẳng vào `Image.source`; rỗng khi chưa khai
+        số tài khoản.
+
+        Nhúng base64 chứ không ghi file tạm: ảnh chỉ vài KB, và không có file thì không có
+        chuyện số tài khoản nằm lại trên đĩa sau khi đóng launcher. `constant=True` được vì
+        số ghim trong kho không đổi giữa chừng — bản từ Worker đi đường `donateAccountHolder`
+        riêng và chỉ dùng để đối chiếu bằng mắt.
+        """
+        # scale=4 để ảnh ra đúng (41+8)*4 = 196 px, bằng CHÍNH kích thước QML vẽ nó. Cho Qt
+        # co giãn thì ô vuông rơi vào ranh giới pixel lẻ và mã nhoè — đã chụp ra thấy tận mắt.
+        png = self._launcher.donate_qr(scale=QR_SCALE)
+        if png is None:
+            return ""
+        return "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+
+    @Property(str, constant=True)
+    def donateMemo(self) -> str:
+        """Nội dung chuyển khoản mà mã QR điền sẵn — hiện ra để người dùng đối chiếu với app
+        ngân hàng trước khi bấm gửi."""
+        return self._launcher.donate_memo()
+
+    @Property(str, constant=True)
+    def donateAccountHolder(self) -> str:
+        """Tên chủ tài khoản, để người quét đối chiếu trước khi gửi tiền. Rỗng khi chưa khai."""
+        account = self._launcher.donate_account()
+        return "" if account is None else account.holder
 
     @Property(str, constant=True)
     def communityUrl(self) -> str:

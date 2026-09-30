@@ -28,6 +28,7 @@ ALLOWED_FOR_USER_INTERFACE = (
     "nostalgia.multiplayer.model",
     "nostalgia.skin.model",
     "nostalgia.settings.store",
+    "nostalgia.donate.vietqr",
 )
 
 # Kiểu KHÔNG được xuất hiện trong chữ ký công khai của façade: chúng buộc người gọi phải biết

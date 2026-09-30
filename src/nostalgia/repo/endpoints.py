@@ -70,6 +70,20 @@ LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/
 # để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
 DONATE_URL = "https://github.com/sponsors/JunXmas"
 
+# Số tài khoản nhận ủng hộ, GHIM SẴN trong kho. Không phải bí mật: mã QR chuyển khoản dán
+# công khai ở quán cà phê cũng chính là ba trường này, và biết số tài khoản chỉ gửi tiền VÀO
+# được chứ không rút ra. Ghim để mã QR luôn dựng được — kể cả khi máy người dùng offline hay
+# Worker chết, hai lúc mà một tính năng "ủng hộ" chết im lặng thì không ai báo cho ai.
+# Đổi số tài khoản KHÔNG cần ra bản mới: `DONATE_ACCOUNT_URL` dưới đây đè được lúc chạy.
+DONATE_BANK_BIN = ""
+DONATE_ACCOUNT_NUMBER = ""
+DONATE_ACCOUNT_HOLDER = ""
+# Nội dung chuyển khoản cố định, để chủ dự án lọc sao kê ra đúng những lệnh đến từ launcher.
+DONATE_MEMO = "UNG HO NOSTALGIA"
+# Worker trả về số tài khoản hiện hành (JSON: bin/number/holder/memo). Hỏng hay chậm thì
+# launcher dùng số ghim ở trên và KHÔNG báo lỗi gì — người dùng vẫn quét được.
+DONATE_ACCOUNT_URL = "https://nostalgia-backend.junbob.workers.dev/donate"
+
 # Application ID của Nostalgia trên Discord Developer Portal. KHÔNG phải bí mật: mọi app dùng
 # Rich Presence đều nhúng id này vào client (nó chính là thứ Discord tra ra tên và icon hiện
 # trên hồ sơ người chơi), và không mở được cửa nào nếu không có client secret — cái đó không
@@ -125,6 +139,7 @@ class Endpoints:
     profile_with_capes: str = PROFILE_WITH_CAPES_URL
     cape_active: str = CAPE_ACTIVE_URL
     donate: str = DONATE_URL
+    donate_account: str = DONATE_ACCOUNT_URL
     community: str = COMMUNITY_URL
 
 
