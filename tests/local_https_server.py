@@ -35,6 +35,8 @@ class Route:
     status: int = 200
     # Có giá trị thì trả kèm header `Location` (dựng 302 của GitHub sang CDN).
     location: str = ""
+    # Header trả thêm, lặp tên được — cần cho `Set-Cookie` (phiên web Ely.by gửi nhiều cái).
+    response_headers: tuple[tuple[str, str], ...] = ()
     fail_first: int = 0
     declare_length: int | None = None
     chunk_delay_seconds: float = 0.0
@@ -64,6 +66,7 @@ class ServerState:
         declare_length: int | None = None,
         chunk_delay_seconds: float = 0.0,
         location: str = "",
+        response_headers: tuple[tuple[str, str], ...] = (),
     ) -> str:
         with self.lock:
             self.routes[path] = Route(
@@ -73,6 +76,7 @@ class ServerState:
                 fail_first=fail_first,
                 declare_length=declare_length,
                 chunk_delay_seconds=chunk_delay_seconds,
+                response_headers=response_headers,
             )
         return path
 
@@ -174,6 +178,9 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
             self._received = self.rfile.read(length) if length else b""
             self.do_GET()
 
+        # PUT có thân như POST: Mojang upload skin dùng PUT, ely.by mặc skin cũng PUT.
+        do_PUT = do_POST
+
         def do_GET(self) -> None:
             with state.lock:
                 route = state.routes.get(self.path.split("?", 1)[0])
@@ -195,9 +202,12 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
                 declared = route.declare_length
                 delay = route.chunk_delay_seconds
                 location = route.location
+                extra_headers = route.response_headers
             self.send_response(status)
             if location:
                 self.send_header("Location", location)
+            for header_name, header_value in extra_headers:
+                self.send_header(header_name, header_value)
             if declared is None:
                 self.send_header("Content-Length", str(len(body)))
             elif declared >= 0:

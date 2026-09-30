@@ -32,7 +32,7 @@ Panel {
             width: parent.width; wrapMode: Text.WordWrap
             text: !skinPanel.hasShown ? ""
                   : skinPanel.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới."
-                  : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Đổi skin/cape thật tại ely.by → Skins (bạn bè trong game thấy nhờ authlib-injector); \"Thêm skin\" chỉ đổi ảnh hiện trong launcher."
+                  : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Bấm \"Thêm skin\" để upload PNG thẳng lên ely.by — bạn bè trong game thấy skin mới nhờ authlib-injector."
                   : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher."
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
@@ -44,10 +44,8 @@ Panel {
                 label: "⟳  Làm mới"
                 onClicked: accountBridge.refreshSkins()
             }
-            /* Đổi skin THẬT của tài khoản Ely chỉ làm được ở ely.by — launcher không có API
-               upload cho họ (khác Microsoft, có). "Thêm skin" bên dưới chỉ đổi ảnh launcher
-               hiện, người chơi khác trong game vẫn thấy skin cũ. Không có nút này thì họ đổi
-               trong thư viện, thấy nhân vật đổi ngay trước mắt, và tưởng là xong. */
+            /* Lối thoát khi upload từ launcher hỏng (phiên web hết hạn, trang ely.by đổi
+               API ngầm) và là chỗ duy nhất đổi CAPE — ely.by không có API cape. */
             ActionButton {
                 objectName: "elySkinSiteButton"
                 visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind === "ely"

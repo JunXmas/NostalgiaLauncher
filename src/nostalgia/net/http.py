@@ -69,6 +69,8 @@ class HttpResponse:
 
     status: int
     body: bytes
+    # (tên, giá_trị) theo thứ tự máy chủ gửi — KHÔNG gộp: `Set-Cookie` lặp tên hợp lệ.
+    headers: tuple[tuple[str, str], ...] = ()
 
     @property
     def is_ok(self) -> bool:
@@ -134,7 +136,7 @@ class HttpClient:
             with response:
                 # Đọc dư một byte để phân biệt "vừa đúng trần" với "vượt trần".
                 payload = response.read(max_bytes + 1)
-                status = response.status
+                status, response_headers = response.status, tuple(response.getheaders())
         except (http.client.HTTPException, OSError) as exc:
             self._discard(host)
             message = f"không gọi được {url}: {exc}"
@@ -143,7 +145,7 @@ class HttpClient:
         if len(payload) > max_bytes:
             message = f"{url}: phản hồi vượt {max_bytes} byte, đã ngắt"
             raise NetworkError(message)
-        return HttpResponse(status=status, body=payload)
+        return HttpResponse(status=status, body=payload, headers=response_headers)
 
     def stream(
         self,
@@ -276,8 +278,7 @@ class HttpClient:
                     continue
                 message = f"không gọi được {url}: {exc}"
                 raise NetworkError(message) from exc
-        message = f"không gọi được {url}"  # không tới được: vòng trên luôn return hoặc raise
-        raise NetworkError(message)
+        raise NetworkError(f"không gọi được {url}")  # không tới được: vòng trên return/raise
 
     def _connection_for(self, host: str) -> tuple[http.client.HTTPSConnection, bool]:
         """Kết nối bền cho `host` của luồng này, kèm cờ "đã dùng trước đó"."""

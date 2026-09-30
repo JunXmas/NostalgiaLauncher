@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from nostalgia.account.model import ELY, Account
 from nostalgia.auth.ely import ElyLogin, refresh_ely
 from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
@@ -34,4 +36,6 @@ def refresh_ely_account(
         endpoints=endpoints,
         cancel_token=cancel_token,
     )
-    return build_ely_account(login)
+    # Giữ refresh_token: với Ely nó là vé phiên WEB (đổi skin), không dính gì tới Yggdrasil,
+    # và dựng lại account từ login mà quên nó là mất tính năng đổi skin sau lần chạy đầu.
+    return replace(build_ely_account(login), refresh_token=account.refresh_token)

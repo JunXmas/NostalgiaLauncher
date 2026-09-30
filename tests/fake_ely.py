@@ -7,6 +7,7 @@ import json
 from dataclasses import replace
 
 from local_https_server import LocalHttpsServer, ServerState
+from nostalgia.auth.ely_web import ElyWebEndpoints
 from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
 
 ELY_UUID = "8f4a0d3e-1c2b-3a4d-9e5f-6a7b8c9d0e1f"
@@ -77,3 +78,53 @@ def publish_textures(
     path = f"/textures/{player_name}"
     state.add(path, body, status=status)
     return server.url("/textures")
+
+
+WEB_REFRESH_TOKEN = "ely-web-refresh-1"
+WEB_JWT = "ely-web-jwt-1"
+WEB_SKIN_ID = 4242
+
+
+def publish_web(server: LocalHttpsServer, state: ServerState) -> ElyWebEndpoints:
+    """Đường web đổi skin thật: login/refresh JWT → OAuth nội bộ → upload + mặc skin.
+
+    Route dựng đúng hình dạng đã soi từ máy chủ thật (curl) và mã nguồn elyby/accounts:
+    login trả JWT + refresh_token; /authorization/login 302 kèm PHPSESSID; complete trả
+    redirectUri; upload trả id skin; users/skin trả JSON rỗng-lỗi.
+    """
+    state.add(
+        "/elyweb/api/authentication/login",
+        json.dumps(
+            {"success": True, "access_token": WEB_JWT, "refresh_token": WEB_REFRESH_TOKEN}
+        ).encode(),
+    )
+    state.add(
+        "/elyweb/api/authentication/refresh-token",
+        json.dumps({"success": True, "access_token": WEB_JWT}).encode(),
+    )
+    state.add(
+        "/elysite/authorization/login",
+        b"",
+        status=302,
+        location=server.url("/elyweb/api/oauth2/v1/ely") + "?client_id=ely&state=st-1",
+        response_headers=(("Set-Cookie", "PHPSESSID=sess-1; path=/; httponly"),),
+    )
+    state.add(
+        "/elyweb/api/oauth2/v1/complete",
+        json.dumps(
+            {"success": True, "redirectUri": server.url("/elysite/authorization/oauth?code=c1")}
+        ).encode(),
+    )
+    state.add(
+        "/elysite/authorization/oauth",
+        b"",
+        status=302,
+        location=server.url("/elysite/"),
+        response_headers=(("Set-Cookie", "remember=rem-1; path=/"),),
+    )
+    state.add(
+        "/elysite/api/legacy/skins",
+        json.dumps({"skin": {"id": WEB_SKIN_ID}}).encode(),
+    )
+    state.add("/elysite/api/legacy/users/skin", json.dumps({}).encode())
+    return ElyWebEndpoints(account_root=server.url("/elyweb"), site_root=server.url("/elysite"))

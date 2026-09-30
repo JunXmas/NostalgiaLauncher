@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import time
+from dataclasses import replace
 
 from nostalgia.account.ely import build_ely_account, refresh_ely_account
 from nostalgia.account.microsoft import build_microsoft_account, needs_refresh, refresh_account
@@ -17,10 +19,13 @@ from nostalgia.account.store import (
     upsert_account,
 )
 from nostalgia.auth.ely import sign_in_ely
+from nostalgia.auth.ely_web import ElyWebEndpoints, sign_in_ely_web
 from nostalgia.auth.microsoft import DeviceCodeFn, ignore_device_code, resolve_client_id, sign_in
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
+
+logger = logging.getLogger(__name__)
 
 
 class AccountOperations(LauncherContext):
@@ -63,7 +68,13 @@ class AccountOperations(LauncherContext):
         cancel_token: CancelToken | None = None,
     ) -> Account:
         """Đăng nhập Ely.by (non-premium). CHẠM MẠNG. Mật khẩu không lưu; ném
-        `TwoFactorRequired` khi tài khoản bật 2FA mà chưa có mã."""
+        `TwoFactorRequired` khi tài khoản bật 2FA mà chưa có mã.
+
+        Đăng nhập luôn cả phiên WEB account.ely.by bằng đúng thông tin vừa gõ để giữ
+        `refresh_token` — đó là thứ cho phép đổi skin thật từ launcher về sau mà không
+        hỏi lại mật khẩu. Phần web hỏng thì vẫn vào game được, chỉ mất tính năng đổi skin,
+        nên chỉ log warning chứ không ném.
+        """
         with self.make_http_client() as http_client:
             login = sign_in_ely(
                 http_client,
@@ -73,7 +84,31 @@ class AccountOperations(LauncherContext):
                 endpoints=self.auth_endpoints,
                 cancel_token=cancel_token,
             )
-        return self._store(build_ely_account(login))
+            web_refresh_token = ""
+            try:
+                web_session = sign_in_ely_web(
+                    http_client,
+                    email_or_name,
+                    password,
+                    totp_code=totp_code,
+                    endpoints=self.ely_web_endpoints(),
+                    cancel_token=cancel_token,
+                )
+                web_refresh_token = web_session.refresh_token
+            except AccountError as exc:
+                logger.warning(
+                    "không mở được phiên web Ely.by (đổi skin sẽ cần đăng nhập lại): %s", exc
+                )
+        account = build_ely_account(login)
+        if web_refresh_token:
+            account = replace(account, refresh_token=web_refresh_token)
+        return self._store(account)
+
+    def ely_web_endpoints(self) -> ElyWebEndpoints:
+        return ElyWebEndpoints(
+            account_root=self.auth_endpoints.ely_web_account_root,
+            site_root=self.auth_endpoints.ely_web_site_root,
+        )
 
     def remove_account(self, account_id: str) -> None:
         """Gỡ một tài khoản. Nhận `account_id` (`kind:uuid`) hoặc tên; tên trùng thì gỡ cái
