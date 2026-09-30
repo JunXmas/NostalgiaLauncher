@@ -129,7 +129,7 @@ def _rs_encode(codewords: list[int], ec_len: int) -> list[int]:
             continue
         for j, gcoef in enumerate(generator):
             residue[i + j] ^= _gf_mul(gcoef, factor)
-    return residue[len(codewords):]
+    return residue[len(codewords) :]
 
 
 def _build_codewords(payload: bytes, size_class: int) -> list[int]:
