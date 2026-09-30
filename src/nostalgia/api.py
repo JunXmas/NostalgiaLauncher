@@ -24,6 +24,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from nostalgia.account.model import Account, PlayerProfile
+from nostalgia.auth.device_code import DeviceCode
+from nostalgia.auth.qr import QrCode
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.facade.content import ContentTarget
@@ -73,6 +75,7 @@ __all__ = [
     "Account",
     "ContentTarget",
     "ContentUpdate",
+    "DeviceCode",
     "Diagnosis",
     "Found",
     "GameProcess",
@@ -84,6 +87,7 @@ __all__ = [
     "PlayerProfile",
     "PlayerSkin",
     "Progress",
+    "QrCode",
     "RecentServer",
     "RecentWorld",
     "RoomService",
