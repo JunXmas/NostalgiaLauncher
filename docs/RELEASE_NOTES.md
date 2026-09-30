@@ -1,37 +1,33 @@
-Đổi skin và cape **ngay trong launcher**, không phải mở trình duyệt nữa.
+Discord Rich Presence **tự chạy** — không phải thiết lập gì nữa.
 
-Trước bản này, trang TÀI KHOẢN chỉ *hiện* skin. Đổi thì vẫn phải sang trang web — nên phần
-skin của launcher gần như vô dụng. Từ 1.1.4, bấm **Thêm skin** là skin đổi thật trên máy chủ,
-bạn bè trong game nhìn thấy.
+## Trước: ba bước thủ công, nên gần như không ai bật
 
-## Ely.by: upload skin thẳng từ launcher
+Muốn hồ sơ Discord hiện bạn đang chơi gì, bản cũ bắt bạn vào
+[Developer Portal](https://discord.com/developers), tự tạo một Application, chép Application
+ID về, dán vào CÀI ĐẶT, rồi mới gạt công tắc. Ba bước trước khi thấy được gì — một tính năng
+mà không ai đi hết được đường thì coi như không tồn tại.
 
-Chọn file PNG → launcher gửi lên ely.by, đặt làm skin đang mặc, rồi tải lại để ảnh trong
-launcher khớp với thứ người khác thấy trong game (qua authlib-injector). Cùng một tài khoản,
-cùng một skin, dù bạn đổi ở launcher hay ở trang web.
+Nó còn im lặng theo hai kiểu nữa: chỉ hiện khi game đang chạy, và nếu lúc khởi động launcher
+mà Discord chưa mở thì thôi luôn, mở Discord sau cũng không nối lại.
 
-Cần đăng nhập lại tài khoản Ely một lần sau khi cập nhật: launcher phải có phiên web mới
-upload được, mà phiên đó chỉ lấy được lúc đăng nhập. Tài khoản cũ vẫn chơi được bình thường,
-chỉ riêng nút đổi skin sẽ báo "đăng nhập lại tài khoản này để bật đổi skin".
+## Giờ: mở launcher là thấy
 
-Mật khẩu chỉ đi thẳng tới `account.ely.by` qua TLS và **không được lưu** — launcher chỉ giữ
-vé phiên. Vé hết hạn thì báo rõ để bạn đăng nhập lại, chứ không lặng lẽ đổi mỗi ảnh hiển thị
-trong launcher rồi để bạn tưởng đã xong.
+Không có gì để điền. Công tắc bật sẵn, launcher mang sẵn Application ID của nó.
 
-Nút "Đổi skin ở ely.by ↗" đã bị gỡ: hai nút cùng làm một việc thì chỉ tổ phải đoán nút nào
-mới thật.
+- Mở launcher → hồ sơ Discord hiện **"Đang ở launcher"**.
+- Vào game → **"Đang chơi &lt;bản chơi&gt;"** kèm đồng hồ đếm thời gian chơi.
+- Đang ở phòng CHƠI CHUNG → **"Đang chơi chung với N người"**. Mã phòng **không** bao giờ lên
+  Discord: đó là chìa khoá vào nhà bạn.
+- Thoát game → quay về "Đang ở launcher", vì bạn vẫn đang ở launcher thật.
+- Mở Discord sau launcher cũng được: cứ 30 giây launcher thử nối lại một lần.
 
-## Microsoft: chọn và gỡ cape
-
-Tab **Cape** liệt kê những cape tài khoản bạn sở hữu. Bấm một cái để mặc, bấm lại cái đang
-mặc (viền xanh, dấu ✓) để gỡ ra. Danh sách chỉ tải khi bạn mở tab — đa số người chơi không có
-cape nào, không việc gì bắt máy họ chạm mạng.
-
-Cape không upload được: Mojang phát theo sự kiện (Migrator, Vanilla…) chứ không cho tự làm.
-Launcher chỉ chọn trong số bạn đã có. Không có cái nào thì tab hiện đúng như vậy.
-
-Ely.by không có API cape nên phần này chỉ dành cho tài khoản Microsoft.
+Không thích thì gạt công tắc trong CÀI ĐẶT, presence biến mất khỏi hồ sơ ngay. Ai muốn hiện
+tên app của riêng mình thì đặt biến môi trường `NOSTALGIA_DISCORD_APP_ID`.
 
 ## Vặt
 
-- Vá cảnh báo Qt `Unable to assign [undefined] to QUrl` ở ô xem trước cape.
+- Trang tải trên GitHub Pages có giao diện mới (`docs/site/`).
+- Thêm `.pre-commit-config.yaml`: chặn lỗi lint/định dạng/kiểu ngay lúc commit thay vì để CI
+  bắt. Chỉ ảnh hưởng người sửa mã nguồn.
+- Tầng lõi biết sinh mã QR cho URL xác minh khi đăng nhập Microsoft — giao diện chưa dùng,
+  sẽ nối ở bản sau.

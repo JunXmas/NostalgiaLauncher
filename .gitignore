@@ -12,3 +12,4 @@ packaging/icons/nostalgia.icns
 .env
 CLAUDE.md
 *.log
+run-test-build.sh
