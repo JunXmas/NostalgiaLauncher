@@ -39,6 +39,9 @@ PATH_ENV_VARS = (
     "XDG_DATA_HOME",
     "XDG_CONFIG_HOME",
     "XDG_CACHE_HOME",
+    # Discord IPC nằm ở đây. Không dọn thì test nào dựng giao diện cũng nối vào Discord THẬT
+    # của người đang chạy test và đổi trạng thái hồ sơ họ.
+    "XDG_RUNTIME_DIR",
 )
 
 
@@ -66,6 +69,10 @@ def isolated_home(
     monkeypatch.setenv("XDG_DATA_HOME", str(home / ".local" / "share"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("XDG_CACHE_HOME", str(home / ".cache"))
+    # Trỏ vào thư mục rỗng chứ không xoá hẳn: bỏ trống thì `candidate_socket_paths` tự lùi
+    # về `/run/user/<uid>` — đúng chỗ Discord thật đang nghe.
+    (home / "run").mkdir(exist_ok=True)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(home / "run"))
     monkeypatch.setenv("NOSTALGIA_DATA_DIR", str(home / "data"))
     # Test bấm nút trong QML không được làm loa máy kêu; test về âm thanh tự bỏ biến này.
     monkeypatch.setenv("NOSTALGIA_SILENT", "1")
@@ -86,7 +93,11 @@ def isolated_home(
 
 
 @pytest.fixture(autouse=True)
-def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+def no_accidental_internet(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     """Chặn mọi kết nối ra ngoài máy, trừ test có đánh dấu `network`.
 
     Không có lưới này thì một test lỡ gọi ra Internet sẽ **treo** thay vì rớt: đã trả giá
@@ -103,7 +114,18 @@ def no_accidental_internet(request: pytest.FixtureRequest, monkeypatch: pytest.M
 
     def guarded_connect(self: socket.socket, address: tuple[object, ...] | str) -> None:
         # Unix socket (địa chỉ là đường dẫn) luôn nằm trong máy: IPC với Discord giả trong test.
+        # Trừ socket Discord THẬT: từ khi presence tự nối lúc mở launcher, mọi test dựng
+        # `build_view` sẽ đẩy "Đang ở launcher" lên hồ sơ Discord của người đang chạy test.
         if isinstance(address, str):
+            if (
+                "discord-ipc-" in address
+                and tmp_path_factory.getbasetemp() not in Path(address).parents
+            ):
+                message = (
+                    f"test đang nối tới Discord THẬT ở {address!r}. Presence trong test phải "
+                    "trỏ vào socket giả trong tmp_path (xem tests/ui/test_discord_presence.py)."
+                )
+                raise AssertionError(message)
             real_connect(self, address)
             return
         host = address[0]

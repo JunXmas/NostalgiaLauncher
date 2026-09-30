@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import socket
 import threading
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -144,69 +145,107 @@ def test_without_discord_everything_stays_quiet(tmp_path: Path) -> None:
     assert DiscordPresence("   ", environ={"XDG_RUNTIME_DIR": str(tmp_path)}).connect() is False
 
 
+def _make_bridge(
+    tmp_path: Path,
+    bridge: LauncherBridge,
+    *,
+    enabled: Callable[[], bool] = lambda: True,
+    retry_seconds: float = 3600.0,
+) -> PresenceBridge:
+    """Hẹn giờ thử lại mặc định đặt rất xa: test nào muốn đo nhịp thử lại thì tự rút ngắn,
+    còn lại không phải chịu một luồng nền bật lên giữa chừng làm kết quả chập chờn."""
+    return PresenceBridge(
+        bridge,
+        is_enabled=enabled,
+        instance_label=lambda _instance_id: "Sinh tồn",
+        client_id="987",
+        make_presence=lambda client_id: DiscordPresence(
+            client_id, environ={"XDG_RUNTIME_DIR": str(tmp_path)}, pid=1
+        ),
+        retry_seconds=retry_seconds,
+    )
+
+
+def _latest_activity(fake: FakeDiscord) -> dict[str, object] | None:
+    frames = [frame for frame in fake.frames if frame[0] == OP_FRAME]
+    if not frames:
+        return None
+    arguments = frames[-1][1]["args"]
+    assert isinstance(arguments, dict)
+    activity = arguments["activity"]
+    assert isinstance(activity, dict)
+    return activity
+
+
+def test_bridge_shows_launcher_presence_before_any_game_starts(tmp_path: Path) -> None:
+    """Mở launcher là đã hiện trên Discord — không bắt người chơi khởi động game mới thấy gì."""
+    fake = FakeDiscord(tmp_path)
+    presence_bridge = _make_bridge(tmp_path, LauncherBridge(make_launcher(tmp_path)))
+
+    wait_until(lambda: presence_bridge.connected is True)
+    assert _latest_activity(fake) is not None
+    activity = _latest_activity(fake)
+    assert activity is not None and activity["details"] == "Đang ở launcher"
+    presence_bridge.shutdown()
+    fake.close()
+
+
+def test_bridge_retries_when_discord_opens_after_the_launcher(tmp_path: Path) -> None:
+    """Người chơi hay mở launcher trước rồi mới mở Discord. Thất bại lần đầu mà im mãi thì
+    với họ tính năng coi như không tồn tại."""
+    presence_bridge = _make_bridge(
+        tmp_path, LauncherBridge(make_launcher(tmp_path)), retry_seconds=0.05
+    )
+    wait_until(lambda: presence_bridge.statusText == "Không thấy Discord đang chạy")
+
+    fake = FakeDiscord(tmp_path)  # Discord mở SAU
+    wait_until(lambda: presence_bridge.connected is True, seconds=5)
+    presence_bridge.shutdown()
+    fake.close()
+
+
 def test_bridge_shows_presence_while_the_game_runs(tmp_path: Path) -> None:
     fake = FakeDiscord(tmp_path)
     launcher = make_launcher(tmp_path)
     bridge = LauncherBridge(launcher)
-    settings = {"enabled": True, "client_id": "987"}
-    presence_bridge = PresenceBridge(
-        bridge,
-        read_settings=lambda: (settings["enabled"], settings["client_id"]),
-        instance_label=lambda _instance_id: "Sinh tồn",
-        make_presence=lambda client_id: DiscordPresence(
-            client_id, environ={"XDG_RUNTIME_DIR": str(tmp_path)}, pid=1
-        ),
+    enabled = {"on": True}
+    presence_bridge = _make_bridge(
+        tmp_path, bridge, enabled=lambda: enabled["on"], retry_seconds=0.05
     )
-    assert presence_bridge.connected is False
+    wait_until(lambda: presence_bridge.connected is True)
 
     bridge.gameStarted.emit("sinh-ton")
-    wait_until(lambda: presence_bridge.connected is True)
+    wait_until(lambda: (_latest_activity(fake) or {}).get("details") == "Đang chơi Sinh tồn")
     assert presence_bridge.statusText == "Đang hiện trên Discord"
-    activity = next(frame for frame in fake.frames if frame[0] == OP_FRAME)
-    arguments = activity[1]["args"]
-    assert isinstance(arguments, dict)
-    assert arguments["activity"]["details"] == "Đang chơi Sinh tồn"
-    assert arguments["activity"]["state"] == "Nostalgia Launcher"
+    activity = _latest_activity(fake)
+    assert activity is not None and activity["state"] == "Nostalgia Launcher"
 
     bridge.gameStopped.emit(0)
-    wait_until(lambda: presence_bridge.connected is False)
-    wait_until(lambda: any(frame[0] == OP_CLOSE for frame in fake.frames), seconds=3)
-    fake.close()
+    wait_until(lambda: (_latest_activity(fake) or {}).get("details") == "Đang ở launcher")
+    assert presence_bridge.connected is True, "thoát game không phải là thoát launcher"
 
-    settings["enabled"] = False
-    bridge.gameStarted.emit("sinh-ton")
-    wait_until(lambda: presence_bridge.statusText == "Đã xoá trạng thái")
-    assert presence_bridge.connected is False, "tắt trong CÀI ĐẶT thì không chạm Discord"
+    enabled["on"] = False
+    wait_until(lambda: presence_bridge.statusText == "Đã xoá trạng thái", seconds=5)
+    wait_until(lambda: any(frame[0] == OP_CLOSE for frame in fake.frames), seconds=3)
+    assert presence_bridge.connected is False, "tắt trong CÀI ĐẶT thì gỡ presence khỏi Discord"
+    presence_bridge.shutdown()
+    fake.close()
 
 
 def test_bridge_shows_shared_room_state_while_playing_together(tmp_path: Path) -> None:
     fake = FakeDiscord(tmp_path)
     launcher = make_launcher(tmp_path)
     bridge = LauncherBridge(launcher)
-    presence_bridge = PresenceBridge(
-        bridge,
-        read_settings=lambda: (True, "987"),
-        instance_label=lambda _instance_id: "Sinh tồn",
-        make_presence=lambda client_id: DiscordPresence(
-            client_id, environ={"XDG_RUNTIME_DIR": str(tmp_path)}, pid=1
-        ),
-    )
+    presence_bridge = _make_bridge(tmp_path, bridge)
 
     bridge.gameStarted.emit("sinh-ton")
     wait_until(lambda: presence_bridge.connected is True)
 
-    def latest_state() -> str | None:
-        frames = [f for f in fake.frames if f[0] == OP_FRAME]
-        if not frames:
-            return None
-        arguments = frames[-1][1]["args"]
-        assert isinstance(arguments, dict)
-        return str(arguments["activity"]["state"])
-
     presence_bridge.setRoomState("hosting", 2)
-    wait_until(lambda: latest_state() == "Đang chơi chung với 2 người")
+    wait_until(lambda: (_latest_activity(fake) or {}).get("state") == "Đang chơi chung với 2 người")
 
     presence_bridge.setRoomState("idle", 0)
-    wait_until(lambda: latest_state() == "Nostalgia Launcher")
+    wait_until(lambda: (_latest_activity(fake) or {}).get("state") == "Nostalgia Launcher")
 
+    presence_bridge.shutdown()
     fake.close()

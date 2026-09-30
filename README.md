@@ -122,8 +122,11 @@ hours played, launches, worlds, mods.
 
 Auto-update checks GitHub once at startup (switchable), downloads over HTTPS, verifies the
 `SHA256SUMS` of the release, and only ever applies itself to a packaged build — never to a
-source checkout. Discord Rich Presence is off by default and uses an Application ID you create
-yourself. A default folder for new instances lets you keep the whole library on a second drive.
+source checkout. Discord Rich Presence works out of the box — no Application ID to create, no
+field to fill in: it shows "Đang ở launcher", then the instance you are playing and for how
+long, and connects whenever Discord happens to be open (set `NOSTALGIA_DISCORD_APP_ID` if you
+would rather show your own app). A default folder for new instances lets you keep the whole
+library on a second drive.
 
 ---
 

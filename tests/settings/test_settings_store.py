@@ -5,7 +5,14 @@ from __future__ import annotations
 import stat
 from pathlib import Path
 
-from nostalgia.settings.store import Settings, load_settings, save_settings, settings_path
+from nostalgia.repo.endpoints import DISCORD_APPLICATION_ID
+from nostalgia.settings.store import (
+    Settings,
+    discord_application_id,
+    load_settings,
+    save_settings,
+    settings_path,
+)
 
 
 def test_round_trip_is_private_and_env_overrides(tmp_path: Path) -> None:
@@ -45,11 +52,23 @@ def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
     )
 
 
-def test_discord_settings_round_trip_and_default_off(tmp_path: Path) -> None:
+def test_discord_presence_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    """Bật sẵn: presence chỉ cần Discord đang mở, không cần người dùng làm gì."""
+    assert load_settings(tmp_path, environment={}).discord_presence is True
+    save_settings(tmp_path, Settings(discord_presence=False))
     assert load_settings(tmp_path, environment={}).discord_presence is False
-    save_settings(tmp_path, Settings(discord_presence=True, discord_application_id=" 1234 "))
-    loaded = load_settings(tmp_path, environment={})
-    assert (loaded.discord_presence, loaded.discord_application_id) == (True, "1234")
+    settings_path(tmp_path).write_text('{"discord_presence": "yes"}')
+    assert load_settings(tmp_path, environment={}).discord_presence is True, "giá trị lạ → mặc định"
+
+
+def test_discord_application_id_comes_from_the_repo_not_from_the_user(tmp_path: Path) -> None:
+    """Id nằm trong kho chứ không nằm trong settings.json — không ai phải mở Developer Portal.
+    Nó là chuỗi số thật (Discord từ chối mọi thứ khác), và biến môi trường vẫn đè được."""
+    assert DISCORD_APPLICATION_ID.isdigit() and len(DISCORD_APPLICATION_ID) >= 17
+    assert discord_application_id(environment={}) == DISCORD_APPLICATION_ID
+    assert discord_application_id(environment={"NOSTALGIA_DISCORD_APP_ID": " 42 "}) == "42"
+    save_settings(tmp_path, Settings())
+    assert "discord_application_id" not in settings_path(tmp_path).read_text(encoding="utf-8")
 
 
 def test_hide_when_game_running_round_trips_and_defaults_on(tmp_path: Path) -> None:
