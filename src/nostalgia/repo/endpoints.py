@@ -70,6 +70,14 @@ LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/
 # để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
 DONATE_URL = "https://github.com/sponsors/JunXmas"
 
+# Application ID của Nostalgia trên Discord Developer Portal. KHÔNG phải bí mật: mọi app dùng
+# Rich Presence đều nhúng id này vào client (nó chính là thứ Discord tra ra tên và icon hiện
+# trên hồ sơ người chơi), và không mở được cửa nào nếu không có client secret — cái đó không
+# nằm ở đây và không cần cho RPC. Ghim sẵn để presence tự chạy: bắt người chơi tự vào
+# Developer Portal tạo app rồi dán id vào CÀI ĐẶT là giao việc của launcher cho người dùng.
+# Đè được bằng NOSTALGIA_DISCORD_APP_ID cho ai muốn hiện tên app của riêng mình.
+DISCORD_APPLICATION_ID = "1554875447609921606"
+
 # Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với DONATE_URL:
 # để ở đây thì đổi lời mời (hết hạn, đổi sang link vĩnh viễn) chỉ phải sửa một dòng, và test
 # kiểm được nó là địa chỉ thật chứ không phải chuỗi rỗng nhúng đâu đó trong QML.

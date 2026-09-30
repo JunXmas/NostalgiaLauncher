@@ -166,16 +166,7 @@ Item {
                     objectName: "discordToggle"
                     anchors.verticalCenter: parent.verticalCenter
                     checked: settingsBridge.discordPresence
-                    onToggled: function (checked) { settingsBridge.setDiscord(checked, discordIdField.text); }
-                }
-                TextField {
-                    id: discordIdField
-                    objectName: "discordIdField"
-                    width: 220
-                    placeholder: "Application ID"
-                    text: settingsBridge.discordApplicationId
-                    onAccepted: settingsBridge.setDiscord(settingsBridge.discordPresence, text)
-                    onActiveFocusChanged: if (!activeFocus) settingsBridge.setDiscord(settingsBridge.discordPresence, text)
+                    onToggled: function (checked) { settingsBridge.setDiscord(checked); }
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -186,7 +177,7 @@ Item {
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
-                text: "Khi game chạy, hồ sơ Discord hiện \"Đang chơi <bản chơi>\" kèm thời gian. Cần Discord đang mở và một Application ID tự tạo tại discord.com/developers (Applications → New Application → General Information)."
+                text: "Hồ sơ Discord của bạn hiện \"Đang ở launcher\", rồi \"Đang chơi <bản chơi>\" kèm thời gian khi game chạy. Không cần thiết lập gì: Discord mở lúc nào thì launcher tự nối lúc đó."
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
         }

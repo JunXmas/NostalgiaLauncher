@@ -9,11 +9,13 @@ from pathlib import Path
 
 from nostalgia.errors import DataFileError
 from nostalgia.model.json_value import as_mapping, as_string
+from nostalgia.repo.endpoints import DISCORD_APPLICATION_ID
 from nostalgia.storage.files import atomic_write_json, read_json
 
 SETTINGS_FILE_NAME = "settings.json"
 # Biến môi trường đè lên file: tiện cho CI và cho người không muốn lưu khoá xuống đĩa.
 CURSEFORGE_KEY_ENV = "NOSTALGIA_CURSEFORGE_API_KEY"
+DISCORD_APP_ID_ENV = "NOSTALGIA_DISCORD_APP_ID"
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,9 +27,9 @@ class Settings:
     notification_sound: bool = True
     # Blip giao diện (chuyển trang, bấm nút, bung thẻ) kiểu Xbox 360 / Steam Big Picture.
     ui_sound: bool = True
-    # Discord Rich Presence: tắt mặc định; Application ID do người dùng tạo ở Developer Portal.
-    discord_presence: bool = False
-    discord_application_id: str = ""
+    # Discord Rich Presence: BẬT mặc định. Application ID không còn là việc của người dùng —
+    # nó ghim sẵn ở `repo/endpoints.py` (xem `discord_application_id()` dưới đây).
+    discord_presence: bool = True
     # Tự kiểm bản mới lúc khởi động (chỉ hỏi GitHub một câu, không tự cài).
     auto_update_check: bool = True
     # Thư mục lưu bản chơi mới (vd ổ còn chỗ). Rỗng = `instances/` trong thư mục dữ liệu.
@@ -57,10 +59,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 curseforge_api_key=as_string(fields.get("curseforge_api_key")) or "",
                 notification_sound=sound if isinstance(sound, bool) else True,
                 ui_sound=ui_sound if isinstance(ui_sound, bool) else True,
-                discord_presence=presence if isinstance(presence, bool) else False,
-                discord_application_id=(
-                    as_string(fields.get("discord_application_id")) or ""
-                ).strip(),
+                discord_presence=presence if isinstance(presence, bool) else True,
                 auto_update_check=update_check if isinstance(update_check, bool) else True,
                 default_game_dir_root=(
                     as_string(fields.get("default_game_dir_root")) or ""
@@ -75,6 +74,17 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
     return settings
 
 
+def discord_application_id(environment: Mapping[str, str] | None = None) -> str:
+    """Application ID cho Rich Presence: hằng của dự án, đè được bằng biến môi trường.
+
+    KHÔNG đọc từ `settings.json`: bắt người chơi tự vào Developer Portal tạo app rồi dán id
+    vào CÀI ĐẶT là giao việc của launcher cho người dùng — và ai cũng bỏ qua, nên tính năng
+    coi như không tồn tại. Ai muốn hiện tên app riêng thì đặt `NOSTALGIA_DISCORD_APP_ID`.
+    """
+    environ = os.environ if environment is None else environment
+    return environ.get(DISCORD_APP_ID_ENV, "").strip() or DISCORD_APPLICATION_ID
+
+
 def save_settings(config_dir: Path, settings: Settings) -> None:
     """Ghi với quyền 0600: có khoá API bên trong."""
     atomic_write_json(
@@ -84,7 +94,6 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "notification_sound": settings.notification_sound,
             "ui_sound": settings.ui_sound,
             "discord_presence": settings.discord_presence,
-            "discord_application_id": settings.discord_application_id.strip(),
             "auto_update_check": settings.auto_update_check,
             "default_game_dir_root": settings.default_game_dir_root.strip(),
             "hide_when_game_running": settings.hide_when_game_running,

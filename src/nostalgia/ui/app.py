@@ -132,10 +132,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("updateBridge", update_bridge)
     presence_bridge = PresenceBridge(
         bridge,
-        read_settings=lambda: (
-            bool(settings_bridge.discordPresence),
-            str(settings_bridge.discordApplicationId),
-        ),
+        is_enabled=lambda: bool(settings_bridge.discordPresence),
         instance_label=lambda instance_id: instance_label(launcher, instance_id),
         parent=view,
     )

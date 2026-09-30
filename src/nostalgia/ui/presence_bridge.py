@@ -1,10 +1,11 @@
-"""Cầu nối Discord Rich Presence: bật thì khi game chạy, hồ sơ Discord hiện "Đang chơi
-<bản chơi>" kèm thời gian chơi; đang ở phòng chơi chung thì đổi sang "Đang chơi chung"; game
-thoát thì xoá. Việc socket chạy ở luồng nền; trạng thái về luồng giao diện qua tín hiệu xếp
-hàng.
+"""Cầu nối Discord Rich Presence: hồ sơ Discord hiện "Đang ở launcher" từ lúc mở launcher,
+đổi sang "Đang chơi <bản chơi>" kèm thời gian chơi khi game chạy, và "Đang chơi chung" khi
+đang ở phòng chơi chung. Việc socket chạy ở luồng nền; trạng thái về luồng giao diện qua tín
+hiệu xếp hàng.
 
-Application ID do người dùng tự tạo ở Discord Developer Portal và dán vào CÀI ĐẶT — không
-mã hoá cứng ID nào trong kho.
+Application ID ghim sẵn trong kho (`repo/endpoints.py`) — người chơi không phải tạo app hay
+dán id vào đâu cả. Discord mở sau launcher cũng được: hẹn giờ thử lại đều đặn, vì thất bại
+một lần mà im mãi thì tính năng coi như không tồn tại với ai quen bật game trước.
 """
 
 from __future__ import annotations
@@ -13,13 +14,16 @@ import threading
 import time
 from collections.abc import Callable
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
+from nostalgia.settings.store import discord_application_id
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.discord_presence import DiscordPresence
 
 type PresenceFactory = Callable[[str], DiscordPresence]
-type SettingsFn = Callable[[], tuple[bool, str]]
+
+IDLE_DETAILS = "Đang ở launcher"
+RETRY_SECONDS = 30.0
 
 
 class PresenceBridge(QObject):
@@ -30,26 +34,34 @@ class PresenceBridge(QObject):
         self,
         bridge: LauncherBridge,
         *,
-        read_settings: SettingsFn,
+        is_enabled: Callable[[], bool],
         instance_label: Callable[[str], str],
+        client_id: str | None = None,
         make_presence: PresenceFactory = DiscordPresence,
+        retry_seconds: float = RETRY_SECONDS,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
-        self._read_settings = read_settings
+        self._is_enabled = is_enabled
         self._instance_label = instance_label
+        self._client_id = discord_application_id() if client_id is None else client_id
         self._make_presence = make_presence
         self._presence: DiscordPresence | None = None
         self._lock = threading.Lock()
+        self._busy = False
         self._connected = False
         self._status_text = "Chưa kết nối"
         self._room_state = "Nostalgia Launcher"
-        # (client_id, details, started_at) trong khi presence đang hiện; None nghĩa là game
-        # không chạy — không có gì để nhắc trạng thái phòng vào.
-        self._active: tuple[str, str, int] | None = None
+        self._details = IDLE_DETAILS
+        self._started_at = int(time.time())
         self._statusArrived.connect(self._apply_status)
         bridge.gameStarted.connect(self._on_game_started)
         bridge.gameStopped.connect(self._on_game_stopped)
+        self._timer = QTimer(self)
+        self._timer.setInterval(max(1, int(retry_seconds * 1000)))
+        self._timer.timeout.connect(self._tick)
+        self._timer.start()
+        self._push()
 
     @Property(bool, notify=statusChanged)
     def connected(self) -> bool:
@@ -61,30 +73,23 @@ class PresenceBridge(QObject):
 
     @Slot(str)
     def _on_game_started(self, instance_id: str) -> None:
-        enabled, client_id = self._read_settings()
-        if not enabled or not client_id.strip():
-            return
-        details = f"Đang chơi {self._instance_label(instance_id)}"
-        started_at = int(time.time())
-        self._active = (client_id, details, started_at)
-        threading.Thread(
-            target=self._show, args=(client_id, details, started_at), daemon=True
-        ).start()
+        self._details = f"Đang chơi {self._instance_label(instance_id)}"
+        self._started_at = int(time.time())
+        self._push()
 
     @Slot(int)
     def _on_game_stopped(self, _exit_code: int) -> None:
-        self._active = None
-        threading.Thread(target=self._hide, daemon=True).start()
+        """Game thoát KHÔNG phải là hết chuyện: người chơi vẫn đang ở launcher, nên quay về
+        trạng thái nghỉ chứ không xoá sạch."""
+        self._details = IDLE_DETAILS
+        self._started_at = int(time.time())
+        self._push()
 
     def setRoomState(self, role: str, joiner_count: int) -> None:
         """Gọi khi `MultiplayerBridge` đổi trạng thái phòng. KHÔNG đưa mã phòng vào presence
         — mã phòng là bí mật vào phòng, phát công khai lên Discord là mời người lạ vào nhà."""
         self._room_state = self._describe_room(role, joiner_count)
-        if self._active is not None:
-            client_id, details, started_at = self._active
-            threading.Thread(
-                target=self._show, args=(client_id, details, started_at), daemon=True
-            ).start()
+        self._push()
 
     @staticmethod
     def _describe_room(role: str, joiner_count: int) -> str:
@@ -95,18 +100,42 @@ class PresenceBridge(QObject):
             return "Đang chơi chung"
         return "Nostalgia Launcher"
 
-    def _show(self, client_id: str, details: str, started_at: int) -> None:
-        with self._lock:
-            if self._presence is None or not self._presence.connected:
-                self._presence = self._make_presence(client_id)
-                if not self._presence.connect():
-                    self._presence = None
-                    self._statusArrived.emit(False, "Không thấy Discord đang chạy")
-                    return
-            shown = self._presence.set_activity(details, self._room_state, started_at)
-        self._statusArrived.emit(
-            shown, "Đang hiện trên Discord" if shown else "Discord ngắt kết nối"
-        )
+    @Slot()
+    def _tick(self) -> None:
+        """Nhịp hẹn giờ: nối lại khi Discord mới mở, và gỡ presence khi người dùng vừa gạt
+        công tắc trong CÀI ĐẶT (không cần nối tín hiệu riêng cho công tắc)."""
+        if not self._is_enabled():
+            if self._connected:
+                threading.Thread(target=self._hide, daemon=True).start()
+            return
+        if not self._connected and not self._busy:
+            self._push()
+
+    def _push(self) -> None:
+        if not self._is_enabled():
+            return
+        threading.Thread(
+            target=self._show,
+            args=(self._details, self._room_state, self._started_at),
+            daemon=True,
+        ).start()
+
+    def _show(self, details: str, state: str, started_at: int) -> None:
+        self._busy = True
+        try:
+            with self._lock:
+                if self._presence is None or not self._presence.connected:
+                    self._presence = self._make_presence(self._client_id)
+                    if not self._presence.connect():
+                        self._presence = None
+                        self._statusArrived.emit(False, "Không thấy Discord đang chạy")
+                        return
+                shown = self._presence.set_activity(details, state, started_at)
+            self._statusArrived.emit(
+                shown, "Đang hiện trên Discord" if shown else "Discord ngắt kết nối"
+            )
+        finally:
+            self._busy = False
 
     def _hide(self) -> None:
         with self._lock:
@@ -118,6 +147,7 @@ class PresenceBridge(QObject):
 
     def shutdown(self) -> None:
         """Đóng launcher là xoá presence — không để Discord hiện "đang chơi" mãi."""
+        self._timer.stop()
         self._hide()
 
     @Slot(bool, str)

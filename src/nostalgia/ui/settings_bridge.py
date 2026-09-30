@@ -55,18 +55,11 @@ class SettingsBridge(QObject):
     def discordPresence(self) -> bool:
         return self.settings_snapshot().discord_presence
 
-    @Property(str, notify=discordChanged)
-    def discordApplicationId(self) -> str:
-        return self.settings_snapshot().discord_application_id
-
-    @Slot(bool, str)
-    def setDiscord(self, enabled: bool, application_id: str) -> None:
+    @Slot(bool)
+    def setDiscord(self, enabled: bool) -> None:
         settings = self.settings_snapshot()
-        wanted = replace(
-            settings, discord_presence=enabled, discord_application_id=application_id.strip()
-        )
-        if wanted != settings:
-            self._save(wanted)
+        if settings.discord_presence != enabled:
+            self._save(replace(settings, discord_presence=enabled))
             self.discordChanged.emit()
 
     @Property(str, notify=gameDirRootChanged)

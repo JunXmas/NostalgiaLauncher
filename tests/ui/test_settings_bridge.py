@@ -76,6 +76,29 @@ def test_settings_page_shows_the_donate_button(tmp_path: Path) -> None:
     assert find_item(root_item, "donateButton") is not None, "trang CÀI ĐẶT thiếu nút ủng hộ"
 
 
+def test_discord_section_has_a_switch_and_nothing_to_fill_in(tmp_path: Path) -> None:
+    """Chỉ còn một công tắc. Ô nhập Application ID đã bỏ: launcher tự mang id của nó, bắt
+    người chơi mở Developer Portal là giao việc của launcher cho người dùng — và ai cũng bỏ
+    qua, nên presence coi như không tồn tại."""
+    from PySide6.QtCore import QObject
+    from PySide6.QtGui import QGuiApplication
+    from qml_tree import find_item
+
+    from nostalgia.ui.app import build_view
+
+    view, _bridge = build_view(Launcher.for_data_dir(tmp_path / "data", tmp_path / "config"))
+    view.show()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None
+    sidebar.setProperty("currentIndex", 6)
+    QGuiApplication.processEvents()
+
+    assert find_item(root_item, "discordToggle") is not None
+    assert find_item(root_item, "discordIdField") is None
+
+
 def test_valid_game_dir_root_saves_and_emits_changed(tmp_path: Path) -> None:
     """Đường dẫn hợp lệ → lưu xuống đĩa và phát gameDirRootChanged."""
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")

@@ -57,6 +57,9 @@ markers = [
     "slow: chạy lâu (tải file lớn, khởi động game)",
     "allow_home: được phép gọi Path.home(); mặc định mọi test đều bị cấm",
 ]
+# Lỗi ném ra từ LUỒNG NỀN mặc định chỉ thành cảnh báo, và test vẫn xanh. Presence Discord
+# chạy ở luồng nền, nên lưới chống-nối-Discord-thật trong conftest kêu mà không ai nghe.
+filterwarnings = ["error::pytest.PytestUnhandledThreadExceptionWarning"]
 
 [tool.ruff]
 line-length = 100
