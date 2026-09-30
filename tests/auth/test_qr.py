@@ -1,52 +1,83 @@
-"""Mã QR cho URL xác minh Microsoft: giải lại bằng mắt, vị trí góc, và biên chuỗi.
+"""Mã QR cho URL xác minh Microsoft và chuỗi VietQR: từng ô phải khớp bộ mã hoá chuẩn.
 
 Đây là loại code mà test tự viết rất dễ chỉ nghiệm lại giả định của chính người viết — vòng
 mã hoá/giải mã tự kiểm sẽ xanh dù bit đặt sai chỗ, miễn cả hai bên đồng ý cùng lỗi. Nên test
-gác thật ở đây là zbarimg (`libzbar`, decoder độc lập, không dùng lại code trong repo) đọc
-PNG sinh ra và trả đúng chuỗi gốc — không có nó thì test này chỉ chứng minh mã tự giải được
-mã của chính nó.
+gác thật ở đây là thư viện `qrcode` (bộ mã hoá độc lập, chỉ có trong nhóm `dev`, launcher
+không bao giờ import) sinh cùng chuỗi và so TỪNG Ô.
+
+Trước đây chỗ này gác bằng `zbarimg` — giải lại PNG và so chuỗi. Hai vấn đề, đã trả giá cả
+hai: công cụ ấy không có trên máy dev lẫn CI nên test skip im lặng; và giải-lại-được là
+tiêu chuẩn quá lỏng — máy quét vẫn đọc đúng khi byte đệm đảo thứ tự hoặc khi bản sao thứ
+hai của ô định dạng đặt ngược bit, vì nó bỏ qua đệm và chỉ cần một bản sao lành. Cả hai lỗi
+đó đều có thật trong file này và chỉ lộ ra khi so từng ô.
 """
 
 from __future__ import annotations
 
-import shutil
-import subprocess
-from pathlib import Path
+import random
+import string
 
 import pytest
 
 from nostalgia.auth.qr import MAX_ASCII_BYTES, encode_qr, qr_png_bytes
 
-ZBARIMG = shutil.which("zbarimg")
+qrcode = pytest.importorskip("qrcode", reason="trọng tài QR độc lập: uv sync")
+from qrcode.constants import ERROR_CORRECT_L  # noqa: E402
+from qrcode.util import MODE_8BIT_BYTE, QRData  # noqa: E402
+
+# Chuỗi VietQR thật (115 byte) — lý do `auth/qr.py` phải với tới cỡ lưới 6, và cỡ 6 là cỡ
+# đầu tiên chia Reed-Solomon làm hai khối phải đan xen.
+VIETQR_SAMPLE = (
+    "00020101021238570010A00000072701270006970436011312345678901230208QRIBFTTA"
+    "53037045802VN62200816UNG HO NOSTALGIA63041234"
+)
 
 
-def _decode_with_zbar(png: bytes, tmp_path: Path) -> str:
-    assert ZBARIMG is not None, "chỉ gọi sau skipif — không có zbarimg thì test đã bị bỏ qua"
-    png_path = tmp_path / "qr.png"
-    png_path.write_bytes(png)
-    result = subprocess.run(
-        [ZBARIMG, "--raw", "-q", str(png_path)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return str(result.stdout).strip()
+def _reference_matrix(text: str) -> list[list[bool]]:
+    """Cùng chuỗi, cùng mức ECC L, cùng mask 0 — dựng bằng thư viện ngoài."""
+    encoder = qrcode.QRCode(error_correction=ERROR_CORRECT_L, border=0, mask_pattern=0)
+    encoder.add_data(QRData(text.encode(), mode=MODE_8BIT_BYTE))
+    encoder.make(fit=True)
+    return [[bool(cell) for cell in row] for row in encoder.get_matrix()]
 
 
-@pytest.mark.skipif(ZBARIMG is None, reason="cần zbarimg (libzbar) để giải lại QR độc lập")
 @pytest.mark.parametrize(
     "text",
     [
+        "A",
         "https://microsoft.com/link",
         "https://microsoft.com/link?otc=ABCD1234",
-        "A",
+        VIETQR_SAMPLE,
+        # Biên của từng cỡ lưới: ô cuối vừa khít, rồi ô đầu của cỡ kế tiếp.
+        *[f"{'x' * length}" for length in (17, 18, 32, 33, 53, 54, 78, 79, 106, 107)],
         "x" * MAX_ASCII_BYTES,
     ],
 )
-def test_qr_roundtrips_through_an_independent_decoder(text: str, tmp_path: Path) -> None:
+def test_every_module_matches_an_independent_encoder(text: str) -> None:
     qr = encode_qr(text)
-    decoded = _decode_with_zbar(qr_png_bytes(qr), tmp_path)
-    assert decoded == text
+    reference = _reference_matrix(text)
+    assert qr.size == len(reference), "chọn sai cỡ lưới cho độ dài này"
+    mismatched = [
+        (row, col)
+        for row in range(qr.size)
+        for col in range(qr.size)
+        if qr.modules[row][col] != reference[row][col]
+    ]
+    assert not mismatched, f"lệch {len(mismatched)} ô so với bộ mã hoá chuẩn: {mismatched[:6]}"
+
+
+def test_random_strings_across_every_size_class_match_too() -> None:
+    """Chuỗi cố định chỉ đi qua vài nhánh. Sai một ô là máy quét đọc ra chuỗi khác — với mã
+    chuyển khoản nghĩa là tiền đi nhầm chỗ, nên quét cả dải độ dài chứ không lấy mẫu."""
+    generator = random.Random(20261001)
+    sizes_seen = set()
+    for _ in range(200):
+        length = generator.randint(1, MAX_ASCII_BYTES)
+        text = "".join(generator.choice(string.printable[:95]) for _ in range(length))
+        qr = encode_qr(text)
+        sizes_seen.add(qr.size)
+        assert [list(row) for row in qr.modules] == _reference_matrix(text), text
+    assert sizes_seen == {21, 25, 29, 33, 37, 41}, f"chưa chạm hết 6 cỡ lưới: {sorted(sizes_seen)}"
 
 
 def test_finder_patterns_sit_in_exactly_three_corners() -> None:
