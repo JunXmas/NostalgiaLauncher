@@ -21,6 +21,7 @@ ZBARIMG = shutil.which("zbarimg")
 
 
 def _decode_with_zbar(png: bytes, tmp_path: Path) -> str:
+    assert ZBARIMG is not None, "chỉ gọi sau skipif — không có zbarimg thì test đã bị bỏ qua"
     png_path = tmp_path / "qr.png"
     png_path.write_bytes(png)
     result = subprocess.run(
@@ -29,7 +30,7 @@ def _decode_with_zbar(png: bytes, tmp_path: Path) -> str:
         text=True,
         check=True,
     )
-    return result.stdout.strip()
+    return str(result.stdout).strip()
 
 
 @pytest.mark.skipif(ZBARIMG is None, reason="cần zbarimg (libzbar) để giải lại QR độc lập")
