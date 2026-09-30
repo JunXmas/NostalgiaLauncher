@@ -79,6 +79,12 @@ COMMUNITY_URL = "https://discord.gg/TTDqYmM89W"
 # endpoint hoàn toàn: profile đọc công khai, upload cần xác thực.
 SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
 
+# Cape Mojang: GET hồ sơ (cần Bearer) trả danh sách capes[] người chơi SỞ HỮU;
+# PUT capes/active {"capeId"} mặc một cái, DELETE gỡ. Cape không upload được —
+# Mojang phát theo sự kiện/mua, launcher chỉ chọn trong số đã có.
+PROFILE_WITH_CAPES_URL = "https://api.minecraftservices.com/minecraft/profile"
+CAPE_ACTIVE_URL = "https://api.minecraftservices.com/minecraft/profile/capes/active"
+
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
@@ -108,6 +114,8 @@ class Endpoints:
     ely_textures: str = ELY_TEXTURES_URL
     launcher_releases: str = LAUNCHER_RELEASES_URL
     skin_upload: str = SKIN_UPLOAD_URL
+    profile_with_capes: str = PROFILE_WITH_CAPES_URL
+    cape_active: str = CAPE_ACTIVE_URL
     donate: str = DONATE_URL
     community: str = COMMUNITY_URL
 
