@@ -182,27 +182,14 @@ def test_the_use_button_never_appears_under_the_cursor(
         assert button.opacity() == 0.0, "chưa trỏ vào hàng nào thì nút phải trong suốt"
 
 
-def test_ely_account_gets_a_link_to_change_its_real_skin(
+def test_ely_account_changes_skin_in_the_launcher_not_on_the_website(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Nút ra ely.by vẫn phải còn dù launcher đã upload thẳng được: nó là lối thoát khi
-    phiên web hỏng (trang ely.by đổi API ngầm) và là chỗ duy nhất đổi CAPE."""
+    """Launcher upload thẳng lên ely.by rồi, nên KHÔNG còn nút đẩy người dùng ra trang web:
+    hai đường làm cùng một việc thì đường nào cũng đáng ngờ. Hỏng phiên web thì báo lỗi bảo
+    đăng nhập lại, chứ đừng để người dùng tự đi vòng."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
-    link = find_item(root_item, "elySkinSiteButton")
-    assert link is not None
-
-    # Đang chọn JunSlayest (microsoft): nút phải ẩn, vì Microsoft upload thẳng được.
-    assert link.isVisible() is False
-
-    page = find_item(root_item, "accountsPage")
-    assert page is not None
-    ely_row = next(
-        account for account in page.property("allAccounts") if account["accountKind"] == "ely"
-    )
-    page.setProperty("shownId", ely_row["accountId"])
-    QGuiApplication.processEvents()
-
-    assert link.isVisible() is True, "tài khoản Ely phải có đường ra ely.by để đổi skin thật"
+    assert find_item(root_item, "elySkinSiteButton") is None
 
 
 def test_ely_sign_in_offers_a_way_to_get_an_account(
@@ -231,11 +218,10 @@ def test_ely_links_point_at_the_account_site_not_the_skin_catalog(
     Đoán sai một lần rồi: `ely.by/register` trả 404 ngay trước mặt jun. Không chạm mạng —
     chỉ gác cái tên miền, vì đó mới là chỗ đã sai."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
-    for name in ("elyRegisterButton", "elySkinSiteButton"):
-        button = find_item(root_item, name)
-        assert button is not None
-        target = button.property("target").toString()
-        assert target.startswith("https://account.ely.by/"), f"{name} trỏ sai chỗ: {target}"
+    button = find_item(root_item, "elyRegisterButton")
+    assert button is not None
+    target = button.property("target").toString()
+    assert target.startswith("https://account.ely.by/"), f"elyRegisterButton trỏ sai chỗ: {target}"
 
 
 def test_two_accounts_with_the_same_name_still_show_the_use_button(

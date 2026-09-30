@@ -44,17 +44,6 @@ Panel {
                 label: "⟳  Làm mới"
                 onClicked: accountBridge.refreshSkins()
             }
-            /* Lối thoát khi upload từ launcher hỏng (phiên web hết hạn, trang ely.by đổi
-               API ngầm) và là chỗ duy nhất đổi CAPE — ely.by không có API cape. */
-            ActionButton {
-                objectName: "elySkinSiteButton"
-                visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind === "ely"
-                label: "Đổi skin ở ely.by ↗"
-                /* account.ely.by, KHÔNG phải ely.by/skins: chỗ kia là catalog skin của
-                   người khác, xem thì được mà đổi skin của mình thì không. */
-                readonly property url target: "https://account.ely.by/profile/change-skin"
-                onClicked: Qt.openUrlExternally(target)
-            }
         }
         SkinLibrary {
             width: parent.width
@@ -134,12 +123,15 @@ Panel {
                     visible: skinPanel.shown.accountKind !== "microsoft" || capeBridge.capes.length === 0
                     width: 120; height: 100; radius: Theme.radiusSmall; color: Theme.surfaceHigh; border.color: Theme.border
                     Image {
-                        visible: skinPanel.hasShown && skinPanel.shown.capeFile !== ""
+                        visible: source != ""
                         anchors.centerIn: parent; width: 60; height: 96
-                        source: skinPanel.hasShown ? skinPanel.shown.capeFile : ""; sourceClipRect: Qt.rect(1, 1, 10, 16); smooth: false
+                        /* `|| ""`: tài khoản chưa tải cape thì `capeFile` là undefined, mà
+                           QUrl không nhận undefined — Qt kêu ra stderr mỗi lần vẽ. */
+                        source: (skinPanel.hasShown && skinPanel.shown.capeFile) || ""
+                        sourceClipRect: Qt.rect(1, 1, 10, 16); smooth: false
                     }
                     Text {
-                        visible: !(skinPanel.hasShown && skinPanel.shown.capeFile !== "")
+                        visible: !((skinPanel.hasShown && skinPanel.shown.capeFile) || "")
                         anchors.centerIn: parent; text: "Không có cape"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
