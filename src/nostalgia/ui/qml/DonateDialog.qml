@@ -1,14 +1,14 @@
 import QtQuick
 
 /*
-  Hộp ủng hộ: mã VietQR quét bằng app ngân hàng, cạnh nút mở trang GitHub Sponsors.
+  Hộp ủng hộ: mã VietQR quét bằng app ngân hàng. Chỉ một đường duy nhất.
 
   KHÔNG nhúng số tiền vào mã — người ủng hộ tự gõ trong app ngân hàng của họ. Hiện tên chủ
   tài khoản và nội dung chuyển khoản ngay cạnh mã: người quét đối chiếu được trước khi bấm
   gửi, thay vì phải tin một ô vuông đen trắng mà mắt không đọc được.
 
-  Chưa khai số tài khoản (`donateQr` rỗng) thì phần QR biến mất hẳn, chỉ còn nút Sponsors —
-  hiện một khung trống là hứa một thứ không có.
+  Chưa khai số tài khoản (`donateQr` rỗng) thì phần QR biến mất hẳn — hiện một khung trống
+  là hứa một thứ không có.
 */
 Item {
     id: dialog
@@ -105,11 +105,6 @@ Item {
             Row {
                 anchors.right: parent.right
                 spacing: 10
-                ActionButton {
-                    objectName: "donateSponsorsButton"
-                    primary: false; label: "GitHub Sponsors"
-                    onClicked: settingsBridge.openDonatePage()
-                }
                 ActionButton {
                     objectName: "donateClose"
                     label: "Đóng"

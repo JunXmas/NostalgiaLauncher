@@ -44,16 +44,18 @@ def test_bridge_exposes_version_and_data_dir_only(tmp_path: Path) -> None:
     assert not {name for name in exposed if "urseforge" in name or "Key" in name}
 
 
-def test_donate_url_is_a_real_https_address(tmp_path: Path) -> None:
-    """Nút ủng hộ mở URL từ `repo/endpoints.py`, không phải chuỗi nhúng trong QML.
-
-    Gác chuyện dán nhầm đường dẫn cục bộ hay để trống: nút hiện ra nhưng bấm không đi đâu là
-    lỗi im lặng — người dùng tưởng app hỏng chứ không báo cho ai.
-    """
-    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    settings_bridge = SettingsBridge(launcher)
-    assert settings_bridge.donateUrl == launcher.donate_url()
-    assert settings_bridge.donateUrl.startswith("https://")
+def test_the_bridge_no_longer_offers_any_web_donate_page(tmp_path: Path) -> None:
+    """GitHub Sponsors đã bỏ: chủ dự án không dùng. Gác để thuộc tính `donateUrl` và slot
+    `openDonatePage` không lặng lẽ quay lại — nút mở ra một trang không ai trông là tệ hơn
+    không có nút, và đường duy nhất giờ phải là mã QR."""
+    settings_bridge = SettingsBridge(
+        Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    )
+    meta_object = settings_bridge.metaObject()
+    exposed = {meta_object.property(i).name() for i in range(meta_object.propertyCount())}
+    assert "donateUrl" not in exposed
+    assert not hasattr(settings_bridge, "openDonatePage")
+    assert settings_bridge.donateQr != "", "bỏ Sponsors rồi thì QR là đường DUY NHẤT, phải có"
 
 
 def test_settings_page_shows_the_donate_button(tmp_path: Path) -> None:

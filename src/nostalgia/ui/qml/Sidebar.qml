@@ -125,9 +125,32 @@ Rectangle {
             compact: root.collapsed
             tint: Theme.textMuted
             // Qua cầu nối chứ không `Qt.openUrlExternally` thẳng trong QML: URL phải sống ở
-            // `repo/endpoints.py` cạnh mọi địa chỉ khác (đúng như `donate_url`), để đổi lời
+            // `repo/endpoints.py` cạnh mọi địa chỉ khác, để đổi lời
             // mời chỉ sửa một dòng và test kiểm được — chuỗi ghi cứng trong QML thì không.
             onClicked: settingsBridge.openCommunityPage()
+        }
+
+        /* Ủng hộ: cùng nhóm "không phải điểm đến" với CỘNG ĐỒNG ở trên, nên nằm cùng phía
+           dưới vạch ngăn và cũng không đụng `currentIndex`.
+
+           Ở thanh bên chứ không chỉ ở cuối trang CÀI ĐẶT: thanh bên hiện ở MỌI trang, còn nút
+           dưới trang CÀI ĐẶT phải bấm hai lớp mới tới — một lời mời mà không ai thấy thì bằng
+           không có. Vẫn là một ô nằm im: không tự bật, không chặn gì.
+
+           Màu vàng `warning` chứ không `textMuted` như hai ô cạnh nó: đây là ô duy nhất ở đây
+           cần nhìn ra được, và vàng là màu nhạt nhất trong bảng mà không trùng bảy màu tab —
+           không ô nào khác dùng nó nên nó không đọc thành "tab thứ tám". */
+        NavItem {
+            objectName: "donateLink"
+            label: root.collapsed ? "" : Tr.text("donate")
+            // Trái tim: hai font nhúng đều không có ký tự này nên nó rơi về font hệ thống,
+            // hệt chữ "✉" ở trên — đã chụp ảnh kiểm, đọc ra được ở cỡ icon.
+            glyph: "♥"
+            compact: root.collapsed
+            tint: Theme.warning
+            // Mở hộp QR, không ra trình duyệt: `donateDialog` là thuộc tính ngữ cảnh đặt ở
+            // `ui/app.py`, phủ cả thanh bên nên gọi được từ đây.
+            onClicked: donateDialog.open()
         }
 
         // Nút thu gọn/mở rộng, cùng hàng lối với các mục trên nó.

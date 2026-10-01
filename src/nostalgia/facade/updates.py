@@ -68,10 +68,6 @@ class UpdateOperations(LauncherContext):
         """`frozen` (gói PyInstaller, tự áp được) hay `source` (chạy từ mã nguồn)."""
         return detect_install_kind()
 
-    def donate_url(self) -> str:
-        """Trang ủng hộ. Không chạm mạng — chỉ trả địa chỉ cho giao diện mở trình duyệt."""
-        return self.endpoints.donate
-
     def community_url(self) -> str:
         """Discord cộng đồng. Không chạm mạng — chỉ trả địa chỉ cho giao diện mở trình duyệt."""
         return self.endpoints.community

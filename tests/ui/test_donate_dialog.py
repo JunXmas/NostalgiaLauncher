@@ -51,6 +51,31 @@ def test_the_dialog_exists_and_the_donate_button_opens_it(tmp_path: Path) -> Non
     ), "có mã QR nhưng không có ô Image nào vẽ nó"
 
 
+def test_the_sidebar_offers_donate_from_any_page(tmp_path: Path) -> None:
+    """Ô ỦNG HỘ phải ở THANH BÊN, mở được khi đang đứng ở trang chủ (index 0).
+
+    Nút nằm cuối trang CÀI ĐẶT thì phải bấm hai lớp mới tới, và một lời mời không ai thấy
+    bằng không có. Test đứng ở trang chủ chứ không trang CÀI ĐẶT đúng là để gác chuyện đó:
+    ai đó dọn ô này về lại trong trang thì nó đỏ.
+    """
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    view, _bridge = build_view(launcher)
+    view.show()
+    root_item = view.rootObject()
+    assert root_item is not None
+    sidebar = root_item.findChild(QObject, "sidebar")
+    assert sidebar is not None and sidebar.property("currentIndex") == 0, "phải ở trang chủ"
+
+    link = find_item(root_item, "donateLink")
+    assert link is not None, "thanh bên thiếu ô ỦNG HỘ"
+    dialog = root_item.findChild(QObject, "donateDialog")
+    assert dialog is not None and dialog.property("visible") is False
+    link.metaObject().invokeMethod(link, "clicked")
+    assert dialog.property("visible") is True, "bấm ô ở thanh bên mà hộp không mở"
+    # Ô này là LIÊN KẾT, không phải điểm đến: mở hộp xong vẫn phải đứng nguyên ở trang chủ.
+    assert sidebar.property("currentIndex") == 0
+
+
 def test_the_qr_data_uri_decodes_to_the_png_the_engine_built(tmp_path: Path) -> None:
     """Chuỗi `data:` QML nhận phải là ĐÚNG những byte PNG mà engine dựng, không phải một ảnh
     khác cùng kích thước. Kiểu lỗi mà nó gác: ai đó đổi `scale` ở một trong hai chỗ."""

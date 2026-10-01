@@ -43,8 +43,8 @@ Item {
                     objectName: "donateButton"
                     primary: false; label: "Ủng hộ dự án"
                     anchors.verticalCenter: parent.verticalCenter
-                    // Mở hộp có mã QR chứ không nhảy thẳng ra trình duyệt nữa: chuyển khoản
-                    // trong nước không phải qua thẻ quốc tế. Nút GitHub Sponsors nằm trong hộp.
+                    // Mở hộp có mã QR chứ không nhảy ra trình duyệt: chuyển khoản trong nước
+                    // không phải qua thẻ quốc tế.
                     onClicked: donateDialog.open()
                 }
                 Text {

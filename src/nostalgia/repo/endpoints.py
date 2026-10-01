@@ -65,11 +65,6 @@ ELY_TEXTURES_URL = "https://skinsystem.ely.by/textures"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
 LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
 
-# Trang ủng hộ. Launcher miễn phí và không quảng cáo; đây là nút nằm im một chỗ trong CÀI ĐẶT,
-# không bao giờ tự bật lên và không chặn tính năng nào. Để ở đây thay vì nhúng thẳng vào QML
-# để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
-DONATE_URL = "https://github.com/sponsors/JunXmas"
-
 # Số tài khoản nhận ủng hộ, GHIM SẴN trong kho. Không phải bí mật: mã QR chuyển khoản dán
 # công khai ở quán cà phê cũng chính là ba trường này, và biết số tài khoản chỉ gửi tiền VÀO
 # được chứ không rút ra. Ghim để mã QR luôn dựng được — kể cả khi máy người dùng offline hay
@@ -94,7 +89,7 @@ DONATE_ACCOUNT_URL = "https://nostalgia-backend.junbob.workers.dev/donate"
 # Đè được bằng NOSTALGIA_DISCORD_APP_ID cho ai muốn hiện tên app của riêng mình.
 DISCORD_APPLICATION_ID = "1554875447609921606"
 
-# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với DONATE_URL:
+# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với mọi URL ở đây:
 # để ở đây thì đổi lời mời (hết hạn, đổi sang link vĩnh viễn) chỉ phải sửa một dòng, và test
 # kiểm được nó là địa chỉ thật chứ không phải chuỗi rỗng nhúng đâu đó trong QML.
 COMMUNITY_URL = "https://discord.gg/TTDqYmM89W"
@@ -140,7 +135,6 @@ class Endpoints:
     skin_upload: str = SKIN_UPLOAD_URL
     profile_with_capes: str = PROFILE_WITH_CAPES_URL
     cape_active: str = CAPE_ACTIVE_URL
-    donate: str = DONATE_URL
     donate_account: str = DONATE_ACCOUNT_URL
     community: str = COMMUNITY_URL
 
