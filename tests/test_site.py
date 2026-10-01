@@ -39,6 +39,18 @@ def test_every_local_file_the_page_points_at_is_really_there() -> None:
     assert not missing, f"trang trỏ tới file không có: {missing}"
 
 
+def test_the_stylesheet_does_not_ask_for_a_file_that_was_deleted() -> None:
+    """`url()` trong CSS là điểm mù của test trên — nó chỉ đọc `src`/`href` trong HTML.
+
+    Khi gỡ `hero.jpg` đi, nếu sót lại một `url("hero.jpg")` thì trình duyệt tải 404 rồi vẽ
+    một mảng trống: không lỗi, không cảnh báo, chỉ là hero mất nền. Đúng kiểu hỏng im lặng
+    mà cả bộ test còn lại không với tới.
+    """
+    refs = re.findall(r'url\(["\']?(?!https?:|data:|#)([^"\')]+)["\']?\)', CSS)
+    missing = [ref for ref in refs if not (SITE / ref).resolve().is_file()]
+    assert not missing, f"CSS trỏ tới file không có: {missing}"
+
+
 def test_the_hidden_state_is_added_by_script_not_baked_into_the_html() -> None:
     """Class `.reveal` (opacity 0) phải do `app.js` GẮN VÀO, không viết sẵn trong HTML.
 

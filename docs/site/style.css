@@ -272,18 +272,27 @@ a { color: inherit; }
   overflow: hidden;
 }
 
-/* Ảnh nền trôi chậm hơn trang khi cuộn (parallax). Để trên phần tử RIÊNG chứ không trên
+/* Nền hero trôi chậm hơn trang khi cuộn (parallax). Để trên phần tử RIÊNG chứ không trên
    `.hero` vì `transform` trên khối cha sẽ kéo theo cả chữ và khối 3D.
-   `fixed` theo trục ngang ra ngoài `--maxw`: ảnh phải chạm hai mép màn hình, còn chữ thì
-   không — đó là cách trang lớn giữ ảnh rộng mà chữ vẫn đọc được. */
+
+   Từng là một ảnh JPEG trường sao. Bỏ đi vì nó rỗ, và lý do rỗ không chữa được bằng cách
+   đổi ảnh đẹp hơn hay làm nét lên: trường sao LÀ nhiễu từng-pixel, còn `brightness(0.34)`
+   (cần có, không thì chữ trắng không đọc nổi) dìm nền về gần đen trong khi sao vẫn trắng —
+   đẩy tương phản hạt lên cực đại. Đo vùng đặt chữ: trung bình 67.7, độ lệch chuẩn 57.6.
+   Làm nét còn tệ hơn: sharpen là khuếch đại tương phản cục bộ, tức khuếch đại đúng cái sạn
+   (đã thử, độ lệch 19.5 → 26.0 sau khi dìm).
+
+   Gradient không có pixel nào để mà rỗ, nhẹ hơn 271 KB, và để khối cỏ 3D nổi hẳn lên —
+   nó mới là thứ đáng nhìn trong hero. Ba quầng dùng đúng accent của launcher. */
 .hero-bg {
   position: absolute;
   inset: -12% 0 auto 0;
   height: 112%;
-  background: url("hero.jpg") center / cover no-repeat;
-  /* Ảnh gốc sáng và nhiều chi tiết; không hạ xuống thì chữ trắng không đọc được và màu của
-     ảnh át cả bảy sắc accent. */
-  filter: brightness(0.34) saturate(0.7);
+  background:
+    radial-gradient(70rem 50rem at 20% 10%, color-mix(in srgb, var(--grass) 10%, transparent), transparent 65%),
+    radial-gradient(60rem 46rem at 85% 30%, color-mix(in srgb, var(--chest) 12%, transparent), transparent 62%),
+    radial-gradient(50rem 40rem at 55% 80%, color-mix(in srgb, var(--book) 8%, transparent), transparent 68%),
+    linear-gradient(170deg, #161b26, #10131a);
   will-change: transform;
   z-index: 0;
 }
