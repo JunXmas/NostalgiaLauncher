@@ -65,10 +65,21 @@ ELY_TEXTURES_URL = "https://skinsystem.ely.by/textures"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
 LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
 
-# Trang ủng hộ. Launcher miễn phí và không quảng cáo; đây là nút nằm im một chỗ trong CÀI ĐẶT,
-# không bao giờ tự bật lên và không chặn tính năng nào. Để ở đây thay vì nhúng thẳng vào QML
-# để sau đổi sang trang gom nhiều cách trả (Ko-fi, VietQR) mà chỉ sửa một dòng.
-DONATE_URL = "https://github.com/sponsors/JunXmas"
+# Số tài khoản nhận ủng hộ, GHIM SẴN trong kho. Không phải bí mật: mã QR chuyển khoản dán
+# công khai ở quán cà phê cũng chính là ba trường này, và biết số tài khoản chỉ gửi tiền VÀO
+# được chứ không rút ra. Ghim để mã QR luôn dựng được — kể cả khi máy người dùng offline hay
+# Worker chết, hai lúc mà một tính năng "ủng hộ" chết im lặng thì không ai báo cho ai.
+# Đổi số tài khoản KHÔNG cần ra bản mới: `DONATE_ACCOUNT_URL` dưới đây đè được lúc chạy.
+DONATE_BANK_BIN = "970436"  # Vietcombank, theo bảng mã ngân hàng NAPAS
+DONATE_ACCOUNT_NUMBER = "1068854548"
+DONATE_ACCOUNT_HOLDER = "NGUYEN NHAT MINH"
+# Tên ngân hàng chỉ để người quét ĐỌC mà đối chiếu; chuỗi QR chỉ mang mã BIN ở trên.
+DONATE_BANK_NAME = "Vietcombank"
+# Nội dung chuyển khoản cố định, để chủ dự án lọc sao kê ra đúng những lệnh đến từ launcher.
+DONATE_MEMO = "UNG HO NOSTALGIA"
+# Worker trả về số tài khoản hiện hành (JSON: bin/number/holder/memo). Hỏng hay chậm thì
+# launcher dùng số ghim ở trên và KHÔNG báo lỗi gì — người dùng vẫn quét được.
+DONATE_ACCOUNT_URL = "https://nostalgia-backend.junbob.workers.dev/donate"
 
 # Application ID của Nostalgia trên Discord Developer Portal. KHÔNG phải bí mật: mọi app dùng
 # Rich Presence đều nhúng id này vào client (nó chính là thứ Discord tra ra tên và icon hiện
@@ -78,7 +89,7 @@ DONATE_URL = "https://github.com/sponsors/JunXmas"
 # Đè được bằng NOSTALGIA_DISCORD_APP_ID cho ai muốn hiện tên app của riêng mình.
 DISCORD_APPLICATION_ID = "1554875447609921606"
 
-# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với DONATE_URL:
+# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với mọi URL ở đây:
 # để ở đây thì đổi lời mời (hết hạn, đổi sang link vĩnh viễn) chỉ phải sửa một dòng, và test
 # kiểm được nó là địa chỉ thật chứ không phải chuỗi rỗng nhúng đâu đó trong QML.
 COMMUNITY_URL = "https://discord.gg/TTDqYmM89W"
@@ -124,7 +135,7 @@ class Endpoints:
     skin_upload: str = SKIN_UPLOAD_URL
     profile_with_capes: str = PROFILE_WITH_CAPES_URL
     cape_active: str = CAPE_ACTIVE_URL
-    donate: str = DONATE_URL
+    donate_account: str = DONATE_ACCOUNT_URL
     community: str = COMMUNITY_URL
 
 

@@ -170,6 +170,39 @@ def test_the_icon_falls_back_to_a_glyph_until_the_strip_exists() -> None:
     assert icon.property("source") == ""
 
 
+def test_an_image_icon_beats_the_glyph_when_there_is_no_block() -> None:
+    """Mục có `image` (logo Discord) phải vẽ ẢNH, không phải chữ dự phòng.
+
+    Hai ô này loại trừ nhau; cùng hiện thì logo chồng lên một ký tự, cùng ẩn thì thanh bên
+    thủng một lỗ. Không test thì cả hai kiểu hỏng đều chỉ thấy được bằng mắt.
+    """
+    scene = build(
+        "import QtQuick\n"
+        'Item { BlockIcon { objectName: "probe"; glyph: "✉"; image: "assets/discord.png" } }'
+    )
+    icon = find(scene, "probe")
+    assert icon.property("ready") is False, "mục này không có khối nào"
+    image_item = find(icon, "navImage")
+    assert image_item.property("visible") is True
+    assert image_item.property("source").toString().endswith("assets/discord.png")
+
+
+def test_every_sidebar_icon_file_is_really_in_the_package() -> None:
+    """Ảnh icon phải nằm trong `ui/qml/assets/`, nơi file spec của PyInstaller gom cả thư
+    mục `qml` vào gói. Thiếu file thì bản đóng gói hiện ô trống, còn bản chạy từ mã nguồn
+    vẫn đẹp — kiểu lỗi chỉ người dùng cuối gặp."""
+    assert (QML_DIR / "assets" / "discord.png").is_file()
+
+
+def test_the_donate_entry_uses_a_block_that_the_texture_table_knows() -> None:
+    """Ô ỦNG HỘ xin khối `beacon`. Tên không có trong `BLOCK_TEXTURES` thì `ensure_strips`
+    không sinh dải nào và icon lặng lẽ rơi về chữ dự phòng mãi mãi."""
+    assert "beacon" in BLOCK_TEXTURES
+    sidebar = (QML_DIR / "Sidebar.qml").read_text(encoding="utf-8")
+    donate_block = sidebar.split('objectName: "donateLink"', 1)[1]
+    assert 'block: "beacon"' in donate_block.split("NavItem")[0]
+
+
 def test_hovering_spins_the_block_up_to_a_ceiling() -> None:
     """Tăng tốc dần rồi CHẠM TRẦN. Bỏ kẹp `vmax` thì khối quay loạn thành vệt mờ.
 

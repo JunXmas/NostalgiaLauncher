@@ -39,6 +39,7 @@ LAYERS: dict[str, int] = {
     "java/component": 2,
     "java/runtime_manifest": 2,  # cũng thuần: chỉ phân tích JSON
     "repo/endpoints": 0,  # hằng địa chỉ, không import gì
+    "donate": 0,  # chuỗi VietQR: thuần tính toán, không import gì của gói
     "auth": 3,  # giao thức đăng nhập: cần net/, chưa biết gì về kho tài khoản
     "repo": 3,
     "install": 3,

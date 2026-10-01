@@ -163,6 +163,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     root_item = view.rootObject()
     if root_item is not None:
         context.setContextProperty("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
+        context.setContextProperty("donateDialog", root_item.findChild(QObject, "donateDialog"))
     build_tray(view, bridge, settings_bridge)
     return view, bridge
 

@@ -14,6 +14,9 @@ Item {
     id: root
     property string block: ""
     property string glyph: ""
+    /* Ảnh thay cho chữ `glyph`, cho mục KHÔNG có khối Minecraft nào nói thay được (logo
+       Discord). Không có khối thì `ready` luôn false, nên ảnh này là thứ hiện suốt. */
+    property url image: ""
     property color glyphColor: Theme.textMuted
     property bool spinning: false
     // `blockIcons ?` không thừa: lúc đóng cửa sổ, cầu nối chết trước cây QML và mọi ràng
@@ -36,9 +39,21 @@ Item {
     readonly property real shake: 1.8    // biên rung (px) lúc chạm trần
     readonly property int throb: 620     // ms một nhịp trứng-sắp-nở
 
+    Image {
+        objectName: "navImage"
+        anchors.centerIn: parent
+        visible: !root.ready && root.image != ""
+        source: root.image
+        // Ảnh gốc 88 px vẽ ở 22: để Qt tự thu thì mép răng cưa, nên mipmap. `sourceSize`
+        // đúng bằng cỡ vẽ cho Qt chỉ giữ một bản đã thu trong RAM.
+        width: root.width; height: root.height
+        sourceSize: Qt.size(root.width * 2, root.height * 2)
+        smooth: true; mipmap: true
+    }
+
     Text {
         anchors.centerIn: parent
-        visible: !root.ready
+        visible: !root.ready && root.image == ""
         text: root.glyph
         color: root.glyphColor
         font.pixelSize: Theme.fontTitle

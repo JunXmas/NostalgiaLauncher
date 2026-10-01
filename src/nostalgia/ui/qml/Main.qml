@@ -149,4 +149,7 @@ Item {
     SignInDialog { anchors.fill: parent }
     // Hộp hỏi lại dùng chung của mọi trang (app.py lộ nó qua context property `confirmDialog`).
     ConfirmDialog { objectName: "confirmDialog"; anchors.fill: parent }
+    // Hộp ủng hộ (mã VietQR) — cùng lý do ở đây: phủ cả thanh bên, và trang CÀI ĐẶT nạp sau
+    // qua Loader nên với lên cây cha không tới.
+    DonateDialog { objectName: "donateDialog"; anchors.fill: parent }
 }

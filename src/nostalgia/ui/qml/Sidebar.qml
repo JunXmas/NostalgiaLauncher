@@ -118,16 +118,44 @@ Rectangle {
         NavItem {
             objectName: "communityLink"
             label: root.collapsed ? "" : Tr.text("community")
-            // Icon: phong bì = lời mời. Không có khối Minecraft nào nói được "Discord", và
-            // hai font nhúng đều không có ký tự này nên nó rơi về font hệ thống — đã chụp
-            // ảnh kiểm ở 22 px, đọc ra được.
-            glyph: "✉"
+            /* Logo Discord thật (assets/discord.png), không phải chữ "✉" như trước: phong bì
+               là "thư", không ai đọc ra Discord, mà đây đúng là chỗ cần nhận ra NGAY bằng
+               hình. Không có khối Minecraft nào nói được điều này nên nó đi đường `image`.
+               Giữ màu lam chính hiệu của Discord — logo đổi màu thì mất tác dụng nhận diện,
+               đó là lý do duy nhất một thứ ở thanh bên được nằm ngoài bảng màu Nostalgia. */
+            image: "assets/discord.png"
+            glyph: "✉"  // dự phòng, nếu ảnh thiếu trong gói
             compact: root.collapsed
             tint: Theme.textMuted
             // Qua cầu nối chứ không `Qt.openUrlExternally` thẳng trong QML: URL phải sống ở
-            // `repo/endpoints.py` cạnh mọi địa chỉ khác (đúng như `donate_url`), để đổi lời
+            // `repo/endpoints.py` cạnh mọi địa chỉ khác, để đổi lời
             // mời chỉ sửa một dòng và test kiểm được — chuỗi ghi cứng trong QML thì không.
             onClicked: settingsBridge.openCommunityPage()
+        }
+
+        /* Ủng hộ: cùng nhóm "không phải điểm đến" với CỘNG ĐỒNG ở trên, nên nằm cùng phía
+           dưới vạch ngăn và cũng không đụng `currentIndex`.
+
+           Ở thanh bên chứ không chỉ ở cuối trang CÀI ĐẶT: thanh bên hiện ở MỌI trang, còn nút
+           dưới trang CÀI ĐẶT phải bấm hai lớp mới tới — một lời mời mà không ai thấy thì bằng
+           không có. Vẫn là một ô nằm im: không tự bật, không chặn gì.
+
+           Màu vàng `warning` chứ không `textMuted` như hai ô cạnh nó: đây là ô duy nhất ở đây
+           cần nhìn ra được, và vàng là màu nhạt nhất trong bảng mà không trùng bảy màu tab —
+           không ô nào khác dùng nó nên nó không đọc thành "tab thứ tám". */
+        NavItem {
+            objectName: "donateLink"
+            label: root.collapsed ? "" : Tr.text("donate")
+            // Khối beacon: trong game nó là thứ người chơi dựng được sau khi hạ boss rồi đặt
+            // lên một bệ quặng quý — ngọn sáng bắn thẳng lên trời. Đúng nghĩa ở đây, và nó
+            // nằm cùng ngôn ngữ với bảy khối phía trên thay vì một ký tự lạc font.
+            block: "beacon"
+            glyph: "♥"  // chỉ dùng mấy nhịp đầu, lúc dải sprite chưa sinh xong
+            compact: root.collapsed
+            tint: Theme.warning
+            // Mở hộp QR, không ra trình duyệt: `donateDialog` là thuộc tính ngữ cảnh đặt ở
+            // `ui/app.py`, phủ cả thanh bên nên gọi được từ đây.
+            onClicked: donateDialog.open()
         }
 
         // Nút thu gọn/mở rộng, cùng hàng lối với các mục trên nó.

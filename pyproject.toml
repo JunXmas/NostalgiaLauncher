@@ -1,6 +1,6 @@
 [project]
 name = "nostalgia"
-version = "1.1.5"
+version = "1.1.6"
 description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -45,7 +45,17 @@ packages = ["src/nostalgia"]
 artifacts = ["src/nostalgia/py.typed"]
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "pre-commit>=3.8"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    # Bộ mã hoá QR độc lập, CHỈ dùng làm trọng tài cho `tests/auth/test_qr.py`. Launcher tự
+    # vẽ QR bằng stdlib và không bao giờ import cái này. Trước đây test gác duy nhất của
+    # `auth/qr.py` là `zbarimg` — một công cụ hệ thống mà cả máy dev lẫn CI đều không có,
+    # nên nó skip im lặng và hai lỗi đặt bit sống sót qua nhiều bản phát hành.
+    "qrcode>=7.4",
+]
 # Chỉ để đóng gói bản phát hành (CI + thử tay); KHÔNG phải phụ thuộc runtime.
 build = ["pyinstaller>=6.10"]
 
@@ -131,3 +141,10 @@ disable_error_code = [
     "has-type",
     "unused-ignore",
 ]
+
+# `qrcode` không có file khai kiểu. Nó CHỈ là trọng tài trong test (xem tests/auth/test_qr.py);
+# launcher tự vẽ QR bằng stdlib và không bao giờ import nó, nên không có kiểu nào của nó rò
+# vào mã chạy trên máy người dùng.
+[[tool.mypy.overrides]]
+module = ["qrcode.*"]
+ignore_missing_imports = true

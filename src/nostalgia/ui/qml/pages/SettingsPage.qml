@@ -43,7 +43,9 @@ Item {
                     objectName: "donateButton"
                     primary: false; label: "Ủng hộ dự án"
                     anchors.verticalCenter: parent.verticalCenter
-                    onClicked: settingsBridge.openDonatePage()
+                    // Mở hộp có mã QR chứ không nhảy ra trình duyệt: chuyển khoản trong nước
+                    // không phải qua thẻ quốc tế.
+                    onClicked: donateDialog.open()
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter

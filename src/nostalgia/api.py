@@ -28,7 +28,9 @@ from nostalgia.auth.device_code import DeviceCode
 from nostalgia.auth.qr import QrCode
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
+from nostalgia.donate.vietqr import BankAccount
 from nostalgia.facade.content import ContentTarget
+from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
 from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
@@ -54,6 +56,7 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    DonateOperations,
     UpdateOperations,
     MultiplayerOperations,
     SkinOperations,
@@ -73,6 +76,7 @@ class Launcher(
 __all__ = [
     "SELF_UPDATING_KINDS",
     "Account",
+    "BankAccount",
     "ContentTarget",
     "ContentUpdate",
     "DeviceCode",

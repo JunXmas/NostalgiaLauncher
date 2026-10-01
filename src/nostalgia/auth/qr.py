@@ -1,9 +1,13 @@
-"""Mã QR tối thiểu cho URL xác minh Microsoft, không phụ thuộc thư viện ngoài.
+"""Mã QR tối thiểu, không phụ thuộc thư viện ngoài: URL xác minh Microsoft và chuỗi VietQR.
 
-Chỉ đủ cho việc thật sự cần: chuỗi ASCII ngắn (URL device-code, dưới 60 ký tự), một mức
-sửa lỗi (L — thấp nhất, đủ cho ảnh hiển thị sạch trên màn hình chứ không in ra rồi làm nhàu),
-và cỡ lưới nhỏ nhất vừa khít dữ liệu (version 1-4 của chuẩn QR). Không hỗ trợ Kanji, chế độ
-số, hay các mức ECC khác — thêm vào là code không ai gọi tới.
+Chỉ đủ cho việc thật sự cần: chuỗi ASCII (URL device-code ~40 ký tự, chuỗi chuyển khoản
+VietQR ~115 byte), một mức sửa lỗi (L — thấp nhất, đủ cho ảnh hiển thị sạch trên màn hình
+chứ không in ra rồi làm nhàu), và cỡ lưới nhỏ nhất vừa khít dữ liệu (version 1-6 của chuẩn
+QR). Không hỗ trợ Kanji, chế độ số, hay các mức ECC khác — thêm vào là code không ai gọi tới.
+
+Dừng ở version 6 có lý do: từ version 7 chuẩn đòi thêm một khối 18 bit thông tin PHIÊN BẢN ở
+hai góc, và các cỡ lớn hơn chia Reed-Solomon thành những khối KHÔNG đều nhau (vài khối dài
+hơn phần còn lại một codeword). Cả hai đều là code chưa ai cần.
 
 Toạ độ mask cố định (mask 0, bàn cờ `(row+col)%2==0`): chuẩn QR không đòi mask phải tối ưu,
 chỉ đòi số mask đã dùng được ghi đúng vào ô định dạng để đầu đọc biết cách đảo lại — máy quét
@@ -17,19 +21,24 @@ import struct
 import zlib
 from dataclasses import dataclass
 
-MAX_ASCII_BYTES = 78  # sức chứa cỡ lưới 4 mức ECC L — trần trên loại QR này hỗ trợ.
+MAX_ASCII_BYTES = 134  # sức chứa cỡ lưới 6 mức ECC L — trần trên loại QR này hỗ trợ.
 
 _MASK_ID = 0
 _PAD_BYTES = (0xEC, 0x11)
 _FORMAT_GENERATOR = 0b10100110111
 _FORMAT_MASK = 0b101010000010010
 
-# cỡ lưới -> (số codeword dữ liệu, số codeword sửa lỗi, sức chứa byte tối đa, vị trí ô canh)
-_SIZE_CLASSES: dict[int, tuple[int, int, int, int | None]] = {
-    1: (19, 7, 17, None),
-    2: (34, 10, 32, 18),
-    3: (55, 15, 53, 22),
-    4: (80, 20, 78, 26),
+# cỡ lưới -> (codeword dữ liệu, codeword sửa lỗi, sức chứa byte, vị trí ô canh, số khối RS)
+# Số khối là cột dễ quên nhất: đến cỡ 6 mức L chuẩn mới chia làm hai khối, và chia rồi thì
+# codeword phải ĐAN XEN chứ không nối đuôi. Bỏ sót thì mã vẫn vẽ ra, vẫn đủ ô, chỉ là máy
+# quét đọc ra rác.
+_SIZE_CLASSES: dict[int, tuple[int, int, int, int | None, int]] = {
+    1: (19, 7, 17, None, 1),
+    2: (34, 10, 32, 18, 1),
+    3: (55, 15, 53, 22, 1),
+    4: (80, 20, 78, 26, 1),
+    5: (108, 26, 106, 30, 1),
+    6: (136, 36, 134, 34, 2),
 }
 
 _EXP = [0] * 512
@@ -61,7 +70,7 @@ class QrCode:
 
 
 def encode_qr(text: str) -> QrCode:
-    """Mã hoá `text` (ASCII, 1-78 byte) thành mã QR mức sửa lỗi L."""
+    """Mã hoá `text` (ASCII, 1-134 byte) thành mã QR mức sửa lỗi L."""
     try:
         payload = text.encode("ascii")
     except UnicodeEncodeError as error:
@@ -71,7 +80,7 @@ def encode_qr(text: str) -> QrCode:
         message = f"độ dài phải trong khoảng 1..{MAX_ASCII_BYTES} byte ASCII, nhận {len(payload)}"
         raise ValueError(message)
 
-    size_class = next(sc for sc, (_, _, cap, _) in _SIZE_CLASSES.items() if len(payload) <= cap)
+    size_class = next(sc for sc, (_, _, cap, _, _) in _SIZE_CLASSES.items() if len(payload) <= cap)
     codewords = _build_codewords(payload, size_class)
     return QrCode(modules=_build_matrix(codewords, size_class))
 
@@ -133,16 +142,36 @@ def _rs_encode(codewords: list[int], ec_len: int) -> list[int]:
 
 
 def _build_codewords(payload: bytes, size_class: int) -> list[int]:
-    data_cw, ec_cw, _, _ = _SIZE_CLASSES[size_class]
+    data_cw, ec_cw, _, _, blocks = _SIZE_CLASSES[size_class]
     bits = "0100" + format(len(payload), "08b")
     for byte in payload:
         bits += format(byte, "08b")
     bits += "0000"[: max(0, min(4, data_cw * 8 - len(bits)))]
     bits += "0" * (-len(bits) % 8)
     codewords = [int(bits[i : i + 8], 2) for i in range(0, len(bits), 8)]
-    for i in range(len(codewords), data_cw):
-        codewords.append(_PAD_BYTES[i % 2])
-    return codewords + _rs_encode(codewords, ec_cw)
+    # Đệm cho đủ chỗ, LUÂN PHIÊN BẮT ĐẦU TỪ 0xEC. Đảo thứ tự thì máy quét vẫn đọc đúng (đệm
+    # nằm sau dấu kết thúc, decoder bỏ qua) nên không test nào bằng cách giải-lại bắt được —
+    # chỉ so từng ô với bộ mã hoá chuẩn mới thấy. Đã lệch như vậy một thời gian.
+    for pad_index in range(data_cw - len(codewords)):
+        codewords.append(_PAD_BYTES[pad_index % 2])
+    if blocks == 1:
+        return codewords + _rs_encode(codewords, ec_cw)
+    return _interleave(codewords, ec_cw, blocks)
+
+
+def _interleave(codewords: list[int], ec_cw: int, blocks: int) -> list[int]:
+    """Chia dữ liệu thành `blocks` khối đều nhau, mỗi khối một bộ sửa lỗi riêng, rồi ĐAN XEN.
+
+    Đan xen là điểm của việc chia khối: một vết xước dài trên giấy sau khi đan sẽ rải đều
+    sang mọi khối thay vì ăn hết một khối, nên vẫn sửa được. Các cỡ lưới ở đây chia hết nên
+    không có nhánh "khối dài/khối ngắn" của chuẩn — thêm vào là code không ai gọi tới.
+    """
+    per_block, ec_per_block = len(codewords) // blocks, ec_cw // blocks
+    chunks = [codewords[i * per_block : (i + 1) * per_block] for i in range(blocks)]
+    parity = [_rs_encode(block, ec_per_block) for block in chunks]
+    return [block[i] for i in range(per_block) for block in chunks] + [
+        block[i] for i in range(ec_per_block) for block in parity
+    ]
 
 
 def _format_bits() -> int:
@@ -168,7 +197,7 @@ def _place_finder(matrix: list[list[bool]], reserved: list[list[bool]], r0: int,
 
 
 def _build_matrix(codewords: list[int], size_class: int) -> tuple[tuple[bool, ...], ...]:
-    _, _, _, align = _SIZE_CLASSES[size_class]
+    _, _, _, align, _ = _SIZE_CLASSES[size_class]
     n = 4 * size_class + 17
     matrix = [[False] * n for _ in range(n)]
     reserved = [[False] * n for _ in range(n)]
@@ -238,10 +267,13 @@ def _place_format_info(matrix: list[list[bool]], n: int) -> None:
     matrix[7][8] = bits[8] == "1"
     for i in range(9, 15):
         matrix[14 - i][8] = bits[i] == "1"
+    # Bản sao thứ hai: 7 bit CAO xuống cột 8 từ đáy lên, 8 bit THẤP sang hàng 8 ở mép phải.
+    # Đặt ngược thì máy quét vẫn đọc đúng — nó lấy bản sao thứ nhất khi bản ấy còn lành, nên
+    # zbarimg không kêu. Chỉ so từng ô với bộ mã hoá chuẩn mới thấy.
+    for i in range(7):
+        matrix[n - 1 - i][8] = bits[i] == "1"
     for i in range(8):
-        matrix[8][n - 1 - i] = bits[i] == "1"
-    for i in range(8, 15):
-        matrix[n - 15 + i][8] = bits[i] == "1"
+        matrix[8][n - 8 + i] = bits[7 + i] == "1"
 
 
 __all__ = ["MAX_ASCII_BYTES", "QrCode", "encode_qr", "qr_png_bytes"]
