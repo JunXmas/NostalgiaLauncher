@@ -1,70 +1,115 @@
-/* Theme Minecraft aero-glass sáng — vỏ trang tải, không đụng Theme.qml (app tối riêng). */
+/* Vỏ trang tải. Bảng màu lấy ĐÚNG từ `src/nostalgia/ui/qml/Theme.qml` — trang web và app là
+   một sản phẩm, lệch màu thì người tải về thấy một thứ khác với thứ vừa xem.
+
+   Trước đây trang này là theme SÁNG (`#dfe7e1`, aero-glass trắng) trong khi app tối hẳn. Nay
+   thống nhất về tối.
+
+   Chuyển động mượn ngôn ngữ của skewclient.store: hiện dần khi cuộn tới, lệch nhịp từng phần
+   tử, easing expo-out vọt nhanh rồi hãm dài. Không mượn thư viện nào của nó — Lenis,
+   framer-motion và three.js đều có thứ native thay được, và kho này không có phụ thuộc runtime. */
 :root {
-  --ink: #12241a;
-  --ink-muted: #33473c;
-  --accent: #2f9e52;
-  --accent-btn: #1a6b38;
-  --accent-btn-deep: #12511f;
-  --glass: rgba(255, 255, 255, 0.78);
-  --glass-strong: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(15, 30, 20, 0.55);
-  --glass-border-soft: rgba(15, 30, 20, 0.18);
-  --focus: #1d6fe0;
+  /* Nền và bề mặt — Theme.qml */
+  --bg: #141821;
+  --surface: #1c212c;
+  --surface-high: #262d3a;
+  --border: #333c4d;
+  --text: #eef1f7;
+  --text-muted: #8d97ab;
+
+  /* Bảy sắc của bảy tab trong launcher. Mỗi khối trang lấy một sắc, đúng như chuyển tab là
+     đổi màu cả trang — đó là thứ làm Nostalgia nhận ra được. */
+  --grass: #5ac54f;
+  --craft: #e8a33d;
+  --book: #b06ee6;
+  --diamond: #3ecfd5;
+  --command: #ef63b9;
+  --chest: #5b8dee;
+  --iron: #9fb0c9;
+
+  /* Sắc đang áp cho khối hiện tại; mỗi `section` ghi đè. */
+  --accent: var(--grass);
+
+  /* Nhịp, cũng từ Theme.qml (quick/normal/slow = 120/220/420 ms). */
+  --quick: 120ms;
+  --normal: 220ms;
+  --slow: 420ms;
+  /* Đường cong CHỦ ĐẠO, đo được từ bundle trang mẫu: dùng 12 lần ở đó. Vọt gần hết quãng
+     trong một phần tư đầu rồi hãm rất dài — đó là toàn bộ cảm giác "mượt" người ta nhớ. */
+  --expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal: 760ms;
 }
 
 * { box-sizing: border-box; }
-
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; }
+html {
+  /* Native, không Lenis. Quán tính kiểu thư viện cướp quyền điều khiển của con lăn chuột và
+     người dùng trackpad hay say — đây là đúng chỗ phần mềm nên nhường hệ điều hành. */
+  scroll-behavior: smooth;
+  background: var(--bg);
+}
 
 body {
   margin: 0;
-  background: #dfe7e1;
-  color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  overflow-x: hidden;
 }
-
-.icon-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-
-.icon { width: 1.75rem; height: 1.75rem; flex-shrink: 0; }
 
 a { color: inherit; }
 
 :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
-.pixel-title,
-.pixel-title-sm,
-.brand-name {
-  font-family: "Courier New", Courier, monospace;
+.icon-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon { width: 1.6rem; height: 1.6rem; flex-shrink: 0; }
+
+/* Nhãn hoa ngắn. App dùng font pixel "Minecraft F2D V1.42" nhưng kho không có bản web của nó,
+   và nhúng font lậu thì sai luật — monospace hoa + giãn chữ giữ được đúng cái nhịp vuông vức
+   đó mà không cần file nào. */
+.pixel {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   font-weight: 700;
 }
 
-/* --- Nav --- */
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--glass-border-soft);
-}
+/* Góc vuông ở mọi nơi: `border-radius: 0` xuất hiện 57 lần trong CSS của minecraft.net, và
+   Theme.qml đã chốt theo đó. Bo góc là ngôn ngữ của app năng suất, không phải của game. */
+.btn, .panel, .shot, .step, .nav-cta { border-radius: 0; }
 
-.nav-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0.9rem 1.5rem;
+/* ───────────────────────── Thanh điều hướng ───────────────────────── */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  /* Nền chỉ hiện khi đã cuộn khỏi hero — `app.js` gắn `.is-stuck`. Thanh có nền ngay từ đầu
+     sẽ cắt ngang ảnh hero bằng một vạch xám. */
+  transition: background var(--normal) ease, border-color var(--normal) ease,
+              backdrop-filter var(--normal) ease;
+}
+
+.nav.is-stuck,
+/* Không JavaScript thì `.is-stuck` không bao giờ được gắn, và thanh nav trong suốt vĩnh viễn
+   — chữ của nó đè thẳng lên nội dung đang cuộn qua phía dưới, đọc không ra (đã chụp thấy).
+   `.no-js` là class ĐẶT SẴN trên `<html>` mà `app.js` gỡ ngay dòng đầu: có JS thì nền hiện
+   theo cuộn như thiết kế, không JS thì nền có luôn từ đầu. Hướng này an toàn vì mặc định
+   của HTML tĩnh là trạng thái dùng được. */
+.no-js .nav {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom-color: var(--border);
 }
 
 .brand {
@@ -72,321 +117,408 @@ a { color: inherit; }
   align-items: center;
   gap: 0.6rem;
   text-decoration: none;
-  color: var(--ink);
   margin-right: auto;
+  font-size: 1.05rem;
 }
 
-.brand-name { font-size: 1.1rem; }
+/* "GIA" giữ sắc lục thương hiệu ở mọi khối, không đổi theo accent — tên sản phẩm phải nhận ra
+   được dù đang ở đoạn nào của trang. Cùng luật với `Theme.brand` trong app. */
+.brand b { color: var(--grass); font-weight: inherit; }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
+.nav-links { display: flex; align-items: center; gap: 1.6rem; }
 
 .nav-link {
   text-decoration: none;
-  color: var(--ink-muted);
-  font-weight: 600;
-  padding-bottom: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.2rem 0;
   border-bottom: 2px solid transparent;
+  transition: color var(--quick) ease, border-color var(--quick) ease;
 }
 
-.nav-link.is-active {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
-}
+.nav-link:hover { color: var(--text); border-bottom-color: var(--accent); }
 
-.btn-outline {
+.nav-cta {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   text-decoration: none;
-  color: var(--ink);
+  font-size: 0.88rem;
   font-weight: 600;
   padding: 0.5rem 1rem;
-  border: 2px solid var(--glass-border);
-  border-radius: 6px;
-  background: var(--glass-strong);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color var(--quick) ease, background var(--quick) ease;
 }
 
-/* --- Hero --- */
+.nav-cta:hover { border-color: var(--accent); background: var(--surface-high); }
+
+/* ───────────────────────── Hero ───────────────────────── */
 .hero {
   position: relative;
-  min-height: 640px;
-  padding: 3rem 1.5rem;
-  display: flex;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
   align-items: center;
-  background-size: cover;
-  background-position: center;
-  background-color: #0e1a14;
-}
-
-.glass-card {
-  position: relative;
-  max-width: 30rem;
-  padding: 2.25rem 2rem;
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 2px solid var(--glass-border);
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  gap: 2rem;
+  padding: 7rem clamp(1rem, 4vw, 3rem) 4rem;
   overflow: hidden;
 }
 
-.glass-card::before {
+/* Ảnh nền trôi chậm hơn trang khi cuộn (parallax). Để trên phần tử RIÊNG chứ không trên
+   `.hero` vì `transform` trên khối cha sẽ kéo theo cả chữ và khối 3D. */
+.hero-bg {
+  position: absolute;
+  inset: -12% 0 0 0;
+  height: 112%;
+  background: url("hero.jpg") center / cover no-repeat;
+  /* Ảnh gốc sáng và nhiều chi tiết; không hạ xuống thì chữ trắng không đọc được và màu của
+     ảnh át cả bảy sắc accent. */
+  filter: brightness(0.42) saturate(0.85);
+  will-change: transform;
+  z-index: 0;
+}
+
+/* Hoà ảnh về nền ở mép dưới, để hero không kết thúc bằng một đường cắt ngang. */
+.hero::after {
   content: "";
   position: absolute;
-  inset: -60% -60% auto auto;
-  width: 140%;
-  height: 140%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 45%);
-  transform: rotate(-20deg);
+  inset: auto 0 0 0;
+  height: 45%;
+  background: linear-gradient(to bottom, transparent, var(--bg));
   pointer-events: none;
+  z-index: 1;
 }
 
-.pixel-title {
-  position: relative;
-  margin: 0 0 0.75rem;
-  font-size: 2.1rem;
-  line-height: 1.2;
-  color: #0c1c13;
+.hero-copy, .hero-cube { position: relative; z-index: 2; }
+
+.hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 700;
 }
+
+.hero h1 span { display: block; }
 
 .tagline {
-  position: relative;
-  margin: 0 0 0.35rem;
-  font-weight: 700;
-  font-size: 1.15rem;
+  margin: 0 0 0.4rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .subtitle {
-  position: relative;
-  margin: 0 0 1.5rem;
-  color: var(--ink-muted);
-  font-size: 0.95rem;
+  margin: 0 0 2rem;
+  color: var(--text-muted);
+  max-width: 34rem;
 }
 
-.download-block {
+/* ───────────────────────── Khối cỏ xoay ─────────────────────────
+   CSS 3D sáu mặt, KHÔNG phải three.js như trang mẫu. Một thư viện 600 KB tải từ CDN để vẽ
+   đúng một hình hộp là cái giá sai, và kho này không có phụ thuộc runtime nào — trang web
+   cũng theo luật đó. Hoạt ảnh chạy trên GPU qua `transform`, không tốn một dòng JS. */
+.hero-cube {
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+}
+
+.cube {
   position: relative;
+  width: 190px;
+  height: 190px;
+  transform-style: preserve-3d;
+  /* -22° nhìn từ trên xuống: đúng góc isometric mà icon thanh bên trong app dùng, nên mặt
+     trên luôn SÁNG hơn mặt bên và khối không bao giờ đọc ra lộn ngược. */
+  animation: cube-spin 18s linear infinite;
+}
+
+@keyframes cube-spin {
+  from { transform: rotateX(-22deg) rotateY(0deg); }
+  to   { transform: rotateX(-22deg) rotateY(360deg); }
+}
+
+.cube .face {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+/* Lưới ô vuông mờ chồng lên mỗi mặt. Mặt màu trơn đọc ra "hộp đồ hoạ" chứ không ra khối
+   Minecraft — chất voxel nằm ở chỗ nhìn thấy TỪNG Ô. Vẽ bằng hai gradient lặp chứ không dùng
+   ảnh texture: không thêm file, không thêm một lượt tải, và tự co theo cỡ khối. */
+.cube .face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to right, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 25%),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 25%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 6px);
+}
+
+/* Bốn mặt bên: đất ở dưới, viền cỏ ở trên — đúng khối grass. Mặt trên full cỏ, mặt đáy full
+   đất. Sắc độ giảm dần theo hướng mặt để khối có khối lượng thay vì phẳng. */
+.cube .side {
+  background:
+    linear-gradient(to bottom, var(--grass) 0 26%, #3f8f4f 26% 34%, #6b4a2f 34% 100%);
+}
+
+.cube .fr { transform: translateZ(95px); filter: brightness(1); }
+.cube .bk { transform: rotateY(180deg) translateZ(95px); filter: brightness(0.7); }
+.cube .rt { transform: rotateY(90deg) translateZ(95px); filter: brightness(0.82); }
+.cube .lf { transform: rotateY(-90deg) translateZ(95px); filter: brightness(0.82); }
+.cube .tp { transform: rotateX(90deg) translateZ(95px); background: var(--grass); filter: brightness(1.12); }
+.cube .bt { transform: rotateX(-90deg) translateZ(95px); background: #6b4a2f; filter: brightness(0.5); }
+
+/* Vầng sáng sau khối, để nó không trôi lơ lửng trên nền tối. */
+.hero-cube::before {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--grass) 26%, transparent), transparent 68%);
+  filter: blur(18px);
+}
+
+/* ───────────────────────── Khối tải ───────────────────────── */
+.download-block {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 0.8rem;
+  max-width: 30rem;
 }
 
-.status {
-  margin: 0;
-  color: var(--ink-muted);
-  font-size: 0.9rem;
-}
+.status { margin: 0; color: var(--text-muted); font-size: 0.88rem; }
 
-.btn-primary {
-  display: flex;
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
   text-decoration: none;
-  background: linear-gradient(180deg, #237a40, var(--accent-btn));
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1.05rem;
-  padding: 0.95rem 1.5rem;
-  border-radius: 10px;
-  border: 2px solid var(--accent-btn-deep);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 3px 0 var(--accent-btn-deep);
-  transition: transform 0.1s ease;
-}
-
-.btn-primary:hover { transform: translateY(-1px); }
-.btn-primary:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5); }
-
-.btn-meta {
-  font-weight: 400;
-  font-size: 0.8rem;
-  opacity: 0.9;
-}
-
-.secondary-row {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-secondary {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: var(--ink);
   font-weight: 600;
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  border: 2px solid var(--glass-border);
-  background: var(--glass-strong);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.75rem 1.2rem;
+  transition: transform var(--quick) var(--expo), background var(--quick) ease,
+              border-color var(--quick) ease;
 }
+
+.btn:hover { transform: translateY(-2px); background: var(--surface-high); border-color: var(--accent); }
+.btn:active { transform: translateY(0); }
+
+/* Nút chính kiểu khối Bedrock: mặt sáng, cạnh dưới dày, viền tối — cùng ngôn ngữ với
+   `ActionButton` trong app (`Theme.blockFace`/`blockEdge`). */
+.btn-primary {
+  width: 100%;
+  font-size: 1.05rem;
+  padding: 1rem 1.5rem;
+  color: #0e1510;
+  background: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, #000);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 40%, #000);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, #fff);
+  border-color: color-mix(in srgb, var(--accent) 45%, #000);
+}
+
+/* Bấm xuống thì khối LÚN: dịch xuống đúng bằng độ dày cạnh và bỏ cạnh đi. Nút Bedrock trong
+   game làm vậy, và đó là nửa còn lại của cảm giác bấm. */
+.btn-primary:active { transform: translateY(4px); box-shadow: none; }
+
+.btn-meta { font-weight: 400; font-size: 0.8rem; opacity: 0.75; }
+
+.secondary-row { display: flex; gap: 0.7rem; width: 100%; }
+.secondary-row .btn { flex: 1; font-size: 0.9rem; }
 
 .all-releases-link {
-  align-self: flex-start;
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-decoration: underline;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: color var(--quick) ease, border-color var(--quick) ease;
 }
 
-#other-files {
-  color: var(--ink-muted);
-  font-size: 0.85rem;
-}
+.all-releases-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-#other-files summary { cursor: pointer; color: var(--ink); }
-
-#other-files ul {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
+#other-files { color: var(--text-muted); font-size: 0.85rem; }
+#other-files summary { cursor: pointer; color: var(--text); }
+#other-files ul { list-style: none; padding: 0; margin: 0.5rem 0 0; display: flex; flex-direction: column; gap: 0.3rem; }
 #other-files a { color: var(--accent); }
 
-/* --- Steps strip --- */
-.steps {
-  background: var(--glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid var(--glass-border-soft);
-  border-bottom: 1px solid var(--glass-border-soft);
-  padding: 2.5rem 1.5rem;
+/* ───────────────────────── Khối nội dung ───────────────────────── */
+section { padding: clamp(4rem, 10vh, 7rem) clamp(1rem, 4vw, 3rem); }
+
+/* Mỗi khối một sắc, như mỗi tab một sắc trong app. */
+.steps     { --accent: var(--craft); }
+.showcase  { --accent: var(--book); }
+.features  { --accent: var(--diamond); }
+
+.section-head { max-width: 1100px; margin: 0 auto 2.6rem; }
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--accent);
+  font-size: 0.78rem;
 }
 
-.pixel-title-sm {
-  text-align: center;
-  margin: 0 0 2rem;
-  font-size: 1.4rem;
+.section-head h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  letter-spacing: -0.015em;
 }
 
-.steps-grid {
-  max-width: 1000px;
+.steps-grid, .features-grid {
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  /* Khe 1px trên nền `--border` làm đường kẻ giữa các ô: một kỹ thuật, không phải mười đường
+     viền phải khớp nhau. */
+  background: var(--border);
+  border: 1px solid var(--border);
 }
+
+.steps-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* 3 cột cố định, KHÔNG `auto-fit`. Sáu ô chia cho bốn cột (thứ `auto-fit` chọn ở màn 1440)
+   để hở một ô trống ở hàng dưới, và vì nền lưới là `--border` thì ô hở đó hiện ra thành một
+   mảng xám to — đã chụp ra thấy. Sáu ô chia hết cho 3 và cho 2. */
+.features-grid { grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 860px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
 
 .step {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 0 1.5rem;
-  border-left: 1px solid var(--glass-border-soft);
+  background: var(--surface);
+  padding: 1.8rem 1.6rem;
+  transition: background var(--normal) ease;
 }
 
-.step:first-child { border-left: none; padding-left: 0; }
+.step:hover { background: var(--surface-high); }
 
-.step-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  flex-shrink: 0;
-  color: var(--accent);
-}
+.step-icon { width: 2.2rem; height: 2.2rem; color: var(--accent); }
+.step-num { font-size: 0.75rem; color: var(--accent); }
+.step h3 { margin: 0.6rem 0 0.35rem; font-size: 1.05rem; }
+.step p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
 
-.step-num {
-  font-family: "Courier New", Courier, monospace;
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 0.85rem;
-}
-
-.step h3 { margin: 0.15rem 0 0.25rem; font-size: 1rem; }
-
-.step p { margin: 0; color: var(--ink-muted); font-size: 0.88rem; }
-
-/* --- Showcase --- */
-.showcase {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+/* ───────────────────────── Ảnh chụp ───────────────────────── */
+.shots {
   max-width: 1100px;
-  margin: 2.5rem auto;
-  padding: 0 1.5rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
 }
 
-.showcase figure {
+.shot {
   margin: 0;
-  background: var(--glass-strong);
-  border: 1px solid var(--glass-border-soft);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
   overflow: hidden;
+  transition: transform var(--slow) var(--expo), border-color var(--normal) ease;
 }
 
-.showcase img {
+.shot:hover { transform: translateY(-6px); border-color: var(--accent); }
+
+.shot img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
+  /* Ảnh xám đi lúc đứng yên, lên màu khi rê vào: bốn ảnh chụp cùng một app nên để màu hết thì
+     chúng cạnh tranh nhau và không ảnh nào được nhìn. */
+  filter: saturate(0.55) brightness(0.85);
+  transition: filter var(--slow) var(--expo), transform var(--slow) var(--expo);
 }
 
-.showcase figcaption {
-  padding: 0.5rem 0.75rem;
-  color: var(--ink-muted);
+.shot:hover img { filter: none; transform: scale(1.03); }
+
+.shot figcaption {
+  padding: 0.6rem 0.8rem;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
-/* --- Footer --- */
+/* ───────────────────────── Chân trang ───────────────────────── */
 footer {
+  border-top: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  color: var(--ink-muted);
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  color: var(--text-muted);
+  font-size: 0.88rem;
 }
 
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  color: var(--ink);
-  font-weight: 600;
+.footer-brand { display: flex; align-items: center; gap: 0.6rem; color: var(--text); font-weight: 600; }
+.footer-note { display: block; color: var(--text-muted); font-weight: 400; font-size: 0.82rem; }
+.footer-links { display: flex; align-items: center; gap: 1.2rem; }
+.footer-links a { text-decoration: none; }
+.footer-links a:hover { color: var(--accent); }
+
+/* ───────────────────────── Hiện dần khi cuộn ─────────────────────────
+   Trạng thái ẩn đặt ở class `.reveal`, mà `app.js` GẮN VÀO bằng JS chứ không viết sẵn trong
+   HTML. Viết sẵn thì ai tắt JavaScript sẽ thấy một trang trắng vĩnh viễn — nội dung biến mất
+   hẳn chứ không phải mất hoạt ảnh. Không JS thì không có class, và mọi thứ hiện bình thường. */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity var(--reveal) var(--expo), transform var(--reveal) var(--expo);
+  /* Lệch nhịp: `app.js` ghi `--i` là thứ tự phần tử trong nhóm. Mọi thứ hiện cùng lúc thì
+     mắt đọc ra "một mảng", lệch 70 ms thì đọc ra "từng thứ một" — đúng thứ trang mẫu làm. */
+  transition-delay: calc(var(--i, 0) * 70ms);
 }
 
-.footer-disclaimer {
-  color: var(--ink-muted);
-  font-weight: 400;
-  font-size: 0.85rem;
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Chữ hero trượt lên ngay lúc tải, không chờ cuộn — nó đã nằm trong khung nhìn rồi. */
+.rise { animation: rise var(--reveal) var(--expo) backwards; animation-delay: calc(var(--i, 0) * 90ms); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
 }
 
-.footer-links {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.footer-links a:first-child {
-  text-decoration: underline;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-/* --- Responsive --- */
-@media (max-width: 900px) {
+/* ───────────────────────── Màn hẹp ───────────────────────── */
+@media (max-width: 960px) {
+  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 6rem; }
+  .hero-cube { order: -1; }
+  .cube { width: 130px; height: 130px; }
+  .cube .fr { transform: translateZ(65px); }
+  .cube .bk { transform: rotateY(180deg) translateZ(65px); }
+  .cube .rt { transform: rotateY(90deg) translateZ(65px); }
+  .cube .lf { transform: rotateY(-90deg) translateZ(65px); }
+  .cube .tp { transform: rotateX(90deg) translateZ(65px); }
+  .cube .bt { transform: rotateX(-90deg) translateZ(65px); }
   .nav-links { display: none; }
-  .steps-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-  .step { border-left: none; padding-left: 0; border-top: 1px solid var(--glass-border-soft); padding-top: 1.5rem; }
-  .step:first-child { border-top: none; padding-top: 0; }
+  .steps-grid { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 640px) {
-  .hero { min-height: 0; padding: 2rem 1rem 2.5rem; }
-  .glass-card { max-width: 100%; padding: 1.5rem 1.25rem; }
-  .pixel-title { font-size: 1.6rem; }
+@media (max-width: 560px) {
   .secondary-row { flex-direction: column; }
   footer { flex-direction: column; align-items: flex-start; }
+}
+
+/* ───────────────────────── Tắt hiệu ứng ─────────────────────────
+   Người bật "giảm chuyển động" trong hệ điều hành thường là người bị chóng mặt tiền đình —
+   với họ parallax và khối xoay không phải là trang trí mà là triệu chứng. Tắt HẾT chuyển
+   động, giữ nguyên toàn bộ nội dung. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .cube { animation: none; transform: rotateX(-22deg) rotateY(-32deg); }
+  .reveal, .reveal.is-in { opacity: 1; transform: none; transition: none; }
+  .rise { animation: none; }
+  .shot, .shot img, .btn { transition: none; }
+  .shot:hover, .btn:hover { transform: none; }
 }

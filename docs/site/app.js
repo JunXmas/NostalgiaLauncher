@@ -2,6 +2,10 @@
 // Không framework, không build step. Nếu API GitHub rate-limit hoặc lỗi mạng, rơi về
 // đường dẫn releases/latest để người dùng tự chọn.
 
+// Gỡ ngay, trước mọi thứ khác: CSS dùng `.no-js` để bật sẵn nền thanh nav cho người không có
+// JavaScript. Để sót class này thì nền hiện ngay từ đầu và mất hiệu ứng nav trong suốt trên hero.
+document.documentElement.classList.remove("no-js");
+
 const REPO = "JunXmas/NostalgiaLauncher";
 const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_URL = `https://github.com/${REPO}/releases/latest`;
@@ -129,6 +133,10 @@ async function main() {
   document.getElementById("primary-meta").textContent = humanSize(asset.size);
 
   const shownNames = [asset.name];
+  if (os !== "windows") {
+    const n = wireSecondaryButton("windows-download", assets, release.tag_name, "windows", "x64");
+    if (n) shownNames.push(n);
+  }
   if (os !== "linux") {
     const n = wireSecondaryButton("linux-download", assets, release.tag_name, "linux", "x64");
     if (n) shownNames.push(n);
@@ -142,3 +150,81 @@ async function main() {
 }
 
 main();
+
+/* ─────────────────────────── Chuyển động ───────────────────────────
+
+   Ba hiệu ứng, viết tay bằng API sẵn có của trình duyệt. Trang mẫu (skewclient.store) làm
+   cùng ba thứ này bằng Lenis + framer-motion + three.js, cộng lại hơn 600 KB JavaScript tải
+   từ CDN — kho này không có một phụ thuộc runtime nào và trang web đi theo luật đó.
+
+   Người bật "giảm chuyển động" trong hệ điều hành thì KHÔNG gắn gì cả: parallax với họ không
+   phải trang trí mà là chóng mặt thật. CSS cũng có nhánh `prefers-reduced-motion` riêng, hai
+   lớp này phải khớp nhau. */
+
+const STILL = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// 1. Thanh điều hướng lấy nền sau khi rời khỏi hero.
+const nav = document.getElementById("nav");
+const heroBg = document.getElementById("heroBg");
+
+// 2. Ảnh hero trôi chậm hơn trang (parallax).
+//
+// Đọc `scrollY` trong `rAF` chứ không ngay trong handler `scroll`: đọc trong handler thì mỗi
+// sự kiện cuộn ép trình duyệt tính lại bố cục giữa chừng (layout thrashing) và trang giật ở
+// đúng lúc đang cuộn. Cờ `ticking` gộp nhiều sự kiện vào một khung hình.
+let ticking = false;
+
+function onScroll() {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => {
+    const y = window.scrollY;
+    nav.classList.toggle("is-stuck", y > 40);
+    if (heroBg && !STILL) {
+      // Hệ số 0.35 và chặn ở 1.2× chiều cao màn hình: quá ngưỡng đó ảnh đã khuất hẳn, tính
+      // tiếp chỉ tốn công. Dấu dương vì ảnh đi CÙNG chiều cuộn nhưng chậm hơn — đi ngược
+      // chiều thì nó chạy ra khỏi khung và lòi nền đen ở mép dưới.
+      const limit = window.innerHeight * 1.2;
+      heroBg.style.transform = `translate3d(0, ${Math.min(y, limit) * 0.35}px, 0)`;
+    }
+    ticking = false;
+  });
+}
+
+window.addEventListener("scroll", onScroll, { passive: true });
+onScroll();
+
+// 3. Hiện dần khi cuộn tới, lệch nhịp từng phần tử.
+//
+// Class `.reveal` GẮN BẰNG JS, không viết sẵn trong HTML: viết sẵn thì ai tắt JavaScript sẽ
+// thấy trang trắng vĩnh viễn — mất nội dung chứ không phải mất hoạt ảnh.
+if (!STILL && "IntersectionObserver" in window) {
+  const watcher = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-in");
+        // Bỏ theo dõi ngay: hiện rồi thì không ẩn lại khi cuộn ngược. Nội dung nhấp nháy mỗi
+        // lần người dùng cuộn qua cuộn lại là thứ gây khó chịu nhanh nhất.
+        watcher.unobserve(entry.target);
+      }
+    },
+    // `-10%` dưới đáy: đợi phần tử vào hẳn trong khung rồi mới chạy, chứ không bật ngay lúc
+    // mép trên vừa ló ra — bật sớm thì hoạt ảnh kết thúc trước khi người dùng nhìn tới.
+    { threshold: 0.12, rootMargin: "0px 0px -10% 0px" },
+  );
+
+  for (const head of document.querySelectorAll(".section-head")) {
+    head.classList.add("reveal");
+    watcher.observe(head);
+  }
+  for (const group of document.querySelectorAll("[data-stagger]")) {
+    [...group.children].forEach((child, index) => {
+      child.classList.add("reveal");
+      // Lệch nhịp đọc từ `--i` trong CSS. Chặn ở 6 để hàng cuối của lưới dài không phải chờ
+      // nửa giây sau khi đã nằm sẵn trong khung nhìn.
+      child.style.setProperty("--i", String(Math.min(index, 6)));
+      watcher.observe(child);
+    });
+  }
+}
