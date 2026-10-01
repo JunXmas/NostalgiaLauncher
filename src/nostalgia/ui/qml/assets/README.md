@@ -9,3 +9,9 @@ bị thu nhỏ.
 
 Không còn thẻ nào neo vào công trình trong ảnh, nên đổi ảnh không phải đo lại toạ độ — chỉ cần
 nó vẫn đủ tối ở đáy để dải bản chơi đọc được.
+
+`discord.png` — logo Discord chính hiệu, do chủ dự án cung cấp
+(`discord-color-icon.webp` 512×512). Cắt viền trong suốt, đệm về ô vuông, thu còn 88 px
+(4× ô icon 22 px, đủ cho mipmap). Giữ NGUYÊN màu lam của Discord: logo đổi màu thì mất tác
+dụng nhận diện, nên đây là thứ duy nhất ở thanh bên nằm ngoài bảng màu Nostalgia.
+Nhãn hiệu của Discord Inc.; dùng để trỏ tới chính máy chủ Discord của dự án.

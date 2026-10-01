@@ -30,6 +30,10 @@ BLOCK_TEXTURES: dict[str, tuple[str, str]] = {
     "command": ("command_block_front|command_block", "command_block_side|command_block"),
     "chest": ("oak_planks|planks_oak", "oak_planks|planks_oak"),
     "redstone": ("redstone_block", "redstone_block"),
+    # Beacon cho ô ỦNG HỘ. Mặt trên là chính texture `beacon` (ô kính thấy lõi sao); mặt bên
+    # mượn thuỷ tinh, vì texture `beacon` của Mojang chỉ có mặt trên — khối trong game là mô
+    # hình nhiều lớp chứ không phải sáu mặt vuông, nên không có "mặt bên beacon" để lấy.
+    "beacon": ("beacon", "glass"),
 }
 
 # Mojang lưu cỏ ở dạng XÁM rồi tô màu theo quần xã lúc chạy. Không tô thì mặt trên ra xám.
@@ -47,6 +51,11 @@ FALLBACK_COLOURS: dict[str, tuple[QColor, QColor]] = {
     "command": (QColor(0xC2, 0x8A, 0x5C), QColor(0xA8, 0x74, 0x4C)),
     "chest": (QColor(0xA0, 0x7A, 0x4E), QColor(0x8B, 0x69, 0x43)),
     "redstone": (QColor(0xD4, 0x24, 0x24), QColor(0xBA, 0x1E, 0x1E)),
+    # Beacon: lam ngọc sáng ở trên, khung obsidian ở bên — đọc ra "khối phát sáng" ngay cả
+    # khi chưa cài bản chơi nào, là lúc duy nhất màu dự phòng này được dùng. Obsidian thật
+    # sẫm hơn hẳn, nhưng ở đây nền thanh bên cũng sẫm (#1c212c): lấy đúng màu game thì hai
+    # mặt bên biến mất vào nền và còn mỗi cái nắp lam trôi lơ lửng — đã chụp ra thấy.
+    "beacon": (QColor(0x6F, 0xE0, 0xDA), QColor(0x45, 0x48, 0x63)),
 }
 
 

@@ -6,8 +6,10 @@ Item {
     id: root
     property string label: ""
     property string glyph: ""
-    // Tên khối Minecraft làm icon. Rỗng, hoặc chưa sinh xong dải, thì rơi về `glyph`.
+    // Tên khối Minecraft làm icon. Rỗng, hoặc chưa sinh xong dải, thì rơi về `image` rồi `glyph`.
     property string block: ""
+    // Ảnh icon cho mục không có khối nào thay được (logo Discord).
+    property url image: ""
     property bool selected: false
     /* Màu RIÊNG của mục này, không phải `Theme.accent`.
 
@@ -59,6 +61,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 22; height: 22
             block: root.block
+            image: root.image
             glyph: root.glyph
             glyphColor: root.selected ? root.tint : Theme.textMuted
             // Xoay khi rê vào mục, và xoay luôn ở mục đang chọn thì thanh bên không bao giờ

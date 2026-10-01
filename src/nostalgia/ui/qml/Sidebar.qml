@@ -118,10 +118,13 @@ Rectangle {
         NavItem {
             objectName: "communityLink"
             label: root.collapsed ? "" : Tr.text("community")
-            // Icon: phong bì = lời mời. Không có khối Minecraft nào nói được "Discord", và
-            // hai font nhúng đều không có ký tự này nên nó rơi về font hệ thống — đã chụp
-            // ảnh kiểm ở 22 px, đọc ra được.
-            glyph: "✉"
+            /* Logo Discord thật (assets/discord.png), không phải chữ "✉" như trước: phong bì
+               là "thư", không ai đọc ra Discord, mà đây đúng là chỗ cần nhận ra NGAY bằng
+               hình. Không có khối Minecraft nào nói được điều này nên nó đi đường `image`.
+               Giữ màu lam chính hiệu của Discord — logo đổi màu thì mất tác dụng nhận diện,
+               đó là lý do duy nhất một thứ ở thanh bên được nằm ngoài bảng màu Nostalgia. */
+            image: "assets/discord.png"
+            glyph: "✉"  // dự phòng, nếu ảnh thiếu trong gói
             compact: root.collapsed
             tint: Theme.textMuted
             // Qua cầu nối chứ không `Qt.openUrlExternally` thẳng trong QML: URL phải sống ở
@@ -143,9 +146,11 @@ Rectangle {
         NavItem {
             objectName: "donateLink"
             label: root.collapsed ? "" : Tr.text("donate")
-            // Trái tim: hai font nhúng đều không có ký tự này nên nó rơi về font hệ thống,
-            // hệt chữ "✉" ở trên — đã chụp ảnh kiểm, đọc ra được ở cỡ icon.
-            glyph: "♥"
+            // Khối beacon: trong game nó là thứ người chơi dựng được sau khi hạ boss rồi đặt
+            // lên một bệ quặng quý — ngọn sáng bắn thẳng lên trời. Đúng nghĩa ở đây, và nó
+            // nằm cùng ngôn ngữ với bảy khối phía trên thay vì một ký tự lạc font.
+            block: "beacon"
+            glyph: "♥"  // chỉ dùng mấy nhịp đầu, lúc dải sprite chưa sinh xong
             compact: root.collapsed
             tint: Theme.warning
             // Mở hộp QR, không ra trình duyệt: `donateDialog` là thuộc tính ngữ cảnh đặt ở
