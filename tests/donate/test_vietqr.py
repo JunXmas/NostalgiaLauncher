@@ -121,3 +121,11 @@ def test_rejects_accounts_that_are_not_all_digits(account: BankAccount) -> None:
     tại chỗ sửa được, thay vì để người dùng thấy một mã không quét được."""
     with pytest.raises(ValueError, match="chữ số"):
         vietqr_payload(account, MEMO)
+
+
+def test_the_bank_name_never_enters_the_qr_string() -> None:
+    """Tên ngân hàng chỉ để người quét ĐỌC. Lọt vào chuỗi là mã dài thêm vô ích, và tệ hơn:
+    chữ có dấu trong tên sẽ làm `encode_qr` ném ngay lúc người dùng bấm nút."""
+    named = BankAccount(ACCOUNT.bin, ACCOUNT.number, ACCOUNT.holder, bank="Vietcombank")
+    assert vietqr_payload(named, MEMO) == vietqr_payload(ACCOUNT, MEMO)
+    assert "Vietcombank" not in vietqr_payload(named, MEMO)

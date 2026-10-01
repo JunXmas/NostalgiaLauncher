@@ -110,3 +110,32 @@ def test_qr_encodes_the_account_it_was_handed_not_some_other_one(tmp_path: Path)
     assert grid.modules == encode_qr(vietqr_payload(account, launcher.donate_memo())).modules
     assert grid.modules != launcher.donate_qr_code(other).modules
     assert launcher.donate_qr(account) is not None
+
+
+def test_worker_answer_without_a_bank_name_is_still_accepted(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """`bank` là tuỳ chọn, khác hẳn ba trường kia. Bắt buộc nó là tự tạo thêm một đường để
+    cả câu trả lời bị từ chối vì thiếu một dòng chữ không ảnh hưởng gì tới mã QR."""
+    launcher = make_donate_launcher(
+        server, server_state, tmp_path, certificate_pair, json.dumps(WORKER_ACCOUNT).encode()
+    )
+    account = launcher.refresh_donate_account()
+    assert account is not None and account.bank == ""
+
+
+def test_the_bank_name_from_the_worker_reaches_the_account(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    named = {**WORKER_ACCOUNT, "bank": "MB Bank"}
+    launcher = make_donate_launcher(
+        server, server_state, tmp_path, certificate_pair, json.dumps(named).encode()
+    )
+    account = launcher.refresh_donate_account()
+    assert account is not None and account.bank == "MB Bank"

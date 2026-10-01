@@ -171,6 +171,16 @@ class SettingsBridge(QObject):
         return "" if account is None else account.holder
 
     @Property(str, constant=True)
+    def donateBankName(self) -> str:
+        """Tên ngân hàng, cùng mục đích với tên chủ tài khoản: đối chiếu bằng mắt.
+
+        Người quét thấy app ngân hàng điền sẵn "NGUYEN NHAT MINH" mà không biết tài khoản
+        ấy ở ngân hàng nào thì không có gì để so — hai dòng đi với nhau mới thành phép kiểm.
+        """
+        account = self._launcher.donate_account()
+        return "" if account is None else account.bank
+
+    @Property(str, constant=True)
     def communityUrl(self) -> str:
         return self._launcher.community_url()
 

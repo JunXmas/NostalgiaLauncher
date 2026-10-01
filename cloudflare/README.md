@@ -43,11 +43,13 @@ số tài khoản hiện hành để đổi số **không phải ra bản launch
 
 ```
 GET https://nostalgia-backend.junbob.workers.dev/donate
-→ 200 {"bin": "970436", "number": "1234567890", "holder": "NGUYEN VAN A"}
+→ 200 {"bin": "970436", "number": "1234567890", "holder": "NGUYEN VAN A", "bank": "Vietcombank"}
 ```
 
-Ba trường đều bắt buộc và đều là chuỗi; `bin` và `number` phải toàn chữ số. Thiếu một
-trường là launcher bỏ cả câu trả lời và dùng số ghim sẵn — một tài khoản nửa vời dựng ra mã
+Ba trường `bin`/`number`/`holder` đều bắt buộc và đều là chuỗi; `bin` và `number` phải toàn
+chữ số. `bank` là TUỲ CHỌN — nó chỉ là dòng chữ người quét đọc để đối chiếu, không đi vào
+chuỗi QR, nên thiếu nó thì giao diện bớt một dòng chứ không làm mã sai. Thiếu một trong ba
+trường bắt buộc là launcher bỏ cả câu trả lời và dùng số ghim sẵn — một tài khoản nửa vời dựng ra mã
 QR mà app ngân hàng từ chối, tệ hơn hẳn số cũ vẫn quét được.
 
 **Không có endpoint này thì tính năng vẫn chạy.** Số tài khoản ghim trong

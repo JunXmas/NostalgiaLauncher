@@ -31,6 +31,9 @@ class BankAccount:
     bin: str
     number: str
     holder: str
+    # Tên ngân hàng để người quét ĐỌC, không đi vào chuỗi QR (chuỗi chỉ mang `bin`). Rỗng
+    # được: thiếu tên thì giao diện bớt một dòng, chứ không làm mã sai.
+    bank: str = ""
 
 
 def crc16_ccitt(text: str) -> str:

@@ -88,6 +88,13 @@ Item {
                         color: Theme.text; font.pixelSize: Theme.fontBody
                     }
                     Text {
+                        objectName: "donateBankText"
+                        visible: text.length > 0
+                        width: parent.width; wrapMode: Text.WordWrap
+                        text: settingsBridge.donateBankName
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                    }
+                    Text {
                         objectName: "donateMemoText"
                         width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.3
                         text: "Nội dung: " + settingsBridge.donateMemo

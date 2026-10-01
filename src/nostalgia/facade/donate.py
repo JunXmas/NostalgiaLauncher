@@ -13,12 +13,15 @@ from nostalgia.repo.endpoints import (
     DONATE_ACCOUNT_HOLDER,
     DONATE_ACCOUNT_NUMBER,
     DONATE_BANK_BIN,
+    DONATE_BANK_NAME,
     DONATE_MEMO,
 )
 
 logger = logging.getLogger(__name__)
 
-PINNED_ACCOUNT = BankAccount(DONATE_BANK_BIN, DONATE_ACCOUNT_NUMBER, DONATE_ACCOUNT_HOLDER)
+PINNED_ACCOUNT = BankAccount(
+    DONATE_BANK_BIN, DONATE_ACCOUNT_NUMBER, DONATE_ACCOUNT_HOLDER, DONATE_BANK_NAME
+)
 
 
 class DonateOperations(LauncherContext):
@@ -87,4 +90,7 @@ def _account_from_json(document: JsonValue) -> BankAccount | None:
         logger.warning("máy chủ trả số tài khoản ủng hộ thiếu trường; dùng số ghim sẵn")
         return None
     bank_bin, number, holder = (str(value).strip() for value in fields)
-    return BankAccount(bank_bin, number, holder)
+    # `bank` KHÔNG bắt buộc: nó chỉ là dòng chữ người quét đọc, thiếu thì bớt một dòng chứ
+    # không làm mã sai. Bắt buộc nó là tự tạo thêm một đường để cả câu trả lời bị từ chối.
+    bank = document.get("bank")
+    return BankAccount(bank_bin, number, holder, bank.strip() if isinstance(bank, str) else "")

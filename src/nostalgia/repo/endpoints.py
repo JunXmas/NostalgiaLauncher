@@ -75,9 +75,11 @@ DONATE_URL = "https://github.com/sponsors/JunXmas"
 # được chứ không rút ra. Ghim để mã QR luôn dựng được — kể cả khi máy người dùng offline hay
 # Worker chết, hai lúc mà một tính năng "ủng hộ" chết im lặng thì không ai báo cho ai.
 # Đổi số tài khoản KHÔNG cần ra bản mới: `DONATE_ACCOUNT_URL` dưới đây đè được lúc chạy.
-DONATE_BANK_BIN = ""
-DONATE_ACCOUNT_NUMBER = ""
-DONATE_ACCOUNT_HOLDER = ""
+DONATE_BANK_BIN = "970436"  # Vietcombank, theo bảng mã ngân hàng NAPAS
+DONATE_ACCOUNT_NUMBER = "1068854548"
+DONATE_ACCOUNT_HOLDER = "NGUYEN NHAT MINH"
+# Tên ngân hàng chỉ để người quét ĐỌC mà đối chiếu; chuỗi QR chỉ mang mã BIN ở trên.
+DONATE_BANK_NAME = "Vietcombank"
 # Nội dung chuyển khoản cố định, để chủ dự án lọc sao kê ra đúng những lệnh đến từ launcher.
 DONATE_MEMO = "UNG HO NOSTALGIA"
 # Worker trả về số tài khoản hiện hành (JSON: bin/number/holder/memo). Hỏng hay chậm thì
