@@ -48,9 +48,7 @@ def test_the_bridge_no_longer_offers_any_web_donate_page(tmp_path: Path) -> None
     """GitHub Sponsors đã bỏ: chủ dự án không dùng. Gác để thuộc tính `donateUrl` và slot
     `openDonatePage` không lặng lẽ quay lại — nút mở ra một trang không ai trông là tệ hơn
     không có nút, và đường duy nhất giờ phải là mã QR."""
-    settings_bridge = SettingsBridge(
-        Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    )
+    settings_bridge = SettingsBridge(Launcher.for_data_dir(tmp_path / "data", tmp_path / "config"))
     meta_object = settings_bridge.metaObject()
     exposed = {meta_object.property(i).name() for i in range(meta_object.propertyCount())}
     assert "donateUrl" not in exposed
