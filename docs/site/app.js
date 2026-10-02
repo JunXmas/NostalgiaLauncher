@@ -228,3 +228,108 @@ if (!STILL && "IntersectionObserver" in window) {
     });
   }
 }
+
+/* 4. Cuộn quán tính.
+ *
+ *   Thứ làm trang mẫu "cảm giác khác" không phải hiệu ứng nào trong ba cái trên, mà là cuộn:
+ *   con lăn ở đó không nhảy từng nấc mà đẩy trang trượt tới rồi hãm dần. Soi bundle của
+ *   skewclient.store ra đúng thông số họ đặt cho Lenis:
+ *
+ *       options: { lerp: 0.1, duration: 1.5, smoothWheel: true }
+ *
+ *   `lerp: 0.1` nghĩa là mỗi khung hình đi 10% quãng đường còn lại — một bộ lọc thông thấp
+ *   bậc nhất, không phải "animation có thời lượng". Dùng đúng 0.1, nhưng viết tay ~40 dòng
+ *   thay vì kéo Lenis (20 KB nén) về: kho này không có một phụ thuộc runtime nào.
+ *
+ *   `scroll-behavior: smooth` của CSS KHÔNG thay được. Nó chỉ áp cho lệnh nhảy neo
+ *   (`scrollTo`, bấm `#id`); con lăn vẫn giật từng nấc như cũ. Hai thứ khác nhau hẳn.
+ *
+ *   ĐÁNH ĐỔI, nói thẳng: đây là cướp con lăn khỏi trình duyệt. Người dùng chuột nấc cứng sẽ
+ *   thấy trang trôi thêm một quãng sau khi ngón tay đã dừng. Đổi lại được cảm giác "nặng"
+ *   mà jun chọn. Chỉ cướp ĐÚNG `wheel` — bàn phím (Space/PageDown/mũi tên), kéo thanh cuộn,
+ *   và vuốt cảm ứng đều để nguyên cho hệ điều hành, vì ba thứ đó người dùng mong khớp 1:1
+ *   với tay và làm mượt chúng là làm hỏng chúng. */
+
+// `STILL` đã đọc ở trên. Người xin giảm chuyển động thì không gắn gì cả: quán tính là đúng
+// loại chuyển động gây chóng mặt tiền đình, và họ đã nói rõ là không muốn.
+//
+// Cũng bỏ qua khi trình duyệt báo có màn hình cảm ứng chính (`pointer: coarse`): trên điện
+// thoại, cuộn do hệ điều hành chạy ở luồng riêng (compositor) nên mượt sẵn và còn trả lại
+// thanh địa chỉ đúng nhịp. Chen vào giữa thì mất cả hai.
+const SMOOTH_WHEEL = !STILL && !window.matchMedia("(pointer: coarse)").matches;
+
+if (SMOOTH_WHEEL) {
+  const doc = document.documentElement;
+  let target = window.scrollY;
+  let current = target;
+  let running = false;
+
+  const maxScroll = () => doc.scrollHeight - window.innerHeight;
+
+  // `lerp: 0.1` của Lenis là "mỗi khung hình đi 10% quãng còn lại" — và viết thẳng như vậy
+  // thì tốc độ hãm BUỘC VÀO tần số quét màn hình: màn 120 Hz hãm xong trong nửa thời gian
+  // của màn 60 Hz, cùng một trang mà hai máy cho hai cảm giác khác hẳn. Quy về thời gian
+  // thật: sau `dt` mili giây, phần quãng CÒN LẠI là 0.9^(dt/16.67).
+  const lerpOver = (dt) => 1 - Math.pow(0.9, dt / 16.667);
+
+  let last = 0;
+
+  function frame(now) {
+    const dt = last ? Math.min(now - last, 50) : 16.667;
+    last = now;
+    const remaining = target - current;
+    // Dưới 0.3px thì đặt thẳng vào đích và dừng vòng lặp. Không có ngưỡng này thì `lerp`
+    // tiệm cận mãi mãi và `requestAnimationFrame` chạy suốt đời trang, ăn pin không vì gì.
+    if (Math.abs(remaining) < 0.3) {
+      current = target;
+      running = false;
+      last = 0;
+    } else {
+      current += remaining * lerpOver(dt);
+      requestAnimationFrame(frame);
+    }
+    window.scrollTo(0, current);
+    // Trả `scroll-behavior` lại cho CSS NGAY khi hãm xong, không tắt vĩnh viễn: nó vẫn là
+    // thứ làm mượt các neo `#download`, `#steps` và phím Home/End. Tắt trong lúc chạy là bắt
+    // buộc — để nguyên thì mỗi lần ghi vị trí trình duyệt lại mở một hoạt ảnh riêng của nó,
+    // hai vòng lặp đánh nhau và trang rung.
+    if (!running) doc.style.scrollBehavior = "";
+  }
+
+  window.addEventListener(
+    "wheel",
+    (event) => {
+      // Ctrl+lăn là phóng to của trình duyệt, không phải cuộn. Nuốt nó là chặn người dùng
+      // phóng chữ lên — một đường vào trợ năng, không phải một cử chỉ trang trí.
+      if (event.ctrlKey) return;
+      // `deltaMode` 1 = lăn theo DÒNG (Firefox hay báo kiểu này), 2 = theo TRANG. Nhân
+      // thẳng `deltaY` mà không quy đổi thì trên Firefox một nấc chỉ đi được 3 px.
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+      event.preventDefault();
+      target = Math.max(0, Math.min(target + event.deltaY * unit, maxScroll()));
+      if (!running) {
+        running = true;
+        doc.style.scrollBehavior = "auto";
+        // Bắt nhịp từ vị trí THẬT: giữa chừng người dùng có thể đã kéo thanh cuộn hoặc bấm
+        // một neo, và `current` cũ khi đó là một con số đã chết. Không đồng bộ ở đây thì
+        // trang nhảy giật về chỗ cũ ngay nấc lăn đầu tiên sau đó.
+        current = window.scrollY;
+        requestAnimationFrame(frame);
+      }
+    },
+    // `passive: false` bắt buộc — không có nó trình duyệt bỏ qua `preventDefault()` và cuộn
+    // native vẫn chạy song song với vòng lặp này.
+    { passive: false },
+  );
+
+  // Mọi đường cuộn KHÁC (bàn phím, thanh cuộn, neo `#id`, `Ctrl+F` nhảy tới kết quả) đều
+  // không đi qua handler trên. Đồng bộ lại `target` để nấc lăn kế tiếp nối từ chỗ người dùng
+  // đang đứng, chứ không kéo ngược về chỗ vòng lặp bỏ dở.
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!running) target = current = window.scrollY;
+    },
+    { passive: true },
+  );
+}

@@ -90,8 +90,12 @@
 [hidden] { display: none !important; }
 
 html {
-  /* Native, không Lenis. Quán tính kiểu thư viện cướp quyền điều khiển của con lăn chuột và
-     người dùng trackpad hay say — đây là đúng chỗ phần mềm nên nhường hệ điều hành. */
+  /* Áp cho LỆNH NHẢY: bấm neo `#download`, phím Home/End, `Ctrl+F` nhảy tới kết quả. Con lăn
+     đi đường khác — cuộn quán tính ở cuối `app.js` lo, và nó tắt tạm thuộc tính này trong lúc
+     đang hãm (hai vòng lặp cùng ghi vị trí thì trang rung) rồi trả lại ngay khi xong.
+
+     Giữ ở CSS chứ không chuyển hẳn sang JS: người không chạy được JavaScript vẫn cần các neo
+     này mượt, và đó là nhóm không có gì bù lại. */
   scroll-behavior: smooth;
   background: var(--bg);
 }

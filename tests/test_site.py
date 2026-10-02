@@ -23,6 +23,47 @@ JS = (SITE / "app.js").read_text(encoding="utf-8")
 CSS = (SITE / "style.css").read_text(encoding="utf-8")
 
 
+def strip_js_comments(source: str) -> str:
+    """Bỏ `//…` và `/*…*/`, giữ nguyên nội dung chuỗi.
+
+    Cần vì `app.js` chú thích rất dày và chú thích luôn nhắc tên đúng thứ nó giải thích —
+    nên mọi test tìm-chuỗi chạy trên nguyên file sẽ xanh kể cả khi code đã bị gỡ.
+
+    Không dùng regex: `"https://x"` có `//` ở giữa một chuỗi, regex ngây thơ sẽ cắt mất nửa
+    dòng và test đỏ oan. Phải đi qua từng ký tự với trạng thái "đang trong chuỗi hay không".
+    """
+    out = []
+    i = 0
+    quote = None
+    while i < len(source):
+        ch = source[i]
+        if quote:
+            out.append(ch)
+            if ch == "\\":
+                if i + 1 < len(source):
+                    out.append(source[i + 1])
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            i += 1
+        elif ch in "\"'`":
+            quote = ch
+            out.append(ch)
+            i += 1
+        elif source.startswith("//", i):
+            i = source.find("\n", i)
+            if i == -1:
+                break
+        elif source.startswith("/*", i):
+            end = source.find("*/", i + 2)
+            i = len(source) if end == -1 else end + 2
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
+
+
 def test_every_id_the_script_reaches_for_exists_in_the_page() -> None:
     """`getElementById` trả `null` cho id không có, và `null.textContent` ném ngay — cả khối
     tải chết, nhưng trang vẫn hiện đầy đủ phần còn lại nên nhìn bằng mắt không ra."""
@@ -248,3 +289,52 @@ def test_the_favicon_is_byte_for_byte_the_icon_the_installed_app_uses() -> None:
     assert "data:image/svg" not in HTML, (
         "favicon quay về SVG data-URI vẽ tay — nó không khớp icon ứng dụng"
     )
+
+
+def test_the_inertia_scroll_only_takes_the_wheel_and_gives_back_every_other_route() -> None:
+    """Cuộn quán tính là thứ DUY NHẤT trong trang cướp quyền của trình duyệt — nên nó cũng là
+    thứ duy nhất có thể làm trang không cuộn được nữa.
+
+    Bốn đường phải còn nguyên, và cả bốn đều hỏng im lặng vì chuột vẫn chạy nên nhìn qua
+    không thấy gì:
+
+    * `event.ctrlKey` → Ctrl+lăn là phóng to chữ của trình duyệt, một đường vào trợ năng.
+      Nuốt nó là chặn người cận thị phóng trang lên.
+    * `pointer: coarse` → trên điện thoại cuộn do hệ điều hành chạy ở luồng riêng, mượt sẵn
+      và còn trả thanh địa chỉ đúng nhịp. Chen vào là mất cả hai.
+    * `deltaMode` → Firefox báo delta theo DÒNG chứ không theo pixel. Không quy đổi thì một
+      nấc lăn ở Firefox đi được 3 px, tức là trang gần như không cuộn được.
+    * `passive: false` → thiếu nó thì `preventDefault()` bị bỏ qua, cuộn native chạy song
+      song với vòng lặp này và trang giật hai nhịp.
+    """
+    assert "wheel" in JS, "mất cuộn quán tính"
+    # Lọc chú thích TRƯỚC khi soi. Bản đầu của test này tìm thẳng trong `JS` và xanh cả bảng
+    # trong khi ba trong năm điều kiện đã bị gỡ khỏi code — vì mỗi điều kiện đều được nhắc
+    # tên trong chú thích giải thích nó, nên chuỗi vẫn còn trong file. Đã thử bằng cách gỡ
+    # thật từng cái: chỉ 1/5 làm test đỏ. Chú thích là thứ KHÔNG chạy; gác theo nó là gác
+    # vào lời hứa chứ không vào hành vi.
+    code = strip_js_comments(JS)
+    assert "const SMOOTH_WHEEL =" in code, "mất cờ bật/tắt cuộn quán tính"
+    # Cắt từ ĐÚNG dòng khai cờ. Neo vào một chữ chung chung (`addEventListener`) thì đoạn cắt
+    # trùm lên cả khối hiện-dần phía trên, vốn cũng dùng `STILL` — và test xanh kể cả khi
+    # điều kiện ở đây đã bị gỡ. Đã thử: gỡ `!STILL` ra thì 0 test đỏ.
+    inertia = code[code.index("const SMOOTH_WHEEL =") :]
+    for needle, why in (
+        ("!STILL", "người xin giảm chuyển động vẫn lãnh quán tính"),
+        ("pointer: coarse", "cướp cả cuộn cảm ứng, vốn đã mượt sẵn ở tầng hệ điều hành"),
+        ("event.ctrlKey", "nuốt cả Ctrl+lăn — mất đường phóng to chữ của trình duyệt"),
+        ("deltaMode", "không quy đổi delta theo dòng — Firefox gần như không cuộn được"),
+        ("passive: false", "`preventDefault()` bị bỏ qua, cuộn native chạy song song"),
+    ):
+        assert needle in inertia, f"{needle}: {why}"
+
+    # Hãm theo THỜI GIAN, không theo khung hình: `remaining * 0.1` viết thẳng thì màn 120 Hz
+    # hãm xong trong nửa thời gian của màn 60 Hz — cùng trang, hai cảm giác.
+    #
+    # Gác ở CHỖ DÙNG chứ không ở chỗ định nghĩa: tìm `Math.pow(0.9` thì một hàm `lerpOver`
+    # còn nằm đó mà không ai gọi vẫn làm test xanh. Đã thử đúng vậy: đổi lời gọi về
+    # `remaining * 0.1` mà bản gác cũ không đỏ.
+    assert "remaining * lerpOver(dt)" in inertia, (
+        "tốc độ hãm buộc vào tần số quét màn hình — phải nhân theo `dt` thật"
+    )
+    assert "Math.pow(0.9" in inertia, "hệ số hãm không còn là lerp 0.1 của trang mẫu"
