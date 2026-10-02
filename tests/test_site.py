@@ -17,7 +17,11 @@ from pathlib import Path
 
 import pytest
 
-SITE = Path(__file__).resolve().parents[1] / "docs" / "site"
+REPO = Path(__file__).resolve().parents[1]
+SITE = REPO / "docs" / "site"
+# Địa chỉ công khai, suy ra từ chủ kho và tên kho. Ghim ở một chỗ vì nó xuất hiện trong
+# `canonical`, `og:url`, `og:image` — lệch một cái là thẻ xem trước trỏ vào hư vô.
+PAGES_BASE = "https://junxmas.github.io/NostalgiaLauncher/site/"
 HTML = (SITE / "index.html").read_text(encoding="utf-8")
 JS = (SITE / "app.js").read_text(encoding="utf-8")
 CSS = (SITE / "style.css").read_text(encoding="utf-8")
@@ -289,6 +293,82 @@ def test_the_favicon_is_byte_for_byte_the_icon_the_installed_app_uses() -> None:
     assert "data:image/svg" not in HTML, (
         "favicon quay về SVG data-URI vẽ tay — nó không khớp icon ứng dụng"
     )
+
+
+def test_the_page_still_works_when_it_is_not_served_from_the_root_of_a_domain() -> None:
+    """GitHub Pages phát kho này ở `/NostalgiaLauncher/`, không ở gốc tên miền.
+
+    Một đường dẫn bắt đầu bằng `/` (ví dụ `/style.css`) ở đó trỏ tới
+    `junxmas.github.io/style.css` — ngoài kho, 404. Nguy hiểm vì nó hỏng ĐÚNG ở bản deploy
+    thật và không hỏng ở đâu khác: ai mở bằng máy chủ local chạy ở gốc vẫn thấy trang hoàn
+    hảo. Dùng đường dẫn tương đối hết thì cả hai nơi đều chạy.
+    """
+    for name, text in (("index.html", HTML), ("style.css", CSS)):
+        rooted = re.findall(r'(?:src|href)="(/[^/][^"]*)"', text) + re.findall(
+            r'url\(["\']?(/[^/][^"\')]*)', text
+        )
+        assert not rooted, (
+            f"{name} dùng đường dẫn tuyệt đối {rooted} — trang phát ở "
+            f"/NostalgiaLauncher/ nên những cái này trỏ ra ngoài kho"
+        )
+
+
+def test_the_link_preview_card_is_not_an_empty_box_when_someone_shares_the_page() -> None:
+    """Chỗ người ta THẬT SỰ chia nhau link này là Discord, Messenger, Zalo — một người tải
+    được rồi gửi cho bạn. Thiếu thẻ Open Graph thì ở đó hiện ra một ô trắng không ảnh không
+    chữ, đọc ra như link rác, và đây đúng là kiểu hỏng không ai tự thấy: người dán link thấy
+    thẻ hỏng, còn chủ trang thì không bao giờ nhìn vào.
+
+    Ảnh phải ghi địa chỉ TUYỆT ĐỐI: trình quét của các nền tảng đó không chạy JavaScript và
+    không giải đường dẫn tương đối, nên `og-card.jpg` trần là mất ảnh ở mọi nơi.
+    """
+    for prop in ("og:title", "og:description", "og:url", "og:image", "og:type"):
+        assert f'property="{prop}"' in HTML, f"thiếu thẻ {prop} — thẻ xem trước sẽ trống"
+    assert 'name="twitter:card" content="summary_large_image"' in HTML, (
+        "thiếu twitter:card — X và vài ứng dụng chat khác sẽ hiện thẻ ảnh bé xíu"
+    )
+
+    for prop in ("og:url", "og:image"):
+        found = re.search(rf'property="{prop}" content="([^"]+)"', HTML)
+        assert found is not None, f"thẻ {prop} mất `content`"
+        assert found.group(1).startswith(PAGES_BASE), (
+            f"{prop} = {found.group(1)!r} không phải địa chỉ tuyệt đối dưới {PAGES_BASE} — "
+            f"trình quét không giải được đường dẫn tương đối"
+        )
+
+    card = SITE / "og-card.jpg"
+    assert card.is_file(), "thiếu `docs/site/og-card.jpg`"
+    # Facebook cắt ảnh trên 8 MB; vài ứng dụng chat còn khắt khe hơn. Dư rất xa ngưỡng, nhưng
+    # vượt 300 KB thì nghĩa là ai đó đã chép thẳng ảnh hero vào chứ không xuất lại.
+    assert card.stat().st_size < 300_000, f"`og-card.jpg` phình lên {card.stat().st_size} byte"
+    assert 'property="og:image:alt"' in HTML, (
+        "ảnh thẻ không có mô tả — người dùng trình đọc màn hình gặp thẻ này trong dòng tin "
+        "và chỉ nghe được 'hình ảnh'"
+    )
+
+
+def test_the_published_address_has_a_door_at_its_root() -> None:
+    """GitHub Pages phát cả thư mục `docs/`, nên địa chỉ gốc rơi vào `docs/index.html` chứ
+    không vào `docs/site/index.html`. Không có file đó thì người dán link gốc — tức là link
+    ngắn nhất, link người ta sẽ nhớ và gõ lại — gặp trang 404 của GitHub.
+
+    `.nojekyll` cũng bắt buộc: để Jekyll chạy thì nó bỏ qua mọi file bắt đầu bằng `_` khi
+    dựng, và file biến mất khỏi bản deploy trong khi kho vẫn còn nó — không có cách nào
+    thấy bằng mắt ở local.
+    """
+    docs = REPO / "docs"
+    assert (docs / ".nojekyll").is_file(), "thiếu `docs/.nojekyll` — Jekyll sẽ nuốt file"
+
+    # `entry` bị GLOSSARY §2 cấm (alias của `manifest_entry`)
+    landing = docs / "index.html"
+    assert landing.is_file(), "thiếu `docs/index.html` — địa chỉ gốc sẽ ra 404"
+    text = landing.read_text(encoding="utf-8")
+    assert 'http-equiv="refresh"' in text and "url=site/" in text, (
+        "trang gốc không chuyển hướng tới `site/`"
+    )
+    # Phải có liên kết bấm được, không chỉ `refresh`: tiện ích chặn `meta refresh` không
+    # hiếm, và khi đó trang này là ngõ cụt.
+    assert 'href="site/"' in text, "trang gốc không có liên kết thật — chặn refresh là ngõ cụt"
 
 
 def test_the_inertia_scroll_only_takes_the_wheel_and_gives_back_every_other_route() -> None:

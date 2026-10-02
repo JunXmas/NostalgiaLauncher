@@ -8,6 +8,30 @@
 <meta name="color-scheme" content="dark">
 <title>Nostalgia Launcher — Tải xuống</title>
 <meta name="description" content="Minecraft launcher miễn phí, mã nguồn mở: tài khoản, bản chơi, mod, LAN qua relay. Trang tự dò hệ điều hành và đưa đúng một nút tải.">
+
+<!-- Thẻ xem trước khi ai đó dán link vào Discord, Messenger, Zalo, X. Thiếu bộ này thì nơi
+     người ta thật sự chia nhau link — một người tải được rồi gửi cho bạn — hiện ra một ô
+     trắng không ảnh không chữ, đọc ra như link rác. Và đó cũng chính là chỗ KHÔNG ai tự
+     kiểm được: người dán thấy thẻ hỏng, còn chủ trang thì không bao giờ thấy.
+
+     `url` và `og:image` phải TUYỆT ĐỐI: các trình quét không chạy JavaScript và không giải
+     đường dẫn tương đối — ghi `og-card.jpg` là mất ảnh ở mọi nơi.
+
+     `og:image:alt` chứ không bỏ trống: người dùng trình đọc màn hình gặp thẻ này trong dòng
+     tin, và nếu không có nó họ chỉ nghe "hình ảnh". -->
+<link rel="canonical" href="https://junxmas.github.io/NostalgiaLauncher/site/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nostalgia Launcher">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:url" content="https://junxmas.github.io/NostalgiaLauncher/site/">
+<meta property="og:title" content="Nostalgia Launcher — Minecraft launcher miễn phí, mã nguồn mở">
+<meta property="og:description" content="Tài khoản Microsoft và Ely.by, bản chơi, mod, chơi LAN với bạn qua relay. Không quảng cáo, không thu thập dữ liệu, mỗi bản có SHA256.">
+<meta property="og:image" content="https://junxmas.github.io/NostalgiaLauncher/site/og-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logo khối lá Nostalgia trên ảnh bình minh trong Minecraft, kèm dòng chữ Nostalgia Launcher">
+<meta name="twitter:card" content="summary_large_image">
+
 <!-- ĐÚNG file icon ứng dụng (`packaging/icons/nostalgia-32.png`), không phải SVG vẽ lại.
      Tab trình duyệt và thanh tác vụ sau khi cài phải là cùng một hình — khác nhau thì người
      dùng không nối được trang web với app vừa tải. -->
