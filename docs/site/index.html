@@ -14,6 +14,22 @@
 <body>
 
 <svg class="icon-defs" aria-hidden="true">
+  <!-- Bộ lọc làm ra chất "kính lỏng": nhiễu fractal → làm mềm → dùng chính nhiễu đó để DỜI
+       từng pixel của ảnh phía sau. Kết quả là ảnh sau tấm bị uốn như nhìn qua thấu kính,
+       chứ không chỉ mờ đi.
+
+       `baseFrequency` thấp (0.008) cho sóng DÀI — tần số cao ra vân lăn tăn, đọc ra "kính
+       mờ phòng tắm" chứ không ra thấu kính. `scale="34"` là biên độ dời tính bằng pixel;
+       trên 50 thì chữ sau tấm bắt đầu méo thấy rõ.
+
+       `color-interpolation-filters="sRGB"`: mặc định của SVG là linearRGB, và nhiễu sinh ra
+       trong không gian đó sẽ lệch sáng hẳn so với phần còn lại của trang. -->
+  <filter id="liquid" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.013" numOctaves="2" seed="11" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="1.6" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+
   <symbol id="icon-grass" viewBox="0 0 24 24">
     <rect width="24" height="24" fill="#6b4a2f"/>
     <rect width="24" height="9" fill="#5ac54f"/>
@@ -64,7 +80,12 @@
       <h1 class="rise" style="--i:1"><span>Thế giới quen thuộc.</span><span class="grad">Khởi đầu mới.</span></h1>
       <p class="tagline rise" style="--i:2">Minecraft launcher miễn phí, không quảng cáo.</p>
       <p class="subtitle rise" style="--i:3">Chọn bản chơi, thêm mod, chơi LAN với bạn bè qua relay. Tài khoản Microsoft và Ely.by đều vào được.</p>
+    </div>
 
+    <!-- Khối tải nằm cột PHẢI, tức đúng nửa khung có mặt trời. Đây là chủ ý: tấm kính chỉ
+         phô ra chất khi phía sau nó có gì sáng và có chi tiết để uốn. Đặt nó bên trái — nơi
+         mặt nạ dìm tối để chữ đọc được — thì nó lại thành ô xám, đúng lỗi của bản trước. -->
+    <div class="hero-action">
       <div id="download" class="download-block glass rise" style="--i:4" aria-live="polite">
         <p id="download-status" class="status">Đang dò bản mới nhất…</p>
 
@@ -108,18 +129,6 @@
           <summary>Hệ điều hành khác / file khác</summary>
           <ul id="other-files-list"></ul>
         </details>
-      </div>
-    </div>
-
-    <!-- Khối cỏ xoay: sáu mặt CSS 3D, không canvas, không thư viện. -->
-    <div class="hero-cube" aria-hidden="true">
-      <div class="cube">
-        <div class="face side fr"></div>
-        <div class="face side bk"></div>
-        <div class="face side rt"></div>
-        <div class="face side lf"></div>
-        <div class="face tp"></div>
-        <div class="face bt"></div>
       </div>
     </div>
   </section>

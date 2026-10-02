@@ -131,6 +131,28 @@ def test_the_glass_surfaces_have_something_behind_them_to_blur() -> None:
     assert "--glass-edge" in CSS and "inset 0 1px 0" in CSS, "mép kính mất đường bắt sáng"
 
 
+def test_the_page_backdrop_is_not_painted_over_by_an_opaque_body() -> None:
+    """Lỗi im lặng đã sống suốt mấy bản, và chính là nguyên nhân gốc của "không ra kính".
+
+    `html` và `body` cùng khai `background: var(--bg)`. Khi `html` ĐÃ có nền, trình duyệt
+    không còn đẩy nền của `body` lên canvas nữa mà vẽ nó thành một hộp đục của riêng `body`
+    — và hộp đục ấy phủ kín mọi `::before`/`::after` đặt ở `z-index: -1` của chính `body`.
+    Tức là lớp quầng màu nền, thứ duy nhất cho `backdrop-filter` có việc để làm, đã bị che
+    hoàn toàn. Trang vẫn chạy, không một cảnh báo, chỉ là mọi tấm kính đọc ra ô xám.
+
+    Không test nào cũ bắt được: `body::before` vẫn có mặt trong file, `position: fixed` vẫn
+    đúng, `backdrop-filter` vẫn đúng. Mọi khẳng định đều xanh trong khi màn hình thì sai.
+    """
+    body = CSS[CSS.index("\nbody {") : CSS.index("body::before")]
+    assert "background:" not in body, (
+        "`body` có nền đục trong khi `html` cũng có — nền này sẽ phủ kín lớp quầng "
+        "`body::before`/`body::after` và mọi tấm kính mất thứ để làm mờ"
+    )
+    assert "background: var(--bg)" in CSS[: CSS.index("\nbody {")], (
+        "nền trang phải nằm ở `html`, nếu không trang hở ra màu trắng mặc định"
+    )
+
+
 def test_the_moving_shine_is_also_switched_off_for_reduced_motion() -> None:
     """Vệt sáng quét ngang nút chính là CHUYỂN ĐỘNG, không phải màu.
 

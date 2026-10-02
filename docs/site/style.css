@@ -47,12 +47,28 @@
      tấm kính thành tấm đặc. */
   --glass: color-mix(in srgb, var(--surface) 58%, transparent);
   --glass-high: color-mix(in srgb, var(--surface-high) 66%, transparent);
-  --glass-edge: rgba(255, 255, 255, 0.085);
-  --glass-blur: blur(18px) saturate(150%);
-  /* Mép trên bắt sáng + bóng xa đổ xuống. Hai thứ này đi cùng nhau: chỉ có bóng thì tấm nổi
-     mà không có vật liệu, chỉ có mép sáng thì có vật liệu mà dán phẳng vào nền. */
-  --lift: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 18px 44px -18px rgba(0, 0, 0, 0.75);
-  --lift-high: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 28px 64px -20px rgba(0, 0, 0, 0.85);
+  /* Viền 0.18 chứ không 0.085. Bản cũ gần như không thấy viền, nên tấm kính không có RÌA —
+     mà rìa bắt sáng chính là thứ mắt đọc ra "đây là một tấm vật liệu có bề dày". */
+  --glass-edge: rgba(255, 255, 255, 0.18);
+  /* Blur THẤP, saturate CAO. Bản cũ dùng blur(18px) và đó là lỗi gốc: 18px xoá sạch hình
+     phía sau, nên tấm kính thành ô xám đặc và toàn bộ công sức làm nền đổ sông. Cả hai trang
+     tham chiếu đều ở quãng 6–14px (skewclient 14px/140%, voxelx 3–8px/165–175%). 10px giữ
+     được hình khối của cảnh Minecraft sau tấm mà chữ vẫn đọc tốt. */
+  --glass-blur: blur(10px) saturate(165%);
+  /* Ba lớp bóng, mỗi lớp một việc — bản cũ chỉ có hai:
+     1. `inset 0 1px 1px rgba(255,255,255,.4)` — mép trên bắt sáng, gần như một vạch chói.
+     2. `inset 0 -14px 32px -22px rgba(0,0,0,.45)` — đáy tối dần, tạo bề DÀY cho tấm.
+     3. bóng xa đổ xuống — tấm nổi khỏi trang.
+     Thiếu (2) là chỗ bản cũ hụt: có mép sáng và có bóng ngoài, nhưng không có gì nói tấm
+     này dày bao nhiêu, nên nó đọc ra một tờ giấy bóng kính. */
+  --lift:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -14px 32px -22px rgba(0, 0, 0, 0.45),
+    0 20px 48px -22px rgba(0, 0, 0, 0.7);
+  --lift-high:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -16px 44px -24px rgba(0, 0, 0, 0.5),
+    0 36px 80px -28px rgba(0, 0, 0, 0.8);
 
   --r-lg: 22px;
   --r: 14px;
@@ -82,7 +98,12 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* KHÔNG đặt nền ở đây — `html` đã có `--bg`. Đây là một lỗi im lặng đã sống suốt mấy bản:
+     khi `html` có nền thì nền của `body` không còn được đẩy lên canvas nữa mà vẽ thành một
+     hộp đục của chính `body`, và hộp đục ấy phủ kín mọi `::before`/`::after` đặt ở
+     `z-index: -1` của nó. Tức là lớp quầng aurora bên dưới vốn đã bị che hoàn toàn — không
+     báo lỗi, không cảnh báo, chỉ là một tấm kính không có gì để làm mờ. Đó mới là nguyên
+     nhân gốc của "không phô ra được liquid glass", chứ không phải thông số blur. */
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   /* Chữ số cùng bề rộng: dãy số ở băng chỉ tiêu bên dưới không nhảy cột khi đổi. */
@@ -104,6 +125,27 @@ body::before {
     radial-gradient(60rem 42rem at 12% -8%, color-mix(in srgb, var(--grass) 16%, transparent), transparent 70%),
     radial-gradient(52rem 38rem at 88% 4%, color-mix(in srgb, var(--chest) 15%, transparent), transparent 68%),
     radial-gradient(46rem 40rem at 68% 92%, color-mix(in srgb, var(--book) 11%, transparent), transparent 70%);
+}
+
+/* Chính ảnh hero, trải khắp trang ở độ mờ rất thấp, đứng yên khi cuộn.
+
+   Đây là bài học lớn nhất của vòng chụp này. Quầng màu gradient KHÔNG đủ: `backdrop-filter`
+   lấy một vùng gradient trơn rồi làm mờ nó thì ra đúng cái gradient ấy — mắt không đọc được
+   gì đã xảy ra, nên tấm kính vẫn là ô màu. Kính chỉ "thấy được" khi sau nó có CHI TIẾT:
+   cạnh, đường, chỗ sáng cạnh chỗ tối. Trang mẫu giải bằng cách để ảnh thật chạy xuyên suốt,
+   và đây là cùng cách giải.
+
+   0.085: đủ cho mắt bắt được cấu trúc khối qua tấm kính, chưa đủ để chữ phụ (`--text-muted`
+   trên nền `--bg`) tụt khỏi 4.5:1. Không tốn thêm file nào — vẫn là `hero.webp` trình duyệt
+   đã tải cho hero, nên không có lượt tải thứ hai. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("hero.webp") center / cover no-repeat;
+  opacity: 0.085;
 }
 
 a { color: inherit; }
@@ -134,7 +176,11 @@ a { color: inherit; }
 .glass {
   position: relative;
   isolation: isolate;
-  background: var(--glass);
+  /* Nền GRADIENT chứ không màu phẳng. Kính thật không có độ đục đều: nó sáng ở mép đón sáng
+     và tối dần về phía xa. Màu phẳng là lý do tấm kính bản cũ đọc ra "ô màu bo góc". */
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--surface) 46%, transparent),
+    color-mix(in srgb, var(--surface) 70%, transparent));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
@@ -163,6 +209,29 @@ a { color: inherit; }
   );
 }
 
+/* ── "Lỏng" thật: bẻ cong ảnh phía sau, không chỉ làm mờ nó ──
+   Mờ thôi thì ra kính MỜ. Thứ làm ra cảm giác THẤU KÍNH là ảnh sau tấm bị uốn — đó là việc
+   của `feDisplacementMap` trong `#liquid` (khai trong `index.html`), chèn vào cuối chuỗi
+   `backdrop-filter`.
+
+   Hai lý do phải gói trong `@supports`:
+   - Firefox chưa nhận `url()` trong `backdrop-filter`. Không gác thì cả dòng bị bỏ, kéo
+     theo mất luôn `blur` và `saturate` đứng cùng dòng — tấm kính biến thành ô trong suốt.
+   - Lọc SVG trên vùng lớn rất nặng GPU. Chỉ gắn cho tấm có nền ảnh thật phía sau (khối tải
+     trong hero và thanh nav); thẻ nằm trên nền trơn thì bẻ cong cũng không thấy gì mà vẫn
+     tốn như nhau.
+
+   Blur hạ còn 5px khi có displacement: hai hiệu ứng cộng dồn, giữ 10px thì ảnh sau tấm nhoè
+   hết và không còn gì để mà bẻ cong. */
+@supports (backdrop-filter: url("#liquid")) or (-webkit-backdrop-filter: url("#liquid")) {
+  .download-block,
+  .nav.is-stuck,
+  .no-js .nav {
+    backdrop-filter: blur(5px) saturate(170%) url("#liquid");
+    -webkit-backdrop-filter: blur(5px) saturate(170%) url("#liquid");
+  }
+}
+
 /* ───────────────────────── Thanh điều hướng ─────────────────────────
    Viên kính nổi, không phải dải chạy hết mép. Dải hết mép cắt ngang ảnh hero bằng một vạch;
    viên nổi đọc ra "thanh công cụ đặt lên trên trang", cùng ý với thanh bên trong app. */
@@ -178,14 +247,21 @@ a { color: inherit; }
   gap: 1.5rem;
   padding: 0.6rem 0.7rem 0.6rem 1.1rem;
   border-radius: 999px;
-  border: 1px solid transparent;
-  background: transparent;
-  /* Nền chỉ hiện khi đã cuộn khỏi hero — `app.js` gắn `.is-stuck`. Thanh có nền ngay từ đầu
-     sẽ cắt ngang ảnh hero bằng một vạch xám. */
+  /* Kính NGAY TỪ ĐẦU, không chờ cuộn. Bản trước để thanh trong suốt trên hero vì nền hero
+     khi đó là gradient trơn — kính trên gradient trơn chỉ ra một vạch xám cắt ngang. Giờ
+     phía sau là ảnh thật, nên đây lại là chỗ phô chất liệu rõ nhất cả trang: viên kính nổi
+     trên đường chân trời, thấy cảnh uốn và nhạt đi bên dưới nó. Đúng cách trang mẫu làm. */
+  border: 1px solid var(--glass-edge);
+  background: color-mix(in srgb, var(--surface) 34%, transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--lift);
   transition: background var(--normal) ease, border-color var(--normal) ease,
               box-shadow var(--normal) ease, backdrop-filter var(--normal) ease;
 }
 
+/* Cuộn khỏi hero thì ĐẶC hơn, không phải "mới có nền". Dưới hero nền là màu trơn nên kính
+   34% không còn đủ tách thanh khỏi nội dung chạy qua dưới nó. */
 .nav.is-stuck,
 /* Không JavaScript thì `.is-stuck` không bao giờ được gắn, và thanh nav trong suốt vĩnh viễn
    — chữ của nó đè thẳng lên nội dung đang cuộn qua phía dưới, đọc không ra (đã chụp thấy).
@@ -256,13 +332,25 @@ a { color: inherit; }
 }
 
 /* ───────────────────────── Hero ───────────────────────── */
+/* Hai cột, nhưng chia khác bản cũ. Bản cũ để khối cỏ CSS 3D ở cột phải — hồi đó đúng, vì
+   nền là gradient trơn nên hero cần một thứ gì đó để nhìn. Giờ nền là cảnh Minecraft thật
+   thì khối vẽ tay thành ra ĐÈ lên cảnh: hai vật thể tranh nhau một chỗ, mà cái vẽ tay không
+   bao giờ thắng cái chụp thật. Đã bỏ khối.
+
+   Cột phải giờ là KHỐI TẢI. Đây mới là chỗ nó đáng nằm: tấm kính chỉ phô ra chất khi phía
+   sau có gì sáng và có chi tiết để uốn, mà nửa phải của ảnh là mặt trời mọc. Bản trước đặt
+   khối tải bên trái, tức ngay dưới mặt nạ dìm tối dành cho chữ — kính trên vùng gần đen thì
+   lại thành ô xám, đúng cái lỗi cần chữa.
+
+   `align-items: center` cho cả hai cột cùng trục ngang; `0.86fr` giữ khối tải hẹp hơn cột
+   chữ để nó đọc ra một tấm nổi chứ không phải nửa trang thứ hai. */
 .hero {
   position: relative;
   min-height: 100svh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr);
+  gap: 3rem;
   align-items: center;
-  gap: 2.5rem;
   /* CHỮ căn giữa theo `--maxw`, nhưng KHUNG chạy hết bề ngang. Nếu để `max-width` trên chính
      `.hero` thì `overflow: hidden` bên dưới sẽ xén ảnh nền còn đúng 1140 px và hai bên màn
      hình rộng lòi ra nền trơn. Padding tính được thay cho `margin: auto`. */
@@ -275,40 +363,50 @@ a { color: inherit; }
 /* Nền hero trôi chậm hơn trang khi cuộn (parallax). Để trên phần tử RIÊNG chứ không trên
    `.hero` vì `transform` trên khối cha sẽ kéo theo cả chữ và khối 3D.
 
-   Từng là một ảnh JPEG trường sao. Bỏ đi vì nó rỗ, và lý do rỗ không chữa được bằng cách
-   đổi ảnh đẹp hơn hay làm nét lên: trường sao LÀ nhiễu từng-pixel, còn `brightness(0.34)`
-   (cần có, không thì chữ trắng không đọc nổi) dìm nền về gần đen trong khi sao vẫn trắng —
-   đẩy tương phản hạt lên cực đại. Đo vùng đặt chữ: trung bình 67.7, độ lệch chuẩn 57.6.
-   Làm nét còn tệ hơn: sharpen là khuếch đại tương phản cục bộ, tức khuếch đại đúng cái sạn
-   (đã thử, độ lệch 19.5 → 26.0 sau khi dìm).
+   Ảnh chụp trong game, từ chính launcher này: bản 1.21.11 Fabric, thế giới savanna lúc bình
+   minh, chụp headless (Xvfb) ở chế độ spectator với F1 tắt HUD. Lật ngang để mặt trời nằm
+   bên PHẢI — chữ đặt bên trái nên nó cần vùng trời tối nhất của ảnh. Đo vùng đặt chữ sau khi
+   lật: trung bình 68.1, độ lệch chuẩn 28.0.
 
-   Gradient không có pixel nào để mà rỗ, nhẹ hơn 271 KB, và để khối cỏ 3D nổi hẳn lên —
-   nó mới là thứ đáng nhìn trong hero. Ba quầng dùng đúng accent của launcher. */
+   Khác hẳn ảnh trường sao đã bỏ (độ lệch 57.6): ở đó nhiễu là TỪNG PIXEL nên dìm sáng bao
+   nhiêu cũng chỉ làm sao nổi hơn. Ở đây chi tiết là KHỐI vuông cỡ chục pixel, dìm sáng làm
+   nó mờ đi đúng như mong đợi chứ không rỗ lên.
+
+   KHÔNG dìm cả ảnh bằng `brightness()` nữa. Đó là chỗ bản cũ sai: dìm toàn khung thì ảnh
+   thành một mảng xám và chẳng còn gì để khoe. Thay bằng mặt nạ tối CÓ HƯỚNG ở `.hero::after`
+   — chỉ tối chỗ có chữ, chỗ còn lại giữ nguyên độ rực của cảnh. */
 .hero-bg {
   position: absolute;
   inset: -12% 0 auto 0;
   height: 112%;
-  background:
-    radial-gradient(70rem 50rem at 20% 10%, color-mix(in srgb, var(--grass) 10%, transparent), transparent 65%),
-    radial-gradient(60rem 46rem at 85% 30%, color-mix(in srgb, var(--chest) 12%, transparent), transparent 62%),
-    radial-gradient(50rem 40rem at 55% 80%, color-mix(in srgb, var(--book) 8%, transparent), transparent 68%),
-    linear-gradient(170deg, #161b26, #10131a);
+  background: #0f1319 url("hero.webp") center / cover no-repeat;
   will-change: transform;
   z-index: 0;
 }
 
-/* Hoà ảnh về nền ở mép dưới, để hero không kết thúc bằng một đường cắt ngang. */
+/* Hai mặt nạ trong MỘT lớp, và đây là thứ làm ảnh nền đọc được mà vẫn còn là ảnh:
+
+   1. `linear-gradient(105deg …)` — tối đậm ở mép trái, tan hết trước giữa khung. Chữ nằm
+      trong cột trái nên chỉ cột đó cần nền tối; mặt trời bên phải giữ nguyên.
+   2. `linear-gradient(to bottom …)` — hoà mép dưới về `--bg`, để hero không kết thúc bằng
+      một đường cắt ngang khi sang khối kế tiếp.
+
+   Dừng ở `z-index: 1`: trên ảnh, dưới chữ (`.hero-copy` ở `z-index: 2`). */
 .hero::after {
   content: "";
   position: absolute;
-  inset: auto 0 0 0;
-  height: 55%;
-  background: linear-gradient(to bottom, transparent, var(--bg));
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(10, 13, 18, 0.62) 0%, rgba(10, 13, 18, 0.34) 34%,
+                    transparent 62%),
+    linear-gradient(to bottom, rgba(10, 13, 18, 0.34) 0%, transparent 18%,
+                    transparent 64%, var(--bg) 100%);
   pointer-events: none;
   z-index: 1;
 }
 
-.hero-copy, .hero-cube { position: relative; z-index: 2; }
+.hero-copy,
+.hero-action { position: relative; z-index: 2; }
 
 /* Nhãn phiên bản trên cùng: thứ đầu tiên mắt gặp là một dòng nói "sản phẩm này đang sống". */
 .hero-badge {
@@ -365,76 +463,6 @@ a { color: inherit; }
   margin: 0 0 1.8rem;
   color: var(--text-muted);
   max-width: 34rem;
-}
-
-/* ───────────────────────── Khối cỏ xoay ─────────────────────────
-   CSS 3D sáu mặt, KHÔNG phải three.js như trang mẫu. Một thư viện 600 KB tải từ CDN để vẽ
-   đúng một hình hộp là cái giá sai, và kho này không có phụ thuộc runtime nào — trang web
-   cũng theo luật đó. Hoạt ảnh chạy trên GPU qua `transform`, không tốn một dòng JS. */
-.hero-cube {
-  display: grid;
-  place-items: center;
-  perspective: 900px;
-}
-
-.cube {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  transform-style: preserve-3d;
-  /* -22° nhìn từ trên xuống: đúng góc isometric mà icon thanh bên trong app dùng, nên mặt
-     trên luôn SÁNG hơn mặt bên và khối không bao giờ đọc ra lộn ngược. */
-  animation: cube-spin 18s linear infinite;
-}
-
-@keyframes cube-spin {
-  from { transform: rotateX(-22deg) rotateY(0deg); }
-  to   { transform: rotateX(-22deg) rotateY(360deg); }
-}
-
-.cube .face {
-  position: absolute;
-  inset: 0;
-  /* Khối cỏ giữ GÓC VUÔNG dù cả trang đã bo: nó là voxel, bo góc là bẻ mất nghĩa của nó. */
-  border: 1px solid rgba(0, 0, 0, 0.35);
-}
-
-/* Lưới ô vuông mờ chồng lên mỗi mặt. Mặt màu trơn đọc ra "hộp đồ hoạ" chứ không ra khối
-   Minecraft — chất voxel nằm ở chỗ nhìn thấy TỪNG Ô. Vẽ bằng hai gradient lặp chứ không dùng
-   ảnh texture: không thêm file, không thêm một lượt tải, và tự co theo cỡ khối. */
-.cube .face::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(to right, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 25%),
-    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 25%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 6px);
-}
-
-/* Bốn mặt bên: đất ở dưới, viền cỏ ở trên — đúng khối grass. Mặt trên full cỏ, mặt đáy full
-   đất. Sắc độ giảm dần theo hướng mặt để khối có khối lượng thay vì phẳng. */
-.cube .side {
-  background:
-    linear-gradient(to bottom, var(--grass) 0 26%, #3f8f4f 26% 34%, #6b4a2f 34% 100%);
-}
-
-.cube .fr { transform: translateZ(100px); filter: brightness(1); }
-.cube .bk { transform: rotateY(180deg) translateZ(100px); filter: brightness(0.7); }
-.cube .rt { transform: rotateY(90deg) translateZ(100px); filter: brightness(0.82); }
-.cube .lf { transform: rotateY(-90deg) translateZ(100px); filter: brightness(0.82); }
-.cube .tp { transform: rotateX(90deg) translateZ(100px); background: var(--grass); filter: brightness(1.12); }
-.cube .bt { transform: rotateX(-90deg) translateZ(100px); background: #6b4a2f; filter: brightness(0.5); }
-
-/* Vầng sáng sau khối, để nó không trôi lơ lửng trên nền tối. */
-.hero-cube::before {
-  content: "";
-  position: absolute;
-  width: 340px;
-  height: 340px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--grass) 24%, transparent), transparent 68%);
-  filter: blur(22px);
 }
 
 /* ───────────────────────── Khối tải ─────────────────────────
@@ -630,6 +658,41 @@ section { padding: clamp(4rem, 9vh, 6.5rem) clamp(1rem, 3vw, 2rem); }
 .steps     { --accent: var(--craft); }
 .showcase  { --accent: var(--book); }
 .features  { --accent: var(--diamond); }
+.closing   { --accent: var(--chest); }
+
+/* Quầng sáng SAU từng khối, lấy đúng sắc của khối đó.
+
+   Chụp ra mới thấy: trên hero kính rất rõ vì sau nó là ảnh thật, nhưng vừa cuộn qua hero là
+   nền thành màu trơn và mọi tấm kính lại đọc ra ô xám — đúng cái bệnh người dùng đã chỉ ra.
+   `backdrop-filter` không bịa được chi tiết; nó chỉ xử lý thứ đã có. Nên phải cho nó thứ
+   để xử lý, ở mọi khối chứ không riêng hero.
+
+   Hai quầng lệch nhau, đặt ở hai góc đối, bán kính lớn hơn khối: tấm kính nằm giữa sẽ bắt
+   được chỗ chuyển từ sáng sang tối, và chính cái chuyển đó là thứ `blur` + `saturate` làm
+   cong lên. Một quầng duy nhất đặt giữa thì mọi tấm đều ngồi trên cùng một độ sáng, và
+   kính lại trở về ô xám.
+
+   Alpha 0.13/0.09 — đo bằng mắt qua ảnh chụp: trên 0.18 thì sắc nền át chữ phụ (màu
+   `--text-muted` tụt dưới 4.5:1), dưới 0.07 thì kính không bắt được gì. */
+.steps, .showcase, .features, .closing { position: relative; isolation: isolate; }
+
+.steps::before,
+.showcase::before,
+.features::before,
+.closing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(34rem 26rem at 14% 78%,
+      color-mix(in srgb, var(--accent) 20%, transparent), transparent 64%),
+    radial-gradient(32rem 24rem at 88% 70%,
+      color-mix(in srgb, var(--chest) 16%, transparent), transparent 62%),
+    radial-gradient(40rem 26rem at 55% 6%,
+      color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
+}
 
 .section-head { max-width: var(--maxw); margin: 0 auto 2.4rem; }
 
@@ -827,16 +890,7 @@ footer {
 
 /* ───────────────────────── Màn hẹp ───────────────────────── */
 @media (max-width: 960px) {
-  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 7rem; gap: 1.5rem; }
-  .hero-cube { order: -1; }
-  .cube { width: 130px; height: 130px; }
-  .cube .fr { transform: translateZ(65px); }
-  .cube .bk { transform: rotateY(180deg) translateZ(65px); }
-  .cube .rt { transform: rotateY(90deg) translateZ(65px); }
-  .cube .lf { transform: rotateY(-90deg) translateZ(65px); }
-  .cube .tp { transform: rotateX(90deg) translateZ(65px); }
-  .cube .bt { transform: rotateX(-90deg) translateZ(65px); }
-  .hero-cube::before { width: 220px; height: 220px; }
+  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 7rem; gap: 1.75rem; }
   .nav-links { display: none; }
   .steps-grid { grid-template-columns: 1fr; }
   .proof-grid { grid-template-columns: repeat(2, 1fr); }
@@ -861,7 +915,6 @@ footer {
    động, giữ nguyên toàn bộ nội dung và toàn bộ vật liệu kính. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .cube { animation: none; transform: rotateX(-22deg) rotateY(-32deg); }
   .reveal, .reveal.is-in { opacity: 1; transform: none; transition: none; }
   .rise { animation: none; }
   .shot, .shot img, .btn, .step, .nav-cta { transition: none; }
