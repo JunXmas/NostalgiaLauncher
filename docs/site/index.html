@@ -160,7 +160,7 @@
   <section class="proof" aria-label="Số liệu dự án">
     <div class="proof-grid glass" data-stagger>
       <div class="proof-item">
-        <span class="proof-num">1 131</span>
+        <span class="proof-num">1 138</span>
         <span class="proof-label">test tự động mỗi lần commit</span>
       </div>
       <div class="proof-item">
@@ -171,9 +171,16 @@
         <span class="proof-num">4</span>
         <span class="proof-label">mod loader: Fabric, Quilt, Forge, NeoForge</span>
       </div>
+      <!-- `app.js` thay con số này bằng tổng thật từ API GitHub. Viết sẵn một con số ĐÚNG ở
+           đây chứ không để trống hay ghi "—": người không có JavaScript, hoặc gặp lúc API
+           cháy ngưỡng 60 lượt/giờ, vẫn phải đọc được một con số thật. Ô trống trong một băng
+           bốn số liệu đọc ra như trang hỏng.
+
+           Số này không tự cập nhật nên nó sẽ cũ dần — chấp nhận được vì nó chỉ thấp hơn sự
+           thật, không bao giờ cao hơn. `data-*` ghi mốc để sau còn biết nó cũ tới đâu. -->
       <div class="proof-item">
-        <span class="proof-num">3</span>
-        <span class="proof-label">hệ điều hành có bản cài sẵn</span>
+        <span class="proof-num" id="download-total" data-as-of="2026-10-02">521</span>
+        <span class="proof-label">lượt tải launcher</span>
       </div>
     </div>
   </section>

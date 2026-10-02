@@ -17,55 +17,7 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[1]
-SITE = REPO / "docs" / "site"
-# Địa chỉ công khai, suy ra từ chủ kho và tên kho. Ghim ở một chỗ vì nó xuất hiện trong
-# `canonical`, `og:url`, `og:image` — lệch một cái là thẻ xem trước trỏ vào hư vô.
-PAGES_BASE = "https://junxmas.github.io/NostalgiaLauncher/site/"
-HTML = (SITE / "index.html").read_text(encoding="utf-8")
-JS = (SITE / "app.js").read_text(encoding="utf-8")
-CSS = (SITE / "style.css").read_text(encoding="utf-8")
-
-
-def strip_js_comments(source: str) -> str:
-    """Bỏ `//…` và `/*…*/`, giữ nguyên nội dung chuỗi.
-
-    Cần vì `app.js` chú thích rất dày và chú thích luôn nhắc tên đúng thứ nó giải thích —
-    nên mọi test tìm-chuỗi chạy trên nguyên file sẽ xanh kể cả khi code đã bị gỡ.
-
-    Không dùng regex: `"https://x"` có `//` ở giữa một chuỗi, regex ngây thơ sẽ cắt mất nửa
-    dòng và test đỏ oan. Phải đi qua từng ký tự với trạng thái "đang trong chuỗi hay không".
-    """
-    out = []
-    i = 0
-    quote = None
-    while i < len(source):
-        ch = source[i]
-        if quote:
-            out.append(ch)
-            if ch == "\\":
-                if i + 1 < len(source):
-                    out.append(source[i + 1])
-                i += 2
-                continue
-            if ch == quote:
-                quote = None
-            i += 1
-        elif ch in "\"'`":
-            quote = ch
-            out.append(ch)
-            i += 1
-        elif source.startswith("//", i):
-            i = source.find("\n", i)
-            if i == -1:
-                break
-        elif source.startswith("/*", i):
-            end = source.find("*/", i + 2)
-            i = len(source) if end == -1 else end + 2
-        else:
-            out.append(ch)
-            i += 1
-    return "".join(out)
+from site_sources import CSS, HTML, JS, PAGES_BASE, REPO, SITE, strip_js_comments
 
 
 def test_every_id_the_script_reaches_for_exists_in_the_page() -> None:
@@ -241,6 +193,62 @@ def test_the_numbers_in_the_proof_band_are_not_invented() -> None:
     claimed = int(re.sub(r"\D", "", found.group(1)))
     assert functions <= claimed <= functions * 3, (
         f"trang khoe {claimed} test mà kho có {functions} hàm test — số đã trôi"
+    )
+
+
+def test_the_download_counter_still_reads_a_real_number_when_the_api_is_silent() -> None:
+    """Con số lượt tải là thứ DUY NHẤT trên trang đổi sau mỗi lượt tải, nên cũng là thứ duy
+    nhất lặng lẽ sai được. Ba cách nó hỏng mà chủ trang không thấy:
+
+    - Để trống rồi chờ JS điền: người tắt script, và người gặp lúc API GitHub cháy ngưỡng
+      60 lượt/giờ/IP (ký túc xá, quán net, NAT nhà mạng dùng chung một IP), đọc ra một ô
+      rỗng giữa băng bốn số liệu — trang hỏng chứ không phải số chưa tải xong.
+    - Điền `0` khi API im: số 0 đọc ra "chưa ai tải", tức nói dối về chính thứ đang quảng cáo.
+    - Cộng cả `SHA256SUMS`: người cẩn thận tải thêm file băm để đối chiếu sẽ bị đếm hai lượt,
+      con số phồng lên mà không ai kiểm lại được.
+
+    Gác ở MÃ ĐÃ LỌC CHÚ THÍCH: mọi điều kiện ở đây đều được nhắc tên trong chính chú thích
+    giải thích nó, nên soi nguyên file thì gỡ vá ra test vẫn xanh. Đã trả giá một lần.
+    """
+    # `[^<]*` chứ không `[^<]+`: ô RỖNG là đúng cái hỏng cần bắt, mà `+` không khớp nổi nội
+    # dung rỗng nên nó rơi xuống `found is None` và báo "mất ô" — đúng màu, sai thông điệp.
+    found = re.search(r'id="download-total"[^>]*>([^<]*)<', HTML)
+    assert found is not None, "mất ô lượt tải trong băng chỉ tiêu"
+    static = int(re.sub(r"\D", "", found.group(1)) or 0)
+    assert static > 0, (
+        f"ô lượt tải viết sẵn {found.group(1)!r} — người không có JavaScript và người gặp lúc "
+        f"API cháy ngưỡng sẽ đọc ra một ô trống hoặc số 0"
+    )
+
+    code = strip_js_comments(JS)
+    # Chỉ soi THÂN hàm đếm, không soi nguyên file: `SHA256SUMS` còn xuất hiện trong
+    # `renderOtherFiles` (nó cũng loại file băm khỏi danh sách "file khác"), nên soi nguyên
+    # file thì gỡ phép loại khỏi hàm đếm ra test vẫn xanh. Đã đo bằng gỡ vá, không đoán.
+    counter = re.search(r"function countDownloads\(.*?\n\}", code, re.S)
+    assert counter is not None, "mất hàm `countDownloads` — con số sẽ đứng im mãi"
+    body = counter.group(0)
+    assert "SHA256SUMS" in body, "không loại `SHA256SUMS` — một người tải bị đếm thành hai lượt"
+    assert "download_count" in body, "không đọc `download_count` — con số sẽ đứng im mãi"
+    # Phải để NGUYÊN số tĩnh khi tổng ra 0, không ghi đè. `total <= 0` là cách duy nhất phân
+    # biệt "API im" với "thật sự chưa ai tải" ở phía trình duyệt.
+    assert "total <= 0" in code, "không chặn ghi đè bằng 0 — API im sẽ xoá mất số thật"
+
+    # Đúng MỘT lần gọi API: ngưỡng ẩn danh là 60 lượt/giờ/IP và cái hỏng khi cháy ngưỡng là
+    # NÚT TẢI, không phải con số trang trí. Thêm một `fetch` nữa chỉ để đếm là tự chia đôi
+    # ngưỡng đó cho mọi người dùng chung IP.
+    assert code.count("fetch(") == 1, (
+        f"có {code.count('fetch(')} lời gọi fetch — ngưỡng API ẩn danh 60 lượt/giờ/IP, "
+        f"cháy ngưỡng thì nút tải chết chứ không phải con số"
+    )
+
+    # `/releases` trả về cả bản nháp và bản thử nghiệm, khác `/releases/latest`. Không lọc thì
+    # một bản nháp — chỉ chủ kho thấy — thành "bản mới nhất", và asset của nó người lạ tải 404.
+    assert ".draft" in code and ".prerelease" in code, (
+        "không lọc bản nháp/thử nghiệm khỏi `/releases` — nút tải sẽ trỏ vào asset 404"
+    )
+    assert "published_at" in code, (
+        "chọn bản mới nhất theo thứ tự API (`created_at`) chứ không theo `published_at` — "
+        "kho này dựng bản DRAFT rồi publish tay nên hai mốc đó lệch nhau"
     )
 
 

@@ -7,7 +7,14 @@
 document.documentElement.classList.remove("no-js");
 
 const REPO = "JunXmas/NostalgiaLauncher";
-const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
+// `/releases` chứ không `/releases/latest`: cùng MỘT request vừa ra bản mới nhất vừa ra lượt
+// tải của mọi bản. API ẩn danh chỉ cho 60 lượt/giờ/IP — thêm một request nữa chỉ để đếm là
+// tự rút ngắn ngưỡng đó xuống một nửa cho mọi người dùng chung IP (ký túc xá, quán net, NAT
+// nhà mạng), và khi cháy ngưỡng thì thứ hỏng là NÚT TẢI chứ không phải con số trang trí.
+// 100 là trần của API. Kho có 18 bản; vượt 100 thì con số đếm thiếu phần đuôi — chấp nhận,
+// vì phân trang đổi lấy một request nữa mỗi lượt vào trang, mà phần đuôi là các bản cũ nhất.
+const PAGE_SIZE = 100;
+const API_URL = `https://api.github.com/repos/${REPO}/releases?per_page=${PAGE_SIZE}`;
 const RELEASES_URL = `https://github.com/${REPO}/releases/latest`;
 
 // Trả {os, arch} suy từ user agent. os: "windows" | "macos" | "linux" | null (không đoán được).
@@ -57,6 +64,37 @@ function humanSize(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
+// Cộng lượt tải mọi bản. Bỏ `SHA256SUMS`: nó là file băm để đối chiếu, một người tải launcher
+// rồi tải thêm nó sẽ bị đếm thành hai lượt — con số phồng lên mà không ai kiểm lại được.
+function countDownloads(releases) {
+  let total = 0;
+  for (const release of releases) {
+    for (const asset of release.assets || []) {
+      if (asset.name !== "SHA256SUMS") total += asset.download_count || 0;
+    }
+  }
+  return total;
+}
+
+// Khoảng trắng hẹp không ngắt dòng (U+202F) làm dấu phân nhóm, đúng lối viết số tiếng Việt và
+// không bị hiểu nhầm thành dấu thập phân như dấu chấm. `toLocaleString("vi-VN")` ra dấu chấm —
+// "1.234" đọc ra một phẩy hai ba tư ở phần lớn phần còn lại của thế giới.
+function groupDigits(number) {
+  return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+// Con số này là thứ DUY NHẤT trên trang thay đổi sau mỗi lượt tải, nên nó cũng là thứ duy nhất
+// có thể lặng lẽ sai mà không ai thấy. Nếu API không trả về được thì để nguyên con số tĩnh đã
+// viết sẵn trong HTML — một con số cũ và đúng-tại-thời-điểm-ghi tốt hơn một ô trống, và tốt
+// hơn hẳn số 0 (số 0 đọc ra "chưa ai tải", tức nói dối về chính thứ đang quảng cáo).
+function renderDownloadTotal(releases) {
+  const slot = document.getElementById("download-total");
+  if (!slot) return;
+  const total = countDownloads(releases);
+  if (total <= 0) return;
+  slot.textContent = groupDigits(total);
+}
+
 function showFallback(statusText) {
   const status = document.getElementById("download-status");
   const primary = document.getElementById("primary-download");
@@ -97,13 +135,34 @@ function wireSecondaryButton(id, assets, version, os, arch) {
 async function main() {
   const { os, arch } = detectPlatform();
 
-  let release;
+  let releases;
   try {
     const res = await fetch(API_URL, { headers: { Accept: "application/vnd.github+json" } });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    release = await res.json();
+    releases = await res.json();
+    if (!Array.isArray(releases)) throw new Error("API không trả về danh sách");
   } catch (err) {
     showFallback("Không dò được bản mới nhất tự động (API GitHub tạm không phản hồi).");
+    return;
+  }
+
+  // Đếm TRƯỚC khi lọc: một bản thử nghiệm vẫn là lượt tải thật của người thật.
+  renderDownloadTotal(releases);
+
+  // `/releases` trả về cả bản nháp và bản thử nghiệm, khác `/releases/latest` vốn tự bỏ hai
+  // loại đó. Không lọc ở đây thì một bản nháp — thứ chỉ chủ kho nhìn thấy, và chỉ khi đã đăng
+  // nhập — sẽ thành "bản mới nhất" của trang, với asset mà người lạ tải về 404.
+  //
+  // Sắp theo `published_at` chứ không tin thứ tự API trả về: `/releases` sắp theo `created_at`,
+  // còn "bản mới nhất" theo định nghĩa của GitHub là theo `published_at`. Hai mốc đó lệch nhau
+  // khi một bản được tạo nháp trước rồi publish sau — đúng quy trình phát hành của kho này
+  // (`release.yml` dựng bản DRAFT, jun publish tay sau khi test).
+  const published = releases
+    .filter((r) => !r.draft && !r.prerelease)
+    .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+  const release = published[0];
+  if (!release) {
+    showFallback("Chưa có bản phát hành nào.");
     return;
   }
 
