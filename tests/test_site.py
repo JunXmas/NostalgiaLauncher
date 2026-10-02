@@ -307,10 +307,7 @@ def test_the_page_still_works_when_it_is_not_served_from_the_root_of_a_domain() 
         rooted = re.findall(r'(?:src|href)="(/[^/][^"]*)"', text) + re.findall(
             r'url\(["\']?(/[^/][^"\')]*)', text
         )
-        assert not rooted, (
-            f"{name} dùng đường dẫn tuyệt đối {rooted} — trang phát ở "
-            f"/NostalgiaLauncher/ nên những cái này trỏ ra ngoài kho"
-        )
+        assert not rooted, f"{name}: {rooted} tuyệt đối, trỏ ra ngoài /NostalgiaLauncher/"
 
 
 def test_the_link_preview_card_is_not_an_empty_box_when_someone_shares_the_page() -> None:
@@ -332,8 +329,7 @@ def test_the_link_preview_card_is_not_an_empty_box_when_someone_shares_the_page(
         found = re.search(rf'property="{prop}" content="([^"]+)"', HTML)
         assert found is not None, f"thẻ {prop} mất `content`"
         assert found.group(1).startswith(PAGES_BASE), (
-            f"{prop} = {found.group(1)!r} không phải địa chỉ tuyệt đối dưới {PAGES_BASE} — "
-            f"trình quét không giải được đường dẫn tương đối"
+            f"{prop} = {found.group(1)!r} không tuyệt đối dưới {PAGES_BASE}"
         )
 
     card = SITE / "og-card.jpg"
@@ -369,6 +365,11 @@ def test_the_published_address_has_a_door_at_its_root() -> None:
     # Phải có liên kết bấm được, không chỉ `refresh`: tiện ích chặn `meta refresh` không
     # hiếm, và khi đó trang này là ngõ cụt.
     assert 'href="site/"' in text, "trang gốc không có liên kết thật — chặn refresh là ngõ cụt"
+    # Không khai icon thì trình duyệt hỏi `/favicon.ico` ở GỐC TÊN MIỀN, ngoài kho — một 404
+    # thật mỗi lượt vào. Bắt được nhờ soi bản deploy; ở local đường dẫn đó trỏ chỗ khác hẳn.
+    assert 'rel="icon" type="image/png" href="site/favicon.png"' in text, (
+        "trang gốc không khai icon — trình duyệt sẽ hỏi /favicon.ico ngoài kho và ăn 404"
+    )
 
 
 def test_the_inertia_scroll_only_takes_the_wheel_and_gives_back_every_other_route() -> None:
