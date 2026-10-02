@@ -19,7 +19,10 @@ skins, friends, updates — is already taken care of.
 
 ![Home — "Hôm nay chơi gì?"](docs/showcase/home.jpg)
 
-**[⬇️ Download the latest release](https://github.com/JunXmas/NostalgiaLauncher/releases/latest)**
+**[⬇️ Download page](https://junxmas.github.io/NostalgiaLauncher/)** — it detects your OS and
+hands you one file.
+&nbsp;·&nbsp;
+[All releases](https://github.com/JunXmas/NostalgiaLauncher/releases/latest)
 
 </div>
 
