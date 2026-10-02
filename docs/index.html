@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- GitHub Pages phát cả thư mục `docs/` làm gốc, nên địa chỉ gốc rơi vào ĐÂY, không vào
+     `docs/site/index.html`. Không có file này thì người dán link gốc gặp 404 của GitHub.
+
+     Vì sao không dọn trang web lên thẳng `docs/` để khỏi phải nhảy: trang trỏ `../showcase/*.jpg`
+     — chính bộ ảnh README dùng. Dọn lên thì phải sửa hết đường dẫn đó hoặc chép ảnh ra thành
+     bản thứ hai, và bản chép sẽ trôi khỏi bản README dùng mà không ai thấy.
+
+     Chuyển hướng bằng `<meta http-equiv="refresh">` chứ không bằng JavaScript: ai tắt script
+     vẫn phải tới được trang tải. Và vẫn để một thẻ `<a>` thật bên dưới, vì `refresh` có thể bị
+     tiện ích chặn — khi đó trang này là một ngõ cụt nếu không có liên kết bấm được. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=site/">
+<link rel="canonical" href="https://junxmas.github.io/NostalgiaLauncher/site/">
+<title>Nostalgia Launcher — Tải xuống</title>
+<style>
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #141821; color: #eef1f7;
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: #5ac54f; }
+</style>
+</head>
+<body>
+<p>Đang chuyển tới <a href="site/">trang tải Nostalgia Launcher</a>…</p>
+</body>
+</html>

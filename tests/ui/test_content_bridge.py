@@ -43,9 +43,17 @@ def test_content_bridge_searches_installs_and_lists(
 
     content_bridge.install(SODIUM)
     assert content_bridge.results[0]["installing"] is True
-    wait_until(lambda: not content_bridge.busy)
-    assert content_bridge.results[0]["installed"] is True
-    assert content_bridge.results[0]["installing"] is False
+
+    # Chờ CỜ CỦA HÀNG, không chờ `busy`. `busy` ghi thẳng vào một trường Python nên luồng
+    # chính đọc ra ngay, còn hai cờ trên hàng chỉ áp vào mô hình sau khi một signal QUEUED
+    # từ luồng nền về tới (`installedChanged`, `_flagsDirty`). Giữa hai mốc đó `busy` đã
+    # False mà mô hình vẫn là số liệu cũ. App không sai — QML nối vào signal nên giao diện
+    # cập nhật đúng một nhịp sau; sai là ở test, vì nó lấy `busy` làm đại diện cho "mô hình
+    # đã cập nhật". Máy nhanh thì cửa sổ ấy gần bằng không nên test xanh mãi; runner CI mở
+    # nó ra và test đỏ ngẫu nhiên, hai lần chạy rớt ở hai dòng khác nhau.
+    wait_until(lambda: content_bridge.results[0]["installed"])
+    wait_until(lambda: not content_bridge.results[0]["installing"])
+    assert not content_bridge.busy
 
     content_bridge.refreshInstalled("mod")
     names = sorted(row["fileName"] for row in content_bridge.installed)
