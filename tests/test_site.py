@@ -197,3 +197,54 @@ def test_the_numbers_in_the_proof_band_are_not_invented() -> None:
     assert functions <= claimed <= functions * 3, (
         f"trang khoe {claimed} test mà kho có {functions} hàm test — số đã trôi"
     )
+
+
+def test_the_brand_mark_is_the_real_app_logo_not_an_svg_redrawn_to_look_like_it() -> None:
+    """Trang từng dùng một `<symbol id="icon-grass">` vẽ tay ba hình chữ nhật cho giống khối
+    lá. Nó "trông na ná" nên không ai thấy sai — mà người dùng thì nối trang web với app
+    bằng đúng cái hình đó. Khác hình nghĩa là họ không chắc file vừa tải có phải thứ họ xem.
+
+    Gác hai chiều vì mỗi chiều hỏng im lặng theo cách riêng: thiếu `<img>` thì có thể đã âm
+    thầm quay về SVG vẽ tay, còn `icon-grass` quay lại thì nghĩa là có hai nhãn hiệu song
+    song trong cùng một trang.
+    """
+    assert 'class="brand-logo" src="logo.webp"' in HTML, (
+        "nhãn hiệu không còn dùng logo thật `logo.webp` — nếu đã thay bằng SVG vẽ lại thì "
+        "nó không còn khớp icon ứng dụng"
+    )
+    assert HTML.count('class="brand-logo"') == 2, "phải đúng hai chỗ: nav và chân trang"
+    assert "icon-grass" not in HTML, "khối lá vẽ tay đã quay lại — dùng `logo.webp` thay"
+
+    # `width`/`height` phải khai trong HTML, nếu không trình duyệt không giữ chỗ trước khi ảnh
+    # về và nav giật một nhịp khi tải (CLS).
+    assert HTML.count('class="brand-logo" src="logo.webp" alt="" width="128" height="128"') == 2, (
+        "thẻ logo thiếu `width`/`height` khai sẵn, hoặc `alt` không rỗng (cạnh nó đã có chữ "
+        "'Nostalgia' nên trình đọc màn hình sẽ đọc tên hai lần)"
+    )
+
+    logo = SITE / "logo.webp"
+    assert logo.is_file(), "thiếu `docs/site/logo.webp`"
+    # 128px là gấp đôi cỡ hiển thị lớn nhất (34px ở nav) nên dư cho màn hình mật độ cao;
+    # vượt 40 KB thì nghĩa là ai đó đã chép thẳng file gốc 256px vào đây.
+    assert logo.stat().st_size < 40_000, f"`logo.webp` phình lên {logo.stat().st_size} byte"
+
+
+def test_the_favicon_is_byte_for_byte_the_icon_the_installed_app_uses() -> None:
+    """So THEO BYTE chứ không chỉ kiểm tồn tại.
+
+    Đây là một file CHÉP, nên nó trôi theo đúng kiểu không ai nhận ra: đổi icon ứng dụng ở
+    `packaging/icons/` thì bản chép trong `docs/site/` vẫn nằm im, vẫn hiện ra, vẫn là một
+    hình hợp lệ — chỉ là tab trình duyệt và thanh tác vụ từ đó trở đi là hai hình khác nhau.
+    """
+    repo = Path(__file__).resolve().parents[1]
+    source = repo / "packaging" / "icons" / "nostalgia-32.png"
+    copied = SITE / "favicon.png"
+    assert copied.is_file(), "thiếu `docs/site/favicon.png`"
+    assert copied.read_bytes() == source.read_bytes(), (
+        "favicon của trang đã lệch khỏi icon ứng dụng — chép lại "
+        "`packaging/icons/nostalgia-32.png` sang `docs/site/favicon.png`"
+    )
+    assert 'href="favicon.png"' in HTML, "trang không còn trỏ tới `favicon.png`"
+    assert "data:image/svg" not in HTML, (
+        "favicon quay về SVG data-URI vẽ tay — nó không khớp icon ứng dụng"
+    )

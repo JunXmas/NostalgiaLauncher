@@ -285,6 +285,28 @@ a { color: inherit; }
   font-size: 1.02rem;
 }
 
+/* Logo THẬT — cùng file làm icon ứng dụng (`assets/logo.png` → `logo.webp`), không phải SVG
+   vẽ lại cho giống. Khối lá có khoảng trống trong suốt ở bốn góc do phép chiếu isometric,
+   nên nó cần nhỉnh hơn icon vuông vài pixel mới cân bằng về mặt thị giác.
+
+   `alt=""` chứ không mô tả: ngay bên cạnh đã có chữ "Nostalgia" trong cùng thẻ `<a>`. Đặt
+   alt ở đây thì trình đọc màn hình đọc tên sản phẩm hai lần liên tiếp.
+
+   `width`/`height` khai trong HTML là 128 — cùng tỉ lệ, nên trình duyệt giữ chỗ đúng trước
+   khi ảnh về và trang không giật (CLS). */
+.brand-logo {
+  /* 34px chứ không 30. Khối lá nhiều chi tiết lốm đốm — dưới ~32px nó không còn đọc ra
+     "khối ba mặt" mà thành một vệt xanh. App cũng dùng 36 (`Sidebar.qml`). */
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  /* Nổi trên ảnh hero: khối xanh lá trên nền trời sáng cần một viền tối mỏng mới tách ra.
+     `drop-shadow` theo đúng hình alpha, khác `box-shadow` vốn bám hộp vuông. */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+}
+
+footer .brand-logo { width: 26px; height: 26px; }
+
 /* "GIA" giữ sắc lục thương hiệu ở mọi khối, không đổi theo accent — tên sản phẩm phải nhận ra
    được dù đang ở đoạn nào của trang. Cùng luật với `Theme.brand` trong app. */
 .brand b { color: var(--grass); font-weight: inherit; }

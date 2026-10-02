@@ -21,6 +21,25 @@ Nội dung trong khung hình là thế giới và texture của **Mojang Studios
 chụp màn hình game dùng để minh hoạ một công cụ phi thương mại cho chính game đó. Dự án
 không liên kết với Mojang hoặc Microsoft — câu này cũng in ở chân trang.
 
+## `logo.webp` và `favicon.png`
+
+Cùng một hình với icon ứng dụng, **không phải SVG vẽ lại cho giống**. Người dùng nối trang
+web với app vừa cài bằng đúng cái hình đó; hai hình na ná nhau là lý do để họ nghi file vừa
+tải.
+
+| File | Nguồn gốc | Xử lý |
+|---|---|---|
+| `logo.webp` | `src/nostalgia/ui/qml/assets/logo.png` (256×256 RGBA, cũng là logo trong `Sidebar.qml`) | Co về 128×128 LANCZOS, WEBP q88 method 6 — 12 550 byte, nhỏ hơn PNG cùng cỡ (26 447 byte) |
+| `favicon.png` | `packaging/icons/nostalgia-32.png` | Chép nguyên byte, không xử lý gì |
+
+`favicon.png` là bản **chép**, nên nó trôi im lặng: đổi icon ứng dụng mà quên chép lại thì
+tab trình duyệt vẫn hiện một hình hợp lệ, chỉ là khác hình trên thanh tác vụ.
+`tests/test_site.py::test_the_favicon_is_byte_for_byte_the_icon_the_installed_app_uses` so
+theo byte để chặn chuyện đó.
+
+Logo khối lá là tác phẩm của **jun** (gốc `packaging/icons/nostalgia-source.png`), theo
+giấy phép của kho — AGPL-3.0.
+
 ## `../showcase/*.jpg`
 
 Ảnh chụp giao diện của chính launcher này. Trong đó `home.jpg`, `create-instance.jpg` và
