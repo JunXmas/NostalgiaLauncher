@@ -369,6 +369,11 @@ def test_the_published_address_has_a_door_at_its_root() -> None:
     # Phải có liên kết bấm được, không chỉ `refresh`: tiện ích chặn `meta refresh` không
     # hiếm, và khi đó trang này là ngõ cụt.
     assert 'href="site/"' in text, "trang gốc không có liên kết thật — chặn refresh là ngõ cụt"
+    # Không khai icon thì trình duyệt hỏi `/favicon.ico` ở GỐC TÊN MIỀN, ngoài kho — một 404
+    # thật mỗi lượt vào. Bắt được nhờ soi bản deploy; ở local đường dẫn đó trỏ chỗ khác hẳn.
+    assert 'rel="icon" type="image/png" href="site/favicon.png"' in text, (
+        "trang gốc không khai icon — trình duyệt sẽ hỏi /favicon.ico ngoài kho và ăn 404"
+    )
 
 
 def test_the_inertia_scroll_only_takes_the_wheel_and_gives_back_every_other_route() -> None:
