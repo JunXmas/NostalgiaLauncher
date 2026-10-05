@@ -1,0 +1,215 @@
+"""Kho tài khoản: ghi nguyên tử, quyền 0600, và chịu được file hỏng."""
+
+from __future__ import annotations
+
+import json
+import logging
+import stat
+from pathlib import Path
+
+import pytest
+
+from nostalgia.account.model import ELY, MICROSOFT, OFFLINE, Account
+from nostalgia.account.offline import build_offline_account
+from nostalgia.account.store import (
+    find_account,
+    load_accounts,
+    remove_account,
+    save_accounts,
+    upsert_account,
+)
+from nostalgia.errors import DataFileError
+from nostalgia.storage.paths import DataPaths
+
+
+def make_accounts() -> tuple[Account, ...]:
+    return tuple(build_offline_account(name) for name in ("Jun", "Notch", "jeb_"))
+
+
+def test_a_saved_store_reads_back_identical(tmp_path: Path) -> None:
+    path = tmp_path / "accounts.json"
+    accounts = make_accounts()
+
+    save_accounts(path, accounts)
+
+    assert load_accounts(path) == accounts
+
+
+def test_the_store_is_not_readable_by_other_users(tmp_path: Path) -> None:
+    """File này sẽ chứa vé đăng nhập Microsoft ở M2."""
+    path = tmp_path / "accounts.json"
+    save_accounts(path, make_accounts())
+
+    mode = stat.S_IMODE(path.stat().st_mode)
+
+    assert mode == 0o600, f"quyền là {oct(mode)}"
+
+
+def test_writing_leaves_no_temporary_file_behind(tmp_path: Path) -> None:
+    path = tmp_path / "accounts.json"
+    save_accounts(path, make_accounts())
+    save_accounts(path, make_accounts())
+
+    assert [path_entry.name for path_entry in tmp_path.iterdir()] == ["accounts.json"]
+
+
+def test_a_missing_store_is_empty_not_an_error(tmp_path: Path) -> None:
+    assert load_accounts(tmp_path / "chua-co.json") == ()
+
+
+def test_a_store_broken_at_the_json_level_refuses_to_load(tmp_path: Path) -> None:
+    """Coi file hỏng như rỗng là con đường thẳng tới việc lần ghi sau xoá sạch tài khoản."""
+    path = tmp_path / "accounts.json"
+    path.write_text("{khong phai json", encoding="utf-8")
+
+    with pytest.raises(DataFileError):
+        load_accounts(path)
+
+
+def test_one_broken_record_does_not_take_the_others_with_it(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    path = tmp_path / "accounts.json"
+    path.write_text(
+        json.dumps(
+            {
+                "format": 1,
+                "accounts": [
+                    {"player_name": "Jun", "player_uuid": "u-1", "account_kind": OFFLINE},
+                    {"player_name": "ThieuUuid"},
+                    "khong phai doi tuong",
+                    {"player_name": "Notch", "player_uuid": "u-2", "account_kind": OFFLINE},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.WARNING):
+        accounts = load_accounts(path)
+
+    assert [account.player_name for account in accounts] == ["Jun", "Notch"]
+    assert len(caplog.records) == 2, "bỏ qua thì phải nói, không được im lặng"
+
+
+def test_an_unknown_field_does_not_break_reading(tmp_path: Path) -> None:
+    """Bản sau có thể thêm trường; bản trước đọc vào không được nổ."""
+    path = tmp_path / "accounts.json"
+    path.write_text(
+        json.dumps(
+            {
+                "format": 99,
+                "accounts": [
+                    {
+                        "player_name": "Jun",
+                        "player_uuid": "u-1",
+                        "account_kind": OFFLINE,
+                        "truong_moi": {"gi do": 1},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert load_accounts(path)[0].player_name == "Jun"
+
+
+def test_a_token_survives_the_round_trip(tmp_path: Path) -> None:
+    path = tmp_path / "accounts.json"
+    account = Account(
+        player_name="Jun", player_uuid="u-1", account_kind=MICROSOFT, access_token="ve"
+    )
+
+    save_accounts(path, (account,))
+
+    assert load_accounts(path)[0].access_token == "ve"
+
+
+def test_lookup_ignores_letter_case_because_people_type_it() -> None:
+    accounts = make_accounts()
+    assert find_account(accounts, "jun") is not None
+    assert find_account(accounts, "JUN") is not None
+    assert find_account(accounts, "khong-co") is None
+    assert find_account((), "Jun") is None
+
+
+def test_same_kind_and_uuid_replaces_in_place() -> None:
+    """Đăng nhập lại (cùng kind + uuid) thay tại chỗ, giữ thứ tự."""
+    accounts = make_accounts()
+    notch_uuid = accounts[1].player_uuid  # "Notch" offline
+    changed = Account(
+        player_name="Notch", player_uuid=notch_uuid, account_kind=OFFLINE, access_token="ve"
+    )
+
+    updated = upsert_account(accounts, changed)
+
+    assert [a.player_name for a in updated] == ["Jun", "Notch", "jeb_"]
+    assert len(updated) == len(accounts)
+    assert updated[1].access_token == "ve"
+
+
+def test_same_name_different_kind_adds_separately() -> None:
+    """offline 'Notch' và ely 'Notch' là hai tài khoản khác nhau."""
+    accounts = make_accounts()
+    ely_notch = Account(
+        player_name="Notch", player_uuid="ely-uuid", account_kind=ELY, access_token="ve"
+    )
+
+    updated = upsert_account(accounts, ely_notch)
+
+    assert len(updated) == 4
+    assert [a.player_name for a in updated] == ["Jun", "Notch", "jeb_", "Notch"]
+    assert updated[1].account_kind == OFFLINE
+    assert updated[3].account_kind == ELY
+
+
+def test_adding_a_new_name_appends() -> None:
+    updated = upsert_account(make_accounts(), build_offline_account("Steve"))
+    assert [a.player_name for a in updated][-1] == "Steve"
+    assert len(updated) == 4
+
+
+def test_removing_ignores_letter_case_and_missing_names() -> None:
+    accounts = make_accounts()
+    assert [account.player_name for account in remove_account(accounts, "NOTCH")] == ["Jun", "jeb_"]
+    assert remove_account(accounts, "khong-co") == accounts
+    assert remove_account((), "Jun") == ()
+
+
+def test_the_store_lives_beside_the_config_not_the_downloads(tmp_path: Path) -> None:
+    """Xoá `data_dir` để lấy chỗ trống thì không được mất tài khoản theo."""
+    paths = DataPaths(data_dir=tmp_path / "data", config_dir=tmp_path / "config")
+
+    assert paths.accounts_json == tmp_path / "config" / "accounts.json"
+    assert not paths.accounts_json.is_relative_to(paths.data_dir)
+
+
+def test_saving_creates_the_config_directory(tmp_path: Path) -> None:
+    paths = DataPaths(data_dir=tmp_path / "data", config_dir=tmp_path / "config")
+
+    save_accounts(paths.accounts_json, make_accounts())
+
+    assert paths.accounts_json.exists()
+
+
+def test_two_accounts_can_share_a_name_and_still_be_told_apart() -> None:
+    """Một người chơi có thể có cả Microsoft lẫn Ely cùng tên — jun có thật trong
+    `accounts.json` của mình. Tra theo tên thì cả hai ra CÙNG một bản ghi, nên launcher
+    chạy game bằng tài khoản sai và không có cách nào chọn cái kia."""
+    microsoft = Account(player_name="JunSlayest", player_uuid="mc-1", account_kind=MICROSOFT)
+    ely = Account(player_name="JunSlayest", player_uuid="ely-1", account_kind=ELY)
+    accounts = (microsoft, ely)
+
+    assert microsoft.account_id != ely.account_id
+    assert find_account(accounts, microsoft.account_id) == microsoft
+    assert find_account(accounts, ely.account_id) == ely
+
+
+def test_removing_by_account_id_leaves_the_namesake_alone() -> None:
+    """Gỡ một tài khoản là việc không lùi được. Khớp theo tên thì gỡ 'JunSlayest' xoá luôn
+    cả hai — mất vé Microsoft mà người dùng chỉ định bỏ tài khoản Ely."""
+    microsoft = Account(player_name="JunSlayest", player_uuid="mc-1", account_kind=MICROSOFT)
+    ely = Account(player_name="JunSlayest", player_uuid="ely-1", account_kind=ELY)
+
+    assert remove_account((microsoft, ely), ely.account_id) == (microsoft,)

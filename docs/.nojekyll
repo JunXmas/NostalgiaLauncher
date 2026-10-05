@@ -1,0 +1,5 @@
+Tệp rỗng này tắt Jekyll trên GitHub Pages.
+
+Trang này là ba file tĩnh viết tay, không có build step. Để Jekyll chạy thì nó bỏ qua mọi
+file và thư mục bắt đầu bằng `_`, và tự ý dựng lại một số thứ — cả hai đều là hỏng im lặng:
+file biến mất khỏi bản deploy mà kho vẫn còn nó, nên không có cách nào thấy bằng mắt ở local.

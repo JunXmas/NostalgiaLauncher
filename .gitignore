@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+out/
+packaging/icons/nostalgia.icns
+*.egg-info/
+.claude/
+.env
+CLAUDE.md
+*.log
+run-test-build.sh

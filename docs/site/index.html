@@ -1,0 +1,303 @@
+<!doctype html>
+<!-- `no-js` gỡ ngay ở dòng đầu `app.js`. Để sẵn chứ không thêm bằng JS: CSS cần biết "không có
+     JavaScript" NGAY lúc vẽ khung đầu tiên, và thứ duy nhất chắc chắn có mặt lúc đó là HTML. -->
+<html lang="vi" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Nostalgia Launcher — Tải xuống</title>
+<meta name="description" content="Minecraft launcher miễn phí, mã nguồn công khai: tài khoản, bản chơi, mod, LAN qua relay. Trang tự dò hệ điều hành và đưa đúng một nút tải.">
+
+<!-- Thẻ xem trước khi ai đó dán link vào Discord, Messenger, Zalo, X. Thiếu bộ này thì nơi
+     người ta thật sự chia nhau link — một người tải được rồi gửi cho bạn — hiện ra một ô
+     trắng không ảnh không chữ, đọc ra như link rác. Và đó cũng chính là chỗ KHÔNG ai tự
+     kiểm được: người dán thấy thẻ hỏng, còn chủ trang thì không bao giờ thấy.
+
+     `url` và `og:image` phải TUYỆT ĐỐI: các trình quét không chạy JavaScript và không giải
+     đường dẫn tương đối — ghi `og-card.jpg` là mất ảnh ở mọi nơi.
+
+     `og:image:alt` chứ không bỏ trống: người dùng trình đọc màn hình gặp thẻ này trong dòng
+     tin, và nếu không có nó họ chỉ nghe "hình ảnh". -->
+<link rel="canonical" href="https://junxmas.github.io/NostalgiaLauncher/site/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nostalgia Launcher">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:url" content="https://junxmas.github.io/NostalgiaLauncher/site/">
+<meta property="og:title" content="Nostalgia Launcher — Minecraft launcher miễn phí, mã nguồn công khai">
+<meta property="og:description" content="Tài khoản Microsoft và Ely.by, bản chơi, mod, chơi LAN với bạn qua relay. Không quảng cáo, không thu thập dữ liệu, mỗi bản có SHA256.">
+<meta property="og:image" content="https://junxmas.github.io/NostalgiaLauncher/site/og-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logo khối lá Nostalgia trên ảnh bình minh trong Minecraft, kèm dòng chữ Nostalgia Launcher">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- ĐÚNG file icon ứng dụng (`packaging/icons/nostalgia-32.png`), không phải SVG vẽ lại.
+     Tab trình duyệt và thanh tác vụ sau khi cài phải là cùng một hình — khác nhau thì người
+     dùng không nối được trang web với app vừa tải. -->
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg class="icon-defs" aria-hidden="true">
+  <!-- Bộ lọc làm ra chất "kính lỏng": nhiễu fractal → làm mềm → dùng chính nhiễu đó để DỜI
+       từng pixel của ảnh phía sau. Kết quả là ảnh sau tấm bị uốn như nhìn qua thấu kính,
+       chứ không chỉ mờ đi.
+
+       `baseFrequency` thấp (0.008) cho sóng DÀI — tần số cao ra vân lăn tăn, đọc ra "kính
+       mờ phòng tắm" chứ không ra thấu kính. `scale="34"` là biên độ dời tính bằng pixel;
+       trên 50 thì chữ sau tấm bắt đầu méo thấy rõ.
+
+       `color-interpolation-filters="sRGB"`: mặc định của SVG là linearRGB, và nhiễu sinh ra
+       trong không gian đó sẽ lệch sáng hẳn so với phần còn lại của trang. -->
+  <filter id="liquid" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.013" numOctaves="2" seed="11" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="1.6" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+
+  <symbol id="icon-download" viewBox="0 0 24 24">
+    <path d="M12 3v11m0 0l-4.5-4.5M12 14l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="icon-craft" viewBox="0 0 24 24">
+    <rect x="2" y="8" width="7" height="8" fill="currentColor" opacity=".55"/>
+    <rect x="9" y="8" width="6" height="8" fill="currentColor"/>
+    <rect x="15" y="8" width="7" height="8" fill="currentColor" opacity=".75"/>
+    <rect x="2" y="16" width="20" height="4" fill="currentColor" opacity=".35"/>
+  </symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24">
+    <path d="M6 4l14 8-14 8V4z" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24">
+    <path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="icon-code" viewBox="0 0 24 24">
+    <path d="M9 7l-5 5 5 5m6-10l5 5-5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<header class="nav" id="nav">
+  <a class="brand pixel" href="#top">
+    <img class="brand-logo" src="logo.webp" alt="" width="128" height="128" decoding="async">
+    <span>Nostal<b>gia</b></span>
+  </a>
+  <nav class="nav-links" aria-label="Điều hướng chính">
+    <a href="#download" class="nav-link">Tải xuống</a>
+    <a href="#steps" class="nav-link">Bắt đầu</a>
+    <a href="#showcase" class="nav-link">Giao diện</a>
+  </nav>
+  <a class="nav-cta" href="https://github.com/JunXmas/NostalgiaLauncher">GitHub <span aria-hidden="true">↗</span></a>
+</header>
+
+<main>
+  <section id="top" class="hero">
+    <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
+
+    <div class="hero-copy">
+      <p class="hero-badge rise" style="--i:0">
+        <span class="dot" aria-hidden="true"></span>
+        Mã nguồn công khai · không quảng cáo
+      </p>
+      <h1 class="rise" style="--i:1"><span>Thế giới quen thuộc.</span><span class="grad">Khởi đầu mới.</span></h1>
+      <p class="tagline rise" style="--i:2">Minecraft launcher miễn phí, không quảng cáo.</p>
+      <p class="subtitle rise" style="--i:3">Chọn bản chơi, thêm mod, chơi LAN với bạn bè qua relay. Tài khoản Microsoft và Ely.by đều vào được.</p>
+    </div>
+
+    <!-- Khối tải nằm cột PHẢI, tức đúng nửa khung có mặt trời. Đây là chủ ý: tấm kính chỉ
+         phô ra chất khi phía sau nó có gì sáng và có chi tiết để uốn. Đặt nó bên trái — nơi
+         mặt nạ dìm tối để chữ đọc được — thì nó lại thành ô xám, đúng lỗi của bản trước. -->
+    <div class="hero-action">
+      <div id="download" class="download-block glass rise" style="--i:4" aria-live="polite">
+        <p id="download-status" class="status">Đang dò bản mới nhất…</p>
+
+        <!-- Không có JavaScript thì không dò được bản mới nhất, và dòng "Đang dò…" ở trên
+             đứng im vĩnh viễn — người dùng nhìn thấy một khối tải không có nút nào. `<noscript>`
+             là đúng công cụ cho chỗ này: trình duyệt tự ẩn nó khi script chạy được, nên không
+             tốn một dòng JS và không có cách nào quên gỡ. -->
+        <noscript>
+          <a class="btn btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest">
+            <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+            Tới trang tải trên GitHub
+          </a>
+        </noscript>
+
+        <a id="primary-download" class="btn btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+          <span id="primary-label">Tải xuống</span>
+          <span id="primary-meta" class="btn-meta"></span>
+        </a>
+
+        <!-- Hai hệ CÒN LẠI, không phải hệ đang dùng. Thiếu nút Windows ở đây thì người dùng
+             Linux chỉ thấy đúng một nút phụ chiếm hết hàng, đọc ra như nút chính thứ hai. -->
+        <div class="secondary-row">
+          <a id="windows-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>Windows</a>
+          <a id="linux-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>Linux</a>
+          <a id="macos-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>macOS</a>
+        </div>
+
+        <!-- Bốn câu này là thứ người lạ cần biết TRƯỚC khi bấm tải một file lạ. Mỗi câu
+             kiểm lại được trong kho — không có con số nào bịa. -->
+        <ul class="promises">
+          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Không quảng cáo</li>
+          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Không thu thập dữ liệu</li>
+          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Mỗi bản có SHA256</li>
+          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Đọc được toàn bộ mã</li>
+        </ul>
+
+        <a class="all-releases-link" href="https://github.com/JunXmas/NostalgiaLauncher/releases">Xem tất cả bản tải →</a>
+
+        <details id="other-files" hidden>
+          <summary>Hệ điều hành khác / file khác</summary>
+          <ul id="other-files-list"></ul>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chỗ trang doanh nghiệp đặt logo khách hàng. Dự án này không có khách hàng để trưng, và
+       logo bịa thì lộ ngay — nên đặt bốn con số VỀ MÃ NGUỒN, đếm được lại trên GitHub. -->
+  <section class="proof" aria-label="Số liệu dự án">
+    <div class="proof-grid glass" data-stagger>
+      <div class="proof-item">
+        <span class="proof-num">1 138</span>
+        <span class="proof-label">test tự động mỗi lần commit</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">0</span>
+        <span class="proof-label">phụ thuộc runtime ở phần lõi</span>
+      </div>
+      <div class="proof-item">
+        <span class="proof-num">4</span>
+        <span class="proof-label">mod loader: Fabric, Quilt, Forge, NeoForge</span>
+      </div>
+      <!-- `app.js` thay con số này bằng tổng thật từ API GitHub. Viết sẵn một con số ĐÚNG ở
+           đây chứ không để trống hay ghi "—": người không có JavaScript, hoặc gặp lúc API
+           cháy ngưỡng 60 lượt/giờ, vẫn phải đọc được một con số thật. Ô trống trong một băng
+           bốn số liệu đọc ra như trang hỏng.
+
+           Số này không tự cập nhật nên nó sẽ cũ dần — chấp nhận được vì nó chỉ thấp hơn sự
+           thật, không bao giờ cao hơn. `data-*` ghi mốc để sau còn biết nó cũ tới đâu. -->
+      <div class="proof-item">
+        <span class="proof-num" id="download-total" data-as-of="2026-10-02">521</span>
+        <span class="proof-label">lượt tải launcher</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="steps" class="steps">
+    <div class="section-head">
+      <p class="eyebrow pixel">Bắt đầu</p>
+      <h2>Vào game trong ba bước</h2>
+      <p>Không cần cài Java trước, không cần tìm bản mod loader đúng đời, không cần sửa file cấu hình nào.</p>
+    </div>
+    <div class="steps-grid" data-stagger>
+      <div class="step glass">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+        <p class="step-num pixel">01</p>
+        <h3>Tải launcher</h3>
+        <p>Trang tự nhận hệ điều hành và đưa đúng một file.</p>
+      </div>
+      <div class="step glass">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-craft"></use></svg>
+        <p class="step-num pixel">02</p>
+        <h3>Tạo bản chơi</h3>
+        <p>Chọn phiên bản, thêm Fabric/Forge và mod yêu thích.</p>
+      </div>
+      <div class="step glass">
+        <svg class="step-icon" aria-hidden="true"><use href="#icon-play"></use></svg>
+        <p class="step-num pixel">03</p>
+        <h3>Bắt đầu chơi</h3>
+        <p>Bấm CHƠI. Java tự tải nếu máy chưa có.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase" class="showcase">
+    <div class="section-head">
+      <p class="eyebrow pixel">Giao diện</p>
+      <h2>Bảy trang, bảy màu</h2>
+      <p>Mỗi trang trong launcher mang một sắc riêng, nên nhìn một cái là biết đang ở đâu.</p>
+    </div>
+    <div class="shots" data-stagger>
+      <figure class="shot glass"><img src="../showcase/home.jpg" alt="Màn hình chính của launcher" loading="lazy" decoding="async"><figcaption>Trang chủ</figcaption></figure>
+      <figure class="shot glass"><img src="../showcase/create-instance.jpg" alt="Màn hình tạo bản chơi mới" loading="lazy" decoding="async"><figcaption>Tạo bản chơi</figcaption></figure>
+      <figure class="shot glass"><img src="../showcase/library.jpg" alt="Thư viện mod và modpack" loading="lazy" decoding="async"><figcaption>Thư viện mod</figcaption></figure>
+      <figure class="shot glass"><img src="../showcase/multiplayer.jpg" alt="Màn hình chơi mạng LAN qua relay" loading="lazy" decoding="async"><figcaption>Chơi chung</figcaption></figure>
+      <figure class="shot glass"><img src="../showcase/accounts-skins.jpg" alt="Trang tài khoản và thư viện skin" loading="lazy" decoding="async"><figcaption>Tài khoản &amp; skin</figcaption></figure>
+      <figure class="shot glass"><img src="../showcase/log.jpg" alt="Nhật ký game" loading="lazy" decoding="async"><figcaption>Nhật ký</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="section-head">
+      <p class="eyebrow pixel">Có sẵn</p>
+      <h2>Không cần cài thêm gì</h2>
+      <p>Những việc người chơi thường phải tự xoay, launcher lo sẵn.</p>
+    </div>
+    <div class="features-grid" data-stagger>
+      <div class="step glass">
+        <h3>Java tự lo</h3>
+        <p>Thiếu Java đúng đời thì launcher tự tải, không bắt đi tìm bản cài.</p>
+      </div>
+      <div class="step glass">
+        <h3>Modpack kéo-thả</h3>
+        <p>Thả file .mrpack hoặc .zip vào cửa sổ là xong. CurseForge và Modrinth đều nhận.</p>
+      </div>
+      <div class="step glass">
+        <h3>LAN qua relay</h3>
+        <p>Chơi chung với bạn mà không mở cổng router, không cần Hamachi.</p>
+      </div>
+      <div class="step glass">
+        <h3>Nhập từ launcher cũ</h3>
+        <p>Đang dùng launcher khác thì mang bản chơi và tài khoản sang.</p>
+      </div>
+      <div class="step glass">
+        <h3>Tự cập nhật</h3>
+        <p>Có bản mới thì báo ngay trong app, tải và áp một lần bấm.</p>
+      </div>
+      <div class="step glass">
+        <h3>Mã nguồn công khai</h3>
+        <p>PolyForm Strict 1.0.0. Toàn bộ mã đọc được trên GitHub, không có gì chạy ngầm.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nút tải ở hero đã cuộn khỏi màn hình từ lâu lúc người đọc tới đây. Không có dải này
+       thì người vừa bị thuyết phục phải cuộn ngược lên đầu trang. -->
+  <section class="closing">
+    <div class="closing-card glass">
+      <h2>Tải về và chơi trong vài phút</h2>
+      <p>Miễn phí, không tài khoản bắt buộc, không quảng cáo. Mỗi bản phát hành đều kèm SHA256 để tự đối chiếu.</p>
+      <div class="closing-actions">
+        <a class="btn btn-primary" href="#download">
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+          Lên đầu trang tải
+        </a>
+        <a class="btn" href="https://github.com/JunXmas/NostalgiaLauncher">
+          <svg class="icon" aria-hidden="true"><use href="#icon-code"></use></svg>
+          Đọc mã nguồn
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-brand">
+    <img class="brand-logo" src="logo.webp" alt="" width="128" height="128" loading="lazy" decoding="async">
+    <span>
+      Nostalgia Launcher
+      <span class="footer-note">Dự án độc lập, không liên kết với Mojang hoặc Microsoft.</span>
+    </span>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/JunXmas/NostalgiaLauncher#readme">Hướng dẫn cài đặt</a>
+    <a href="https://github.com/JunXmas/NostalgiaLauncher/releases">Bản phát hành</a>
+    <a href="https://github.com/JunXmas/NostalgiaLauncher">GitHub ↗</a>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

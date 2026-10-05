@@ -1,0 +1,265 @@
+"""Cầu nối chính giữa QML và lõi: tài khoản, chơi game, nhật ký game (phần bản chơi và tiến
+độ nằm ở `instance_bridge.py`, cùng một đối tượng `bridge` với QML).
+
+Các cầu nối trong `ui/` là những file DUY NHẤT chạm vào `nostalgia.api`. Khi lõi đổi, chỉ
+chúng phải sửa, còn QML thì không. Kho tiền nhiệm không làm vậy — giao diện gọi thẳng sáu
+module lõi, và mỗi lần lõi đổi là giao diện gãy theo.
+"""
+
+from __future__ import annotations
+
+import threading
+import time
+from typing import Any
+
+from PySide6.QtCore import Property, QObject, Signal, Slot
+
+from nostalgia.account.model import Account
+from nostalgia.api import GameProcess, Launcher
+from nostalgia.operations.cancellation import CancelToken
+from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
+from nostalgia.ui.instance_bridge import InstanceBridge
+
+
+class LauncherBridge(InstanceBridge):
+    """Bề mặt mà QML nhìn thấy: vài thuộc tính đọc được, vài lệnh gọi được, và tín hiệu."""
+
+    accountsChanged = Signal()
+    gameStarted = Signal(str)
+    gameStopped = Signal(int)
+    gameRunningChanged = Signal()
+    # Đăng nhập Microsoft: mã để người dùng gõ trên trang của Microsoft, rồi kết quả.
+    deviceCodeReady = Signal(str, str)
+    signInFinished = Signal(str)
+    activeAccountChanged = Signal()
+
+    def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
+        super().__init__(launcher, parent)
+        self._active_account_id = ""
+        self._sign_in_cancel: CancelToken | None = None
+        self._game_running = False
+        # Tiến trình game đang chạy (để nút DỪNG gửi tín hiệu) và cờ "người dùng tự dừng" —
+        # dừng chủ động không phải sự cố, không toast "gặp sự cố".
+        self._game: GameProcess | None = None
+        self._stop_requested = False
+        # Kho tài khoản đọc từ đĩa MỘT lần rồi giữ trong RAM. Trước đây mỗi binding QML đọc
+        # `accounts`/`activePlayerName` là một lần đọc + parse accounts.json — một cú bấm chọn
+        # tài khoản kéo theo 11 lần đọc, thêm tài khoản 26 lần (đo bằng harness).
+        self._accounts: tuple[Account, ...] | None = None
+        # Nhật ký game: luồng đọc output đổ vào đây, trang NHẬT KÝ đọc model của nó.
+        self._game_log = GameLogFeed(self)
+        # `play` chạy ở luồng nền; timer gom lô phải bật/tắt ở luồng giao diện → đi qua tín hiệu.
+        self.gameRunningChanged.connect(self._sync_game_log_session)
+        # Game vừa tắt: thế giới vừa chơi phải lên đầu ô CHƠI TIẾP (chỉ xoá cache, quét khi đọc).
+        self.gameStopped.connect(self._forget_recent_worlds)
+
+    # ----- kho tài khoản trong RAM -----
+
+    def accounts_snapshot(self) -> tuple[Account, ...]:
+        """Danh sách tài khoản hiện tại; chỉ chạm đĩa khi chưa có hoặc vừa có thay đổi."""
+        if self._accounts is None:
+            self._accounts = self._launcher.list_accounts()
+        return self._accounts
+
+    def announce_accounts_changed(self) -> None:
+        """Gọi sau MỌI thay đổi kho tài khoản (kể cả từ cầu nối khác): quên bản trong RAM
+        rồi mới báo, để binding nào đọc lại cũng thấy dữ liệu mới."""
+        self._accounts = None
+        self.accountsChanged.emit()
+        self.activeAccountChanged.emit()
+
+    # ----- thuộc tính cho QML -----
+
+    @Property(list, notify=accountsChanged)
+    def accounts(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "playerName": account.player_name,
+                "playerUuid": account.player_uuid,
+                "accountKind": account.account_kind,
+            }
+            for account in self.accounts_snapshot()
+        ]
+
+    def active_account(self) -> Account | None:
+        """Tài khoản sẽ dùng khi bấm CHƠI: cái người dùng chọn, không thì cái đầu danh sách."""
+        accounts = self.accounts_snapshot()
+        chosen = next((a for a in accounts if a.account_id == self._active_account_id), None)
+        return chosen or (accounts[0] if accounts else None)
+
+    @Property(str, notify=activeAccountChanged)
+    def activeAccountId(self) -> str:
+        """Khoá định danh, KHÔNG phải tên: jun có Microsoft và Ely cùng tên "JunSlayest", nên
+        khoá theo tên thì cả hai hàng đều tự nhận là đang dùng — nút Dùng biến mất khỏi mọi
+        hàng và không còn cách nào chọn cái kia."""
+        account = self.active_account()
+        return account.account_id if account is not None else ""
+
+    @Property(str, notify=activeAccountChanged)
+    def activePlayerName(self) -> str:
+        """Tên để hiện lên màn hình. Chọn tài khoản thì dùng `activeAccountId`."""
+        account = self.active_account()
+        return account.player_name if account is not None else ""
+
+    @Slot(str)
+    def setActiveAccount(self, account_id: str) -> None:
+        self._active_account_id = account_id
+        self.activeAccountChanged.emit()
+
+    @Property(QObject, constant=True)
+    def gameLog(self) -> GameLogFeed:
+        return self._game_log
+
+    @Property(bool, notify=gameRunningChanged)
+    def gameRunning(self) -> bool:
+        """Game đang chạy: cầu nối vẫn bận (chờ tiến trình) nhưng popup loading không hiện."""
+        return self._game_running
+
+    # ----- lệnh từ QML -----
+
+    @Slot(str)
+    def addOfflineAccount(self, player_name: str) -> None:
+        def work() -> None:
+            account = self._launcher.add_offline_account(player_name)
+            self._active_account_id = account.account_id
+            self.announce_accounts_changed()
+
+        self.run_in_background(work, "Thêm tài khoản")
+
+    @Slot()
+    def signInMicrosoft(self) -> None:
+        """Luồng mã thiết bị: mã đi ra `deviceCodeReady`, kết quả đi ra `signInFinished`."""
+        cancel_token = CancelToken()
+        self._sign_in_cancel = cancel_token
+
+        def work() -> None:
+            try:
+                account = self._launcher.add_microsoft_account(
+                    on_device_code=lambda code: self.deviceCodeReady.emit(
+                        code.user_code, code.verification_url
+                    ),
+                    cancel_token=cancel_token,
+                )
+            finally:
+                self._sign_in_cancel = None
+            self._active_account_id = account.account_id
+            self.announce_accounts_changed()
+            self.signInFinished.emit(account.player_name)
+
+        self.run_in_background(work, "Đăng nhập Microsoft — chờ bạn nhập mã")
+
+    @Slot()
+    def cancelSignIn(self) -> None:
+        if self._sign_in_cancel is not None:
+            self._sign_in_cancel.cancel()
+
+    @Slot(str)
+    def removeAccount(self, account_id: str) -> None:
+        def work() -> None:
+            self._launcher.remove_account(account_id)
+            self.announce_accounts_changed()
+
+        self.run_in_background(work, "Gỡ tài khoản")
+
+    @Slot(str)
+    def play(self, instance_id: str) -> None:
+        """Chơi bằng tài khoản đang hoạt động."""
+        self._launch(instance_id)
+
+    @Slot(str, str)
+    def playWorld(self, instance_id: str, world_folder: str) -> None:
+        """Ô CHƠI TIẾP: mở bản chơi và vào thẳng thế giới (thư mục trong saves/)."""
+        self._launch(instance_id, world_folder)
+
+    @Slot()
+    def stopGame(self) -> None:
+        """Nút DỪNG: xin game đóng (SIGTERM cả cây tiến trình), hết ân huệ thì ép. Chạy ở luồng
+        riêng vì `stop()` chờ tới vài giây; luồng của `_launch` thấy tiến trình thoát và dọn như
+        mọi lần thoát khác."""
+        game = self._game
+        if game is None:
+            return
+        self._stop_requested = True
+        threading.Thread(target=game.stop, name="nostalgia-stop-game", daemon=True).start()
+
+    @Slot(str, str)
+    def playServer(self, instance_id: str, server_address: str) -> None:
+        """Ô CHƠI TIẾP, nhóm SERVER: mở bản chơi và vào thẳng máy chủ (`host[:port]`)."""
+        self._launch(instance_id, server_address=server_address)
+
+    def _launch(self, instance_id: str, world_folder: str = "", server_address: str = "") -> None:
+        # Khoá định danh chứ không phải tên: hai tài khoản trùng tên thì lõi tra theo tên sẽ
+        # trả về cái đầu tiên, và người dùng chơi bằng tài khoản họ không chọn.
+        account_id = str(self.activeAccountId)
+
+        def work() -> None:
+            # Bù phần thiếu TRƯỚC khi chạy: bản cài hụt một jar thì JVM chết ngay với mã 1 và
+            # không để lại log nào (đã xảy ra với Fabric thiếu fabric-loader). Đủ rồi thì bước
+            # này chỉ mất ~1 giây soi kích thước file.
+            version_id = next(
+                (
+                    i.version_id
+                    for i in self._launcher.list_instances()
+                    if i.instance_id == instance_id
+                ),
+                "",
+            )
+            if version_id:
+                self._launcher.install_version(version_id, on_progress=self.report_progress)
+            # Nos Client: nếu bật, inject mod jar trước khi chạy.
+            instance_obj = next(
+                (i for i in self._launcher.list_instances() if i.instance_id == instance_id),
+                None,
+            )
+            if instance_obj is not None and instance_obj.nos_client_enabled:
+                self._launcher.prepare_nos_client(instance_obj)
+            # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
+            self._game_log.reset()
+            game = self._launcher.launch_instance(
+                instance_id,
+                account_id,
+                world_folder=world_folder,
+                server_address=server_address,
+                on_output=self._game_log.receive,
+            )
+            started_at = time.time()
+            self._game = game
+            self._stop_requested = False
+            self._set_game_running(True)
+            self.gameStarted.emit(instance_id)
+            try:
+                exit_code = game.wait()
+            finally:
+                self._game = None
+                self._set_game_running(False)
+            # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
+            self._launcher.record_play_session(instance_id, started_at, time.time())
+            self.instancesChanged.emit()
+            if self._stop_requested:
+                # Người dùng bấm DỪNG: game chết vì tín hiệu ta gửi — báo là thoát bình thường.
+                self.gameStopped.emit(0)
+                return
+            self.gameStopped.emit(exit_code)
+            if exit_code != 0:
+                self.failed.emit(describe_game_failure(exit_code, self._game_log.tail_snapshot))
+
+        if server_address:
+            activity = f"Vào máy chủ {server_address} ({instance_id})"
+        elif world_folder:
+            activity = f"Vào {world_folder} ({instance_id})"
+        else:
+            activity = f"Khởi động {instance_id}"
+        self.run_in_background(work, activity)
+
+    # ----- nội bộ -----
+
+    @Slot()
+    def _sync_game_log_session(self) -> None:
+        if self._game_running:
+            self._game_log.begin_session()
+        else:
+            self._game_log.end_session()
+
+    def _set_game_running(self, running: bool) -> None:
+        self._game_running = running
+        self.gameRunningChanged.emit()

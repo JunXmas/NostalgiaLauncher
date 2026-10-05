@@ -1,0 +1,81 @@
+"""Cấu hình người dùng: ghi 0600, biến môi trường thắng file, file hỏng không chặn launcher."""
+
+from __future__ import annotations
+
+import stat
+from pathlib import Path
+
+from nostalgia.repo.endpoints import DISCORD_APPLICATION_ID
+from nostalgia.settings.store import (
+    Settings,
+    discord_application_id,
+    load_settings,
+    save_settings,
+    settings_path,
+)
+
+
+def test_round_trip_is_private_and_env_overrides(tmp_path: Path) -> None:
+    save_settings(tmp_path, Settings(curseforge_api_key="  $2a$10$khoa  "))
+
+    assert stat.S_IMODE(settings_path(tmp_path).stat().st_mode) == 0o600
+    assert load_settings(tmp_path, environment={}).curseforge_api_key == "$2a$10$khoa"
+    assert (
+        load_settings(
+            tmp_path, environment={"NOSTALGIA_CURSEFORGE_API_KEY": "env"}
+        ).curseforge_api_key
+        == "env"
+    )
+
+
+def test_missing_or_corrupt_file_means_empty_settings(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}) == Settings()
+    settings_path(tmp_path).write_text("{ hỏng")
+    assert load_settings(tmp_path, environment={}).curseforge_api_key == ""
+
+
+def test_ui_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).ui_sound is True
+    save_settings(tmp_path, Settings(ui_sound=False))
+    assert load_settings(tmp_path, environment={}).ui_sound is False
+    settings_path(tmp_path).write_text('{"ui_sound": 0}')
+    assert load_settings(tmp_path, environment={}).ui_sound is True, "giá trị lạ → mặc định"
+
+
+def test_notification_sound_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).notification_sound is True
+    save_settings(tmp_path, Settings(notification_sound=False))
+    assert load_settings(tmp_path, environment={}).notification_sound is False
+    settings_path(tmp_path).write_text('{"notification_sound": "yes"}')
+    assert load_settings(tmp_path, environment={}).notification_sound is True, (
+        "giá trị lạ → mặc định"
+    )
+
+
+def test_discord_presence_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    """Bật sẵn: presence chỉ cần Discord đang mở, không cần người dùng làm gì."""
+    assert load_settings(tmp_path, environment={}).discord_presence is True
+    save_settings(tmp_path, Settings(discord_presence=False))
+    assert load_settings(tmp_path, environment={}).discord_presence is False
+    settings_path(tmp_path).write_text('{"discord_presence": "yes"}')
+    assert load_settings(tmp_path, environment={}).discord_presence is True, "giá trị lạ → mặc định"
+
+
+def test_discord_application_id_comes_from_the_repo_not_from_the_user(tmp_path: Path) -> None:
+    """Id nằm trong kho chứ không nằm trong settings.json — không ai phải mở Developer Portal.
+    Nó là chuỗi số thật (Discord từ chối mọi thứ khác), và biến môi trường vẫn đè được."""
+    assert DISCORD_APPLICATION_ID.isdigit() and len(DISCORD_APPLICATION_ID) >= 17
+    assert discord_application_id(environment={}) == DISCORD_APPLICATION_ID
+    assert discord_application_id(environment={"NOSTALGIA_DISCORD_APP_ID": " 42 "}) == "42"
+    save_settings(tmp_path, Settings())
+    assert "discord_application_id" not in settings_path(tmp_path).read_text(encoding="utf-8")
+
+
+def test_hide_when_game_running_round_trips_and_defaults_on(tmp_path: Path) -> None:
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is True
+    save_settings(tmp_path, Settings(hide_when_game_running=False))
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is False
+    settings_path(tmp_path).write_text('{"hide_when_game_running": "invalid"}')
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is True, (
+        "giá trị lạ → mặc định"
+    )

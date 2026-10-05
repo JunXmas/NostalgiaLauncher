@@ -1,0 +1,72 @@
+Nostalgia Launcher
+Copyright (C) 2026 JunXmas <minejunbob@gmail.com>
+
+Mã nguồn này CÔNG KHAI để mọi người đọc và tự kiểm launcher có an toàn hay không. Nó KHÔNG
+phải phần mềm mã nguồn mở. Giấy phép là PolyForm Strict License 1.0.0, toàn văn ở file
+LICENSE (https://polyformproject.org/licenses/strict/1.0.0).
+
+Tóm tắt dễ đọc (khi khác nhau, file LICENSE và các quyền bổ sung dưới đây là bản có hiệu lực):
+
+- ĐƯỢC: đọc mã, tự build và chạy launcher cho mục đích phi thương mại (cá nhân, học tập,
+  giải trí, trường học, tổ chức phi lợi nhuận).
+- KHÔNG ĐƯỢC: dùng cho mục đích thương mại; phân phối lại mã nguồn hay bản build (kể cả miễn
+  phí); làm và phát tán bản sửa đổi hay sản phẩm dựa trên mã này.
+
+Chương trình được phát hành với hy vọng nó có ích, nhưng KHÔNG KÈM BẤT KỲ BẢO ĐẢM NÀO.
+
+## Quyền bổ sung
+
+Ngoài những gì PolyForm Strict cho phép, người giữ bản quyền cho thêm hai quyền, cũng chỉ cho
+mục đích phi thương mại:
+
+1. **Sửa trên máy riêng để kiểm thử và kiểm an toàn** — vd thêm log, chạy công cụ phân tích,
+   thử vá một lỗi — miễn là bản đã sửa không được phân phối cho ai khác.
+2. **Gửi bản sửa về chính dự án** qua pull request hoặc issue trên
+   https://github.com/JunXmas/NostalgiaLauncher. Fork trên GitHub chỉ để mở pull request là
+   được phép. Gửi đóng góp nghĩa là bạn đồng ý để JunXmas dùng, sửa và phát hành nó theo bất
+   kỳ giấy phép nào, kể cả giấy phép này (xem CONTRIBUTING.md).
+
+## Phiên bản cũ
+
+Các bản tới và gồm 1.1.7 đã được phát hành theo AGPL-3.0. Ai đã nhận bản đó thì vẫn giữ
+quyền AGPL-3.0 với đúng bản đó; giấy phép mới áp dụng cho mã từ sau 1.1.7.
+
+## Phạm vi bản quyền
+
+Bản quyền trên mã nguồn trong kho này thuộc về JunXmas, trừ những phần ghi rõ dưới đây. Copy
+mã nguồn của dự án vào phần mềm khác là vi phạm bản quyền.
+
+Xin nói rõ điều giấy phép KHÔNG cấm: tự viết lại một tính năng tương tự. Bản quyền bảo vệ cách
+viết code, không bảo vệ ý tưởng. Ai nhìn launcher này rồi tự viết phần mềm của họ thì hoàn
+toàn hợp pháp — dự án chấp nhận điều đó.
+
+## Thành phần của bên khác
+
+Các thành phần dưới đây giữ giấy phép riêng của chúng, không theo PolyForm Strict.
+
+
+- **Minecraft** là nhãn hiệu của Mojang Studios / Microsoft. Dự án này KHÔNG liên kết,
+  không được tài trợ, cũng không được Mojang hay Microsoft xác nhận.
+- **Key art** trong `src/nostalgia/ui/qml/assets/keyart/` thuộc về Mojang, chỉ dùng để minh
+  hoạ phi thương mại. Ghi công từng file ở
+  `src/nostalgia/ui/qml/assets/keyart/CREDITS.md`.
+- **Texture khối** dùng cho icon thanh bên được đọc trực tiếp từ bản Minecraft do chính
+  người dùng đã cài trên máy họ, lúc chạy. Không có texture nào của Mojang nằm trong kho
+  này hay trong bộ cài.
+- **PySide6 / Qt** là phụ thuộc TUỲ CHỌN (LGPL-3.0), liên kết động và không kèm trong mã
+  nguồn. Lõi launcher không phụ thuộc thư viện ngoài nào.
+- **Asset giao diện Aero** dựng theo bộ "Aero UI (Windows 7)" trên Figma, giấy phép
+  CC BY 4.0.
+- **Font đóng kèm** ở `src/nostalgia/ui/qml/assets/fonts/`, cả hai đều SIL Open Font
+  License 1.1 — giấy phép này BẮT BUỘC phát hành kèm bản quyền, nên bản gốc nằm ngay cạnh
+  file font (`Inter-OFL.txt`, `MinecraftF2D-OFL.txt`) và `tests/ui/test_fonts.py` gác cho
+  chúng không biến mất:
+  - **Inter** (Rasmus Andersson) — chữ đọc.
+  - **Minecraft F2D v1.42** — nhãn viết hoa. Font tự làm theo phong cách Minecraft, KHÔNG
+    phải font của Mojang; chọn nó vì nó là font kiểu pixel duy nhất tìm được phủ đủ 74 ký
+    tự có dấu tiếng Việt.
+
+## Phần máy chủ
+
+Relay chơi chung và proxy CurseForge chạy trên Cloudflare Worker của dự án; mã của chúng
+giữ riêng và không thuộc phạm vi giấy phép này. Xem `cloudflare/README.md`.

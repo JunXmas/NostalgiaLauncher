@@ -1,0 +1,130 @@
+"""Ely.by giả + trang phát hành authlib-injector giả trên máy chủ HTTPS cục bộ."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import replace
+
+from local_https_server import LocalHttpsServer, ServerState
+from nostalgia.auth.ely_web import ElyWebEndpoints
+from nostalgia.auth.endpoints import DEFAULT_AUTH_ENDPOINTS, AuthEndpoints
+
+ELY_UUID = "8f4a0d3e-1c2b-3a4d-9e5f-6a7b8c9d0e1f"
+ELY_NAME = "JunBob"
+ACCESS_TOKEN = "ely-access-1"
+REFRESHED_TOKEN = "ely-access-2"
+INJECTOR_JAR = b"PK\x03\x04 authlib-injector gia"
+API_METADATA = b'{"meta":{"serverName":"Ely.by"},"skinDomains":["ely.by"]}'
+
+
+def publish(server: LocalHttpsServer, state: ServerState) -> AuthEndpoints:
+    state.add(
+        "/ely/auth/authenticate",
+        json.dumps(
+            {
+                "accessToken": ACCESS_TOKEN,
+                "clientToken": "ignored-by-client",
+                "selectedProfile": {"id": ELY_UUID.replace("-", ""), "name": ELY_NAME},
+            }
+        ).encode(),
+    )
+    state.add(
+        "/ely/auth/refresh",
+        json.dumps(
+            {
+                "accessToken": REFRESHED_TOKEN,
+                "selectedProfile": {"id": ELY_UUID.replace("-", ""), "name": ELY_NAME},
+            }
+        ).encode(),
+    )
+    jar_url = server.url(state.add("/authlib/authlib-injector-9.9.9.jar", INJECTOR_JAR))
+    state.add(
+        "/authlib/latest.json",
+        json.dumps(
+            {
+                "version": "9.9.9",
+                "download_url": jar_url,
+                "checksums": {"sha256": hashlib.sha256(INJECTOR_JAR).hexdigest()},
+            }
+        ).encode(),
+    )
+    state.add("/ely/api/authlib-injector", API_METADATA)
+    return replace(
+        DEFAULT_AUTH_ENDPOINTS,
+        ely_auth_url=server.url("/ely/auth"),
+        ely_authlib_root_url=server.url("/ely/api/authlib-injector"),
+        authlib_injector_latest_url=server.url("/authlib/latest.json"),
+    )
+
+
+def publish_textures(
+    server: LocalHttpsServer,
+    state: ServerState,
+    player_name: str,
+    *,
+    slim: bool = False,
+    status: int = 200,
+) -> str:
+    """Route giả cho `GET /textures/<tên>` — JSON metadata thật của Ely (JL-18 mục 4/6).
+
+    `status=204` mô phỏng "tài khoản chưa có skin" (hành vi thật đã kiểm bằng curl: tên
+    không tồn tại trả 204 rỗng, không phải lỗi).
+    """
+    skin: dict[str, object] = {"url": "http://textures.minecraft.net/texture/fake"}
+    if slim:
+        skin["metadata"] = {"model": "slim"}
+    body = b"" if status != 200 else json.dumps({"SKIN": skin}).encode()
+    path = f"/textures/{player_name}"
+    state.add(path, body, status=status)
+    return server.url("/textures")
+
+
+WEB_REFRESH_TOKEN = "ely-web-refresh-1"
+WEB_JWT = "ely-web-jwt-1"
+WEB_SKIN_ID = 4242
+
+
+def publish_web(server: LocalHttpsServer, state: ServerState) -> ElyWebEndpoints:
+    """Đường web đổi skin thật: login/refresh JWT → OAuth nội bộ → upload + mặc skin.
+
+    Route dựng đúng hình dạng đã soi từ máy chủ thật (curl) và mã nguồn elyby/accounts:
+    login trả JWT + refresh_token; /authorization/login 302 kèm PHPSESSID; complete trả
+    redirectUri; upload trả id skin; users/skin trả JSON rỗng-lỗi.
+    """
+    state.add(
+        "/elyweb/api/authentication/login",
+        json.dumps(
+            {"success": True, "access_token": WEB_JWT, "refresh_token": WEB_REFRESH_TOKEN}
+        ).encode(),
+    )
+    state.add(
+        "/elyweb/api/authentication/refresh-token",
+        json.dumps({"success": True, "access_token": WEB_JWT}).encode(),
+    )
+    state.add(
+        "/elysite/authorization/login",
+        b"",
+        status=302,
+        location=server.url("/elyweb/api/oauth2/v1/ely") + "?client_id=ely&state=st-1",
+        response_headers=(("Set-Cookie", "PHPSESSID=sess-1; path=/; httponly"),),
+    )
+    state.add(
+        "/elyweb/api/oauth2/v1/complete",
+        json.dumps(
+            {"success": True, "redirectUri": server.url("/elysite/authorization/oauth?code=c1")}
+        ).encode(),
+    )
+    state.add(
+        "/elysite/authorization/oauth",
+        b"",
+        status=302,
+        location=server.url("/elysite/"),
+        response_headers=(("Set-Cookie", "remember=rem-1; path=/"),),
+    )
+    state.add(
+        "/elysite/api/legacy/skins",
+        json.dumps({"skin": {"id": WEB_SKIN_ID}}).encode(),
+    )
+    state.add("/elysite/api/legacy/users/skin", json.dumps({}).encode())
+    return ElyWebEndpoints(account_root=server.url("/elyweb"), site_root=server.url("/elysite"))

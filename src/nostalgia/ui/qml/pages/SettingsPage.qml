@@ -1,0 +1,193 @@
+import QtQuick
+import QtQuick.Dialogs
+import "../"
+
+/* CÀI ĐẶT: thông tin chung và công tắc âm thanh thông báo. Thư viện CurseForge đi qua máy chủ
+   của dự án, không cần khoá. */
+Item {
+    id: page
+    signal navigate(int pageIndex)
+
+    Item {
+        id: header
+        anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
+        height: 50
+        PageTitle {
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+            caption: "Cài đặt"
+        }
+    }
+
+    UpdatePanel {
+        id: updatePanel
+        anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 6 }
+    }
+
+    Panel {
+        anchors { top: updatePanel.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
+                  margins: Theme.gap; topMargin: Theme.gap }
+        title: "CHUNG"
+
+        Column {
+            anchors { left: parent.left; right: parent.right }
+            spacing: 14
+            Row {
+                spacing: 10
+                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody
+                       width: 120; anchors.verticalCenter: parent.verticalCenter }
+                // Trang CÀI ĐẶT không cuộn được, nên nút ủng hộ đi ghép vào hàng này thay vì
+                // thêm hàng mới — hàng cuối cùng đã chạm mép dưới ở cửa sổ 1360×860.
+                ActionButton {
+                    objectName: "donateButton"
+                    primary: false; label: "Ủng hộ dự án"
+                    anchors.verticalCenter: parent.verticalCenter
+                    // Mở hộp có mã QR chứ không nhảy ra trình duyệt: chuyển khoản trong nước
+                    // không phải qua thẻ quốc tế.
+                    onClicked: donateDialog.open()
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Launcher miễn phí, không quảng cáo. Ủng hộ là tuỳ tâm."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
+            }
+            Row {
+                spacing: 10
+                Text { text: "Thư mục dữ liệu"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    text: settingsBridge.dataDir; color: Theme.text; font.pixelSize: Theme.fontBody
+                    elide: Text.ElideMiddle; width: Math.min(520, page.width - 360)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                ActionButton { primary: false; label: "Mở thư mục"; onClicked: settingsBridge.openDataFolder() }
+            }
+            Row {
+                spacing: 10
+                Text { text: "Thư mục lưu bản chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    objectName: "gameDirRootText"
+                    text: settingsBridge.defaultGameDirRoot || (settingsBridge.dataDir + "/instances  (mặc định)")
+                    color: settingsBridge.defaultGameDirRoot ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
+                    elide: Text.ElideMiddle; width: Math.min(420, page.width - 520)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                ActionButton { primary: false; label: "Chọn ổ khác…"; onClicked: gameDirRootPicker.open() }
+                ActionButton {
+                    primary: false; label: "Mặc định"; visible: settingsBridge.defaultGameDirRoot !== ""
+                    onClicked: settingsBridge.setDefaultGameDirRoot("")
+                }
+            }
+            Text {
+                id: gameDirRootErrorText
+                objectName: "gameDirRootErrorText"
+                visible: text.length > 0
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                color: Theme.danger
+                font.pixelSize: Theme.fontBody
+                lineHeight: 1.3
+                Connections {
+                    target: settingsBridge
+                    function onGameDirRootError(message) { gameDirRootErrorText.text = message; }
+                    function onGameDirRootChanged() { gameDirRootErrorText.text = ""; }
+                }
+            }
+            Text {
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                text: "Bản chơi mới (tạo mới, cài modpack, nhập file, kéo-thả) sẽ đặt mods/saves ở thư mục này; kho chung (versions, libraries, assets, Java) vẫn ở thư mục dữ liệu. Bản chơi đã có không bị chuyển."
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+            }
+            Rectangle { width: parent.width; height: 1; color: Theme.border }
+
+            Text {
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                text: "Thư viện mod và modpack duyệt CurseForge qua máy chủ của Nostalgia, không cần khoá API."
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+            }
+            Rectangle { width: parent.width; height: 1; color: Theme.border }
+            Row {
+                spacing: 10
+                Text { text: "Âm thanh thông báo"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "notificationSoundToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.notificationSound
+                    onToggled: function (checked) { settingsBridge.setNotificationSound(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
+            }
+            Row {
+                spacing: 10
+                Text { text: "Âm thanh giao diện"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "uiSoundToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.uiSound
+                    onToggled: function (checked) { settingsBridge.setUiSound(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
+            }
+            Rectangle { width: parent.width; height: 1; color: Theme.border }
+            Row {
+                spacing: 10
+                Text { text: "Thu gọn vào khay khi chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "hideWhenGameRunningToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.hideWhenGameRunning
+                    onToggled: function (checked) { settingsBridge.setHideWhenGameRunning(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM."
+                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
+            }
+            Row {
+                spacing: 10
+                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
+                       anchors.verticalCenter: parent.verticalCenter }
+                Toggle {
+                    objectName: "discordToggle"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settingsBridge.discordPresence
+                    onToggled: function (checked) { settingsBridge.setDiscord(checked); }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: presenceBridge.statusText
+                    color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody
+                }
+            }
+            Text {
+                width: Math.min(parent.width, 720)
+                wrapMode: Text.WordWrap
+                text: "Hồ sơ Discord của bạn hiện \"Đang ở launcher\", rồi \"Đang chơi <bản chơi>\" kèm thời gian khi game chạy. Không cần thiết lập gì: Discord mở lúc nào thì launcher tự nối lúc đó."
+                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+            }
+        }
+    }
+
+    FolderDialog {
+        id: gameDirRootPicker
+        title: "Chọn thư mục lưu bản chơi mới"
+        onAccepted: settingsBridge.setDefaultGameDirRoot(selectedFolder.toString())
+    }
+}

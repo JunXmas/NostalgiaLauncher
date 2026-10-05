@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      # --locked: nếu pyproject đổi mà uv.lock chưa cập nhật thì FAIL, thay vì âm thầm
+      # re-resolve và test một thứ khác với thứ được commit.
+      - run: uv sync --locked --extra ui
+      # Qt cần vài thư viện hệ thống mà runner không có sẵn; offscreen thì chỉ cần chừng này.
+      - name: Thư viện cho Qt chạy không màn hình
+        # Kho Google Chrome cài sẵn trong ảnh runner hay lệch băm (Hash Sum mismatch) làm
+        # `apt-get update` rớt dù ta không cần nó: gỡ nguồn lạ, và lỗi cập nhật chỉ mục không
+        # được chặn bước cài (gói cần đều nằm trong kho Ubuntu, cài rớt thì vẫn báo rớt).
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list /etc/apt/sources.list.d/microsoft-edge*.list
+          sudo apt-get update -qq || true
+          sudo apt-get install -y -qq libegl1 libgl1 libxkbcommon0 libdbus-1-3
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Kiểm kiểu
+        run: uv run mypy
+      - name: Test (không cần mạng)
+        run: uv run pytest -m "not network" -q
+      - name: Đóng gói thử
+        run: uv build
+
+  # Bug 1.0.15 (updater Windows chết im lặng) sống sót được vì không test nào từng chạy
+  # trên Windows. Job này nhỏ: chỉ bộ tự cập nhật, chạy script tráo bằng PowerShell thật.
+  check-windows-updater:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Test bộ tự cập nhật trên Windows
+        run: uv run pytest tests/update -q

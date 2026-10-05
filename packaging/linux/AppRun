@@ -1,0 +1,4 @@
+#!/bin/sh
+# Điểm vào AppImage: chạy binary PyInstaller nằm cạnh, chuyển nguyên tham số.
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/nostalgia/nostalgia-ui" "$@"

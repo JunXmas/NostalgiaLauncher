@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Nostalgia Launcher
+Comment=Minecraft launcher: accounts, instances, mods, LAN over relay
+Exec=nostalgia-ui
+Icon=nostalgia
+Terminal=false
+Categories=Game;
+Keywords=minecraft;launcher;

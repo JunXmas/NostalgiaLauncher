@@ -1,0 +1,213 @@
+{
+ "virtual": true,
+ "objects": {
+  "music/calm1.ogg": {
+   "hash": "50a59a4f56e4046701b758ddbb1c1587efa4cadf",
+   "size": 2530812
+  },
+  "sounds/music/game/calm1.ogg": {
+   "hash": "50a59a4f56e4046701b758ddbb1c1587efa4cadf",
+   "size": 2530812
+  },
+  "music/calm2.ogg": {
+   "hash": "74da65c99aa578486efa7b69983d3533e14c0d6e",
+   "size": 1976731
+  },
+  "sounds/music/game/calm2.ogg": {
+   "hash": "74da65c99aa578486efa7b69983d3533e14c0d6e",
+   "size": 1976731
+  },
+  "music/calm3.ogg": {
+   "hash": "14ae57a6bce3d4254daa8be2b098c2d99743cc3f",
+   "size": 2232651
+  },
+  "sounds/music/game/calm3.ogg": {
+   "hash": "14ae57a6bce3d4254daa8be2b098c2d99743cc3f",
+   "size": 2232651
+  },
+  "music/hal1.ogg": {
+   "hash": "df1ff11b79757432c5c3f279e5ecde7b63ceda64",
+   "size": 1972217
+  },
+  "sounds/music/game/hal1.ogg": {
+   "hash": "df1ff11b79757432c5c3f279e5ecde7b63ceda64",
+   "size": 1972217
+  },
+  "music/hal2.ogg": {
+   "hash": "ceaaaa1d57dfdfbb0bd4da5ea39628b42897a687",
+   "size": 1754429
+  },
+  "sounds/music/game/hal2.ogg": {
+   "hash": "ceaaaa1d57dfdfbb0bd4da5ea39628b42897a687",
+   "size": 1754429
+  },
+  "music/hal3.ogg": {
+   "hash": "dd85fb564e96ee2dbd4754f711ae9deb08a169f9",
+   "size": 1923269
+  },
+  "sounds/music/game/hal3.ogg": {
+   "hash": "dd85fb564e96ee2dbd4754f711ae9deb08a169f9",
+   "size": 1923269
+  },
+  "READ_ME_I_AM_VERY_IMPORTANT.txt": {
+   "hash": "0d000710b71ca9aafabd8f587768431d0b560b32",
+   "size": 546
+  },
+  "icons/icon_16x16.png": {
+   "hash": "bdf48ef6b5d0d23bbb02e17d04865216179f510a",
+   "size": 3665
+  },
+  "icons/icon_32x32.png": {
+   "hash": "92750c5f93c312ba9ab413d546f32190c56d6f1f",
+   "size": 5362
+  },
+  "icons/minecraft.icns": {
+   "hash": "991b421dfd401f115241601b2b373140a8d78572",
+   "size": 114786
+  },
+  "lang/af_ZA.lang": {
+   "hash": "a9ea89177fbf3f10e527102451eb1469671530d4",
+   "size": 69996
+  },
+  "lang/ar_SA.lang": {
+   "hash": "ab4b24fb41b13f1c83ee45879e0c0db3f86d7fa4",
+   "size": 83986
+  },
+  "lang/bg_BG.lang": {
+   "hash": "f36a4c278292b2c80b2e0889d60980fbb6f4339b",
+   "size": 95147
+  },
+  "lang/ca_ES.lang": {
+   "hash": "ebdfd687b678262836cb4179f8b3833fe557db28",
+   "size": 72677
+  },
+  "lang/cs_CZ.lang": {
+   "hash": "d8dd3873fac34c74f038df02d76d745febafe8da",
+   "size": 71829
+  },
+  "lang/cy_GB.lang": {
+   "hash": "16e554ed068e38f738f0afa7a03db23b77456ec3",
+   "size": 70247
+  },
+  "lang/da_DK.lang": {
+   "hash": "be7fd7a59648a565b83c1c6de161df470728b656",
+   "size": 68955
+  },
+  "lang/de_DE.lang": {
+   "hash": "e37d3ab28ec7acc17337da3d4a4fe4dd0642aac5",
+   "size": 71313
+  },
+  "lang/el_GR.lang": {
+   "hash": "4330e3218548e9f3268d103e5ab71fa2b28d9b20",
+   "size": 103177
+  },
+  "lang/en_AU.lang": {
+   "hash": "cee3c7dc6d3fcc0bd399a743dad1b53bba485e60",
+   "size": 67927
+  },
+  "lang/en_CA.lang": {
+   "hash": "6c6489f61ee7d2efa086fa63b23097530c52d26e",
+   "size": 67845
+  },
+  "lang/en_GB.lang": {
+   "hash": "88bd61ca6d1201d0109262c2d3b0d1464d07ce74",
+   "size": 67676
+  },
+  "lang/en_PT.lang": {
+   "hash": "eb59d5ba3728885ff40f1bf37cc8f72d6d9e6930",
+   "size": 71748
+  },
+  "lang/eo_UY.lang": {
+   "hash": "69ff827d47a5b247f88a71db37c27d010c755653",
+   "size": 69406
+  },
+  "lang/es_AR.lang": {
+   "hash": "ec830f34a2ea5d964603ff621e7c4d64323a904c",
+   "size": 71755
+  },
+  "lang/es_ES.lang": {
+   "hash": "ebcebf42cd5cc197b9d0f0e89e061f33382870c6",
+   "size": 73202
+  },
+  "lang/es_MX.lang": {
+   "hash": "720843b6860be60ec252ae17db4d54dd50b4829c",
+   "size": 73034
+  },
+  "lang/es_UY.lang": {
+   "hash": "c6843b4ba73c4c075d697398d43ee916283e5b93",
+   "size": 72868
+  },
+  "lang/es_VE.lang": {
+   "hash": "b73850cb324ddce5488f8edfe14ddb68e1f63670",
+   "size": 73296
+  },
+  "lang/et_EE.lang": {
+   "hash": "6c7de8b578694b6a86c5f462a2df708f9d804a13",
+   "size": 69679
+  },
+  "lang/eu_ES.lang": {
+   "hash": "e5dc74ad272f60621a04a67bd62a5cf63c4e8135",
+   "size": 73305
+  },
+  "lang/fa_IR.lang": {
+   "hash": "9b7368cc1a3b4f8e7d8dff923b2cbe9069cd0f3b",
+   "size": 71995
+  },
+  "lang/fi_FI.lang": {
+   "hash": "16af3fb50160638e7250af4cc3beb3769f6e58b0",
+   "size": 72181
+  },
+  "lang/fil_PH.lang": {
+   "hash": "0dbc616d03816a6f925a5b2f77e89738d290f194",
+   "size": 69231
+  },
+  "lang/fr_CA.lang": {
+   "hash": "6df06576e677d952dc15da3926f4ed822d106354",
+   "size": 75791
+  },
+  "lang/fr_FR.lang": {
+   "hash": "419a50b4099da63ca54f70aaddee5dfd4084b37c",
+   "size": 74536
+  },
+  "lang/ga_IE.lang": {
+   "hash": "78f017a2c23e6bdf6c8da0ef2ebd0a7d0ff8be88",
+   "size": 73730
+  },
+  "lang/gl_ES.lang": {
+   "hash": "f414a01c9317aaffd43169021f66dad9b9cc6ed3",
+   "size": 71887
+  },
+  "lang/he_IL.lang": {
+   "hash": "00562baef8bd1db4c43990f6b1027361e7f620c4",
+   "size": 79972
+  },
+  "lang/hi_IN.lang": {
+   "hash": "7f66e73aaa91fdc3164757a208fd29348bff2b35",
+   "size": 101712
+  },
+  "lang/hr_HR.lang": {
+   "hash": "090858721704b0a6f95342538ed732124bce4945",
+   "size": 69765
+  },
+  "lang/hu_HU.lang": {
+   "hash": "10c2d1819d800db8ff9c0ea000db1223d2eecd4b",
+   "size": 72828
+  },
+  "lang/hy_AM.lang": {
+   "hash": "b97a0903384607ba6ffd96f636b5a54f96736659",
+   "size": 88875
+  },
+  "lang/id_ID.lang": {
+   "hash": "dcc2504c5428b0d96a8e9488e9ee55e71dbbbfff",
+   "size": 69637
+  },
+  "lang/is_IS.lang": {
+   "hash": "3387bbc2e5982c355ebd1f4662c90e548f94835d",
+   "size": 69877
+  },
+  "lang/it_IT.lang": {
+   "hash": "3b1d6346f35f0eb0c3e044f17ae9e95d7c237b54",
+   "size": 73949
+  }
+ }
+}

@@ -1,0 +1,153 @@
+[project]
+name = "nostalgia"
+version = "1.1.7"
+description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
+readme = "README.md"
+requires-python = ">=3.12"
+# PolyForm Strict 1.0.0: mã nguồn CÔNG KHAI để đọc và kiểm an toàn, dùng phi thương mại —
+# không được phân phối lại, không được làm bản sửa đổi để phát tán. Không phải giấy phép mã
+# nguồn mở theo định nghĩa OSI. Quyền bổ sung (sửa trên máy riêng, gửi bản vá) ở NOTICE.
+license = { text = "LicenseRef-PolyForm-Strict-1.0.0" }
+authors = [{ name = "JunXmas" }]
+keywords = ["minecraft", "launcher", "modrinth", "curseforge", "fabric", "forge", "pyside6"]
+classifiers = [
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+]
+# Không phụ thuộc runtime. Mọi thứ HTTP dùng http.client của thư viện chuẩn — xem
+# docs/PERFORMANCE.md §2 để biết vì sao (nhanh hơn requests 1,5x khi song song, nạp rẻ hơn).
+dependencies = []
+
+# Giao diện là TUỲ CHỌN. Lõi và dòng lệnh vẫn chạy với đúng thư viện chuẩn; ai muốn cửa sổ
+# thì `uv sync --extra ui`. Giữ như vậy để tính chất "không phụ thuộc runtime" của lõi không
+# bị một thư viện 100 MB xoá sổ chỉ vì có thêm giao diện.
+[project.optional-dependencies]
+# `truststore` (MIT, thuần Python, chính pip cũng dùng) đi cùng gói giao diện: nó cho
+# `net/http.py` xác minh chứng chỉ bằng bộ xác minh CỦA HỆ ĐIỀU HÀNH. Thiếu nó, lõi vẫn chạy
+# bằng `ssl` chuẩn — chỉ là trên Windows cũ có thể hỏng TLS (xem `default_tls_context`).
+ui = ["PySide6-Essentials>=6.7", "truststore>=0.10"]
+
+[project.scripts]
+nostalgia = "nostalgia.cli.main:main"
+nostalgia-ui = "nostalgia.ui.app:main"
+
+[project.urls]
+Homepage = "https://github.com/JunXmas/NostalgiaLauncher"
+Releases = "https://github.com/JunXmas/NostalgiaLauncher/releases"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nostalgia"]
+# py.typed: báo cho bộ kiểm kiểu của người dùng biết gói này có chú kiểu. Không có nó,
+# giao diện tương lai gọi nostalgia.api sẽ không thấy kiểu nào cả.
+artifacts = ["src/nostalgia/py.typed"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    # Bộ mã hoá QR độc lập, CHỈ dùng làm trọng tài cho `tests/auth/test_qr.py`. Launcher tự
+    # vẽ QR bằng stdlib và không bao giờ import cái này. Trước đây test gác duy nhất của
+    # `auth/qr.py` là `zbarimg` — một công cụ hệ thống mà cả máy dev lẫn CI đều không có,
+    # nên nó skip im lặng và hai lỗi đặt bit sống sót qua nhiều bản phát hành.
+    "qrcode>=7.4",
+]
+# Chỉ để đóng gói bản phát hành (CI + thử tay); KHÔNG phải phụ thuộc runtime.
+build = ["pyinstaller>=6.10"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not network' --strict-markers --strict-config"
+markers = [
+    "network: cần Internet thật; mặc định bị bỏ qua",
+    "slow: chạy lâu (tải file lớn, khởi động game)",
+    "allow_home: được phép gọi Path.home(); mặc định mọi test đều bị cấm",
+]
+# Lỗi ném ra từ LUỒNG NỀN mặc định chỉ thành cảnh báo, và test vẫn xanh. Presence Discord
+# chạy ở luồng nền, nên lưới chống-nối-Discord-thật trong conftest kêu mà không ai nghe.
+filterwarnings = ["error::pytest.PytestUnhandledThreadExceptionWarning"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# ARG bắt tham số chết — đã tìm ra hai fixture pytest nhận rồi không dùng.
+select = ["E", "W", "F", "I", "UP", "B", "ANN", "ARG", "RUF", "PTH", "SIM", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]
+
+[tool.mypy]
+# Chú kiểu mà không kiểm kiểu thì chỉ tốn công. GLOSSARY.md dành hẳn hai mục nói về kiểu
+# (Path vs str, dataclass frozen), nên phần lớn từ điển chỉ có giá trị khi có bộ kiểm kiểu.
+files = ["src", "tests", "bench"]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+
+# Nhượng bộ DUY NHẤT, và có lý do cụ thể: decorator `@Property` của PySide6 trả về một đối
+# tượng `Property` chứ không phải giá trị, nên mypy đọc `bridge.instances` thành `Property`
+# thay vì `list`. Đây là hạn chế của phần khai kiểu PySide6, không phải chỗ ta viết ẩu — nên
+# chỉ tắt đúng những mã lỗi phát sinh từ nó, và chỉ ở test của tầng giao diện.
+[[tool.mypy.overrides]]
+module = [
+    "test_qml",
+    "test_bridges",
+    "test_content_bridge",
+    "test_content_bridge_packs",
+    "test_settings_bridge",
+    "test_account_bridge",
+    "test_account_cache",
+    "test_home_layout",
+    "test_home_picker",
+    "test_multiplayer_bridge",
+    "test_room_code_input",
+    "test_game_log",
+    "test_notifier",
+    "test_instance_stats",
+    "test_skin_library",
+    "test_modpack_drop",
+    "test_discord_presence",
+    "test_update_bridge",
+    "test_continue_card",
+    "test_stop_game",
+    "test_continue_servers",
+    "test_tray",
+    "test_download_disk_full",
+    "test_reinstall_confirm",
+    "test_game_process_windows",
+    "test_host_deadlock",
+    "test_lan_injection",
+    "test_nos_client",
+    "test_skin_editor",
+    "test_game_log",
+    "test_settings_bridge",
+    "test_tray",
+    "test_cape_bridge",
+]
+disable_error_code = [
+    "comparison-overlap",
+    "attr-defined",
+    "index",
+    "unreachable",
+    "return-value",
+    "arg-type",
+    "misc",
+    "has-type",
+    "unused-ignore",
+]
+
+# `qrcode` không có file khai kiểu. Nó CHỈ là trọng tài trong test (xem tests/auth/test_qr.py);
+# launcher tự vẽ QR bằng stdlib và không bao giờ import nó, nên không có kiểu nào của nó rò
+# vào mã chạy trên máy người dùng.
+[[tool.mypy.overrides]]
+module = ["qrcode.*"]
+ignore_missing_imports = true

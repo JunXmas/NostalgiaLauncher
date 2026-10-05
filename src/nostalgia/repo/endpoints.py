@@ -1,0 +1,142 @@
+"""Mọi địa chỉ máy chủ, gom một chỗ.
+
+Rải URL khắp nơi là cách chắc chắn để một ngày nào đó có hai địa chỉ khác nhau cho cùng một
+thứ. Mojang đã đổi host manifest từ `launchermeta` sang `piston-meta`; cả hai còn sống,
+nhưng chỉ nên có một chỗ để sửa.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+VERSION_MANIFEST_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+
+# Danh mục bản Java. Đoạn băm trong đường dẫn là của chính danh mục, không phải của phiên
+# bản game — Mojang đổi nó khi phát hành bản Java mới, và trình khởi động chính thức cũng
+# ghi cứng đúng đường dẫn này.
+JAVA_RUNTIME_MANIFEST_URL = (
+    "https://piston-meta.mojang.com/v1/products/java-runtime/"
+    "2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
+)
+
+# Object asset nằm trên một host khác hẳn manifest, và chỉ mục KHÔNG khai URL — địa chỉ được
+# suy ra từ chính hash. Vì thế nó phải nằm ở đây chứ không nằm cạnh chỗ suy ra.
+ASSET_OBJECT_BASE_URL = "https://resources.download.minecraft.net"
+
+# Kho thư viện Mojang: thư viện khai kiểu maven (chỉ `name`, không `downloads`) mà không nói
+# `url` thì lấy ở đây — quy ước của launcher chính thức và của Forge đời cũ.
+MOJANG_LIBRARIES_URL = "https://libraries.minecraft.net/"
+
+# Meta của Fabric: một request trả về đúng file version JSON có `inheritsFrom`, phần còn lại
+# đi qua kho `repo/` và bộ cài `install/` y như một bản Mojang.
+FABRIC_META_URL = "https://meta.fabricmc.net/v2"
+# Quilt: cùng hình dạng API với Fabric (danh sách loader + profile JSON kế thừa bản Mojang).
+QUILT_META_URL = "https://meta.quiltmc.org/v3"
+
+# Modrinth: nguồn mod / gói tài nguyên / shader. Không cần khoá API; chỉ cần User-Agent tử tế.
+MODRINTH_API_URL = "https://api.modrinth.com/v2"
+
+# CurseForge: mặc định đi qua Worker của dự án (khoá API nằm ở máy chủ, launcher không mang
+# khoá); ai có khoá riêng thì dán ở CÀI ĐẶT để gọi thẳng api.curseforge.com. File nào API
+# không trả downloadUrl thì dựng từ CDN theo công thức files/<id//1000>/<id%1000>/<tên>.
+CURSEFORGE_PROXY_URL = "https://nostalgia-backend.junbob.workers.dev/cf"
+CURSEFORGE_DIRECT_URL = "https://api.curseforge.com/v1"
+CURSEFORGE_CDN_URL = "https://mediafilez.forgecdn.net/files"
+
+# Forge và NeoForge: danh sách bản lấy từ maven-metadata.xml; installer jar cùng kho maven.
+# Forge còn có promotions_slim.json để biết bản "recommended" cho từng phiên bản game.
+FORGE_MAVEN_URL = "https://maven.minecraftforge.net/net/minecraftforge/forge"
+FORGE_PROMOTIONS_URL = (
+    "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json"
+)
+NEOFORGE_MAVEN_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
+
+# Relay chơi chung (Cloudflare Worker + Durable Object). Mã ở kho riêng — xem cloudflare/README.md.
+# Đổi được sang Worker của bạn: địa chỉ chỉ nằm ở đúng đây.
+MULTIPLAYER_RELAY_URL = "wss://nostalgia-multiplayer-relay.junbob.workers.dev"
+
+# Hồ sơ công khai (skin/cape) theo UUID, không cần đăng nhập.
+MOJANG_SESSION_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft/profile"
+# Skin/cape của tài khoản Ely.by (non-premium), theo tên.
+ELY_SKINS_URL = "https://skinsystem.ely.by/skins"
+ELY_CAPES_URL = "https://skinsystem.ely.by/cloaks"
+# Metadata textures theo tên (JSON: SKIN.metadata.model == "slim" khi tài khoản dùng dáng Alex).
+ELY_TEXTURES_URL = "https://skinsystem.ely.by/textures"
+# Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
+LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
+
+# Số tài khoản nhận ủng hộ, GHIM SẴN trong kho. Không phải bí mật: mã QR chuyển khoản dán
+# công khai ở quán cà phê cũng chính là ba trường này, và biết số tài khoản chỉ gửi tiền VÀO
+# được chứ không rút ra. Ghim để mã QR luôn dựng được — kể cả khi máy người dùng offline hay
+# Worker chết, hai lúc mà một tính năng "ủng hộ" chết im lặng thì không ai báo cho ai.
+# Đổi số tài khoản KHÔNG cần ra bản mới: `DONATE_ACCOUNT_URL` dưới đây đè được lúc chạy.
+DONATE_BANK_BIN = "970436"  # Vietcombank, theo bảng mã ngân hàng NAPAS
+DONATE_ACCOUNT_NUMBER = "1068854548"
+DONATE_ACCOUNT_HOLDER = "NGUYEN NHAT MINH"
+# Tên ngân hàng chỉ để người quét ĐỌC mà đối chiếu; chuỗi QR chỉ mang mã BIN ở trên.
+DONATE_BANK_NAME = "Vietcombank"
+# Nội dung chuyển khoản cố định, để chủ dự án lọc sao kê ra đúng những lệnh đến từ launcher.
+DONATE_MEMO = "UNG HO NOSTALGIA"
+# Worker trả về số tài khoản hiện hành (JSON: bin/number/holder/memo). Hỏng hay chậm thì
+# launcher dùng số ghim ở trên và KHÔNG báo lỗi gì — người dùng vẫn quét được.
+DONATE_ACCOUNT_URL = "https://nostalgia-backend.junbob.workers.dev/donate"
+
+# Application ID của Nostalgia trên Discord Developer Portal. KHÔNG phải bí mật: mọi app dùng
+# Rich Presence đều nhúng id này vào client (nó chính là thứ Discord tra ra tên và icon hiện
+# trên hồ sơ người chơi), và không mở được cửa nào nếu không có client secret — cái đó không
+# nằm ở đây và không cần cho RPC. Ghim sẵn để presence tự chạy: bắt người chơi tự vào
+# Developer Portal tạo app rồi dán id vào CÀI ĐẶT là giao việc của launcher cho người dùng.
+# Đè được bằng NOSTALGIA_DISCORD_APP_ID cho ai muốn hiện tên app của riêng mình.
+DISCORD_APPLICATION_ID = "1554875447609921606"
+
+# Máy chủ Discord cộng đồng — chung cho bản PC và bản điện thoại. Cùng lý do với mọi URL ở đây:
+# để ở đây thì đổi lời mời (hết hạn, đổi sang link vĩnh viễn) chỉ phải sửa một dòng, và test
+# kiểm được nó là địa chỉ thật chứ không phải chuỗi rỗng nhúng đâu đó trong QML.
+COMMUNITY_URL = "https://discord.gg/TTDqYmM89W"
+
+# Upload skin lên Mojang (PUT, cần Bearer token). Riêng biệt với session profile vì khác
+# endpoint hoàn toàn: profile đọc công khai, upload cần xác thực.
+SKIN_UPLOAD_URL = "https://api.minecraftservices.com/minecraft/profile/skins"
+
+# Cape Mojang: GET hồ sơ (cần Bearer) trả danh sách capes[] người chơi SỞ HỮU;
+# PUT capes/active {"capeId"} mặc một cái, DELETE gỡ. Cape không upload được —
+# Mojang phát theo sự kiện/mua, launcher chỉ chọn trong số đã có.
+PROFILE_WITH_CAPES_URL = "https://api.minecraftservices.com/minecraft/profile"
+CAPE_ACTIVE_URL = "https://api.minecraftservices.com/minecraft/profile/capes/active"
+
+
+@dataclass(frozen=True, slots=True)
+class Endpoints:
+    """Các địa chỉ gốc, gói lại để truyền xuống một lần.
+
+    Truyền ba tham số URL rời qua từng tầng là cách chắc chắn để một ngày có tầng quên
+    chuyển tiếp một cái, và test "offline" lặng lẽ đi ra Internet thật. Đã xảy ra: URL asset
+    từng bị ghi cứng, và một bộ test tưởng là offline mất 46 giây vì gọi ra Mojang.
+    """
+
+    version_manifest: str = VERSION_MANIFEST_URL
+    java_catalog: str = JAVA_RUNTIME_MANIFEST_URL
+    asset_objects: str = ASSET_OBJECT_BASE_URL
+    fabric_meta: str = FABRIC_META_URL
+    quilt_meta: str = QUILT_META_URL
+    modrinth_api: str = MODRINTH_API_URL
+    curseforge_proxy: str = CURSEFORGE_PROXY_URL
+    curseforge_direct: str = CURSEFORGE_DIRECT_URL
+    curseforge_cdn: str = CURSEFORGE_CDN_URL
+    forge_maven: str = FORGE_MAVEN_URL
+    forge_promotions: str = FORGE_PROMOTIONS_URL
+    neoforge_maven: str = NEOFORGE_MAVEN_URL
+    multiplayer_relay: str = MULTIPLAYER_RELAY_URL
+    mojang_session_profile: str = MOJANG_SESSION_PROFILE_URL
+    ely_skins: str = ELY_SKINS_URL
+    ely_capes: str = ELY_CAPES_URL
+    ely_textures: str = ELY_TEXTURES_URL
+    launcher_releases: str = LAUNCHER_RELEASES_URL
+    skin_upload: str = SKIN_UPLOAD_URL
+    profile_with_capes: str = PROFILE_WITH_CAPES_URL
+    cape_active: str = CAPE_ACTIVE_URL
+    donate_account: str = DONATE_ACCOUNT_URL
+    community: str = COMMUNITY_URL
+
+
+DEFAULT_ENDPOINTS = Endpoints()

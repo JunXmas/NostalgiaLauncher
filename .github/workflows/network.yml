@@ -1,0 +1,24 @@
+# Test cần Internet không được phép làm đỏ PR (mạng ngoài hỏng là chuyện của mạng ngoài),
+# nhưng cũng không được để chúng không bao giờ chạy ở đâu cả.
+name: Test cần mạng
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -m network -q
