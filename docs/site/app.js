@@ -21,8 +21,9 @@ const RELEASES_URL = `https://github.com/${REPO}/releases/latest`;
 // `download_count` về 0 cho mọi asset vừa tải lên, nên lượt tải KHÔNG chuyển kho được — API
 // của kho mới chỉ trả về lượt tải phát sinh sau khi chuyển. Không cộng mốc này thì con số
 // trên trang tụt từ 758 xuống còn vài lượt ngay sau khi chuyển, đọc ra như chưa ai từng tải.
-// Đếm từ `repos/JunXmas/NostalgiaLauncher/releases` của kho cũ (19 bản, đã bỏ `SHA256SUMS`)
-// đúng trước lúc chuyển; kho cũ lưu trữ ở `NostalgiaLauncher-agpl`.
+// Đếm từ `/releases` của kho cũ (19 bản, đã bỏ `SHA256SUMS`) đúng trước lúc chuyển. Kho cũ
+// nay đã lưu trữ riêng và không còn công khai, nên con số này không đối chiếu lại được từ
+// bên ngoài — sửa nó thì phải có số liệu thật trong tay, đừng ước lượng.
 const DOWNLOADS_BEFORE_RELICENSE = 758;
 
 // Trả {os, arch} suy từ user agent. os: "windows" | "macos" | "linux" | null (không đoán được).
