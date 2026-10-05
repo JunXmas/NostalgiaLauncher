@@ -17,6 +17,14 @@ const PAGE_SIZE = 100;
 const API_URL = `https://api.github.com/repos/${REPO}/releases?per_page=${PAGE_SIZE}`;
 const RELEASES_URL = `https://github.com/${REPO}/releases/latest`;
 
+// Lượt tải đã có trước khi kho được dựng lại dưới PolyForm Strict (2026-10-05). GitHub đặt
+// `download_count` về 0 cho mọi asset vừa tải lên, nên lượt tải KHÔNG chuyển kho được — API
+// của kho mới chỉ trả về lượt tải phát sinh sau khi chuyển. Không cộng mốc này thì con số
+// trên trang tụt từ 758 xuống còn vài lượt ngay sau khi chuyển, đọc ra như chưa ai từng tải.
+// Đếm từ `repos/JunXmas/NostalgiaLauncher/releases` của kho cũ (19 bản, đã bỏ `SHA256SUMS`)
+// đúng trước lúc chuyển; kho cũ lưu trữ ở `NostalgiaLauncher-agpl`.
+const DOWNLOADS_BEFORE_RELICENSE = 758;
+
 // Trả {os, arch} suy từ user agent. os: "windows" | "macos" | "linux" | null (không đoán được).
 function detectPlatform() {
   const uaData = navigator.userAgentData;
@@ -64,10 +72,11 @@ function humanSize(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
-// Cộng lượt tải mọi bản. Bỏ `SHA256SUMS`: nó là file băm để đối chiếu, một người tải launcher
-// rồi tải thêm nó sẽ bị đếm thành hai lượt — con số phồng lên mà không ai kiểm lại được.
+// Cộng lượt tải mọi bản, trên nền mốc trước lúc đổi giấy phép. Bỏ `SHA256SUMS`: nó là file
+// băm để đối chiếu, một người tải launcher rồi tải thêm nó sẽ bị đếm thành hai lượt — con số
+// phồng lên mà không ai kiểm lại được.
 function countDownloads(releases) {
-  let total = 0;
+  let total = DOWNLOADS_BEFORE_RELICENSE;
   for (const release of releases) {
     for (const asset of release.assets || []) {
       if (asset.name !== "SHA256SUMS") total += asset.download_count || 0;
