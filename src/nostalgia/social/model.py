@@ -22,6 +22,8 @@ class ServiceAccount:
     plus_until: int
     plus_lifetime: bool = False
     plus_plan: str = ""
+    accent: str = ""
+    show_badge: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +32,8 @@ class Friend:
     name: str
     online: bool
     incoming: bool = False
+    badge: str = ""
+    accent: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +75,10 @@ class SocialGateway(Protocol):
     ) -> None: ...
     def accept_invite(self, invite_id: str) -> str: ...
     def decline_invite(self, invite_id: str) -> None: ...
+    def update_profile(self, accent: str, show_badge: bool) -> None: ...
+
+    def fetch_preview_url(self, target: str) -> str: ...
+
     def logout(self) -> None: ...
 
 

@@ -10,6 +10,7 @@ Item {
     z: 100
     Keys.onEscapePressed: visible = false
     property var instance: ({})
+    signal repairRequested(var instance)
 
     function openFor(entry) {
         instance = entry;
@@ -95,6 +96,7 @@ Item {
             }
             Flow {
                 width: parent.width; spacing: 8
+                ActionButton { primary: false; label: "Kiểm tra mod"; visible: typeof modRepairBridge !== "undefined"; clickable: !bridge.gameRunning && !bridge.storageBusy; onClicked: dialog.repairRequested(dialog.instance) }
                 ActionButton { primary: false; label: Tr.phrase("Sao lưu"); clickable: !storageBridge.busy && !bridge.gameRunning; onClicked: storageBridge.backup(dialog.instance.instanceId) }
                 ActionButton {
                     primary: false; label: Tr.phrase("Chuyển vào thùng rác"); clickable: !storageBridge.busy && !bridge.gameRunning

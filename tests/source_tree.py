@@ -44,6 +44,8 @@ LAYERS: dict[str, int] = {
     "repo": 3,
     "install": 3,
     "content": 3,  # Modrinth + file đã cài trong thư mục bản chơi
+    "modcheck": 3,
+    "modrepair": 3,
     "social": 3,  # tài khoản dịch vụ, bạn bè và lời mời qua HTTPS
     "payment": 3,  # đơn Plus do máy chủ xác nhận, không cấp quyền ở máy khách
     "importing": 3,  # tìm instance từ launcher khác trên máy

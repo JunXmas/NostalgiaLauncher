@@ -38,6 +38,14 @@ def python_command(tmp_path: Path, source: str, *arguments: str) -> LaunchComman
 
 
 def is_alive(pid: int) -> bool:
+    # Container PID 1 có thể chưa reap zombie; tiến trình đó đã dừng, không còn chạy.
+    status = Path(f"/proc/{pid}/stat")
+    if sys.platform == "linux" and status.exists():
+        try:
+            if status.read_text().rsplit(")", 1)[1].lstrip().startswith("Z"):
+                return False
+        except FileNotFoundError:
+            return False
     try:
         os.kill(pid, 0)
     except (ProcessLookupError, PermissionError):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import platform
+import sys
 import uuid
 
 from PySide6.QtCore import Slot
@@ -90,6 +92,25 @@ class SocialBridge(SocialSession):
         gateway = self._gateway
         if self.signedIn and gateway and not self.busy:
             self._request("changed", lambda: gateway.decline_invite(invite_id))
+
+    @Slot(str, bool)
+    def setProfile(self, accent: str, show_badge: bool) -> None:
+        gateway = self._gateway
+        if gateway and self.signedIn and not self.busy:
+            self._request("changed", lambda: gateway.update_profile(accent, show_badge))
+
+    @Slot()
+    def downloadEarlyPreview(self) -> None:
+        gateway = self._gateway
+        if gateway and self.signedIn and not self.busy:
+            target = (
+                "windows-x64"
+                if sys.platform == "win32"
+                else ("macos-arm64" if platform.machine() == "arm64" else "macos-x64")
+                if sys.platform == "darwin"
+                else "linux-x64"
+            )
+            self._request("preview", lambda: gateway.fetch_preview_url(target))
 
     @Slot()
     def copyFriendCode(self) -> None:

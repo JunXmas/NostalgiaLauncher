@@ -11,11 +11,11 @@ Rectangle {
     id: root
     objectName: "updateBanner"
     // Trạng thái đáng chiếm chỗ trên màn hình; "checking"/"idle"/"failed" thì không.
-    readonly property bool active: !dismissed && (updateBridge.state === "available"
+    readonly property bool active: !!updateBridge && !dismissed && (updateBridge.state === "available"
                                    || updateBridge.state === "downloading"
                                    || updateBridge.state === "ready")
     property bool dismissed: false
-    readonly property bool canSelfUpdate: updateBridge.canSelfUpdate
+    readonly property bool canSelfUpdate: !!updateBridge && updateBridge.canSelfUpdate
     // Cờ này là điều kiện hiện của nút, tách ra để test đọc được: `visible` của QML là
     // hiện-thật-sự (luôn false khi cây chưa vào cửa sổ), nên không kiểm được ràng buộc.
     // Lúc đang tải thì ẩn nút: việc đã chạy, bấm thêm không thêm được gì.
@@ -38,7 +38,7 @@ Rectangle {
         Text {
             objectName: "updateBannerText"
             anchors.verticalCenter: parent.verticalCenter
-            text: updateBridge.state === "downloading"
+            text: !updateBridge ? "" : updateBridge.state === "downloading"
                   ? Tr.phrase("Đang tải bản ") + updateBridge.latestVersion + "… "
                     + Math.round(updateBridge.progressFraction * 100) + "%"
                   : updateBridge.state === "ready"

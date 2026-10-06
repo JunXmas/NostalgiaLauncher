@@ -93,7 +93,7 @@ Controls.Popup {
                     text: root.details.title || ""
                     color: GlassTheme.text
                     font.family: GlassTheme.font
-                    font.pixelSize: 24
+                    font.pixelSize: GlassTheme.fontDialog
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
@@ -102,7 +102,7 @@ Controls.Popup {
                     text: (root.details.author ? root.details.author + "  ·  " : "") + (root.details.source === "curseforge" ? "CurseForge" : "Modrinth")
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
-                    font.pixelSize: 12
+                    font.pixelSize: GlassTheme.fontLabel
                     elide: Text.ElideRight
                 }
             }
@@ -134,7 +134,7 @@ Controls.Popup {
                     text: bridge.progressText || projectBridge.activity
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
-                    font.pixelSize: 12
+                    font.pixelSize: GlassTheme.fontLabel
                     elide: Text.ElideRight
                 }
                 Controls.ProgressBar {
@@ -181,7 +181,7 @@ Controls.Popup {
                     text: "Giới thiệu"
                     color: GlassTheme.text
                     font.family: GlassTheme.font
-                    font.pixelSize: 15
+                    font.pixelSize: GlassTheme.fontSubheading
                     font.weight: Font.DemiBold
                 }
                 Rectangle {
@@ -206,7 +206,7 @@ Controls.Popup {
                             wrapMode: TextEdit.Wrap
                             color: GlassTheme.text
                             font.family: GlassTheme.font
-                            font.pixelSize: 13
+                            font.pixelSize: GlassTheme.fontBody
                         }
                     }
                 }
@@ -216,7 +216,7 @@ Controls.Popup {
                     text: root.details.notice || ""
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
-                    font.pixelSize: 12
+                    font.pixelSize: GlassTheme.fontLabel
                     wrapMode: Text.Wrap
                 }
                 Text {
@@ -225,7 +225,7 @@ Controls.Popup {
                     text: "Đang lấy giới thiệu và các phiên bản…"
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
-                    font.pixelSize: 13
+                    font.pixelSize: GlassTheme.fontBody
                 }
                 Text {
                     objectName: "projectError"
@@ -234,7 +234,7 @@ Controls.Popup {
                     text: root.details.error || ""
                     color: GlassTheme.danger
                     font.family: GlassTheme.font
-                    font.pixelSize: 13
+                    font.pixelSize: GlassTheme.fontBody
                     wrapMode: Text.Wrap
                 }
                 Button {
@@ -268,7 +268,7 @@ Controls.Popup {
                     text: root.success
                     color: GlassTheme.brand
                     font.family: GlassTheme.font
-                    font.pixelSize: 13
+                    font.pixelSize: GlassTheme.fontBody
                     wrapMode: Text.Wrap
                 }
             }

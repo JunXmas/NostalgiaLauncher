@@ -55,7 +55,7 @@ Item {
             text: "Nostalgia"
             color: GlassTheme.text
             font.family: GlassTheme.font
-            font.pixelSize: 21
+            font.pixelSize: GlassTheme.fontBrand
             font.weight: Font.DemiBold
         }
     }
@@ -77,7 +77,7 @@ Item {
                 text: "MINECRAFT, THEO CÁCH CỦA BẠN"
                 color: GlassTheme.accent
                 font.family: GlassTheme.font
-                font.pixelSize: 11
+                font.pixelSize: GlassTheme.fontNote
                 font.letterSpacing: 2
             }
         }
@@ -99,7 +99,7 @@ khởi đầu."
             text: "Chơi, khám phá và trở lại những điều bạn yêu. Tất cả bắt đầu ở đây."
             color: GlassTheme.muted
             font.family: GlassTheme.font
-            font.pixelSize: 16
+            font.pixelSize: GlassTheme.fontAction
             lineHeight: 1.55
         }
     }
@@ -126,7 +126,7 @@ khởi đầu."
                         text: root.mode === "choose" ? "Chào mừng về nhà." : root.mode === "ely" ? "Đăng nhập Ely.by" : "Chơi ngoại tuyến"
                         color: GlassTheme.text
                         font.family: GlassTheme.font
-                        font.pixelSize: 26
+                        font.pixelSize: GlassTheme.fontResult
                         font.weight: Font.DemiBold
                     }
                     Text {
@@ -135,7 +135,7 @@ khởi đầu."
                         text: root.mode === "choose" ? "Chọn tài khoản để bắt đầu hành trình." : root.mode === "ely" ? "Sử dụng tài khoản và skin Ely.by của bạn." : "Đặt tên nhân vật để chơi trên máy này."
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
-                        font.pixelSize: 14
+                        font.pixelSize: GlassTheme.fontControl
                         lineHeight: 1.4
                     }
                 }
@@ -154,7 +154,7 @@ khởi đầu."
                         width: parent.width
                         text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : "Google lưu bạn bè và Plus. Chọn tài khoản Minecraft bên dưới để chơi."
                         color: GlassTheme.muted
-                        font.pixelSize: 11 * GlassTheme.scale
+                        font.pixelSize: GlassTheme.fontNote
                     }
                     Button {
                         objectName: "loginMicrosoft"
@@ -173,7 +173,7 @@ khởi đầu."
                         text: "Dành cho tài khoản sở hữu Minecraft Java."
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
-                        font.pixelSize: 11
+                        font.pixelSize: GlassTheme.fontNote
                         horizontalAlignment: Text.AlignHCenter
                     }
                     Item {
@@ -280,7 +280,7 @@ khởi đầu."
                     text: root.failure
                     color: GlassTheme.danger
                     font.family: GlassTheme.font
-                    font.pixelSize: 13
+                    font.pixelSize: GlassTheme.fontBody
                 }
                 Button {
                     visible: root.mode !== "choose"
@@ -301,7 +301,7 @@ khởi đầu."
                     text: "Tài khoản của bạn. Thế giới của bạn."
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
-                    font.pixelSize: 12
+                    font.pixelSize: GlassTheme.fontLabel
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
@@ -314,7 +314,7 @@ khởi đầu."
         text: "NOSTALGIA LAUNCHER    /    JAVA EDITION"
         color: GlassTheme.muted
         font.family: GlassTheme.font
-        font.pixelSize: 10
+        font.pixelSize: GlassTheme.fontCaption
         font.letterSpacing: 1.7
     }
     Button {

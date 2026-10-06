@@ -46,14 +46,14 @@ Item {
                 text: "Khám phá"
                 color: GlassTheme.text
                 font.family: GlassTheme.font
-                font.pixelSize: 30
+                font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             Text {
                 text: "Một thế giới quen thuộc. Những cách chơi mới."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 13
+                font.pixelSize: GlassTheme.fontBody
             }
         }
         Select {
@@ -127,7 +127,7 @@ Item {
             text: contentBridge.searching ? "Đang tìm kiếm…" : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), 'f', 0) + " kết quả"
             color: GlassTheme.muted
             font.family: GlassTheme.font
-            font.pixelSize: 11
+            font.pixelSize: GlassTheme.fontNote
         }
         Button {
             anchors.right: parent.right
@@ -212,7 +212,7 @@ Item {
                                 text: model.title
                                 color: GlassTheme.text
                                 font.family: GlassTheme.font
-                                font.pixelSize: 15
+                                font.pixelSize: GlassTheme.fontSubheading
                                 font.weight: Font.DemiBold
                                 elide: Text.ElideRight
                             }
@@ -221,7 +221,7 @@ Item {
                                 text: model.description
                                 color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                                 font.family: GlassTheme.font
-                                font.pixelSize: 12
+                                font.pixelSize: GlassTheme.fontLabel
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
                                 elide: Text.ElideRight
@@ -236,7 +236,7 @@ Item {
                             text: Legacy.Theme.compact(model.downloads) + " tải  ·  " + (model.loaders.length ? model.loaders[0] : "Minecraft")
                             color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                             font.family: GlassTheme.font
-                            font.pixelSize: 11
+                            font.pixelSize: GlassTheme.fontNote
                         }
                         Button {
                             id: downloadButton
@@ -262,7 +262,7 @@ Item {
                 text: "Chưa có kết quả. Thử đổi từ khóa hoặc nguồn nội dung."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 14
+                font.pixelSize: GlassTheme.fontControl
             }
             Button {
                 visible: contentBridge.hasMore

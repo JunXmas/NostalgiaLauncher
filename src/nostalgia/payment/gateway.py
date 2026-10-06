@@ -6,7 +6,7 @@ import json
 from urllib.parse import urlsplit
 
 from nostalgia.errors import PaymentError
-from nostalgia.model.json_value import JsonValue
+from nostalgia.model.json_value import JsonValue, as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
 from nostalgia.payment.model import PaymentOffer, PaymentOrder
@@ -48,7 +48,12 @@ class HttpPaymentGateway:
 
     def fetch_current_order(self, offer: PaymentOffer) -> PaymentOrder | None:
         document = self._request("GET", "/v1/plus/orders/current")
-        return None if document is None else parse_order(document, offer)
+        if document is None:
+            return None
+        current_id = as_string(as_mapping(document).get("offer_id")) or ""
+        if current_id != offer.offer_id:
+            offer = self.fetch_offer(identifier(current_id))
+        return parse_order(document, offer)
 
     def fetch_order(self, order: PaymentOrder) -> PaymentOrder:
         document = self._request("GET", "/v1/plus/orders/" + identifier(order.order_id))

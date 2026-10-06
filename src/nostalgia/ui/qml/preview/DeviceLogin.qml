@@ -41,7 +41,7 @@ Item {
                 text: "Đăng nhập Microsoft"
                 color: GlassTheme.text
                 font.family: GlassTheme.font
-                font.pixelSize: 25
+                font.pixelSize: GlassTheme.fontLogin
                 font.weight: Font.DemiBold
             }
             Text {
@@ -50,7 +50,7 @@ Item {
                 text: "Mở trang Microsoft, nhập mã bên dưới và đăng nhập tài khoản sở hữu Minecraft Java."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 14
+                font.pixelSize: GlassTheme.fontControl
                 lineHeight: 1.4
             }
             Rectangle {
@@ -65,7 +65,7 @@ Item {
                     text: root.code
                     color: GlassTheme.accent
                     font.family: "monospace"
-                    font.pixelSize: 32
+                    font.pixelSize: GlassTheme.fontCode
                     font.letterSpacing: 5
                     readOnly: true
                     selectByMouse: true

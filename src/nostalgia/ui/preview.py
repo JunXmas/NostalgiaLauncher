@@ -1,4 +1,4 @@
-"""Factory for the isolated design preview. The release entrypoint stays in app.py."""
+"""Factory cho giao diện mới; bản release nối gateway thật qua runtime.py."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.interface_setup import InterfaceSetup
+from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
@@ -38,6 +39,7 @@ def open_preview(
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
     context = view.rootContext()
+    context.setContextProperty("modRepairBridge", ModRepairBridge(launcher, bridge))
     multiplayer_bridge = context.contextProperty("multiplayerBridge")
     assert isinstance(multiplayer_bridge, MultiplayerBridge)
     room_sync_bridge = RoomSyncBridge(

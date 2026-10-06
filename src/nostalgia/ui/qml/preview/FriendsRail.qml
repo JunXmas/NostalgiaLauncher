@@ -13,7 +13,7 @@ Glass {
         width: parent.width; spacing: 10
         Item {
             width: parent.width; height: add.height
-            PaymentText { width: parent.width - add.width - 10; anchors.verticalCenter: parent.verticalCenter; text: "Bạn bè · " + socialBridge.friends.length; font.pixelSize: 17 * GlassTheme.scale; font.weight: Font.DemiBold }
+            PaymentText { width: parent.width - add.width - 10; anchors.verticalCenter: parent.verticalCenter; text: "Bạn bè · " + socialBridge.friends.length; font.pixelSize: GlassTheme.fontHeading; font.weight: Font.DemiBold }
             Button { id: add; objectName: "showAddFriend"; anchors.right: parent.right; width: 40; label: root.adding ? "−" : "+"; quiet: true; Accessible.name: "Thêm bạn"; onClicked: root.adding = !root.adding }
         }
         Column {
@@ -45,8 +45,8 @@ Glass {
                         Column {
                             id: labels
                             x: 12; y: 10; width: parent.width - 24; spacing: 4
-                            PaymentText { width: parent.width; text: modelData.name; font.weight: Font.DemiBold }
-                            PaymentText { width: parent.width; text: modelData.online ? "●  Trực tuyến" : "○  Ngoại tuyến"; color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: 10 * GlassTheme.scale }
+                            PaymentText { width: parent.width; text: modelData.name + (modelData.badge ? " · " + modelData.badge : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
+                            PaymentText { width: parent.width; text: modelData.online ? "●  Trực tuyến" : "○  Ngoại tuyến"; color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                         }
                     }
                 }

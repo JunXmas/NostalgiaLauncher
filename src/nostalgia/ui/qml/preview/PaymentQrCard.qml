@@ -31,7 +31,7 @@ Rectangle {
                 horizontalAlignment: Text.AlignRight
                 text: "Còn " + root.timeLeft
                 color: GlassTheme.muted
-                font.pixelSize: 11 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontNote
             }
         }
         Rectangle {
@@ -66,7 +66,7 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             text: (root.compactLayout ? "Còn " + root.timeLeft + " · " : "") + (root.details.demonstration ? "Mã mẫu, không thanh toán." : "Mở ứng dụng ngân hàng để quét mã.")
             color: GlassTheme.muted
-            font.pixelSize: 11 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontNote
         }
         PaymentCopyLine {
             label: "Số tiền"

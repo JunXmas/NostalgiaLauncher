@@ -46,7 +46,7 @@ Rectangle {
             text: root.entry.label || root.entry.instanceId || ""
             color: GlassTheme.text
             font.family: GlassTheme.font
-            font.pixelSize: 15 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontSubheading
             font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
@@ -55,7 +55,7 @@ Rectangle {
             text: root.version + "  ·  " + root.loader + (root.entry.groupName ? "  /  " + root.entry.groupName : "")
             color: GlassTheme.muted
             font.family: GlassTheme.font
-            font.pixelSize: 12 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontLabel
             elide: Text.ElideRight
         }
     }

@@ -1,4 +1,5 @@
 import QtQuick
+import "../preview" as Preview
 import QtQuick.Dialogs
 import "../"
 
@@ -27,6 +28,7 @@ Item {
             id: settingsColumn
             width: parent.width; spacing: Theme.gap
             AppearanceSettings { width: parent.width; height: implicitHeight }
+    Preview.ServiceSettings { width: parent.width }
     UpdatePanel {
         id: updatePanel
         width: parent.width

@@ -21,7 +21,7 @@ Rectangle {
             width: parent.width
             text: root.label
             color: GlassTheme.muted
-            font.pixelSize: 10 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontCaption
         }
         PaymentText {
             objectName: "paymentField-" + root.field

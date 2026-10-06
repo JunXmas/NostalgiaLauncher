@@ -5,7 +5,7 @@ Controls.ComboBox {
     id: root
     height: 42 * GlassTheme.scale
     font.family: GlassTheme.font
-    font.pixelSize: 13 * GlassTheme.scale
+    font.pixelSize: GlassTheme.fontBody
     background: Rectangle {
         radius: 12
         color: GlassTheme.inputSurface
@@ -25,7 +25,7 @@ Controls.ComboBox {
         anchors.verticalCenter: parent.verticalCenter
         text: "⌄"
         color: GlassTheme.muted
-        font.pixelSize: 16
+        font.pixelSize: GlassTheme.fontAction
     }
     delegate: Controls.ItemDelegate {
         width: root.width

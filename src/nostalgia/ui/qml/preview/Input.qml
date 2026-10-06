@@ -20,7 +20,7 @@ Rectangle {
         anchors.rightMargin: 16
         verticalAlignment: TextInput.AlignVCenter
         font.family: GlassTheme.font
-        font.pixelSize: 14 * GlassTheme.scale
+        font.pixelSize: GlassTheme.fontControl
         color: GlassTheme.text
         selectByMouse: true
         clip: true
@@ -36,7 +36,7 @@ Rectangle {
         visible: !field.text.length
         text: root.placeholder
         font.family: GlassTheme.font
-        font.pixelSize: 14 * GlassTheme.scale
+        font.pixelSize: GlassTheme.fontControl
         color: GlassTheme.muted
     }
 }

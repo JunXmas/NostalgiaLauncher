@@ -24,6 +24,25 @@ QtObject {
     property var preferences: null
     readonly property bool reducedMotion: preferences ? preferences.reducedMotion : false
     readonly property real scale: preferences ? preferences.uiScale / 100 : 1
+    readonly property int fontCaption: Math.round(10 * scale)
+    readonly property int fontNote: Math.round(11 * scale)
+    readonly property int fontLabel: Math.round(12 * scale)
+    readonly property int fontBody: Math.round(13 * scale)
+    readonly property int fontControl: Math.round(14 * scale)
+    readonly property int fontSubheading: Math.round(15 * scale)
+    readonly property int fontHeading: Math.round(17 * scale)
+    readonly property int fontLead: Math.round(19 * scale)
+    readonly property int fontTitle: Math.round(22 * scale)
+    readonly property int fontDialog: Math.round(24 * scale)
+    readonly property int fontPage: Math.round(30 * scale)
+    readonly property int fontPrice: Math.round(44 * scale)
+    readonly property int fontMicro: Math.round(9 * scale)
+    readonly property int fontAction: Math.round(16 * scale)
+    readonly property int fontSection: Math.round(18 * scale)
+    readonly property int fontBrand: Math.round(21 * scale)
+    readonly property int fontLogin: Math.round(25 * scale)
+    readonly property int fontResult: Math.round(26 * scale)
+    readonly property int fontCode: Math.round(32 * scale)
     readonly property int quick: reducedMotion ? 0 : 160
     property var backdrop: null
     function alpha(color, opacity) {

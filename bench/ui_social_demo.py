@@ -98,5 +98,15 @@ class DemoSocialGateway:
         del invite_id
         self.snapshot = replace(self.snapshot, invitations=())
 
+    def update_profile(self, accent: str, show_badge: bool) -> None:
+        self.snapshot = replace(
+            self.snapshot,
+            account=replace(self.snapshot.account, accent=accent, show_badge=show_badge),
+        )
+
+    def fetch_preview_url(self, target: str) -> str:
+        del target
+        raise RuntimeError("Demo không phân phối bộ cài riêng.")
+
     def logout(self) -> None:
         self.access_token = ""

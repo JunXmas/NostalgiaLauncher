@@ -34,6 +34,7 @@ from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
 from nostalgia.facade.instances import InstanceOperations
+from nostalgia.facade.mod_repair import ModRepairOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
 from nostalgia.facade.nos_client import NosClientOperations
 from nostalgia.facade.play import PlayOperations
@@ -47,6 +48,9 @@ from nostalgia.instance.server_list import RecentServer
 from nostalgia.instance.world import RecentWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
+from nostalgia.modcheck.model import ModScan
+from nostalgia.modrepair.gateway import HttpRepairGateway
+from nostalgia.modrepair.model import RepairGateway, RepairPlan, RepairScan
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
@@ -57,6 +61,7 @@ from nostalgia.payment.gateway import HttpPaymentGateway
 from nostalgia.payment.model import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
+from nostalgia.social.configuration import ServiceConfiguration
 from nostalgia.social.gateway import HttpSocialGateway
 from nostalgia.social.model import (
     FriendMessage,
@@ -71,6 +76,7 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    ModRepairOperations,
     BackupOperations,
     DonateOperations,
     UpdateOperations,
@@ -103,12 +109,14 @@ __all__ = [
     "GameProcess",
     "GoogleLogin",
     "HttpPaymentGateway",
+    "HttpRepairGateway",
     "HttpRoomSyncGateway",
     "HttpSocialGateway",
     "InstallReport",
     "Instance",
     "Launcher",
     "LauncherRelease",
+    "ModScan",
     "NosClientConfig",
     "PaymentCheckout",
     "PaymentGateway",
@@ -120,9 +128,13 @@ __all__ = [
     "QrCode",
     "RecentServer",
     "RecentWorld",
+    "RepairGateway",
+    "RepairPlan",
+    "RepairScan",
     "RoomService",
     "RoomStatus",
     "RoomSyncGateway",
+    "ServiceConfiguration",
     "ServiceSessionStore",
     "Settings",
     "SocialGateway",

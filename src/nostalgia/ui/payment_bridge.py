@@ -8,11 +8,12 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
+from PySide6.QtGui import QDesktopServices, QGuiApplication
 
 from nostalgia.api import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
 from nostalgia.errors import NostalgiaError
+from nostalgia.ui.payment_plan import fetch_checkout, resolve_preview_offer
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -88,17 +89,11 @@ class PaymentBridge(WorkerBridge):
 
     @Slot(int)
     def selectPlan(self, months: int) -> None:
-        prices = {
-            1: ("plus-month-v1", 29_000),
-            6: ("plus-half-year-v1", 69_000),
-            12: ("plus-year-v2", 109_000),
-            0: ("plus-lifetime-v1", 209_000),
-        }
-        if months not in prices or self.busy or self._order is not None:
+        offer = resolve_preview_offer(months)
+        if offer is None or self.busy or self._order is not None:
             return
-        offer_id, amount = prices[months]
-        self._selected_offer_id = offer_id
-        self._offer = PaymentOffer(offer_id, amount, amount, months, months == 0)
+        self._selected_offer_id = offer.offer_id
+        self._offer = offer
         self._offer_loaded = False
         self._request_id = uuid.uuid4().hex
         self.changed.emit()
@@ -123,18 +118,7 @@ class PaymentBridge(WorkerBridge):
         if self.busy or self._order or gateway is None:
             return
 
-        def fetch_checkout() -> PaymentCheckout:
-            offer = (
-                gateway.fetch_offer(self._selected_offer_id)
-                if self._selected_offer_id
-                else gateway.fetch_offer()
-            )
-            order = gateway.fetch_current_order(offer)
-            if order is not None and order.status in ("expired", "cancelled"):
-                order = None
-            return PaymentCheckout(offer, order)
-
-        self._request("offer", fetch_checkout)
+        self._request("offer", lambda: fetch_checkout(gateway, self._selected_offer_id))
 
     @Slot()
     def createOrder(self) -> None:
@@ -161,6 +145,17 @@ class PaymentBridge(WorkerBridge):
         self._error = ""
         self.changed.emit()
         self.loadOffer()
+
+    @Slot()
+    def openCheckout(self) -> None:
+        order = self._order
+        value = (
+            order.checkout_url
+            if order and order.status == "pending" and order.expires_at > time.time()
+            else ""
+        )
+        if value:
+            QDesktopServices.openUrl(QUrl(value))
 
     @Slot(str)
     def copyField(self, field: str) -> None:

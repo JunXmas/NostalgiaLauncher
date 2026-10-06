@@ -155,6 +155,22 @@ class HttpSocialGateway:
     def decline_invite(self, invite_id: str) -> None:
         self._request("POST", "/v1/invitations/" + identifier(invite_id) + "/decline", {})
 
+    def update_profile(self, accent: str, show_badge: bool) -> None:
+        self._request("POST", "/v1/profile", {"accent": accent, "show_badge": show_badge})
+
+    def fetch_preview_url(self, target: str) -> str:
+        fields = as_mapping(self._request("POST", "/v1/plus/preview", {"target": target}))
+        value = as_string(fields.get("url")) or ""
+        parts = urlsplit(value)
+        if (
+            parts.scheme != "https"
+            or parts.netloc != urlsplit(self.base_url).netloc
+            or parts.path != "/v1/plus/preview/download"
+            or parts.fragment
+        ):
+            raise SocialError("Địa chỉ bản thử nghiệm không hợp lệ.")
+        return value
+
     def logout(self) -> None:
         self._request("POST", "/v1/auth/logout", {})
 

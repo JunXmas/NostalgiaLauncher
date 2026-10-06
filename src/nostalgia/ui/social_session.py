@@ -195,6 +195,9 @@ class SocialSession(SocialState):
             self._sync_bridge.join(payload)
             self._note = "Đang vào phòng của bạn…"
             QTimer.singleShot(30, self.refresh)
+        elif operation == "preview" and isinstance(payload, str):
+            QDesktopServices.openUrl(QUrl(payload))
+            self._note = "Đã mở bản thử nghiệm riêng cho gói của bạn."
         elif operation == "changed":
             self._note = "Đã gửi."
             QTimer.singleShot(30, self.refresh)

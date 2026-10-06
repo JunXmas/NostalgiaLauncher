@@ -46,7 +46,7 @@ Item {
             text: (root.icon ? root.icon + "  " : "") + root.label
             color: root.selected && !root.primary ? GlassTheme.accent : GlassTheme.text
             font.family: GlassTheme.font
-            font.pixelSize: 14 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontControl
             font.weight: Font.DemiBold
         }
     }

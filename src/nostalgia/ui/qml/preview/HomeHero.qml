@@ -42,7 +42,7 @@ Glass {
                 width: parent.width - 14
                 text: root.chosen ? "THẾ GIỚI CỦA BẠN VẪN Ở ĐÂY" : "MỘT KHỞI ĐẦU MỚI"
                 color: GlassTheme.accent
-                font.pixelSize: 10 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontCaption
                 font.letterSpacing: 1.2
             }
         }
@@ -58,7 +58,7 @@ Glass {
             width: parent.width
             text: root.chosen ? root.chosen.label + " · " + root.chosen.versionId : "Từ một góc nhỏ, đến những điều chưa khám phá."
             color: GlassTheme.muted
-            font.pixelSize: 13 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontBody
         }
         Flow {
             width: parent.width

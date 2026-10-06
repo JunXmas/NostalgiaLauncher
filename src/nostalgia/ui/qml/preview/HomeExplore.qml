@@ -59,7 +59,7 @@ Grid {
                     width: parent.width
                     text: modelData.description
                     color: GlassTheme.muted
-                    font.pixelSize: 11 * GlassTheme.scale
+                    font.pixelSize: GlassTheme.fontNote
                 }
             }
             PaymentText {

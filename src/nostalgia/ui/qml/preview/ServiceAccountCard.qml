@@ -21,7 +21,7 @@ Glass {
                 PaymentText {
                     width: parent.width
                     text: socialBridge.signedIn ? socialBridge.account.name : "Cùng bạn bè, ở mọi nơi."
-                    font.pixelSize: 22 * GlassTheme.scale
+                    font.pixelSize: GlassTheme.fontTitle
                     font.weight: Font.DemiBold
                 }
                 PaymentText {
@@ -54,6 +54,7 @@ Glass {
                 }
             }
         }
+        ProfilePerks { width: parent.width }
         PaymentText {
             objectName: "socialAccountHint"
             width: parent.width
@@ -61,7 +62,7 @@ Glass {
                 : socialBridge.configured ? "Bạn bè, chat và chơi chung miễn phí. Chỉ chủ phòng cần Plus để đồng bộ modpack."
                 : "PREVIEW · Đăng nhập Google sẽ mở khi dịch vụ được cấu hình."
             color: GlassTheme.muted
-            font.pixelSize: 11 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontNote
         }
     }
 }

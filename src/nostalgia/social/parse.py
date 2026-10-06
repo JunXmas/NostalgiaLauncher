@@ -66,6 +66,8 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
         timestamp(account_fields.get("plus_until")),
         plus_lifetime,
         plus_plan,
+        accent(account_fields.get("accent")),
+        account_fields.get("show_badge", True) is True,
     )
 
     def parse_friend(document: JsonValue) -> Friend:
@@ -77,6 +79,8 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
             text(fields.get("name")),
             fields.get("online") is True,
             fields.get("incoming") is True,
+            badge(fields.get("badge")),
+            accent(fields.get("accent")),
         )
 
     invitations = []
@@ -112,3 +116,17 @@ def parse_messages(document: JsonValue) -> tuple[FriendMessage, ...]:
             )
         )
     return tuple(messages)
+
+
+def accent(document: JsonValue) -> str:
+    value = as_string(document) or ""
+    if value not in ("", "amethyst", "emerald", "amber"):
+        raise SocialError("Màu hồ sơ không hợp lệ.")
+    return value
+
+
+def badge(document: JsonValue) -> str:
+    value = as_string(document) or ""
+    if value not in ("", "Đồng hành", "Tiên phong", "Sáng lập"):
+        raise SocialError("Huy hiệu không hợp lệ.")
+    return value

@@ -32,7 +32,7 @@ Rectangle {
                 PaymentText {
                     anchors.centerIn: parent
                     text: root.success ? "✓" : root.verifying ? "···" : "!"
-                    font.pixelSize: 26
+                    font.pixelSize: GlassTheme.fontResult
                     color: root.success ? GlassTheme.brand : GlassTheme.muted
                 }
             }
@@ -91,7 +91,7 @@ Rectangle {
                         PaymentText {
                             width: parent.width
                             text: modelData.label
-                            font.pixelSize: 10 * GlassTheme.scale
+                            font.pixelSize: GlassTheme.fontCaption
                             color: GlassTheme.muted
                         }
                         PaymentText {

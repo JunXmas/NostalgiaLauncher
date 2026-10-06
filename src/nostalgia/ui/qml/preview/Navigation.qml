@@ -57,7 +57,7 @@ Glass {
             text: "Nostalgia"
             color: GlassTheme.text
             font.family: GlassTheme.font
-            font.pixelSize: 19
+            font.pixelSize: GlassTheme.fontLead
             font.weight: Font.DemiBold
         }
     }
@@ -80,7 +80,7 @@ Glass {
                 text: "KHÔNG GIAN CỦA BẠN"
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 9
+                font.pixelSize: GlassTheme.fontMicro
                 font.letterSpacing: 1.3
             }
             Repeater {
@@ -127,7 +127,7 @@ Glass {
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.label
                         font.family: GlassTheme.font
-                        font.pixelSize: 13 * GlassTheme.scale
+                        font.pixelSize: GlassTheme.fontBody
                         font.weight: root.currentIndex === modelData.index ? Font.DemiBold : Font.Normal
                         color: root.currentIndex === modelData.index ? GlassTheme.text : GlassTheme.muted
                     }
@@ -215,7 +215,7 @@ Glass {
                 anchors.centerIn: parent
                 text: socialBridge.signedIn ? socialBridge.account.name[0] : bridge.activePlayerName ? bridge.activePlayerName[0] : "?"
                 color: GlassTheme.brand
-                font.pixelSize: 17
+                font.pixelSize: GlassTheme.fontHeading
             }
         }
         Column {
@@ -228,7 +228,7 @@ Glass {
                 text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || "Khách"
                 color: GlassTheme.text
                 font.family: GlassTheme.font
-                font.pixelSize: 13
+                font.pixelSize: GlassTheme.fontBody
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
@@ -236,7 +236,7 @@ Glass {
                 text: socialBridge.signedIn ? (socialBridge.account.plus ? "Google · Plus" : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 11
+                font.pixelSize: GlassTheme.fontNote
             }
         }
         MouseArea {

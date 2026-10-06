@@ -11,8 +11,8 @@ from typing import Any, NoReturn
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtCore import QObject, QPoint, QPointF, Qt, qInstallMessageHandler
-from PySide6.QtGui import QGuiApplication, QWheelEvent
+from PySide6.QtCore import QObject, qInstallMessageHandler
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
@@ -26,6 +26,9 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
+from qt_controls import find_control as find_control
+from qt_controls import press as press
+from qt_controls import wheel as wheel
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -56,33 +59,6 @@ def preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Preview
     view.close()
     view.deleteLater()
     QGuiApplication.processEvents()
-
-
-def find_control(root_item: Any, name: str) -> Any:
-    result = root_item.findChild(QObject, name)
-    assert result is not None, name
-    return result
-
-
-def press(view: QQuickView, control: Any, key: Qt.Key = Qt.Key.Key_Return) -> None:
-    control.forceActiveFocus()
-    QTest.keyClick(view, key)
-    QGuiApplication.processEvents()
-
-
-def wheel(view: QQuickView, scroll: Any, angle: int = -120, pixels: int = 0) -> None:
-    position = scroll.mapToScene(QPointF(scroll.width() / 2, scroll.height() / 2))
-    event = QWheelEvent(
-        position,
-        position,
-        QPoint(0, pixels),
-        QPoint(0, angle),
-        Qt.MouseButton.NoButton,
-        Qt.KeyboardModifier.NoModifier,
-        Qt.ScrollPhase.NoScrollPhase,
-        False,
-    )
-    QGuiApplication.sendEvent(view, event)
 
 
 def test_first_login_and_keyboard_offline_error_then_success(preview: Preview) -> None:

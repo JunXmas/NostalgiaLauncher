@@ -79,9 +79,7 @@ def payment_preview(
 
 
 def create_order(preview: PaymentPreview) -> None:
-    wait_until(
-        lambda: bool(find_control(preview.root_item, "paymentCreate").property("clickable"))
-    )
+    wait_until(lambda: bool(find_control(preview.root_item, "paymentCreate").property("clickable")))
     press(preview.view, find_control(preview.root_item, "paymentCreate"))
     wait_until(lambda: preview.payments.details["stage"] == "pending" and not preview.payments.busy)
 

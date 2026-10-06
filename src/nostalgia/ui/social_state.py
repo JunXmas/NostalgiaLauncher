@@ -57,13 +57,26 @@ class SocialState(WorkerBridge):
             if account.plus_lifetime or account.plus_until > time.time()
             else "",
             "plusUntil": account.plus_until,
+            "accent": account.accent,
+            "showBadge": account.show_badge,
+            "profilePlus": account.plus_plan
+            in ("plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
+            and (account.plus_lifetime or account.plus_until > time.time()),
+            "earlyPreview": account.plus_plan in ("plus-year-v2", "plus-lifetime-v1")
+            and (account.plus_lifetime or account.plus_until > time.time()),
         }
 
     @Property(list, notify=changed)
     def friends(self) -> list[dict[str, Any]]:
         return (
             [
-                {"accountId": friend.account_id, "name": friend.name, "online": friend.online}
+                {
+                    "accountId": friend.account_id,
+                    "name": friend.name,
+                    "online": friend.online,
+                    "badge": friend.badge,
+                    "accent": friend.accent,
+                }
                 for friend in self._snapshot.friends
             ]
             if self._snapshot

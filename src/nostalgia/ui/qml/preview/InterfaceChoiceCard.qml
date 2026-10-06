@@ -63,7 +63,7 @@ Rectangle {
                     width: parent.width
                     text: root.description
                     color: GlassTheme.muted
-                    font.pixelSize: 12 * GlassTheme.scale
+                    font.pixelSize: GlassTheme.fontLabel
                 }
             }
             Rectangle {
@@ -76,7 +76,7 @@ Rectangle {
                 PaymentText {
                     anchors.centerIn: parent
                     text: root.selected ? "✓" : ""
-                    font.pixelSize: 16
+                    font.pixelSize: GlassTheme.fontAction
                     color: GlassTheme.background
                 }
             }

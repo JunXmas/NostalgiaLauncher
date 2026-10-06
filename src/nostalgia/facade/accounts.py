@@ -27,6 +27,11 @@ from nostalgia.auth.qr import QrCode, encode_qr
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.social.configuration import (
+    ServiceConfiguration,
+    load_configuration,
+    save_configuration,
+)
 from nostalgia.social.model import ServiceSessionStore
 
 logger = logging.getLogger(__name__)
@@ -34,6 +39,12 @@ logger = logging.getLogger(__name__)
 
 class AccountOperations(LauncherContext):
     __slots__ = ()
+
+    def load_service_configuration(self) -> ServiceConfiguration:
+        return load_configuration(self.paths.config_dir)
+
+    def save_service_configuration(self, configuration: ServiceConfiguration) -> None:
+        save_configuration(self.paths.config_dir, configuration)
 
     def list_accounts(self) -> tuple[Account, ...]:
         return load_accounts(self.paths.accounts_json)

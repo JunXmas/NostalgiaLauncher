@@ -1,3 +1,17 @@
+## 1.2.0rc2 — Google, bạn bè và Plus draft
+
+- Dùng giao diện mới mặc định, giữ màu cũ và mica; thu gọn bạn bè/chat/chơi chung.
+- Tài khoản Google độc lập Minecraft, lời mời qua bạn bè, một phiên dịch vụ hoạt động.
+- Bốn gói Plus 29k / 69k / 109k / mua đứt 209k, huy hiệu/màu hồ sơ và kênh preview.
+- Luồng payOS xác nhận server, QR nội bộ và khôi phục đơn chờ; client không tự cấp Plus.
+- Free kiểm metadata mod; Plus xem phương án hỗ trợ, sao lưu, kiểm hash và hoàn tác.
+- Đồng bộ modpack cho khách Free khi được host Plus mời.
+
+**DRAFT để thử, chưa publish.** Google/payOS và các quyền online cần dịch vụ staging
+được cấu hình; lượt này chưa deploy backend hay xác minh giao dịch thật.
+
+Xem `DRAFT_TEST_GUIDE.md` đi kèm release để biết cách thử và giới hạn.
+
 ## 1.2.0rc1 — UX preview
 
 Bản thử để chủ dự án duyệt trước khi gộp vào nhánh ổn định.

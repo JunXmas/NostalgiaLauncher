@@ -1,3 +1,6 @@
+> Tài liệu review giai đoạn trước. Bản rc2 đã bổ sung runtime release, payOS, hồ sơ Plus và sửa mod.
+> Trạng thái hiện tại và hướng dẫn thử: [DRAFT_TEST_GUIDE.md](DRAFT_TEST_GUIDE.md).
+
 # Gói mua đứt và trang Bạn bè thu gọn — review preview
 
 Ngày 2026-10-06, nhánh local `preview/glass-review`. Chưa build installer, push, tag,

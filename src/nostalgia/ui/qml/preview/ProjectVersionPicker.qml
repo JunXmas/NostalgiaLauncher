@@ -80,7 +80,7 @@ Column {
         text: "Phiên bản cài đặt"
         color: GlassTheme.text
         font.family: GlassTheme.font
-        font.pixelSize: 15
+        font.pixelSize: GlassTheme.fontSubheading
         font.weight: Font.DemiBold
     }
     Row {
@@ -92,7 +92,7 @@ Column {
             Text {
                 text: "Minecraft"
                 color: GlassTheme.muted
-                font.pixelSize: 12
+                font.pixelSize: GlassTheme.fontLabel
                 font.family: GlassTheme.font
             }
             Select {
@@ -112,7 +112,7 @@ Column {
             Text {
                 text: "Bản phát hành"
                 color: GlassTheme.muted
-                font.pixelSize: 12
+                font.pixelSize: GlassTheme.fontLabel
                 font.family: GlassTheme.font
             }
             Select {
@@ -138,7 +138,7 @@ Column {
         Text {
             text: "Cài vào bản chơi"
             color: GlassTheme.muted
-            font.pixelSize: 12
+            font.pixelSize: GlassTheme.fontLabel
             font.family: GlassTheme.font
         }
         Select {
@@ -163,7 +163,7 @@ Column {
         text: !root.chosen ? "" : root.isPack ? "Tạo bản chơi mới với Minecraft và loader do modpack quy định." : root.targets.length ? "Chỉ hiện bản chơi khớp phiên bản Minecraft" + (root.details.contentKind === "mod" ? " và mod loader." : ".") : "Bạn cần một bản chơi Minecraft " + root.gameVersion + (root.details.contentKind === "mod" ? " với " + root.chosen.loaders.join(" / ") : "") + " để cài bản này."
         color: GlassTheme.muted
         font.family: GlassTheme.font
-        font.pixelSize: 12
+        font.pixelSize: GlassTheme.fontLabel
         wrapMode: Text.Wrap
         lineHeight: 1.3
     }

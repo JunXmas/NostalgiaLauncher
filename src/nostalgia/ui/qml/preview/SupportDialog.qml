@@ -75,7 +75,7 @@ Controls.Popup {
             PaymentText {
                 width: parent.width
                 text: "Ít lo lỗi mod.\nNhiều thời gian chơi."
-                font.pixelSize: 30 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             PaymentText {
@@ -117,7 +117,7 @@ Controls.Popup {
                         PaymentText {
                             width: parent.width
                             text: modelData.description
-                            font.pixelSize: 11 * GlassTheme.scale
+                            font.pixelSize: GlassTheme.fontNote
                             color: GlassTheme.muted
                         }
                     }
@@ -127,7 +127,7 @@ Controls.Popup {
                 width: parent.width
                 text: "Dự kiến: Free báo xung đột, Plus hỗ trợ sửa. Không bảo đảm sửa được mọi lỗi."
                 color: GlassTheme.muted
-                font.pixelSize: 11 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontNote
             }
         }
     }
@@ -140,7 +140,7 @@ Controls.Popup {
             Loader {
                 id: cardLoader
                 anchors.fill: parent
-                source: root.details.stage === "pending" ? "PaymentQrCard.qml" : ["paid", "expired", "cancelled", "verifying"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
+                source: root.details.stage === "pending" ? (root.details.qr ? "PaymentQrCard.qml" : "PaymentLinkCard.qml") : ["paid", "expired", "cancelled", "verifying"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
                 onLoaded: {
                     if ("compactLayout" in item)
                         item.compactLayout = Qt.binding(function () {
@@ -162,7 +162,7 @@ Controls.Popup {
                 PaymentText {
                     text: root.receiptMode ? "BIÊN NHẬN PLUS" : "ỦNG HỘ & PLUS"
                     color: GlassTheme.brand
-                    font.pixelSize: 10 * GlassTheme.scale
+                    font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
@@ -212,7 +212,7 @@ Controls.Popup {
                 text: "Ủng hộ tùy tâm không kích hoạt Plus."
                 visible: !root.receiptMode && ["offer", "unavailable", "pending"].indexOf(root.details.stage) < 0
                 color: GlassTheme.muted
-                font.pixelSize: 10 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontCaption
             }
             Button {
                 objectName: root.receiptMode ? "paymentDone" : root.details.stage === "pending" ? "paymentCheck" : "paymentCreate"

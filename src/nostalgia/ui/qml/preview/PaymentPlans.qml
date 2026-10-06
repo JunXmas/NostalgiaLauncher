@@ -30,8 +30,8 @@ Column {
                     id: labels
                     x: 14; y: 14; width: parent.width - 28; spacing: 5
                     PaymentText { width: parent.width; text: modelData.title; color: root.selected === modelData.months ? GlassTheme.accent : GlassTheme.muted; font.weight: Font.DemiBold }
-                    PaymentText { width: parent.width; text: modelData.price; font.pixelSize: 22 * GlassTheme.scale; font.weight: Font.DemiBold }
-                    PaymentText { width: parent.width; text: modelData.duration; color: GlassTheme.muted; font.pixelSize: 11 * GlassTheme.scale }
+                    PaymentText { width: parent.width; text: modelData.price; font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
+                    PaymentText { width: parent.width; text: modelData.duration; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
                 }
             }
         }
@@ -44,12 +44,12 @@ Column {
         Column {
             id: perks
             width: parent.width; spacing: 7
-            PaymentText { width: parent.width; text: "QUYỀN LỢI RIÊNG · " + (root.selected === 0 ? "SÁNG LẬP" : root.selected === 12 ? "TIÊN PHONG" : root.selected === 6 ? "ĐỒNG HÀNH" : "KHỞI ĐẦU"); color: GlassTheme.accent; font.pixelSize: 10 * GlassTheme.scale; font.letterSpacing: 1 }
+            PaymentText { width: parent.width; text: "QUYỀN LỢI RIÊNG · " + (root.selected === 0 ? "SÁNG LẬP" : root.selected === 12 ? "TIÊN PHONG" : root.selected === 6 ? "ĐỒNG HÀNH" : "KHỞI ĐẦU"); color: GlassTheme.accent; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
             Flow {
                 width: parent.width; spacing: 12
-                Repeater { model: root.extra; PaymentText { text: "✓ " + modelData; font.pixelSize: 12 * GlassTheme.scale } }
+                Repeater { model: root.extra; PaymentText { text: "✓ " + modelData; font.pixelSize: GlassTheme.fontLabel } }
             }
-            PaymentText { width: parent.width; text: "Đề xuất preview · Quyền lợi bổ sung sẽ mở cùng dịch vụ. Không tự động gia hạn."; color: GlassTheme.muted; font.pixelSize: 10 * GlassTheme.scale }
+            PaymentText { width: parent.width; text: "Quyền lợi gắn tài khoản Google · Không tự động gia hạn."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
         }
     }
 }

@@ -18,7 +18,7 @@ Rectangle {
         PaymentText {
             text: "GÓI ỦNG HỘ PLUS"
             color: GlassTheme.brand
-            font.pixelSize: 10 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontCaption
             font.letterSpacing: 1.3
             font.weight: Font.DemiBold
         }
@@ -29,7 +29,7 @@ Rectangle {
                 objectName: "paymentPrice"
                 width: parent.width
                 text: Number(root.details.amount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ"
-                font.pixelSize: 44 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontPrice
                 font.weight: Font.DemiBold
                 lineHeight: 1
             }
@@ -53,7 +53,7 @@ Rectangle {
             width: parent.width
             text: root.details.available ? "Quyền Plus được ghi nhận sau khi hệ thống xác nhận giao dịch." : "Plus đang được chuẩn bị. Bạn chưa cần chuyển khoản để đăng ký."
             color: GlassTheme.muted
-            font.pixelSize: 11 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontNote
         }
     }
 }

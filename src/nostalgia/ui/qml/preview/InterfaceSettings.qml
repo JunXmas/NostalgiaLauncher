@@ -11,7 +11,7 @@ Item {
         PaymentText {
             width: parent.width
             text: "Diện mạo launcher"
-            font.pixelSize: 15 * GlassTheme.scale
+            font.pixelSize: GlassTheme.fontSubheading
             font.weight: Font.DemiBold
         }
         PaymentText {

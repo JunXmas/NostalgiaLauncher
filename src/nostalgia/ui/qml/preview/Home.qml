@@ -49,13 +49,13 @@ Item {
                         text: "Hôm nay, mình chơi gì?"
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
-                        font.pixelSize: 13
+                        font.pixelSize: GlassTheme.fontBody
                     }
                     Text {
                         text: "Chào " + (bridge.activePlayerName || "bạn") + "."
                         color: GlassTheme.text
                         font.family: GlassTheme.font
-                        font.pixelSize: 30
+                        font.pixelSize: GlassTheme.fontPage
                         font.weight: Font.DemiBold
                         font.letterSpacing: -0.7
                     }
@@ -75,7 +75,7 @@ Item {
                     text: "Bản chơi của bạn"
                     color: GlassTheme.text
                     font.family: GlassTheme.font
-                    font.pixelSize: 18
+                    font.pixelSize: GlassTheme.fontSection
                     font.weight: Font.DemiBold
                 }
                 Button {
@@ -106,7 +106,7 @@ Item {
                 text: "Bản chơi bạn tạo sẽ xuất hiện tại đây."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 13
+                font.pixelSize: GlassTheme.fontBody
             }
             HomeExplore {
                 width: parent.width

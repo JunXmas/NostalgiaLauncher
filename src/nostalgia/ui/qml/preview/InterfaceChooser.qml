@@ -32,7 +32,7 @@ Item {
         PaymentText {
             anchors.verticalCenter: parent.verticalCenter
             text: "Nostalgia"
-            font.pixelSize: 19
+            font.pixelSize: GlassTheme.fontLead
             font.weight: Font.DemiBold
         }
     }
@@ -124,7 +124,7 @@ Item {
             PaymentText {
                 width: parent.width
                 text: settingsBridge.interfaceSelectionError || (root.switchBusy ? "Đợi tác vụ hiện tại hoàn tất để đổi giao diện." : "Có thể đổi trong Cài đặt → Giao diện.")
-                font.pixelSize: 12 * GlassTheme.scale
+                font.pixelSize: GlassTheme.fontLabel
                 color: settingsBridge.interfaceSelectionError ? GlassTheme.danger : GlassTheme.muted
             }
             Button {

@@ -48,8 +48,8 @@ Glass {
                 id: heading
                 width: parent.width - (invite.visible ? invite.width + 12 : 0)
                 spacing: 4
-                PaymentText { width: parent.width; text: socialBridge.peerName || "Cùng nhau chơi"; font.pixelSize: 19 * GlassTheme.scale; font.weight: Font.DemiBold }
-                PaymentText { width: parent.width; visible: !!socialBridge.peerId; text: socialBridge.peerOnline ? "● Trực tuyến" : "○ Ngoại tuyến"; color: socialBridge.peerOnline ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: 10 * GlassTheme.scale }
+                PaymentText { width: parent.width; text: socialBridge.peerName || "Cùng nhau chơi"; font.pixelSize: GlassTheme.fontLead; font.weight: Font.DemiBold }
+                PaymentText { width: parent.width; visible: !!socialBridge.peerId; text: socialBridge.peerOnline ? "● Trực tuyến" : "○ Ngoại tuyến"; color: socialBridge.peerOnline ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
             }
             Button {
                 id: invite
@@ -99,7 +99,7 @@ Glass {
             id: chatFooter
             visible: !!socialBridge.peerId
             width: parent.width; height: more.height
-            PaymentText { width: parent.width - more.width - 8; anchors.verticalCenter: parent.verticalCenter; text: "Tin nhắn lưu 30 ngày"; font.pixelSize: 10 * GlassTheme.scale; color: GlassTheme.muted }
+            PaymentText { width: parent.width - more.width - 8; anchors.verticalCenter: parent.verticalCenter; text: "Tin nhắn lưu 30 ngày"; font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted }
             Button { id: more; objectName: "chatOptions"; anchors.right: parent.right; width: 40; height: 30; label: "···"; quiet: true; Accessible.name: "Tùy chọn trò chuyện"; onClicked: root.optionsExpanded = !root.optionsExpanded }
         }
         Flow {

@@ -12,6 +12,7 @@ from urllib.parse import urlsplit
 from nostalgia.errors import PaymentError
 from nostalgia.model.json_value import JsonValue, as_integer, as_mapping, as_string
 from nostalgia.payment.model import PaymentOffer, PaymentOrder, PaymentStatus
+from nostalgia.payment.qr_payload import render_payment_qr
 
 
 def identifier(value: str) -> str:
@@ -86,15 +87,22 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         field: as_string(fields.get(field)) or ""
         for field in ("bank_name", "holder", "account_number", "transfer_memo", "qr_image")
     }
+    payment_url = checkout_url(as_string(fields.get("checkout_url")) or "")
+    raw_qr = as_string(fields.get("qr_payload")) or ""
+    if status == "pending" and raw_qr:
+        strings["qr_image"] = render_payment_qr(raw_qr)
     if status == "pending":
-        if (
-            not all(strings.values())
-            or not strings["account_number"].isascii()
-            or not strings["account_number"].isdigit()
-            or any(len(strings[field]) > 150 for field in strings if field != "qr_image")
-        ):
-            raise PaymentError("Thông tin chuyển khoản chưa đầy đủ.")
-        _validate_png(strings["qr_image"])
+        if strings["qr_image"]:
+            if (
+                not all(strings.values())
+                or not strings["account_number"].isascii()
+                or not strings["account_number"].isdigit()
+                or any(len(strings[field]) > 150 for field in strings if field != "qr_image")
+            ):
+                raise PaymentError("Thông tin chuyển khoản chưa đầy đủ.")
+            _validate_png(strings["qr_image"])
+        elif not payment_url:
+            raise PaymentError("Không có QR hoặc trang thanh toán được xác minh.")
     return PaymentOrder(
         identifier(as_string(fields.get("order_id")) or ""),
         offer.offer_id,
@@ -102,7 +110,7 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         cast(PaymentStatus, status),
         expires_at,
         **strings,
-        checkout_url=checkout_url(as_string(fields.get("checkout_url")) or ""),
+        checkout_url=payment_url,
         active_until=active_until,
         lifetime=offer.lifetime,
     )

@@ -29,14 +29,14 @@ Item {
                 text: "Bản chơi"
                 color: GlassTheme.text
                 font.family: GlassTheme.font
-                font.pixelSize: 30
+                font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             Text {
                 text: bridge.instances.length + " thế giới, theo cách của bạn."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 13
+                font.pixelSize: GlassTheme.fontBody
             }
         }
         Button {
@@ -110,10 +110,11 @@ Item {
                 text: bridge.instances.length ? "Không có bản chơi phù hợp." : "Tạo bản chơi đầu tiên của bạn để bắt đầu."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: 15
+                font.pixelSize: GlassTheme.fontSubheading
             }
         }
     }
+    ModRepairDialog { id: repair }
     Legacy.CreateInstanceDialog {
         id: create
         anchors.fill: parent
@@ -121,6 +122,7 @@ Item {
     Legacy.InstanceEditDialog {
         id: editor
         anchors.fill: parent
+        onRepairRequested: function(instance) { editor.visible=false;repair.openFor(instance); }
     }
     Legacy.ImportInstanceDialog {
         id: imports
