@@ -41,13 +41,14 @@ echo "Successfully installed client into launcher."
 """
 
 
-def installer_jar(*, legacy: bool = False) -> bytes:
+def installer_jar(*, legacy: bool = False, version_id: str = FORGE_VERSION_ID) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        install_profile: dict[str, object] = {"processors": []}
+        install_profile: dict[str, object] = {"processors": [], "json": "/version.json"}
         if legacy:
             install_profile = {"versionInfo": {"id": "old"}, "install": {}}
         archive.writestr("install_profile.json", json.dumps(install_profile))
+        archive.writestr("version.json", json.dumps({"id": version_id}))
     return buffer.getvalue()
 
 
@@ -71,7 +72,30 @@ def publish_forge(state: ServerState, *, legacy: bool = False) -> None:
         f"<version>{NEOFORGE_NAME}-beta</version><version>{NEOFORGE_NAME}</version>"
         f"</versions></versioning></metadata>".encode(),
     )
-    state.add(f"/neoforge/{NEOFORGE_NAME}/neoforge-{NEOFORGE_NAME}-installer.jar", installer_jar())
+    state.add(
+        f"/neoforge/{NEOFORGE_NAME}/neoforge-{NEOFORGE_NAME}-installer.jar",
+        installer_jar(version_id=f"neoforge-{NEOFORGE_NAME}"),
+    )
+
+
+@pytest.mark.parametrize("loader_kind", ["forge", "neoforge"])
+def test_reinstalling_the_same_loader_returns_its_exact_version_id(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+    loader_kind: str,
+) -> None:
+    from typing import cast
+
+    from nostalgia.modloader.model import LoaderKind
+
+    launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
+    chosen = FORGE_NAME if loader_kind == "forge" else NEOFORGE_NAME
+    first = launcher.install_loader(cast(LoaderKind, loader_kind), VERSION_ID, chosen)
+    second = launcher.install_loader(cast(LoaderKind, loader_kind), VERSION_ID, chosen)
+    assert second.version_meta.version_id == first.version_meta.version_id
+    assert second.skipped > 0
 
 
 def make_forge_launcher(
@@ -135,15 +159,17 @@ def test_neoforge_versions_filter_by_game_and_flag_betas(
     assert neoforge_prefix("1.20.4") == "20.4."
 
 
+@pytest.mark.parametrize("loader_version", [FORGE_NAME, "47.2.0"])
 def test_install_forge_runs_installer_and_merges_inheritance(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    loader_version: str,
 ) -> None:
     launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
 
-    report = launcher.install_loader("forge", VERSION_ID, FORGE_NAME)
+    report = launcher.install_loader("forge", VERSION_ID, loader_version)
 
     assert report.version_meta.version_id == FORGE_VERSION_ID
     merged = VersionRepository(launcher.paths).load_version_meta(FORGE_VERSION_ID)
@@ -152,6 +178,7 @@ def test_install_forge_runs_installer_and_merges_inheritance(
     # Installer jar không nằm lại trên đĩa; launcher_profiles.json thì có (installer đòi).
     assert list((launcher.paths.data_dir / "installers").iterdir()) == []
     assert (launcher.paths.data_dir / "launcher_profiles.json").is_file()
+    assert server_state.request_count(f"/forge/{FORGE_NAME}/forge-{FORGE_NAME}-installer.jar") == 1
 
 
 def test_install_neoforge_picks_stable_when_unspecified(
@@ -167,16 +194,18 @@ def test_install_neoforge_picks_stable_when_unspecified(
     assert report.version_meta.version_id == f"neoforge-{NEOFORGE_NAME}"
 
 
+@pytest.mark.parametrize("loader_version", ["1.99.9-0.0.0", "47.2", "1.20.1-47.2.0"])
 def test_unknown_loader_version_is_a_clear_error(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    loader_version: str,
 ) -> None:
     launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
 
     with pytest.raises(VersionError, match="không có bản loader"):
-        launcher.install_loader("forge", VERSION_ID, "1.99.9-0.0.0")
+        launcher.install_loader("forge", VERSION_ID, loader_version)
 
 
 def test_installer_hides_console_on_windows(

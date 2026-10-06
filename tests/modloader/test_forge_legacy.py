@@ -7,6 +7,7 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
 from test_forge import make_forge_launcher
 
 from fake_mojang import VERSION_ID
@@ -50,11 +51,13 @@ def legacy_installer_jar(maven_url: str) -> bytes:
     return buffer.getvalue()
 
 
+@pytest.mark.parametrize("loader_version", ["full", "10.13.4.1614", f"10.13.4.1614-{VERSION_ID}"])
 def test_legacy_forge_is_installed_from_the_profile_without_running_java(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    loader_version: str,
 ) -> None:
     """Installer <=1.12.1: version JSON lấy từ versionInfo (bỏ lib server-only), jar universal
     vào libraries/ theo toạ độ maven, "java" giả KHÔNG được gọi."""
@@ -71,7 +74,9 @@ def test_legacy_forge_is_installed_from_the_profile_without_running_java(
     )
     server_state.add("/maven/net/minecraft/launchwrapper/1.12/launchwrapper-1.12.jar", b"lw")
 
-    report = launcher.install_loader("forge", VERSION_ID, legacy_name)
+    report = launcher.install_loader(
+        "forge", VERSION_ID, legacy_name if loader_version == "full" else loader_version
+    )
 
     version_id = f"{VERSION_ID}-Forge10.13.4.1614-{VERSION_ID}"
     assert report.version_meta.version_id == version_id

@@ -11,9 +11,11 @@ cần chạy Java, chỉ ghi JSON và jar universal từ chính installer.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 from nostalgia.errors import VersionError
@@ -197,12 +199,19 @@ def run_installer(
 
 
 def _reinstalled_version_id(versions_dir: Path, jar_path: Path) -> str:
-    """Cài lại bản đã có: không có thư mục mới, suy id từ tên installer."""
-    stem = jar_path.name.removesuffix("-installer.jar")
-    for candidate in sorted(_version_dirs(versions_dir)):
-        if stem.split("-", 1)[-1] in candidate:
-            return candidate
-    message = f"installer báo xong nhưng không thấy thư mục version nào cho {stem}"
+    """Cài lại: lấy mã từ profile trong installer, không suy từ tên Maven khác thứ tự."""
+    with zipfile.ZipFile(jar_path) as archive:
+        installer_fields = as_mapping(json.loads(archive.read("install_profile.json")))
+        version_path = as_string(installer_fields.get("json")) or "/version.json"
+        try:
+            version_id = as_string(
+                as_mapping(json.loads(archive.read(version_path.lstrip("/")))).get("id")
+            )
+        except KeyError:
+            version_id = as_string(installer_fields.get("version"))
+    if version_id in _version_dirs(versions_dir):
+        return version_id
+    message = f"installer báo xong nhưng không thấy thư mục version nào cho {jar_path.name}"
     raise VersionError(message)
 
 
