@@ -1,4 +1,4 @@
-# Nostalgia 1.2.0rc2 — hướng dẫn thử draft
+# Nostalgia 1.2.0rc5 — hướng dẫn thử draft
 
 Bản này dành cho chủ dự án thử trước khi publish. Không thay bản ổn định và không
 phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu thư mục đang chơi.
@@ -7,6 +7,10 @@ phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu 
 
 - Giao diện mới mặc định, giữ palette cũ, thẻ mica và model block Minecraft.
   Lần mở đầu phóng to cửa sổ đăng nhập; trang bạn bè thu gọn theo kích thước cửa sổ.
+- Quản lý bản chơi mới chia Tổng quan / Nội dung đã cài / Hiệu năng / Sao lưu & dữ liệu.
+  Tab Đã cài và bộ lọc không mở lại trang thư viện cũ; nút và form dùng theme mới.
+- Manrope cho tiêu đề, Inter cho chữ đọc, block sidebar xoay trở lại, chuyển trang/popup
+  có animation; cuộn theo tham số Lenis của Skew và thiết lập Giảm chuyển động.
 - Thư viện có popup dự án và chọn phiên bản cho mod, resourcepack, shader, modpack.
 - Tài khoản Google riêng cho Plus/bạn bè/chat/lời mời. Phiên mới thu hồi phiên dịch vụ
   cũ; tài khoản Minecraft vẫn dùng để khởi chạy game. Không đăng xuất Gmail trên máy khác.
@@ -42,10 +46,13 @@ R2 private, các service bindings, INVITE_KEY và ba secret payOS. Đăng ký we
 1. Windows: tải `setup.exe`; Linux: AppImage hoặc tar.gz; macOS: DMG đúng CPU.
    So SHA-256 với `SHA256SUMS`. Đây là draft chưa ký chứng chỉ hệ điều hành.
 2. Mở lần đầu, đăng nhập Minecraft/ngoại tuyến, kiểm Home, Thư viện, bản chơi, Cài đặt.
-   Thử cửa sổ 1024×600 và chữ 150%; popup và ô nhập không được mất nút thao tác.
+   Thử cửa sổ 1024×600 và chữ 150%; cuộn tới các thao tác nếu nội dung dài.
+   Mở quản lý bản chơi, lưu tên/RAM, thử Đã cài, bật/tắt một mod rồi bật lại.
+   Hover/focus sidebar, chuyển trang, mở/đóng popup; bật Giảm chuyển động.
+   Cuộn bằng chuột/trackpad, đảo hướng và kéo scrollbar; xem RC5_MOTION.gif để đối chiếu.
 3. Cài Forge 1.20.1 số ngắn `47.4.23`, rồi một modpack Forge. Khởi chạy game để kiểm
    cài đặt thực tế; fixture của CI không thay thế bước này.
-4. Bản chơi → sửa bản chơi → Kiểm tra mod. Quét bộ mod bình thường, thử hai JAR có
+4. Bản chơi → quản lý → Sao lưu & dữ liệu → Kiểm tra xung đột mod. Quét bộ mod bình thường, thử hai JAR có
    cùng ID và một mod thiếu phụ thuộc. Quét phải chỉ đọc, không đổi file.
 5. Với dịch vụ staging và Plus: lập phương án, xem danh sách, áp dụng rồi hoàn tác.
    Sửa file mod sau khi áp dụng: hoàn tác phải từ chối ghi đè thay đổi đó.

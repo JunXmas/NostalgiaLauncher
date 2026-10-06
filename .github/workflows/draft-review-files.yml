@@ -6,8 +6,9 @@ on:
     paths:
       - .github/workflows/draft-review-files.yml
       - docs/DRAFT_TEST_GUIDE.md
-      - docs/RC2_VALIDATION.md
-      - docs/preview/rc2/**
+      - docs/RC5_VALIDATION.md
+      - docs/UI_MOTION_REVIEW.md
+      - docs/preview/rc5/**
 
 permissions:
   contents: write
@@ -26,11 +27,11 @@ jobs:
           import re
           from pathlib import Path
           version = re.search(r'__version__ = "([^"]+)"', Path('src/nostalgia/__init__.py').read_text()).group(1)
-          folder = Path('docs/preview/rc2')
+          folder = Path('docs/preview/rc5')
           installers = (folder / 'SHA256SUMS').read_text().splitlines()
           assert installers and all(version in line.split()[1] for line in installers)
-          artifacts = {path.name: path for path in folder.glob('*.png')}
-          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', 'RC2_VALIDATION.md')})
+          artifacts = {path.name: path for path in folder.iterdir() if path.suffix in ('.png', '.gif')}
+          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', 'RC5_VALIDATION.md', 'UI_MOTION_REVIEW.md')})
           seen = set()
           for line in (folder / 'PREVIEW_SHA256SUMS').read_text().splitlines():
               checksum, name = line.split(maxsplit=1)
@@ -47,6 +48,6 @@ jobs:
         run: |
           test "$(gh release view "$DRAFT_REVIEW_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq '.isDraft and (.isPrerelease | not)')" = true
           gh release upload "$DRAFT_REVIEW_TAG" \
-            docs/DRAFT_TEST_GUIDE.md docs/RC2_VALIDATION.md \
-            docs/preview/rc2/PREVIEW_SHA256SUMS docs/preview/rc2/*.png \
+            docs/DRAFT_TEST_GUIDE.md docs/RC5_VALIDATION.md docs/UI_MOTION_REVIEW.md \
+            docs/preview/rc5/PREVIEW_SHA256SUMS docs/preview/rc5/*.png docs/preview/rc5/*.gif \
             --repo "$GITHUB_REPOSITORY" --clobber
