@@ -23,7 +23,7 @@ from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.loaders import LoaderOperations
 from nostalgia.instance.model import Instance
 from nostalgia.model.download import DownloadTask
-from nostalgia.modloader.model import LoaderKind, detect_loader_kind
+from nostalgia.modloader.model import LoaderKind
 from nostalgia.net.download import download_all, download_one
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
@@ -151,18 +151,17 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
         cancel_token: CancelToken | None = None,
     ) -> Instance:
         """Phần chung của mọi modpack: cài loader, đăng ký bản chơi, tải file, chép overrides."""
-        self.install_loader(
+        loader_report = self.install_loader(
             plan.loader_kind,
             plan.game_version,
             plan.loader_version or None,
             on_progress=on_progress,
             cancel_token=cancel_token,
         )
-        version_id = self._loader_version_id(plan.loader_kind, plan.game_version)
         instance = self.create_instance(
             Instance(
                 instance_id=instance_id,
-                version_id=version_id,
+                version_id=loader_report.version_meta.version_id,
                 display_name=display_name or plan.name,
                 icon_url=icon_url,
                 game_dir_override=game_dir_override,
@@ -219,17 +218,3 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
                 pack_path, game_dir, manifest.overrides_prefix
             ),
         )
-
-    def _loader_version_id(self, loader_kind: str, game_version: str) -> str:
-        """Mã bản vừa cài: bản mới nhất trong kho khớp loader + phiên bản game."""
-        if loader_kind == "vanilla":
-            return game_version
-        candidates = [
-            version_id
-            for version_id in self.list_installed_versions()
-            if detect_loader_kind(version_id) == loader_kind and version_id.endswith(game_version)
-        ]
-        if not candidates:
-            message = f"không thấy bản {loader_kind} cho {game_version} sau khi cài"
-            raise ContentError(message)
-        return max(candidates)

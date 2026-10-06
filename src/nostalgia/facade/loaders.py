@@ -47,7 +47,8 @@ class LoaderOperations(VersionOperations):
         cancel_token: CancelToken | None = None,
     ) -> InstallReport:
         """Cài loader cho `game_version`; bỏ trống `loader_version` thì lấy bản ổn định mới
-        nhất. CHẠM MẠNG. Trả về báo cáo cài của chính bản loader vừa sinh ra."""
+        nhất. Forge nhận cả số bản ngắn của modpack lẫn tên đầy đủ trong Maven.
+        CHẠM MẠNG. Trả về báo cáo cài của chính bản loader vừa sinh ra."""
         if loader_kind == "vanilla":
             return self.install_version(
                 game_version, on_progress=on_progress, cancel_token=cancel_token
@@ -56,7 +57,7 @@ class LoaderOperations(VersionOperations):
             candidates = self._fetch_loader_versions(
                 http_client, loader_kind, game_version, cancel_token
             )
-            chosen = self._pick(candidates, loader_version)
+            chosen = self._pick(candidates, loader_version, loader_kind, game_version)
             if loader_kind in ("fabric", "quilt"):
                 version_id = install_fabric_profile(
                     http_client,
@@ -117,11 +118,25 @@ class LoaderOperations(VersionOperations):
         raise VersionError(message)
 
     @staticmethod
-    def _pick(candidates: tuple[LoaderVersion, ...], loader_version: str | None) -> LoaderVersion:
+    def _pick(
+        candidates: tuple[LoaderVersion, ...],
+        loader_version: str | None,
+        loader_kind: LoaderKind,
+        game_version: str,
+    ) -> LoaderVersion:
         if loader_version:
             for candidate in candidates:
                 if candidate.loader_version == loader_version:
                     return candidate
+            if loader_kind == "forge":
+                # Pack ghi `47.4.23`, Maven ghi `1.20.1-47.4.23`; giữ nguyên candidate
+                # để tải đúng URL, kể cả hậu tố nhánh cũ như `-1.7.10`.
+                prefix = f"{game_version}-"
+                for candidate in candidates:
+                    if candidate.loader_version.startswith(prefix):
+                        build = candidate.loader_version.removeprefix(prefix)
+                        if loader_version in (build, build.split("-", 1)[0]):
+                            return candidate
             message = f"không có bản loader {loader_version!r}"
             raise VersionError(message)
         return next((c for c in candidates if c.stable), candidates[0])

@@ -135,15 +135,17 @@ def test_neoforge_versions_filter_by_game_and_flag_betas(
     assert neoforge_prefix("1.20.4") == "20.4."
 
 
+@pytest.mark.parametrize("loader_version", [FORGE_NAME, "47.2.0"])
 def test_install_forge_runs_installer_and_merges_inheritance(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    loader_version: str,
 ) -> None:
     launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
 
-    report = launcher.install_loader("forge", VERSION_ID, FORGE_NAME)
+    report = launcher.install_loader("forge", VERSION_ID, loader_version)
 
     assert report.version_meta.version_id == FORGE_VERSION_ID
     merged = VersionRepository(launcher.paths).load_version_meta(FORGE_VERSION_ID)
@@ -152,6 +154,7 @@ def test_install_forge_runs_installer_and_merges_inheritance(
     # Installer jar không nằm lại trên đĩa; launcher_profiles.json thì có (installer đòi).
     assert list((launcher.paths.data_dir / "installers").iterdir()) == []
     assert (launcher.paths.data_dir / "launcher_profiles.json").is_file()
+    assert server_state.request_count(f"/forge/{FORGE_NAME}/forge-{FORGE_NAME}-installer.jar") == 1
 
 
 def test_install_neoforge_picks_stable_when_unspecified(
@@ -167,16 +170,18 @@ def test_install_neoforge_picks_stable_when_unspecified(
     assert report.version_meta.version_id == f"neoforge-{NEOFORGE_NAME}"
 
 
+@pytest.mark.parametrize("loader_version", ["1.99.9-0.0.0", "47.2", "1.20.1-47.2.0"])
 def test_unknown_loader_version_is_a_clear_error(
     server: LocalHttpsServer,
     server_state: ServerState,
     tmp_path: Path,
     certificate_pair: tuple[Path, Path],
+    loader_version: str,
 ) -> None:
     launcher = make_forge_launcher(server, server_state, tmp_path, certificate_pair)
 
     with pytest.raises(VersionError, match="không có bản loader"):
-        launcher.install_loader("forge", VERSION_ID, "1.99.9-0.0.0")
+        launcher.install_loader("forge", VERSION_ID, loader_version)
 
 
 def test_installer_hides_console_on_windows(

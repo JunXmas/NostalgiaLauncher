@@ -14,6 +14,7 @@ from local_https_server import LocalHttpsServer, ServerState
 from modpack_fixture import MOD_BODY, PACK_ID, modpack_project, publish_modpack
 from nostalgia.api import Launcher
 from nostalgia.errors import ContentError
+from nostalgia.storage.files import atomic_write_json
 from test_api import make_launcher
 
 
@@ -44,6 +45,8 @@ def test_modpack_becomes_a_playable_instance(
     certificate_pair: tuple[Path, Path],
 ) -> None:
     launcher, host = make_modpack_launcher(server, server_state, tmp_path, certificate_pair)
+    other_id = f"fabric-loader-999-{VERSION_ID}"
+    atomic_write_json(launcher.paths.version_json(other_id), {"id": other_id})
 
     instance = launcher.install_modpack(modpack_project(), "goi-vui", allowed_hosts=(host,))
 
