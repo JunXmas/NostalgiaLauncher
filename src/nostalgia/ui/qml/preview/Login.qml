@@ -144,6 +144,19 @@ khởi đầu."
                     width: parent.width
                     spacing: 12
                     Button {
+                        objectName: "loginGoogleService"
+                        width: parent.width
+                        label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Kết nối Google · Bạn bè & Plus"
+                        clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn && !socialBridge.signedIn
+                        onClicked: socialBridge.signIn()
+                    }
+                    PaymentText {
+                        width: parent.width
+                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : "Google lưu bạn bè và Plus. Chọn tài khoản Minecraft bên dưới để chơi."
+                        color: GlassTheme.muted
+                        font.pixelSize: 11 * GlassTheme.scale
+                    }
+                    Button {
                         objectName: "loginMicrosoft"
                         width: parent.width
                         height: 50

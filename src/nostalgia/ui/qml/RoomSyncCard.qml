@@ -5,7 +5,7 @@ Rectangle {
     objectName: "roomSyncCard"
     property bool hostMode: false
     readonly property var info: roomSyncBridge.offer
-    implicitHeight: content.height + 28
+    implicitHeight: content.implicitHeight + 28
     height: implicitHeight
     color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.14)
     radius: Theme.radiusSmall
@@ -22,7 +22,7 @@ Rectangle {
             width: parent.width; wrapMode: Text.WordWrap
             textFormat: Text.PlainText
             text: card.hostMode
-                ? "Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận mã được đồng bộ miễn phí."
+                ? "Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận lời mời được đồng bộ miễn phí."
                 : (card.info.name || "") + "\nMinecraft " + (card.info.gameVersion || "") + " · " + (card.info.loader || "") + " " + (card.info.loaderVersion || "") + "\n" + (card.info.fileCount || 0) + " file · " + ((card.info.sizeMiB || 0) === 0 ? "<0,1" : card.info.sizeMiB) + " MiB"
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }

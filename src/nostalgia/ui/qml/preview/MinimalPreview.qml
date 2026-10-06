@@ -67,6 +67,8 @@ Item {
                         return "Home.qml";
                     if (root.currentIndex === 1)
                         return "Instances.qml";
+                    if (root.currentIndex === 4)
+                        return "Friends.qml";
                     if (root.currentIndex === 2)
                         return root.advancedLibrary ? "../pages/LibraryPage.qml" : "Library.qml";
                     return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
@@ -82,6 +84,22 @@ Item {
                     }
                 }
             }
+        }
+    }
+    Glass {
+        visible: !root.loginVisible && root.currentIndex !== 4 && socialBridge.invitations.length > 0
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 24
+        width: Math.min(380 * GlassTheme.scale, parent.width - 48)
+        height: invitationNote.implicitHeight + invitationOpen.height + 50
+        padding: 18
+        z: 140
+        Column {
+            width: parent.width
+            spacing: 12
+            PaymentText { id: invitationNote; width: parent.width; text: socialBridge.invitations.length ? socialBridge.invitations[0].name + " mời bạn chơi cùng" : "" }
+            Button { id: invitationOpen; label: "Xem lời mời"; primary: true; onClicked: root.navigate(4) }
         }
     }
     Login {

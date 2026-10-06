@@ -70,6 +70,17 @@ class MultiplayerBridge(QObject):
         self._service.start_hosting()
 
     @Slot(str)
+    def supplyLanPort(self, port_text: str) -> None:
+        if (
+            not port_text.isascii()
+            or not port_text.isdigit()
+            or not 1024 <= int(port_text) <= 65535
+        ):
+            self.failed.emit("Cổng LAN phải là số trong 1024 đến 65535.")
+            return
+        self._service.supply_lan_port(int(port_text))
+
+    @Slot(str)
     def join(self, room_code: str) -> None:
         self._service.join(room_code)
 

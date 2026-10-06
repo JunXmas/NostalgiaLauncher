@@ -30,7 +30,8 @@ class PaymentBridge(WorkerBridge):
         super().__init__(parent)
         self._gateway = gateway
         self._demonstration = demonstration
-        self._offer = PaymentOffer("", 69_000, 99_000)
+        self._offer = PaymentOffer("", 109_000, 109_000)
+        self._selected_offer_id = ""
         self._offer_loaded = False
         self._order: PaymentOrder | None = None
         self._request_id = uuid.uuid4().hex
@@ -58,6 +59,7 @@ class PaymentBridge(WorkerBridge):
             "amount": self._offer.amount,
             "regularAmount": self._offer.regular_amount,
             "months": self._offer.duration_months,
+            "lifetime": self._offer.lifetime,
             "error": self._error,
             "orderId": order.order_id if order else "",
             "bank": order.bank_name if order else "",
@@ -68,9 +70,39 @@ class PaymentBridge(WorkerBridge):
             "checkoutUrl": order.checkout_url if order and status == "pending" else "",
             "remaining": remaining,
             "activeUntil": datetime.fromtimestamp(order.active_until, UTC).strftime("%d/%m/%Y")
+            if order and order.status == "paid" and not self._offer.lifetime
+            else "Không hết hạn"
             if order and order.status == "paid"
             else "",
         }
+
+    def set_gateway(self, gateway: PaymentGateway | None) -> None:
+        self.next_generation()
+        self._poll.stop()
+        self._clock.stop()
+        self._gateway, self._order = gateway, None
+        self._offer_loaded = False
+        self._request_id = uuid.uuid4().hex
+        self._error = ""
+        self.changed.emit()
+
+    @Slot(int)
+    def selectPlan(self, months: int) -> None:
+        prices = {
+            1: ("plus-month-v1", 29_000),
+            6: ("plus-half-year-v1", 69_000),
+            12: ("plus-year-v2", 109_000),
+            0: ("plus-lifetime-v1", 209_000),
+        }
+        if months not in prices or self.busy or self._order is not None:
+            return
+        offer_id, amount = prices[months]
+        self._selected_offer_id = offer_id
+        self._offer = PaymentOffer(offer_id, amount, amount, months, months == 0)
+        self._offer_loaded = False
+        self._request_id = uuid.uuid4().hex
+        self.changed.emit()
+        self.loadOffer()
 
     @Slot(bool)
     def setWatching(self, watching: bool) -> None:
@@ -92,7 +124,11 @@ class PaymentBridge(WorkerBridge):
             return
 
         def fetch_checkout() -> PaymentCheckout:
-            offer = gateway.fetch_offer()
+            offer = (
+                gateway.fetch_offer(self._selected_offer_id)
+                if self._selected_offer_id
+                else gateway.fetch_offer()
+            )
             order = gateway.fetch_current_order(offer)
             if order is not None and order.status in ("expired", "cancelled"):
                 order = None

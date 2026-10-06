@@ -27,7 +27,7 @@ dependencies = []
 # `truststore` (MIT, thuần Python, chính pip cũng dùng) đi cùng gói giao diện: nó cho
 # `net/http.py` xác minh chứng chỉ bằng bộ xác minh CỦA HỆ ĐIỀU HÀNH. Thiếu nó, lõi vẫn chạy
 # bằng `ssl` chuẩn — chỉ là trên Windows cũ có thể hỏng TLS (xem `default_tls_context`).
-ui = ["PySide6-Essentials>=6.7", "truststore>=0.10"]
+ui = ["PySide6-Essentials>=6.7", "truststore>=0.10", "keyring>=25.6,<26", "cryptography>=44,<51"]
 
 [project.scripts]
 nostalgia = "nostalgia.cli.main:main"
@@ -53,6 +53,8 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "pre-commit>=3.8",
+    # Kiểm thư viện mã hóa lời mời thật kể cả CI không cài giao diện.
+    "cryptography>=44,<51",
     # Bộ mã hoá QR độc lập, CHỈ dùng làm trọng tài cho `tests/auth/test_qr.py`. Launcher tự
     # vẽ QR bằng stdlib và không bao giờ import cái này. Trước đây test gác duy nhất của
     # `auth/qr.py` là `zbarimg` — một công cụ hệ thống mà cả máy dev lẫn CI đều không có,

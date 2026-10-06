@@ -7,6 +7,7 @@ import QtQuick
    `app.py` đặt. */
 Item {
     id: window
+    property bool socialPreview: false
     implicitWidth: 1360
     implicitHeight: 860
     Component.onCompleted: {
@@ -98,7 +99,7 @@ Item {
             case 1: return "pages/InstancesPage.qml";
             case 2: return "pages/LibraryPage.qml";
             case 3: return "pages/AccountsPage.qml";
-            case 4: return "pages/MultiplayerPage.qml";
+            case 4: return window.socialPreview ? "preview/ClassicFriends.qml" : "pages/MultiplayerPage.qml";
             case 5: return "pages/LogPage.qml";
             case 6: return "pages/SettingsPage.qml";
             default: return "pages/PlaceholderPage.qml";

@@ -35,7 +35,7 @@ Rectangle {
             }
             PaymentText {
                 width: parent.width
-                text: root.details.amount < root.details.regularAmount ? "Ưu đãi cho 12 tháng đầu" : "12 tháng sử dụng Plus"
+                text: root.details.lifetime ? "Mua một lần · Plus không hết hạn" : root.details.amount < root.details.regularAmount ? "Ưu đãi cho " + root.details.months + " tháng" : root.details.months + " tháng sử dụng Plus"
                 color: GlassTheme.muted
             }
         }
@@ -46,7 +46,7 @@ Rectangle {
         }
         PaymentText {
             width: parent.width
-            text: "Gia hạn " + Number(root.details.regularAmount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ/năm. Không tự động gia hạn."
+            text: root.details.lifetime ? "Gắn với tài khoản Google. Các cập nhật Plus về sau trong thời gian dịch vụ hoạt động." : "Gia hạn " + Number(root.details.regularAmount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ/" + root.details.months + " tháng. Không tự động gia hạn."
             color: GlassTheme.muted
         }
         PaymentText {

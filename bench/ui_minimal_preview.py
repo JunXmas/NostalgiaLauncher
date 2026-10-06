@@ -16,7 +16,13 @@ from pathlib import Path
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication
 
-from nostalgia.api import HttpPaymentGateway, HttpRoomSyncGateway, Launcher
+from nostalgia.api import (
+    HttpPaymentGateway,
+    HttpRoomSyncGateway,
+    HttpSocialGateway,
+    Launcher,
+    SocialGateway,
+)
 from nostalgia.net.http import HttpClient
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
@@ -29,7 +35,17 @@ def main() -> int:
     parser.add_argument("--plus-url", default="", help="URL HTTPS của backend Plus đã triển khai")
     parser.add_argument("--plus-session-file", type=Path, help="File chứa phiên tài khoản ủng hộ")
     parser.add_argument("--room-sync-url", default="", help="Relay HTTPS hỗ trợ đồng bộ Plus")
+    parser.add_argument("--accounts-url", default="", help="URL HTTPS của dịch vụ Google/bạn bè")
+    parser.add_argument(
+        "--social-demo", action="store_true", help="Dữ liệu bạn bè PREVIEW, không đăng nhập thật"
+    )
     args = parser.parse_args()
+    if args.social_demo and args.accounts_url:
+        parser.error("Không ghép --social-demo và --accounts-url")
+    if args.accounts_url and (args.plus_url or args.plus_session_file or args.payment_demo):
+        parser.error(
+            "--accounts-url cung cấp phiên Google cho Plus; không ghép chế độ thanh toán khác"
+        )
     if bool(args.plus_url) != bool(args.plus_session_file):
         parser.error("--plus-url và --plus-session-file phải đi cùng nhau")
     if args.payment_demo and args.plus_url:
@@ -54,6 +70,16 @@ def main() -> int:
         if args.room_sync_url
         else None
     )
+    social_gateway: SocialGateway | None = (
+        HttpSocialGateway(args.accounts_url, http_client) if args.accounts_url else None
+    )
+    session_store = (
+        launcher.make_service_session_store(args.accounts_url) if args.accounts_url else None
+    )
+    if args.social_demo:
+        from ui_social_demo import DemoSocialGateway
+
+        social_gateway = DemoSocialGateway()
     if args.payment_demo:
         from ui_payment_demo import DemoPaymentGateway
 
@@ -63,14 +89,45 @@ def main() -> int:
             payment_demonstration=True,
             ui_setup=True,
             room_sync_gateway=sync_gateway,
+            social_gateway=social_gateway,
+            session_store=session_store,
         )
     elif args.plus_session_file:
         gateway = HttpPaymentGateway(args.plus_url, session_token, http_client)
         view, bridge = open_preview(
-            launcher, payment_gateway=gateway, ui_setup=True, room_sync_gateway=sync_gateway
+            launcher,
+            payment_gateway=gateway,
+            ui_setup=True,
+            room_sync_gateway=sync_gateway,
+            social_gateway=social_gateway,
+            session_store=session_store,
         )
     else:
-        view, bridge = open_preview(launcher, ui_setup=True, room_sync_gateway=sync_gateway)
+        view, bridge = open_preview(
+            launcher,
+            ui_setup=True,
+            room_sync_gateway=sync_gateway,
+            social_gateway=social_gateway,
+            session_store=session_store,
+        )
+    if args.accounts_url:
+        social_bridge = view.rootContext().contextProperty("socialBridge")
+        payment_bridge = view.rootContext().contextProperty("paymentBridge")
+        room_bridge = view.rootContext().contextProperty("roomSyncBridge")
+
+        def connect_services() -> None:
+            access_token = social_bridge.access_token()
+            payment_bridge.set_gateway(
+                HttpPaymentGateway(args.accounts_url, access_token, http_client)
+                if access_token
+                else None
+            )
+            if args.room_sync_url:
+                room_bridge.set_gateway(
+                    HttpRoomSyncGateway(args.room_sync_url, http_client, access_token)
+                )
+
+        social_bridge.sessionChanged.connect(connect_services)
     try:
         if view.status() != QQuickView.Status.Ready:
             for error in view.errors():

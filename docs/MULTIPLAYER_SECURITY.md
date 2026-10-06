@@ -45,7 +45,7 @@ hay tự cài gì từ host sang joiner qua phòng, (ii) cảnh báo khi server 
 | # | Luật | Chặn | Bằng chứng từ bản cũ |
 |---|---|---|---|
 | L1 | **Chỉ có bắt tay v2. Không fallback, không downgrade.** Bắt tay hỏng vì bất kỳ lý do gì → đóng, không gửi gì thêm. | A, F | Mọi lỗi khác "host failed auth" đều rơi xuống v1 và gửi **secret plaintext** → host giả chỉ cần im lặng đóng stream là nhận được secret. |
-| L2 | **Secret không rời máy dưới bất kỳ dạng nào.** Không vào URL, không vào presence/friends API, không vào log. Chỉ HMAC của nó lên dây. | A, B, F | Bản cũ đẩy cả mã 18 ký tự vào `PUT /presence` không xác thực → ai biết friend-code lấy được phòng. |
+| L2 | **Secret không lên dây dạng đọc được.** Không vào URL, presence công khai hoặc log. Relay chỉ nhận HMAC. Preview bạn bè gửi envelope X25519/HKDF-SHA256/AES-GCM tới khóa máy nhận; API và D1 không có mã phòng plaintext. | A, B, F | Bản cũ đẩy cả mã 18 ký tự vào `PUT /presence` không xác thực → ai biết friend-code lấy được phòng. |
 | L3 | **Cổng world chỉ tin từ loopback.** Datagram multicast phải có nguồn `127.0.0.1`; cổng trong 1024..65535; launcher chỉ nối tới cổng vừa nghe được. | E | Bản cũ bind `0.0.0.0:4445`, không kiểm nguồn → hàng xóm phát `[AD]22[/AD]` là host bắc cầu tới ssh. |
 | L4 | **Byte đầu sau bắt tay phải là gói Handshake Minecraft hợp lệ** (VarInt length ≤ 300, packet id 0x00, next_state ∈ {1,2}). Không đúng → đóng stream. Chỉ chuyển tiếp byte, không diễn giải lệnh. | D | Bản cũ chuyển tiếp bất kỳ byte nào sau bắt tay. |
 | L5 | **Trần ở mọi bộ đệm.** Khung WS ≤ 1 MiB (đọc chunk 64 KiB nên không cần hơn), tổng gộp continuation ≤ 1 MiB, bộ đệm bắt tay ≤ 512 B, ≤ 32 stream chưa xác thực, timeout bắt tay 8 s, ≤ 16 joiner. | D, F | Bản cũ 16 MiB/khung — thừa 16 lần. |
@@ -72,3 +72,15 @@ mới vẫn tương thích relay đang chạy vì khung mux không đổi.
   `test_bridge_serve_slams_the_door_on_foreign_peers`
 - L9: `test_websocket_accept_is_verified`
 - L10: `test_stop_ends_all_tasks`
+
+## Preview bạn bè và Google (2026-10-06)
+
+Lời mời cần quan hệ bạn bè đã được chấp nhận, phiên Google hiện hành và vé socket
+host thật. API bạn bè biết room ID và vé kiểm host, **không giải được mã phòng trong
+envelope**. Khóa nhận lời mời chỉ tồn tại trên máy hiện hành; khởi động lại hoặc đổi
+máy làm lời mời cũ hết dùng được. Lời mời hạn 5 phút, cấp đúng người nhận một lần.
+
+Dịch vụ danh tính vẫn là nơi tin để liên kết tài khoản Google và khóa người nhận;
+envelope không chống được dịch vụ danh tính chủ động thay khóa hay máy bạn bị chiếm.
+Chat thường lưu trên backend, không phải chat mã hóa đầu cuối. Xem
+[đặc tả Google/bạn bè](GOOGLE_FRIENDS_PREVIEW.md).

@@ -93,3 +93,11 @@ class UpdateError(NostalgiaError):
 
 class PaymentError(NostalgiaError):
     """Không tạo/xác nhận được đơn Plus; lỗi không được tự cấp quyền sử dụng."""
+
+
+class SocialError(NostalgiaError):
+    """Dịch vụ tài khoản Google, bạn bè hoặc lời mời không xác nhận được."""
+
+
+class SessionRevoked(SocialError):
+    """Máy chủ từ chối phiên: hết hạn, đăng xuất hoặc đăng nhập trên máy khác."""

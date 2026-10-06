@@ -39,11 +39,23 @@ def parse_offer(document: JsonValue) -> PaymentOffer:
     fields = as_mapping(document)
     amount = as_integer(fields.get("amount")) or 0
     regular = as_integer(fields.get("regular_amount")) or 0
-    months = as_integer(fields.get("duration_months")) or 0
-    if fields.get("currency") != "VND" or not 0 < amount <= regular <= 10_000_000 or months != 12:
+    months = as_integer(fields.get("duration_months"))
+    lifetime = fields.get("lifetime", False)
+    valid_duration = isinstance(lifetime, bool) and (
+        months == 0 if lifetime else months in (1, 6, 12)
+    )
+    if (
+        fields.get("currency") != "VND"
+        or not 0 < amount <= regular <= 10_000_000
+        or not valid_duration
+    ):
         raise PaymentError("Gói thanh toán không hợp lệ; hãy thử lại sau.")
     return PaymentOffer(
-        identifier(as_string(fields.get("offer_id")) or ""), amount, regular, months
+        identifier(as_string(fields.get("offer_id")) or ""),
+        amount,
+        regular,
+        months or 0,
+        lifetime is True,
     )
 
 
@@ -51,14 +63,23 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
     fields = as_mapping(document)
     status = as_string(fields.get("status")) or ""
     expires_at = as_integer(fields.get("expires_at")) or 0
-    active_until = as_integer(fields.get("active_until")) or 0
+    recorded_until = as_integer(fields.get("active_until"))
+    active_until = recorded_until or 0
     if (
         fields.get("offer_id") != offer.offer_id
         or as_integer(fields.get("amount")) != offer.amount
         or fields.get("currency") != "VND"
+        or ("lifetime" in fields and fields["lifetime"] is not offer.lifetime)
         or status not in {"pending", "paid", "expired", "cancelled"}
         or not 0 < expires_at <= 4_102_444_800
-        or (status == "paid" and not 0 < active_until <= 4_102_444_800)
+        or (
+            status == "paid"
+            and (
+                recorded_until is None
+                or fields.get("lifetime", False) is not offer.lifetime
+                or (active_until != 0 if offer.lifetime else not 0 < active_until <= 4_102_444_800)
+            )
+        )
     ):
         raise PaymentError("Thông tin xác nhận thanh toán không khớp với đơn.")
     strings = {
@@ -83,6 +104,7 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         **strings,
         checkout_url=checkout_url(as_string(fields.get("checkout_url")) or ""),
         active_until=active_until,
+        lifetime=offer.lifetime,
     )
 
 

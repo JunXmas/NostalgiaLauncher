@@ -115,3 +115,41 @@ def test_confirmation_cannot_regress_to_pending(
 def test_insecure_service_config_is_rejected(http_client: HttpClient, url: str) -> None:
     with pytest.raises(PaymentError):
         HttpPaymentGateway(url, "session", http_client)
+
+
+@pytest.mark.parametrize(
+    ("months", "amount", "offer_id"),
+    [
+        (1, 29000, "plus-month-v1"),
+        (6, 69000, "plus-half-year-v1"),
+        (12, 109000, "plus-year-v2"),
+        (0, 209000, "plus-lifetime-v1"),
+    ],
+)
+def test_new_plans_are_confirmed_by_https_server(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    http_client: HttpClient,
+    months: int,
+    amount: int,
+    offer_id: str,
+) -> None:
+    document = offer_document()
+    document.update(
+        offer_id=offer_id,
+        amount=amount,
+        regular_amount=amount,
+        duration_months=months,
+        lifetime=months == 0,
+    )
+    path = "/v1/plus/offer?offer_id=" + offer_id
+    server_state.add("/v1/plus/offer", json.dumps(document).encode())
+    gateway = HttpPaymentGateway(server.url(""), "support-session", http_client)
+    offer = gateway.fetch_offer(offer_id)
+    assert offer.duration_months == months and offer.amount == amount
+    assert server_state.received_path("/v1/plus/offer") == path
+    order_fields = order_document()
+    order_fields.update(offer_id=offer_id, amount=amount)
+    server_state.add("/v1/plus/orders", json.dumps(order_fields).encode())
+    assert gateway.create_order(offer, "request_123").amount == amount
+    assert json.loads(server_state.received_body("/v1/plus/orders")) == {"offer_id": offer_id}

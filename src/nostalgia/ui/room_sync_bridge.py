@@ -44,7 +44,13 @@ class RoomSyncBridge(WorkerBridge):
         self._completed.connect(self._apply_completed)
         self._multiplayer.statusChanged.connect(self._room_changed)
 
-    @Property(bool, constant=True)
+    def set_gateway(self, gateway: RoomSyncGateway | None) -> None:
+        self._cancel.cancel()
+        self.next_generation()
+        self._gateway = gateway
+        self.stateChanged.emit()
+
+    @Property(bool, notify=stateChanged)
     def configured(self) -> bool:
         return self._gateway is not None
 
@@ -95,7 +101,7 @@ class RoomSyncBridge(WorkerBridge):
                 gateway, status, instance_id, cancel_token=cancel_token
             )
             self._completed.emit(
-                "Đã chia sẻ. Bạn bè có mã phòng được đồng bộ miễn phí.", "", generation
+                "Đã chia sẻ. Bạn bè nhận lời mời được đồng bộ miễn phí.", "", generation
             )
 
         self.run_in_background(work, "Đang chia sẻ ảnh chụp modpack...")

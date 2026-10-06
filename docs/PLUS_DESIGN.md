@@ -1,15 +1,16 @@
-# Đề xuất Nostalgia Plus — cần chốt trước khi triển khai thanh toán
+# Nostalgia Plus — đặc tả và giá đã chốt
 
 Hướng sản phẩm đã được chủ dự án duyệt. Đây là đặc tả toàn bộ hệ thống, không phải
 bằng chứng mọi tính năng đã triển khai. Phần giao diện và client thanh toán được mô tả
-tại [preview thanh toán](PLUS_PAYMENT_PREVIEW.md); dịch vụ xác thực, cấp quyền và bộ
-sửa mod vẫn cần triển khai. Chưa nhận thanh toán hoặc thay đổi bản phát hành.
-Giao diện mới là hướng duy nhất; palette và mica giữ theo mẫu đã duyệt.
+tại [preview thanh toán](PLUS_PAYMENT_PREVIEW.md); backend đăng nhập Google/phiên một máy đã có trong preview; cổng thanh toán
+thật và bộ sửa mod vẫn cần triển khai. Chưa nhận thanh toán hoặc thay đổi bản phát hành.
+Preview cho phép chọn giao diện cũ/mới; palette và mica giữ theo mẫu đã duyệt.
 
 ## Giá trị và mức giá đề xuất
 
-Gói «Ủng hộ Plus»: 99.000đ cho 12 tháng, ưu đãi ra mắt 69.000đ cho 12 tháng đầu.
-Đây là mức đề xuất đã được duyệt để dựng preview. Nếu gia hạn ở giá khác, phải công bố trước khi thanh toán;
+Giá chốt ngày 2026-10-06: **29.000đ/1 tháng, 69.000đ/6 tháng, 109.000đ/12 tháng, 209.000đ/mua đứt**.
+Cả bốn gói giữ cùng quyền Plus cốt lõi; gói dài hơn thêm quyền lợi hồ sơ/preview được
+đề xuất tại [review mới](PLUS_LIFETIME_REVIEW.md). Nếu gia hạn ở giá khác, phải công bố trước khi thanh toán;
 không tự trừ tiền, không mặc định gia hạn. Hết hạn vẫn dùng launcher và bản chơi bình thường.
 
 | | Free | Plus |
@@ -29,9 +30,11 @@ Khoản ủng hộ tùy tâm vẫn là luồng riêng, có thể chuyển số t
 cấp Plus. Luồng Plus ghi rõ số tiền, thời hạn, quyền lợi và điều kiện trước khi trả tiền.
 Không dùng nội dung «ủng hộ tùy tâm» cho một giao dịch đổi lấy quyền sử dụng tính năng.
 
-Không đề xuất gói trọn đời trong đợt đầu vì chi phí máy chủ và hỗ trợ còn phát sinh.
+Theo yêu cầu mới, thêm gói mua đứt 209.000đ. Quyền không hết hạn trong thời gian dịch vụ
+hoạt động, vẫn có giới hạn sử dụng và thu hồi khi hoàn tiền. Chi phí máy chủ tiếp tục
+phát sinh nên cần đo chi phí mỗi account trước mở bán.
 Không bao gồm hỗ trợ trực tiếp không giới hạn hoặc AI không giới hạn trong mức giá này.
-Thử nghiệm gói năm trước; chỉ bổ sung gói ngắn hạn nếu có nhu cầu thực tế.
+Bốn gói được chọn rõ trước tạo đơn; giá/thời hạn vẫn phải do backend xác nhận.
 
 ## Ranh giới bảo vệ quyền Plus
 
@@ -63,8 +66,8 @@ sequenceDiagram
   ủng hộ riêng; không tin tên tài khoản Minecraft ngoại tuyến hoặc email tự khai.
 - Không gửi token Minecraft/Microsoft/Ely.by cho dịch vụ thanh toán hay dịch vụ Plus.
 - Lưu token bằng kho thông tin xác thực của hệ điều hành; không log token. Token đọc
-  được bởi chủ máy vẫn có thể bị chia sẻ: giới hạn hai phiên thiết bị đang hoạt động,
-  cho phép xem và thu hồi thiết bị; không khóa bằng HWID cố định.
+  được bởi chủ máy vẫn có thể bị chia sẻ: chỉ cho phép **một phiên Nostalgia đang hoạt động**;
+  đăng nhập máy mới thu hồi phiên cũ ở máy chủ; không khóa bằng HWID cố định.
 - Quyền hết hạn/thu hồi phải chặn API. Đồng hồ client không quyết định thời hạn.
   Lỗi xác thực hoặc mất mạng không tự chuyển thành Plus. Free và chức năng chơi vẫn chạy.
 - Giới hạn tốc độ, kích thước yêu cầu, số yêu cầu song song và ngân sách xử lý theo tài
@@ -91,13 +94,13 @@ Cả hai phương án đều cần dịch vụ máy chủ; mã QR ủng hộ hi�
 4. Ghi nhận giao dịch và cấp quyền trong một giao dịch cơ sở dữ liệu. Mã giao dịch và
    mã đơn có ràng buộc duy nhất: thông báo lặp hoặc xử lý song song chỉ cấp quyền một lần.
 5. Client hỏi trạng thái đơn gắn với tài khoản; trang quay về sau thanh toán và nút
-   «Tôi đã chuyển khoản» chỉ kiểm tra trạng thái, không cấp quyền.
+   «Kiểm tra thanh toán» chỉ kiểm tra trạng thái, không cấp quyền.
 6. Đơn chưa trả, trả thiếu, sai nội dung hoặc đã hết hạn không tự cấp quyền. Cần luồng
    xử lý ngoại lệ đối chiếu được; công bố chính sách trước khi nhận tiền.
 7. Gia hạn bắt đầu từ ngày hết hạn nếu quyền còn hiệu lực, hoặc ngày giao dịch được
    xác nhận nếu đã hết hạn. Hoàn tiền/thu hồi quyền cần lưu lịch sử đối chiếu.
 
-Không cấp Plus chỉ vì chuyển đúng 69.000đ/99.000đ vào QR cũ: không đủ để biết người
+Không cấp Plus chỉ vì chuyển đúng số tiền của một gói vào QR cũ: không đủ để biết người
 nhận quyền, gói đã chọn hoặc đơn nào được thanh toán.
 
 ## Luồng sửa lỗi Plus
@@ -152,7 +155,9 @@ người chơi chấp nhận, tỷ lệ sửa thành công, hoàn tác và thờ
 dữ liệu để dự đoán tỷ lệ mua. Báo cáo đóng góp của Plus cho phát triển launcher theo
 kết quả thực tế, không hứa lịch tính năng cố định khi chưa đủ nguồn lực.
 
-99.000đ/năm tương đương doanh thu gộp 8.250đ/tháng/người; 69.000đ/năm là 5.750đ.
+109.000đ/năm tương đương doanh thu gộp khoảng 9.083đ/tháng/người; gói 6 tháng là 11.500đ/tháng.
 Cần trừ phí giao dịch, thuế, hoàn tiền, hạ tầng và thời gian hỗ trợ để đánh giá có lãi.
 Điều kiện mở bán: chi phí mỗi tài khoản nằm trong ngân sách và luồng sửa/hoàn tác được
 kiểm chứng. Giá ra mắt không phải bằng chứng mô hình bền vững.
+
+Xem [Google, bạn bè và phiên một máy](GOOGLE_FRIENDS_PREVIEW.md) cho phần đã triển khai và giới hạn kiểm thử.

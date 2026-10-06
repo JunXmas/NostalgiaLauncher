@@ -32,7 +32,7 @@ class InterfaceSetup(QObject):
 
     def _show_source(self, style: str) -> None:
         path = QML_DIR / (
-            "Main.qml"
+            "preview/ClassicPreview.qml"
             if style == "classic"
             else "preview/MinimalPreview.qml"
             if style == "modern"
@@ -62,6 +62,7 @@ class InterfaceSetup(QObject):
             "storageBridge",
             "importBridge",
             "roomSyncBridge",
+            "socialBridge",
         ):
             control = context.contextProperty(name)
             if isinstance(control, QObject) and control.property("busy"):

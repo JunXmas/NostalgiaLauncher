@@ -5,7 +5,7 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
 
 ## Đã triển khai
 
-- Mục Ủng hộ mở màn Plus: quyền lợi, 69.000đ cho 12 tháng đầu, gia hạn 99.000đ/năm,
+- Mục Ủng hộ mở màn Plus: quyền lợi, 29.000đ/1 tháng, 69.000đ/6 tháng, 109.000đ/năm, 209.000đ/mua đứt,
   không tự gia hạn. Giá thật luôn lấy từ backend; giá chưa nạp được chỉ là mẫu, nút tạo
   đơn bị khóa. Free/Plus là phạm vi tính năng dự kiến, chưa phải bộ sửa mod đang hoạt động.
 - Thanh toán có QR, số tiền, ngân hàng/người nhận, số tài khoản và nội dung chuyển khoản.
@@ -17,7 +17,7 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
 - Mất mạng giữ đơn để thử lại; retry tạo đơn giữ cùng Idempotency-Key. Client không
   được quyết định hết hạn thanh toán bằng đồng hồ của mình: hết giờ thì ẩn QR và đối chiếu
   với máy chủ. Trạng thái thành công/hết hạn/hủy đều có màn riêng, có sao chép mã đơn.
-- Nút «Tôi đã chuyển khoản» chỉ gọi API kiểm tra. Không có slot «đánh dấu đã trả tiền».
+- Nút «Kiểm tra thanh toán» chỉ gọi API kiểm tra. Không có slot «đánh dấu đã trả tiền».
   JSON sai mã đơn/gói/giá, trạng thái lạ, phiên hết hạn, lỗi HTTP hoặc redirect không thành
   xác nhận thành công. Client không chứa khóa payOS hay khóa quản trị.
 - Ủng hộ tùy tâm mở dialog VietQR hiện có, ghi rõ không kích hoạt Plus. Không tự đổi
@@ -36,6 +36,10 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
 - Palette cũ và nền mica giữ nguyên. Chỉ thay đổi nhánh preview, không build/phát hành.
 
 ## Ảnh Qt thật
+
+Ảnh bốn gói mới: [chọn gói](preview/minimal/plus-four-plans.png).
+Xem [review quyền lợi/bố cục](PLUS_LIFETIME_REVIEW.md) cho trạng thái triển khai hiện tại. Các ảnh bên dưới
+là bản bố cục cũ, có giá cũ; dùng để đối chiếu việc sửa QR/biên nhận.
 
 Ảnh chụp từ QQuickView trên OpenGL/llvmpipe, 1440×900 và 1024×600/cỡ chữ 150%.
 Dữ liệu ngân hàng và giao dịch là mẫu. QR chỉ chứa chữ DEMO, không chứa lệnh chuyển

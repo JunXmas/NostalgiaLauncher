@@ -219,7 +219,7 @@ Controls.Popup {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 visible: root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0
-                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Tôi đã chuyển khoản") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
+                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Kiểm tra thanh toán") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
                 primary: true
                 clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error)
                 onClicked: {
@@ -262,6 +262,10 @@ Controls.Popup {
                         color: root.details.error ? GlassTheme.danger : "#e6bb68"
                         font.pixelSize: (root.compactLayout ? 10 : 11) * GlassTheme.scale
                     }
+                }
+                PaymentPlans {
+                    width: parent.width
+                    visible: ["offer", "unavailable"].indexOf(root.details.stage) >= 0
                 }
                 Grid {
                     id: grid

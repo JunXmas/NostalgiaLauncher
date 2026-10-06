@@ -11,6 +11,7 @@ from nostalgia.account.ely import build_ely_account, refresh_ely_account
 from nostalgia.account.microsoft import build_microsoft_account, needs_refresh, refresh_account
 from nostalgia.account.model import ELY, Account
 from nostalgia.account.offline import build_offline_account
+from nostalgia.account.service_store import KeyringSessionStore
 from nostalgia.account.store import (
     find_account,
     load_accounts,
@@ -26,6 +27,7 @@ from nostalgia.auth.qr import QrCode, encode_qr
 from nostalgia.errors import AccountError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.social.model import ServiceSessionStore
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +161,9 @@ class AccountOperations(LauncherContext):
                 cancel_token=cancel_token,
             )
         return self._store(refreshed)
+
+    def make_service_session_store(self, service_url: str) -> ServiceSessionStore:
+        return KeyringSessionStore(service_url, self.paths.config_dir)
 
     def _store(self, account: Account) -> Account:
         save_accounts(self.paths.accounts_json, upsert_account(self.list_accounts(), account))

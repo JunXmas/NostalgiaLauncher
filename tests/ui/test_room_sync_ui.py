@@ -24,6 +24,7 @@ from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapsho
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
+from social_fixture import SocialFixture
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -68,7 +69,11 @@ def room_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tu
     launcher.add_offline_account("JunXmas")
     monkeypatch.setattr(Launcher, "search_content", lambda *_a, **_k: SearchPage((), 0, 0))
     gateway = OfferGateway()
-    view, bridge = open_preview(launcher, room_sync_gateway=gateway)
+    social_gateway = SocialFixture()
+    social_gateway.access_token = "a" * 64
+    view, bridge = open_preview(launcher, room_sync_gateway=gateway, social_gateway=social_gateway)
+    social_bridge = view.rootContext().contextProperty("socialBridge")
+    wait_until(lambda: social_bridge.signedIn and not social_bridge.busy)
     view.show()
     view.requestActivate()
     root_item = view.rootObject()
@@ -79,6 +84,7 @@ def room_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tu
     sync_bridge = view.rootContext().contextProperty("roomSyncBridge")
     sync_bridge._joined_code = "ABCDEFGHJKMNPQRSTU"
     yield launcher, gateway, view, root_item, multiplayer, sync_bridge, bridge
+    social_bridge.shutdown()
     sync_bridge.cancel()
     sync_bridge._poll.stop()
     multiplayer.shutdown()
@@ -152,5 +158,5 @@ def test_sync_card_controls_fit_at_small_and_desktop_sizes(
         assert origin.x() >= 0 and origin.y() >= 0
         assert origin.x() + button.width() <= card.width() + 0.5
         assert origin.y() + button.height() <= card.height() + 0.5
-        scroll = find_control(root_item, "multiplayerScroll")
+        scroll = find_control(root_item, "friendsScroll")
         assert card.width() <= scroll.width()

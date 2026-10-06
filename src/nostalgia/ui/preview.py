@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QObject, QUrl
+from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickView
 
-from nostalgia.api import Launcher, PaymentGateway, RoomSyncGateway
+from nostalgia.api import (
+    Launcher,
+    PaymentGateway,
+    RoomSyncGateway,
+    ServiceSessionStore,
+    SocialGateway,
+)
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
@@ -16,6 +22,7 @@ from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
+from nostalgia.ui.social_bridge import SocialBridge
 
 
 def open_preview(
@@ -25,6 +32,8 @@ def open_preview(
     payment_demonstration: bool = False,
     ui_setup: bool = False,
     room_sync_gateway: RoomSyncGateway | None = None,
+    social_gateway: SocialGateway | None = None,
+    session_store: ServiceSessionStore | None = None,
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
@@ -35,9 +44,22 @@ def open_preview(
         launcher, bridge, multiplayer_bridge, room_sync_gateway, parent=view
     )
     context.setContextProperty("roomSyncBridge", room_sync_bridge)
+    social_bridge = SocialBridge(
+        social_gateway,
+        multiplayer_bridge,
+        room_sync_bridge,
+        parent=view,
+        session_store=session_store,
+    )
+    context.setContextProperty("socialBridge", social_bridge)
+    if social_gateway is not None and social_gateway.access_token:
+        social_bridge.refresh()
+    elif social_gateway is not None and session_store is not None:
+        QTimer.singleShot(0, social_bridge.restoreSession)
     running_application = QGuiApplication.instance()
     if running_application is not None:
         running_application.aboutToQuit.connect(room_sync_bridge.cancel)
+        running_application.aboutToQuit.connect(social_bridge.shutdown)
     content_bridge = context.contextProperty("contentBridge")
     assert isinstance(content_bridge, ContentBridge)
     context.setContextProperty(

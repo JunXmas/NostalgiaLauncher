@@ -30,7 +30,7 @@ Glass {
             index: 3
         },
         {
-            label: "Chơi chung",
+            label: "Bạn bè & chơi chung",
             block: "command",
             index: 4
         },
@@ -201,7 +201,7 @@ Glass {
                 return a.accountId === bridge.activeAccountId;
             }) || null
             source: active ? active.skinFile : ""
-            visible: !!source
+            visible: !!source && !socialBridge.signedIn
         }
         Rectangle {
             x: 12
@@ -213,7 +213,7 @@ Glass {
             color: Legacy.Theme.mix(GlassTheme.surface, GlassTheme.brand, 0.20)
             Text {
                 anchors.centerIn: parent
-                text: bridge.activePlayerName ? bridge.activePlayerName[0] : "?"
+                text: socialBridge.signedIn ? socialBridge.account.name[0] : bridge.activePlayerName ? bridge.activePlayerName[0] : "?"
                 color: GlassTheme.brand
                 font.pixelSize: 17
             }
@@ -225,7 +225,7 @@ Glass {
             spacing: 4
             Text {
                 width: parent.width
-                text: bridge.activePlayerName || "Khách"
+                text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || "Khách"
                 color: GlassTheme.text
                 font.family: GlassTheme.font
                 font.pixelSize: 13
@@ -233,7 +233,7 @@ Glass {
                 elide: Text.ElideRight
             }
             Text {
-                text: bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
+                text: socialBridge.signedIn ? (socialBridge.account.plus ? "Google · Plus" : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: 11
@@ -242,7 +242,7 @@ Glass {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.navigate(3)
+            onClicked: root.navigate(socialBridge.signedIn ? 4 : 3)
         }
     }
 }

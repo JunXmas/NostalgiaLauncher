@@ -18,6 +18,7 @@ from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.host import HostRelay
 from nostalgia.multiplayer.lan import LanWorld, announce_forever, detect_open_to_lan
+from nostalgia.multiplayer.lan_probe import probe_lan_port
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
 from nostalgia.net.websocket import TlsContext
@@ -52,6 +53,7 @@ class RoomService:
         self._host: HostRelay | None = None
         self._joiner: JoinerBridge | None = None
         self._beacon: asyncio.Task[None] | None = None
+        self._manual_port = 0
 
     # ----- lệnh từ luồng giao diện -----
 
@@ -60,6 +62,13 @@ class RoomService:
 
     def join(self, room_code: str) -> Future[None]:
         return self._submit(self._join_flow(room_code))
+
+    def supply_lan_port(self, world_port: int) -> Future[None]:
+        async def apply() -> None:
+            if self._status.role == "waiting_world":
+                self._manual_port = world_port
+
+        return self._submit(apply())
 
     def set_locked(self, locked: bool) -> Future[None]:
         async def apply() -> None:
@@ -125,8 +134,27 @@ class RoomService:
 
     async def _wait_for_world(self) -> LanWorld:
         deadline = self._loop.time() + WORLD_WAIT_SECONDS
+        detector_available = True
         while self._loop.time() < deadline:
-            world = await self._loop.run_in_executor(None, self._detect_world, WORLD_POLL_SECONDS)
+            if self._manual_port:
+                world_port, self._manual_port = self._manual_port, 0
+                try:
+                    return await self._loop.run_in_executor(None, probe_lan_port, world_port)
+                except MultiplayerError as exc:
+                    self._on_failure(str(exc))
+            if not detector_available:
+                await asyncio.sleep(0.2)
+                continue
+            try:
+                world = await self._loop.run_in_executor(
+                    None, self._detect_world, WORLD_POLL_SECONDS
+                )
+            except MultiplayerError:
+                detector_available = False
+                self._on_failure(
+                    "Không dò LAN tự động được. Hãy nhập cổng Minecraft báo sau khi mở LAN."
+                )
+                continue
             if world is not None:
                 return world
         raise MultiplayerError("không thấy world nào mở LAN: vào game, bấm Esc → Open to LAN")
@@ -170,6 +198,7 @@ class RoomService:
         host, self._host = self._host, None
         if host is not None:
             await host.stop()
+        self._manual_port = 0
         self._status = RoomStatus()
         self._on_status(self._status)
 

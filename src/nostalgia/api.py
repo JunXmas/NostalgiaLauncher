@@ -57,6 +57,15 @@ from nostalgia.payment.gateway import HttpPaymentGateway
 from nostalgia.payment.model import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
+from nostalgia.social.gateway import HttpSocialGateway
+from nostalgia.social.model import (
+    FriendMessage,
+    GoogleLogin,
+    ServiceSessionStore,
+    SocialGateway,
+    SocialSnapshot,
+    SocialUpdate,
+)
 from nostalgia.update.release import LauncherRelease
 
 
@@ -90,9 +99,12 @@ __all__ = [
     "DeviceCode",
     "Diagnosis",
     "Found",
+    "FriendMessage",
     "GameProcess",
+    "GoogleLogin",
     "HttpPaymentGateway",
     "HttpRoomSyncGateway",
+    "HttpSocialGateway",
     "InstallReport",
     "Instance",
     "Launcher",
@@ -111,7 +123,11 @@ __all__ = [
     "RoomService",
     "RoomStatus",
     "RoomSyncGateway",
+    "ServiceSessionStore",
     "Settings",
+    "SocialGateway",
+    "SocialSnapshot",
+    "SocialUpdate",
     "StagedUpdate",
     "SyncManifest",
 ]

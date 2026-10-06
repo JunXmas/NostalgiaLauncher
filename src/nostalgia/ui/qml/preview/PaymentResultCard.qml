@@ -49,7 +49,7 @@ Rectangle {
                 }
                 PaymentText {
                     visible: root.success
-                    text: "Nostalgia Plus · 12 tháng"
+                    text: "Nostalgia Plus · " + (root.details.lifetime ? "Mua đứt" : root.details.months + " tháng")
                     font.pixelSize: (root.compactLayout ? 10 : 13) * GlassTheme.scale
                     color: GlassTheme.muted
                 }

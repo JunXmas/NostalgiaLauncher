@@ -14,6 +14,7 @@ class PaymentOffer:
     amount: int
     regular_amount: int
     duration_months: int = 12
+    lifetime: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +31,7 @@ class PaymentOrder:
     qr_image: str = ""
     checkout_url: str = ""
     active_until: int = 0
+    lifetime: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +43,7 @@ class PaymentCheckout:
 class PaymentGateway(Protocol):
     """Client không tự cấp quyền: chỉ tạo đơn và hỏi trạng thái máy chủ."""
 
-    def fetch_offer(self) -> PaymentOffer: ...
+    def fetch_offer(self, offer_id: str = "") -> PaymentOffer: ...
 
     def create_order(self, offer: PaymentOffer, request_id: str) -> PaymentOrder: ...
 

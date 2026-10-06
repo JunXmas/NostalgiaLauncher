@@ -33,8 +33,9 @@ class HttpPaymentGateway:
         self._session_token = session_token
         self._http_client = http_client
 
-    def fetch_offer(self) -> PaymentOffer:
-        return parse_offer(self._request("GET", "/v1/plus/offer"))
+    def fetch_offer(self, offer_id: str = "") -> PaymentOffer:
+        query = "?offer_id=" + identifier(offer_id) if offer_id else ""
+        return parse_offer(self._request("GET", "/v1/plus/offer" + query))
 
     def create_order(self, offer: PaymentOffer, request_id: str) -> PaymentOrder:
         document = self._request(
@@ -51,7 +52,16 @@ class HttpPaymentGateway:
 
     def fetch_order(self, order: PaymentOrder) -> PaymentOrder:
         document = self._request("GET", "/v1/plus/orders/" + identifier(order.order_id))
-        current = parse_order(document, PaymentOffer(order.offer_id, order.amount, order.amount))
+        current = parse_order(
+            document,
+            PaymentOffer(
+                order.offer_id,
+                order.amount,
+                order.amount,
+                0 if order.lifetime else 12,
+                order.lifetime,
+            ),
+        )
         if current.order_id != order.order_id:
             raise PaymentError("Máy chủ trả về một đơn thanh toán khác.")
         if (
