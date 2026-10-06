@@ -23,8 +23,8 @@ QtObject {
     readonly property string font: "Inter"
     readonly property string displayFont: "Manrope"
     property var preferences: null
-    readonly property bool reducedMotion: preferences ? preferences.reducedMotion : false
-    readonly property real scale: preferences ? preferences.uiScale / 100 : 1
+    readonly property bool reducedMotion: preferences ? preferences.reducedMotion : Legacy.Theme.reducedMotion
+    readonly property real scale: preferences ? preferences.uiScale / 100 : Legacy.Theme.textScale
     readonly property int fontCaption: Math.round(10 * scale)
     readonly property int fontNote: Math.round(11 * scale)
     readonly property int fontLabel: Math.round(12 * scale)

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import "../" as Legacy
 
 Item {
@@ -290,6 +291,8 @@ Item {
     LibraryFilters { id: advanced; kind: root.kind; onApplied: root.refresh() }
     Legacy.ModpackDialog {
         id: pack
+        objectName: "modernQuickModpack"
+        parent: root.Window.window ? root.Window.window.contentItem : root
         anchors.fill: parent
     }
 }

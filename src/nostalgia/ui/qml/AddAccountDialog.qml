@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Preview
 
 /* Thêm tài khoản: chọn Microsoft (mã thiết bị, hộp SignInDialog sẵn có), Ely.by (email + mật
    khẩu, hỏi thêm mã 2FA khi cần), hoặc ngoại tuyến (chỉ tên). Mật khẩu chỉ đi qua bridge. */
@@ -6,11 +7,12 @@ Item {
     id: dialog
     visible: false
     z: 100
+    Keys.onEscapePressed: dialog.visible = false
     property string mode: "pick"   // pick | ely | offline
     property bool needsTotp: false
     property string failure: ""
 
-    function openDialog() { mode = "pick"; needsTotp = false; failure = ""; emailField.text = ""; passwordField.text = ""; totpField.text = ""; nameField.text = ""; visible = true; }
+    function openDialog() { mode = "pick"; needsTotp = false; failure = ""; emailField.text = ""; passwordField.text = ""; totpField.text = ""; nameField.text = ""; visible = true; box.forceActiveFocus(); }
 
     Connections {
         target: accountBridge
@@ -25,20 +27,29 @@ Item {
 
     MouseArea {
         anchors.fill: parent
+        onWheel: function(event) { event.accepted = true; }
         onClicked: if (!accountBridge.busy) dialog.visible = false
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
-    Rectangle {
+    DialogFrame {
+        id: box
+        objectName: "AddAccountDialogSurface"
         anchors.centerIn: parent
-        width: 440; height: contentColumn.height + 52
+        width: Math.min(Theme.modern ? 560 * Theme.textScale : 440, parent.width - 40)
+        height: Math.min(contentColumn.implicitHeight + 52, parent.height - 40)
         radius: Theme.radius; color: Theme.surface; border.color: Theme.border
         MouseArea { anchors.fill: parent }
 
+        Preview.InertialScroll {
+            id: accountFormScroll
+            objectName: "accountFormScroll"
+            anchors.fill: parent; anchors.margins: 26
+            contentHeight: contentColumn.implicitHeight
         Column {
             id: contentColumn
-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
+            width: accountFormScroll.width
             spacing: 14
-            Text { text: Tr.phrase("Thêm tài khoản"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { text: Tr.phrase("Thêm tài khoản"); color: Theme.text; font.family: Theme.modern ? "Manrope" : Theme.sans; font.pixelSize: Theme.fontTitle; font.bold: true }
 
             // ----- chọn loại -----
             Column {
@@ -50,13 +61,16 @@ Item {
                         { key: "offline",   title: Tr.phrase("Ngoại tuyến"), text: Tr.phrase("Chỉ nhập tên. Không skin riêng, tên có thể trùng người khác.") }
                     ]
                     Rectangle {
-                        width: parent.width; height: 58; radius: Theme.radiusSmall
+                        width: parent.width; height: Theme.modern ? Math.max(58, providerText.implicitHeight + 24) : 58; radius: Theme.radiusSmall
                         color: pickArea.containsMouse ? Theme.surfaceHigh : Theme.surface; border.color: Theme.border
+                        Behavior on color { ColorAnimation { duration: Theme.quick } }
                         Column {
+                            id: providerText
+                            width: parent.width - 28
                             anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
                             spacing: 3
                             Text { text: modelData.title; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
-                            Text { text: modelData.text; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
+                            Text { width: parent.width; wrapMode: Text.WordWrap; text: modelData.text; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
                         }
                         MouseArea {
                             id: pickArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
@@ -84,8 +98,8 @@ Item {
                     text: Tr.phrase("Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
-                Row {
-                    spacing: 8
+                Flow {
+                    width: parent.width; spacing: 8
                     ActionButton { objectName: "elySignInButton"; label: accountBridge.busy ? Tr.phrase("Đang đăng nhập...") : Tr.phrase("Đăng nhập")
                                    clickable: !accountBridge.busy && emailField.text.trim() !== "" && passwordField.text !== ""; onClicked: dialog.submitEly() }
                     /* Đăng ký phải mở trình duyệt, không có cách nào khác: ely.by đòi xác nhận
@@ -108,12 +122,13 @@ Item {
                 visible: dialog.mode === "offline"; width: parent.width; spacing: 10
                 Text { text: Tr.phrase("TÊN NGOẠI TUYẾN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: nameField; width: parent.width; placeholder: "vd. Steve"; onAccepted: dialog.submitOffline() }
-                Row {
-                    spacing: 8
+                Flow {
+                    width: parent.width; spacing: 8
                     ActionButton { label: Tr.phrase("Thêm"); clickable: nameField.text.trim() !== ""; onClicked: dialog.submitOffline() }
                     ActionButton { primary: false; label: Tr.phrase("Quay lại"); onClicked: dialog.mode = "pick" }
                 }
             }
+        }
         }
     }
 

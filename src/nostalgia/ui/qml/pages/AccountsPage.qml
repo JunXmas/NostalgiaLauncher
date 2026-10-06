@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import "../"
 
 /*
@@ -208,5 +209,7 @@ Item {
         }
     }
 
-    AddAccountDialog { id: addDialog; objectName: "addAccountDialog"; anchors.fill: parent }
+    AddAccountDialog {
+        parent: Theme.modern && page.Window.window ? page.Window.window.contentItem : page
+        id: addDialog; objectName: "addAccountDialog"; anchors.fill: parent }
 }

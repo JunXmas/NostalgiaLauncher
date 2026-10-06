@@ -1,4 +1,4 @@
-# Giao diện và chuyển động · draft 1.2.0rc4
+# Giao diện và chuyển động · draft 1.2.0rc5
 
 Giữ bảng màu hiện tại: nền xám lạnh, accent theo trang và màu thương hiệu xanh.
 Mục tiêu là giảm sự rời rạc giữa các màn hình, đưa thao tác chính về cùng vị trí,

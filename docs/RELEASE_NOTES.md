@@ -1,3 +1,11 @@
+## 1.2.0rc5 — Giao diện mới và popup co giãn
+
+- Giữ toàn bộ quản lý bản chơi, Đã cài, bộ lọc, font và chuyển động của giao diện mới ở rc4.
+- Thêm tài khoản và cài modpack nhanh dùng khung mica chung, co giãn theo cửa sổ, có cuộn quán tính; nội dung dài và chữ 150% vẫn tới được các nút.
+- Hai popup nằm giữa cửa sổ, hỗ trợ Escape; thẻ loại tài khoản và các hàng thao tác tự bố trí theo chiều rộng.
+- Các vùng cuộn dùng chung lấy thiết lập cỡ chữ/Giảm chuyển động của launcher cả khi đang ở theme classic.
+- Draft để thử; Google/payOS vẫn cần cấu hình dịch vụ staging.
+
 ## 1.2.0rc4 — Giao diện nhất quán & chuyển động
 
 - Quản lý bản chơi có Tổng quan, Nội dung đã cài, Hiệu năng, Sao lưu & dữ liệu; thao tác lưu và mở thư mục luôn ở cuối cửa sổ.
