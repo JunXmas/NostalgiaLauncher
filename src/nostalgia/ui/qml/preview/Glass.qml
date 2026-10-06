@@ -8,9 +8,9 @@ Rectangle {
     property bool frosted: true
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     radius: 24
-    color: "#a31b2429"
+    color: GlassTheme.glassSurface
     border.width: 1
-    border.color: "#2dffffff"
+    border.color: GlassTheme.stroke
     // Capture only the dedicated background, never the pane itself (no recursion).
     ShaderEffectSource {
         id: capture
@@ -61,18 +61,18 @@ Rectangle {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: "#142fffff"
+                color: GlassTheme.alpha(GlassTheme.raised, 0.40)
             }
             GradientStop {
                 position: 0.45
-                color: "#071b2429"
+                color: GlassTheme.alpha(GlassTheme.surface, 0.03)
             }
             GradientStop {
                 position: 1
-                color: "#83151d22"
+                color: GlassTheme.alpha(GlassTheme.background, 0.51)
             }
         }
-        border.color: "#25ffffff"
+        border.color: GlassTheme.alpha(GlassTheme.text, 0.10)
     }
     Item {
         id: holder

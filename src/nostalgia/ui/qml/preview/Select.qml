@@ -8,7 +8,7 @@ Controls.ComboBox {
     font.pixelSize: 13 * GlassTheme.scale
     background: Rectangle {
         radius: 12
-        color: "#80192328"
+        color: GlassTheme.inputSurface
         border.color: root.activeFocus ? GlassTheme.accent : GlassTheme.stroke
     }
     contentItem: Text {
@@ -39,7 +39,7 @@ Controls.ComboBox {
             verticalAlignment: Text.AlignVCenter
         }
         background: Rectangle {
-            color: highlighted ? "#233e34" : GlassTheme.surface
+            color: highlighted ? GlassTheme.selectedSurface : GlassTheme.surface
             radius: 8
         }
     }

@@ -1,7 +1,8 @@
 # Preview UI: minimal + kính mờ
 
 Mẫu riêng theo phản hồi của chủ dự án: UI đang rối về thứ bậc thị giác; cần màn hình đăng
-nhập toàn cửa sổ, phong cách gọn như Modrinth, kính nhẹ và cuộn có quán tính như Skewlith.
+nhập toàn cửa sổ, phong cách gọn như Modrinth, kính nhẹ, cuộn có quán tính như Skewlith
+và giữ cách phối màu gốc của Nostalgia.
 
 Chỉ chạy từ mã nguồn. Không thay `Main.qml`, không đổi bộ cài, không tạo tag, không build,
 không push hoặc xuất bản release. Các file preview nằm trong `qml/preview/`.
@@ -28,8 +29,10 @@ chụp; không phải bằng chứng cài hoặc chạy game. Nội dung/biểu 
 
 ## Lựa chọn thiết kế
 
-- Một màu nhấn mint, nền trung tính, chữ Inter. Dùng khoảng trống và độ đậm để phân cấp;
-  bỏ chữ pixel và viền khối dày trong các màn mẫu.
+- Dùng lại palette trong `Theme.qml`: nền xám lạnh, Trang chủ xanh lá, Bản chơi vàng nâu,
+  Thư viện tím, Tài khoản cyan, Chơi chung hồng, Nhật ký xanh dương và Cài đặt xám xanh.
+  Màn đăng nhập dùng xanh thương hiệu. Chữ Inter, khoảng trống và độ đậm giữ bố cục gọn;
+  nút chính lấy màu đậm của từng trang và chữ sáng như launcher gốc.
 - Kính giới hạn ở thanh bên, khung đăng nhập và hero. Blur nền thật bằng MultiEffect trên
   OpenGL; có nền trong mờ dự phòng ở renderer phần mềm. Đây là kính mờ theo hướng liquid
   glass, chưa có khúc xạ vật lý kiểu thấu kính.
@@ -64,7 +67,8 @@ khoản/mật khẩu mẫu trong source; form sử dụng các bridge đăng nh�
 - 31 kiểm tra UI liên quan (6 mới + preview controls, block models và block icons) qua
   renderer phần mềm. 6 kiểm tra mới cũng qua OpenGL/llvmpipe.
 - 25 kiểm tra giao diện/QML và quy ước kiến trúc qua sau kiểm tra bổ sung.
-- `ruff check` và mypy toàn kho qua. Các ảnh cuối không có cảnh báo QML.
+- `ruff check` và mypy toàn kho qua. Sau đổi palette, 6 kiểm tra tương tác preview qua;
+  ảnh và video được chụp lại trên OpenGL, không có cảnh báo QML.
 - Thử đăng nhập ngoại tuyến thật qua bridge; Microsoft/2FA Ely.by dùng provider giả để
   kiểm tra luồng UI, hủy và xử lý lỗi; không đăng nhập tài khoản online thật.
 - OpenGL được kiểm tra trên Linux/llvmpipe, chưa đo hiệu năng GPU Windows/macOS.

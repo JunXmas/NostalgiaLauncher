@@ -161,8 +161,8 @@ Item {
                         width: (grid.width - (grid.columns - 1) * 16) / grid.columns
                         height: 218
                         radius: 18
-                        color: hover.hovered ? "#223036" : "#ba182126"
-                        border.color: hover.hovered ? "#5075e5b4" : "#19ffffff"
+                        color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
+                        border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
                         Behavior on color {
                             ColorAnimation {
                                 duration: GlassTheme.quick

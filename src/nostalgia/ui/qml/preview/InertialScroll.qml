@@ -117,7 +117,7 @@ Flickable {
         background: Item {}
         contentItem: Rectangle {
             radius: 3
-            color: bar.pressed ? GlassTheme.accent : "#557d9190"
+            color: bar.pressed ? GlassTheme.accent : GlassTheme.alpha(GlassTheme.muted, 0.55)
         }
     }
 }

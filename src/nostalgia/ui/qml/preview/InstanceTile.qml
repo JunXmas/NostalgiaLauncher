@@ -11,8 +11,8 @@ Rectangle {
     signal picked
     height: compact ? 92 : 204
     radius: 18
-    color: hover.hovered ? "#233136" : "#bb192227"
-    border.color: selected ? "#7075e5b4" : hover.hovered ? "#4075e5b4" : "#18ffffff"
+    color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
+    border.color: selected ? GlassTheme.alpha(GlassTheme.accent, 0.65) : hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.40) : GlassTheme.stroke
     Behavior on color {
         ColorAnimation {
             duration: GlassTheme.quick
@@ -27,7 +27,7 @@ Rectangle {
         width: compact ? 48 : 52
         height: width
         radius: 14
-        color: root.loader === "Forge" ? "#263e46" : "#263e31"
+        color: GlassTheme.selectedSurface
         Legacy.BlockIcon {
             anchors.centerIn: parent
             width: 34

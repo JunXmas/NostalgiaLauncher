@@ -265,7 +265,7 @@ khởi đầu."
                     width: parent.width
                     wrapMode: Text.Wrap
                     text: root.failure
-                    color: "#ff9898"
+                    color: GlassTheme.danger
                     font.family: GlassTheme.font
                     font.pixelSize: 13
                 }

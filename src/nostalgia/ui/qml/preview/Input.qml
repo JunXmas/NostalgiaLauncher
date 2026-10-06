@@ -11,7 +11,7 @@ Rectangle {
     }
     height: 46 * GlassTheme.scale
     radius: 12
-    color: "#7010181d"
+    color: GlassTheme.inputSurface
     border.color: field.activeFocus ? GlassTheme.accent : GlassTheme.stroke
     TextInput {
         id: field

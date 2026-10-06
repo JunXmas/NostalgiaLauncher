@@ -25,7 +25,7 @@ Item {
         anchors.fill: parent
         Rectangle {
             anchors.fill: parent
-            color: "#bb080d11"
+            color: GlassTheme.alpha(GlassTheme.background, 0.75)
         }
     }
     Glass {
@@ -57,7 +57,7 @@ Item {
                 width: parent.width
                 height: 82
                 radius: 14
-                color: "#66121b1f"
+                color: GlassTheme.inputSurface
                 border.color: GlassTheme.stroke
                 TextEdit {
                     id: codeText

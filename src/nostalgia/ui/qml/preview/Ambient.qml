@@ -5,7 +5,7 @@ Item {
     property bool cinematic: false
     Rectangle {
         anchors.fill: parent
-        color: GlassTheme.background
+        color: GlassTheme.canvas
     }
     Image {
         anchors.fill: parent
@@ -30,15 +30,15 @@ Item {
             orientation: Gradient.Horizontal
             GradientStop {
                 position: 0
-                color: "#b00c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0.69)
             }
             GradientStop {
                 position: 0.6
-                color: "#000c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0)
             }
             GradientStop {
                 position: 1
-                color: "#990c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0.60)
             }
         }
     }
@@ -47,15 +47,15 @@ Item {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: "#000c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0)
             }
             GradientStop {
                 position: 0.65
-                color: "#350c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0.21)
             }
             GradientStop {
                 position: 1
-                color: "#ed0c1014"
+                color: GlassTheme.alpha(GlassTheme.background, 0.93)
             }
         }
     }

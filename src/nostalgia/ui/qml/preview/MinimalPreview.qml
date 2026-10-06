@@ -16,6 +16,11 @@ Item {
         Legacy.Theme.preferences = settingsBridge;
         Legacy.Tr.setLanguage(settingsBridge.language);
     }
+    Binding {
+        target: Legacy.Theme
+        property: "page"
+        value: root.loginVisible ? 0 : root.currentIndex
+    }
     function navigate(index) {
         currentIndex = index;
         advancedLibrary = false;

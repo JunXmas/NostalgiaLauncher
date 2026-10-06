@@ -85,6 +85,8 @@ Glass {
             Repeater {
                 model: root.entries
                 Item {
+                    id: navEntry
+                    readonly property color tint: Legacy.Theme.accents[modelData.index]
                     width: links.width
                     height: 48 * GlassTheme.scale
                     activeFocusOnTab: true
@@ -102,8 +104,8 @@ Glass {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: root.currentIndex === modelData.index ? "#2263c99e" : area.containsMouse ? "#0cffffff" : "transparent"
-                        border.color: parent.activeFocus ? GlassTheme.accent : root.currentIndex === modelData.index ? "#2475e5b4" : "transparent"
+                        color: root.currentIndex === modelData.index ? Legacy.Theme.mix(GlassTheme.raised, navEntry.tint, 0.22) : area.containsMouse ? GlassTheme.alpha(navEntry.tint, 0.08) : "transparent"
+                        border.color: parent.activeFocus ? GlassTheme.accent : root.currentIndex === modelData.index ? GlassTheme.alpha(navEntry.tint, 0.25) : "transparent"
                         Behavior on color {
                             ColorAnimation {
                                 duration: GlassTheme.quick
@@ -186,8 +188,8 @@ Glass {
         anchors.bottom: parent.bottom
         height: 68
         radius: 14
-        color: "#1012191d"
-        border.color: "#12ffffff"
+        color: GlassTheme.alpha(GlassTheme.surface, 0.70)
+        border.color: GlassTheme.stroke
         Legacy.SkinFace {
             id: face
             x: 12
@@ -206,11 +208,11 @@ Glass {
             height: 32
             radius: 10
             visible: !face.visible
-            color: "#254a3b"
+            color: Legacy.Theme.mix(GlassTheme.surface, GlassTheme.brand, 0.20)
             Text {
                 anchors.centerIn: parent
                 text: bridge.activePlayerName ? bridge.activePlayerName[0] : "?"
-                color: GlassTheme.accent
+                color: GlassTheme.brand
                 font.pixelSize: 17
             }
         }

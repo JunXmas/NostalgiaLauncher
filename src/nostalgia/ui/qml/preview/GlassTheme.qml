@@ -1,19 +1,32 @@
 pragma Singleton
 import QtQuick
+import "../" as Legacy
 
 QtObject {
-    readonly property color background: "#0c1014"
-    readonly property color surface: "#181e23"
-    readonly property color raised: "#20282e"
-    readonly property color stroke: "#22ffffff"
-    readonly property color text: "#f1f5f3"
-    readonly property color muted: "#a0abae"
-    readonly property color accent: "#75e5b4"
-    readonly property color ink: "#09241a"
+    // Reuse the existing launcher palette so every page keeps its original identity.
+    readonly property color background: Legacy.Theme.background
+    readonly property color surface: Legacy.Theme.surface
+    readonly property color raised: Legacy.Theme.surfaceHigh
+    readonly property color stroke: Legacy.Theme.border
+    readonly property color text: Legacy.Theme.text
+    readonly property color muted: Legacy.Theme.textMuted
+    readonly property color accent: Legacy.Theme.accent
+    readonly property color brand: Legacy.Theme.brand
+    readonly property color danger: Legacy.Theme.danger
+    readonly property color selectedSurface: Legacy.Theme.accentSoft
+    readonly property color primaryFace: Qt.darker(accent, 2.0)
+    readonly property color primaryHover: Qt.lighter(primaryFace, 1.08)
+    readonly property color canvas: Legacy.Theme.mix(background, accent, 0.06)
+    readonly property color glassSurface: alpha(surface, 0.80)
+    readonly property color cardSurface: alpha(surface, 0.74)
+    readonly property color inputSurface: alpha(raised, 0.65)
     readonly property string font: "Inter"
     property var preferences: null
     readonly property bool reducedMotion: preferences ? preferences.reducedMotion : false
     readonly property real scale: preferences ? preferences.uiScale / 100 : 1
     readonly property int quick: reducedMotion ? 0 : 160
     property var backdrop: null
+    function alpha(color, opacity) {
+        return Qt.rgba(color.r, color.g, color.b, opacity);
+    }
 }

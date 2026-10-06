@@ -68,7 +68,7 @@ Item {
                 height: Math.max(310, 280 * GlassTheme.scale)
                 radius: 26
                 padding: 32
-                color: "#ad17322a"
+                color: GlassTheme.alpha(GlassTheme.selectedSurface, 0.85)
                 Column {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter

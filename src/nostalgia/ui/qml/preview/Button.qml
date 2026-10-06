@@ -30,7 +30,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: 12
-        color: root.primary ? (hover.hovered ? "#97edc9" : GlassTheme.accent) : root.selected ? "#28493b" : root.quiet ? (hover.hovered ? "#14ffffff" : "transparent") : (hover.hovered ? "#28343a" : "#172126")
+        color: root.primary ? (hover.hovered ? GlassTheme.primaryHover : GlassTheme.primaryFace) : root.selected ? GlassTheme.selectedSurface : root.quiet ? (hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.10) : "transparent") : (hover.hovered ? GlassTheme.raised : GlassTheme.surface)
         border.color: root.activeFocus ? GlassTheme.accent : root.primary || root.quiet ? "transparent" : GlassTheme.stroke
         border.width: root.activeFocus ? 2 : 1
         opacity: root.clickable ? 1 : 0.4
@@ -43,7 +43,7 @@ Item {
             id: caption
             anchors.centerIn: parent
             text: (root.icon ? root.icon + "  " : "") + root.label
-            color: root.primary ? GlassTheme.ink : root.selected ? GlassTheme.accent : GlassTheme.text
+            color: root.selected && !root.primary ? GlassTheme.accent : GlassTheme.text
             font.family: GlassTheme.font
             font.pixelSize: 14 * GlassTheme.scale
             font.weight: Font.DemiBold
