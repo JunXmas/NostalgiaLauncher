@@ -28,7 +28,7 @@ Item {
         height: 58
         PageTitle {
             anchors { left: parent.left; top: parent.top }
-            caption: "Nhật ký"
+            caption: Tr.phrase("Nhật ký")
         }
         Row {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
@@ -36,19 +36,19 @@ Item {
             StatusPill {
                 dotColor: bridge.gameRunning ? Theme.accent : Theme.textMuted
                 pulsing: bridge.gameRunning
-                text: bridge.gameRunning ? "Game đang chạy" : "Game không chạy"
+                text: bridge.gameRunning ? Tr.phrase("Game đang chạy") : Tr.phrase("Game không chạy")
                 height: 24
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: logList.count + " dòng"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                text: logList.count + Tr.phrase(" dòng"); color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
         }
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter }
             spacing: 8
             Repeater {
-                model: [{ key: "info", text: "Tất cả" }, { key: "warn", text: "Cảnh báo+" }, { key: "error", text: "Lỗi" }]
+                model: [{ key: "info", text: Tr.phrase("Tất cả") }, { key: "warn", text: Tr.phrase("Cảnh báo+") }, { key: "error", text: Tr.phrase("Lỗi") }]
                 Rectangle {
                     width: chipText.width + 22; height: 30; radius: 0
                     color: page.minimumLevel === modelData.key ? Theme.accentSoft : Theme.surface
@@ -59,7 +59,7 @@ Item {
             }
             ActionButton {
                 objectName: "copyLogButton"
-                primary: false; label: "⧉  Sao chép"
+                primary: false; label: Tr.phrase("⧉  Sao chép")
                 clickable: logList.count > 0
                 onClicked: page.feed.copyAll()
             }
@@ -95,7 +95,7 @@ Item {
         Text {
             visible: logList.count === 0
             anchors.centerIn: parent
-            text: bridge.gameRunning ? "Đang chờ dòng đầu tiên..." : "Chưa có nhật ký. Bấm CHƠI, output của game sẽ hiện ở đây."
+            text: bridge.gameRunning ? Tr.phrase("Đang chờ dòng đầu tiên...") : Tr.phrase("Chưa có nhật ký. Bấm CHƠI, output của game sẽ hiện ở đây.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }

@@ -37,6 +37,8 @@ class Instance:
     game_dir_override: str = ""
     # Nos Client: bật HUD overlay ingame cho bản chơi này.
     nos_client_enabled: bool = False
+    group_name: str = ""
+    favorite: bool = False
 
     @property
     def label(self) -> str:

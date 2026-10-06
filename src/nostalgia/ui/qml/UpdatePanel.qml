@@ -7,7 +7,7 @@ import QtQuick
 */
 Panel {
     id: panel
-    title: "CẬP NHẬT"
+    title: Tr.phrase("CẬP NHẬT")
     readonly property string state: updateBridge.state
     readonly property bool canSelfUpdate: updateBridge.canSelfUpdate
     implicitHeight: panel.contentTop + column.implicitHeight + Theme.pad
@@ -17,28 +17,30 @@ Panel {
         id: column
         width: parent.width
         spacing: 12
-        Row {
+        Flow {
+            width: parent.width
             spacing: 10
-            Text { text: "Đang dùng"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                   anchors.verticalCenter: parent.verticalCenter }
+            Text { text: Tr.phrase("Đang dùng"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                    }
             Text { text: "v" + settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody
-                   anchors.verticalCenter: parent.verticalCenter }
+                    }
             Item { width: 24; height: 1 }
             Toggle {
-                objectName: "autoUpdateToggle"
-                anchors.verticalCenter: parent.verticalCenter
+                objectName: "autoUpdateToggle"; accessibleLabel: Tr.phrase("Tự kiểm bản mới khi mở launcher")
+
                 checked: settingsBridge.autoUpdateCheck
                 onToggled: function (checked) { settingsBridge.setAutoUpdateCheck(checked); }
             }
-            Text { text: "Tự kiểm bản mới khi mở launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
-                   anchors.verticalCenter: parent.verticalCenter }
+            Text { text: Tr.phrase("Tự kiểm bản mới khi mở launcher"); color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                    }
         }
-        Row {
+        Flow {
+            width: parent.width
             spacing: 10
             ActionButton {
                 objectName: "checkUpdateButton"
                 primary: false
-                label: panel.state === "checking" ? "Đang kiểm..." : "⟳  Kiểm tra bản mới"
+                label: panel.state === "checking" ? Tr.phrase("Đang kiểm...") : Tr.phrase("⟳  Kiểm tra bản mới")
                 clickable: panel.state !== "checking" && panel.state !== "downloading"
                 onClicked: updateBridge.checkNow()
             }
@@ -46,12 +48,12 @@ Panel {
                 objectName: "updateNowButton"
                 visible: panel.state === "available"
                 // Một nút cho cả việc: tải → tráo → mở lại (xem UpdateBanner.qml).
-                label: panel.canSelfUpdate ? "⬇  Cập nhật ngay" : "Mở trang tải"
+                label: panel.canSelfUpdate ? Tr.phrase("⬇  Cập nhật ngay") : Tr.phrase("Mở trang tải")
                 onClicked: updateBridge.updateNow()
             }
             Text {
                 objectName: "updateMessage"
-                anchors.verticalCenter: parent.verticalCenter
+
                 text: updateBridge.message
                 color: panel.state === "failed" ? Theme.danger
                        : panel.state === "available" || panel.state === "ready" ? Theme.accent : Theme.textMuted
@@ -79,8 +81,8 @@ Panel {
             width: Math.min(parent.width, 720)
             wrapMode: Text.WordWrap
             text: updateBridge.installKind === "app"
-                  ? "Gói macOS (.app): launcher chỉ báo có bản mới; tải .dmg mới từ trang release rồi kéo đè vào Applications."
-                  : "Đang chạy từ mã nguồn: launcher chỉ báo có bản mới; cập nhật bằng git pull + uv sync. Gói đóng sẵn Linux/Windows (tải từ trang release) thì tự cài và mở lại."
+                  ? Tr.phrase("Gói macOS (.app): launcher chỉ báo có bản mới; tải .dmg mới từ trang release rồi kéo đè vào Applications.")
+                  : Tr.phrase("Đang chạy từ mã nguồn: launcher chỉ báo có bản mới; cập nhật bằng git pull + uv sync. Gói đóng sẵn Linux/Windows (tải từ trang release) thì tự cài và mở lại.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
     }

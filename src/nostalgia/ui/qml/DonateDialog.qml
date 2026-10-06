@@ -47,12 +47,12 @@ Item {
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
             spacing: 14
             Text {
-                text: "Ủng hộ Nostalgia"
+                text: Tr.phrase("Ủng hộ Nostalgia")
                 color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true
             }
             Text {
                 width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.3
-                text: "Launcher miễn phí và không quảng cáo. Ủng hộ là tuỳ tâm — bạn tự điền số tiền trong app ngân hàng."
+                text: Tr.phrase("Launcher miễn phí và không quảng cáo. Ủng hộ là tuỳ tâm — bạn tự điền số tiền trong app ngân hàng.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Row {
@@ -77,7 +77,7 @@ Item {
                     spacing: 8
                     width: 210
                     Text {
-                        text: "Quét bằng app ngân hàng"
+                        text: Tr.phrase("Quét bằng app ngân hàng")
                         color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true
                     }
                     Text {
@@ -97,7 +97,7 @@ Item {
                     Text {
                         objectName: "donateMemoText"
                         width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.3
-                        text: "Nội dung: " + settingsBridge.donateMemo
+                        text: Tr.phrase("Nội dung: ") + settingsBridge.donateMemo
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
@@ -107,7 +107,7 @@ Item {
                 spacing: 10
                 ActionButton {
                     objectName: "donateClose"
-                    label: "Đóng"
+                    label: Tr.phrase("Đóng")
                     onClicked: dialog.dismiss()
                 }
             }

@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from nostalgia.errors import DataFileError
-from nostalgia.model.json_value import as_mapping, as_string
+from nostalgia.model.json_value import as_integer, as_mapping, as_string
 from nostalgia.repo.endpoints import DISCORD_APPLICATION_ID
 from nostalgia.storage.files import atomic_write_json, read_json
 
@@ -36,6 +36,11 @@ class Settings:
     default_game_dir_root: str = ""
     # Thu gọn launcher vào khay hệ thống khi game chạy để giải phóng RAM.
     hide_when_game_running: bool = True
+    ui_scale: int = 100
+    compact_ui: bool = False
+    reduced_motion: bool = False
+    decorative_background: bool = True
+    language: str = "vi"
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -65,6 +70,13 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                     as_string(fields.get("default_game_dir_root")) or ""
                 ).strip(),
                 hide_when_game_running=hide_game if isinstance(hide_game, bool) else True,
+                ui_scale=(as_integer(fields.get("ui_scale")) or 100)
+                if fields.get("ui_scale") in (100, 125, 150)
+                else 100,
+                compact_ui=fields.get("compact_ui") is True,
+                reduced_motion=fields.get("reduced_motion") is True,
+                decorative_background=fields.get("decorative_background") is not False,
+                language="en" if fields.get("language") == "en" else "vi",
             )
         except DataFileError:
             settings = Settings()
@@ -97,6 +109,11 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "auto_update_check": settings.auto_update_check,
             "default_game_dir_root": settings.default_game_dir_root.strip(),
             "hide_when_game_running": settings.hide_when_game_running,
+            "ui_scale": settings.ui_scale,
+            "compact_ui": settings.compact_ui,
+            "reduced_motion": settings.reduced_motion,
+            "decorative_background": settings.decorative_background,
+            "language": settings.language,
         },
         private=True,
     )

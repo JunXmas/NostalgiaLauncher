@@ -107,6 +107,8 @@ def save_instance(paths: DataPaths, instance: Instance) -> None:
         "icon_url": instance.icon_url,
         "game_dir": instance.game_dir_override or None,
         "nos_client_enabled": instance.nos_client_enabled,
+        "group_name": instance.group_name,
+        "favorite": instance.favorite,
     }
     atomic_write_json(paths.instance_json(instance.instance_id), document)
 
@@ -228,4 +230,6 @@ def _parse_instance(fields: dict[str, JsonValue], *, fallback_id: str) -> Instan
         icon_url=as_string(fields.get("icon_url")) or "",
         game_dir_override=as_string(fields.get("game_dir")) or "",
         nos_client_enabled=as_boolean(fields.get("nos_client_enabled"), default=False),
+        group_name=as_string(fields.get("group_name")) or "",
+        favorite=as_boolean(fields.get("favorite"), default=False),
     )

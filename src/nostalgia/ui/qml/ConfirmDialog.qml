@@ -14,8 +14,8 @@ Item {
     z: 200
     property string title: ""
     property string message: ""
-    property string acceptLabel: "Đồng ý"
-    property string cancelLabel: "Thôi"
+    property string acceptLabel: Tr.phrase("Đồng ý")
+    property string cancelLabel: Tr.phrase("Thôi")
     property var acceptAction: null
     signal accepted()
 

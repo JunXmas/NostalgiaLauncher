@@ -190,6 +190,9 @@ class LauncherBridge(InstanceBridge):
     def _launch(self, instance_id: str, world_folder: str = "", server_address: str = "") -> None:
         # Khoá định danh chứ không phải tên: hai tài khoản trùng tên thì lõi tra theo tên sẽ
         # trả về cái đầu tiên, và người dùng chơi bằng tài khoản họ không chọn.
+        if self.storageBusy:
+            self.failed.emit("hãy đợi thao tác sao lưu/khôi phục hoàn tất trước khi chơi")
+            return
         account_id = str(self.activeAccountId)
 
         def work() -> None:

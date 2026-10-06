@@ -64,6 +64,7 @@ Item {
     // Ảnh 2528 px, luôn bị thu nhỏ: mipmap để Qt lọc đúng khi thu (không mipmap là lấy mẫu
     // 2×2 → răng cưa và "mờ nhoè" trên sao và cạnh khối).
     Image {
+        visible: Theme.decorativeBackground
         id: photo
         anchors.fill: parent
         source: "../assets/hero.jpg"
@@ -141,15 +142,15 @@ Item {
                 }
             }
             Text {
-                text: "HÔM NAY CHƠI GÌ?"
+                text: Tr.phrase("HÔM NAY CHƠI GÌ?")
                 color: Theme.text
                 font.family: Theme.pixel
                 font.pixelSize: Theme.fontHero
                 font.letterSpacing: 1
             }
             Text {
-                text: bridge.instances.length > 0 ? "Tiếp tục cuộc phiêu lưu của bạn."
-                                                  : "Tạo một bản chơi để bắt đầu."
+                text: bridge.instances.length > 0 ? Tr.phrase("Tiếp tục cuộc phiêu lưu của bạn.")
+                                                  : Tr.phrase("Tạo một bản chơi để bắt đầu.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontBody
             }
@@ -158,11 +159,11 @@ Item {
     Row {
         anchors { right: rightColumn.left; top: parent.top; margins: Theme.gap; topMargin: 22 }
         spacing: 10
-        StatusPill { glyph: "▣"; text: bridge.instances.length + " bản chơi"; translucent: true }
+        StatusPill { glyph: "▣"; text: bridge.instances.length + Tr.phrase(" bản chơi"); translucent: true }
         StatusPill {
             dotColor: bridge.gameRunning ? Theme.accent : Theme.textMuted
             pulsing: bridge.gameRunning
-            text: bridge.gameRunning ? "Đang chơi" : "Sẵn sàng"
+            text: bridge.gameRunning ? Tr.phrase("Đang chơi") : Tr.phrase("Sẵn sàng")
             translucent: true
         }
     }
@@ -170,9 +171,10 @@ Item {
     // ----- khối CHƠI: giữa vùng trái, ngay trên dải bản chơi -----
     PlayButton {
         objectName: "playBlock"
+        visible: page.missingKind === ""
         anchors { bottom: instanceStrip.top; bottomMargin: 22 }
         x: Math.round((rightColumn.x - width) / 2)
-        playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
+        playable: page.chosen !== null && bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.storageBusy && !bridge.gameRunning
         running: bridge.gameRunning
         instances: bridge.instances
         chosenIndex: page.chosenIndex
@@ -187,6 +189,7 @@ Item {
     // ----- cột phải: kính nổi trên ảnh -----
     Column {
         id: rightColumn
+        visible: page.missingKind === ""
         width: page.rightColumnWidth
         anchors { top: parent.top; right: parent.right; margins: Theme.gap; topMargin: 76 }
         spacing: Theme.gap
@@ -198,7 +201,7 @@ Item {
             translucent: true
             worlds: bridge.recentWorlds
             servers: bridge.recentServers
-            playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
+            playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.storageBusy && !bridge.gameRunning
             onWorldChosen: function (instanceId, worldFolder) { bridge.playWorld(instanceId, worldFolder); }
             onServerChosen: function (instanceId, address) { bridge.playServer(instanceId, address); }
         }
@@ -213,6 +216,7 @@ Item {
     // ----- dải bản chơi dưới cùng: một hàng, cuộn ngang khi nhiều -----
     Panel {
         id: instanceStrip
+        visible: page.missingKind === ""
         translucent: true
         anchors { left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap }
         height: page.instanceStripHeight
@@ -222,20 +226,20 @@ Item {
             Text {
                 id: listTitle
                 anchors { left: parent.left; top: parent.top }
-                text: "BẢN CHƠI CỦA TÔI"
+                text: Tr.phrase("BẢN CHƠI CỦA TÔI")
                 color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true; font.letterSpacing: 1.2
             }
             Row {
                 anchors { right: parent.right; top: parent.top; topMargin: -4 }
                 spacing: 9
-                TextField { width: 200; placeholder: "Tìm bản chơi..."; onTextChanged: page.search = text }
-                ActionButton { label: "+  Tạo mới"; onClicked: page.navigate(1) }
+                TextField { width: 200; placeholder: Tr.phrase("Tìm bản chơi..."); onTextChanged: page.search = text }
+                ActionButton { label: Tr.phrase("+  Tạo mới"); onClicked: page.navigate(1) }
             }
             Text {
                 anchors { left: parent.left; top: listTitle.bottom; topMargin: 22 }
                 visible: page.visibleInstances().length === 0
-                text: bridge.instances.length === 0 ? "Chưa có bản chơi nào."
-                                                    : "Không có bản chơi nào khớp \"" + page.search + "\"."
+                text: bridge.instances.length === 0 ? Tr.phrase("Chưa có bản chơi nào.")
+                                                    : Tr.phrase("Không có bản chơi nào khớp \"") + page.search + "\"."
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             ListView {
@@ -251,10 +255,17 @@ Item {
                     versionId: modelData.versionId
                     playtimeText: modelData.playtimeText; launchCount: modelData.launchCount
                     worldCount: modelData.worldCount; modCount: modelData.modCount
-                    playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.gameRunning
+                    playable: bridge.activePlayerName.length > 0 && !bridge.busy && !bridge.storageBusy && !bridge.gameRunning
                     onPlayRequested: bridge.play(modelData.instanceId)
                 }
             }
         }
+    }
+    OnboardingCard {
+        visible: page.missingKind !== ""
+        anchors.centerIn: parent
+        width: Math.min(620, parent.width - 48)
+        height: implicitHeight
+        onNavigate: function(index) { page.navigate(index); }
     }
 }

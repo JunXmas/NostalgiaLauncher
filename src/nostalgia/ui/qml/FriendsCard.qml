@@ -16,12 +16,12 @@ Panel {
 
         Text {
             width: parent.width
-            text: multiplayerBridge.active ? (multiplayerBridge.role === "joined" ? "Bạn đang trong phòng của bạn bè." : "Phòng của bạn đang mở — " + multiplayerBridge.joinerCount + " người đang vào.")
-                                             : "Mở phòng rồi gửi mã cho bạn, hoặc nhập mã bạn gửi để vào."
+            text: multiplayerBridge.active ? (multiplayerBridge.role === "joined" ? Tr.phrase("Bạn đang trong phòng của bạn bè.") : Tr.phrase("Phòng của bạn đang mở — ") + multiplayerBridge.joinerCount + Tr.phrase(" người đang vào."))
+                                             : Tr.phrase("Mở phòng rồi gửi mã cho bạn, hoặc nhập mã bạn gửi để vào.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
         }
         ActionButton {
-            label: multiplayerBridge.active ? "Xem phòng" : "Chơi chung"
+            label: multiplayerBridge.active ? Tr.phrase("Xem phòng") : Tr.phrase("Chơi chung")
             primary: false
             onClicked: root.openMultiplayer()
         }

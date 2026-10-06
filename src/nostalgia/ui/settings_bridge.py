@@ -17,15 +17,16 @@ from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
 from nostalgia import __version__
-from nostalgia.api import Launcher, Settings
+from nostalgia.api import Launcher
 from nostalgia.errors import NostalgiaError
+from nostalgia.ui.appearance_bridge import AppearanceBridge
 
 # Mỗi ô mã QR vẽ bằng 4 pixel. Lưới cỡ 6 là 41 ô + viền 4 ô mỗi bên = (41+8)*4 = 196 px,
 # và QML vẽ đúng 196 px — không co giãn thì không ô nào rơi vào ranh giới pixel lẻ.
 QR_SCALE = 4
 
 
-class SettingsBridge(QObject):
+class SettingsBridge(AppearanceBridge):
     notificationSoundChanged = Signal()
     uiSoundChanged = Signal()
     discordChanged = Signal()
@@ -35,18 +36,7 @@ class SettingsBridge(QObject):
     hideWhenGameRunningChanged = Signal()
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
-        super().__init__(parent)
-        self._launcher = launcher
-        self._settings: Settings | None = None
-
-    def settings_snapshot(self) -> Settings:
-        if self._settings is None:
-            self._settings = self._launcher.load_settings()
-        return self._settings
-
-    def _save(self, wanted: Settings) -> None:
-        self._launcher.save_settings(wanted)
-        self._settings = wanted
+        super().__init__(launcher, parent)
 
     @Property(bool, notify=notificationSoundChanged)
     def notificationSound(self) -> bool:

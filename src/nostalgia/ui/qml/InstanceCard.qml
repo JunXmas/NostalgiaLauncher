@@ -6,6 +6,7 @@ Rectangle {
     property string label: ""
     property string versionId: ""
     property bool playable: true
+    property bool showPlay: true
     property bool removable: false
     property bool editable: false
     property string iconUrl: ""
@@ -129,6 +130,7 @@ Rectangle {
         }
 
         Rectangle {
+            visible: root.showPlay
             anchors { left: parent.left; top: parent.top; margins: 10 }
             width: 30; height: 30; radius: 0
             color: playHover.hovered ? Theme.accent : "#b3000000"
@@ -162,7 +164,7 @@ Rectangle {
         Text {
             id: removeText
             anchors.centerIn: parent
-            text: root.confirmingRemove ? "Gỡ?" : "🗑"
+            text: root.confirmingRemove ? Tr.phrase("Gỡ?") : "🗑"
             font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
             color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
         }

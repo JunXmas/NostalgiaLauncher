@@ -15,7 +15,7 @@ Item {
     Connections {
         target: accountBridge
         function onElySignedIn(playerName) { dialog.visible = false; }
-        function onTwoFactorRequired() { dialog.needsTotp = true; dialog.failure = "Tài khoản bật xác thực hai lớp — nhập mã từ ứng dụng TOTP."; }
+        function onTwoFactorRequired() { dialog.needsTotp = true; dialog.failure = Tr.phrase("Tài khoản bật xác thực hai lớp — nhập mã từ ứng dụng TOTP."); }
         function onFailed(message) { dialog.failure = message; }
     }
     Connections {
@@ -38,16 +38,16 @@ Item {
             id: contentColumn
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
             spacing: 14
-            Text { text: "Thêm tài khoản"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { text: Tr.phrase("Thêm tài khoản"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
 
             // ----- chọn loại -----
             Column {
                 visible: dialog.mode === "pick"; width: parent.width; spacing: 10
                 Repeater {
                     model: [
-                        { key: "microsoft", title: "Microsoft", text: "Tài khoản premium: đăng nhập bằng mã trên trang Microsoft." },
-                        { key: "ely",       title: "Ely.by",    text: "Non-premium: tên duy nhất, skin/cape riêng hiện trong game." },
-                        { key: "offline",   title: "Ngoại tuyến", text: "Chỉ nhập tên. Không skin riêng, tên có thể trùng người khác." }
+                        { key: "microsoft", title: "Microsoft", text: Tr.phrase("Tài khoản premium: đăng nhập bằng mã trên trang Microsoft.") },
+                        { key: "ely",       title: "Ely.by",    text: Tr.phrase("Non-premium: tên duy nhất, skin/cape riêng hiện trong game.") },
+                        { key: "offline",   title: Tr.phrase("Ngoại tuyến"), text: Tr.phrase("Chỉ nhập tên. Không skin riêng, tên có thể trùng người khác.") }
                     ]
                     Rectangle {
                         width: parent.width; height: 58; radius: Theme.radiusSmall
@@ -72,46 +72,46 @@ Item {
             // ----- Ely.by -----
             Column {
                 visible: dialog.mode === "ely"; width: parent.width; spacing: 10
-                Text { text: "ELY.BY — EMAIL HOẶC TÊN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                Text { text: Tr.phrase("ELY.BY — EMAIL HOẶC TÊN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: emailField; objectName: "elyEmailField"; width: parent.width; placeholder: "ban@example.com" }
-                Text { text: "MẬT KHẨU"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                Text { text: Tr.phrase("MẬT KHẨU"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: passwordField; objectName: "elyPasswordField"; width: parent.width; placeholder: "••••••••"; echoMode: TextInput.Password; onAccepted: dialog.submitEly() }
                 Text { visible: dialog.needsTotp; text: "MÃ 2FA"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: totpField; visible: dialog.needsTotp; width: 160; placeholder: "123456"; onAccepted: dialog.submitEly() }
                 Text { visible: dialog.failure !== ""; width: parent.width; wrapMode: Text.WordWrap; text: dialog.failure; color: Theme.danger; font.pixelSize: Theme.fontBody }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu."
+                    text: Tr.phrase("Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Row {
                     spacing: 8
-                    ActionButton { objectName: "elySignInButton"; label: accountBridge.busy ? "Đang đăng nhập..." : "Đăng nhập"
+                    ActionButton { objectName: "elySignInButton"; label: accountBridge.busy ? Tr.phrase("Đang đăng nhập...") : Tr.phrase("Đăng nhập")
                                    clickable: !accountBridge.busy && emailField.text.trim() !== "" && passwordField.text !== ""; onClicked: dialog.submitEly() }
                     /* Đăng ký phải mở trình duyệt, không có cách nào khác: ely.by đòi xác nhận
                        email. Dựng form đăng ký trong launcher chỉ là đẩy họ ra trình duyệt
                        chậm hơn một bước, và là một chỗ nữa để mật khẩu đi qua tay ta. */
                     ActionButton {
                         objectName: "elyRegisterButton"
-                        primary: false; label: "Đăng ký ↗"
+                        primary: false; label: Tr.phrase("Đăng ký ↗")
                         /* account.ely.by, KHÔNG phải ely.by: ely.by là catalog skin, mọi
                            thứ tài khoản nằm ở subdomain kia. `ely.by/register` ra 404. */
                         readonly property url target: "https://account.ely.by/register"
                         onClicked: Qt.openUrlExternally(target)
                     }
-                    ActionButton { primary: false; label: "Quay lại"; onClicked: dialog.mode = "pick" }
+                    ActionButton { primary: false; label: Tr.phrase("Quay lại"); onClicked: dialog.mode = "pick" }
                 }
             }
 
             // ----- ngoại tuyến -----
             Column {
                 visible: dialog.mode === "offline"; width: parent.width; spacing: 10
-                Text { text: "TÊN NGOẠI TUYẾN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                Text { text: Tr.phrase("TÊN NGOẠI TUYẾN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: nameField; width: parent.width; placeholder: "vd. Steve"; onAccepted: dialog.submitOffline() }
                 Row {
                     spacing: 8
-                    ActionButton { label: "Thêm"; clickable: nameField.text.trim() !== ""; onClicked: dialog.submitOffline() }
-                    ActionButton { primary: false; label: "Quay lại"; onClicked: dialog.mode = "pick" }
+                    ActionButton { label: Tr.phrase("Thêm"); clickable: nameField.text.trim() !== ""; onClicked: dialog.submitOffline() }
+                    ActionButton { primary: false; label: Tr.phrase("Quay lại"); onClicked: dialog.mode = "pick" }
                 }
             }
         }

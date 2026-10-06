@@ -30,40 +30,40 @@ Item {
         Column {
             anchors { fill: parent; margins: 26 }
             spacing: 14
-            Text { text: "Cài modpack thành bản chơi"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { text: Tr.phrase("Cài modpack thành bản chơi"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
-                text: dialog.packTitle + " sẽ thành một bản chơi mới với đúng loader và phiên bản mà pack yêu cầu. Có thể mất vài phút."
+                text: dialog.packTitle + Tr.phrase(" sẽ thành một bản chơi mới với đúng loader và phiên bản mà pack yêu cầu. Có thể mất vài phút.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             TextField { id: nameField; width: parent.width; placeholder: dialog.packTitle }
             Row {
                 spacing: 8
                 ActionButton {
-                    primary: false; label: "📁  Thư mục chơi"
+                    primary: false; label: Tr.phrase("📁  Thư mục chơi")
                     onClicked: folderPicker.open()
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 260; elide: Text.ElideMiddle
-                    text: dialog.gameDirUrl ? dialog.gameDirPath : "mặc định"
+                    text: dialog.gameDirUrl ? dialog.gameDirPath : Tr.phrase("mặc định")
                     color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Row {
                 spacing: 8
                 ActionButton {
-                    label: "Cài"
+                    label: Tr.phrase("Cài")
                     onClicked: { contentBridge.installModpack(dialog.projectId, nameField.text, dialog.gameDirUrl); dialog.visible = false; }
                 }
-                ActionButton { primary: false; label: "Huỷ"; onClicked: dialog.visible = false }
+                ActionButton { primary: false; label: Tr.phrase("Huỷ"); onClicked: dialog.visible = false }
             }
         }
     }
 
     FolderDialog {
         id: folderPicker
-        title: "Chọn thư mục chơi cho modpack này"
+        title: Tr.phrase("Chọn thư mục chơi cho modpack này")
         onAccepted: dialog.gameDirUrl = selectedFolder.toString()
     }
 }

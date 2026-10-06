@@ -12,6 +12,18 @@ Item {
     id: root
     property bool checked: true
     signal toggled(bool checked)
+    property string accessibleLabel: ""
+    activeFocusOnTab: true
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: accessibleLabel
+    Accessible.checkable: true
+    Accessible.checked: checked
+    Accessible.onToggleAction: root.toggled(!root.checked)
+    Keys.onSpacePressed: function(event) { if (!event.isAutoRepeat) root.toggled(!root.checked); }
+    Rectangle {
+        anchors.fill: parent; anchors.margins: -3; color: "transparent"
+        border.color: Theme.text; border.width: 2; visible: root.activeFocus; z: 3
+    }
 
     readonly property int edge: 3                       // cạnh dưới "khối"
     readonly property int pressDrop: press.pressed ? 2 : 0

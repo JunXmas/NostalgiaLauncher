@@ -14,7 +14,7 @@ Panel {
     signal worldChosen(string instanceId, string worldFolder)
     signal serverChosen(string instanceId, string address)
 
-    title: "CHƠI TIẾP"
+    title: Tr.phrase("CHƠI TIẾP")
 
     Column {
         anchors.fill: parent
@@ -24,7 +24,7 @@ Panel {
             objectName: "continueEmpty"
             visible: root.worlds.length === 0
             width: parent.width; wrapMode: Text.WordWrap
-            text: "Chưa có thế giới nào — vào game tạo một thế giới rồi quay lại đây."
+            text: Tr.phrase("Chưa có thế giới nào — vào game tạo một thế giới rồi quay lại đây.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }
         Repeater {
@@ -33,7 +33,7 @@ Panel {
                 objectName: "continueRow"
                 width: parent.width
                 worldName: modelData.worldName
-                detail: modelData.instanceLabel + "  ·  chơi " + modelData.lastPlayedText
+                detail: modelData.instanceLabel + Tr.phrase("  ·  chơi ") + modelData.lastPlayedText
                 clickable: root.playable
                 onChosen: root.worldChosen(modelData.instanceId, modelData.worldFolder)
             }
@@ -46,7 +46,7 @@ Panel {
             objectName: "continueServerEmpty"
             visible: root.servers.length === 0
             width: parent.width; wrapMode: Text.WordWrap
-            text: "Chưa có server nào — thêm trong game (Multiplayer → Add Server) rồi quay lại đây."
+            text: Tr.phrase("Chưa có server nào — thêm trong game (Multiplayer → Add Server) rồi quay lại đây.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }
         Repeater {

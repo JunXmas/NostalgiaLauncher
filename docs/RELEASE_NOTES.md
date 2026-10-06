@@ -1,3 +1,15 @@
+## 1.2.0rc1 — UX preview
+
+Bản thử để chủ dự án duyệt trước khi gộp vào nhánh ổn định.
+
+- Trang chủ hướng dẫn bước bắt đầu; thanh bên cuộn và chữ/nút rõ hơn.
+- Tùy chọn cỡ chữ, mật độ, ảnh nền, giảm chuyển động, Việt/Anh.
+- Tìm/nhóm/ghim bản chơi; sao lưu ZIP, khôi phục sang bản mới, thùng rác.
+- Lỗi giữ lại với thử lại và sao chép chi tiết; bàn phím và focus cho điều khiển chính.
+- Giữ hai bản vá v1.1.8 và model beacon/bookshelf Minecraft nguyên bản.
+
+Xem [hướng dẫn và giới hạn preview](https://github.com/JunXmas/NostalgiaLauncher/blob/preview/ux-1.2/docs/PREVIEW_REVIEW.md).
+
 # Nostalgia Launcher 1.1.8
 
 ## Sửa Forge và modpack

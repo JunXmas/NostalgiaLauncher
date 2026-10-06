@@ -9,6 +9,14 @@ Item {
     id: window
     implicitWidth: 1360
     implicitHeight: 860
+    Component.onCompleted: {
+        Theme.preferences = settingsBridge;
+        Tr.setLanguage(settingsBridge.language);
+    }
+    Connections {
+        target: settingsBridge
+        function onAppearanceChanged() { Tr.setLanguage(settingsBridge.language); }
+    }
     /* Nền pha một chút màu của tab đang mở, và chuyển màu chứ không nhảy.
 
        Chỉ 6% — đủ để cả khung hình nghiêng về sắc của tab, chưa đủ để thành một nền có màu
@@ -25,7 +33,7 @@ Item {
         id: sidebar
         objectName: "sidebar"
         // Thu gọn còn cột icon 64 px; nội dung trượt theo chứ không nhảy.
-        width: collapsed ? 64 : (window.width < 1100 ? 190 : 232)
+        width: collapsed ? 64 : Math.min(340, (window.width < 1100 ? 190 : 232) * Theme.textScale)
         Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
         playerName: bridge.activePlayerName
@@ -98,51 +106,18 @@ Item {
         }
     }
 
-    // Dải báo lỗi: trượt xuống từ trên, tự biến mất. Lỗi im lặng là lỗi tệ nhất.
-    Rectangle {
+    RecoveryBanner {
         id: banner
-        objectName: "errorBanner"
-        property string message: ""
-        anchors { top: parent.top; right: parent.right; margins: 18 }
-        width: Math.min(460, window.width - sidebar.width - 60)
-        height: message ? 52 : 0
-        radius: Theme.radiusSmall
-        color: Theme.danger
-        clip: true
-        opacity: message ? 1 : 0
-        Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
-
-        Text {
-            anchors { fill: parent; margins: 14 }
-            text: banner.message
-            color: "white"
-            font.pixelSize: Theme.fontBody
-            elide: Text.ElideRight
-            verticalAlignment: Text.AlignVCenter
-        }
-        Timer { id: hideBanner; interval: 6000; onTriggered: banner.message = "" }
+        anchors { left: sidebar.right; right: parent.right; top: parent.top; margins: 18 }
+        z: 250
     }
-
-    Connections {
-        target: bridge
-        function onFailed(message) { banner.message = message; hideBanner.restart(); }
-    }
-    Connections {
-        target: contentBridge
-        function onFailed(message) { banner.message = message; hideBanner.restart(); }
-    }
-    Connections {
-        target: catalogBridge
-        function onFailed(message) { banner.message = message; hideBanner.restart(); }
-    }
-    // Hộp thoại Nhập bản chơi là đường chọn file duy nhất còn lại, nên lỗi của nó cũng phải
-    // lên dải này: `failed` cho hỏng lúc chạy nền, `importError` cho từ chối ngay tại chỗ.
-    Connections {
-        target: importBridge
-        function onFailed(message) { banner.message = message; hideBanner.restart(); }
-        function onImportError(message) { banner.message = message; hideBanner.restart(); }
-    }
+    Connections { target: bridge; function onFailed(message) { banner.report(message, bridge); } }
+    Connections { target: contentBridge; function onFailed(message) { banner.report(message, contentBridge); } }
+    Connections { target: catalogBridge; function onFailed(message) { banner.report(message, catalogBridge); } }
+    Connections { target: importBridge; function onFailed(message) { banner.report(message, importBridge); }
+                  function onImportError(message) { banner.report(message, null); } }
+    Connections { target: accountBridge; function onFailed(message) { banner.report(message, accountBridge); } }
+    Connections { target: storageBridge; function onFailed(message) { banner.report(message, storageBridge); } }
 
     LoadingToast { id: loadingToast; z: 90 }
     NotificationToast { z: 91; bottomOffset: loadingToast.active ? loadingToast.height + Theme.gap * 2 : Theme.gap }

@@ -31,9 +31,9 @@ Panel {
             visible: skinPanel.hasShown && skinPanel.tab === "skin"
             width: parent.width; wrapMode: Text.WordWrap
             text: !skinPanel.hasShown ? ""
-                  : skinPanel.shown.accountKind === "microsoft" ? "Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới."
-                  : skinPanel.shown.accountKind === "ely" ? "Skin lấy từ Ely.by. Bấm \"Thêm skin\" để upload PNG thẳng lên ely.by — bạn bè trong game thấy skin mới nhờ authlib-injector."
-                  : "Tài khoản ngoại tuyến dùng skin mặc định (" + (skinPanel.shown.slim ? "Alex" : "Steve") + "). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher."
+                  : skinPanel.shown.accountKind === "microsoft" ? Tr.phrase("Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới.")
+                  : skinPanel.shown.accountKind === "ely" ? Tr.phrase("Skin lấy từ Ely.by. Bấm \"Thêm skin\" để upload PNG thẳng lên ely.by — bạn bè trong game thấy skin mới nhờ authlib-injector.")
+                  : Tr.phrase("Tài khoản ngoại tuyến dùng skin mặc định (") + (skinPanel.shown.slim ? "Alex" : "Steve") + Tr.phrase("). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
         Row {
@@ -41,7 +41,7 @@ Panel {
             ActionButton {
                 visible: skinPanel.hasShown && skinPanel.tab === "skin" && skinPanel.shown.accountKind !== "offline"
                 primary: false
-                label: "⟳  Làm mới"
+                label: Tr.phrase("⟳  Làm mới")
                 onClicked: accountBridge.refreshSkins()
             }
         }
@@ -58,7 +58,7 @@ Panel {
             property bool isError: false
             Connections {
                 target: accountBridge
-                function onSkinUploaded(name) { uploadStatus.text = "✓ Đã cập nhật skin cho " + name; uploadStatus.isError = false; }
+                function onSkinUploaded(name) { uploadStatus.text = Tr.phrase("✓ Đã cập nhật skin cho ") + name; uploadStatus.isError = false; }
                 function onSkinUploadFailed(msg) { uploadStatus.text = "✕ " + msg; uploadStatus.isError = true; }
             }
         }
@@ -78,10 +78,10 @@ Panel {
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
                 text: skinPanel.shown.accountKind === "microsoft"
-                      ? "Cape Mojang phát theo sự kiện — có cái nào thì chọn mặc ngay tại đây."
+                      ? Tr.phrase("Cape Mojang phát theo sự kiện — có cái nào thì chọn mặc ngay tại đây.")
                       : skinPanel.shown.accountKind === "ely"
-                      ? "Ely.by không có API cape — đổi tại ely.by, launcher sẽ hiện theo."
-                      : "Tài khoản ngoại tuyến không có cape."
+                      ? Tr.phrase("Ely.by không có API cape — đổi tại ely.by, launcher sẽ hiện theo.")
+                      : Tr.phrase("Tài khoản ngoại tuyến không có cape.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Flow {
@@ -132,7 +132,7 @@ Panel {
                     }
                     Text {
                         visible: !((skinPanel.hasShown && skinPanel.shown.capeFile) || "")
-                        anchors.centerIn: parent; text: "Không có cape"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                        anchors.centerIn: parent; text: Tr.phrase("Không có cape"); color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
             }
@@ -144,7 +144,7 @@ Panel {
                 property bool isError: false
                 Connections {
                     target: capeBridge
-                    function onCapeApplied(name) { capeStatus.text = "✓ Đã đổi cape"; capeStatus.isError = false; }
+                    function onCapeApplied(name) { capeStatus.text = Tr.phrase("✓ Đã đổi cape"); capeStatus.isError = false; }
                     function onCapeFailed(msg) { capeStatus.text = "✕ " + msg; capeStatus.isError = true; }
                 }
             }

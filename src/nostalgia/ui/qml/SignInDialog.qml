@@ -35,10 +35,10 @@ Item {
         Column {
             anchors { fill: parent; margins: 26 }
             spacing: 14
-            Text { text: "Đăng nhập Microsoft"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { text: Tr.phrase("Đăng nhập Microsoft"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
-                text: "Mở trang bên dưới, nhập mã này rồi đăng nhập bằng tài khoản Microsoft có Minecraft. Hộp này tự đóng khi xong."
+                text: Tr.phrase("Mở trang bên dưới, nhập mã này rồi đăng nhập bằng tài khoản Microsoft có Minecraft. Hộp này tự đóng khi xong.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Rectangle {
@@ -57,17 +57,17 @@ Item {
             Row {
                 spacing: 8
                 ActionButton {
-                    label: "Mở trang Microsoft"
+                    label: Tr.phrase("Mở trang Microsoft")
                     onClicked: Qt.openUrlExternally(dialog.verificationUrl)
                 }
                 ActionButton {
                     primary: false
-                    label: "Sao chép mã"
+                    label: Tr.phrase("Sao chép mã")
                     onClicked: { codeText.selectAll(); codeText.copy(); codeText.deselect(); }
                 }
                 ActionButton {
                     primary: false
-                    label: "Huỷ"
+                    label: Tr.phrase("Huỷ")
                     onClicked: { bridge.cancelSignIn(); dialog.visible = false; }
                 }
             }

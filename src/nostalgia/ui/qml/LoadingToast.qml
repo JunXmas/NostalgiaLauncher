@@ -8,15 +8,15 @@ import QtQuick
 Rectangle {
     id: toast
     // Game đang chạy thì cầu nối vẫn bận (chờ tiến trình) nhưng không phải "đang tải": ẩn.
-    readonly property bool active: (bridge.busy && !bridge.gameRunning) || contentBridge.busy || catalogBridge.busy
+    readonly property bool active: storageBridge.busy || (bridge.busy && !bridge.gameRunning) || contentBridge.busy || catalogBridge.busy
     // Việc nào đang chạy thì nói việc đó; nhiều việc cùng lúc thì ưu tiên cái nặng nhất.
-    readonly property string activity: bridge.busy && !bridge.gameRunning ? bridge.activity
+    readonly property string activity: storageBridge.busy ? storageBridge.activity : bridge.busy && !bridge.gameRunning ? bridge.activity
                                      : catalogBridge.busy ? catalogBridge.activity
                                      : contentBridge.busy ? contentBridge.activity : ""
     readonly property bool hasFraction: bridge.progressFraction > 0 && bridge.progressFraction < 1
 
-    width: 320
-    height: 70
+    width: Math.min(420, parent.width - 48)
+    height: 70 * Theme.textScale
     radius: Theme.radiusSmall
     color: "#f2111713"
     border.color: Theme.border
@@ -46,7 +46,7 @@ Rectangle {
             }
         }
         RotationAnimation on rotation {
-            running: toast.active; loops: Animation.Infinite
+            running: toast.active && !Theme.reducedMotion; loops: Animation.Infinite
             from: 0; to: 360; duration: 1000
         }
     }

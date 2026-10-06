@@ -61,12 +61,12 @@ Rectangle {
         Rectangle {
             visible: !installedContent.enabled
             width: offText.width + 14; height: 18; radius: 0; color: Theme.surfaceHigh; border.color: Theme.border
-            Text { id: offText; anchors.centerIn: parent; text: "đã tắt"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
+            Text { id: offText; anchors.centerIn: parent; text: Tr.phrase("đã tắt"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
             visible: root.hasUpdate
             width: updateText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
-            Text { id: updateText; anchors.centerIn: parent; text: "mới: " + (installedContent.latestVersion || ""); color: "white"; font.pixelSize: Theme.fontLabel }
+            Text { id: updateText; anchors.centerIn: parent; text: Tr.phrase("mới: ") + (installedContent.latestVersion || ""); color: "white"; font.pixelSize: Theme.fontLabel }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: root.updateRequested(installedContent.fileName) }
         }
@@ -88,7 +88,7 @@ Rectangle {
             Text {
                 id: removeText
                 anchors.centerIn: parent
-                text: root.confirmingRemove ? "Gỡ?" : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
+                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
                 color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
             }
             HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }

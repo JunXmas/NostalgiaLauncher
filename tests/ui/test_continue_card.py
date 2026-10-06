@@ -42,6 +42,8 @@ class FakeGame:
 
 
 def seed(launcher: Launcher, *, worlds: int = 2) -> None:
+    if not launcher.list_accounts():
+        launcher.add_offline_account("ContinueTester")
     instance = launcher.create_instance(
         Instance(instance_id="van", version_id="1.20.1", display_name="Vanilla")
     )
@@ -140,7 +142,7 @@ def test_card_shows_at_most_three_block_buttons_and_a_click_opens_that_world(
     assert (recorded["instance_id"], recorded["world_folder"]) == ("van", "w0")
 
 
-def test_card_explains_itself_when_there_is_nothing_to_continue(tmp_path: Path) -> None:
+def test_new_user_sees_onboarding_instead_of_empty_continue_panel(tmp_path: Path) -> None:
     view, _bridge = build_view(make_launcher(tmp_path))
     view.show()
     root_item = view.rootObject()
@@ -149,4 +151,6 @@ def test_card_explains_itself_when_there_is_nothing_to_continue(tmp_path: Path) 
     assert card is not None
     assert collect_items(card, "continueRow") == []
     empty = find_item(card, "continueEmpty")
-    assert empty is not None and empty.property("visible") is True
+    assert empty is not None and empty.property("visible") is False
+    onboarding = root_item.findChild(QObject, "onboardingCard")
+    assert onboarding is not None and onboarding.property("visible") is True

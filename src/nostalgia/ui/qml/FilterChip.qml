@@ -17,7 +17,7 @@ Item {
     property var selected: []
     property string title: ""
     property bool searchable: false
-    property string searchPlaceholder: "Tìm..."
+    property string searchPlaceholder: Tr.phrase("Tìm...")
     property string emptyNote: ""
     property bool open: false
     signal toggled(string value, bool checked)
@@ -173,7 +173,7 @@ Item {
                 width: parent.width; height: visible ? 24 : 0
                 verticalAlignment: Text.AlignVCenter
                 leftPadding: 8
-                text: root.options.length === 0 ? root.emptyNote : "Không có mục nào khớp."
+                text: root.options.length === 0 ? root.emptyNote : Tr.phrase("Không có mục nào khớp.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
         }

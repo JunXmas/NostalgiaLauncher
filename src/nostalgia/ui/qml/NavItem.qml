@@ -20,6 +20,17 @@ Item {
     // Thu gọn: chỉ icon, không chữ — thanh bên hẹp thành cột khối.
     property bool compact: false
     signal clicked()
+    property string accessibleLabel: label
+    activeFocusOnTab: true
+    Accessible.role: Accessible.Button
+    Accessible.name: accessibleLabel
+    Accessible.onPressAction: root.clicked()
+    Keys.onReturnPressed: root.clicked()
+    Keys.onSpacePressed: function(event) { if (!event.isAutoRepeat) root.clicked(); }
+    Rectangle {
+        anchors.fill: parent; color: "transparent"; z: 3
+        border.width: 2; border.color: Theme.text; visible: root.activeFocus
+    }
 
     implicitHeight: 46
     width: parent ? parent.width : 0
@@ -66,7 +77,7 @@ Item {
             glyphColor: root.selected ? root.tint : Theme.textMuted
             // Xoay khi rê vào mục, và xoay luôn ở mục đang chọn thì thanh bên không bao giờ
             // đứng yên — đốt CPU mà chẳng ai nhìn. Chỉ xoay lúc có chuột.
-            spinning: hover.hovered
+            spinning: hover.hovered && !Theme.reducedMotion
         }
         Text {
             visible: !root.compact

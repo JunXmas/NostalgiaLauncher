@@ -23,11 +23,11 @@ Item {
         height: 58
         PageTitle {
             anchors { left: parent.left; top: parent.top }
-            caption: "Chơi chung"
+            caption: Tr.phrase("Chơi chung")
         }
         Text {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
-            text: "Không cần thuê server, không cần mod, khác mạng vẫn chơi được."
+            text: Tr.phrase("Không cần thuê server, không cần mod, khác mạng vẫn chơi được.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
@@ -62,24 +62,24 @@ Item {
                 spacing: 14
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "1. Chạy game, vào world.\n2. Bấm Esc → Open to LAN → Start LAN World.\n3. Bấm Mở phòng ở đây rồi đọc mã cho bạn."
+                    text: Tr.phrase("1. Chạy game, vào world.\n2. Bấm Esc → Open to LAN → Start LAN World.\n3. Bấm Mở phòng ở đây rồi đọc mã cho bạn.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.35
                 }
                 ActionButton {
                     objectName: "hostButton"
                     visible: !hostPanel.hosting && !hostPanel.waiting
                     clickable: multiplayerBridge.role === "idle"
-                    label: "Mở phòng"
+                    label: Tr.phrase("Mở phòng")
                     onClicked: multiplayerBridge.startHosting()
                 }
                 Row {
                     visible: hostPanel.waiting; spacing: 10
-                    StatusPill { dotColor: Theme.accent; pulsing: true; text: "Đang chờ bạn Open to LAN trong game..." }
-                    ActionButton { primary: false; label: "Huỷ"; onClicked: multiplayerBridge.stop() }
+                    StatusPill { dotColor: Theme.accent; pulsing: true; text: Tr.phrase("Đang chờ bạn Open to LAN trong game...") }
+                    ActionButton { primary: false; label: Tr.phrase("Huỷ"); onClicked: multiplayerBridge.stop() }
                 }
                 Column {
                     visible: hostPanel.hosting; spacing: 10; width: parent.width
-                    Text { text: "Mã phòng — gửi cho bạn:"; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
+                    Text { text: Tr.phrase("Mã phòng — gửi cho bạn:"); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
                     Rectangle {
                         width: parent.width; height: 56; radius: 0
                         color: "#1a2b1f"; border.color: Theme.accent
@@ -93,23 +93,23 @@ Item {
                     }
                     Row {
                         spacing: 8
-                        ActionButton { primary: false; label: "Chép mã"; onClicked: multiplayerBridge.copyRoomCode() }
+                        ActionButton { primary: false; label: Tr.phrase("Chép mã"); onClicked: multiplayerBridge.copyRoomCode() }
                         ActionButton {
                             primary: false
-                            label: multiplayerBridge.locked ? "Mở lại cửa" : "Khoá phòng"
+                            label: multiplayerBridge.locked ? Tr.phrase("Mở lại cửa") : Tr.phrase("Khoá phòng")
                             onClicked: multiplayerBridge.setLocked(!multiplayerBridge.locked)
                         }
-                        ActionButton { primary: false; label: "Đóng phòng"; onClicked: multiplayerBridge.stop() }
+                        ActionButton { primary: false; label: Tr.phrase("Đóng phòng"); onClicked: multiplayerBridge.stop() }
                     }
                     Row {
                         spacing: 10
                         StatusPill { glyph: "▣"; text: multiplayerBridge.worldName }
-                        StatusPill { dotColor: Theme.accent; text: multiplayerBridge.joinerCount + " người đang vào" }
-                        StatusPill { visible: multiplayerBridge.locked; glyph: "🔒"; text: "Đã khoá: không nhận thêm" }
+                        StatusPill { dotColor: Theme.accent; text: multiplayerBridge.joinerCount + Tr.phrase(" người đang vào") }
+                        StatusPill { visible: multiplayerBridge.locked; glyph: "🔒"; text: Tr.phrase("Đã khoá: không nhận thêm") }
                     }
                     Text {
                         width: parent.width; wrapMode: Text.WordWrap
-                        text: "Mã chỉ sống khi phòng mở. Khoá phòng khi đủ người: ai có mã cũng không vào thêm được."
+                        text: Tr.phrase("Mã chỉ sống khi phòng mở. Khoá phòng khi đủ người: ai có mã cũng không vào thêm được.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
@@ -128,7 +128,7 @@ Item {
                 spacing: 14
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "1. Nhập mã bạn gửi rồi bấm Vào phòng.\n2. Chạy game → Multiplayer: world của bạn hiện trong danh sách LAN.\n3. Bấm vào để chơi. Xong thì bấm Rời phòng."
+                    text: Tr.phrase("1. Nhập mã bạn gửi rồi bấm Vào phòng.\n2. Chạy game → Multiplayer: world của bạn hiện trong danh sách LAN.\n3. Bấm vào để chơi. Xong thì bấm Rời phòng.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.35
                 }
                 Column {
@@ -142,22 +142,22 @@ Item {
                         spacing: 8
                         ActionButton {
                             objectName: "joinButton"
-                            label: "Vào phòng"
+                            label: Tr.phrase("Vào phòng")
                             clickable: multiplayerBridge.role === "idle" && codeField.complete
                             onClicked: multiplayerBridge.join(codeField.code)
                         }
                         ActionButton {
-                            primary: false; label: "Dán"
+                            primary: false; label: Tr.phrase("Dán")
                             onClicked: codeField.setCode(multiplayerBridge.clipboardText())
                         }
                         ActionButton {
-                            primary: false; label: "Xoá"
+                            primary: false; label: Tr.phrase("Xoá")
                             visible: codeField.code.length > 0
                             onClicked: codeField.clear()
                         }
                     }
                     Text {
-                        text: codeField.complete ? "Đủ 18 ký tự — bấm Vào phòng hoặc Enter." : "Gõ hoặc dán mã bạn gửi: 3 nhóm, mỗi nhóm 6 ký tự."
+                        text: codeField.complete ? Tr.phrase("Đủ 18 ký tự — bấm Vào phòng hoặc Enter.") : Tr.phrase("Gõ hoặc dán mã bạn gửi: 3 nhóm, mỗi nhóm 6 ký tự.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
@@ -165,13 +165,13 @@ Item {
                     visible: joinPanel.joined; spacing: 10; width: parent.width
                     Row {
                         spacing: 10
-                        StatusPill { dotColor: Theme.accent; pulsing: true; text: "Đã nối: mở game, vào Multiplayer, chọn world trong mục LAN" }
+                        StatusPill { dotColor: Theme.accent; pulsing: true; text: Tr.phrase("Đã nối: mở game, vào Multiplayer, chọn world trong mục LAN") }
                     }
                     Text {
-                        text: "Cổng cục bộ 127.0.0.1:" + multiplayerBridge.localPort + " — chỉ máy này thấy."
+                        text: Tr.phrase("Cổng cục bộ 127.0.0.1:") + multiplayerBridge.localPort + Tr.phrase(" — chỉ máy này thấy.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
-                    ActionButton { primary: false; label: "Rời phòng"; onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
+                    ActionButton { primary: false; label: Tr.phrase("Rời phòng"); onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
                 }
             }
         }

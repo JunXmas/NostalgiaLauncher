@@ -14,70 +14,83 @@ Item {
         height: 50
         PageTitle {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-            caption: "Cài đặt"
+            caption: Tr.phrase("Cài đặt")
         }
     }
 
+    Flickable {
+        anchors { top: header.bottom; left: parent.left; right: parent.right; bottom: parent.bottom; margins: Theme.gap; topMargin: 0 }
+        clip: true
+        contentHeight: settingsColumn.height
+        boundsBehavior: Flickable.StopAtBounds
+        Column {
+            id: settingsColumn
+            width: parent.width; spacing: Theme.gap
+            AppearanceSettings { width: parent.width; height: implicitHeight }
     UpdatePanel {
         id: updatePanel
-        anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 6 }
+        width: parent.width
     }
 
     Panel {
-        anchors { top: updatePanel.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
-                  margins: Theme.gap; topMargin: Theme.gap }
-        title: "CHUNG"
+        width: parent.width
+        height: contentTop + generalSettings.implicitHeight + Theme.pad
+        title: Tr.phrase("CHUNG")
 
         Column {
+            id: generalSettings
             anchors { left: parent.left; right: parent.right }
             spacing: 14
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Phiên bản launcher"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Phiên bản launcher"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Text { text: settingsBridge.launcherVersion; color: Theme.text; font.pixelSize: Theme.fontBody
-                       width: 120; anchors.verticalCenter: parent.verticalCenter }
+                       width: 120;  }
                 // Trang CÀI ĐẶT không cuộn được, nên nút ủng hộ đi ghép vào hàng này thay vì
                 // thêm hàng mới — hàng cuối cùng đã chạm mép dưới ở cửa sổ 1360×860.
                 ActionButton {
                     objectName: "donateButton"
-                    primary: false; label: "Ủng hộ dự án"
-                    anchors.verticalCenter: parent.verticalCenter
+                    primary: false; label: Tr.phrase("Ủng hộ dự án")
+
                     // Mở hộp có mã QR chứ không nhảy ra trình duyệt: chuyển khoản trong nước
                     // không phải qua thẻ quốc tế.
                     onClicked: donateDialog.open()
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Launcher miễn phí, không quảng cáo. Ủng hộ là tuỳ tâm."
+
+                    text: Tr.phrase("Launcher miễn phí, không quảng cáo. Ủng hộ là tuỳ tâm.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Thư mục dữ liệu"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Thư mục dữ liệu"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Text {
                     text: settingsBridge.dataDir; color: Theme.text; font.pixelSize: Theme.fontBody
-                    elide: Text.ElideMiddle; width: Math.min(520, page.width - 360)
-                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideMiddle; width: Math.max(160, Math.min(520, page.width - 400))
+
                 }
-                ActionButton { primary: false; label: "Mở thư mục"; onClicked: settingsBridge.openDataFolder() }
+                ActionButton { primary: false; label: Tr.phrase("Mở thư mục"); onClicked: settingsBridge.openDataFolder() }
             }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Thư mục lưu bản chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Thư mục lưu bản chơi"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Text {
                     objectName: "gameDirRootText"
-                    text: settingsBridge.defaultGameDirRoot || (settingsBridge.dataDir + "/instances  (mặc định)")
+                    text: settingsBridge.defaultGameDirRoot || (settingsBridge.dataDir + Tr.phrase("/instances  (mặc định)"))
                     color: settingsBridge.defaultGameDirRoot ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
-                    elide: Text.ElideMiddle; width: Math.min(420, page.width - 520)
-                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideMiddle; width: Math.max(160, Math.min(420, page.width - 500))
+
                 }
-                ActionButton { primary: false; label: "Chọn ổ khác…"; onClicked: gameDirRootPicker.open() }
+                ActionButton { primary: false; label: Tr.phrase("Chọn ổ khác…"); onClicked: gameDirRootPicker.open() }
                 ActionButton {
-                    primary: false; label: "Mặc định"; visible: settingsBridge.defaultGameDirRoot !== ""
+                    primary: false; label: Tr.phrase("Mặc định"); visible: settingsBridge.defaultGameDirRoot !== ""
                     onClicked: settingsBridge.setDefaultGameDirRoot("")
                 }
             }
@@ -99,7 +112,7 @@ Item {
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
-                text: "Bản chơi mới (tạo mới, cài modpack, nhập file, kéo-thả) sẽ đặt mods/saves ở thư mục này; kho chung (versions, libraries, assets, Java) vẫn ở thư mục dữ liệu. Bản chơi đã có không bị chuyển."
+                text: Tr.phrase("Bản chơi mới (tạo mới, cài modpack, nhập file, kéo-thả) sẽ đặt mods/saves ở thư mục này; kho chung (versions, libraries, assets, Java) vẫn ở thư mục dữ liệu. Bản chơi đã có không bị chuyển.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
@@ -107,71 +120,75 @@ Item {
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
-                text: "Thư viện mod và modpack duyệt CurseForge qua máy chủ của Nostalgia, không cần khoá API."
+                text: Tr.phrase("Thư viện mod và modpack duyệt CurseForge qua máy chủ của Nostalgia, không cần khoá API.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Âm thanh thông báo"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Âm thanh thông báo"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Toggle {
-                    objectName: "notificationSoundToggle"
-                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "notificationSoundToggle"; accessibleLabel: Tr.phrase("Âm thanh thông báo")
+
                     checked: settingsBridge.notificationSound
                     onToggled: function (checked) { settingsBridge.setNotificationSound(checked); }
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản."
+
+                    text: Tr.phrase("Chuông ngắn khi game khởi động, thoát, hoặc tải xong phiên bản.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Âm thanh giao diện"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Âm thanh giao diện"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Toggle {
-                    objectName: "uiSoundToggle"
-                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "uiSoundToggle"; accessibleLabel: Tr.phrase("Âm thanh giao diện")
+
                     checked: settingsBridge.uiSound
                     onToggled: function (checked) { settingsBridge.setUiSound(checked); }
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ."
+
+                    text: Tr.phrase("Blip mềm kiểu Xbox 360 / Steam Big Picture khi chuyển trang, bấm nút, bung thẻ.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Thu gọn vào khay khi chơi"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: Tr.phrase("Thu gọn vào khay khi chơi"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Toggle {
-                    objectName: "hideWhenGameRunningToggle"
-                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "hideWhenGameRunningToggle"; accessibleLabel: Tr.phrase("Thu gọn vào khay khi chơi")
+
                     checked: settingsBridge.hideWhenGameRunning
                     onToggled: function (checked) { settingsBridge.setHideWhenGameRunning(checked); }
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM."
+
+                    text: Tr.phrase("Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
-            Row {
+            Flow {
+                width: parent.width
                 spacing: 10
-                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 160
-                       anchors.verticalCenter: parent.verticalCenter }
+                Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
+                        }
                 Toggle {
-                    objectName: "discordToggle"
-                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "discordToggle"; accessibleLabel: Tr.phrase("Discord Rich Presence")
+
                     checked: settingsBridge.discordPresence
                     onToggled: function (checked) { settingsBridge.setDiscord(checked); }
                 }
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
+
                     text: presenceBridge.statusText
                     color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
@@ -179,15 +196,18 @@ Item {
             Text {
                 width: Math.min(parent.width, 720)
                 wrapMode: Text.WordWrap
-                text: "Hồ sơ Discord của bạn hiện \"Đang ở launcher\", rồi \"Đang chơi <bản chơi>\" kèm thời gian khi game chạy. Không cần thiết lập gì: Discord mở lúc nào thì launcher tự nối lúc đó."
+                text: Tr.phrase("Hồ sơ Discord của bạn hiện \"Đang ở launcher\", rồi \"Đang chơi <bản chơi>\" kèm thời gian khi game chạy. Không cần thiết lập gì: Discord mở lúc nào thì launcher tự nối lúc đó.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
         }
     }
 
+        }
+    }
+
     FolderDialog {
         id: gameDirRootPicker
-        title: "Chọn thư mục lưu bản chơi mới"
+        title: Tr.phrase("Chọn thư mục lưu bản chơi mới")
         onAccepted: settingsBridge.setDefaultGameDirRoot(selectedFolder.toString())
     }
 }

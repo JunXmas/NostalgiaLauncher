@@ -11,11 +11,11 @@ Item {
     objectName: "contentPage"
     property string title: ""
     property var kinds: ["mod"]
-    property var kindLabels: ({ "mod": "Mod", "shader": "Shader", "resourcepack": "Gói tài nguyên", "modpack": "Modpack" })
+    property var kindLabels: ({ "mod": "Mod", "shader": "Shader", "resourcepack": Tr.phrase("Gói tài nguyên"), "modpack": "Modpack" })
 
     readonly property string kind: kinds[kindTabs.currentIndex] || kinds[0]
     readonly property var sortKeys: ["relevance", "downloads", "follows", "newest", "updated"]
-    readonly property var sortLabels: ["Liên quan", "Nhiều tải", "Theo dõi", "Mới nhất", "Vừa cập nhật"]
+    readonly property var sortLabels: [Tr.phrase("Liên quan"), Tr.phrase("Nhiều tải"), Tr.phrase("Theo dõi"), Tr.phrase("Mới nhất"), Tr.phrase("Vừa cập nhật")]
     readonly property bool hasInstance: contentBridge.instanceId.length > 0
     readonly property bool modsBlocked: kind === "mod" && contentBridge.loaderKind === "vanilla"
     property bool gridMode: true
@@ -30,10 +30,10 @@ Item {
     function requestInstall(projectId, title, alreadyInstalled) {
         if (!alreadyInstalled) { contentBridge.install(projectId); return; }
         page.pendingProjectId = projectId;
-        confirmDialog.acceptLabel = "Cài thêm";
-        confirmDialog.ask("Cài thêm " + title + "?",
-                          "Bạn chắc chắn muốn cài thêm " + page.kindLabels[page.kind].toLowerCase()
-                          + " này chứ? " + page.kindLabels[page.kind] + " đã tồn tại trong bản chơi — cài lại sẽ ghi đè file hiện có.",
+        confirmDialog.acceptLabel = Tr.phrase("Cài thêm");
+        confirmDialog.ask(Tr.phrase("Cài thêm ") + title + "?",
+                          Tr.phrase("Bạn chắc chắn muốn cài thêm ") + page.kindLabels[page.kind].toLowerCase()
+                          + Tr.phrase(" này chứ? ") + page.kindLabels[page.kind] + Tr.phrase(" đã tồn tại trong bản chơi — cài lại sẽ ghi đè file hiện có."),
                           function () { contentBridge.install(projectId); });
     }
     function refresh() {
@@ -56,7 +56,7 @@ Item {
         function onTargetChanged() { page.refresh(); }
         function onSourceChanged() { page.refresh(); }
         function onModpackInstalled(instanceId) { contentBridge.selectInstance(instanceId); }
-        function onIdentified(found) { identifiedNote.text = found > 0 ? "Nhận ra " + found + " file." : "Modrinth không biết file nào trong số này."; identifiedNote.visible = true; hideNote.restart(); }
+        function onIdentified(found) { identifiedNote.text = found > 0 ? Tr.phrase("Nhận ra ") + found + " file." : Tr.phrase("Modrinth không biết file nào trong số này."); identifiedNote.visible = true; hideNote.restart(); }
     }
     Timer { id: debounce; interval: 300; onTriggered: page.runSearch() }
     // Timer chết cùng trang, khác Qt.callLater có thể bắn sau khi trang đã bị huỷ.
@@ -77,19 +77,20 @@ Item {
             objectName: "modeTabs"
             anchors { left: parent.left; leftMargin: 170; verticalCenter: parent.verticalCenter }
             width: 230
-            tabs: ["Duyệt Modrinth", "Đã cài"]
+            tabs: [Tr.phrase("Duyệt Modrinth"), Tr.phrase("Đã cài")]
             onCurrentIndexChanged: refreshSoon.restart()
         }
         Row {
+            visible: page.kind !== "modpack"
             anchors { right: parent.right; verticalCenter: parent.verticalCenter }
             spacing: 8
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Cài vào"; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                text: Tr.phrase("Cài vào"); color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Dropdown {
                 width: 250
-                placeholder: bridge.instances.length > 0 ? "Chọn bản chơi" : "Chưa có bản chơi"
+                placeholder: bridge.instances.length > 0 ? Tr.phrase("Chọn bản chơi") : Tr.phrase("Chưa có bản chơi")
                 model: bridge.instances.map(function (instance) { return instance.label + "  (" + instance.versionId + ")"; })
                 currentIndex: bridge.instances.findIndex(function (instance) { return instance.instanceId === contentBridge.instanceId; })
                 onActivated: function (index) { contentBridge.selectInstance(bridge.instances[index].instanceId); }
@@ -161,7 +162,7 @@ Item {
                         id: searchField
                         anchors { left: parent.left; right: viewToggle.left; rightMargin: 10; verticalCenter: parent.verticalCenter }
                         height: 36
-                        placeholder: "Tìm " + page.kindLabels[page.kind].toLowerCase() + "..."
+                        placeholder: Tr.phrase("Tìm ") + page.kindLabels[page.kind].toLowerCase() + "..."
                         onTextChanged: debounce.restart()
                         onAccepted: page.runSearch()
                     }
@@ -197,7 +198,7 @@ Item {
                 Text {
                     id: countLine
                     anchors { top: searchRow.bottom; topMargin: 18; right: parent.right }
-                    text: contentBridge.searching ? "Đang tìm..." : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), "f", 0) + " kết quả"
+                    text: contentBridge.searching ? Tr.phrase("Đang tìm...") : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), "f", 0) + Tr.phrase(" kết quả")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Rectangle {
@@ -220,13 +221,13 @@ Item {
 
                     Text {
                         visible: !contentBridge.searching && contentBridge.results.length === 0
-                        text: "Không có kết quả."
+                        text: Tr.phrase("Không có kết quả.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                     Text {
                         anchors { top: parent.top; right: parent.right }
                         visible: page.modsBlocked && contentBridge.results.length > 0
-                        text: "Bản chơi đích không có mod loader — chọn bản Fabric/Forge/NeoForge để cài."
+                        text: Tr.phrase("Bản chơi đích không có mod loader — chọn bản Fabric/Forge/NeoForge để cài.")
                         color: Theme.accent; font.pixelSize: Theme.fontBody
                     }
                     GridView {
@@ -275,7 +276,7 @@ Item {
                                 anchors.centerIn: parent
                                 visible: contentBridge.hasMore
                                 primary: false
-                                label: contentBridge.searching ? "Đang tải..." : "Tải thêm"
+                                label: contentBridge.searching ? Tr.phrase("Đang tải...") : Tr.phrase("Tải thêm")
                                 clickable: !contentBridge.searching
                                 onClicked: contentBridge.loadMore()
                             }
@@ -296,7 +297,7 @@ Item {
                     TextField {
                         anchors { left: parent.left; right: installedToggle.left; rightMargin: 10; verticalCenter: parent.verticalCenter }
                         height: 36
-                        placeholder: "Tìm trong " + page.kindLabels[page.kind].toLowerCase() + " đã cài..."
+                        placeholder: Tr.phrase("Tìm trong ") + page.kindLabels[page.kind].toLowerCase() + Tr.phrase(" đã cài...")
                         onTextChanged: contentBridge.setInstalledFilter(text)
                     }
                     Row {
@@ -322,13 +323,13 @@ Item {
                     spacing: 8
                     ActionButton {
                         primary: false; height: 30
-                        label: "Kiểm tra bản mới"
+                        label: Tr.phrase("Kiểm tra bản mới")
                         clickable: page.hasInstance && !contentBridge.busy && contentBridge.installed.length > 0
                         onClicked: contentBridge.checkUpdates(page.kind)
                     }
                     ActionButton {
                         primary: false; height: 30
-                        label: "Nhận diện file chép tay"
+                        label: Tr.phrase("Nhận diện file chép tay")
                         clickable: page.hasInstance && !contentBridge.busy && contentBridge.installed.length > 0
                         onClicked: contentBridge.identifyInstalled(page.kind)
                     }
@@ -350,9 +351,9 @@ Item {
                 Text {
                     anchors { top: installedCount.bottom; topMargin: 18; horizontalCenter: parent.horizontalCenter }
                     visible: contentBridge.installedShownCount === 0
-                    text: !page.hasInstance ? "Tạo một bản chơi trước."
-                        : contentBridge.installed.length === 0 ? "Chưa cài gì. Sang tab Duyệt Modrinth để thêm."
-                        : "Không có mục nào khớp."
+                    text: !page.hasInstance ? Tr.phrase("Tạo một bản chơi trước.")
+                        : contentBridge.installed.length === 0 ? Tr.phrase("Chưa cài gì. Sang tab Duyệt Modrinth để thêm.")
+                        : Tr.phrase("Không có mục nào khớp.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 GridView {

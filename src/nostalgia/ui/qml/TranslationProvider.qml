@@ -16,6 +16,9 @@ QtObject {
         return _dict[key] !== undefined ? _dict[key] : key;
     }
 
+    function phrase(source) {
+        return _dict["p:" + source] !== undefined ? _dict["p:" + source] : source;
+    }
     function setLanguage(lang) {
         if (lang === _lang) return;
         _lang = lang;

@@ -56,7 +56,7 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Nhập bản chơi"
+                text: Tr.phrase("Nhập bản chơi")
                 color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true
             }
             Text {
@@ -74,8 +74,8 @@ Item {
             spacing: 0
             Repeater {
                 model: [
-                    { label: "Từ file .mrpack", idx: 0 },
-                    { label: "Từ launcher khác", idx: 1 }
+                    { label: Tr.phrase("Từ file .mrpack"), idx: 0 },
+                    { label: Tr.phrase("Từ launcher khác"), idx: 1 }
                 ]
                 Rectangle {
                     readonly property bool active: dialog.currentTab === modelData.idx
@@ -110,11 +110,11 @@ Item {
                 anchors { left: parent.left; right: parent.right }
                 spacing: 16
 
-                Text { text: "Chọn file modpack (.mrpack hoặc .zip) từ máy tính"; color: Theme.textMuted; font.pixelSize: Theme.fontBody }
+                Text { text: Tr.phrase("Chọn file modpack (.mrpack hoặc .zip) từ máy tính"); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
 
                 ActionButton {
                     width: 200; height: 40
-                    label: "Chọn file..."
+                    label: Tr.phrase("Chọn file...")
                     clickable: !importBridge.busy
                     onClicked: mrpackPicker.open()
                 }
@@ -133,14 +133,14 @@ Item {
                 spacing: 12
 
                 Text {
-                    text: importBridge.busy && importBridge.activity === "Đang quét launcher trên máy..."
-                          ? "Đang quét..."
-                          : importBridge.scanResults.length === 0 ? "Không tìm thấy launcher nào trên máy."
-                          : importBridge.scanResults.length + " bản chơi tìm thấy"
+                    text: importBridge.busy && importBridge.activity === Tr.phrase("Đang quét launcher trên máy...")
+                          ? Tr.phrase("Đang quét...")
+                          : importBridge.scanResults.length === 0 ? Tr.phrase("Không tìm thấy launcher nào trên máy.")
+                          : importBridge.scanResults.length + Tr.phrase(" bản chơi tìm thấy")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ActionButton {
-                    primary: false; label: "Quét lại"
+                    primary: false; label: Tr.phrase("Quét lại")
                     clickable: !importBridge.busy
                     onClicked: importBridge.scanLaunchers()
                 }
@@ -167,7 +167,7 @@ Item {
                         }
                         ActionButton {
                             anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
-                            primary: false; label: "Nhập"
+                            primary: false; label: Tr.phrase("Nhập")
                             clickable: !importBridge.busy
                             onClicked: importBridge.importFromLauncher(index, "")
                         }
@@ -180,8 +180,8 @@ Item {
 
     FileDialog {
         id: mrpackPicker
-        title: "Chọn modpack"
-        nameFilters: ["Modpack (*.mrpack *.zip)", "Mọi file (*)"]
+        title: Tr.phrase("Chọn modpack")
+        nameFilters: ["Modpack (*.mrpack *.zip)", Tr.phrase("Mọi file (*)")]
         onAccepted: importBridge.importMrpackFile(selectedFile.toString(), "", "")
     }
 }

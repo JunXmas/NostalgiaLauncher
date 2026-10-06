@@ -7,8 +7,9 @@ Rectangle {
     property alias echoMode: input.echoMode
     property string placeholder: ""
     signal accepted()
+    function focusInput() { input.forceActiveFocus(); }
 
-    height: 34
+    height: Math.max(34, Theme.fontBody + 18)
     radius: Theme.radiusSmall
     color: Theme.surfaceHigh
     border.color: input.activeFocus ? Theme.accent : Theme.border
@@ -23,6 +24,9 @@ Rectangle {
         font.pixelSize: Theme.fontBody
         clip: true
         selectByMouse: true
+        activeFocusOnTab: true
+        Accessible.role: Accessible.EditableText
+        Accessible.name: root.placeholder
         onAccepted: root.accepted()
     }
     Text {

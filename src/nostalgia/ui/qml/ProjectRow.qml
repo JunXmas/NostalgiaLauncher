@@ -78,7 +78,7 @@ Rectangle {
         id: action
         anchors { right: parent.right; rightMargin: 14; verticalCenter: parent.verticalCenter }
         width: 92
-        label: project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
+        label: project.installed ? Tr.phrase("Đã cài") : project.installing ? Tr.phrase("Đang cài...") : Tr.phrase("Cài")
         // Đã cài thì nút xám nhưng VẪN bấm được: trang sẽ hỏi lại trước khi cài đè.
         primary: !project.installed
         clickable: root.installable && !project.installing

@@ -50,7 +50,7 @@ Rectangle {
             visible: root.hasUpdate
             anchors.verticalCenter: parent.verticalCenter
             height: 28
-            label: "Cập nhật " + (installedContent.latestVersion || "")
+            label: Tr.phrase("Cập nhật ") + (installedContent.latestVersion || "")
             onClicked: root.updateRequested(installedContent.fileName)
         }
         Toggle {

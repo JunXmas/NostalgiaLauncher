@@ -181,11 +181,15 @@ def http_client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
 
 
 @pytest.fixture(scope="session")
-def qt_app() -> object:
+def qt_app() -> Iterator[object]:
     """Một `QGuiApplication` cho cả phiên — Qt không cho tạo hai. Chỉ test trong `tests/ui/`
     dùng; PySide6 là phụ thuộc tuỳ chọn nên import lười và bỏ qua nếu thiếu."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
     from PySide6.QtWidgets import QApplication
 
-    return QApplication.instance() or QApplication(["test"])
+    application = QApplication.instance() or QApplication(["test"])
+    yield application
+    from nostalgia.ui.worker import wait_for_background
+
+    wait_for_background()

@@ -29,6 +29,7 @@ from nostalgia.auth.qr import QrCode
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.donate.vietqr import BankAccount
+from nostalgia.facade.backups import BackupOperations
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
@@ -56,6 +57,7 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    BackupOperations,
     DonateOperations,
     UpdateOperations,
     MultiplayerOperations,

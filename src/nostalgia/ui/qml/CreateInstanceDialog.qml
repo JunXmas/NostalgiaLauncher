@@ -58,18 +58,18 @@ Item {
     readonly property string defaultName: loaderLabel + " " + gameVersion
     /* Nhãn nút nói rõ SẼ tạo ra cái gì — "Tạo bản chơi" không thôi thì người dùng không biết
        mình sắp nhận Vanilla hay Fabric hay bản tối ưu. */
-    readonly property string createLabel: dialog.isPreset ? "Tạo bản chơi tối ưu"
-                                                          : "Tạo bản chơi " + dialog.loaderLabel
+    readonly property string createLabel: dialog.isPreset ? Tr.phrase("Tạo bản chơi tối ưu")
+                                                          : Tr.phrase("Tạo bản chơi ") + dialog.loaderLabel
     /* Phiên bản đang chọn nhưng Optimized không có gói cho nó.
 
        KHÔNG tự xoá lựa chọn như trước: đổi ngầm thứ người dùng vừa bấm là cách chắc nhất để
        họ tưởng mình bấm hụt. Giữ nguyên lựa chọn, khoá nút, và nói thẳng thiếu ở đâu. */
     readonly property bool versionUnsupported: gameVersion.length > 0 && !presetSupports(gameVersion)
-    readonly property string missingStep: gameVersion.length === 0 ? "Chọn phiên bản Minecraft ở cột phải."
+    readonly property string missingStep: gameVersion.length === 0 ? Tr.phrase("Chọn phiên bản Minecraft ở cột phải.")
                                         : versionUnsupported
-                                          ? "Bản tối ưu chưa có gói cho " + gameVersion
-                                            + ". Chọn phiên bản khác, hoặc đổi sang Fabric."
-                                        : (needsLoaderStep && loaderVersion.length === 0) ? "Chọn bản " + loaderLabel + " ở cột phải."
+                                          ? Tr.phrase("Bản tối ưu chưa có gói cho ") + gameVersion
+                                            + Tr.phrase(". Chọn phiên bản khác, hoặc đổi sang Fabric.")
+                                        : (needsLoaderStep && loaderVersion.length === 0) ? Tr.phrase("Chọn bản ") + loaderLabel + Tr.phrase(" ở cột phải.")
                                         : ""
     readonly property bool canCreate: missingStep.length === 0 && !bridge.busy
     // Các dòng lớn theo thứ tự mới → cũ, kèm số bản trong dòng.
@@ -173,9 +173,9 @@ Item {
 
                     Column {
                         spacing: 2
-                        Text { text: "Tạo bản chơi"; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
+                        Text { text: Tr.phrase("Tạo bản chơi"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
                         Text {
-                            text: (dialog.isPreset ? "Tối ưu hiệu năng" : dialog.loaderLabel)
+                            text: (dialog.isPreset ? Tr.phrase("Tối ưu hiệu năng") : dialog.loaderLabel)
                                   + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
                                   + (dialog.loaderVersion ? "  ·  " + dialog.loaderVersion : "")
                             color: Theme.accent; font.pixelSize: Theme.fontBody
@@ -201,7 +201,7 @@ Item {
                        nó chỉ là một lựa chọn thứ sáu và người mới vẫn bấm Vanilla. */
                     Column {
                         spacing: 8; width: parent.width
-                        Text { text: "① KIỂU BẢN CHƠI"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                        Text { text: Tr.phrase("① KIỂU BẢN CHƠI"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
 
                         Rectangle {
                             objectName: "optimizedCard"
@@ -224,20 +224,20 @@ Item {
                                 spacing: 3
                                 Row {
                                     spacing: 8
-                                    Text { text: "Tối ưu hiệu năng"; color: Theme.text
+                                    Text { text: Tr.phrase("Tối ưu hiệu năng"); color: Theme.text
                                            font.pixelSize: Theme.fontHeading; font.bold: true }
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: recommendText.width + 12; height: 17; radius: 0
                                         color: Theme.accent
-                                        Text { id: recommendText; anchors.centerIn: parent; text: "ĐỀ XUẤT"
+                                        Text { id: recommendText; anchors.centerIn: parent; text: Tr.phrase("ĐỀ XUẤT")
                                                color: "#11151c"; font.pixelSize: Theme.fontLabel
                                                font.bold: true; font.letterSpacing: 0.8 }
                                     }
                                 }
                                 Text {
                                     width: parent.width
-                                    text: "Cài sẵn Fabulously Optimized, gồm Fabric và các mod tối ưu"
+                                    text: Tr.phrase("Cài sẵn Fabulously Optimized, gồm Fabric và các mod tối ưu")
                                     color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                                 }
                             }
@@ -298,10 +298,10 @@ Item {
 
                     Column {
                         spacing: 5; width: parent.width
-                        Text { text: "③ TÊN"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                        Text { text: Tr.phrase("③ TÊN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                         TextField {
                             id: nameField; width: parent.width
-                            placeholder: dialog.gameVersion ? dialog.defaultName : "Để trống = tự động"
+                            placeholder: dialog.gameVersion ? dialog.defaultName : Tr.phrase("Để trống = tự động")
                         }
                     }
 
@@ -318,7 +318,7 @@ Item {
                         border.color: Theme.border
                         Text {
                             anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
-                            text: (dialog.advancedOpen ? "▴  " : "▾  ") + "Thiết lập nâng cao"
+                            text: (dialog.advancedOpen ? "▴  " : "▾  ") + Tr.phrase("Thiết lập nâng cao")
                             color: Theme.textMuted; font.pixelSize: Theme.fontBody
                         }
                         HoverHandler { id: advancedHover; cursorShape: Qt.PointingHandCursor }
@@ -332,12 +332,12 @@ Item {
                         Row {
                             spacing: 10
                             Text { anchors.verticalCenter: parent.verticalCenter; text: "RAM (MB)"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
-                            TextField { id: heapField; width: 110; placeholder: "mặc định" }
+                            TextField { id: heapField; width: 110; placeholder: Tr.phrase("mặc định") }
                         }
 
                         Column {
                             spacing: 5; width: parent.width
-                            Text { text: "THƯ MỤC GAME"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                            Text { text: Tr.phrase("THƯ MỤC GAME"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                             // Bấm để chọn ổ khác cho mods/saves của bản chơi này (kho chung vẫn ở data_dir).
                             Rectangle {
                                 objectName: "gameDirPicker"
@@ -346,7 +346,7 @@ Item {
                                 Text {
                                     anchors { left: parent.left; leftMargin: 10; right: clearFolder.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
                                     text: dialog.gameDirUrl ? dialog.gameDirPath
-                                          : (settingsBridge.defaultGameDirRoot ? "Mặc định: " + settingsBridge.defaultGameDirRoot + "/…" : "Mặc định trong instances/ — bấm để chọn ổ khác")
+                                          : (settingsBridge.defaultGameDirRoot ? Tr.phrase("Mặc định: ") + settingsBridge.defaultGameDirRoot + "/…" : Tr.phrase("Mặc định trong instances/ — bấm để chọn ổ khác"))
                                     elide: Text.ElideMiddle
                                     color: dialog.gameDirUrl ? Theme.text : Theme.textMuted; font.pixelSize: Theme.fontBody
                                 }
@@ -369,13 +369,13 @@ Item {
                     Text {
                         visible: !bridge.busy && dialog.missingStep.length > 0
                         width: parent.width
-                        text: "Còn thiếu: " + dialog.missingStep
+                        text: Tr.phrase("Còn thiếu: ") + dialog.missingStep
                         color: Theme.accent; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
                         visible: !bridge.busy && dialog.isPreset
                         width: parent.width
-                        text: "Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi."
+                        text: Tr.phrase("Fabulously Optimized: Fabric + Sodium và các mod tối ưu, cài sẵn từ Modrinth. Bản không có gói sẽ mờ đi.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     // Lối thoát ngay tại chỗ tắc: bản đã chọn không có gói tối ưu thì đổi sang
@@ -385,7 +385,7 @@ Item {
                         visible: !bridge.busy && dialog.versionUnsupported
                         width: parent.width
                         primary: false
-                        label: "Dùng Fabric cho " + dialog.gameVersion
+                        label: Tr.phrase("Dùng Fabric cho ") + dialog.gameVersion
                         onClicked: {
                             dialog.loaderKind = "fabric";
                             dialog.loaderVersion = "";
@@ -395,7 +395,7 @@ Item {
                     Text {
                         visible: !bridge.busy && (dialog.loaderKind === "forge" || dialog.loaderKind === "neoforge")
                         width: parent.width
-                        text: "Forge/NeoForge cài bằng installer chính thức; có thể mất vài phút."
+                        text: Tr.phrase("Forge/NeoForge cài bằng installer chính thức; có thể mất vài phút.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
@@ -407,7 +407,7 @@ Item {
                     ActionButton {
                         width: parent.width
                         height: 44
-                        label: bridge.busy ? "Đang cài..." : dialog.createLabel
+                        label: bridge.busy ? Tr.phrase("Đang cài...") : dialog.createLabel
                         clickable: dialog.canCreate
                         onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName,
                                                                 dialog.gameVersion, dialog.loaderKind,
@@ -432,14 +432,14 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: dialog.needsLoaderStep && dialog.gameVersion
-                          ? "CHỌN PHIÊN BẢN " + dialog.loaderLabel.toUpperCase() + " CHO " + dialog.gameVersion
-                          : "② CHỌN PHIÊN BẢN MINECRAFT"
+                          ? Tr.phrase("CHỌN PHIÊN BẢN ") + dialog.loaderLabel.toUpperCase() + " CHO " + dialog.gameVersion
+                          : Tr.phrase("② CHỌN PHIÊN BẢN MINECRAFT")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody; font.bold: true; font.letterSpacing: 1.2
                 }
                 ActionButton {
                     visible: dialog.needsLoaderStep && dialog.gameVersion
                     primary: false
-                    label: "← Đổi phiên bản"
+                    label: Tr.phrase("← Đổi phiên bản")
                     onClicked: dialog.gameVersion = ""
                 }
             }
@@ -457,13 +457,13 @@ Item {
 
                 Text {
                     visible: dialog.released.length === 0
-                    text: catalogBridge.busy ? "Đang tải danh mục phiên bản..." : "Không tải được danh mục."
+                    text: catalogBridge.busy ? Tr.phrase("Đang tải danh mục phiên bản...") : Tr.phrase("Không tải được danh mục.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ActionButton {
                     y: 30
                     visible: dialog.released.length === 0 && !catalogBridge.busy
-                    primary: false; label: "Thử lại"
+                    primary: false; label: Tr.phrase("Thử lại")
                     onClicked: catalogBridge.loadReleasedVersions()
                 }
                 ListView {
@@ -558,7 +558,7 @@ Item {
                                     Behavior on opacity { NumberAnimation { duration: Theme.normal } }
                                     Text { text: modelData.major; color: Theme.text; font.pixelSize: Theme.fontHero; font.bold: true
                                            style: Text.Raised; styleColor: "#80000000" }
-                                    Text { text: modelData.count + " phiên bản"; color: Theme.text; font.pixelSize: Theme.fontBody; opacity: 0.85 }
+                                    Text { text: modelData.count + Tr.phrase(" phiên bản"); color: Theme.text; font.pixelSize: Theme.fontBody; opacity: 0.85 }
                                 }
                                 Text {
                                     anchors { right: parent.right; rightMargin: 16; bottom: parent.bottom; bottomMargin: 12 }
@@ -642,7 +642,7 @@ Item {
 
                 Text {
                     visible: catalogBridge.loaderVersions.length === 0
-                    text: catalogBridge.busy ? "Đang lấy danh sách bản loader..." : "Không có bản loader cho phiên bản này."
+                    text: catalogBridge.busy ? Tr.phrase("Đang lấy danh sách bản loader...") : Tr.phrase("Không có bản loader cho phiên bản này.")
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ListView {
@@ -656,13 +656,13 @@ Item {
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
                             anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                            text: modelData.loaderVersion; color: Theme.text; font.pixelSize: Theme.fontBody; font.family: "monospace"
+                            text: modelData.loaderVersion.indexOf(dialog.gameVersion + "-") === 0 ? modelData.loaderVersion.slice(dialog.gameVersion.length + 1) : modelData.loaderVersion; color: Theme.text; font.pixelSize: Theme.fontBody; font.family: "monospace"
                         }
                         Rectangle {
                             anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                             visible: modelData.stable
                             width: stableText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
-                            Text { id: stableText; anchors.centerIn: parent; text: "ổn định"; color: "white"; font.pixelSize: Theme.fontLabel }
+                            Text { id: stableText; anchors.centerIn: parent; text: Tr.phrase("ổn định"); color: "white"; font.pixelSize: Theme.fontLabel }
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: dialog.loaderVersion = modelData.loaderVersion }
@@ -674,7 +674,7 @@ Item {
 
     FolderDialog {
         id: folderPicker
-        title: "Chọn thư mục chơi cho bản chơi này"
+        title: Tr.phrase("Chọn thư mục chơi cho bản chơi này")
         onAccepted: dialog.gameDirUrl = selectedFolder.toString()
     }
 }

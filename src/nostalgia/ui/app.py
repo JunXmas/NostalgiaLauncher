@@ -31,6 +31,7 @@ from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.sound import SoundPlayer
+from nostalgia.ui.storage_bridge import StorageBridge
 from nostalgia.ui.update_bridge import UpdateBridge
 from nostalgia.ui.worker import wait_for_background
 
@@ -112,6 +113,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     bridge = LauncherBridge(launcher, parent=view)
     context = view.rootContext()
     context.setContextProperty("bridge", bridge)
+    context.setContextProperty("storageBridge", StorageBridge(launcher, bridge, parent=view))
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
     context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
     context.setContextProperty("capeBridge", CapeBridge(launcher, bridge, parent=view))
@@ -152,7 +154,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
         running_application.aboutToQuit.connect(multiplayer_bridge.shutdown)
         running_application.aboutToQuit.connect(presence_bridge.shutdown)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
-    view.setTitle("Nostalgia Launcher")
+    view.setTitle("Nostalgia Launcher · Preview " + __version__)
     # Cho phép cửa sổ co nhỏ đến 1024x600 để chạy được trên màn hình 1366x768 (trừ taskbar,
     # title bar). Bố cục QML tự scale xuống nhờ ScrollView / Flickable và layout linh hoạt.
     view.setMinimumSize(QSize(1024, 600))

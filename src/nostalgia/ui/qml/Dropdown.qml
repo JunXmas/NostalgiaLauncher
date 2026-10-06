@@ -7,7 +7,7 @@ Item {
     id: root
     property var model: []
     property int currentIndex: -1
-    property string placeholder: "Chọn..."
+    property string placeholder: Tr.phrase("Chọn...")
     readonly property string currentText: currentIndex >= 0 && currentIndex < model.length
                                           ? model[currentIndex] : ""
     property bool open: false
@@ -30,14 +30,28 @@ Item {
     readonly property real trayHeight: popup.height
     onOpenChanged: if (open) origin = root.mapToItem(null, 0, 0)
 
-    height: 34
+    activeFocusOnTab: true
+    Accessible.role: Accessible.ComboBox
+    Accessible.name: currentText || placeholder
+    Keys.onSpacePressed: open = !open
+    Keys.onReturnPressed: open = !open
+    Keys.onEnterPressed: open = !open
+    Keys.onEscapePressed: open = false
+    function step(offset) {
+        if (model.length === 0) return;
+        currentIndex = Math.max(0, Math.min(model.length - 1, currentIndex + offset));
+        activated(currentIndex);
+    }
+    Keys.onDownPressed: step(1)
+    Keys.onUpPressed: step(-1)
+    height: Math.max(34, Theme.fontBody + 18)
 
     Rectangle {
         id: head
         anchors.fill: parent
         radius: Theme.radiusSmall
         color: hover.containsMouse || root.open ? Theme.surfaceHigh : Theme.surface
-        border.color: root.open ? Theme.accent : Theme.border
+        border.color: root.open || root.activeFocus ? Theme.accent : Theme.border
         border.width: 1
         Behavior on color { ColorAnimation { duration: Theme.quick } }
 
@@ -75,7 +89,7 @@ Item {
             id: hover
             anchors.fill: parent
             hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-            onClicked: root.open = !root.open
+            onClicked: { root.forceActiveFocus(); root.open = !root.open; }
         }
     }
 
@@ -87,7 +101,7 @@ Item {
         width: root.width
         x: root.origin.x
         y: root.origin.y + (root.dropUp ? -height - 4 : head.height + 4)
-        height: root.open ? Math.min(root.model.length, 8) * 32 + 8 : 0
+        height: root.open ? Math.min(root.model.length, 8) * Math.max(32, Theme.fontBody + 14) + 8 : 0
         visible: height > 0
         clip: true
         radius: Theme.radiusSmall
@@ -114,7 +128,7 @@ Item {
             clip: true
             delegate: Rectangle {
                 width: ListView.view.width
-                height: 32
+                height: Math.max(32, Theme.fontBody + 14)
                 radius: 0
                 color: rowHover.containsMouse ? Theme.accentSoft : "transparent"
                 Text {

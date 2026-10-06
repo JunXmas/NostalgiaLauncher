@@ -39,11 +39,11 @@ Rectangle {
             objectName: "updateBannerText"
             anchors.verticalCenter: parent.verticalCenter
             text: updateBridge.state === "downloading"
-                  ? "Đang tải bản " + updateBridge.latestVersion + "… "
+                  ? Tr.phrase("Đang tải bản ") + updateBridge.latestVersion + "… "
                     + Math.round(updateBridge.progressFraction * 100) + "%"
                   : updateBridge.state === "ready"
-                  ? "Đang cài bản " + updateBridge.latestVersion + ", launcher sắp mở lại…"
-                  : "Có bản mới " + updateBridge.latestVersion
+                  ? Tr.phrase("Đang cài bản ") + updateBridge.latestVersion + Tr.phrase(", launcher sắp mở lại…")
+                  : Tr.phrase("Có bản mới ") + updateBridge.latestVersion
             color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true
         }
     }
@@ -56,7 +56,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.canUpdate
             // Một nút, một nhịp: tải → tráo → mở lại. Gói không tự tráo được thì mở trang tải.
-            label: root.canSelfUpdate ? "⬇  Cập nhật ngay" : "Mở trang tải"
+            label: root.canSelfUpdate ? Tr.phrase("⬇  Cập nhật ngay") : Tr.phrase("Mở trang tải")
             onClicked: updateBridge.updateNow()
         }
         Text {

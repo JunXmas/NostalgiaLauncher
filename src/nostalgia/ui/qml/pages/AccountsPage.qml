@@ -38,17 +38,17 @@ Item {
         height: 58
         PageTitle {
             anchors { left: parent.left; top: parent.top }
-            caption: "Tài khoản"
+            caption: Tr.phrase("Tài khoản")
         }
         Text {
             anchors { left: parent.left; top: parent.top; topMargin: 32 }
-            text: "Quản lý tài khoản Minecraft: premium (Microsoft) và non-premium (Ely.by)."
+            text: Tr.phrase("Quản lý tài khoản Minecraft: premium (Microsoft) và non-premium (Ely.by).")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         ActionButton {
             objectName: "addAccountButton"
             anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-            label: "+  Thêm tài khoản"
+            label: Tr.phrase("+  Thêm tài khoản")
             onClicked: addDialog.openDialog()
         }
     }
@@ -105,7 +105,7 @@ Item {
                             objectName: "accountDetail"
                             readonly property bool waitingForSkinSupport:
                                 modelData.accountKind === "ely" && !accountBridge.skinSupportReady
-                            text: waitingForSkinSupport ? "Skin trong game: đang tải hỗ trợ…"
+                            text: waitingForSkinSupport ? Tr.phrase("Skin trong game: đang tải hỗ trợ…")
                                                         : modelData.playerUuid.slice(0, 8) + "···"
                             color: waitingForSkinSupport ? Theme.warning : Theme.textMuted
                             font.pixelSize: Theme.fontLabel
@@ -131,7 +131,7 @@ Item {
                     anchors { right: parent.right; rightMargin: 40; verticalCenter: parent.verticalCenter }
                     opacity: !row.active && rowHovered.hovered ? 1 : 0
                     enabled: opacity > 0
-                    height: 26; fontSize: 11; label: "Dùng"
+                    height: 26; fontSize: 11; label: Tr.phrase("Dùng")
                     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
                     onClicked: { page.shownId = modelData.accountId; bridge.setActiveAccount(modelData.accountId); }
                 }
@@ -151,7 +151,7 @@ Item {
         }
         Text {
             visible: page.allAccounts.length === 0
-            text: "Chưa có tài khoản — bấm Thêm tài khoản."; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+            text: Tr.phrase("Chưa có tài khoản — bấm Thêm tài khoản."); color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
 
@@ -195,7 +195,7 @@ Item {
         Column {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 26 }
             spacing: 6
-            Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.hasShown ? page.shown.playerName : "Chưa chọn"
+            Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.hasShown ? page.shown.playerName : Tr.phrase("Chưa chọn")
                    color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
                    text: page.hasShown ? page.shown.playerUuid : ""; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace" }

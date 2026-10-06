@@ -20,6 +20,7 @@ from nostalgia.ui.worker import WorkerBridge
 
 class InstanceBridge(WorkerBridge):
     instancesChanged = Signal()
+    storageBusyChanged = Signal()
     progressChanged = Signal()
     recentWorldsChanged = Signal()
     recentServersChanged = Signal()
@@ -27,6 +28,7 @@ class InstanceBridge(WorkerBridge):
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._launcher = launcher
+        self._storage_busy = False
         self._progress_text = ""
         self._progress_fraction = 0.0
         # Hàng cho QML giữ trong RAM: mỗi hàng kèm thống kê (đếm thế giới, mod trên đĩa), mà
@@ -37,6 +39,15 @@ class InstanceBridge(WorkerBridge):
         self._recent_server_rows: list[dict[str, Any]] | None = None
         self.instancesChanged.connect(self._forget_instance_rows)
         self.instancesChanged.connect(self._forget_recent_worlds)
+
+    @Property(bool, notify=storageBusyChanged)
+    def storageBusy(self) -> bool:
+        return self._storage_busy
+
+    @Slot(bool)
+    def setStorageBusy(self, busy: bool) -> None:
+        self._storage_busy = busy
+        self.storageBusyChanged.emit()
 
     def _forget_instance_rows(self) -> None:
         self._instance_rows = None
@@ -96,6 +107,8 @@ class InstanceBridge(WorkerBridge):
             "label": instance.label,
             "versionId": instance.version_id,
             "iconUrl": instance.icon_url,
+            "groupName": instance.group_name,
+            "favorite": instance.favorite,
             "maxHeapMegabytes": instance.max_heap_megabytes or 0,
             "windowWidth": instance.window_width or 0,
             "windowHeight": instance.window_height or 0,

@@ -11,7 +11,7 @@ import threading
 import time
 from collections.abc import Callable
 
-from PySide6.QtCore import Property, QObject, QUrl, Signal
+from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
 from nostalgia.errors import NostalgiaError
 
@@ -37,6 +37,7 @@ class WorkerBridge(QObject):
     busyChanged = Signal()
     activityChanged = Signal()
     failed = Signal(str)
+    retryChanged = Signal()
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -45,6 +46,18 @@ class WorkerBridge(QObject):
         self._lock = threading.Lock()
         # Thế hệ của yêu cầu mới nhất: kết quả về muộn của yêu cầu cũ bị bỏ, không đè lên mới.
         self._generation = 0
+        self._retry_work: Callable[[], None] | None = None
+        self._retry_activity = ""
+
+    @Property(bool, notify=retryChanged)
+    def canRetry(self) -> bool:
+        return self._retry_work is not None and not self._busy
+
+    @Slot()
+    def retry(self) -> None:
+        work = self._retry_work
+        if work is not None and not self._busy:
+            self.run_in_background(work, self._retry_activity)
 
     @Property(bool, notify=busyChanged)
     def busy(self) -> bool:
@@ -68,6 +81,8 @@ class WorkerBridge(QObject):
         """Chạy `work` ở luồng nền; lỗi đi ra tín hiệu `failed` thay vì chết lặng."""
         self._activity = activity
         self.activityChanged.emit()
+        self._retry_work = None
+        self.retryChanged.emit()
 
         def guarded() -> None:
             message = ""
@@ -81,8 +96,11 @@ class WorkerBridge(QObject):
             # mọi tín hiệu ném RuntimeError — không còn ai để báo, bỏ qua là đúng.
             with contextlib.suppress(RuntimeError):
                 if message:
+                    self._retry_work = work
+                    self._retry_activity = activity
                     self.failed.emit(message)
                 self._set_busy(False)
+                self.retryChanged.emit()
 
         def tracked() -> None:
             try:

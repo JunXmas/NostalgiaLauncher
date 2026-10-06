@@ -80,9 +80,9 @@ def test_an_unsupported_version_is_explained_not_erased(tmp_path: Path) -> None:
     assert "1.2.3-khong-co-that" in dialog.property("missingStep")
 
 
-def test_the_play_block_says_what_is_missing(tmp_path: Path) -> None:
+def test_onboarding_says_what_is_missing(tmp_path: Path) -> None:
     """Nút xám câm là lý do người mới bỏ đi: chỗ thêm tài khoản nằm ở trang khác nên họ không
-    đoán ra. Khối CHƠI phải nói thiếu gì và đưa luôn nút đi làm việc đó."""
+    đoán ra. Màn hình bắt đầu phải nói thiếu gì và đưa nút đi làm việc đó."""
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     view, _bridge = build_view(launcher)
     QGuiApplication.processEvents()
@@ -93,7 +93,7 @@ def test_the_play_block_says_what_is_missing(tmp_path: Path) -> None:
     assert home is not None and play is not None
 
     assert home.property("missingKind") == "account", "chưa đăng nhập thì hỏi tài khoản trước"
-    missing_action = play.findChild(QObject, "missingAction")
+    missing_action = root_item.findChild(QObject, "onboardingPrimary")
     assert missing_action is not None
     assert missing_action.property("visible") is True
 

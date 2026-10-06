@@ -29,6 +29,11 @@ QtObject {
        `page` do Sidebar ghi vào. Đây là property DUY NHẤT ghi được trong file này; mọi thứ
        khác vẫn readonly để không ai lén đổi màu từ chỗ khác. */
     property int page: 0
+    property var preferences: null
+    readonly property real textScale: preferences ? preferences.uiScale / 100 : 1
+    readonly property bool compactUi: preferences ? preferences.compactUi : false
+    readonly property bool reducedMotion: preferences ? preferences.reducedMotion : false
+    readonly property bool decorativeBackground: preferences ? preferences.decorativeBackground : true
 
     readonly property var accents: [
         "#5ac54f",  // TRANG CHỦ   — cỏ
@@ -92,11 +97,11 @@ QtObject {
     readonly property string pixel: "Minecraft F2D V1.42"
     readonly property string mono:  "monospace"
 
-    readonly property int fontHero:    30   // câu chào trang chủ
-    readonly property int fontTitle:   18   // tiêu đề hộp thoại
-    readonly property int fontHeading: 13   // tên thẻ, tên mục
-    readonly property int fontBody:    12   // chữ đọc chính
-    readonly property int fontLabel:   10   // nhãn viết hoa, chú thích
+    readonly property int fontHero: Math.round(30 * textScale)   // câu chào trang chủ
+    readonly property int fontTitle: Math.round(20 * textScale)   // tiêu đề hộp thoại
+    readonly property int fontHeading: Math.round(14 * textScale)   // tên thẻ, tên mục
+    readonly property int fontBody: Math.round(14 * textScale)   // chữ đọc chính
+    readonly property int fontLabel: Math.round(12 * textScale)   // nhãn viết hoa, chú thích
 
     // Giãn chữ: chỉ hai giá trị. Giãn rộng làm chữ thường khó đọc — nó chỉ hợp nhãn hoa ngắn.
     readonly property real trackLabel: 1.2
@@ -114,9 +119,9 @@ QtObject {
 
     // Một nhịp duy nhất cho mọi hoạt ảnh nhỏ. Mỗi chỗ một tốc độ khác nhau làm giao diện
     // trông rời rạc, dù từng chỗ nhìn riêng vẫn mượt.
-    readonly property int quick:         120
-    readonly property int normal:        220
-    readonly property int slow:          420
+    readonly property int quick: Theme.reducedMotion ? 0 : 120
+    readonly property int normal: Theme.reducedMotion ? 0 : 220
+    readonly property int slow: Theme.reducedMotion ? 0 : 420
 
     /* Pha `ratio` phần `b` vào `a`.
 

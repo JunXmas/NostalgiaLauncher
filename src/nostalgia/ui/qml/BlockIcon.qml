@@ -92,7 +92,7 @@ Item {
         // 45fps: sprite nhảy theo bậc nên không cần 60, mà nhịp rung ngắn thì 30 thấy giật.
         interval: 1000 / 45
         repeat: true
-        running: root.spinning || root.velocity > 0.001 || root.turn > 0.0005
+        running: !Theme.reducedMotion && (root.spinning || root.velocity > 0.001 || root.turn > 0.0005)
         onTriggered: {
             var dt = interval / 1000;
             root.elapsed += interval;

@@ -72,8 +72,8 @@ Rectangle {
         id: action
         anchors { right: parent.right; top: parent.top; margins: 14 }
         width: root.isModpack ? 120 : 84; height: 30
-        label: root.isModpack ? (project.installing ? "Đang cài..." : "Tạo bản chơi")
-             : project.installed ? "Đã cài" : project.installing ? "Đang cài..." : "Cài"
+        label: root.isModpack ? (project.installing ? Tr.phrase("Đang cài...") : Tr.phrase("Tạo bản chơi"))
+             : project.installed ? Tr.phrase("Đã cài") : project.installing ? Tr.phrase("Đang cài...") : Tr.phrase("Cài")
         // Đã cài thì nút xám nhưng VẪN bấm được: trang sẽ hỏi lại trước khi cài đè.
         primary: !project.installed
         clickable: !project.installing && (root.isModpack || root.installable)

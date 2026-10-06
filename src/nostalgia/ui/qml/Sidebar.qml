@@ -13,6 +13,7 @@ Rectangle {
        mà là đổi thanh bên lấy bầu trời. Trạng thái sống theo phiên, không ghi đĩa. */
     property bool collapsed: false
 
+    clip: true
     color: Theme.surface
 
     // Thanh bên là nơi DUY NHẤT nói cho Theme biết đang ở tab nào — và nó cũng là nơi duy
@@ -72,9 +73,19 @@ Rectangle {
         }
     }
 
-    Column {
-        anchors { top: brand.bottom; topMargin: 24; left: parent.left; right: parent.right; margins: 12 }
-        spacing: 4
+    Flickable {
+        id: navigationScroll
+        objectName: "navigationScroll"
+        anchors { top: brand.bottom; bottom: accountCard.top; topMargin: 20; bottomMargin: 12;
+                  left: parent.left; right: parent.right; margins: 12 }
+        clip: true
+        contentWidth: width
+        contentHeight: navigationItems.height
+        boundsBehavior: Flickable.StopAtBounds
+        Column {
+        id: navigationItems
+        width: parent.width
+        spacing: Theme.compactUi ? 0 : 4
 
         Repeater {
             model: root.entries
@@ -117,6 +128,7 @@ Rectangle {
 
         NavItem {
             objectName: "communityLink"
+            accessibleLabel: Tr.text("community")
             label: root.collapsed ? "" : Tr.text("community")
             /* Logo Discord thật (assets/discord.png), không phải chữ "✉" như trước: phong bì
                là "thư", không ai đọc ra Discord, mà đây đúng là chỗ cần nhận ra NGAY bằng
@@ -145,6 +157,7 @@ Rectangle {
            không ô nào khác dùng nó nên nó không đọc thành "tab thứ tám". */
         NavItem {
             objectName: "donateLink"
+            accessibleLabel: Tr.text("donate")
             label: root.collapsed ? "" : Tr.text("donate")
             // Khối beacon: trong game nó là thứ người chơi dựng được sau khi hạ boss rồi đặt
             // lên một bệ quặng quý — ngọn sáng bắn thẳng lên trời. Đúng nghĩa ở đây, và nó
@@ -167,6 +180,8 @@ Rectangle {
             tint: Theme.textMuted
             onClicked: root.collapsed = !root.collapsed
         }
+    }
+
     }
 
     // Thẻ tài khoản. Chưa đăng nhập thì nói thẳng là chưa, không vẽ người giả.

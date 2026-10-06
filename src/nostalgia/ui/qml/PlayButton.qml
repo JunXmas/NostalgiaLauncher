@@ -44,7 +44,7 @@ Column {
         width: parent.width
         height: 64
         fontSize: 24
-        label: root.running ? "DỪNG  ■" : "CHƠI  ▶"
+        label: root.running ? Tr.phrase("DỪNG  ■") : Tr.phrase("CHƠI  ▶")
         danger: root.running
         clickable: root.running || root.playable
         onClicked: root.running ? root.stopRequested() : root.clicked()
@@ -59,9 +59,9 @@ Column {
         width: parent.width
         height: 40
         // Đóng lại chỉ thấy một dòng: viên "N bản" là thứ duy nhất nói rằng còn bản khác.
-        badge: root.instances.length > 1 ? root.instances.length + " bản" : ""
+        badge: root.instances.length > 1 ? root.instances.length + Tr.phrase(" bản") : ""
         markedIndex: root.order.indexOf(root.recentIndex)
-        markLabel: "vừa chơi"
+        markLabel: Tr.phrase("vừa chơi")
         model: root.order.map(function (index) {
             var instance = root.instances[index];
             return instance.label + "  (" + instance.versionId + ")";
@@ -88,15 +88,15 @@ Column {
             spacing: 7
             Text {
                 width: parent.width
-                text: root.missingKind === "account" ? "Cần một tài khoản để chơi"
-                                                     : "Chưa có bản chơi nào"
+                text: root.missingKind === "account" ? Tr.phrase("Cần một tài khoản để chơi")
+                                                     : Tr.phrase("Chưa có bản chơi nào")
                 color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true
             }
             ActionButton {
                 objectName: "missingActionButton"
                 width: parent.width
                 height: 30
-                label: root.missingKind === "account" ? "Thêm tài khoản" : "Tạo bản chơi"
+                label: root.missingKind === "account" ? Tr.phrase("Thêm tài khoản") : Tr.phrase("Tạo bản chơi")
                 onClicked: root.missingKind === "account" ? root.addAccountRequested()
                                                           : root.createRequested()
             }

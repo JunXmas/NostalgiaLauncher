@@ -47,7 +47,7 @@ Item {
             objectName: "loaderChip"
             width: 168
             visible: root.loadersEnabled
-            title: "Mọi loader"
+            title: Tr.phrase("Mọi loader")
             options: root.loaderOptions
             selected: contentBridge.selectedLoaders
             onToggled: function (value, checked) { contentBridge.setLoaderSelected(value, checked); root.changed(); }
@@ -59,10 +59,10 @@ Item {
             objectName: "versionChip"
             width: 168
             visible: root.versionsEnabled
-            title: "Mọi phiên bản"
+            title: Tr.phrase("Mọi phiên bản")
             searchable: true
-            searchPlaceholder: "Tìm phiên bản..."
-            emptyNote: catalogBridge.busy ? "Đang tải danh mục..." : "Không tải được danh mục phiên bản."
+            searchPlaceholder: Tr.phrase("Tìm phiên bản...")
+            emptyNote: catalogBridge.busy ? Tr.phrase("Đang tải danh mục...") : Tr.phrase("Không tải được danh mục phiên bản.")
             options: root.versionOptions
             selected: contentBridge.selectedGameVersions
             onToggled: function (value, checked) { contentBridge.setGameVersionSelected(value, checked); root.changed(); }
@@ -73,7 +73,7 @@ Item {
             id: sortBox
             objectName: "sortBox"
             width: 168; height: 32
-            placeholder: "Sắp xếp"
+            placeholder: Tr.phrase("Sắp xếp")
             model: root.sortLabels
             currentIndex: root.sortIndex
             onActivated: function (index) { root.sortIndex = index; root.changed(); }
@@ -86,7 +86,7 @@ Item {
         visible: root.singleOnly && (contentBridge.selectedLoaders.length > 1
                                      || contentBridge.selectedGameVersions.length > 1)
         wrapMode: Text.WordWrap
-        text: "CurseForge chỉ lọc theo loader và phiên bản ĐẦU TIÊN được tick."
+        text: Tr.phrase("CurseForge chỉ lọc theo loader và phiên bản ĐẦU TIÊN được tick.")
         color: Theme.accent; font.pixelSize: Theme.fontLabel
     }
 }

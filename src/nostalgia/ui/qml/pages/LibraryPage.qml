@@ -1,4 +1,4 @@
 import QtQuick
 import "../"
 
-ContentPage { title: "Thư viện"; kinds: ["mod", "shader", "resourcepack", "modpack"] }
+ContentPage { title: Tr.phrase("Thư viện"); kinds: ["mod", "shader", "resourcepack", "modpack"] }

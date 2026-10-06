@@ -10,18 +10,33 @@ Item {
     // Nút nguy hiểm (DỪNG game): khối đỏ đất nung, cùng hình khối.
     property bool danger: false
     property bool clickable: true
-    property int fontSize: 12
+    property int fontSize: Theme.fontBody
     signal clicked()
+    activeFocusOnTab: root.clickable
+    Accessible.role: Accessible.Button
+    Accessible.name: root.label
+    Accessible.onPressAction: root.trigger()
+    Keys.onReturnPressed: root.trigger()
+    Keys.onEnterPressed: root.trigger()
+    Keys.onSpacePressed: function(event) { if (!event.isAutoRepeat) root.trigger(); }
+    function trigger() {
+        if (root.clickable) { notifier.playUi("select"); root.clicked(); }
+    }
+    Rectangle {
+        anchors.fill: parent; anchors.margins: -3
+        color: "transparent"; border.width: 2; border.color: Theme.text
+        visible: root.activeFocus; z: 2
+    }
 
     readonly property int edge: 4         // cạnh dưới "khối"
     readonly property int pressDrop: press.pressed && root.clickable ? 3 : 0
     // Nút chính mang màu của tab đang mở (`Theme.accent`), không còn sắc lục viết cứng: nút
     // và tiêu đề trang nằm cùng một màn hình nên phải cùng một màu. Dịu đi một bậc so với
     // chữ tiêu đề — mặt nút là mảng màu lớn, để nguyên độ bão hoà thì chói.
-    readonly property color baseFace: Qt.darker(Theme.accent, 1.35)
+    readonly property color baseFace: Qt.darker(Theme.accent, 2.0)
     readonly property color faceColor: !root.clickable ? "#5a5b5c"
                                       : root.danger ? (hover.hovered ? "#d4413c" : "#b8332f")
-                                      : root.primary ? (hover.hovered ? Qt.lighter(baseFace, 1.22)
+                                      : root.primary ? (hover.hovered ? Qt.lighter(baseFace, 1.08)
                                                                      : baseFace)
                                                      : (hover.hovered ? "#5a5c5e" : "#48494a")
     readonly property color edgeColor: !root.clickable ? "#3b3c3d"
@@ -29,7 +44,7 @@ Item {
                                       : root.primary ? Qt.darker(Theme.accent, 2.4) : "#2b2c2d"
     readonly property color glintColor: root.primary ? "#66ffffff" : "#33ffffff"
 
-    height: 36
+    height: Math.max(36, root.fontSize + 22)
     implicitWidth: caption.width + 34
 
     // Viền tối bao cả khối.
@@ -62,11 +77,11 @@ Item {
             // pixel thấp, dấu tiếng Việt chồng lên làm dòng gồ ghề.
             font.family: root.label === root.label.toUpperCase() ? Theme.pixel : Theme.sans
             font.pixelSize: root.fontSize
-            font.letterSpacing: Theme.trackLabel
+            font.letterSpacing: root.label === root.label.toUpperCase() ? Theme.trackLabel : 0
             style: Text.Raised; styleColor: "#40000000"
         }
     }
 
     HoverHandler { id: hover; enabled: root.clickable; cursorShape: Qt.PointingHandCursor }
-    TapHandler { id: press; enabled: root.clickable; onTapped: { notifier.playUi("select"); root.clicked(); } }
+    TapHandler { id: press; enabled: root.clickable; onTapped: { root.forceActiveFocus(); root.trigger(); } }
 }
