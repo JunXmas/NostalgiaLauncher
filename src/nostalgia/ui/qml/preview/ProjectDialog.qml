@@ -18,11 +18,32 @@ Controls.Popup {
     property var details: projectBridge.details
     property string success: ""
     property string openedProject: ""
+    property Item backdrop: null
     signal createRequested(string gameVersion, string loaderKind)
     background: Glass {
+        id: popupMica
+        objectName: "projectMica"
         padding: 0
         radius: 22
-        color: GlassTheme.surface
+        color: "transparent"
+        backdrop: root.backdrop
+        backdropRect: {
+            if (!root.backdrop || !root.parent)
+                return Qt.rect(0, 0, 1, 1);
+            // X/Y của Popup đổi khi mở và resize; mapToItem không tự theo dõi tổ tiên.
+            var origin = root.parent.mapToItem(root.backdrop, root.x, root.y);
+            return Qt.rect(origin.x, origin.y, root.width, root.height);
+        }
+        frosted: root.opened
+        blurOpacity: 0.95
+        blurRadius: 64
+        finishOpacity: 0.45
+        Rectangle {
+            anchors.fill: parent
+            radius: popupMica.radius
+            color: GlassTheme.alpha(GlassTheme.surface, popupMica.shaderAvailable ? 0.45 : 0.94)
+            border.color: GlassTheme.alpha(GlassTheme.text, 0.14)
+        }
     }
     Controls.Overlay.modal: Rectangle {
         color: "#aa080b12"

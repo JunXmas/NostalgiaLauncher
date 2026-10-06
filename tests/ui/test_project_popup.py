@@ -59,6 +59,14 @@ def find_visual(root_item: Any, name: str) -> Any:
     return None
 
 
+def assert_mica_alignment(root_item: Any) -> None:
+    QTest.qWait(30)
+    mica = find_control(root_item, "projectMica")
+    origin = mica.mapToScene(QPointF())
+    assert mica.property("backdropRect").x() == pytest.approx(origin.x())
+    assert mica.property("backdropRect").y() == pytest.approx(origin.y())
+
+
 @pytest.mark.parametrize("content_kind", ["mod", "resourcepack", "shader", "modpack"])
 def test_card_popup_selects_version_and_installs(
     tmp_path: Path,
@@ -156,6 +164,7 @@ def test_card_popup_selects_version_and_installs(
         assert find_control(root_item, "projectAbout").property("text") == "About\nNội dung đầy đủ"
         # Popup covers the whole window, including the navigation, and is centred.
         assert dialog.property("modal")
+        assert_mica_alignment(root_item)
         assert dialog.property("x") + dialog.property("width") / 2 == pytest.approx(
             view.width() / 2
         )
@@ -203,6 +212,7 @@ def test_card_popup_selects_version_and_installs(
         wait_until(lambda: not project_bridge.details["loading"])
         assert dialog.property("width") < view.width()
         assert dialog.property("height") < view.height()
+        assert_mica_alignment(root_item)
         assert not warnings
     finally:
         bridge.cancelSignIn()

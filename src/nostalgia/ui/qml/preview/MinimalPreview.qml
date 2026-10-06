@@ -25,55 +25,60 @@ Item {
         currentIndex = index;
         advancedLibrary = false;
     }
-    Ambient {
-        id: ambient
-        anchors.fill: parent
-        cinematic: root.loginVisible
-    }
     Item {
+        id: scene
+        objectName: "previewScene"
         anchors.fill: parent
-        visible: !root.loginVisible
-        Navigation {
-            id: navigation
-            objectName: "minimalNavigation"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.margins: 16
-            width: Math.min(275, 212 * Math.max(1, GlassTheme.scale * 0.9))
-            currentIndex: root.currentIndex
-            onNavigate: function (index) {
-                root.navigate(index);
-            }
+        Ambient {
+            id: ambient
+            anchors.fill: parent
+            cinematic: root.loginVisible
         }
-        Loader {
-            id: pages
-            objectName: "minimalPageLoader"
-            anchors.left: navigation.right
-            anchors.leftMargin: 32
-            anchors.right: parent.right
-            anchors.rightMargin: 40
-            anchors.top: parent.top
-            anchors.topMargin: 30
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 24
-            source: {
-                if (root.currentIndex === 0)
-                    return "Home.qml";
-                if (root.currentIndex === 1)
-                    return "Instances.qml";
-                if (root.currentIndex === 2)
-                    return root.advancedLibrary ? "../pages/LibraryPage.qml" : "Library.qml";
-                return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
-            }
-            Connections {
-                target: pages.item
-                ignoreUnknownSignals: true
-                function onNavigate(index) {
+        Item {
+            anchors.fill: parent
+            visible: !root.loginVisible
+            Navigation {
+                id: navigation
+                objectName: "minimalNavigation"
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.margins: 16
+                width: Math.min(275, 212 * Math.max(1, GlassTheme.scale * 0.9))
+                currentIndex: root.currentIndex
+                onNavigate: function (index) {
                     root.navigate(index);
                 }
-                function onAdvancedRequested() {
-                    root.advancedLibrary = true;
+            }
+            Loader {
+                id: pages
+                objectName: "minimalPageLoader"
+                anchors.left: navigation.right
+                anchors.leftMargin: 32
+                anchors.right: parent.right
+                anchors.rightMargin: 40
+                anchors.top: parent.top
+                anchors.topMargin: 30
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 24
+                source: {
+                    if (root.currentIndex === 0)
+                        return "Home.qml";
+                    if (root.currentIndex === 1)
+                        return "Instances.qml";
+                    if (root.currentIndex === 2)
+                        return root.advancedLibrary ? "../pages/LibraryPage.qml" : "Library.qml";
+                    return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
+                }
+                Connections {
+                    target: pages.item
+                    ignoreUnknownSignals: true
+                    function onNavigate(index) {
+                        root.navigate(index);
+                    }
+                    function onAdvancedRequested() {
+                        root.advancedLibrary = true;
+                    }
                 }
             }
         }
@@ -92,6 +97,7 @@ Item {
     }
     ProjectDialog {
         id: projectDialog
+        backdrop: scene
         onCreateRequested: function (gameVersion, loaderKind) {
             projectDialog.close();
             createForProject.openDialog();

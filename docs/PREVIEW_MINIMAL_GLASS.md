@@ -40,7 +40,7 @@ Complementary Reimagined và Fabulously Optimized, nạp từ fixture cục bộ
   Thư viện tím, Tài khoản cyan, Chơi chung hồng, Nhật ký xanh dương và Cài đặt xám xanh.
   Màn đăng nhập dùng xanh thương hiệu. Chữ Inter, khoảng trống và độ đậm giữ bố cục gọn;
   nút chính lấy màu đậm của từng trang và chữ sáng như launcher gốc.
-- Kính giới hạn ở thanh bên, khung đăng nhập và hero. Blur nền thật bằng MultiEffect trên
+- Kính dùng ở thanh bên, khung đăng nhập, hero và popup dự án. Blur nền thật bằng MultiEffect trên
   OpenGL; có nền trong mờ dự phòng ở renderer phần mềm. Đây là kính mờ theo hướng liquid
   glass, chưa có khúc xạ vật lý kiểu thấu kính.
 - Các thẻ Thư viện giữ avatar rõ phía trước và dùng cùng ảnh làm nền mica phía sau,
@@ -52,6 +52,10 @@ Complementary Reimagined và Fabulously Optimized, nạp từ fixture cục bộ
   là lọc nội dung để cài; không đổi phiên bản game của bản chơi đã có. Nếu thiếu bản chơi,
   mở hộp tạo bản chơi hiện có và điền sẵn game/loader; đóng hộp đó trở lại popup.
   Modpack tạo bản chơi mới theo archive của đúng bản phát hành đã chọn, có ô đặt tên.
+- Nền popup là mica xuyên thấu: lấy đúng vùng giao diện thư viện phía sau, blur và phủ
+  màu nền cũ ở mức trong mờ, bo góc và thêm viền kính nhẹ. Nguồn thu không chứa popup/
+  overlay để tránh hiệu ứng tự thu lại chính nó. Vùng thu bám vị trí khi mở và resize;
+  dừng cập nhật khi đóng. Renderer phần mềm dùng lớp màu đậm hơn để giữ chữ dễ đọc.
 - Popup cài đúng version ID; không rơi về bản mới nhất khi bản được chọn bị gỡ hoặc không
   tương thích. Có trạng thái tải, thử lại, tiến độ và kết quả cài; khóa thao tác cài lặp.
   Nội dung giới thiệu Markdown/HTML hiển thị thành văn bản cuộn được, có nút mở trang
@@ -99,6 +103,9 @@ khoản/mật khẩu mẫu trong source; form sử dụng các bridge đăng nh�
   phụ thuộc mod, cập nhật/gỡ file cũ sau tải thành công, giữ file/sổ cũ khi tải lỗi, từ chối bản mất hoặc sai game/
   loader, và archive modpack có metadata game không khớp. Provider giả kiểm tra lỗi/
   thử lại, kết quả về muộn, chặn cài lặp và phân biệt bấm thẻ với nút tải nhanh.
+- Sau thêm mica xuyên thấu, 10 kiểm tra preview/popup và 7 kiểm tra quy ước qua trên
+  renderer phần mềm; 4 luồng popup qua trên OpenGL. Kiểm tra thêm vùng nền khớp vị trí
+  popup trước/sau resize. Sáu ảnh popup được chụp lại trên OpenGL, không có cảnh báo QML.
 - Thử đăng nhập ngoại tuyến thật qua bridge; Microsoft/2FA Ely.by dùng provider giả để
   kiểm tra luồng UI, hủy và xử lý lỗi; không đăng nhập tài khoản online thật.
 - OpenGL được kiểm tra trên Linux/llvmpipe, chưa đo hiệu năng GPU Windows/macOS.

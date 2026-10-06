@@ -6,21 +6,28 @@ Rectangle {
     default property alias content: holder.data
     property int padding: 24
     property bool frosted: true
+    property Item backdrop: GlassTheme.backdrop
+    property rect backdropRect: Qt.rect(0, 0, -1, -1)
+    property real blurOpacity: 0.60
+    property int blurRadius: 48
+    property real finishOpacity: 1
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     radius: 24
     color: GlassTheme.glassSurface
     border.width: 1
     border.color: GlassTheme.stroke
-    // Capture only the dedicated background, never the pane itself (no recursion).
+    // Nguồn phải nằm ngoài panel để không thu lại chính hiệu ứng kính.
     ShaderEffectSource {
         id: capture
         anchors.fill: parent
         visible: false
-        sourceItem: GlassTheme.backdrop
+        sourceItem: root.backdrop
         sourceRect: {
-            if (!GlassTheme.backdrop)
+            if (root.backdropRect.width >= 0)
+                return root.backdropRect;
+            if (!root.backdrop)
                 return Qt.rect(0, 0, 1, 1);
-            var p = root.mapToItem(GlassTheme.backdrop, 0, 0);
+            var p = root.mapToItem(root.backdrop, 0, 0);
             return Qt.rect(p.x, p.y, root.width, root.height);
         }
         textureSize: Qt.size(Math.max(1, root.width / 2), Math.max(1, root.height / 2))
@@ -33,12 +40,12 @@ Rectangle {
         visible: root.frosted && root.shaderAvailable
         source: capture
         blurEnabled: true
-        blurMax: 48
+        blurMax: root.blurRadius
         blur: 0.8
         saturation: -0.15
         maskEnabled: true
         maskSource: maskCapture
-        opacity: 0.60
+        opacity: root.blurOpacity
     }
     Rectangle {
         id: mask
@@ -58,6 +65,7 @@ Rectangle {
     Rectangle {
         anchors.fill: parent
         radius: root.radius
+        opacity: root.finishOpacity
         gradient: Gradient {
             GradientStop {
                 position: 0
