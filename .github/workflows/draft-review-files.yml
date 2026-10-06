@@ -46,8 +46,35 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh release view "$DRAFT_REVIEW_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq '.isDraft and (.isPrerelease | not)')" = true
-          gh release upload "$DRAFT_REVIEW_TAG" \
-            docs/DRAFT_TEST_GUIDE.md docs/RC5_VALIDATION.md docs/UI_MOTION_REVIEW.md \
-            docs/preview/rc5/PREVIEW_SHA256SUMS docs/preview/rc5/*.png docs/preview/rc5/*.gif \
-            --repo "$GITHUB_REPOSITORY" --clobber
+          python - <<'PYUPLOAD'
+          import json
+          import os
+          import subprocess
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+          repository = os.environ['GITHUB_REPOSITORY']
+          tag = os.environ['DRAFT_REVIEW_TAG']
+          def api(path, *arguments):
+              return subprocess.check_output(['gh', 'api', path, *arguments])
+          releases = json.loads(api(f'repos/{repository}/releases?per_page=100'))
+          release = next(value for value in releases if value['tag_name'] == tag)
+          assert release['draft'] and not release['prerelease']
+          assets = {value['name']: value['id'] for value in release['assets']}
+          folder = Path('docs/preview/rc5')
+          artifacts = [Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', 'RC5_VALIDATION.md', 'UI_MOTION_REVIEW.md')]
+          artifacts += [folder / 'PREVIEW_SHA256SUMS', *sorted(folder.glob('*.png')), *sorted(folder.glob('*.gif'))]
+          for artifact in artifacts:
+              if artifact.name in assets:
+                  api(f'repos/{repository}/releases/assets/{assets[artifact.name]}', '--method', 'DELETE')
+              url = release['upload_url'].split('{')[0] + '?' + urllib.parse.urlencode({'name': artifact.name})
+              request = urllib.request.Request(url, data=artifact.read_bytes(), method='POST', headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json',
+                  'Content-Type': 'application/octet-stream',
+              })
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  uploaded = json.load(response)
+              assert uploaded['name'] == artifact.name and uploaded['size'] == artifact.stat().st_size
+              print('Attached', artifact.name)
+          PYUPLOAD
