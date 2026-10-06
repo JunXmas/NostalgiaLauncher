@@ -1,0 +1,52 @@
+name: Draft review files
+
+on:
+  push:
+    branches: [preview/glass-review]
+    paths:
+      - .github/workflows/draft-review-files.yml
+      - docs/DRAFT_TEST_GUIDE.md
+      - docs/RC2_VALIDATION.md
+      - docs/preview/rc2/**
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kiểm hash hướng dẫn và ảnh, xác định tag đã build
+        run: |
+          python - <<'PY'
+          import hashlib
+          import os
+          import re
+          from pathlib import Path
+          version = re.search(r'__version__ = "([^"]+)"', Path('src/nostalgia/__init__.py').read_text()).group(1)
+          folder = Path('docs/preview/rc2')
+          installers = (folder / 'SHA256SUMS').read_text().splitlines()
+          assert installers and all(version in line.split()[1] for line in installers)
+          artifacts = {path.name: path for path in folder.glob('*.png')}
+          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', 'RC2_VALIDATION.md')})
+          seen = set()
+          for line in (folder / 'PREVIEW_SHA256SUMS').read_text().splitlines():
+              checksum, name = line.split(maxsplit=1)
+              assert name in artifacts and name not in seen
+              assert hashlib.sha256(artifacts[name].read_bytes()).hexdigest() == checksum
+              seen.add(name)
+          assert seen == set(artifacts)
+          with Path(os.environ['GITHUB_ENV']).open('a') as output:
+              output.write('DRAFT_REVIEW_TAG=v' + version + '\n')
+          PY
+      - name: Chỉ đính kèm vào release draft đã có bộ cài
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh release view "$DRAFT_REVIEW_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq '.isDraft and (.isPrerelease | not)')" = true
+          gh release upload "$DRAFT_REVIEW_TAG" \
+            docs/DRAFT_TEST_GUIDE.md docs/RC2_VALIDATION.md \
+            docs/preview/rc2/PREVIEW_SHA256SUMS docs/preview/rc2/*.png \
+            --repo "$GITHUB_REPOSITORY" --clobber
