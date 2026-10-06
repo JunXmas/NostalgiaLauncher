@@ -1,0 +1,41 @@
+name: Preview release metadata
+
+on:
+  push:
+    branches: [preview/ux-1.2]
+    paths:
+      - .github/workflows/preview-metadata.yml
+      - docs/preview/SHA256SUMS
+      - docs/PREVIEW_VALIDATION.md
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check metadata matches this preview
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          source = Path('src/nostalgia/__init__.py').read_text()
+          match = re.search(r'__version__ = "([^"]+)"', source)
+          assert match is not None
+          wanted = match.group(1)
+          lines = Path('docs/preview/SHA256SUMS').read_text().splitlines()
+          assert lines and all(wanted in line.split()[1] for line in lines)
+          with Path(os.environ['GITHUB_ENV']).open('a') as output:
+              output.write('PREVIEW_RELEASE_TAG=v' + wanted + '\n')
+          PY
+      - name: Upload checksums and validation report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$PREVIEW_RELEASE_TAG" \
+            docs/preview/SHA256SUMS docs/PREVIEW_VALIDATION.md \
+            --repo "$GITHUB_REPOSITORY" --clobber
