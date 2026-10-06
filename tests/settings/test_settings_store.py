@@ -79,3 +79,18 @@ def test_hide_when_game_running_round_trips_and_defaults_on(tmp_path: Path) -> N
     assert load_settings(tmp_path, environment={}).hide_when_game_running is True, (
         "giá trị lạ → mặc định"
     )
+
+
+def test_interface_choice_preserves_old_settings_and_round_trips(tmp_path: Path) -> None:
+    settings_path(tmp_path).write_text('{"ui_scale": 150, "ui_sound": false}')
+    settings = load_settings(tmp_path, environment={})
+    assert settings.interface_style == "", "file cũ chưa có lựa chọn vẫn được đọc"
+    assert settings.ui_scale == 150 and settings.ui_sound is False
+    for style in ("classic", "modern"):
+        save_settings(tmp_path, Settings(interface_style=style, ui_scale=150))
+        loaded = load_settings(tmp_path, environment={})
+        assert loaded.interface_style == style
+        assert loaded.ui_scale == 150
+    for invalid in ('"unknown"', "true", "150", "null"):
+        settings_path(tmp_path).write_text('{"interface_style": ' + invalid + "}")
+        assert load_settings(tmp_path, environment={}).interface_style == ""

@@ -4,10 +4,10 @@ Mẫu riêng theo phản hồi của chủ dự án: UI đang rối về thứ b
 nhập toàn cửa sổ, phong cách gọn như Modrinth, kính nhẹ, cuộn có quán tính như Skewlith
 và giữ cách phối màu gốc của Nostalgia.
 
-Chủ dự án đã chốt chỉ sử dụng giao diện mới. Bỏ phương án hai ô chọn giao diện
-cũ/mới ở lần mở đầu tiên và tùy chọn chuyển giữa hai giao diện trong Cài đặt.
-Luồng lần đầu của mẫu tiếp tục vào màn đăng nhập toàn cửa sổ; giữ palette gốc,
-nền mica từ avatar ở Thư viện và mica xuyên thấu trong popup.
+Theo yêu cầu mới nhất, runner preview mở [hai ô chọn giao diện cũ/mới](UI_SETUP_PREVIEW.md)
+ở lần đầu, trước màn đăng nhập. Lựa chọn được lưu và có thể đổi trong Cài đặt.
+Giao diện mới tiếp tục giữ palette gốc, nền mica từ avatar ở Thư viện và mica xuyên
+thấu trong popup. Điểm vào bản phát hành chưa được đổi.
 
 Chỉ chạy từ mã nguồn. Không thay `Main.qml`, không đổi bộ cài, không tạo tag, không build,
 không push hoặc xuất bản release. Các file preview nằm trong `qml/preview/`.

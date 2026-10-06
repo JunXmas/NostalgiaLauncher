@@ -41,6 +41,8 @@ class Settings:
     reduced_motion: bool = False
     decorative_background: bool = True
     language: str = "vi"
+    # Rỗng: chưa chọn; chỉ runner preview dùng bước thiết lập giao diện.
+    interface_style: str = ""
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -77,6 +79,9 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 reduced_motion=fields.get("reduced_motion") is True,
                 decorative_background=fields.get("decorative_background") is not False,
                 language="en" if fields.get("language") == "en" else "vi",
+                interface_style=as_string(fields.get("interface_style")) or ""
+                if fields.get("interface_style") in ("classic", "modern")
+                else "",
             )
         except DataFileError:
             settings = Settings()
@@ -114,6 +119,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "reduced_motion": settings.reduced_motion,
             "decorative_background": settings.decorative_background,
             "language": settings.language,
+            "interface_style": settings.interface_style,
         },
         private=True,
     )

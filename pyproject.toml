@@ -107,6 +107,7 @@ module = [
     "test_payment_ui",
     "test_payment_recovery",
     "test_payment_layout",
+    "test_interface_setup",
     "test_bridges",
     "test_content_bridge",
     "test_content_bridge_packs",

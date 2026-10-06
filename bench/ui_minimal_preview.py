@@ -51,15 +51,18 @@ def main() -> int:
         from ui_payment_demo import DemoPaymentGateway
 
         view, bridge = open_preview(
-            launcher, payment_gateway=DemoPaymentGateway(), payment_demonstration=True
+            launcher,
+            payment_gateway=DemoPaymentGateway(),
+            payment_demonstration=True,
+            ui_setup=True,
         )
     elif args.plus_session_file:
         gateway = HttpPaymentGateway(
             args.plus_url, args.plus_session_file.read_text().strip(), http_client
         )
-        view, bridge = open_preview(launcher, payment_gateway=gateway)
+        view, bridge = open_preview(launcher, payment_gateway=gateway, ui_setup=True)
     else:
-        view, bridge = open_preview(launcher)
+        view, bridge = open_preview(launcher, ui_setup=True)
     try:
         if view.status() != QQuickView.Status.Ready:
             for error in view.errors():

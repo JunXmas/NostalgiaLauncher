@@ -9,8 +9,10 @@ from nostalgia.api import Launcher, PaymentGateway
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
+from nostalgia.ui.settings_bridge import SettingsBridge
 
 
 def open_preview(
@@ -18,6 +20,7 @@ def open_preview(
     *,
     payment_gateway: PaymentGateway | None = None,
     payment_demonstration: bool = False,
+    ui_setup: bool = False,
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
@@ -31,7 +34,14 @@ def open_preview(
         "paymentBridge",
         PaymentBridge(payment_gateway, demonstration=payment_demonstration, parent=view),
     )
-    view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
+    if ui_setup:
+        settings_bridge = context.contextProperty("settingsBridge")
+        assert isinstance(settings_bridge, SettingsBridge)
+        interface_setup = InterfaceSetup(view, settings_bridge)
+        context.setContextProperty("interfaceSetup", interface_setup)
+        interface_setup.show_initial()
+    else:
+        view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
     root_item = view.rootObject()
     if root_item is not None:
         context = view.rootContext()
