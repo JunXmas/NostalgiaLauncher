@@ -2,20 +2,25 @@ import QtQuick
 
 Rectangle {
     id: root
+    objectName: "paymentQrCard"
     property var details: paymentBridge.details
+    property bool compactLayout: false
+    readonly property string timeLeft: Math.floor(details.remaining / 60).toString().padStart(2, "0") + ":" + (details.remaining % 60).toString().padStart(2, "0")
     width: parent.width
-    height: contents.implicitHeight + 40
+    implicitHeight: contents.implicitHeight + (compactLayout ? 32 : 40)
+    height: implicitHeight
     radius: 20
     color: GlassTheme.alpha(GlassTheme.surface, 0.82)
     border.color: GlassTheme.stroke
     Column {
         id: contents
-        x: 20
-        y: 20
-        width: parent.width - 40
+        x: root.compactLayout ? 16 : 20
+        y: root.compactLayout ? 16 : 20
+        width: parent.width - 2 * x
         spacing: 12
         Row {
             width: parent.width
+            visible: !root.compactLayout
             PaymentText {
                 width: parent.width / 2
                 text: root.details.demonstration ? "QR minh họa" : "Quét mã VietQR"
@@ -24,24 +29,27 @@ Rectangle {
             PaymentText {
                 width: parent.width / 2
                 horizontalAlignment: Text.AlignRight
-                text: "Còn " + Math.floor(root.details.remaining / 60).toString().padStart(2, "0") + ":" + (root.details.remaining % 60).toString().padStart(2, "0")
+                text: "Còn " + root.timeLeft
                 color: GlassTheme.muted
                 font.pixelSize: 11 * GlassTheme.scale
             }
         }
         Rectangle {
+            objectName: "paymentQrFrame"
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.max(196, qr.implicitWidth) + 24
+            width: Math.min(parent.width, Math.max(196, qr.implicitWidth) + 24)
             height: width
             radius: 14
             color: "white"
+            clip: true
             Image {
                 id: qr
                 objectName: "paymentQr"
                 anchors.centerIn: parent
                 source: root.details.qr
-                width: implicitWidth
-                height: implicitHeight
+                width: Math.min(implicitWidth, Math.max(0, parent.width - 24))
+                height: width
+                fillMode: Image.PreserveAspectFit
                 smooth: false
             }
             PaymentText {
@@ -56,7 +64,7 @@ Rectangle {
         PaymentText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: root.details.demonstration ? "Mã mẫu để xem bố cục, không thanh toán." : "Mở ứng dụng ngân hàng để quét mã."
+            text: (root.compactLayout ? "Còn " + root.timeLeft + " · " : "") + (root.details.demonstration ? "Mã mẫu, không thanh toán." : "Mở ứng dụng ngân hàng để quét mã.")
             color: GlassTheme.muted
             font.pixelSize: 11 * GlassTheme.scale
         }

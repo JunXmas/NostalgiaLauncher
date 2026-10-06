@@ -6,8 +6,8 @@ Controls.Popup {
     id: root
     objectName: "supportDialog"
     parent: Controls.Overlay.overlay
-    width: Math.min(1000, parent ? parent.width - 48 : 1000)
-    height: Math.min(details.stage === "pending" ? 840 : 780, parent ? parent.height - 48 : 780)
+    width: Math.min(receiptMode ? 760 : 1000, parent ? parent.width - 48 : 1000)
+    height: Math.min(receiptMode ? 660 : details.stage === "pending" ? 840 : 780, parent ? parent.height - 48 : 780)
     x: parent ? (parent.width - width) / 2 : 0
     y: parent ? (parent.height - height) / 2 : 0
     padding: 28
@@ -16,6 +16,8 @@ Controls.Popup {
     focus: true
     property Item backdrop: null
     property var details: paymentBridge.details
+    readonly property bool receiptMode: details.stage === "paid"
+    readonly property bool compactLayout: height < 650
     property string displayedStage: ""
     signal donateRequested
     closePolicy: Controls.Popup.CloseOnEscape
@@ -61,6 +63,7 @@ Controls.Popup {
     Component {
         id: benefitsPanel
         Column {
+            objectName: "paymentBenefits"
             width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
             spacing: 20
             Legacy.BlockIcon {
@@ -130,30 +133,41 @@ Controls.Popup {
     }
     Component {
         id: checkoutPanel
-        Loader {
+        Item {
             width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
-            height: item ? item.height : 0
-            source: root.details.stage === "pending" ? "PaymentQrCard.qml" : ["paid", "expired", "cancelled", "verifying"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
+            implicitHeight: cardLoader.item ? cardLoader.item.implicitHeight : 0
+            height: implicitHeight
+            Loader {
+                id: cardLoader
+                anchors.fill: parent
+                source: root.details.stage === "pending" ? "PaymentQrCard.qml" : ["paid", "expired", "cancelled", "verifying"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
+                onLoaded: {
+                    if ("compactLayout" in item)
+                        item.compactLayout = Qt.binding(function () {
+                            return root.compactLayout;
+                        });
+                }
+            }
         }
     }
     contentItem: Item {
         Item {
             id: header
             width: parent.width
-            height: heading.implicitHeight + 18
+            height: heading.implicitHeight + (root.compactLayout ? 12 : 18)
             Column {
                 id: heading
                 width: parent.width - 60
-                spacing: 6
+                spacing: root.compactLayout ? 4 : 6
                 PaymentText {
-                    text: "ỦNG HỘ & PLUS"
+                    text: root.receiptMode ? "BIÊN NHẬN PLUS" : "ỦNG HỘ & PLUS"
                     color: GlassTheme.brand
                     font.pixelSize: 10 * GlassTheme.scale
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
                     text: "Nostalgia Plus"
-                    font.pixelSize: 29 * GlassTheme.scale
+                    font.pixelSize: (root.receiptMode ? (root.compactLayout ? 16 : 20) : (root.compactLayout ? 22 : 29)) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
             }
@@ -183,6 +197,7 @@ Controls.Popup {
                 objectName: "paymentDonation"
                 anchors.bottom: parent.bottom
                 label: "Ủng hộ tùy tâm  ↗"
+                visible: !root.receiptMode
                 quiet: true
                 onClicked: {
                     root.close();
@@ -195,20 +210,22 @@ Controls.Popup {
                 width: Math.max(0, parent.width - donation.width - 24)
                 horizontalAlignment: Text.AlignRight
                 text: "Ủng hộ tùy tâm không kích hoạt Plus."
-                visible: ["offer", "unavailable", "pending"].indexOf(root.details.stage) < 0
+                visible: !root.receiptMode && ["offer", "unavailable", "pending"].indexOf(root.details.stage) < 0
                 color: GlassTheme.muted
                 font.pixelSize: 10 * GlassTheme.scale
             }
             Button {
-                objectName: root.details.stage === "pending" ? "paymentCheck" : "paymentCreate"
+                objectName: root.receiptMode ? "paymentDone" : root.details.stage === "pending" ? "paymentCheck" : "paymentCreate"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                visible: ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0
-                label: root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Tôi đã chuyển khoản") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
+                visible: root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0
+                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Tôi đã chuyển khoản") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
                 primary: true
-                clickable: !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error)
+                clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error)
                 onClicked: {
-                    if (root.details.stage === "pending")
+                    if (root.receiptMode)
+                        root.close();
+                    else if (root.details.stage === "pending")
                         paymentBridge.checkPayment();
                     else if (root.details.available)
                         paymentBridge.createOrder();
@@ -224,42 +241,44 @@ Controls.Popup {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: footer.top
-            anchors.bottomMargin: 18
+            anchors.bottomMargin: root.compactLayout ? 12 : 18
             contentHeight: body.implicitHeight + 8
             Column {
                 id: body
                 width: parent.width - 10
-                spacing: 18
+                spacing: root.compactLayout ? 12 : 18
                 Rectangle {
                     width: parent.width
-                    height: note.implicitHeight + 20
+                    height: note.implicitHeight + (root.compactLayout ? 16 : 20)
                     radius: 10
                     color: GlassTheme.alpha(root.details.demonstration ? "#e6bb68" : GlassTheme.danger, 0.10)
                     visible: root.details.demonstration || !!root.details.error
                     PaymentText {
                         id: note
                         x: 12
-                        y: 10
+                        y: root.compactLayout ? 8 : 10
                         width: parent.width - 24
                         text: (root.details.demonstration ? "BẢN XEM TRƯỚC · QR mẫu, không chuyển tiền." : "") + (root.details.error ? (root.details.demonstration ? "\n" : "") + root.details.error : "")
                         color: root.details.error ? GlassTheme.danger : "#e6bb68"
-                        font.pixelSize: 11 * GlassTheme.scale
+                        font.pixelSize: (root.compactLayout ? 10 : 11) * GlassTheme.scale
                     }
                 }
                 Grid {
                     id: grid
                     width: parent.width
-                    columns: width >= 780 * GlassTheme.scale ? 2 : 1
+                    columns: !root.receiptMode && width >= 780 * GlassTheme.scale ? 2 : 1
                     columnSpacing: 32
                     rowSpacing: 24
                     Loader {
                         width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
-                        height: item ? item.height : 0
+                        height: item ? item.implicitHeight : 0
                         sourceComponent: grid.columns === 1 ? checkoutPanel : benefitsPanel
                     }
                     Loader {
                         width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
-                        height: item ? item.height : 0
+                        visible: !root.receiptMode
+                        active: visible
+                        height: visible && item ? item.implicitHeight : 0
                         sourceComponent: grid.columns === 1 ? benefitsPanel : checkoutPanel
                     }
                 }

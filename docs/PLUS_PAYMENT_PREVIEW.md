@@ -9,7 +9,8 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
   không tự gia hạn. Giá thật luôn lấy từ backend; giá chưa nạp được chỉ là mẫu, nút tạo
   đơn bị khóa. Free/Plus là phạm vi tính năng dự kiến, chưa phải bộ sửa mod đang hoạt động.
 - Thanh toán có QR, số tiền, ngân hàng/người nhận, số tài khoản và nội dung chuyển khoản.
-  Có sao chép; ảnh QR vẽ ở kích thước gốc, không phóng/co làm lệch ô. Nút chính luôn
+  Có sao chép; ảnh QR giữ kích thước gốc trong các cỡ cửa sổ hỗ trợ, có giới hạn
+  để không tràn khung khi hẹp hơn. Nút chính luôn
   nằm ở cạnh dưới; cửa sổ nhỏ/chữ 150% ưu tiên nội dung thanh toán rồi mới tới quyền lợi.
 - Hỏi trạng thái mỗi 5 giây khi popup mở. Đóng popup dừng polling; mở lại giữ đơn.
   Mở cửa sổ mới lấy đơn hiện hành của tài khoản từ backend trước khi cho tạo đơn mới.
@@ -21,6 +22,18 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
   xác nhận thành công. Client không chứa khóa payOS hay khóa quản trị.
 - Ủng hộ tùy tâm mở dialog VietQR hiện có, ghi rõ không kích hoạt Plus. Không tự đổi
   khoản ủng hộ cũ thành đơn Plus.
+
+## Sửa bố cục theo phản hồi
+
+- Thẻ dùng chiều cao nội tại theo nội dung, Loader đo `implicitHeight`. Trước đây
+  chiều cao bị giữ từ lúc ảnh chưa tải, nên QR và dòng chuyển khoản tràn khỏi nền.
+- QR có khung trắng giới hạn theo bề rộng, căn giữa và giữ tỉ lệ. Khi cửa sổ thấp,
+  tiêu đề gọn hơn, bộ đếm chuyển xuống dưới QR để toàn bộ mã luôn nằm trong vùng xem
+  ở 1024×600/cỡ chữ 150%. Thông tin chuyển khoản phía dưới vẫn cuộn được.
+- Thành công chuyển sang biên nhận một cột, rộng tối đa 760 px: kết quả → số tiền và
+  hạn Plus → mã đơn có sao chép → nút «Quay lại launcher». Không còn cột giới thiệu
+  quyền lợi hoặc lời mời ủng hộ ở màn này. Cửa sổ thấp bỏ câu cảm ơn để ưu tiên biên nhận.
+- Palette cũ và nền mica giữ nguyên. Chỉ thay đổi nhánh preview, không build/phát hành.
 
 ## Ảnh Qt thật
 
@@ -37,7 +50,9 @@ khoản và không thể kích hoạt Plus. Trạng thái thành công là phả
 Xem thêm [đơn hết hạn](preview/minimal/plus-expired.png) và
 [lỗi mạng giữ nguyên đơn](preview/minimal/plus-network-error.png).
 
-![Cửa sổ nhỏ, chữ 150%](preview/minimal/plus-small-150.png)
+![QR trọn vẹn ở cửa sổ nhỏ, chữ 150%](preview/minimal/plus-qr-small-150.png)
+
+![Biên nhận ở cửa sổ nhỏ, chữ 150%](preview/minimal/plus-small-150.png)
 
 ## Chạy thử
 
@@ -101,13 +116,20 @@ quyền trên dịch vụ chưa triển khai. Không quảng cáo hệ thống c
 
 ## Kiểm chứng
 
-61 kiểm tra liên quan qua trên renderer phần mềm: giao thức thanh toán, tương tác/
+Trước lượt sửa bố cục, 61 kiểm tra liên quan qua trên renderer phần mềm: giao thức thanh toán, tương tác/
 khôi phục đơn, preview, popup dự án, ranh giới API, kiến trúc và quy ước. 9 kiểm tra
 thanh toán/khôi phục cũng qua trên OpenGL/llvmpipe. Ruff toàn kho và mypy 396 file qua.
-Sáu ảnh Qt được chụp trên OpenGL, không có cảnh báo QML. Đã kiểm tra vùng mica khớp
+Bảy ảnh Qt mới được chụp trên OpenGL, không có cảnh báo QML. Đã kiểm tra vùng mica khớp
 vị trí sau resize, thao tác bàn phím, sao chép, cỡ chữ 150% và nút chính cố định.
 
-Xem `tests/payment/test_gateway.py`, `tests/ui/test_payment_ui.py` và
+Lượt sửa bố cục: 37 kiểm tra liên quan qua trên renderer phần mềm; 13 kiểm tra
+thanh toán/bố cục/khôi phục qua trên OpenGL. Bốn ca hồi quy mới kiểm tra QR lớn 245 px,
+các dòng chuyển khoản nằm trong nền thẻ sau tải ảnh/resize, QR nằm trong vùng xem,
+biên nhận không còn cột quảng bá, mã đơn và nút quay lại nằm trong vùng xem. Kiểm tra
+ở 1440×900 và 1024×600, chữ 100%/150%. Trước khi sửa, ba trong bốn ca mới thất bại,
+bao gồm QR tràn chiều cao thẻ và màn thành công vẫn giữ hai cột. Ruff qua; mypy 397 file qua.
+
+Xem `tests/ui/test_payment_layout.py`, `tests/payment/test_gateway.py`, `tests/ui/test_payment_ui.py` và
 `tests/ui/test_payment_recovery.py`. Hai ca test bàn phím từng gặp thời điểm binding
 chưa cập nhật; fixture thanh toán đã chờ nút clickable và xử lý sự kiện trước khi bấm.
 Kiểm tra popup shader riêng và bộ liên quan sau sửa đều qua. Chưa đo GPU Windows hoặc

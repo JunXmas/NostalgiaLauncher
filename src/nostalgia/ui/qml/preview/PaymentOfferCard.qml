@@ -3,7 +3,8 @@ import QtQuick
 Rectangle {
     id: root
     width: parent.width
-    height: contents.implicitHeight + 48
+    implicitHeight: contents.implicitHeight + 48
+    height: implicitHeight
     radius: 20
     color: GlassTheme.alpha(GlassTheme.surface, 0.82)
     border.color: GlassTheme.alpha(GlassTheme.brand, 0.35)
