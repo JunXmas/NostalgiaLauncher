@@ -17,6 +17,7 @@ from nostalgia.content.cfpack import apply_overrides as cf_apply_overrides
 from nostalgia.content.cfpack import read_manifest, resolve_files
 from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.mrpack import apply_overrides, plan_downloads, read_index
+from nostalgia.content.pack_version import choose_pack_version as choose_pack_version
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.content import ContentOperations
 from nostalgia.facade.instances import InstanceOperations
@@ -45,13 +46,6 @@ class PackPlan:
     apply_overrides: Callable[[Path], int]
 
 
-def choose_pack_version(versions: tuple[ProjectVersion, ...], game_version: str) -> ProjectVersion:
-    """Ưu tiên bản cho đúng phiên bản game đang lọc; trong đó release đứng trước beta."""
-    matching = [v for v in versions if game_version and game_version in v.game_versions]
-    pool = matching or list(versions)
-    return next((v for v in pool if v.version_type == "release"), pool[0])
-
-
 class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations):
     __slots__ = ()
 
@@ -62,6 +56,7 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
         display_name: str = "",
         *,
         game_version: str = "",
+        version_id: str = "",
         game_dir_override: str = "",
         allowed_hosts: tuple[str, ...] | None = None,
         on_progress: ProgressFn = ignore_progress,
@@ -79,7 +74,9 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
         self.require_instance_id_free(instance_id)
         with self.make_http_client() as http_client:
             versions = self.fetch_versions(http_client, project.source, project.project_id)
-            chosen = choose_pack_version(versions, game_version)
+            chosen = choose_pack_version(
+                versions, game_version, project_id=project.project_id, version_id=version_id
+            )
             pack_path = ensure_dir(self.paths.data_dir / "installers") / chosen.file_name
             download_one(
                 http_client,
@@ -91,6 +88,10 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
                     plan = self._plan_curseforge_pack(http_client, pack_path)
                 else:
                     plan = self._plan_modrinth_pack(pack_path, allowed_hosts)
+                if version_id and game_version and plan.game_version != game_version:
+                    raise ContentError(
+                        "modpack archive does not match the selected Minecraft version"
+                    )
                 instance = self._install_pack_plan(
                     http_client,
                     plan,

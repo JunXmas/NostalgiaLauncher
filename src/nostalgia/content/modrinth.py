@@ -1,7 +1,6 @@
 """Nói chuyện với Modrinth và dịch JSON của họ sang `content/model.py` ngay tại biên.
 
-Chỉ hai endpoint: `/search` và `/project/{id}/project_version`. Không đọc markdown mô tả (không có
-chỗ hiển thị an toàn), không đụng CurseForge (cần khoá API hoặc proxy của người lạ).
+Tìm kiếm, giới thiệu dự án và các bản phát hành; dữ liệu thô không đi qua biên module.
 """
 
 from __future__ import annotations
@@ -13,13 +12,14 @@ from nostalgia import __version__
 from nostalgia.content.model import (
     ContentKind,
     Project,
+    ProjectDetails,
     ProjectVersion,
     SearchPage,
     SortOrder,
 )
 from nostalgia.content.modrinth_parse import parse_project, parse_version
 from nostalgia.errors import ContentError
-from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping
+from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
 from nostalgia.modloader.model import LoaderKind
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import fetch_json
@@ -73,6 +73,23 @@ def search_projects(
         hits=hits,
         offset=as_integer(document.get("offset")) or 0,
         total_hits=as_integer(document.get("total_hits")) or len(hits),
+    )
+
+
+def fetch_project_details(
+    http_client: HttpClient,
+    project_id: str,
+    *,
+    endpoints: Endpoints = DEFAULT_ENDPOINTS,
+) -> ProjectDetails:
+    """Giới thiệu Markdown của dự án. CHẠM MẠNG."""
+    document = as_mapping(
+        _fetch(http_client, f"{endpoints.modrinth_api}/project/{quote(project_id, safe='')}", None)
+    )
+    return ProjectDetails(
+        body=as_string(document.get("body")) or "",
+        body_format="markdown",
+        website_url=f"https://modrinth.com/project/{quote(project_id, safe='')}",
     )
 
 

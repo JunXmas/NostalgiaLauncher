@@ -11,7 +11,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from nostalgia.content.installed import LedgerEntry, content_dir, load_ledger, save_ledger
+from nostalgia.content.installed import (
+    DISABLED_SUFFIX,
+    LedgerEntry,
+    content_dir,
+    load_ledger,
+    save_ledger,
+)
 from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.modrinth import choose_version
 from nostalgia.errors import ContentError, NetworkError
@@ -47,6 +53,7 @@ def install_project(
     *,
     game_version: str,
     loader_kind: LoaderKind,
+    version_id: str = "",
     on_progress: ProgressFn = ignore_progress,
     cancel_token: CancelToken | None = None,
 ) -> ContentInstallReport:
@@ -59,7 +66,14 @@ def install_project(
         raise ContentError(message)
     directory = content_dir(game_dir, project.content_kind)
     ledger = load_ledger(directory)
-    chosen = _resolve_with_dependencies(project, ledger, fetch_versions, game_version, loader_kind)
+    chosen = _resolve_with_dependencies(
+        project, ledger, fetch_versions, game_version, loader_kind, version_id
+    )
+    replaced = {
+        old.file_name
+        for release in chosen
+        if (old := ledger.get(release.project_id)) and old.file_name != release.file_name
+    }
     tasks = [
         DownloadTask(
             url=project_version.file_url,
@@ -91,6 +105,11 @@ def install_project(
             source=project.source,
         )
     save_ledger(directory, ledger)
+    # Chỉ gỡ bản cũ sau khi mọi file mới đã tải và xác minh xong; tránh hai jar của cùng mod.
+    retained = {record.file_name for record in ledger.values()}
+    for file_name in replaced - retained:
+        for candidate in (file_name, file_name + DISABLED_SUFFIX):
+            resolve_child(directory, candidate).unlink(missing_ok=True)
     return ContentInstallReport(installed=tuple(chosen))
 
 
@@ -100,6 +119,7 @@ def _resolve_with_dependencies(
     fetch_versions: FetchVersionsFn,
     game_version: str,
     loader_kind: LoaderKind,
+    version_id: str = "",
 ) -> list[ProjectVersion]:
     chosen: list[ProjectVersion] = []
     visited: set[str] = {project.project_id}
@@ -107,6 +127,10 @@ def _resolve_with_dependencies(
     while frontier:
         project_id, depth = frontier.pop(0)
         versions = fetch_versions(project_id)
+        if project_id == project.project_id and version_id:
+            versions = tuple(
+                v for v in versions if v.version_id == version_id and v.project_id == project_id
+            )
         project_version = choose_version(
             versions,
             game_version=game_version,

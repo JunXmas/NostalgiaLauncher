@@ -18,6 +18,11 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
   lưu/nhập vẫn truy cập được. [Dạng danh sách](preview/minimal/instances-compact.png).
 - [Thư viện](preview/minimal/library.png): tìm kiếm và loại nội dung là hai lớp chính;
   bộ lọc nâng cao và Đã cài mở giao diện hiện có. [Các thẻ mod với nền mica từ avatar](preview/minimal/library-mods.png).
+- Bấm thẻ để xem popup giữa cửa sổ: [mod](preview/minimal/project-mod.png),
+  [resource pack](preview/minimal/project-resourcepack.png),
+  [shader pack](preview/minimal/project-shader.png), [modpack](preview/minimal/project-modpack.png).
+  Nút tải nhanh trên thẻ hoạt động riêng. [Danh sách bản phát hành](preview/minimal/project-mod-releases.png)
+  và [popup ở cửa sổ nhỏ/chữ 150%](preview/minimal/project-small-150.png).
 - [Video cuộn 5 giây](preview/minimal/scroll-preview.mp4): thao tác bánh xe thật trong Qt,
   có đổi hướng, quay về đầu và dừng dần; video ghi trước khi bổ sung mica cho thẻ.
 - [Cửa sổ nhỏ, chữ 150%](preview/minimal/login-small-150.png) và
@@ -26,6 +31,8 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
 Ảnh chụp từ QQuickView chạy thật, 1440×900 và 1024×600. Tài khoản/bản chơi là dữ liệu mẫu
 trong thư mục tạm. Danh sách và icon 12 modpack cùng 12 mod lấy từ API Modrinth, được nạp cục bộ khi
 chụp; không phải bằng chứng cài hoặc chạy game. Nội dung/biểu tượng thuộc tác giả dự án.
+Popup dùng giới thiệu và danh sách bản phát hành thật của Sodium, Fresh Animations,
+Complementary Reimagined và Fabulously Optimized, nạp từ fixture cục bộ để chụp ổn định.
 
 ## Lựa chọn thiết kế
 
@@ -40,6 +47,15 @@ chụp; không phải bằng chứng cài hoặc chạy game. Nội dung/biểu 
   theo kỹ thuật cũ: chồng hai ảnh thu nhỏ 4×4 và 7×7 rồi phóng mượt. Lớp phủ dùng màu
   nền gốc và tối hơn ở vùng chữ. OpenGL cắt nền theo góc bo; renderer phần mềm dùng nền
   thu vào trong góc, có chuyển sắc ở mép. Không có ảnh thì chỉ hiện icon dự phòng.
+- Popup chung cho cả bốn loại nội dung: giới thiệu đầy đủ, chọn Minecraft, chọn bản phát
+  hành (kèm release/beta/alpha và loader), rồi chọn bản chơi tương thích. Chọn Minecraft
+  là lọc nội dung để cài; không đổi phiên bản game của bản chơi đã có. Nếu thiếu bản chơi,
+  mở hộp tạo bản chơi hiện có và điền sẵn game/loader; đóng hộp đó trở lại popup.
+  Modpack tạo bản chơi mới theo archive của đúng bản phát hành đã chọn, có ô đặt tên.
+- Popup cài đúng version ID; không rơi về bản mới nhất khi bản được chọn bị gỡ hoặc không
+  tương thích. Có trạng thái tải, thử lại, tiến độ và kết quả cài; khóa thao tác cài lặp.
+  Nội dung giới thiệu Markdown/HTML hiển thị thành văn bản cuộn được, có nút mở trang
+  dự án gốc. CurseForge hiện dùng danh sách tối đa 50 file từ API như luồng thư viện cũ.
 - Reuse BlockIcon và nguyên model/texture Minecraft; không vẽ lại beacon hoặc kệ sách.
 - Cuộn bánh xe tích lũy đích, nội suy theo thời gian; đổi hướng liên tục và kẹp biên. Timer
   dừng khi hết chuyển động. Trackpad có pixel delta dùng quán tính của OS, tránh làm mượt
@@ -76,6 +92,13 @@ khoản/mật khẩu mẫu trong source; form sử dụng các bridge đăng nh�
 - Sau thêm mica, 6 kiểm tra tương tác preview tiếp tục qua. Chụp mod/modpack, trường hợp
   thiếu avatar và cửa sổ 1024×600/chữ 150% trên OpenGL/llvmpipe và renderer phần mềm;
   cả hai không có cảnh báo QML. Đây là kiểm tra render, không đo hiệu năng GPU Windows.
+- Sau thêm popup: 84 kiểm tra liên quan qua trên renderer phần mềm, gồm toàn bộ nhóm
+  nội dung, bridge thư viện, preview, quy ước và kiến trúc. 14 kiểm tra tương tác/bridge
+  preview cũng qua OpenGL/llvmpipe. Ruff và mypy (386 file) qua.
+  Máy chủ HTTPS giả kiểm tra tải đúng bản cũ cho mod/resource pack/shader/modpack, giữ
+  phụ thuộc mod, cập nhật/gỡ file cũ sau tải thành công, giữ file/sổ cũ khi tải lỗi, từ chối bản mất hoặc sai game/
+  loader, và archive modpack có metadata game không khớp. Provider giả kiểm tra lỗi/
+  thử lại, kết quả về muộn, chặn cài lặp và phân biệt bấm thẻ với nút tải nhanh.
 - Thử đăng nhập ngoại tuyến thật qua bridge; Microsoft/2FA Ely.by dùng provider giả để
   kiểm tra luồng UI, hủy và xử lý lỗi; không đăng nhập tài khoản online thật.
 - OpenGL được kiểm tra trên Linux/llvmpipe, chưa đo hiệu năng GPU Windows/macOS.

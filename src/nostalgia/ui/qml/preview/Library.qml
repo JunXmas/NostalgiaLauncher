@@ -158,6 +158,13 @@ Item {
                     model: contentBridge.resultsModel
                     Rectangle {
                         id: tile
+                        objectName: "projectCard-" + model.projectId
+                        activeFocusOnTab: true
+                        Accessible.role: Accessible.Button
+                        Accessible.name: model.title + ", xem giới thiệu và phiên bản"
+                        Accessible.onPressAction: projectBridge.openProject(model.projectId)
+                        Keys.onReturnPressed: projectBridge.openProject(model.projectId)
+                        Keys.onEnterPressed: projectBridge.openProject(model.projectId)
                         width: (grid.width - (grid.columns - 1) * 16) / grid.columns
                         height: 218
                         radius: 18
@@ -176,6 +183,15 @@ Item {
                             radius: tile.radius
                             color: "transparent"
                             border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: function (mouse) {
+                                if (mouse.x >= downloadButton.x && mouse.x <= downloadButton.x + downloadButton.width && mouse.y >= downloadButton.y && mouse.y <= downloadButton.y + downloadButton.height)
+                                    return;
+                                tile.forceActiveFocus();
+                                projectBridge.openProject(model.projectId);
+                            }
                         }
                         Legacy.ProjectIcon {
                             id: projectIcon
@@ -223,6 +239,8 @@ Item {
                             font.pixelSize: 11
                         }
                         Button {
+                            id: downloadButton
+                            objectName: "projectDownload-" + model.projectId
                             anchors.right: parent.right
                             anchors.rightMargin: 14
                             anchors.bottom: parent.bottom
@@ -234,6 +252,7 @@ Item {
                         }
                         HoverHandler {
                             id: hover
+                            cursorShape: Qt.PointingHandCursor
                         }
                     }
                 }

@@ -15,9 +15,16 @@ from nostalgia.content.curseforge_parse import (
     parse_file,
     parse_project,
 )
-from nostalgia.content.model import ContentKind, ProjectVersion, SearchPage, SortOrder
+from nostalgia.content.model import (
+    ContentKind,
+    Project,
+    ProjectDetails,
+    ProjectVersion,
+    SearchPage,
+    SortOrder,
+)
 from nostalgia.errors import ContentError
-from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping
+from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
 from nostalgia.operations.cancellation import CancelToken
@@ -83,6 +90,32 @@ def search_projects(
         hits=hits,
         offset=as_integer(pagination.get("index")) or 0,
         total_hits=as_integer(pagination.get("totalCount")) or len(hits),
+    )
+
+
+def fetch_project_details(
+    http_client: HttpClient,
+    api_key: str,
+    project: Project,
+    *,
+    endpoints: Endpoints = DEFAULT_ENDPOINTS,
+) -> ProjectDetails:
+    """Giới thiệu HTML qua cùng API/proxy tin cậy như tìm kiếm. CHẠM MẠNG."""
+    url = f"{_base_url(endpoints, api_key)}/mods/{quote(project.project_id, safe='')}/description"
+    document = as_mapping(_fetch_json(http_client, api_key, url, None))
+    category = {
+        "mod": "mc-mods",
+        "modpack": "modpacks",
+        "resourcepack": "texture-packs",
+        "shader": "shaders",
+    }[project.content_kind]
+    return ProjectDetails(
+        body=as_string(document.get("data")) or "",
+        body_format="html",
+        website_url="https://www.curseforge.com/minecraft/"
+        + category
+        + "/"
+        + quote(project.project_slug, safe=""),
     )
 
 

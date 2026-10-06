@@ -8,11 +8,19 @@ from PySide6.QtQuick import QQuickView
 from nostalgia.api import Launcher
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.project_bridge import ProjectBridge
 
 
 def open_preview(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
+    context = view.rootContext()
+    content_bridge = context.contextProperty("contentBridge")
+    assert isinstance(content_bridge, ContentBridge)
+    context.setContextProperty(
+        "projectBridge", ProjectBridge(launcher, bridge, content_bridge, parent=view)
+    )
     view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
     root_item = view.rootObject()
     if root_item is not None:

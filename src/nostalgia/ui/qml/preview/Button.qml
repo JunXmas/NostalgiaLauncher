@@ -13,7 +13,8 @@ Item {
     implicitHeight: 42
     width: implicitWidth
     height: implicitHeight
-    activeFocusOnTab: clickable
+    enabled: clickable
+    activeFocusOnTab: true
     Accessible.role: Accessible.Button
     Accessible.name: label
     Accessible.onPressAction: root.trigger()

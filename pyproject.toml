@@ -102,6 +102,8 @@ module = [
     "test_qml",
     "test_preview_controls",
     "test_minimal_preview",
+    "test_project_popup",
+    "test_project_bridge",
     "test_bridges",
     "test_content_bridge",
     "test_content_bridge_packs",

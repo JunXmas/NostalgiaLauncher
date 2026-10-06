@@ -19,7 +19,7 @@ from nostalgia.content.model import (
     SortOrder,
 )
 from nostalgia.content.updates import ContentUpdate, find_updates, identify_by_hash
-from nostalgia.facade.context import LauncherContext
+from nostalgia.facade.content_detail import ContentDetailOperations
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modloader.model import COMPATIBLE_LOADERS, LoaderKind, detect_loader_kind
 from nostalgia.net.http import HttpClient
@@ -39,7 +39,7 @@ class ContentTarget:
     loader_kind: LoaderKind
 
 
-class ContentOperations(LauncherContext):
+class ContentOperations(ContentDetailOperations):
     __slots__ = ()
 
     # ----- cấu hình -----
@@ -138,6 +138,7 @@ class ContentOperations(LauncherContext):
         target: ContentTarget,
         project: Project,
         *,
+        version_id: str = "",
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> ContentInstallReport:
@@ -150,6 +151,7 @@ class ContentOperations(LauncherContext):
                 lambda project_id: self.fetch_versions(http_client, project.source, project_id),
                 game_version=target.game_version,
                 loader_kind=target.loader_kind,
+                version_id=version_id,
                 on_progress=on_progress,
                 cancel_token=cancel_token,
             )
@@ -198,10 +200,6 @@ class ContentOperations(LauncherContext):
             source=cast(ContentSource, update.installed.source),
         )
         self.install_content(target, project, on_progress=on_progress, cancel_token=cancel_token)
-        if update.latest.file_name != update.installed.file_name:
-            remove_installed(
-                target.game_dir, update.installed.content_kind, update.installed.file_name
-            )
 
     def identify_installed_content(self, target: ContentTarget, content_kind: ContentKind) -> int:
         """Nhận diện file chép tay bằng sha1 trên Modrinth; trả số file nhận ra. CHẠM MẠNG."""

@@ -58,6 +58,15 @@ class SearchPage:
 
 
 @dataclass(frozen=True, slots=True)
+class ProjectDetails:
+    """Giới thiệu đầy đủ từ trang dự án, giữ định dạng gốc của nguồn."""
+
+    body: str
+    body_format: Literal["markdown", "html"]
+    website_url: str
+
+
+@dataclass(frozen=True, slots=True)
 class ProjectVersion:
     """Một bản phát hành của dự án, kèm file chính để tải."""
 

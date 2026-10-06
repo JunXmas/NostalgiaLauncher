@@ -90,6 +90,27 @@ Item {
     DeviceLogin {
         anchors.fill: parent
     }
+    ProjectDialog {
+        id: projectDialog
+        onCreateRequested: function (gameVersion, loaderKind) {
+            projectDialog.close();
+            createForProject.openDialog();
+            createForProject.loaderKind = loaderKind;
+            createForProject.pickGameVersion(gameVersion);
+            createForProject.expandedMajor = gameVersion.split(".").slice(0, 2).join(".");
+        }
+    }
+    Legacy.CreateInstanceDialog {
+        id: createForProject
+        objectName: "projectCreateInstance"
+        anchors.fill: parent
+        onVisibleChanged: {
+            if (!visible && projectDialog.openedProject) {
+                projectBridge.refreshTargets();
+                projectDialog.open();
+            }
+        }
+    }
     Legacy.RecoveryBanner {
         id: recovery
         anchors.left: parent.left
