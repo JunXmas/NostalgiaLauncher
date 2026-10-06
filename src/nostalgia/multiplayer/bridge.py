@@ -67,8 +67,10 @@ class JoinerBridge:
             await socket.close()
 
     async def stop(self) -> None:
-        for handler in list(self._handlers):
+        handlers = list(self._handlers)
+        for handler in handlers:
             handler.cancel()
+        await asyncio.gather(*handlers, return_exceptions=True)
         if self._server is not None:
             self._server.close()
             await self._server.wait_closed()
@@ -110,9 +112,11 @@ class JoinerBridge:
     async def _handshake(self, socket: WebSocketClient) -> bytes:
         gate = JoinerGate(self._room_secret)
         await socket.send(gate.hello())
+        deadline = asyncio.get_running_loop().time() + HANDSHAKE_TIMEOUT_SECONDS
         while True:
             try:
-                chunk = await asyncio.wait_for(socket.receive(), HANDSHAKE_TIMEOUT_SECONDS)
+                remaining = max(0, deadline - asyncio.get_running_loop().time())
+                chunk = await asyncio.wait_for(socket.receive(), remaining)
             except TimeoutError:
                 raise ConnectionError("host không trả lời bắt tay") from None
             if not chunk:

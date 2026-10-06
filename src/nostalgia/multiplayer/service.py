@@ -105,12 +105,23 @@ class RoomService:
             await host.connect()
             host.start()
             self._host = host
-            self._publish(role="hosting", world_name=world.world_name)
+            self._publish(role="hosting", world_name=world.world_name, host_ticket=host.sync_ticket)
+            self._flow = self._loop.create_task(self._watch_host(host))
         except asyncio.CancelledError:
             pass
         except Exception as exc:
             await self._teardown()
             self._on_failure(str(exc))
+
+    async def _watch_host(self, host: HostRelay) -> None:
+        try:
+            await host.wait_closed()
+        except asyncio.CancelledError:
+            return
+        except Exception:
+            pass
+        await self._teardown()
+        self._on_failure("Mất kết nối relay. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.")
 
     async def _wait_for_world(self) -> LanWorld:
         deadline = self._loop.time() + WORLD_WAIT_SECONDS
@@ -122,6 +133,7 @@ class RoomService:
 
     async def _join_flow(self, room_code: str) -> None:
         await self._teardown()
+        self._flow = asyncio.current_task()
         try:
             room_id, room_secret = split_room_code(room_code)
             joiner = JoinerBridge(

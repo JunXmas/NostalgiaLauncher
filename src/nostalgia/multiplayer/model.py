@@ -22,3 +22,5 @@ class RoomStatus:
     joiner_count: int = 0
     locked: bool = False
     world_name: str = ""
+    # Vé do relay cấp qua HTTPS upgrade; không xuất thành thuộc tính QML/clipboard.
+    host_ticket: str = ""

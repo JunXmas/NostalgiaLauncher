@@ -13,6 +13,7 @@ from fake_relay import FakeRelay
 from test_end_to_end import FakeWorld, game_client
 from test_gate import MC_HANDSHAKE
 
+from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.lan import LanWorld
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
@@ -141,5 +142,44 @@ def test_unexpected_error_in_the_flow_surfaces_and_stop_still_resets(remote: Loo
         assert failures == ["card mạng nổ"] and statuses[-1].role == "idle"
         service.stop().result(5)
         assert statuses[-1] == RoomStatus()
+    finally:
+        service.shutdown()
+
+
+def test_relay_disconnect_clears_host_status_and_reports_failure(remote: LoopThread) -> None:
+    statuses: list[RoomStatus] = []
+    failures: list[str] = []
+    service = make_service(remote, statuses, failures)
+    try:
+        service.start_hosting().result(5)
+        assert statuses[-1].role == "hosting"
+        remote.run(remote.relay.stop())
+        wait_for(lambda: bool(failures))
+        assert statuses[-1] == RoomStatus()
+        assert "Mất kết nối relay" in failures[-1]
+    finally:
+        service.shutdown()
+
+
+def test_stop_cancels_a_join_in_progress(
+    remote: LoopThread, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = threading.Event()
+
+    async def blocked_probe(self: JoinerBridge) -> None:
+        del self
+        started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(JoinerBridge, "probe", blocked_probe)
+    statuses: list[RoomStatus] = []
+    failures: list[str] = []
+    service = make_service(remote, statuses, failures)
+    try:
+        joining = service.join("ABCDEFGHJKMNPQRSTU")
+        assert started.wait(2)
+        service.stop().result(2)
+        assert joining.done() and statuses[-1] == RoomStatus()
+        assert not failures and service._joiner is None
     finally:
         service.shutdown()

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import hashlib
 import secrets
 import ssl
@@ -20,6 +21,8 @@ MAX_FRAME_BYTES = 1024 * 1024
 # Tầng trên chỉ cần *kiểu* để tiêm chứng chỉ test; chỉ net/ được import ssl.
 TlsContext = ssl.SSLContext
 CONNECT_TIMEOUT_SECONDS = 15.0
+PING_INTERVAL_SECONDS = 25.0
+PONG_TIMEOUT_SECONDS = 15.0
 _ACCEPT_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 _BINARY, _CLOSE, _PING, _PONG = 0x2, 0x8, 0x9, 0xA
 
@@ -34,6 +37,10 @@ class WebSocketClient:
         self._writer = writer
         self._closed = False
         self._write_lock = asyncio.Lock()  # host mux nhiều stream: khung không được xen nhau
+        self._pong = asyncio.Event()
+        self._ping_payload = b""
+        self._heartbeat: asyncio.Task[None] | None = None
+        self.host_ticket = ""
 
     @property
     def closed(self) -> bool:
@@ -81,11 +88,30 @@ class WebSocketClient:
         )
         await writer.drain()
         try:
-            await asyncio.wait_for(_read_upgrade(reader, key), timeout)
+            headers = await asyncio.wait_for(_read_upgrade(reader, key), timeout)
         except (MultiplayerError, TimeoutError, OSError):
             writer.close()
             raise
-        return cls(reader, writer)
+        socket = cls(reader, writer)
+        socket.host_ticket = headers.get("x-nostalgia-host-ticket", "")
+        socket._heartbeat = asyncio.create_task(socket._keep_alive())
+        return socket
+
+    async def _keep_alive(self) -> None:
+        """Giữ NAT/relay sống; mất pong thì đóng TCP để vòng nhận thoát và báo lỗi."""
+        try:
+            while not self._closed:
+                await asyncio.sleep(PING_INTERVAL_SECONDS)
+                self._ping_payload = secrets.token_bytes(8)
+                self._pong.clear()
+                async with asyncio.timeout(PONG_TIMEOUT_SECONDS):
+                    async with self._write_lock:
+                        self._writer.write(_frame(_PING, self._ping_payload))
+                        await self._writer.drain()
+                    await self._pong.wait()
+        except (TimeoutError, OSError):
+            self._writer.close()
+            await self.close()
 
     async def send(self, payload: bytes) -> None:
         if self._closed:
@@ -111,7 +137,7 @@ class WebSocketClient:
                 mask = await self._reader.readexactly(4) if second & 0x80 else b""
                 payload = await self._reader.readexactly(length) if length else b""
             except (asyncio.IncompleteReadError, ConnectionError):
-                self._closed = True
+                await self.close()
                 return b""
             if mask:
                 payload = _apply_mask(payload, mask)
@@ -125,6 +151,8 @@ class WebSocketClient:
                     await self._writer.drain()
                 continue
             if opcode == _PONG:
+                if payload == self._ping_payload:
+                    self._pong.set()
                 continue
             assembled += payload
             if first & 0x80:
@@ -134,6 +162,11 @@ class WebSocketClient:
         if self._closed:
             return
         self._closed = True
+        heartbeat, self._heartbeat = self._heartbeat, None
+        if heartbeat is not None and heartbeat is not asyncio.current_task():
+            heartbeat.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await heartbeat
         try:
             async with self._write_lock:
                 self._writer.write(_frame(_CLOSE, b""))
@@ -143,21 +176,28 @@ class WebSocketClient:
         self._writer.close()
 
 
-async def _read_upgrade(reader: asyncio.StreamReader, key: str) -> None:
+async def _read_upgrade(reader: asyncio.StreamReader, key: str) -> dict[str, str]:
     status = await reader.readline()
     if b" 101 " not in status:
         message = f"relay từ chối nâng cấp WebSocket: {status.strip().decode(errors='replace')}"
         raise MultiplayerError(message)
     accept = ""
+    headers: dict[str, str] = {}
+    total_bytes = len(status)
     while True:
         line = await reader.readline()
+        total_bytes += len(line)
+        if total_bytes > 16384:
+            raise MultiplayerError("relay trả header quá lớn")
         if line in (b"\r\n", b"\n", b""):
             break
         header, _, value = line.decode(errors="replace").partition(":")
+        headers[header.strip().lower()] = value.strip()
         if header.strip().lower() == "sec-websocket-accept":
             accept = value.strip()
     if accept != expected_accept(key):
         raise MultiplayerError("relay trả Sec-WebSocket-Accept sai: không phải WebSocket thật")
+    return headers
 
 
 def _frame(opcode: int, payload: bytes) -> bytes:

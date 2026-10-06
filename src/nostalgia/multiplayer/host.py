@@ -54,6 +54,10 @@ class HostRelay:
     def joiner_count(self) -> int:
         return len(self._worlds)
 
+    @property
+    def sync_ticket(self) -> str:
+        return self._socket.host_ticket if self._socket is not None else ""
+
     async def connect(self) -> None:
         """Nối relay trước khi báo "đang host" để lỗi ném ra chỗ gọi, không chết lặng."""
         self._socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
@@ -77,6 +81,10 @@ class HostRelay:
 
     def start(self) -> None:
         self._runner = asyncio.ensure_future(self.run())
+
+    async def wait_closed(self) -> None:
+        if self._runner is not None:
+            await self._runner
 
     async def stop(self) -> None:
         """Huỷ vòng nhận; `run()` tự dọn stream và đóng WebSocket trong `finally`."""

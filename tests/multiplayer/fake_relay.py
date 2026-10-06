@@ -31,6 +31,12 @@ class ServerSocket:
         self.closed = False
 
     async def receive(self) -> bytes:
+        while True:
+            payload = await self._receive_frame()
+            if payload is not None:
+                return payload
+
+    async def _receive_frame(self) -> bytes | None:
         try:
             first, second = struct.unpack("!BB", await self.reader.readexactly(2))
             length = second & 0x7F
@@ -46,6 +52,9 @@ class ServerSocket:
             payload = bytes(b ^ mask[i & 3] for i, b in enumerate(payload))
         if first & 0x0F == 0x8:
             return b""
+        if first & 0x0F == 0x9:
+            await self.send(payload, opcode=0xA)
+            return None
         return payload
 
     async def send(self, payload: bytes, opcode: int = 0x2) -> None:
