@@ -58,6 +58,12 @@ analysis = Analysis(
 # Loại bỏ bản trùng lặp của freetype.dll trên Windows
 if sys.platform == "win32":
     analysis.binaries = filter_binaries(analysis.binaries)
+# Mesa của hệ điều hành có thể cần GLIBCXX mới hơn libstdc++ trên runner Ubuntu 22.04.
+# Dùng runtime C++ của máy người chơi để driver GLX/EGL nạp được; không thay thư viện driver.
+if sys.platform.startswith("linux"):
+    analysis.binaries = [record for record in analysis.binaries
+                         if not Path(record[0]).name.startswith("libstdc++.so")]
+
 pyz = PYZ(analysis.pure, analysis.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,

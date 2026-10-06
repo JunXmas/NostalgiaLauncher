@@ -1,3 +1,9 @@
+## 1.2.0rc3 — sửa đóng gói OpenGL Linux
+
+- Dùng libstdc++ của hệ điều hành trên Linux để tương thích với driver Mesa mới.
+- Giữ các tính năng giao diện, Google/bạn bè, Plus/payOS và kiểm/sửa mod của rc2.
+- Draft để thử; dịch vụ Google/payOS vẫn cần cấu hình staging.
+
 ## 1.2.0rc2 — Google, bạn bè và Plus draft
 
 - Dùng giao diện mới mặc định, giữ màu cũ và mica; thu gọn bạn bè/chat/chơi chung.
