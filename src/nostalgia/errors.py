@@ -89,3 +89,7 @@ class SkinError(NostalgiaError):
 
 class UpdateError(NostalgiaError):
     """Tự cập nhật launcher: không có gói cho máy này, thiếu SHA256SUMS, hay chạy từ mã nguồn."""
+
+
+class PaymentError(NostalgiaError):
+    """Không tạo/xác nhận được đơn Plus; lỗi không được tự cấp quyền sử dụng."""

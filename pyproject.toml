@@ -104,6 +104,8 @@ module = [
     "test_minimal_preview",
     "test_project_popup",
     "test_project_bridge",
+    "test_payment_ui",
+    "test_payment_recovery",
     "test_bridges",
     "test_content_bridge",
     "test_content_bridge_packs",

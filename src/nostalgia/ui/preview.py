@@ -5,14 +5,20 @@ from __future__ import annotations
 from PySide6.QtCore import QObject, QUrl
 from PySide6.QtQuick import QQuickView
 
-from nostalgia.api import Launcher
+from nostalgia.api import Launcher, PaymentGateway
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
 
 
-def open_preview(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
+def open_preview(
+    launcher: Launcher,
+    *,
+    payment_gateway: PaymentGateway | None = None,
+    payment_demonstration: bool = False,
+) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
     context = view.rootContext()
@@ -20,6 +26,10 @@ def open_preview(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     assert isinstance(content_bridge, ContentBridge)
     context.setContextProperty(
         "projectBridge", ProjectBridge(launcher, bridge, content_bridge, parent=view)
+    )
+    context.setContextProperty(
+        "paymentBridge",
+        PaymentBridge(payment_gateway, demonstration=payment_demonstration, parent=view),
     )
     view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
     root_item = view.rootObject()

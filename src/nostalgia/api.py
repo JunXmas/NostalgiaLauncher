@@ -50,6 +50,8 @@ from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
+from nostalgia.payment.gateway import HttpPaymentGateway
+from nostalgia.payment.model import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
 from nostalgia.update.release import LauncherRelease
@@ -85,11 +87,16 @@ __all__ = [
     "Diagnosis",
     "Found",
     "GameProcess",
+    "HttpPaymentGateway",
     "InstallReport",
     "Instance",
     "Launcher",
     "LauncherRelease",
     "NosClientConfig",
+    "PaymentCheckout",
+    "PaymentGateway",
+    "PaymentOffer",
+    "PaymentOrder",
     "PlayerProfile",
     "PlayerSkin",
     "Progress",

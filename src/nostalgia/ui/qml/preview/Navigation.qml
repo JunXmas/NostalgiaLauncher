@@ -5,6 +5,7 @@ Glass {
     id: root
     property int currentIndex: 0
     signal navigate(int index)
+    signal supportRequested
     padding: 16
     radius: 22
     readonly property var entries: [
@@ -171,7 +172,8 @@ Glass {
                 width: parent.width - 36
                 label: "Ủng hộ dự án"
                 quiet: true
-                onClicked: donateDialog.open()
+                objectName: "openSupport"
+                onClicked: root.supportRequested()
             }
         }
         Button {

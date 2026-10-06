@@ -4,6 +4,11 @@ Mẫu riêng theo phản hồi của chủ dự án: UI đang rối về thứ b
 nhập toàn cửa sổ, phong cách gọn như Modrinth, kính nhẹ, cuộn có quán tính như Skewlith
 và giữ cách phối màu gốc của Nostalgia.
 
+Chủ dự án đã chốt chỉ sử dụng giao diện mới. Bỏ phương án hai ô chọn giao diện
+cũ/mới ở lần mở đầu tiên và tùy chọn chuyển giữa hai giao diện trong Cài đặt.
+Luồng lần đầu của mẫu tiếp tục vào màn đăng nhập toàn cửa sổ; giữ palette gốc,
+nền mica từ avatar ở Thư viện và mica xuyên thấu trong popup.
+
 Chỉ chạy từ mã nguồn. Không thay `Main.qml`, không đổi bộ cài, không tạo tag, không build,
 không push hoặc xuất bản release. Các file preview nằm trong `qml/preview/`.
 
@@ -27,6 +32,8 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
   có đổi hướng, quay về đầu và dừng dần; video ghi trước khi bổ sung mica cho thẻ.
 - [Cửa sổ nhỏ, chữ 150%](preview/minimal/login-small-150.png) và
   [thư viện ở cùng kích thước](preview/minimal/library-small-150.png).
+- [Thanh toán Plus](PLUS_PAYMENT_PREVIEW.md): popup mica, gói năm, QR và trạng thái giao
+  dịch; gateway mẫu để duyệt UI, adapter HTTPS để nối backend. Chưa nhận thanh toán thật.
 
 Ảnh chụp từ QQuickView chạy thật, 1440×900 và 1024×600. Tài khoản/bản chơi là dữ liệu mẫu
 trong thư mục tạm. Danh sách và icon 12 modpack cùng 12 mod lấy từ API Modrinth, được nạp cục bộ khi
@@ -112,4 +119,5 @@ khoản/mật khẩu mẫu trong source; form sử dụng các bridge đăng nh�
 - Tài khoản, chơi chung, nhật ký, cài đặt và dialog quản lý nâng cao giữ UI hiện có. Các
   màn mẫu mới hiện dùng tiếng Việt; đồng bộ các màn còn lại và dịch mới sau duyệt hướng.
 
-Chờ chủ dự án duyệt ảnh/chuyển động trước khi chuyển mẫu này thành UI mặc định hoặc build.
+Hướng giao diện mới đã được chốt. Hiện mẫu vẫn chạy riêng từ mã nguồn; chưa đổi
+điểm vào của bản phát hành, chưa build hoặc xuất bản bản mới.

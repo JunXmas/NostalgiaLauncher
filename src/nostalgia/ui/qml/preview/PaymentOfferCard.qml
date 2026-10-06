@@ -1,0 +1,58 @@
+import QtQuick
+
+Rectangle {
+    id: root
+    width: parent.width
+    height: contents.implicitHeight + 48
+    radius: 20
+    color: GlassTheme.alpha(GlassTheme.surface, 0.82)
+    border.color: GlassTheme.alpha(GlassTheme.brand, 0.35)
+    property var details: paymentBridge.details
+    Column {
+        id: contents
+        x: 24
+        y: 24
+        width: parent.width - 48
+        spacing: 18
+        PaymentText {
+            text: "GÓI ỦNG HỘ PLUS"
+            color: GlassTheme.brand
+            font.pixelSize: 10 * GlassTheme.scale
+            font.letterSpacing: 1.3
+            font.weight: Font.DemiBold
+        }
+        Column {
+            width: parent.width
+            spacing: 6
+            PaymentText {
+                objectName: "paymentPrice"
+                width: parent.width
+                text: Number(root.details.amount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ"
+                font.pixelSize: 44 * GlassTheme.scale
+                font.weight: Font.DemiBold
+                lineHeight: 1
+            }
+            PaymentText {
+                width: parent.width
+                text: root.details.amount < root.details.regularAmount ? "Ưu đãi cho 12 tháng đầu" : "12 tháng sử dụng Plus"
+                color: GlassTheme.muted
+            }
+        }
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: GlassTheme.stroke
+        }
+        PaymentText {
+            width: parent.width
+            text: "Gia hạn " + Number(root.details.regularAmount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ/năm. Không tự động gia hạn."
+            color: GlassTheme.muted
+        }
+        PaymentText {
+            width: parent.width
+            text: root.details.available ? "Quyền Plus được ghi nhận sau khi hệ thống xác nhận giao dịch." : "Plus đang được chuẩn bị. Bạn chưa cần chuyển khoản để đăng ký."
+            color: GlassTheme.muted
+            font.pixelSize: 11 * GlassTheme.scale
+        }
+    }
+}

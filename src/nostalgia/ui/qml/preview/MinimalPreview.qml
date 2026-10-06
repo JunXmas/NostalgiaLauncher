@@ -46,6 +46,7 @@ Item {
                 anchors.margins: 16
                 width: Math.min(275, 212 * Math.max(1, GlassTheme.scale * 0.9))
                 currentIndex: root.currentIndex
+                onSupportRequested: support.open()
                 onNavigate: function (index) {
                     root.navigate(index);
                 }
@@ -105,6 +106,11 @@ Item {
             createForProject.pickGameVersion(gameVersion);
             createForProject.expandedMajor = gameVersion.split(".").slice(0, 2).join(".");
         }
+    }
+    SupportDialog {
+        id: support
+        backdrop: scene
+        onDonateRequested: donateDialog.open()
     }
     Legacy.CreateInstanceDialog {
         id: createForProject
