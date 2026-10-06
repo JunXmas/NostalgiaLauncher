@@ -17,14 +17,14 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
 - [Bản chơi](preview/minimal/instances.png): bỏ ảnh rỗng lớn, giảm số nút nổi; quản lý/sao
   lưu/nhập vẫn truy cập được. [Dạng danh sách](preview/minimal/instances-compact.png).
 - [Thư viện](preview/minimal/library.png): tìm kiếm và loại nội dung là hai lớp chính;
-  bộ lọc nâng cao và Đã cài mở giao diện hiện có.
+  bộ lọc nâng cao và Đã cài mở giao diện hiện có. [Các thẻ mod với nền mica từ avatar](preview/minimal/library-mods.png).
 - [Video cuộn 5 giây](preview/minimal/scroll-preview.mp4): thao tác bánh xe thật trong Qt,
-  có đổi hướng, quay về đầu và dừng dần.
+  có đổi hướng, quay về đầu và dừng dần; video ghi trước khi bổ sung mica cho thẻ.
 - [Cửa sổ nhỏ, chữ 150%](preview/minimal/login-small-150.png) và
   [thư viện ở cùng kích thước](preview/minimal/library-small-150.png).
 
 Ảnh chụp từ QQuickView chạy thật, 1440×900 và 1024×600. Tài khoản/bản chơi là dữ liệu mẫu
-trong thư mục tạm. Danh sách và icon 12 modpack lấy từ API Modrinth, được nạp cục bộ khi
+trong thư mục tạm. Danh sách và icon 12 modpack cùng 12 mod lấy từ API Modrinth, được nạp cục bộ khi
 chụp; không phải bằng chứng cài hoặc chạy game. Nội dung/biểu tượng thuộc tác giả dự án.
 
 ## Lựa chọn thiết kế
@@ -36,6 +36,10 @@ chụp; không phải bằng chứng cài hoặc chạy game. Nội dung/biểu 
 - Kính giới hạn ở thanh bên, khung đăng nhập và hero. Blur nền thật bằng MultiEffect trên
   OpenGL; có nền trong mờ dự phòng ở renderer phần mềm. Đây là kính mờ theo hướng liquid
   glass, chưa có khúc xạ vật lý kiểu thấu kính.
+- Các thẻ Thư viện giữ avatar rõ phía trước và dùng cùng ảnh làm nền mica phía sau,
+  theo kỹ thuật cũ: chồng hai ảnh thu nhỏ 4×4 và 7×7 rồi phóng mượt. Lớp phủ dùng màu
+  nền gốc và tối hơn ở vùng chữ. OpenGL cắt nền theo góc bo; renderer phần mềm dùng nền
+  thu vào trong góc, có chuyển sắc ở mép. Không có ảnh thì chỉ hiện icon dự phòng.
 - Reuse BlockIcon và nguyên model/texture Minecraft; không vẽ lại beacon hoặc kệ sách.
 - Cuộn bánh xe tích lũy đích, nội suy theo thời gian; đổi hướng liên tục và kẹp biên. Timer
   dừng khi hết chuyển động. Trackpad có pixel delta dùng quán tính của OS, tránh làm mượt
@@ -69,6 +73,9 @@ khoản/mật khẩu mẫu trong source; form sử dụng các bridge đăng nh�
 - 25 kiểm tra giao diện/QML và quy ước kiến trúc qua sau kiểm tra bổ sung.
 - `ruff check` và mypy toàn kho qua. Sau đổi palette, 6 kiểm tra tương tác preview qua;
   ảnh và video được chụp lại trên OpenGL, không có cảnh báo QML.
+- Sau thêm mica, 6 kiểm tra tương tác preview tiếp tục qua. Chụp mod/modpack, trường hợp
+  thiếu avatar và cửa sổ 1024×600/chữ 150% trên OpenGL/llvmpipe và renderer phần mềm;
+  cả hai không có cảnh báo QML. Đây là kiểm tra render, không đo hiệu năng GPU Windows.
 - Thử đăng nhập ngoại tuyến thật qua bridge; Microsoft/2FA Ely.by dùng provider giả để
   kiểm tra luồng UI, hủy và xử lý lỗi; không đăng nhập tài khoản online thật.
 - OpenGL được kiểm tra trên Linux/llvmpipe, chưa đo hiệu năng GPU Windows/macOS.

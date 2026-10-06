@@ -162,11 +162,20 @@ Item {
                         height: 218
                         radius: 18
                         color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
-                        border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
                         Behavior on color {
                             ColorAnimation {
                                 duration: GlassTheme.quick
                             }
+                        }
+                        CardMica {
+                            source: model.iconUrl
+                            radius: tile.radius
+                        }
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: tile.radius
+                            color: "transparent"
+                            border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
                         }
                         Legacy.ProjectIcon {
                             id: projectIcon
@@ -194,7 +203,7 @@ Item {
                             Text {
                                 width: parent.width
                                 text: model.description
-                                color: GlassTheme.muted
+                                color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                                 font.family: GlassTheme.font
                                 font.pixelSize: 12
                                 wrapMode: Text.WordWrap
@@ -209,7 +218,7 @@ Item {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 25
                             text: Legacy.Theme.compact(model.downloads) + " tải  ·  " + (model.loaders.length ? model.loaders[0] : "Minecraft")
-                            color: GlassTheme.muted
+                            color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                             font.family: GlassTheme.font
                             font.pixelSize: 11
                         }
