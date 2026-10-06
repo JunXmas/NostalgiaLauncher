@@ -1,23 +1,20 @@
-Sửa lỗi **"thất bại sau 4 lần thử: không gọi được https://cdn.modrinth.com/..."** trên Windows.
+# Nostalgia Launcher 1.1.8
 
-## Triệu chứng
+## Sửa Forge và modpack
 
-Trên một số máy Windows 10 (nhất là máy lâu không cập nhật Windows), bấm **Tạo bản chơi** ở
-một modpack hoặc tải mod từ Modrinth thì hiện thông báo đỏ "thất bại sau 4 lần thử: không gọi
-được https://cdn.modrinth.com/data/...". Mở trình duyệt hay chạy `curl.exe` tới cùng địa chỉ
-thì vẫn vào được bình thường.
+- Sửa lỗi "không có bản loader '47.4.23'" khi modpack dùng số phiên bản Forge ngắn.
+- Chọn đúng version ID do installer trả về, kể cả khi đã có loader khác trong máy.
+- Sửa trường hợp cài lại Forge/NeoForge đã có; đọc version ID từ metadata installer.
 
-## Nguyên nhân
+## Icon Minecraft nguyên bản
 
-Launcher kiểm chứng chỉ HTTPS bằng thư viện `ssl` của Python, thứ chỉ tin các chứng chỉ gốc
-**đang nằm sẵn** trong kho của Windows. Nhưng Windows không giữ đủ chứng chỉ gốc trong kho: nó
-tải thêm từ Windows Update đúng lúc cần — và chỉ khi chính Windows (Schannel) kiểm chứng chỉ,
-như trình duyệt hay `curl.exe`. Máy thiếu chứng chỉ gốc mà CDN của Modrinth đang dùng thì
-launcher từ chối kết nối, còn curl thì không.
+- Beacon ở Ủng hộ và kệ sách ở Thư viện dùng model JSON và texture PNG nguyên bản từ client Minecraft Java 1.20.1.
+- Beacon có lớp kính, lõi và đế obsidian đúng model. Kệ sách dùng mặt trên gỗ sồi và mặt bên sách.
+- Tự thay cache icon cũ. Ghi nguồn, quyền sở hữu và hash asset trong gói.
+- Sửa vòng lặp QML khi xóa/thay đổi bộ lọc.
 
-## Sửa
+## Kiểm chứng
 
-Launcher giờ giao việc kiểm chứng chỉ cho **chính hệ điều hành** (qua thư viện `truststore`,
-thứ pip cũng dùng): Schannel trên Windows, Security.framework trên macOS, kho chứng chỉ hệ thống
-trên Linux. Launcher kết nối được ở đâu thì trình duyệt và curl kết nối được ở đó. Việc kiểm
-vẫn đầy đủ như trước — chứng chỉ sai hay sai tên máy vẫn bị từ chối.
+Hai PR đã đạt CI Python 3.12/3.13 và test updater Windows. Đã thử luồng UI Forge/modpack bằng fixture cục bộ, dựng và chạy bản Linux. Quy trình release dựng và smoke-test từng gói Windows, Linux, macOS, kèm SHA256SUMS.
+
+Chưa kiểm chứng khởi động Minecraft bằng installer Forge thật trên máy Windows. Các cải thiện UX tiếp theo sẽ được đưa vào bản preview riêng để duyệt.
