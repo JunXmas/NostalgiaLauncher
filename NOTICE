@@ -50,9 +50,11 @@ Các thành phần dưới đây giữ giấy phép riêng của chúng, không 
 - **Key art** trong `src/nostalgia/ui/qml/assets/keyart/` thuộc về Mojang, chỉ dùng để minh
   hoạ phi thương mại. Ghi công từng file ở
   `src/nostalgia/ui/qml/assets/keyart/CREDITS.md`.
-- **Texture khối** dùng cho icon thanh bên được đọc trực tiếp từ bản Minecraft do chính
-  người dùng đã cài trên máy họ, lúc chạy. Không có texture nào của Mojang nằm trong kho
-  này hay trong bộ cài.
+- **Model và texture beacon / kệ sách** thuộc về Mojang Studios / Microsoft, được lấy
+  nguyên bản từ client Minecraft Java 1.20.1; nguồn và băm đối chiếu nằm ở
+  `src/nostalgia/ui/qml/assets/minecraft-blocks/CREDITS.md` và `source.json`. Khi có model
+  trong client đã cài, launcher ưu tiên bản đó. Texture của các icon khối còn lại được
+  đọc trực tiếp từ client trên máy người dùng.
 - **PySide6 / Qt** là phụ thuộc TUỲ CHỌN (LGPL-3.0), liên kết động và không kèm trong mã
   nguồn. Lõi launcher không phụ thuộc thư viện ngoài nào.
 - **Asset giao diện Aero** dựng theo bộ "Aero UI (Windows 7)" trên Figma, giấy phép

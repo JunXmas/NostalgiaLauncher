@@ -5,10 +5,8 @@ shader, mà `MicaBackdrop.qml` đã ghi rõ hiệu ứng dựng bằng shader kh
 phần mềm. Một dải ảnh + `AnimatedSprite` thì chỉ là một `Image` đổi khung — chạy ở mọi
 nơi, và không tính gì lúc chạy.
 
-**Giấy phép.** Texture là tài sản của Mojang. Ở đây chỉ ĐỌC jar mà chính người dùng đã
-tải về máy họ, và ảnh sinh ra nằm trong thư mục cache của họ — không bao giờ nằm trong
-kho mã nguồn hay trong gói phát hành. Không có jar thì rơi về texture vẽ bằng code, nên
-launcher vẫn chạy đủ chức năng trước khi cài bản chơi đầu tiên.
+Beacon/kệ sách dùng model và texture nguyên bản Minecraft, kể cả khi chưa cài game.
+Nguồn và quyền sở hữu được ghi ở assets/minecraft-blocks/CREDITS.md.
 """
 
 from __future__ import annotations
@@ -20,6 +18,7 @@ from pathlib import Path
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QImage, QPainter, QPolygonF, QTransform
 
+from nostalgia.ui.block_model import CUBE_FACES, BlockSurface
 from nostalgia.ui.block_textures import (
     BLOCK_TEXTURES,
     BlockFaces,
@@ -35,16 +34,7 @@ FRAME_COUNT = 48  # số khung một vòng
 SUPERSAMPLE = 3  # vẽ gấp 3 rồi thu nhỏ: cạnh khối hết răng cưa
 TILT_DEGREES = 22.0  # nghiêng xuống, giống icon vật phẩm trong game
 START_DEGREES = 45.0  # khung 0 nhìn 3/4, không nhìn thẳng mặt
-
-# Khối đơn vị tâm ở gốc; mỗi mặt là 4 đỉnh thuận chiều kim đồng hồ khi nhìn từ ngoài.
-CUBE_FACES: dict[str, tuple[tuple[float, float, float], ...]] = {
-    "front": ((-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)),
-    "back": ((1, -1, -1), (-1, -1, -1), (-1, 1, -1), (1, 1, -1)),
-    "right": ((1, -1, 1), (1, -1, -1), (1, 1, -1), (1, 1, 1)),
-    "left": ((-1, -1, -1), (-1, -1, 1), (-1, 1, 1), (-1, 1, -1)),
-    "top": ((-1, -1, -1), (1, -1, -1), (1, -1, 1), (-1, -1, 1)),
-    "bottom": ((-1, 1, 1), (1, 1, 1), (1, 1, -1), (-1, 1, -1)),
-}
+MODEL_REVISIONS = {"beacon": 3, "bookshelf": 3}
 # Mặt nào lấy texture nào, và độ sáng — giống cách game tô: trên sáng nhất, hai bên tối dần.
 FACE_SOURCE: dict[str, tuple[str, float]] = {
     "top": ("top", 1.00),
@@ -67,35 +57,47 @@ def _rotate(
     return x, y, z
 
 
-def _project(point: tuple[float, float, float], size: int) -> tuple[float, float, float]:
+def _project(
+    point: tuple[float, float, float], size: int, scale_factor: float = 0.33
+) -> tuple[float, float, float]:
     x, y, z = point
-    scale = size * 0.33  # ở 0,33 khối xoay vẫn không chạm mép khung
+    scale = size * scale_factor
     return size / 2 + x * scale, size / 2 + y * scale, z
 
 
 def render_frame(faces: BlockFaces, angle_degrees: float, size: int) -> QImage:
     """Vẽ một khung của khối xoay ở góc `angle_degrees`."""
     yaw = math.radians(angle_degrees)
-    pitch = math.radians(TILT_DEGREES)
+    pitch = math.radians(faces.model.gui_rotation[0] if faces.model else TILT_DEGREES)
+    scale = faces.model.gui_scale[0] / 2 if faces.model else 0.33
     frame = QImage(size, size, QImage.Format.Format_ARGB32)
     frame.fill(Qt.GlobalColor.transparent)
 
-    visible: list[tuple[float, str, list[tuple[float, float]]]] = []
-    for name, vertices in CUBE_FACES.items():
-        projected = [_project(_rotate(vertex, yaw, pitch), size) for vertex in vertices]
+    visible: list[tuple[int, float, QImage, list[tuple[float, float]]]] = []
+    surfaces = (
+        faces.model.surfaces
+        if faces.model
+        else tuple(
+            BlockSurface(name, vertices, faces.top if FACE_SOURCE[name][0] == "top" else faces.side)
+            for name, vertices in CUBE_FACES.items()
+        )
+    )
+    for surface in surfaces:
+        projected = [
+            _project(_rotate(vertex, yaw, pitch), size, scale) for vertex in surface.vertices
+        ]
         (x0, y0, _), (x1, y1, _), (x2, y2, _) = projected[0], projected[1], projected[2]
-        # Mặt có quay ra ngoài không? Tích có hướng 2D của hai cạnh đầu. Màn hình có trục y
-        # hướng XUỐNG, nên mặt trước cho tích ÂM — dấu ngược lại là khối lộn ngược.
-        if (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1) >= 0:
+        # Trục y màn hình hướng xuống: mặt trước có tích âm. Kính cần cả mặt sau.
+        front = (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1) < 0
+        if front == surface.back_faces:
             continue
         depth = sum(point[2] for point in projected) / 4
-        visible.append((depth, name, [(point[0], point[1]) for point in projected]))
+        texture = shaded(surface.texture, FACE_SOURCE[surface.face][1])
+        visible.append((surface.layer, depth, texture, [(p[0], p[1]) for p in projected]))
 
     painter = QPainter(frame)
     # Xa vẽ trước, gần vẽ sau — không có z-buffer nên thứ tự chính là độ sâu.
-    for _, name, quad in sorted(visible, key=lambda face: face[0], reverse=True):
-        source_key, brightness = FACE_SOURCE[name]
-        texture = shaded(faces.top if source_key == "top" else faces.side, brightness)
+    for _, _, texture, quad in sorted(visible, key=lambda face: (face[0], -face[1])):
         transform = QTransform()
         source_quad = QPolygonF(
             [
@@ -126,7 +128,8 @@ def render_strip(faces: BlockFaces) -> QImage:
     painter = QPainter(strip)
     painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
     for index in range(FRAME_COUNT):
-        angle = START_DEGREES + index * 360 / FRAME_COUNT
+        start = faces.model.gui_rotation[1] if faces.model else START_DEGREES
+        angle = start + index * 360 / FRAME_COUNT
         # Vẽ to gấp SUPERSAMPLE rồi thu nhỏ: cạnh khối mượt mà texel vẫn vuông. Đây là
         # cách khử răng cưa duy nhất áp được cho ảnh sinh sẵn — MSAA chỉ lo cảnh đang vẽ.
         large = render_frame(faces, angle, FRAME_SIZE * SUPERSAMPLE)
@@ -151,7 +154,9 @@ def ensure_strips(cache_dir: Path, jar_path: Path | None) -> dict[str, Path]:
     source = "jar" if jar_path is not None and jar_path.is_file() else "code"
     strips: dict[str, Path] = {}
     for block in BLOCK_TEXTURES:
-        target = cache_dir / f"{block}_{source}.png"
+        revision = f"_v{MODEL_REVISIONS[block]}" if block in MODEL_REVISIONS else ""
+        block_source = "vanilla" if block in MODEL_REVISIONS and source == "code" else source
+        target = cache_dir / f"{block}{revision}_{block_source}.png"
         strips[block] = target
         if target.is_file():
             continue

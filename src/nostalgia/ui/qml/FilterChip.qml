@@ -80,12 +80,13 @@ Item {
             id: clearMark
             objectName: "filterChipClear"
             visible: root.selected.length > 0
-            width: visible ? implicitWidth + 8 : 0
+            width: visible ? clearMetrics.width + 8 : 0
             anchors { right: arrow.left; verticalCenter: parent.verticalCenter }
             horizontalAlignment: Text.AlignHCenter
             text: "✕"
             color: clearHover.containsMouse ? Theme.danger : Theme.textMuted
             font.pixelSize: Theme.fontLabel
+            TextMetrics { id: clearMetrics; font: clearMark.font; text: clearMark.text }
             MouseArea {
                 id: clearHover
                 anchors.fill: parent
