@@ -136,3 +136,19 @@ def test_the_clear_mark_only_appears_when_something_is_filtered() -> None:
     chip.cleared.emit()  # type: ignore[attr-defined]
     QGuiApplication.processEvents()
     assert scene.property("clearCount") == 1
+
+
+def test_changing_the_selection_does_not_create_a_text_width_binding_loop() -> None:
+    from PySide6.QtCore import qInstallMessageHandler
+
+    warnings: list[str] = []
+    qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
+    try:
+        chip = find(build(CHIP % (versions(5), "[]")), "probe")
+        for selection in (["1.0"], ["1.0", "1.1"], [], ["1.2"]):
+            chip.setProperty("selected", selection)
+            QGuiApplication.processEvents()
+        assert find(chip, "filterChipClear").property("width") > 8
+    finally:
+        qInstallMessageHandler(None)
+    assert warnings == []

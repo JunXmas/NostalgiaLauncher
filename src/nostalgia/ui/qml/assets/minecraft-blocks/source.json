@@ -1,0 +1,16 @@
+{
+  "minecraft_version": "1.20.1",
+  "client_sha1": "0c3ec587af28e5a785c0b4a7b8a30f9a8f78f838",
+  "files": {
+    "models/block/beacon.json": "04abc04bab23a8e42eac76e0b30402d69090334beb69fcad0917247f3e80ce71",
+    "models/block/block.json": "3ef6c442f1ab55d2a57fa58e28bb831268159052659f12b453b637b31ded1da8",
+    "models/block/bookshelf.json": "ca9f599c8d0e7e01f5020f6b506dbad3dd9c7ca43088ee4319a7814e9547d1cb",
+    "models/block/cube.json": "3e4aacd02e816aeba38f83076596e18ded4cf49c01e17c62d1fce79850ffb84e",
+    "models/block/cube_column.json": "4cc89841e64bfb9be33aef096675291b585d05bae81cbbd14bf977f89aa81a6b",
+    "textures/block/beacon.png": "3ae9b5530a0d5396e41e73103ac9997c169776e68c92065bd16a68cd039ddf8d",
+    "textures/block/bookshelf.png": "614156e22b83b1b55b84c668a9f7fbd3e730fdc906730f10fed481a3a635c11a",
+    "textures/block/glass.png": "cb89c706dce86eac3123cef087d359b5f23098b658a468fb91662b4a9922bcd0",
+    "textures/block/oak_planks.png": "3b00412fec87bd07b83825b86de49bcb6c186ca7799f41721a36b04e5d8ed161",
+    "textures/block/obsidian.png": "5a22e88553ec5a8aefc0804a157ce6881d74f593f03246994751a18a35160b29"
+  }
+}

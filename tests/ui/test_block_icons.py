@@ -137,7 +137,10 @@ def test_no_jar_still_yields_every_icon(tmp_path: Path) -> None:
     """Chưa cài bản chơi nào thì vẫn phải đủ icon — launcher mới cài là đúng cảnh này."""
     made = blocks.ensure_strips(tmp_path / "cache", None)
     assert set(made) == set(BLOCK_TEXTURES)
-    assert all(path.name.endswith("_code.png") for path in made.values())
+    assert all(
+        path.name.endswith("_vanilla.png" if block in ("beacon", "bookshelf") else "_code.png")
+        for block, path in made.items()
+    )
 
 
 def test_newest_client_jar_picks_the_latest_install(tmp_path: Path) -> None:

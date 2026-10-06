@@ -3,8 +3,8 @@
 Tách khỏi `blocks.py` vì hai việc khác hẳn nhau: ở đây là NGUỒN ảnh (đọc zip, tô màu cỏ,
 màu dự phòng), còn bên kia là HÌNH HỌC (xoay, chiếu, ghép dải).
 
-**Giấy phép.** Texture là tài sản của Mojang. Chỉ ĐỌC jar mà chính người dùng đã tải về
-máy họ; ảnh sinh ra nằm trong cache của họ, không bao giờ vào kho mã hay gói phát hành.
+Model/texture beacon và kệ sách lấy nguyên bản từ Minecraft Java; xem CREDITS.md đi kèm.
+Các khối khác ưu tiên texture trong jar client của người dùng rồi mới dùng màu dự phòng.
 """
 
 from __future__ import annotations
@@ -16,6 +16,8 @@ from pathlib import Path
 
 from PySide6.QtGui import QColor, QImage, QPainter
 
+from nostalgia.ui.block_model import BlockModel, load_block_model
+
 logger = logging.getLogger(__name__)
 
 TEXTURE_SIZE = 16
@@ -25,15 +27,13 @@ TEXTURE_SIZE = 16
 BLOCK_TEXTURES: dict[str, tuple[str, str]] = {
     "grass": ("grass_block_top|grass_top", "grass_block_side|grass_side"),
     "crafting": ("crafting_table_top", "crafting_table_side|crafting_table_front"),
-    "bookshelf": ("bookshelf", "bookshelf"),
+    "bookshelf": ("oak_planks|planks_oak", "bookshelf"),
     "diamond": ("diamond_block", "diamond_block"),
     "command": ("command_block_front|command_block", "command_block_side|command_block"),
     "chest": ("oak_planks|planks_oak", "oak_planks|planks_oak"),
     "redstone": ("redstone_block", "redstone_block"),
-    # Beacon cho ô ỦNG HỘ. Mặt trên là chính texture `beacon` (ô kính thấy lõi sao); mặt bên
-    # mượn thuỷ tinh, vì texture `beacon` của Mojang chỉ có mặt trên — khối trong game là mô
-    # hình nhiều lớp chứ không phải sáu mặt vuông, nên không có "mặt bên beacon" để lấy.
-    "beacon": ("beacon", "glass"),
+    # Lõi beacon dùng cùng texture ở mọi mặt; kính và obsidian là các lớp riêng.
+    "beacon": ("beacon", "beacon"),
 }
 
 # Mojang lưu cỏ ở dạng XÁM rồi tô màu theo quần xã lúc chạy. Không tô thì mặt trên ra xám.
@@ -51,20 +51,23 @@ FALLBACK_COLOURS: dict[str, tuple[QColor, QColor]] = {
     "command": (QColor(0xC2, 0x8A, 0x5C), QColor(0xA8, 0x74, 0x4C)),
     "chest": (QColor(0xA0, 0x7A, 0x4E), QColor(0x8B, 0x69, 0x43)),
     "redstone": (QColor(0xD4, 0x24, 0x24), QColor(0xBA, 0x1E, 0x1E)),
-    # Beacon: lam ngọc sáng ở trên, khung obsidian ở bên — đọc ra "khối phát sáng" ngay cả
-    # khi chưa cài bản chơi nào, là lúc duy nhất màu dự phòng này được dùng. Obsidian thật
-    # sẫm hơn hẳn, nhưng ở đây nền thanh bên cũng sẫm (#1c212c): lấy đúng màu game thì hai
-    # mặt bên biến mất vào nền và còn mỗi cái nắp lam trôi lơ lửng — đã chụp ra thấy.
-    "beacon": (QColor(0x6F, 0xE0, 0xDA), QColor(0x45, 0x48, 0x63)),
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BlockFaces:
-    """Hai texture vuông của một khối: mặt trên và mặt bên."""
+    """Texture mặt trên/bên; model Minecraft nguyên bản có các mặt và UV riêng."""
 
     top: QImage
     side: QImage
+    model: BlockModel | None = None
+
+
+def _model_faces(block: str, jar_path: Path | None = None) -> BlockFaces:
+    model = load_block_model(block, jar_path)
+    top = [s.texture for s in model.surfaces if s.face == "top" and s.layer == 1][-1]
+    side = [s.texture for s in model.surfaces if s.face == "front" and s.layer == 1][-1]
+    return BlockFaces(top=top, side=side, model=model)
 
 
 def _tinted(image: QImage, colour: QColor) -> QImage:
@@ -104,6 +107,8 @@ def faces_from_jar(jar_path: Path, block: str) -> BlockFaces | None:
     names = BLOCK_TEXTURES.get(block)
     if names is None:
         return None
+    if block in ("beacon", "bookshelf"):
+        return _model_faces(block, jar_path)
     top_choices, side_choices = names
 
     try:
@@ -147,7 +152,9 @@ def faces_from_jar(jar_path: Path, block: str) -> BlockFaces | None:
 
 
 def fallback_faces(block: str) -> BlockFaces:
-    """Texture vẽ bằng code, dùng khi chưa cài bản chơi nào. Không phải asset của Mojang."""
+    """Hai icon yêu cầu dùng nguyên bản Minecraft; khối khác dùng màu dự phòng."""
+    if block in ("beacon", "bookshelf"):
+        return _model_faces(block)
     top_colour, side_colour = FALLBACK_COLOURS.get(
         block, (QColor(0x7E, 0x7E, 0x7E), QColor(0x6B, 0x6B, 0x6B))
     )
