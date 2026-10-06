@@ -10,6 +10,15 @@ Item {
     id: page
     signal navigate(int pageIndex)
     property string failure: ""
+    function joinRoom(code) {
+        if (typeof roomSyncBridge !== "undefined") roomSyncBridge.join(code);
+        else multiplayerBridge.join(code);
+    }
+
+    Connections {
+        target: typeof roomSyncBridge !== "undefined" ? roomSyncBridge : null
+        function onFailed(message) { page.failure = message; }
+    }
 
     Connections {
         target: multiplayerBridge
@@ -20,14 +29,17 @@ Item {
     Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
-        height: 58
+        height: pageTitle.height + subtitle.implicitHeight + 8
         PageTitle {
+            id: pageTitle
             anchors { left: parent.left; top: parent.top }
             caption: Tr.phrase("Chơi chung")
         }
         Text {
-            anchors { left: parent.left; top: parent.top; topMargin: 32 }
-            text: Tr.phrase("Không cần thuê server, không cần mod, khác mạng vẫn chơi được.")
+            id: subtitle
+            width: parent.width; wrapMode: Text.WordWrap
+            anchors { left: parent.left; top: pageTitle.bottom; topMargin: 6 }
+            text: "Mở LAN, gửi mã và chơi cùng bạn bè khác mạng."
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
@@ -35,29 +47,39 @@ Item {
     Rectangle {
         id: failureBar
         anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 4 }
-        height: page.failure ? 34 : 0
+        height: page.failure ? failureText.implicitHeight + 16 : 0
         visible: page.failure !== ""
         radius: 0; color: "#33ff5555"; border.color: "#80ff5555"
         Text {
+            id: failureText
+            width: parent.width - 24; wrapMode: Text.WordWrap
             anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
             text: page.failure; color: Theme.text; font.pixelSize: Theme.fontBody
         }
     }
 
-    Row {
+    Flickable {
         anchors { top: failureBar.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
                   margins: Theme.gap; topMargin: 10 }
-        spacing: Theme.gap
+        id: scroll
+        objectName: "multiplayerScroll"
+        clip: true; contentHeight: panels.height; boundsBehavior: Flickable.StopAtBounds
+        Flow {
+        id: panels
+        width: scroll.width; spacing: Theme.gap
 
         // ----- MỞ PHÒNG -----
         Panel {
             id: hostPanel
-            width: (parent.width - Theme.gap) / 2; height: parent.height
+            visible: multiplayerBridge.role !== "joined"
+            width: panels.width >= 900 && multiplayerBridge.role === "idle" ? (panels.width - Theme.gap) / 2 : panels.width
+            height: contentTop + hostContent.height + Theme.pad
             title: "MỞ PHÒNG"
             readonly property bool hosting: multiplayerBridge.role === "hosting"
             readonly property bool waiting: multiplayerBridge.role === "waiting_world"
 
             Column {
+                id: hostContent
                 anchors { left: parent.left; right: parent.right }
                 spacing: 14
                 Text {
@@ -91,8 +113,8 @@ Item {
                             font.family: "monospace"
                         }
                     }
-                    Row {
-                        spacing: 8
+                    Flow {
+                        width: parent.width; spacing: 8
                         ActionButton { primary: false; label: Tr.phrase("Chép mã"); onClicked: multiplayerBridge.copyRoomCode() }
                         ActionButton {
                             primary: false
@@ -101,8 +123,8 @@ Item {
                         }
                         ActionButton { primary: false; label: Tr.phrase("Đóng phòng"); onClicked: multiplayerBridge.stop() }
                     }
-                    Row {
-                        spacing: 10
+                    Flow {
+                        width: parent.width; spacing: 10
                         StatusPill { glyph: "▣"; text: multiplayerBridge.worldName }
                         StatusPill { dotColor: Theme.accent; text: multiplayerBridge.joinerCount + Tr.phrase(" người đang vào") }
                         StatusPill { visible: multiplayerBridge.locked; glyph: "🔒"; text: Tr.phrase("Đã khoá: không nhận thêm") }
@@ -112,6 +134,12 @@ Item {
                         text: Tr.phrase("Mã chỉ sống khi phòng mở. Khoá phòng khi đủ người: ai có mã cũng không vào thêm được.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
+                    Loader {
+                        width: parent.width
+                        height: active && item ? item.implicitHeight : 0
+                        active: hostPanel.hosting && typeof roomSyncBridge !== "undefined"
+                        sourceComponent: Component { RoomSyncCard { hostMode: true } }
+                    }
                 }
             }
         }
@@ -119,11 +147,14 @@ Item {
         // ----- VÀO PHÒNG -----
         Panel {
             id: joinPanel
-            width: (parent.width - Theme.gap) / 2; height: parent.height
+            visible: multiplayerBridge.role === "idle" || multiplayerBridge.role === "joined"
+            width: panels.width >= 900 && multiplayerBridge.role === "idle" ? (panels.width - Theme.gap) / 2 : panels.width
+            height: contentTop + joinContent.height + Theme.pad
             title: "VÀO PHÒNG"
             readonly property bool joined: multiplayerBridge.role === "joined"
 
             Column {
+                id: joinContent
                 anchors { left: parent.left; right: parent.right }
                 spacing: 14
                 Text {
@@ -136,7 +167,7 @@ Item {
                     RoomCodeInput {
                         id: codeField
                         objectName: "roomCodeField"
-                        onSubmitted: if (complete && multiplayerBridge.role === "idle") multiplayerBridge.join(code)
+                        onSubmitted: if (complete && multiplayerBridge.role === "idle") page.joinRoom(code)
                     }
                     Row {
                         spacing: 8
@@ -144,7 +175,7 @@ Item {
                             objectName: "joinButton"
                             label: Tr.phrase("Vào phòng")
                             clickable: multiplayerBridge.role === "idle" && codeField.complete
-                            onClicked: multiplayerBridge.join(codeField.code)
+                            onClicked: page.joinRoom(codeField.code)
                         }
                         ActionButton {
                             primary: false; label: Tr.phrase("Dán")
@@ -157,23 +188,44 @@ Item {
                         }
                     }
                     Text {
+                        width: parent.width; wrapMode: Text.WordWrap
                         text: codeField.complete ? Tr.phrase("Đủ 18 ký tự — bấm Vào phòng hoặc Enter.") : Tr.phrase("Gõ hoặc dán mã bạn gửi: 3 nhóm, mỗi nhóm 6 ký tự.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                 }
                 Column {
                     visible: joinPanel.joined; spacing: 10; width: parent.width
-                    Row {
-                        spacing: 10
-                        StatusPill { dotColor: Theme.accent; pulsing: true; text: Tr.phrase("Đã nối: mở game, vào Multiplayer, chọn world trong mục LAN") }
-                    }
+                    StatusPill { dotColor: Theme.accent; pulsing: true; text: "Đã nối phòng" }
                     Text {
+                        width: parent.width; wrapMode: Text.WordWrap
                         text: Tr.phrase("Cổng cục bộ 127.0.0.1:") + multiplayerBridge.localPort + Tr.phrase(" — chỉ máy này thấy.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
-                    ActionButton { primary: false; label: Tr.phrase("Rời phòng"); onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
+                    Text {
+                        width: parent.width; wrapMode: Text.WordWrap
+                        text: "Nếu modpack không hiện mục LAN: Multiplayer → Direct Connection → dán địa chỉ ở trên. Cần cùng Minecraft, loader và bộ mod với host."
+                        color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                    }
+                    Flow {
+                        width: parent.width; spacing: 8
+                        ActionButton { objectName: "copyLocalAddressButton"; primary: false; label: "Chép địa chỉ kết nối"; onClicked: multiplayerBridge.copyLocalAddress() }
+                        ActionButton { primary: false; label: Tr.phrase("Rời phòng"); onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
+                        ActionButton {
+                            visible: typeof roomSyncBridge !== "undefined" && roomSyncBridge.configured
+                            primary: false; label: "Kiểm tra modpack của phòng"
+                            clickable: typeof roomSyncBridge !== "undefined" && !roomSyncBridge.busy
+                            onClicked: roomSyncBridge.checkRoomPack()
+                        }
+                    }
+                    Loader {
+                        width: parent.width
+                        height: active && item ? item.implicitHeight : 0
+                        active: joinPanel.joined && typeof roomSyncBridge !== "undefined" && !!roomSyncBridge.offer.name
+                        sourceComponent: Component { RoomSyncCard {} }
+                    }
                 }
             }
+        }
         }
     }
 }

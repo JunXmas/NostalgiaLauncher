@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QObject, QUrl
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickView
 
-from nostalgia.api import Launcher, PaymentGateway
+from nostalgia.api import Launcher, PaymentGateway, RoomSyncGateway
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.interface_setup import InterfaceSetup
+from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
+from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 
 
@@ -21,10 +24,20 @@ def open_preview(
     payment_gateway: PaymentGateway | None = None,
     payment_demonstration: bool = False,
     ui_setup: bool = False,
+    room_sync_gateway: RoomSyncGateway | None = None,
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
     context = view.rootContext()
+    multiplayer_bridge = context.contextProperty("multiplayerBridge")
+    assert isinstance(multiplayer_bridge, MultiplayerBridge)
+    room_sync_bridge = RoomSyncBridge(
+        launcher, bridge, multiplayer_bridge, room_sync_gateway, parent=view
+    )
+    context.setContextProperty("roomSyncBridge", room_sync_bridge)
+    running_application = QGuiApplication.instance()
+    if running_application is not None:
+        running_application.aboutToQuit.connect(room_sync_bridge.cancel)
     content_bridge = context.contextProperty("contentBridge")
     assert isinstance(content_bridge, ContentBridge)
     context.setContextProperty(

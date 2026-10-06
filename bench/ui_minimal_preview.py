@@ -16,7 +16,7 @@ from pathlib import Path
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication
 
-from nostalgia.api import HttpPaymentGateway, Launcher
+from nostalgia.api import HttpPaymentGateway, HttpRoomSyncGateway, Launcher
 from nostalgia.net.http import HttpClient
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
@@ -28,6 +28,7 @@ def main() -> int:
     parser.add_argument("--payment-demo", action="store_true", help="QR mẫu, không chuyển tiền")
     parser.add_argument("--plus-url", default="", help="URL HTTPS của backend Plus đã triển khai")
     parser.add_argument("--plus-session-file", type=Path, help="File chứa phiên tài khoản ủng hộ")
+    parser.add_argument("--room-sync-url", default="", help="Relay HTTPS hỗ trợ đồng bộ Plus")
     args = parser.parse_args()
     if bool(args.plus_url) != bool(args.plus_session_file):
         parser.error("--plus-url và --plus-session-file phải đi cùng nhau")
@@ -47,6 +48,12 @@ def main() -> int:
     qt_application = QApplication(["Nostalgia UI preview"])
     qt_application.setApplicationName("Nostalgia UI preview")
     http_client = HttpClient(timeout_seconds=10)
+    session_token = args.plus_session_file.read_text().strip() if args.plus_session_file else ""
+    sync_gateway = (
+        HttpRoomSyncGateway(args.room_sync_url, http_client, session_token)
+        if args.room_sync_url
+        else None
+    )
     if args.payment_demo:
         from ui_payment_demo import DemoPaymentGateway
 
@@ -55,14 +62,15 @@ def main() -> int:
             payment_gateway=DemoPaymentGateway(),
             payment_demonstration=True,
             ui_setup=True,
+            room_sync_gateway=sync_gateway,
         )
     elif args.plus_session_file:
-        gateway = HttpPaymentGateway(
-            args.plus_url, args.plus_session_file.read_text().strip(), http_client
+        gateway = HttpPaymentGateway(args.plus_url, session_token, http_client)
+        view, bridge = open_preview(
+            launcher, payment_gateway=gateway, ui_setup=True, room_sync_gateway=sync_gateway
         )
-        view, bridge = open_preview(launcher, payment_gateway=gateway, ui_setup=True)
     else:
-        view, bridge = open_preview(launcher, ui_setup=True)
+        view, bridge = open_preview(launcher, ui_setup=True, room_sync_gateway=sync_gateway)
     try:
         if view.status() != QQuickView.Status.Ready:
             for error in view.errors():

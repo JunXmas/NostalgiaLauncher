@@ -87,6 +87,15 @@ class MultiplayerBridge(QObject):
         if clipboard is not None and self._status.room_code:
             clipboard.setText(self._status.room_code)
 
+    @Slot()
+    def copyLocalAddress(self) -> None:
+        clipboard = QGuiApplication.clipboard()
+        if clipboard is not None and self._status.role == "joined":
+            clipboard.setText(f"127.0.0.1:{self._status.local_port}")
+
+    def room_snapshot(self) -> RoomStatus:
+        return self._status
+
     @Slot(result=str)
     def clipboardText(self) -> str:
         """QML thuần không đọc được clipboard; nút Dán đi qua đây."""

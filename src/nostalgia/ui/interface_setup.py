@@ -55,7 +55,14 @@ class InterfaceSetup(QObject):
 
     def _is_busy(self) -> bool:
         context = self._view.rootContext()
-        for name in ("bridge", "accountBridge", "contentBridge", "storageBridge", "importBridge"):
+        for name in (
+            "bridge",
+            "accountBridge",
+            "contentBridge",
+            "storageBridge",
+            "importBridge",
+            "roomSyncBridge",
+        ):
             control = context.contextProperty(name)
             if isinstance(control, QObject) and control.property("busy"):
                 return True
