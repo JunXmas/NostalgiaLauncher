@@ -101,6 +101,7 @@ warn_unreachable = true
 module = [
     "test_qml",
     "test_preview_controls",
+    "test_minimal_preview",
     "test_bridges",
     "test_content_bridge",
     "test_content_bridge_packs",

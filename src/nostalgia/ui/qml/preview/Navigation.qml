@@ -1,0 +1,244 @@
+import QtQuick
+import "../" as Legacy
+
+Glass {
+    id: root
+    property int currentIndex: 0
+    signal navigate(int index)
+    padding: 16
+    radius: 22
+    readonly property var entries: [
+        {
+            label: "Trang chủ",
+            block: "grass",
+            index: 0
+        },
+        {
+            label: "Bản chơi",
+            block: "crafting",
+            index: 1
+        },
+        {
+            label: "Thư viện",
+            block: "bookshelf",
+            index: 2
+        },
+        {
+            label: "Tài khoản",
+            block: "diamond",
+            index: 3
+        },
+        {
+            label: "Chơi chung",
+            block: "command",
+            index: 4
+        },
+        {
+            label: "Nhật ký",
+            block: "chest",
+            index: 5
+        }
+    ]
+    Row {
+        id: brand
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: 10
+        spacing: 10
+        Image {
+            width: 30
+            height: 30
+            source: "../assets/logo.png"
+            mipmap: true
+        }
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Nostalgia"
+            color: GlassTheme.text
+            font.family: GlassTheme.font
+            font.pixelSize: 19
+            font.weight: Font.DemiBold
+        }
+    }
+    InertialScroll {
+        id: nav
+        anchors.top: brand.bottom
+        anchors.topMargin: 40
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: bottomLinks.top
+        anchors.bottomMargin: 20
+        contentHeight: links.height
+        Column {
+            id: links
+            width: parent.width
+            spacing: 6
+            Text {
+                x: 12
+                height: 26
+                text: "KHÔNG GIAN CỦA BẠN"
+                color: GlassTheme.muted
+                font.family: GlassTheme.font
+                font.pixelSize: 9
+                font.letterSpacing: 1.3
+            }
+            Repeater {
+                model: root.entries
+                Item {
+                    width: links.width
+                    height: 48 * GlassTheme.scale
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData.label
+                    function activate() {
+                        root.navigate(modelData.index);
+                    }
+                    Accessible.onPressAction: activate()
+                    Keys.onReturnPressed: activate()
+                    Keys.onSpacePressed: function (event) {
+                        if (!event.isAutoRepeat)
+                            activate();
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 12
+                        color: root.currentIndex === modelData.index ? "#2263c99e" : area.containsMouse ? "#0cffffff" : "transparent"
+                        border.color: parent.activeFocus ? GlassTheme.accent : root.currentIndex === modelData.index ? "#2475e5b4" : "transparent"
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: GlassTheme.quick
+                            }
+                        }
+                    }
+                    Legacy.BlockIcon {
+                        x: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 23
+                        height: 23
+                        block: modelData.block
+                        glyph: "·"
+                        spinning: false
+                    }
+                    Text {
+                        x: 47
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        font.family: GlassTheme.font
+                        font.pixelSize: 13 * GlassTheme.scale
+                        font.weight: root.currentIndex === modelData.index ? Font.DemiBold : Font.Normal
+                        color: root.currentIndex === modelData.index ? GlassTheme.text : GlassTheme.muted
+                    }
+                    MouseArea {
+                        id: area
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: parent.activate()
+                    }
+                }
+            }
+        }
+    }
+    Column {
+        id: bottomLinks
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: account.top
+        anchors.bottomMargin: 18
+        spacing: 2
+        Button {
+            width: parent.width
+            label: "Cài đặt"
+            quiet: true
+            onClicked: root.navigate(6)
+        }
+        Item {
+            width: parent.width
+            height: 42
+            Legacy.BlockIcon {
+                x: 12
+                anchors.verticalCenter: parent.verticalCenter
+                width: 22
+                height: 22
+                block: "beacon"
+                glyph: "·"
+            }
+            Button {
+                anchors.left: parent.left
+                anchors.leftMargin: 36
+                width: parent.width - 36
+                label: "Ủng hộ dự án"
+                quiet: true
+                onClicked: donateDialog.open()
+            }
+        }
+        Button {
+            width: parent.width
+            label: "Cộng đồng  ↗"
+            quiet: true
+            onClicked: settingsBridge.openCommunityPage()
+        }
+    }
+    Rectangle {
+        id: account
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 68
+        radius: 14
+        color: "#1012191d"
+        border.color: "#12ffffff"
+        Legacy.SkinFace {
+            id: face
+            x: 12
+            anchors.verticalCenter: parent.verticalCenter
+            size: 32
+            readonly property var active: accountBridge.accounts.find(function (a) {
+                return a.accountId === bridge.activeAccountId;
+            }) || null
+            source: active ? active.skinFile : ""
+            visible: !!source
+        }
+        Rectangle {
+            x: 12
+            anchors.verticalCenter: parent.verticalCenter
+            width: 32
+            height: 32
+            radius: 10
+            visible: !face.visible
+            color: "#254a3b"
+            Text {
+                anchors.centerIn: parent
+                text: bridge.activePlayerName ? bridge.activePlayerName[0] : "?"
+                color: GlassTheme.accent
+                font.pixelSize: 17
+            }
+        }
+        Column {
+            x: 55
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - 64
+            spacing: 4
+            Text {
+                width: parent.width
+                text: bridge.activePlayerName || "Khách"
+                color: GlassTheme.text
+                font.family: GlassTheme.font
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+            }
+            Text {
+                text: bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
+                color: GlassTheme.muted
+                font.family: GlassTheme.font
+                font.pixelSize: 11
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.navigate(3)
+        }
+    }
+}
