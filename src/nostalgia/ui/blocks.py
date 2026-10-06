@@ -5,7 +5,7 @@ shader, mà `MicaBackdrop.qml` đã ghi rõ hiệu ứng dựng bằng shader kh
 phần mềm. Một dải ảnh + `AnimatedSprite` thì chỉ là một `Image` đổi khung — chạy ở mọi
 nơi, và không tính gì lúc chạy.
 
-Beacon/kệ sách dùng model và texture nguyên bản Minecraft, kể cả khi chưa cài game.
+Mọi icon dùng model và texture nguyên bản Minecraft, kể cả khi chưa cài game.
 Nguồn và quyền sở hữu được ghi ở assets/minecraft-blocks/CREDITS.md.
 """
 
@@ -20,7 +20,7 @@ from PySide6.QtGui import QImage, QPainter, QPolygonF, QTransform
 
 from nostalgia.ui.block_model import CUBE_FACES, BlockSurface
 from nostalgia.ui.block_textures import (
-    BLOCK_TEXTURES,
+    BLOCK_MODELS,
     BlockFaces,
     faces_from_jar,
     fallback_faces,
@@ -34,7 +34,7 @@ FRAME_COUNT = 48  # số khung một vòng
 SUPERSAMPLE = 3  # vẽ gấp 3 rồi thu nhỏ: cạnh khối hết răng cưa
 TILT_DEGREES = 22.0  # nghiêng xuống, giống icon vật phẩm trong game
 START_DEGREES = 45.0  # khung 0 nhìn 3/4, không nhìn thẳng mặt
-MODEL_REVISIONS = {"beacon": 3, "bookshelf": 3}
+MODEL_REVISION = 5
 # Mặt nào lấy texture nào, và độ sáng — giống cách game tô: trên sáng nhất, hai bên tối dần.
 FACE_SOURCE: dict[str, tuple[str, float]] = {
     "top": ("top", 1.00),
@@ -151,12 +151,10 @@ def ensure_strips(cache_dir: Path, jar_path: Path | None) -> dict[str, Path]:
     lần mở launcher.
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
-    source = "jar" if jar_path is not None and jar_path.is_file() else "code"
+    source = "jar" if jar_path is not None and jar_path.is_file() else "vanilla"
     strips: dict[str, Path] = {}
-    for block in BLOCK_TEXTURES:
-        revision = f"_v{MODEL_REVISIONS[block]}" if block in MODEL_REVISIONS else ""
-        block_source = "vanilla" if block in MODEL_REVISIONS and source == "code" else source
-        target = cache_dir / f"{block}{revision}_{block_source}.png"
+    for block in BLOCK_MODELS:
+        target = cache_dir / f"{block}_v{MODEL_REVISION}_{source}.png"
         strips[block] = target
         if target.is_file():
             continue

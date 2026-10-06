@@ -59,7 +59,7 @@ Item {
     PlanetCard {
         objectName: "planetCard"
         landmarkX: 0.660; landmarkY: 0.522; below: true; entryIndex: 4  // hành tinh vành lam, dưới phải
-        pageIndex: 5; glyph: "≡"; block: "chest"
+        pageIndex: 5; glyph: "≡"; block: "barrel"
         title: Tr.text("log"); subtitle: Tr.text("planet_log_hint")
         onActivated: root.navigate(pageIndex)
     }

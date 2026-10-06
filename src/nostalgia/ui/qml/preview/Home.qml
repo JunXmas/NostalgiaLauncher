@@ -1,5 +1,4 @@
 import QtQuick
-import "../" as Legacy
 
 Item {
     id: root
@@ -47,7 +46,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 8
                     Text {
-                        text: "Không gian của bạn"
+                        text: "Hôm nay, mình chơi gì?"
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
                         font.pixelSize: 13
@@ -62,75 +61,11 @@ Item {
                     }
                 }
             }
-            Glass {
-                id: hero
+            HomeHero {
                 width: parent.width
-                height: Math.max(310, 280 * GlassTheme.scale)
-                radius: 26
-                padding: 32
-                color: GlassTheme.alpha(GlassTheme.selectedSurface, 0.85)
-                Column {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 165
-                    spacing: 18
-                    Text {
-                        text: root.chosen ? "SẴN SÀNG KHI BẠN MUỐN" : "MỘT KHỞI ĐẦU MỚI"
-                        color: GlassTheme.accent
-                        font.family: GlassTheme.font
-                        font.pixelSize: 10
-                        font.letterSpacing: 1.6
-                    }
-                    Text {
-                        width: parent.width
-                        text: root.chosen ? "Tiếp tục cuộc
-phiêu lưu của bạn." : "Thế giới tiếp theo
-đang chờ bạn."
-                        color: GlassTheme.text
-                        font.family: GlassTheme.font
-                        font.pixelSize: root.width < 750 ? 32 : 40
-                        font.weight: Font.DemiBold
-                        font.letterSpacing: -1.1
-                        lineHeight: 1.13
-                    }
-                    Text {
-                        width: parent.width
-                        elide: Text.ElideRight
-                        text: root.chosen ? root.chosen.label + "  ·  " + root.chosen.versionId : "Tạo một bản chơi hoặc khám phá modpack trong thư viện."
-                        color: GlassTheme.muted
-                        font.family: GlassTheme.font
-                        font.pixelSize: 13
-                    }
-                    Row {
-                        spacing: 12
-                        Button {
-                            objectName: "minimalPlay"
-                            width: 155
-                            height: 46
-                            primary: true
-                            label: bridge.gameRunning ? "Dừng game" : root.chosen ? "Chơi ngay  →" : "Tạo bản chơi  +"
-                            clickable: bridge.gameRunning || (!bridge.busy && !bridge.storageBusy && (!root.chosen || !!bridge.activePlayerName))
-                            onClicked: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.play(root.chosen.instanceId) : root.navigate(1)
-                        }
-                        Button {
-                            height: 46
-                            label: "Khám phá modpack"
-                            quiet: true
-                            onClicked: root.navigate(2)
-                        }
-                    }
-                }
-                Legacy.BlockIcon {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin: 10
-                    width: root.width < 750 ? 112 : 148
-                    height: width
-                    block: "grass"
-                    glyph: ""
-                    spinning: false
-                    opacity: 0.95
-                }
+                chosen: root.chosen
+                onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.play(root.chosen.instanceId) : root.navigate(1)
+                onLibraryRequested: root.navigate(2)
             }
             Item {
                 width: parent.width
@@ -173,34 +108,10 @@ phiêu lưu của bạn." : "Thế giới tiếp theo
                 font.family: GlassTheme.font
                 font.pixelSize: 13
             }
-            Rectangle {
+            HomeExplore {
                 width: parent.width
-                height: 1
-                color: "#13ffffff"
-            }
-            Item {
-                width: parent.width
-                height: 64
-                Column {
-                    spacing: 8
-                    Text {
-                        text: "Một chút mới mẻ cho thế giới quen thuộc."
-                        color: GlassTheme.text
-                        font.family: GlassTheme.font
-                        font.pixelSize: 15
-                    }
-                    Text {
-                        text: "Mod, shader và modpack — tìm điều hợp với bạn."
-                        color: GlassTheme.muted
-                        font.family: GlassTheme.font
-                        font.pixelSize: 13
-                    }
-                }
-                Button {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    label: "Mở thư viện  →"
-                    onClicked: root.navigate(2)
+                onNavigate: function (index) {
+                    root.navigate(index);
                 }
             }
         }

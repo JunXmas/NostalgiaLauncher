@@ -9,9 +9,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtGui import QImage
+from PySide6.QtGui import QImage, QTransform
 
 from nostalgia.model.json_value import JsonValue, as_list, as_mapping, as_string
+from nostalgia.ui.block_tint import load_biome_tint, tinted
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,7 @@ def _decode_model(reader: Callable[[str], bytes], block: str) -> BlockModel:
         return images[reference]
 
     surfaces: list[BlockSurface] = []
+    tint = load_biome_tint(reader, block) if block in ("grass_block", "oak_leaves") else None
     for raw_element in as_list(fields.get("elements")):
         element = as_mapping(raw_element)
         low, high = _triple(element.get("from")), _triple(element.get("to"))
@@ -109,6 +111,11 @@ def _decode_model(reader: Callable[[str], bytes], block: str) -> BlockModel:
             uv = as_list(face.get("uv")) or [0, 0, 16, 16]
             u0, v0, u1, v1 = (float(str(n)) * image.width() / 16 for n in uv)
             texture = image.copy(round(u0), round(v0), round(u1 - u0), round(v1 - v0))
+            if face.get("tintindex") is not None and tint is not None:
+                texture = tinted(texture, tint)
+            rotation = face.get("rotation")
+            if isinstance(rotation, (int, float)):
+                texture = texture.transformed(QTransform().rotate(rotation))
             vertices = tuple(
                 (
                     minimum[0] + (x + 1) * (maximum[0] - minimum[0]) / 2,
@@ -130,12 +137,19 @@ def _decode_model(reader: Callable[[str], bytes], block: str) -> BlockModel:
 
 
 def load_block_model(block: str, jar_path: Path | None = None) -> BlockModel:
-    """Ưu tiên model/texture từ client đã cài; thiếu thì dùng bản gốc 1.20.1 đóng kèm."""
+    """Ưu tiên model/texture từ client đã cài; phần thiếu dùng bản gốc 1.20.1 đóng kèm."""
+    assets_dir = Path(__file__).parent / "qml" / "assets" / "minecraft-blocks"
     if jar_path is not None:
         try:
             with zipfile.ZipFile(jar_path) as archive:
-                return _decode_model(lambda path: archive.read(f"assets/minecraft/{path}"), block)
+
+                def read_resource(path: str) -> bytes:
+                    try:
+                        return archive.read(f"assets/minecraft/{path}")
+                    except KeyError:
+                        return (assets_dir / path).read_bytes()
+
+                return _decode_model(read_resource, block)
         except (OSError, zipfile.BadZipFile, KeyError, ValueError) as error:
             logger.debug("model Minecraft trong jar không có hoặc không hợp lệ: %s", error)
-    assets_dir = Path(__file__).parent / "qml" / "assets" / "minecraft-blocks"
     return _decode_model(lambda path: (assets_dir / path).read_bytes(), block)

@@ -36,7 +36,7 @@ Glass {
         },
         {
             label: "Nhật ký",
-            block: "chest",
+            block: "barrel",
             index: 5
         }
     ]

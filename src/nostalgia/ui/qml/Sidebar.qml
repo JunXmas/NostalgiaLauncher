@@ -37,7 +37,7 @@ Rectangle {
             { label: Tr.text("library"),     glyph: "⚙", block: "bookshelf" },
             { label: Tr.text("accounts"),    glyph: "☺", block: "diamond" },
             { label: Tr.text("multiplayer"), glyph: "⛶", block: "command" },
-            { label: Tr.text("log"),         glyph: "≡", block: "chest" },
+            { label: Tr.text("log"),         glyph: "≡", block: "barrel" },
             { label: Tr.text("settings"),    glyph: "☸", block: "redstone" }
         ];
     }

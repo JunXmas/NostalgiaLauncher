@@ -18,7 +18,8 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
   Microsoft là lựa chọn chính, Ely.by và ngoại tuyến là lựa chọn phụ. Có đường khám phá
   trước; tài khoản có sẵn vào launcher ngay.
 - [Trang chủ](preview/minimal/home.png): một nút Chơi chính; ưu tiên bản vừa chơi, sau đó
-  bản ghim; các bản khác chỉ có nút chọn.
+  bản ghim; các bản khác chỉ có nút chọn. [Home sinh động hơn](HOME_LIVING_PREVIEW.md)
+  thay khối cỏ đơn bằng cảnh ghép từ model Minecraft gốc, ánh sáng và chuyển động nhẹ.
 - [Bản chơi](preview/minimal/instances.png): bỏ ảnh rỗng lớn, giảm số nút nổi; quản lý/sao
   lưu/nhập vẫn truy cập được. [Dạng danh sách](preview/minimal/instances-compact.png).
 - [Thư viện](preview/minimal/library.png): tìm kiếm và loại nội dung là hai lớp chính;
@@ -67,7 +68,9 @@ Complementary Reimagined và Fabulously Optimized, nạp từ fixture cục bộ
   tương thích. Có trạng thái tải, thử lại, tiến độ và kết quả cài; khóa thao tác cài lặp.
   Nội dung giới thiệu Markdown/HTML hiển thị thành văn bản cuộn được, có nút mở trang
   dự án gốc. CurseForge hiện dùng danh sách tối đa 50 file từ API như luồng thư viện cũ.
-- Reuse BlockIcon và nguyên model/texture Minecraft; không vẽ lại beacon hoặc kệ sách.
+- Mọi icon BlockIcon dùng model/texture Minecraft gốc, kể cả khi chưa cài game;
+  không còn texture màu/nhiễu tự tạo. Nhật ký dùng barrel vanilla, Home ghép các khối
+  grass/dirt/stone, cây sồi, bàn chế tạo và glowstone từ cùng tài nguyên gốc.
 - Cuộn bánh xe tích lũy đích, nội suy theo thời gian; đổi hướng liên tục và kẹp biên. Timer
   dừng khi hết chuyển động. Trackpad có pixel delta dùng quán tính của OS, tránh làm mượt
   hai lần. Bàn phím, kéo nội dung và scrollbar vẫn hoạt động. Giảm chuyển động tắt nội suy.

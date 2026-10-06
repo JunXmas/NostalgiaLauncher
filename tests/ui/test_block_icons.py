@@ -25,7 +25,7 @@ from PySide6.QtQml import QQmlComponent, QQmlEngine
 from nostalgia.storage.paths import DataPaths
 from nostalgia.ui import blocks
 from nostalgia.ui.block_bridge import newest_client_jar
-from nostalgia.ui.block_textures import BLOCK_TEXTURES, fallback_faces
+from nostalgia.ui.block_textures import BLOCK_MODELS, fallback_faces
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -127,20 +127,17 @@ def test_strips_come_from_the_jar_when_one_is_present(tmp_path: Path) -> None:
     made = blocks.ensure_strips(tmp_path / "cache", jar)
     assert made["grass"].name.endswith("_jar.png"), "tên file phải phân biệt nguồn texture"
     strip = QImage(str(made["grass"]))
-    centre = strip.pixelColor(blocks.FRAME_SIZE // 2, blocks.FRAME_SIZE // 2)
-    assert centre.red() > 120 and centre.blue() > 120 and centre.green() < 90, (
-        f"không dùng texture trong jar (màu giữa khung: {centre.name()})"
+    colours = [strip.pixelColor(x, y) for y in range(64) for x in range(64)]
+    assert sum(c.red() > 120 and c.blue() > 120 and c.green() < 90 for c in colours) > 200, (
+        "không dùng texture trong jar"
     )
 
 
 def test_no_jar_still_yields_every_icon(tmp_path: Path) -> None:
     """Chưa cài bản chơi nào thì vẫn phải đủ icon — launcher mới cài là đúng cảnh này."""
     made = blocks.ensure_strips(tmp_path / "cache", None)
-    assert set(made) == set(BLOCK_TEXTURES)
-    assert all(
-        path.name.endswith("_vanilla.png" if block in ("beacon", "bookshelf") else "_code.png")
-        for block, path in made.items()
-    )
+    assert set(made) == set(BLOCK_MODELS)
+    assert all(path.name.endswith("_vanilla.png") for path in made.values())
 
 
 def test_newest_client_jar_picks_the_latest_install(tmp_path: Path) -> None:
@@ -198,9 +195,9 @@ def test_every_sidebar_icon_file_is_really_in_the_package() -> None:
 
 
 def test_the_donate_entry_uses_a_block_that_the_texture_table_knows() -> None:
-    """Ô ỦNG HỘ xin khối `beacon`. Tên không có trong `BLOCK_TEXTURES` thì `ensure_strips`
+    """Ô ỦNG HỘ xin khối `beacon`. Tên không có trong `BLOCK_MODELS` thì `ensure_strips`
     không sinh dải nào và icon lặng lẽ rơi về chữ dự phòng mãi mãi."""
-    assert "beacon" in BLOCK_TEXTURES
+    assert "beacon" in BLOCK_MODELS
     sidebar = (QML_DIR / "Sidebar.qml").read_text(encoding="utf-8")
     donate_block = sidebar.split('objectName: "donateLink"', 1)[1]
     assert 'block: "beacon"' in donate_block.split("NavItem")[0]
