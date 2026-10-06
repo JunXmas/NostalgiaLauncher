@@ -1,4 +1,5 @@
 import QtQuick
+import "../preview" as Preview
 import "../"
 
 /*
@@ -49,7 +50,7 @@ Item {
         anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 4 }
         height: page.failure ? failureText.implicitHeight + 16 : 0
         visible: page.failure !== ""
-        radius: 0; color: "#33ff5555"; border.color: "#80ff5555"
+        radius: Theme.modern ? 8 : 0; color: "#33ff5555"; border.color: "#80ff5555"
         Text {
             id: failureText
             width: parent.width - 24; wrapMode: Text.WordWrap
@@ -58,7 +59,7 @@ Item {
         }
     }
 
-    Flickable {
+    Preview.InertialScroll {
         anchors { top: failureBar.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
                   margins: Theme.gap; topMargin: 10 }
         id: scroll
@@ -103,7 +104,7 @@ Item {
                     visible: hostPanel.hosting; spacing: 10; width: parent.width
                     Text { text: Tr.phrase("Mã phòng — gửi cho bạn:"); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
                     Rectangle {
-                        width: parent.width; height: 56; radius: 0
+                        width: parent.width; height: 56; radius: Theme.modern ? 8 : 0
                         color: "#1a2b1f"; border.color: Theme.accent
                         Text {
                             objectName: "roomCodeText"

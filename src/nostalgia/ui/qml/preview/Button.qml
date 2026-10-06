@@ -8,11 +8,14 @@ Item {
     property bool quiet: false
     property bool selected: false
     property bool clickable: true
+    readonly property bool hovered: hover.hovered
     signal clicked
     implicitWidth: caption.implicitWidth + 32
     implicitHeight: 42
     width: implicitWidth
     height: implicitHeight
+    scale: press.pressed && clickable ? 0.97 : 1
+    Behavior on scale { NumberAnimation { duration: GlassTheme.quick; easing.type: Easing.OutCubic } }
     enabled: clickable
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
@@ -55,6 +58,7 @@ Item {
         cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
     TapHandler {
+        id: press
         enabled: root.clickable
         onTapped: {
             root.forceActiveFocus();

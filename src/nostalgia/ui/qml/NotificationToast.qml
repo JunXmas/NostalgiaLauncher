@@ -50,7 +50,7 @@ Item {
 
         Rectangle {
             id: glyphBox
-            width: 36; height: 36; radius: 0
+            width: 36; height: 36; radius: Theme.modern ? 8 : 0
             anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
             color: card.eventKind === "crashed" ? "#3a1c1e" : Theme.accentSoft
             Text {

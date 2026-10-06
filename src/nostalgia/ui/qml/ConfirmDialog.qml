@@ -48,7 +48,7 @@ Item {
         onWheel: function (wheel) { wheel.accepted = true; }
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
-    Rectangle {
+    DialogFrame {
         id: box
         anchors.centerIn: parent
         width: 420; height: contentColumn.height + 52

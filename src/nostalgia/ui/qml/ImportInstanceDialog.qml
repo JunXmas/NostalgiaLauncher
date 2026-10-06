@@ -35,7 +35,7 @@ Item {
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
 
-    Rectangle {
+    DialogFrame {
         id: box
         anchors.centerIn: parent
         width: Math.min(parent.width - 40, 760)
@@ -151,7 +151,7 @@ Item {
                     clip: true; spacing: 6
                     model: importBridge.scanResults
                     delegate: Rectangle {
-                        width: ListView.view.width; height: 52; radius: 0
+                        width: ListView.view.width; height: 52; radius: Theme.modern ? 8 : 0
                         color: launcherHover.hovered ? Theme.surfaceHigh : Theme.surface
                         border.color: Theme.border
                         Column {

@@ -35,19 +35,20 @@ Item {
     Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: rightColumn.left; margins: Theme.gap }
-        height: 58
+        height: Theme.modern ? 90 * Theme.textScale : 58
         PageTitle {
             anchors { left: parent.left; top: parent.top }
             caption: Tr.phrase("Tài khoản")
         }
         Text {
-            anchors { left: parent.left; top: parent.top; topMargin: 32 }
+            anchors { left: parent.left; top: parent.top; topMargin: Theme.modern ? 42 * Theme.textScale : 32 }
+            width: header.width; wrapMode: Text.WordWrap
             text: Tr.phrase("Quản lý tài khoản Minecraft: premium (Microsoft) và non-premium (Ely.by).")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         ActionButton {
             objectName: "addAccountButton"
-            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+            anchors { right: parent.right; top: parent.top }
             label: Tr.phrase("+  Thêm tài khoản")
             onClicked: addDialog.openDialog()
         }
@@ -87,7 +88,7 @@ Item {
                             Text { text: modelData.playerName; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
                             Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: kindText.width + 12; height: 16; radius: 0
+                                width: kindText.width + 12; height: 16; radius: Theme.modern ? 8 : 0
                                 color: modelData.accountKind === "microsoft" ? "#1d4d13" : Theme.surfaceHigh
                                 border.color: Theme.border
                                 Text { id: kindText; anchors.centerIn: parent; text: modelData.kindLabel
@@ -164,10 +165,13 @@ Item {
     Rectangle {
         id: rightColumn
         anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
-        width: 300
+        visible: !Theme.modern || page.width > 820 * Theme.textScale
+        width: visible ? 300 : 0
+        radius: Theme.radius
+        border.color: Theme.border
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0d1a11" }
-            GradientStop { position: 1.0; color: "#08110b" }
+            GradientStop { position: 0.0; color: Theme.modern ? Theme.surfaceHigh : "#0d1a11" }
+            GradientStop { position: 1.0; color: Theme.modern ? Theme.background : "#08110b" }
         }
         Rectangle {
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom }

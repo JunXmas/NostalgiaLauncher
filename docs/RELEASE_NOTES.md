@@ -1,3 +1,13 @@
+## 1.2.0rc4 — Giao diện nhất quán & chuyển động
+
+- Quản lý bản chơi có Tổng quan, Nội dung đã cài, Hiệu năng, Sao lưu & dữ liệu; thao tác lưu và mở thư mục luôn ở cuối cửa sổ.
+- Đã cài và bộ lọc thư viện dùng giao diện mới, không chuyển sang toàn bộ trang thư viện cũ.
+- Đồng bộ nút, ô nhập, công tắc, checkbox, slider, thẻ và các cửa sổ tạo/nhập/sao lưu/xác nhận theo hệ màu hiện có.
+- Khôi phục block Minecraft gốc xoay khi hover hoặc focus sidebar; chỉ báo trang trượt, nút có nhịp nhấn, trang/popup mờ chuyển nhẹ.
+- Tiêu đề Manrope, chữ đọc Inter, đầy đủ tiếng Việt và cỡ chữ theo thiết lập.
+- Cuộn bằng nhịp render với độ hãm theo Lenis trên skewclient.store. Home, thư viện, Đã cài, quản lý bản chơi, form và Cài đặt cùng cơ chế; trackpad dùng quán tính hệ điều hành, Giảm chuyển động bỏ hiệu ứng.
+- Bộ cài Linux sử dụng libstdc++ của máy để tương thích Mesa mới, tránh xung đột thư viện từ runner build.
+
 ## 1.2.0rc3 — sửa đóng gói OpenGL Linux
 
 - Dùng libstdc++ của hệ điều hành trên Linux để tương thích với driver Mesa mới.

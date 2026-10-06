@@ -37,6 +37,9 @@ Item {
         root.moved(next);
     }
 
+    Item {
+        anchors.fill: parent
+        visible: !Theme.modern
     // ----- rãnh -----
     Rectangle {
         id: rail
@@ -73,6 +76,22 @@ Item {
                 height: 2; color: "#55000000"
             }
         }
+    }
+
+    }
+    Rectangle {
+        visible: Theme.modern
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width; height: 6; radius: 3; color: Theme.surfaceHigh
+        Rectangle { width: root.fraction * parent.width; height: parent.height; radius: 3; color: Theme.accent }
+    }
+    Rectangle {
+        visible: Theme.modern
+        x: root.fraction * root.travel; y: (parent.height - height) / 2
+        width: root.knobWidth; height: width; radius: width / 2
+        color: Theme.text; border.color: Theme.accent
+        scale: drag.active || hover.hovered ? 1.15 : 1
+        Behavior on scale { NumberAnimation { duration: Theme.quick } }
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

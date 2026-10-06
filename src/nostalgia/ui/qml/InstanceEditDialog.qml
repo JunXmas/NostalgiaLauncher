@@ -35,7 +35,7 @@ Item {
         onClicked: dialog.visible = false
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
-    Rectangle {
+    DialogFrame {
         anchors.centerIn: parent
         width: Math.min(560, parent.width - 48); height: Math.min(490, parent.height - 32)
         radius: Theme.radius

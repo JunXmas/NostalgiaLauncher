@@ -47,6 +47,9 @@ Item {
     height: Math.max(36, root.fontSize + 22)
     implicitWidth: caption.width + 34
 
+    Item {
+        anchors.fill: parent
+        visible: !Theme.modern
     // Viền tối bao cả khối.
     Rectangle { anchors.fill: parent; color: "#1e1e1f" }
     // Cạnh dưới tối.
@@ -79,6 +82,27 @@ Item {
             font.pixelSize: root.fontSize
             font.letterSpacing: root.label === root.label.toUpperCase() ? Theme.trackLabel : 0
             style: Text.Raised; styleColor: "#40000000"
+        }
+    }
+
+    }
+    Rectangle {
+        anchors.fill: parent
+        visible: Theme.modern
+        radius: 12
+        color: root.danger ? Theme.mix(Theme.surface, Theme.danger, hover.hovered ? 0.4 : 0.28) : root.primary ? root.faceColor : hover.hovered ? Theme.surfaceHigh : Theme.surface
+        border.color: root.activeFocus ? Theme.accent : root.danger ? Theme.danger : Theme.border
+        opacity: root.clickable ? 1 : 0.4
+        scale: press.pressed ? 0.97 : 1
+        Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: Theme.quick } }
+        Text {
+            anchors.centerIn: parent
+            text: root.label
+            color: Theme.text
+            font.family: Theme.sans
+            font.pixelSize: root.fontSize
+            font.weight: Font.DemiBold
         }
     }
 

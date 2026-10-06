@@ -33,6 +33,9 @@ Item {
     implicitWidth: 44; implicitHeight: 24
     width: implicitWidth; height: implicitHeight
 
+    Item {
+        anchors.fill: parent
+        visible: !Theme.modern
     // Viền tối bao cả khối.
     Rectangle { anchors.fill: parent; color: Theme.blockBorder }
     // Cạnh dưới tối.
@@ -92,6 +95,22 @@ Item {
                 anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                 height: 2; color: "#33000000"
             }
+        }
+    }
+
+    }
+    Rectangle {
+        anchors.fill: parent
+        visible: Theme.modern
+        radius: Theme.modern ? height / 2 : 0
+        color: root.checked ? Theme.accentDeep : Theme.surfaceHigh
+        border.color: root.activeFocus ? Theme.accent : Theme.border
+        Behavior on color { ColorAnimation { duration: Theme.quick } }
+        Rectangle {
+            x: root.checked ? parent.width - width - 3 : 3
+            y: 3; width: parent.height - 6; height: width; radius: Theme.modern ? width / 2 : 0
+            color: Theme.text
+            Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         }
     }
 

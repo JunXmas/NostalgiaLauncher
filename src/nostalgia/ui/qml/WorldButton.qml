@@ -55,7 +55,7 @@ Item {
                 anchors { left: parent.left; leftMargin: 8; verticalCenter: parent.verticalCenter }
                 spacing: 8
                 Rectangle {
-                    width: 20; height: 20; radius: 0
+                    width: 20; height: 20; radius: Theme.modern ? 8 : 0
                     anchors.verticalCenter: parent.verticalCenter
                     color: Theme.accentSoft; border.color: Theme.accent
                     clip: true

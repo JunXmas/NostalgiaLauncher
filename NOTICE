@@ -64,6 +64,7 @@ Các thành phần dưới đây giữ giấy phép riêng của chúng, không 
   file font (`Inter-OFL.txt`, `MinecraftF2D-OFL.txt`) và `tests/ui/test_fonts.py` gác cho
   chúng không biến mất:
   - **Inter** (Rasmus Andersson) — chữ đọc.
+  - **Manrope** (Mikhail Sharanda, Mirko Velimirović) — tiêu đề của giao diện mới; SIL OFL 1.1, kèm `Manrope-OFL.txt`.
   - **Minecraft F2D v1.42** — nhãn viết hoa. Font tự làm theo phong cách Minecraft, KHÔNG
     phải font của Mojang; chọn nó vì nó là font kiểu pixel duy nhất tìm được phủ đủ 74 ký
     tự có dấu tiếng Việt.

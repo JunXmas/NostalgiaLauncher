@@ -54,7 +54,7 @@ Item {
                     Text {
                         text: "Chào " + (bridge.activePlayerName || "bạn") + "."
                         color: GlassTheme.text
-                        font.family: GlassTheme.font
+                        font.family: GlassTheme.displayFont
                         font.pixelSize: GlassTheme.fontPage
                         font.weight: Font.DemiBold
                         font.letterSpacing: -0.7

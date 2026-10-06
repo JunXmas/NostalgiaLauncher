@@ -70,6 +70,18 @@ Glass {
         anchors.bottom: bottomLinks.top
         anchors.bottomMargin: 20
         contentHeight: links.height
+        Rectangle {
+            readonly property color tint: Legacy.Theme.accents[Math.min(5, root.currentIndex)]
+            objectName: "navigationIndicator"
+            width: links.width; height: 48 * GlassTheme.scale
+            y: 32 + Math.min(5, root.currentIndex) * (48 * GlassTheme.scale + 6)
+            radius: 12
+            opacity: root.currentIndex < 6 ? 1 : 0
+            color: Legacy.Theme.mix(GlassTheme.raised, tint, 0.22)
+            Behavior on y { NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
+            Behavior on color { ColorAnimation { duration: GlassTheme.normal } }
+            Behavior on opacity { NumberAnimation { duration: GlassTheme.quick } }
+        }
         Column {
             id: links
             width: parent.width
@@ -87,6 +99,7 @@ Glass {
                 model: root.entries
                 Item {
                     id: navEntry
+                    objectName: "navigationEntry-" + modelData.index
                     readonly property color tint: Legacy.Theme.accents[modelData.index]
                     width: links.width
                     height: 48 * GlassTheme.scale
@@ -105,7 +118,7 @@ Glass {
                     Rectangle {
                         anchors.fill: parent
                         radius: 12
-                        color: root.currentIndex === modelData.index ? Legacy.Theme.mix(GlassTheme.raised, navEntry.tint, 0.22) : area.containsMouse ? GlassTheme.alpha(navEntry.tint, 0.08) : "transparent"
+                        color: area.containsMouse ? GlassTheme.alpha(navEntry.tint, 0.08) : "transparent"
                         border.color: parent.activeFocus ? GlassTheme.accent : root.currentIndex === modelData.index ? GlassTheme.alpha(navEntry.tint, 0.25) : "transparent"
                         Behavior on color {
                             ColorAnimation {
@@ -120,7 +133,8 @@ Glass {
                         height: 23
                         block: modelData.block
                         glyph: "·"
-                        spinning: false
+                        objectName: "navigationBlock-" + modelData.index
+                        spinning: area.containsMouse || navEntry.activeFocus
                     }
                     Text {
                         x: 47
@@ -133,6 +147,7 @@ Glass {
                     }
                     MouseArea {
                         id: area
+                        objectName: "navigationHit-" + modelData.index
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
@@ -149,11 +164,19 @@ Glass {
         anchors.bottom: account.top
         anchors.bottomMargin: 18
         spacing: 2
-        Button {
-            width: parent.width
-            label: "Cài đặt"
-            quiet: true
-            onClicked: root.navigate(6)
+        Item {
+            width: parent.width; height: 42
+            Legacy.BlockIcon {
+                x: 12; anchors.verticalCenter: parent.verticalCenter
+                width: 22; height: 22; block: "redstone"; glyph: "·"
+                spinning: settingsAction.hovered
+            }
+            Button {
+                id: settingsAction
+                anchors.left: parent.left; anchors.leftMargin: 36
+                width: parent.width - 36; label: "Cài đặt"; quiet: true
+                onClicked: root.navigate(6)
+            }
         }
         Item {
             width: parent.width
@@ -164,6 +187,10 @@ Glass {
                 width: 22
                 height: 22
                 block: "beacon"
+                id: supportBeacon
+                objectName: "supportBlock"
+                spinning: supportHover.hovered || donateHover.hovered
+                HoverHandler { id: supportHover }
                 glyph: "·"
             }
             Button {
@@ -173,6 +200,7 @@ Glass {
                 label: "Ủng hộ dự án"
                 quiet: true
                 objectName: "openSupport"
+                HoverHandler { id: donateHover }
                 onClicked: root.supportRequested()
             }
         }

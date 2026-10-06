@@ -27,7 +27,7 @@ Item {
                 width: parent.width
                 visible: !root.compact || !socialBridge.peerId
                 height: Math.max(title.implicitHeight, openRoom.height)
-                PaymentText { id: title; width: parent.width - (openRoom.visible ? openRoom.width + 14 : 0); text: "Bạn bè"; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold }
+                PaymentText { id: title; width: parent.width - (openRoom.visible ? openRoom.width + 14 : 0); text: "Bạn bè"; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
                 Button { id: openRoom; objectName: "friendsOpenRoom"; anchors.right: parent.right; visible: socialBridge.signedIn && !multiplayerBridge.active; label: "Mở phòng"; primary: true; onClicked: multiplayerBridge.startHosting() }
             }
             Item {

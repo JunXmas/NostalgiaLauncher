@@ -13,6 +13,8 @@ Item {
     Component.onCompleted: {
         GlassTheme.preferences = settingsBridge;
         GlassTheme.backdrop = ambient;
+        Legacy.Theme.modern = true;
+        Legacy.Theme.modalBackdrop = scene;
         Legacy.Theme.preferences = settingsBridge;
         Legacy.Tr.setLanguage(settingsBridge.language);
     }
@@ -62,6 +64,15 @@ Item {
                 anchors.topMargin: 30
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 24
+                onLoaded: pageEntrance.restart()
+                transform: Translate { id: pageOffset }
+                SequentialAnimation {
+                    id: pageEntrance
+                    ParallelAnimation {
+                        NumberAnimation { target: pages; property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: pageOffset; property: "y"; from: GlassTheme.reducedMotion ? 0 : 12; to: 0; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+                    }
+                }
                 source: {
                     if (root.currentIndex === 0)
                         return "Home.qml";
@@ -70,7 +81,7 @@ Item {
                     if (root.currentIndex === 4)
                         return "Friends.qml";
                     if (root.currentIndex === 2)
-                        return root.advancedLibrary ? "../pages/LibraryPage.qml" : "Library.qml";
+                        return "Library.qml";
                     return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
                 }
                 Connections {

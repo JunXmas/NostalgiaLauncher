@@ -34,7 +34,7 @@ Item {
         x: active ? active.x : 0
         width: active ? active.width : 0
         anchors.bottom: parent.bottom
-        height: 2; radius: 0
+        height: 2; radius: Theme.modern ? 8 : 0
         color: Theme.accent
         Behavior on x { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         Behavior on width { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }

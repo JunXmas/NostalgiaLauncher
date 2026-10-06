@@ -11,6 +11,8 @@ Item {
     implicitWidth: 1360
     implicitHeight: 860
     Component.onCompleted: {
+        Theme.modern = false;
+        Theme.modalBackdrop = null;
         Theme.preferences = settingsBridge;
         Tr.setLanguage(settingsBridge.language);
     }

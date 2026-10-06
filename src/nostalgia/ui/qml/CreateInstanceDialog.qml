@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Preview
 import QtQuick.Dialogs
 
 /*
@@ -13,6 +14,7 @@ Item {
     id: dialog
     visible: false
     z: 100
+    Keys.onEscapePressed: if (!bridge.busy) dialog.close()
 
     property string loaderKind: "optimized"
     property string gameVersion: ""
@@ -107,6 +109,7 @@ Item {
         dialog.advancedOpen = false;
         nameField.text = ""; heapField.text = "";
         dialog.visible = true;
+        box.forceActiveFocus();
         notifier.playUi("open");
         if (dialog.released.length === 0) catalogBridge.loadReleasedVersions();
         // Mở ra là đã ở Optimized, nên danh sách bản được hỗ trợ phải có ngay — không có thì
@@ -133,20 +136,22 @@ Item {
     // nuốt sự kiện nên bấm nút BÊN TRONG hộp cũng lọt xuống đây (lỗi thật).
     MouseArea {
         anchors.fill: parent
+        onWheel: function(event) { event.accepted = true; }
         onClicked: if (!bridge.busy) dialog.close()
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
 
-    Rectangle {
+    DialogFrame {
         id: box
+        backdrop: Theme.modern ? Theme.modalBackdrop : null
         anchors.centerIn: parent
         width: Math.min(parent.width - 40, 1120)
         height: Math.min(parent.height - 20, 760)
         radius: Theme.radius
         color: Theme.surface
         // Nét mực tối 2 px như Panel.qml — hộp thoại phải cùng ngôn ngữ hình khối với thẻ.
-        border.color: Qt.darker(Theme.background, 1.7)
-        border.width: 2
+        border.color: Theme.modern ? Theme.border : Qt.darker(Theme.background, 1.7)
+        border.width: Theme.modern ? 1 : 2
         scale: dialog.visible ? 1 : 0.96
         Behavior on scale { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         MouseArea { anchors.fill: parent }
@@ -157,9 +162,10 @@ Item {
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom; margins: 24 }
             width: Math.min(300, box.width * 0.35)
 
-            Flickable {
+            Preview.InertialScroll {
                 id: formFlick
                 anchors.fill: parent
+                anchors.bottomMargin: 60
                 contentWidth: width
                 contentHeight: formColumn.implicitHeight
                 clip: true
@@ -209,7 +215,7 @@ Item {
                             width: parent.width; height: 74; radius: Theme.radiusSmall
                             color: selected ? Theme.accentSoft : Theme.surfaceHigh
                             border.color: selected ? Theme.accent : Theme.border
-                            border.width: 2
+                            border.width: Theme.modern ? 1 : 2
                             Behavior on color { ColorAnimation { duration: Theme.quick } }
 
                             Image {
@@ -228,7 +234,7 @@ Item {
                                            font.pixelSize: Theme.fontHeading; font.bold: true }
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: recommendText.width + 12; height: 17; radius: 0
+                                        width: recommendText.width + 12; height: 17; radius: Theme.modern ? 8 : 0
                                         color: Theme.accent
                                         Text { id: recommendText; anchors.centerIn: parent; text: Tr.phrase("ĐỀ XUẤT")
                                                color: "#11151c"; font.pixelSize: Theme.fontLabel
@@ -404,7 +410,12 @@ Item {
                         text: bridge.progressText
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
                     }
-                    ActionButton {
+
+                }
+            }
+            ActionButton {
+                objectName: "createInstanceConfirm"
+                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
                         width: parent.width
                         height: 44
                         label: bridge.busy ? Tr.phrase("Đang cài...") : dialog.createLabel
@@ -414,8 +425,6 @@ Item {
                                                                 dialog.loaderVersion, parseInt(heapField.text) || 0,
                                                                 dialog.gameDirUrl)
                     }
-                }
-            }
         }
 
         Rectangle { x: form.x + form.width + 20; y: 0; width: 1; height: box.height; color: Theme.border }
@@ -520,7 +529,7 @@ Item {
                             Rectangle {
                                 anchors.fill: parent; anchors.margins: -2
                                 radius: Theme.radiusSmall + 2; color: "transparent"
-                                border.width: 2; border.color: Theme.accent
+                                border.width: Theme.modern ? 1 : 2; border.color: Theme.accent
                                 opacity: card.lit ? 0.6 : 0
                                 Behavior on opacity { NumberAnimation { duration: Theme.normal } }
                             }
@@ -601,6 +610,8 @@ Item {
                                            biết vì sao. Bấm được thì dòng "Còn thiếu" nói rõ
                                            lý do và đưa luôn nút đổi sang Fabric. */
                                         opacity: supported ? 1 : 0.45
+                                        Item {
+                                            anchors.fill: parent; visible: !Theme.modern
                                         Rectangle { anchors.fill: parent; color: "#1e1e1f" }
                                         Rectangle {
                                             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 2 }
@@ -625,8 +636,14 @@ Item {
                                                    font.pixelSize: Theme.fontBody; font.bold: true
                                                    style: Text.Raised; styleColor: "#40000000" }
                                         }
-                                        HoverHandler { id: versionHover; cursorShape: Qt.PointingHandCursor }
-                                        TapHandler { id: versionPress; onTapped: dialog.pickGameVersion(modelData.versionId) }
+                                        }
+                                        ActionButton {
+                                            anchors.fill: parent; visible: Theme.modern
+                                            label: modelData.versionId; primary: versionCell.selected
+                                            onClicked: dialog.pickGameVersion(modelData.versionId)
+                                        }
+                                        HoverHandler { id: versionHover; enabled: !Theme.modern; cursorShape: Qt.PointingHandCursor }
+                                        TapHandler { id: versionPress; enabled: !Theme.modern; onTapped: dialog.pickGameVersion(modelData.versionId) }
                                     }
                                 }
                             }
@@ -651,7 +668,7 @@ Item {
                     model: catalogBridge.loaderVersions
                     delegate: Rectangle {
                         readonly property bool selected: modelData.loaderVersion === dialog.loaderVersion
-                        width: ListView.view.width; height: 38; radius: 0
+                        width: ListView.view.width; height: 38; radius: Theme.modern ? 8 : 0
                         color: selected ? Theme.accentSoft : Theme.surfaceHigh
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
@@ -661,7 +678,7 @@ Item {
                         Rectangle {
                             anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
                             visible: modelData.stable
-                            width: stableText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
+                            width: stableText.width + 14; height: 18; radius: Theme.modern ? 8 : 0; color: Theme.accentDeep
                             Text { id: stableText; anchors.centerIn: parent; text: Tr.phrase("ổn định"); color: "white"; font.pixelSize: Theme.fontLabel }
                         }
                         HoverHandler { cursorShape: Qt.PointingHandCursor }

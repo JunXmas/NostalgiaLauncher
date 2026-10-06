@@ -50,7 +50,7 @@ Item {
             Repeater {
                 model: [{ key: "info", text: Tr.phrase("Tất cả") }, { key: "warn", text: Tr.phrase("Cảnh báo+") }, { key: "error", text: Tr.phrase("Lỗi") }]
                 Rectangle {
-                    width: chipText.width + 22; height: 30; radius: 0
+                    width: chipText.width + 22; height: 30; radius: Theme.modern ? 8 : 0
                     color: page.minimumLevel === modelData.key ? Theme.accentSoft : Theme.surface
                     border.color: page.minimumLevel === modelData.key ? Theme.accent : Theme.border
                     Text { id: chipText; anchors.centerIn: parent; text: modelData.text; color: Theme.text; font.pixelSize: Theme.fontBody }

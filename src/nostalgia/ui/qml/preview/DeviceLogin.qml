@@ -2,6 +2,8 @@ import QtQuick
 
 Item {
     id: root
+    opacity: visible ? 1 : 0
+    Behavior on opacity { NumberAnimation { duration: GlassTheme.normal } }
     objectName: "minimalDeviceLogin"
     visible: false
     z: 110
@@ -40,7 +42,7 @@ Item {
             Text {
                 text: "Đăng nhập Microsoft"
                 color: GlassTheme.text
-                font.family: GlassTheme.font
+                font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontLogin
                 font.weight: Font.DemiBold
             }

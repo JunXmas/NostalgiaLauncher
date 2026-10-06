@@ -11,6 +11,8 @@ Rectangle {
     signal picked
     height: compact ? 92 : 204
     radius: 18
+    scale: hover.hovered ? 1.008 : 1
+    Behavior on scale { NumberAnimation { duration: GlassTheme.quick; easing.type: Easing.OutCubic } }
     color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
     border.color: selected ? GlassTheme.alpha(GlassTheme.accent, 0.65) : hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.40) : GlassTheme.stroke
     Behavior on color {
@@ -18,8 +20,8 @@ Rectangle {
             duration: GlassTheme.quick
         }
     }
-    readonly property string loader: (entry.versionId || "").indexOf("forge") >= 0 ? "Forge" : (entry.versionId || "").indexOf("fabric") >= 0 ? "Fabric" : "Vanilla"
-    readonly property string version: (entry.versionId || "").split("-")[0]
+    readonly property string loader: (entry.versionId || "").indexOf("neoforge") >= 0 ? "NeoForge" : (entry.versionId || "").indexOf("forge") >= 0 ? "Forge" : (entry.versionId || "").indexOf("quilt") >= 0 ? "Quilt" : (entry.versionId || "").indexOf("fabric") >= 0 ? "Fabric" : "Vanilla"
+    readonly property string version: /^(fabric-loader|quilt-loader)-/.test(entry.versionId || "") ? (entry.versionId || "").split("-").pop() : (entry.versionId || "").split("-")[0]
     Rectangle {
         id: iconWell
         x: 20
@@ -33,6 +35,7 @@ Rectangle {
             width: 34
             height: 34
             block: root.loader === "Forge" ? "crafting" : "grass"
+            spinning: hover.hovered
             glyph: "·"
         }
     }
@@ -77,6 +80,7 @@ Rectangle {
             visible: !root.pickOnly
             width: 38
             height: 36
+            objectName: "manageInstance-" + root.entry.instanceId
             label: "···"
             quiet: true
             Accessible.name: "Quản lý " + (root.entry.label || "bản chơi")

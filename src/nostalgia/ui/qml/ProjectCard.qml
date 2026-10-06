@@ -52,7 +52,7 @@ Rectangle {
         Repeater {
             model: (project.loaders || []).slice(0, 3)
             Rectangle {
-                width: loaderText.width + 14; height: 18; radius: 0
+                width: loaderText.width + 14; height: 18; radius: Theme.modern ? 8 : 0
                 color: Theme.accentSoft
                 Text { id: loaderText; anchors.centerIn: parent; text: modelData; color: Theme.accent; font.pixelSize: Theme.fontLabel }
             }

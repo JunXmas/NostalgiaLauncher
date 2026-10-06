@@ -54,7 +54,7 @@ Item {
             // đặc, không bo là ngôn ngữ hoạt hình — và nay nó còn phải tải được màu.
             width: 4
             height: root.selected ? parent.height * 0.62 : 0
-            radius: 0
+            radius: Theme.modern ? 8 : 0
             color: root.tint
             Behavior on height { NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic } }
         }

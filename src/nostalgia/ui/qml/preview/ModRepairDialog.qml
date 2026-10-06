@@ -3,6 +3,12 @@ import QtQuick.Controls as Controls
 
 Controls.Popup {
     id: root
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+        }
+    }
+    exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     objectName: "modRepairDialog"
     parent: Controls.Overlay.overlay
     width: Math.min(800,parent ? parent.width - 48 : 800)
@@ -19,7 +25,7 @@ Controls.Popup {
         Column {
             id: header
             width: parent.width; spacing: 8
-            PaymentText { width: parent.width-40; text: "Kiểm tra & sửa mod"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold }
+            PaymentText { width: parent.width-40; text: "Kiểm tra & sửa mod"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
             PaymentText { width: parent.width; text: root.instanceLabel; color: GlassTheme.muted }
         }
         Button { anchors.right: parent.right; label: "×"; quiet: true; width: 40; Accessible.name: "Đóng kiểm tra mod"; onClicked: root.close() }

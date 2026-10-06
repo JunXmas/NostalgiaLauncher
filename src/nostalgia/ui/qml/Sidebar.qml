@@ -201,7 +201,7 @@ Rectangle {
                và tài khoản ngoại tuyến chưa chọn skin thì cũng không có file. */
             Rectangle {
                 objectName: "sidebarAvatar"
-                width: 38; height: 38; radius: 0
+                width: 38; height: 38; radius: Theme.modern ? 8 : 0
                 color: root.playerName ? Theme.accentDeep : Theme.border
                 Text {
                     anchors.centerIn: parent
@@ -231,7 +231,7 @@ Rectangle {
             visible: !root.collapsed
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 }
             height: 28
-            radius: 0
+            radius: Theme.modern ? 8 : 0
             color: Theme.surface
             Row {
                 anchors { left: parent.left; leftMargin: 9; verticalCenter: parent.verticalCenter }

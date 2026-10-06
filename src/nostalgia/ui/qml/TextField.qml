@@ -11,7 +11,7 @@ Rectangle {
 
     height: Math.max(34, Theme.fontBody + 18)
     radius: Theme.radiusSmall
-    color: Theme.surfaceHigh
+    color: Theme.modern ? Qt.rgba(Theme.surfaceHigh.r, Theme.surfaceHigh.g, Theme.surfaceHigh.b, 0.65) : Theme.surfaceHigh
     border.color: input.activeFocus ? Theme.accent : Theme.border
     border.width: 1
     Behavior on border.color { ColorAnimation { duration: Theme.quick } }
@@ -21,6 +21,7 @@ Rectangle {
         anchors { fill: parent; leftMargin: 11; rightMargin: 11 }
         verticalAlignment: TextInput.AlignVCenter
         color: Theme.text
+        font.family: Theme.sans
         font.pixelSize: Theme.fontBody
         clip: true
         selectByMouse: true
@@ -33,6 +34,7 @@ Rectangle {
         anchors { left: parent.left; leftMargin: 11; verticalCenter: parent.verticalCenter }
         visible: input.text.length === 0
         text: root.placeholder
-        color: Theme.textMuted; font.pixelSize: Theme.fontBody
+        color: Theme.textMuted; font.family: Theme.sans
+        font.pixelSize: Theme.fontBody
     }
 }

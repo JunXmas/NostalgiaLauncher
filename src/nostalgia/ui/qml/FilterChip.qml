@@ -65,7 +65,7 @@ Item {
             anchors { right: clearMark.left; rightMargin: visible ? 6 : 0; verticalCenter: parent.verticalCenter }
             width: visible ? countText.width + 12 : 0
             height: 18
-            radius: 0
+            radius: Theme.modern ? 8 : 0
             color: Theme.accentSoft
             border.color: Theme.accent
             Text {

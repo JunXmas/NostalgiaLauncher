@@ -28,6 +28,8 @@ QtObject {
 
        `page` do Sidebar ghi vào. Đây là property DUY NHẤT ghi được trong file này; mọi thứ
        khác vẫn readonly để không ai lén đổi màu từ chỗ khác. */
+    property bool modern: false
+    property var modalBackdrop: null
     property int page: 0
     property var preferences: null
     readonly property real textScale: preferences ? preferences.uiScale / 100 : 1
@@ -109,11 +111,11 @@ QtObject {
 
     /* Góc vuông, không bo.
 
-       Đo trên chính CSS của minecraft.net: `border-radius: 0` xuất hiện 57 lần, và không có
+       Đo trên chính CSS của minecraft.net: `border-radius: Theme.modern ? 8 : 0` xuất hiện 57 lần, và không có
        một giá trị bo nào khác ngoài `50%` cho bốn hình tròn. Mọi thứ ở đó đều là khối vuông.
        Giữ hai tên cũ để 10 chỗ đang dùng không phải sửa một lượt, nhưng giá trị nay là 0. */
-    readonly property int radius:        0
-    readonly property int radiusSmall:   0
+    readonly property int radius:        modern ? 22 : 0
+    readonly property int radiusSmall:   modern ? 12 : 0
     readonly property int gap:           14
     readonly property int pad:           18
 

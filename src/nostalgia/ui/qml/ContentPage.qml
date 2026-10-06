@@ -113,7 +113,7 @@ Item {
                     model: [{ key: "modrinth", label: "Modrinth" }, { key: "curseforge", label: "CurseForge" }]
                     Rectangle {
                         readonly property bool selected: modelData.key === contentBridge.source
-                        width: sourceText.width + 26; height: 28; radius: 0
+                        width: sourceText.width + 26; height: 28; radius: Theme.modern ? 8 : 0
                         color: selected ? Theme.accentSoft : "transparent"
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
@@ -131,7 +131,7 @@ Item {
                     model: page.kinds
                     Rectangle {
                         readonly property bool selected: index === kindTabs.currentIndex
-                        width: kindText.width + 26; height: 28; radius: 0
+                        width: kindText.width + 26; height: 28; radius: Theme.modern ? 8 : 0
                         color: selected ? Theme.accentSoft : "transparent"
                         border.color: selected ? Theme.accent : Theme.border
                         Text {
@@ -174,7 +174,7 @@ Item {
                             model: ["▦", "☰"]
                             Rectangle {
                                 readonly property bool selected: (index === 0) === page.gridMode
-                                width: 32; height: 32; radius: 0
+                                width: 32; height: 32; radius: Theme.modern ? 8 : 0
                                 color: selected ? Theme.accentSoft : Theme.surfaceHigh
                                 Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontHeading }
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }
@@ -308,7 +308,7 @@ Item {
                             model: ["▦", "☰"]
                             Rectangle {
                                 readonly property bool selected: (index === 0) === page.gridMode
-                                width: 32; height: 32; radius: 0
+                                width: 32; height: 32; radius: Theme.modern ? 8 : 0
                                 color: selected ? Theme.accentSoft : Theme.surfaceHigh
                                 Text { anchors.centerIn: parent; text: modelData; color: parent.selected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontHeading }
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }

@@ -38,7 +38,7 @@ Rectangle {
         Repeater {
             model: 8
             Rectangle {
-                width: 3; height: 7; radius: 0
+                width: 3; height: 7; radius: Theme.modern ? 8 : 0
                 x: spinner.width / 2 - width / 2; y: 0
                 color: Theme.accent
                 opacity: 0.25 + 0.75 * index / 7
@@ -66,10 +66,10 @@ Rectangle {
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Rectangle {
-            width: parent.width; height: 3; radius: 0
+            width: parent.width; height: 3; radius: Theme.modern ? 8 : 0
             color: Theme.border
             Rectangle {
-                height: parent.height; radius: 0
+                height: parent.height; radius: Theme.modern ? 8 : 0
                 width: toast.hasFraction ? parent.width * bridge.progressFraction : parent.width
                 color: Theme.accent
                 opacity: toast.hasFraction ? 1 : 0.35

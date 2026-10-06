@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import "../" as Legacy
 
 Item {
@@ -28,7 +29,7 @@ Item {
             Text {
                 text: "Bản chơi"
                 color: GlassTheme.text
-                font.family: GlassTheme.font
+                font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
@@ -42,12 +43,13 @@ Item {
         Button {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            objectName: "createModernInstance"
             label: "Tạo bản chơi  +"
             primary: true
             onClicked: create.openDialog()
         }
     }
-    Row {
+    Flow {
         id: filters
         anchors.top: header.bottom
         anchors.topMargin: 8
@@ -73,8 +75,7 @@ Item {
             onClicked: imports.openDialog()
         }
         Button {
-            label: "···"
-            width: 36
+            label: "Sao lưu"
             quiet: true
             Accessible.name: "Sao lưu và thùng rác"
             onClicked: manager.openDialog()
@@ -117,19 +118,21 @@ Item {
     ModRepairDialog { id: repair }
     Legacy.CreateInstanceDialog {
         id: create
+        parent: root.Window.window ? root.Window.window.contentItem : root
         anchors.fill: parent
     }
-    Legacy.InstanceEditDialog {
+    InstanceManager {
         id: editor
-        anchors.fill: parent
-        onRepairRequested: function(instance) { editor.visible=false;repair.openFor(instance); }
+        onRepairRequested: function(instance) { repair.openFor(instance); }
     }
     Legacy.ImportInstanceDialog {
         id: imports
+        parent: root.Window.window ? root.Window.window.contentItem : root
         anchors.fill: parent
     }
     Legacy.DataManager {
         id: manager
+        parent: root.Window.window ? root.Window.window.contentItem : root
         anchors.fill: parent
     }
 }

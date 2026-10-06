@@ -122,7 +122,7 @@ Rectangle {
             Repeater {
                 model: 3
                 Rectangle {
-                    width: 16; height: 16; radius: 0
+                    width: 16; height: 16; radius: Theme.modern ? 8 : 0
                     color: Theme.accent
                     opacity: 0.10 + index * 0.05
                 }
@@ -132,7 +132,7 @@ Rectangle {
         Rectangle {
             visible: root.showPlay
             anchors { left: parent.left; top: parent.top; margins: 10 }
-            width: 30; height: 30; radius: 0
+            width: 30; height: 30; radius: Theme.modern ? 8 : 0
             color: playHover.hovered ? Theme.accent : "#b3000000"
             Behavior on color { ColorAnimation { duration: Theme.quick } }
             Text { anchors.centerIn: parent; text: "▶"; color: "white"; font.pixelSize: Theme.fontBody }
@@ -158,7 +158,7 @@ Rectangle {
         anchors { right: parent.right; top: thumb.bottom; margins: 10 }
         visible: root.removable
         opacity: hover.hovered ? 1 : 0
-        width: removeText.width + 16; height: 24; radius: 0
+        width: removeText.width + 16; height: 24; radius: Theme.modern ? 8 : 0
         color: root.confirmingRemove ? Theme.danger : "transparent"
         Behavior on opacity { NumberAnimation { duration: Theme.quick } }
         Text {

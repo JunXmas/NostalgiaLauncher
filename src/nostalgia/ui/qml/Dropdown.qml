@@ -68,7 +68,7 @@ Item {
             anchors { right: arrow.left; rightMargin: visible ? 8 : 0; verticalCenter: parent.verticalCenter }
             width: visible ? badgeText.width + 14 : 0
             height: 20
-            radius: 0
+            radius: Theme.modern ? 8 : 0
             color: Theme.accentSoft
             border.color: Theme.border
             Text {
@@ -129,7 +129,7 @@ Item {
             delegate: Rectangle {
                 width: ListView.view.width
                 height: Math.max(32, Theme.fontBody + 14)
-                radius: 0
+                radius: Theme.modern ? 8 : 0
                 color: rowHover.containsMouse ? Theme.accentSoft : "transparent"
                 Text {
                     anchors {

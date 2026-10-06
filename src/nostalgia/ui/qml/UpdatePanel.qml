@@ -62,9 +62,9 @@ Panel {
         }
         Rectangle {
             visible: panel.state === "downloading"
-            width: Math.min(parent.width, 420); height: 4; radius: 0; color: Theme.border
+            width: Math.min(parent.width, 420); height: 4; radius: Theme.modern ? 8 : 0; color: Theme.border
             Rectangle {
-                height: parent.height; radius: 0; color: Theme.accent
+                height: parent.height; radius: Theme.modern ? 8 : 0; color: Theme.accent
                 width: parent.width * updateBridge.progressFraction
                 Behavior on width { NumberAnimation { duration: Theme.quick } }
             }

@@ -4,6 +4,12 @@ import "../" as Legacy
 
 Controls.Popup {
     id: root
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+        }
+    }
+    exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     objectName: "projectDialog"
     parent: Controls.Overlay.overlay
     width: Math.min(760, parent ? parent.width - 48 : 760)
@@ -92,7 +98,7 @@ Controls.Popup {
                     width: parent.width
                     text: root.details.title || ""
                     color: GlassTheme.text
-                    font.family: GlassTheme.font
+                    font.family: GlassTheme.displayFont
                     font.pixelSize: GlassTheme.fontDialog
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight

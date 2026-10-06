@@ -124,7 +124,7 @@ Item {
             spacing: 12
 
             Rectangle {
-                width: 30; height: 30; radius: 0
+                width: 30; height: 30; radius: Theme.modern ? 8 : 0
                 anchors.verticalCenter: parent.verticalCenter
                 color: root.lit ? root.tint : Qt.darker(root.tint, 1.55)
                 Behavior on color { ColorAnimation { duration: Theme.quick } }

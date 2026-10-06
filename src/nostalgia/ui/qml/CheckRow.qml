@@ -30,23 +30,25 @@ Item {
         width: 18; height: 18
         anchors { left: parent.left; verticalCenter: parent.verticalCenter }
 
-        Rectangle { anchors.fill: parent; color: Theme.blockBorder }
+        Rectangle { anchors.fill: parent; radius: Theme.modern ? 5 : 0; color: Theme.modern ? Theme.surfaceHigh : Theme.blockBorder }
         Rectangle {
             anchors.fill: parent; anchors.margins: 2
+            visible: !Theme.modern
             color: root.checked ? Theme.blockOnEdge : Theme.blockEdge
             Behavior on color { ColorAnimation { duration: Theme.quick } }
         }
         Rectangle {
             id: face
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 2 }
-            anchors.topMargin: 2 + root.pressDrop
-            height: parent.height - 4 - root.edge + root.pressDrop
-            color: root.checked ? Theme.blockOnFace
+            anchors.topMargin: Theme.modern ? 1 : 2 + root.pressDrop
+            height: Theme.modern ? parent.height - 2 : parent.height - 4 - root.edge + root.pressDrop
+            radius: Theme.modern ? 4 : 0
+            color: root.checked ? (Theme.modern ? Theme.accentDeep : Theme.blockOnFace)
                                 : (hover.hovered ? "#5a5c5e" : Theme.blockFace)
             Behavior on color { ColorAnimation { duration: Theme.quick } }
             Rectangle {
                 anchors { left: parent.left; right: parent.right; top: parent.top }
-                height: 2; color: Theme.blockGlint
+                height: 2; color: Theme.blockGlint; visible: !Theme.modern
             }
         }
 

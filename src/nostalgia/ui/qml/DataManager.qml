@@ -12,11 +12,11 @@ Item {
     function openDialog() { storageBridge.refresh(); root.visible = true; root.forceActiveFocus(); }
     Keys.onEscapePressed: root.visible = false
     Rectangle { anchors.fill: parent; color: "#c0000000"; MouseArea { anchors.fill: parent } }
-    Rectangle {
+    DialogFrame {
         id: box
         anchors.centerIn: parent
         width: Math.min(900, parent.width - 48); height: Math.min(650, parent.height - 48)
-        color: Theme.surface; border.color: Theme.border
+        radius: Theme.radius; color: Theme.surface; border.color: Theme.border
         MouseArea { anchors.fill: parent }
         Column {
             anchors.fill: parent; anchors.margins: 20; spacing: 14

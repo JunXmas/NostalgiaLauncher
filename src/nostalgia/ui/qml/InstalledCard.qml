@@ -12,7 +12,7 @@ Rectangle {
     signal updateRequested(string fileName)
     readonly property bool hasUpdate: !!(installedContent.latestVersion)
 
-    height: 118
+    height: Theme.modern ? Math.round(118 * Theme.textScale) : 118
     radius: Theme.radiusSmall
     color: hover.hovered ? Theme.surfaceHigh : Theme.surface
     border.color: hover.hovered ? Theme.accent : Theme.border
@@ -51,21 +51,21 @@ Rectangle {
         spacing: 6
         Rectangle {
             visible: !!installedContent.versionNumber
-            width: versionText.width + 14; height: 18; radius: 0; color: Theme.accentSoft
+            width: versionText.width + 14; height: 18; radius: Theme.modern ? 8 : 0; color: Theme.accentSoft
             Text { id: versionText; anchors.centerIn: parent; text: "v" + installedContent.versionNumber; color: Theme.accent; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
-            width: sizeText.width + 14; height: 18; radius: 0; color: Theme.surfaceHigh; border.color: Theme.border
+            width: sizeText.width + 14; height: 18; radius: Theme.modern ? 8 : 0; color: Theme.surfaceHigh; border.color: Theme.border
             Text { id: sizeText; anchors.centerIn: parent; text: Theme.fileSize(installedContent.fileSize || 0); color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
             visible: !installedContent.enabled
-            width: offText.width + 14; height: 18; radius: 0; color: Theme.surfaceHigh; border.color: Theme.border
+            width: offText.width + 14; height: 18; radius: Theme.modern ? 8 : 0; color: Theme.surfaceHigh; border.color: Theme.border
             Text { id: offText; anchors.centerIn: parent; text: Tr.phrase("đã tắt"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
         }
         Rectangle {
             visible: root.hasUpdate
-            width: updateText.width + 14; height: 18; radius: 0; color: Theme.accentDeep
+            width: updateText.width + 14; height: 18; radius: Theme.modern ? 8 : 0; color: Theme.accentDeep
             Text { id: updateText; anchors.centerIn: parent; text: Tr.phrase("mới: ") + (installedContent.latestVersion || ""); color: "white"; font.pixelSize: Theme.fontLabel }
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: root.updateRequested(installedContent.fileName) }
@@ -76,6 +76,8 @@ Rectangle {
         anchors { right: parent.right; top: parent.top; margins: 14 }
         spacing: 10
         Toggle {
+            objectName: "installedToggle-" + installedContent.fileName
+            accessibleLabel: "Bật " + (installedContent.label || installedContent.fileName)
             visible: root.toggleable
             anchors.right: parent.right
             checked: !!installedContent.enabled
@@ -83,12 +85,12 @@ Rectangle {
         }
         Rectangle {
             anchors.right: parent.right
-            width: removeText.width + 16; height: 24; radius: 0
+            width: removeText.width + 16; height: 24; radius: Theme.modern ? 8 : 0
             color: root.confirmingRemove ? Theme.danger : "transparent"
             Text {
                 id: removeText
                 anchors.centerIn: parent
-                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
+                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : Theme.modern ? "Gỡ" : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
                 color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
             }
             HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }

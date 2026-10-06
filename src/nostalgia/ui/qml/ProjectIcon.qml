@@ -6,7 +6,7 @@ Rectangle {
     property string source: ""
     property string fallbackText: "?"
 
-    width: 44; height: 44; radius: 0
+    width: 44; height: 44; radius: Theme.modern ? 8 : 0
     color: Theme.accentSoft
     clip: true
 

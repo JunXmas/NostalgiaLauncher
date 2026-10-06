@@ -4,6 +4,12 @@ import "../" as Legacy
 
 Controls.Popup {
     id: root
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+        }
+    }
+    exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     objectName: "supportDialog"
     parent: Controls.Overlay.overlay
     width: Math.min(receiptMode ? 760 : 1000, parent ? parent.width - 48 : 1000)
@@ -22,7 +28,7 @@ Controls.Popup {
     signal donateRequested
     closePolicy: Controls.Popup.CloseOnEscape
     onOpened: paymentBridge.setWatching(true)
-    onClosed: paymentBridge.setWatching(false)
+    onAboutToHide: paymentBridge.setWatching(false)
     Connections {
         target: paymentBridge
         function onChanged() {

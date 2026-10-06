@@ -19,7 +19,7 @@ Item {
         }
     }
 
-    Flickable {
+    Preview.InertialScroll {
         anchors { top: header.bottom; left: parent.left; right: parent.right; bottom: parent.bottom; margins: Theme.gap; topMargin: 0 }
         clip: true
         contentHeight: settingsColumn.height

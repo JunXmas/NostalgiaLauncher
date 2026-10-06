@@ -3,7 +3,7 @@ import QtQuick
 /* Khung thẻ dùng chung cho mọi ô ở cột phải và ô danh sách bản chơi.
 
    Hình khối lấy theo công thức đo được trên chính CSS của minecraft.net: góc vuông tuyệt đối
-   (`border-radius: 0` xuất hiện 57 lần, không có giá trị bo nào khác), và độ nổi làm bằng
+   (`border-radius: Theme.modern ? 8 : 0` xuất hiện 57 lần, không có giá trị bo nào khác), và độ nổi làm bằng
    viền trong hai tông chứ không bằng đổ bóng —
 
        inset 2px 2px 0 0 rgba(255,255,255,.6), inset -2px -2px 0 0 rgba(255,255,255,.4)
@@ -34,12 +34,13 @@ Rectangle {
 
        Tối hơn NỀN chứ không phải tối hơn mặt thẻ: nét phải bắt được cả khi thẻ nằm trên nền
        và khi thẻ nằm chồng lên thẻ khác. */
-    border.width: 2
-    border.color: Qt.darker(Theme.background, 1.7)
+    radius: Theme.radius
+    border.width: Theme.modern ? 1 : 2
+    border.color: Theme.modern ? Theme.border : Qt.darker(Theme.background, 1.7)
 
     // Chuyển sắc mặt + viền trong hai tông — cái làm thẻ nổi lên thành khối. Thẻ kính nằm
     // trên ảnh nền chỉ lấy viền: tô thêm chuyển sắc lên nền mờ là mất luôn vẻ trong.
-    Bevel { faceOnly: root.translucent }
+    Bevel { visible: !Theme.modern; faceOnly: root.translucent }
 
     // Tiêu đề: nhãn hoa bằng font pixel, trên một vạch xanh ngắn. Vạch làm mắt bắt được đầu
     // thẻ ngay cả khi liếc nhanh — chữ không thôi thì mọi thẻ nhìn như nhau.
@@ -58,9 +59,10 @@ Rectangle {
         Text {
             text: root.title
             color: Theme.accent
-            font.family: Theme.pixel
+            font.family: Theme.modern ? Theme.sans : Theme.pixel
             font.pixelSize: Theme.fontHeading
-            font.letterSpacing: Theme.trackLabel
+            font.weight: Theme.modern ? Font.DemiBold : Font.Normal
+            font.letterSpacing: Theme.modern ? 0.4 : Theme.trackLabel
             anchors.verticalCenter: parent.verticalCenter
         }
     }

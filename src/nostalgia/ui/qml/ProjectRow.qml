@@ -46,7 +46,7 @@ Rectangle {
             Repeater {
                 model: project.loaders || []
                 Rectangle {
-                    width: loaderText.width + 12; height: 16; radius: 0
+                    width: loaderText.width + 12; height: 16; radius: Theme.modern ? 8 : 0
                     color: Theme.accentSoft
                     Text {
                         id: loaderText

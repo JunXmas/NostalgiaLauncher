@@ -13,9 +13,10 @@ Text {
     property string caption: ""
     // `toUpperCase()` ở đây chứ không viết hoa sẵn ở chỗ gọi: cùng chuỗi `title` đó còn dùng
     // cho tiêu đề hộp thoại và câu hỏi xác nhận, nơi chữ thường mới đúng.
-    text: caption.toUpperCase()
+    text: Theme.modern ? caption : caption.toUpperCase()
     color: Theme.text
-    font.family: Theme.pixel
-    font.pixelSize: Theme.fontTitle
-    font.letterSpacing: Theme.trackLabel
+    font.family: Theme.modern ? "Manrope" : Theme.pixel
+    font.pixelSize: Theme.modern ? Theme.fontHero : Theme.fontTitle
+    font.weight: Theme.modern ? Font.DemiBold : Font.Normal
+    font.letterSpacing: Theme.modern ? -0.6 : Theme.trackLabel
 }

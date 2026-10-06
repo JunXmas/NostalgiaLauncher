@@ -4,6 +4,7 @@ import "../" as Legacy
 Item {
     id: root
     objectName: "minimalLibrary"
+    property bool installedMode: false
     property string kind: "modpack"
     property string sort: "relevance"
     signal advancedRequested
@@ -45,7 +46,7 @@ Item {
             Text {
                 text: "Khám phá"
                 color: GlassTheme.text
-                font.family: GlassTheme.font
+                font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
@@ -68,14 +69,16 @@ Item {
             }
         }
     }
-    Row {
+    Flow {
         id: types
+        width: parent.width
         anchors.top: header.bottom
         anchors.topMargin: 8
         spacing: 8
         Repeater {
             model: root.kinds
             Button {
+                visible: !root.installedMode
                 label: modelData.label
                 selected: root.kind === modelData.key
                 quiet: true
@@ -86,13 +89,16 @@ Item {
             }
         }
         Button {
-            label: "Đã cài  ↗"
+            objectName: "openModernInstalled"
+            label: root.installedMode ? "Duyệt thư viện" : "Đã cài"
+            selected: root.installedMode
             quiet: true
-            onClicked: root.advancedRequested()
+            onClicked: root.installedMode = !root.installedMode
         }
     }
     Item {
         id: filters
+        visible: !root.installedMode
         anchors.top: types.bottom
         anchors.topMargin: 24
         width: parent.width
@@ -119,6 +125,7 @@ Item {
     }
     Item {
         id: status
+        visible: !root.installedMode
         anchors.top: filters.bottom
         anchors.topMargin: 18
         width: parent.width
@@ -134,11 +141,12 @@ Item {
             height: 24
             label: "Bộ lọc nâng cao  ↗"
             quiet: true
-            onClicked: root.advancedRequested()
+            onClicked: advanced.open()
         }
     }
     InertialScroll {
         objectName: "libraryScroll"
+        visible: !root.installedMode
         anchors.top: status.bottom
         anchors.topMargin: 12
         anchors.left: parent.left
@@ -273,6 +281,13 @@ Item {
             }
         }
     }
+    Loader {
+        anchors.top: types.bottom; anchors.topMargin: 24
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        active: root.installedMode
+        sourceComponent: Component { InstalledContent {} }
+    }
+    LibraryFilters { id: advanced; kind: root.kind; onApplied: root.refresh() }
     Legacy.ModpackDialog {
         id: pack
         anchors.fill: parent

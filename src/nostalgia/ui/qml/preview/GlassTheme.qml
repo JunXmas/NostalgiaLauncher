@@ -21,6 +21,7 @@ QtObject {
     readonly property color cardSurface: alpha(surface, 0.74)
     readonly property color inputSurface: alpha(raised, 0.65)
     readonly property string font: "Inter"
+    readonly property string displayFont: "Manrope"
     property var preferences: null
     readonly property bool reducedMotion: preferences ? preferences.reducedMotion : false
     readonly property real scale: preferences ? preferences.uiScale / 100 : 1
@@ -43,6 +44,8 @@ QtObject {
     readonly property int fontLogin: Math.round(25 * scale)
     readonly property int fontResult: Math.round(26 * scale)
     readonly property int fontCode: Math.round(32 * scale)
+    readonly property int normal: reducedMotion ? 0 : 260
+    readonly property int slow: reducedMotion ? 0 : 380
     readonly property int quick: reducedMotion ? 0 : 160
     property var backdrop: null
     function alpha(color, opacity) {

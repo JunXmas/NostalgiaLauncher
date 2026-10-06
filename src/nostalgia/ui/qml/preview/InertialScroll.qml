@@ -12,7 +12,7 @@ Flickable {
     activeFocusOnTab: true
     readonly property real maxY: Math.max(0, contentHeight - height)
     property real destination: 0
-    property real lastFrame: 0
+    readonly property real damping: 10 * Math.LN2 / 1.5
     readonly property bool settling: motion.running
     function clamp(y) {
         return Math.max(0, Math.min(maxY, y));
@@ -29,11 +29,11 @@ Flickable {
             contentY = destination;
         } else if (Math.abs(destination - contentY) > 0.4) {
             if (!motion.running) {
-                lastFrame = Date.now();
                 motion.start();
             }
         }
     }
+    onVisibleChanged: if (!visible) stopMotion()
     onDraggingChanged: if (dragging)
         stopMotion()
     onMaxYChanged: {
@@ -52,16 +52,13 @@ Flickable {
             }
         }
     }
-    Timer {
+    FrameAnimation {
         id: motion
-        interval: 16
-        repeat: true
         onTriggered: {
-            var now = Date.now();
-            var dt = Math.min(0.05, Math.max(0.001, (now - root.lastFrame) / 1000));
-            root.lastFrame = now;
-            // Equivalent to Lenis lerp 0.1 at 60fps; independent of frame rate.
-            var ratio = 1 - Math.exp(-6.32 * dt);
+            // Skew uses Lenis exponential easing with a 1.5-second duration.
+            // Render-clock damping keeps the same weight at 60/120/144 Hz.
+            var dt = Math.min(0.05, Math.max(0.001, frameTime));
+            var ratio = 1 - Math.exp(-root.damping * dt);
             var remaining = root.destination - root.contentY;
             if (Math.abs(remaining) < 0.4) {
                 root.contentY = root.destination;
