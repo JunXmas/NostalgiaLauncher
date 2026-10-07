@@ -104,7 +104,7 @@ Controls.Popup {
                         width: parent.width; height: trashNote.implicitHeight + trashButton.height + 44; padding: 16
                         Column { width: parent.width; spacing: 12
                             PaymentText { id: trashNote; width: parent.width; text: "Thùng rác\nChuyển bản chơi vào thùng rác để gỡ khỏi danh sách. Thư mục chơi ngoài launcher được giữ nguyên."; color: GlassTheme.muted }
-                            Button { id: trashButton; label: "Chuyển vào thùng rác"; clickable: root.writable; onClicked: confirmDialog.ask("Chuyển bản chơi vào thùng rác?", "Bạn có thể khôi phục trong Sao lưu & thùng rác.", function() { storageBridge.moveToTrash(root.instance.instanceId); root.close(); }) }
+                            Button { id: trashButton; objectName: "instanceTrash"; label: "Chuyển vào thùng rác"; clickable: root.writable; onClicked: confirmDialog.ask("Chuyển bản chơi vào thùng rác?", "Bạn có thể khôi phục trong Sao lưu & thùng rác.", function() { storageBridge.moveToTrash(root.instance.instanceId); root.close(); }) }
                         }
                     }
                 }

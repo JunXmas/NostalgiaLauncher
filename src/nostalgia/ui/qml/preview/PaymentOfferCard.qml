@@ -16,7 +16,7 @@ Rectangle {
         width: parent.width - 48
         spacing: 18
         PaymentText {
-            text: "GÓI ỦNG HỘ PLUS"
+            text: "GÓI " + root.details.planName.toUpperCase()
             color: GlassTheme.brand
             font.pixelSize: GlassTheme.fontCaption
             font.letterSpacing: 1.3
@@ -35,7 +35,7 @@ Rectangle {
             }
             PaymentText {
                 width: parent.width
-                text: root.details.lifetime ? "Mua một lần · Plus không hết hạn" : root.details.amount < root.details.regularAmount ? "Ưu đãi cho " + root.details.months + " tháng" : root.details.months + " tháng sử dụng Plus"
+                text: root.details.lifetime ? "Mua một lần · Ultimate không hết hạn" : root.details.amount < root.details.regularAmount ? "Ưu đãi cho " + root.details.months + " tháng" : root.details.months + " tháng sử dụng " + root.details.planName
                 color: GlassTheme.muted
             }
         }

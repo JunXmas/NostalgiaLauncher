@@ -261,7 +261,7 @@ Glass {
                 elide: Text.ElideRight
             }
             Text {
-                text: socialBridge.signedIn ? (socialBridge.account.plus ? "Google · Plus" : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
+                text: socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + socialBridge.account.planName : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontNote

@@ -27,7 +27,7 @@ Glass {
                 PaymentText {
                     width: parent.width
                     color: GlassTheme.muted
-                    text: socialBridge.signedIn ? (socialBridge.account.plus ? "Nostalgia Plus" + (socialBridge.account.badge ? " · " + socialBridge.account.badge : "") : "Miễn phí") + " · Tài khoản Google"
+                    text: socialBridge.signedIn ? (socialBridge.account.plus ? "Nostalgia " + socialBridge.account.planName + (socialBridge.account.badge ? " · " + socialBridge.account.badge : "") : "Miễn phí") + " · Tài khoản Google"
                         : "Dùng Google để lưu bạn bè và nhận lời mời trên các máy của bạn. Tài khoản Minecraft vẫn dùng riêng để chơi game."
                 }
             }

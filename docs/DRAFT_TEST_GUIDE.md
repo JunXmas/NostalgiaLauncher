@@ -43,7 +43,8 @@ Không đưa Client Secret/khóa payOS vào launcher hoặc git. Người chơi 
    mở lại launcher, đổi máy, thêm bạn/chat. Máy đầu mất phiên dịch vụ khi máy thứ hai login.
 8. Thử LAN/lời mời chỉ khi relay/binding staging đã sẵn sàng; Plus pack sync vẫn khóa.
 
-Các ảnh rc8 chụp từ Qt thật; tài khoản Google chưa kết nối. Không có token/secret trong ảnh.
+Ảnh preview chụp từ Qt thật được gửi riêng để duyệt giao diện, không đính kèm vào release draft.
+Không có token/secret trong ảnh. Phần server mới xem [SERVER_MANAGER_REVIEW.md](SERVER_MANAGER_REVIEW.md).
 Xem RC8_VALIDATION.md cho kiểm thử và giới hạn. Vòng rc8 chưa build/smoke
 Windows/macOS, chưa kiểm GUI trên phần cứng thật của người dùng.
 

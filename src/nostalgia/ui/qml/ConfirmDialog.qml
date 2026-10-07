@@ -1,30 +1,21 @@
 import QtQuick
+import QtQuick.Controls as Controls
 
-/*
-  Hộp hỏi lại dùng chung. Đặt ở Main.qml (cấp cửa sổ) và lộ cho mọi trang qua context property
-  `confirmDialog`, nên phủ cả thanh bên: mở ra là không bấm nhầm được thứ gì phía sau. Chỉ đóng
-  bằng Thôi / Esc — bấm màn tối KHÔNG đóng (từng làm người dùng tưởng hộp "xuyên" xuống trang).
-  Nuốt cả rê chuột và cuộn để phía sau không sáng lên hay trôi.
-
-  `ask(title, message, acceptAction)`: đồng ý thì gọi `acceptAction()` rồi phát `accepted()`.
-*/
+// Keep ask()/visible compatible with existing pages; the modal itself belongs to Overlay.
 Item {
     id: dialog
     visible: false
-    z: 200
     property string title: ""
     property string message: ""
     property string acceptLabel: Tr.phrase("Đồng ý")
     property string cancelLabel: Tr.phrase("Thôi")
     property var acceptAction: null
     signal accepted()
-
     function ask(title, message, acceptAction) {
         dialog.title = title;
         dialog.message = message;
         dialog.acceptAction = acceptAction || null;
         dialog.visible = true;
-        box.forceActiveFocus();
         notifier.playUi("open");
     }
     function dismiss() {
@@ -33,53 +24,63 @@ Item {
         notifier.playUi("back");
     }
     function accept() {
+        if (!dialog.visible) return;
         var action = dialog.acceptAction;
         dialog.visible = false;
         dialog.acceptAction = null;
         if (action) action();
         dialog.accepted();
     }
-
-    // Màn tối: nuốt bấm (mọi nút), rê và cuộn — không làm gì cả.
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.AllButtons
-        onWheel: function (wheel) { wheel.accepted = true; }
-        Rectangle { anchors.fill: parent; color: "#b3000000" }
-    }
-    DialogFrame {
-        id: box
-        anchors.centerIn: parent
-        width: 420; height: contentColumn.height + 52
-        radius: Theme.radius; color: Theme.surface; border.color: Theme.border
-        focus: true
-        Keys.onEscapePressed: dialog.dismiss()
-        Keys.onReturnPressed: dialog.accept()
-        MouseArea { anchors.fill: parent; hoverEnabled: true }
-
-        Column {
-            id: contentColumn
-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26 }
-            spacing: 14
-            Text { text: dialog.title; color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
-            Text {
-                objectName: "confirmMessage"
-                width: parent.width; wrapMode: Text.WordWrap
-                text: dialog.message; color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+    Controls.Popup {
+        id: modal
+        objectName: "confirmationModal"
+        parent: Controls.Overlay.overlay
+        z: 10000
+        visible: dialog.visible
+        modal: true; dim: true; focus: true
+        closePolicy: Controls.Popup.NoAutoClose
+        padding: 26
+        width: Math.min(480 * Theme.textScale, parent ? parent.width - 48 : 480)
+        height: Math.min(contents.implicitHeight + padding * 2, parent ? parent.height - 48 : 500)
+        x: parent ? (parent.width - width) / 2 : 0
+        y: parent ? (parent.height - height) / 2 : 0
+        onOpened: contentItem.forceActiveFocus()
+        Controls.Overlay.modal: Rectangle {
+            color: "#b3080b12"
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.AllButtons
+                onWheel: function (wheel) { wheel.accepted = true; }
             }
-            Row {
-                anchors.right: parent.right
-                spacing: 10
-                ActionButton {
-                    objectName: "confirmCancel"
-                    primary: false; label: dialog.cancelLabel
-                    onClicked: dialog.dismiss()
+        }
+        background: DialogFrame { color: Theme.surface; border.color: Theme.border; radius: Theme.radius }
+        contentItem: Flickable {
+            contentHeight: contents.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            Keys.onEscapePressed: dialog.dismiss()
+            Keys.onReturnPressed: dialog.accept()
+            Column {
+                id: contents
+                width: parent.width
+                spacing: 16
+                Text {
+                    width: parent.width; wrapMode: Text.Wrap
+                    text: dialog.title; color: Theme.text
+                    font.family: Theme.sans; font.pixelSize: Theme.fontTitle; font.bold: true
                 }
-                ActionButton {
-                    objectName: "confirmAccept"
-                    label: dialog.acceptLabel
-                    onClicked: dialog.accept()
+                Text {
+                    objectName: "confirmMessage"
+                    width: parent.width; wrapMode: Text.Wrap
+                    text: dialog.message; color: Theme.textMuted
+                    font.family: Theme.sans; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+                }
+                Flow {
+                    width: parent.width; spacing: 10
+                    layoutDirection: Qt.RightToLeft
+                    ActionButton { objectName: "confirmAccept"; label: dialog.acceptLabel; onClicked: dialog.accept() }
+                    ActionButton { objectName: "confirmCancel"; primary: false; label: dialog.cancelLabel; onClicked: dialog.dismiss() }
                 }
             }
         }

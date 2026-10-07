@@ -60,6 +60,7 @@ class PaymentBridge(WorkerBridge):
             "amount": self._offer.amount,
             "regularAmount": self._offer.regular_amount,
             "months": self._offer.duration_months,
+            "planName": self._offer.plan_name,
             "lifetime": self._offer.lifetime,
             "error": self._error,
             "orderId": order.order_id if order else "",

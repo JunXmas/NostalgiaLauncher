@@ -101,3 +101,7 @@ class SocialError(NostalgiaError):
 
 class SessionRevoked(SocialError):
     """Máy chủ từ chối phiên: hết hạn, đăng xuất hoặc đăng nhập trên máy khác."""
+
+
+class ServerError(NostalgiaError):
+    """Server riêng: quyền truy cập, bản tải, cấu hình hoặc tiến trình không hợp lệ."""

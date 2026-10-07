@@ -10,6 +10,7 @@ from nostalgia.api import (
     Launcher,
     PaymentGateway,
     RoomSyncGateway,
+    ServerGateway,
     ServiceSessionStore,
     SocialGateway,
 )
@@ -23,6 +24,8 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.project_bridge import ProjectBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
+from nostalgia.ui.server_controller import ServerController
+from nostalgia.ui.server_room_bridge import ServerRoomBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.social_bridge import SocialBridge
 
@@ -37,6 +40,7 @@ def open_preview(
     social_gateway: SocialGateway | None = None,
     session_store: ServiceSessionStore | None = None,
     plus_enabled: bool = True,
+    server_gateway: ServerGateway | None = None,
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
@@ -69,6 +73,10 @@ def open_preview(
     host_bridge.connect_workflow()
     context.setContextProperty("hostBridge", host_bridge)
     context.setContextProperty("plusFeaturesEnabled", plus_enabled)
+    server_bridge = ServerController(launcher, server_gateway, enabled=plus_enabled, parent=view)
+    context.setContextProperty("serverBridge", server_bridge)
+    server_room = ServerRoomBridge(server_bridge, multiplayer_bridge, room_sync_bridge, parent=view)
+    context.setContextProperty("serverRoomBridge", server_room)
     if social_gateway is not None and social_gateway.access_token:
         social_bridge.refresh()
     elif social_gateway is not None and session_store is not None:
@@ -78,6 +86,8 @@ def open_preview(
         running_application.aboutToQuit.connect(room_sync_bridge.cancel)
         running_application.aboutToQuit.connect(host_bridge.stop)
         running_application.aboutToQuit.connect(social_bridge.shutdown)
+        running_application.aboutToQuit.connect(server_bridge.shutdown)
+        running_application.aboutToQuit.connect(server_room.close)
     content_bridge = context.contextProperty("contentBridge")
     assert isinstance(content_bridge, ContentBridge)
     context.setContextProperty(

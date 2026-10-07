@@ -58,6 +58,7 @@ LAYERS: dict[str, int] = {
     "nos_client": 3,  # Nos Client: config HUD + manager tải/inject mod jar
     "account": 4,
     "launch": 4,
+    "server": 4,
     "doctor": 4,
     "api": 5,
     "facade": 5,  # thân của api.py, tách theo miền

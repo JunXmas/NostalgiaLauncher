@@ -40,6 +40,7 @@ from nostalgia.facade.nos_client import NosClientOperations
 from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.room_sync import RoomSyncOperations
+from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.skins import SkinOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.importing.launchers import Found
@@ -60,6 +61,23 @@ from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.payment.gateway import HttpPaymentGateway
 from nostalgia.payment.model import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
+from nostalgia.server.content_model import (
+    InstalledServerContent,
+    ServerContentVersion,
+    ServerProject,
+)
+from nostalgia.server.gateway import HttpServerGateway
+from nostalgia.server.manager import ServerManager, ServerSelection
+from nostalgia.server.model import (
+    ENGINES,
+    DedicatedServer,
+    ServerAccess,
+    ServerArtifact,
+    ServerConnection,
+    ServerGateway,
+    ServerLease,
+)
+from nostalgia.server.properties import ServerProperties
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
 from nostalgia.social.configuration import ServiceConfiguration
@@ -77,6 +95,7 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    ServerOperations,
     ModRepairOperations,
     BackupOperations,
     DonateOperations,
@@ -98,11 +117,13 @@ class Launcher(
 
 
 __all__ = [
+    "ENGINES",
     "SELF_UPDATING_KINDS",
     "Account",
     "BankAccount",
     "ContentTarget",
     "ContentUpdate",
+    "DedicatedServer",
     "DeviceCode",
     "Diagnosis",
     "Found",
@@ -112,8 +133,10 @@ __all__ = [
     "HttpPaymentGateway",
     "HttpRepairGateway",
     "HttpRoomSyncGateway",
+    "HttpServerGateway",
     "HttpSocialGateway",
     "InstallReport",
+    "InstalledServerContent",
     "Instance",
     "Launcher",
     "LauncherRelease",
@@ -135,6 +158,16 @@ __all__ = [
     "RoomService",
     "RoomStatus",
     "RoomSyncGateway",
+    "ServerAccess",
+    "ServerArtifact",
+    "ServerConnection",
+    "ServerContentVersion",
+    "ServerGateway",
+    "ServerLease",
+    "ServerManager",
+    "ServerProject",
+    "ServerProperties",
+    "ServerSelection",
     "ServiceConfiguration",
     "ServiceSessionStore",
     "Settings",

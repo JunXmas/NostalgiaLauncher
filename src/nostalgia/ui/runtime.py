@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication
 from nostalgia import __version__
 from nostalgia.api import (
     HttpRoomSyncGateway,
+    HttpServerGateway,
     HttpSocialGateway,
     Launcher,
 )
@@ -20,6 +21,7 @@ from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
+from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.service_configuration_bridge import ServiceConfigurationBridge
 from nostalgia.ui.worker import wait_for_background
 
@@ -52,11 +54,18 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         and isinstance(repair, ModRepairBridge)
     )
     social = view.rootContext().contextProperty("socialBridge")
+    servers = view.rootContext().contextProperty("serverBridge")
+    assert isinstance(servers, ServerController)
 
     def connect_services() -> None:
         access_token = social_gateway.access_token if social_gateway else ""
         payments.set_gateway(None)
         repair.set_gateway(None)
+        servers.set_gateway(
+            HttpServerGateway(configuration.account_url, http_client, access_token)
+            if servers.enabled and access_token and configuration.account_url
+            else None
+        )
         synchronization.set_gateway(
             HttpRoomSyncGateway(configuration.room_sync_url, http_client, access_token)
             if access_token and configuration.room_sync_url

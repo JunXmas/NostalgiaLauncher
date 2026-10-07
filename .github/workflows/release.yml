@@ -198,8 +198,8 @@ jobs:
               seen.add(name)
           assert seen == set(artifacts)
           PYREVIEW
-            assets+=("$review_dir"/*.png "$review_dir"/*.gif "$review_dir/PREVIEW_SHA256SUMS"
-              docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md)
+            # Review screenshots stay outside release assets, as requested by the owner.
+            assets+=(docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md)
           fi
           gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \

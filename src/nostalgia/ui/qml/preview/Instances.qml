@@ -6,6 +6,7 @@ Item {
     id: root
     objectName: "minimalInstances"
     property string selectedGroup: ""
+    property bool serverMode: false
     readonly property var filtered: bridge.instances.filter(function (i) {
         return (!root.selectedGroup || i.groupName === root.selectedGroup) && (!search.text.trim() || (i.label + " " + i.versionId + " " + i.groupName).toLowerCase().indexOf(search.text.toLowerCase().trim()) >= 0);
     }).sort(function (a, b) {
@@ -27,14 +28,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
             Text {
-                text: "Bản chơi"
+                text: root.serverMode ? "Máy chủ của bạn" : "Bản chơi"
                 color: GlassTheme.text
                 font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             Text {
-                text: bridge.instances.length + " thế giới, theo cách của bạn."
+                text: root.serverMode ? "Cùng xây một thế giới. Theo cách của bạn." : bridge.instances.length + " thế giới, theo cách của bạn."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontBody
@@ -44,14 +45,22 @@ Item {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             objectName: "createModernInstance"
-            label: "Tạo bản chơi  +"
+            label: root.serverMode ? "Tạo server  +" : "Tạo bản chơi  +"
             primary: true
-            onClicked: create.openDialog()
+            onClicked: { if (root.serverMode && servers.item) servers.item.openCreate(); else create.openDialog(); }
         }
+    }
+    Row {
+        id: workspaceTabs
+        anchors.top: header.bottom
+        spacing: 8
+        Button { objectName: "workspaceInstances"; label: "Bản chơi"; selected: !root.serverMode; quiet: true; onClicked: root.serverMode = false }
+        Button { objectName: "workspaceServers"; label: "Server · Pro+"; selected: root.serverMode; quiet: true; onClicked: root.serverMode = true }
     }
     Flow {
         id: filters
-        anchors.top: header.bottom
+        anchors.top: workspaceTabs.bottom
+        visible: !root.serverMode
         anchors.topMargin: 8
         width: parent.width
         spacing: 12
@@ -82,6 +91,7 @@ Item {
         }
     }
     InertialScroll {
+        visible: !root.serverMode
         objectName: "instancesScroll"
         anchors.top: filters.bottom
         anchors.topMargin: 24
@@ -114,6 +124,13 @@ Item {
                 font.pixelSize: GlassTheme.fontSubheading
             }
         }
+    }
+    Loader {
+        id: servers
+        objectName: "serversPageLoader"
+        anchors.top: workspaceTabs.bottom; anchors.topMargin: 18
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        active: root.serverMode; visible: active; source: "Servers.qml"
     }
     ModRepairDialog { id: repair }
     Legacy.CreateInstanceDialog {

@@ -59,6 +59,12 @@ class SocialState(WorkerBridge):
             if self._plus_enabled and (account.plus_lifetime or account.plus_until > time.time())
             else "",
             "plusUntil": account.plus_until,
+            "planName": {
+                "plus-month-v1": "Plus",
+                "plus-half-year-v1": "Pro",
+                "plus-year-v2": "Max",
+                "plus-lifetime-v1": "Ultimate",
+            }.get(account.plus_plan, "Plus"),
             "accent": account.accent,
             "showBadge": account.show_badge,
             "profilePlus": self._plus_enabled

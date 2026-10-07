@@ -16,6 +16,10 @@ class PaymentOffer:
     duration_months: int = 12
     lifetime: bool = False
 
+    @property
+    def plan_name(self) -> str:
+        return {1: "Plus", 6: "Pro", 12: "Max", 0: "Ultimate"}.get(self.duration_months, "Plus")
+
 
 @dataclass(frozen=True, slots=True)
 class PaymentOrder:
