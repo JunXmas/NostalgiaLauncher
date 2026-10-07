@@ -4,6 +4,17 @@ Người chơi chỉ bấm **Tiếp tục với Google**, chọn tài khoản tr
 quay lại launcher. Không nhập URL, Client ID, secret hoặc mã đăng nhập trong launcher.
 Google giữ bạn bè và danh tính Nostalgia; Microsoft/Ely.by vẫn dùng riêng để chơi Minecraft.
 
+Client ID công khai bạn gửi ngày 07/10/2026 đã được điền vào cấu hình backend:
+
+```
+657365850471-pktashbc6knqn89r81gfgl77t50oshpr.apps.googleusercontent.com
+```
+
+Cần xác nhận loại **Web application**, địa chỉ HTTPS của account Worker và đặt
+Client Secret trong secret `GOOGLE_CLIENT_SECRET` của Worker. Workspace chưa có
+hai cấu hình cuối, nên chưa thể đăng nhập thật. Không gửi Client Secret vào chat.
+Client ID/Secret không cần nhập vào launcher của người chơi.
+
 ## 1. Chọn địa chỉ backend
 
 Cần một Cloudflare Account Worker riêng, HTTPS, ví dụ
@@ -70,6 +81,9 @@ với tag mới sau khi backend và variable đã sẵn sàng. Mã nguồn local
 503 tại start: kiểm Worker secret, Client ID, PUBLIC_URL, D1 và deployment.
 
 Mã preview rc8 hiện chỉ kiểm luồng bằng Google giả ở biên mạng, RSA/D1/Qt thật.
-Chưa có OAuth client/backend production được cung cấp nên chưa thử Google thật.
+Đã nhận Client ID công khai; chưa có Client Secret/backend production nên chưa thử Google thật.
+Sau khi nhận ID, bộ kiểm thử backend **23 tests passed** (07/10/2026), có kiểm
+đúng Client ID xuyên suốt OAuth và từ chối ID token của client khác. Google giả
+ở biên mạng; không dùng kết quả này để khẳng định Google Console đã cấu hình đúng.
 
 Theo yêu cầu chủ dự án: chưa build bộ cài hoặc tạo release draft rc8.
