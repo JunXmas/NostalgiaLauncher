@@ -61,7 +61,10 @@ def test_browser_login_proof_and_no_token_in_url(
     gateway = HttpSocialGateway(server.url(""), http_client)
     login = gateway.start_login()
     body = json.loads(server_state.received_body("/v1/auth/google/start"))
-    assert body == {"challenge": hashlib.sha256(login.verifier.encode()).hexdigest()}
+    assert body["challenge"] == hashlib.sha256(login.verifier.encode()).hexdigest()
+    assert len(body["proof_public_key"]) == 64
+    assert "proof_seed" not in body
+    assert login.proof_seed not in repr(login)
     assert login.verifier not in login.authorization_url and login.verifier not in repr(login)
     access_token = gateway.poll_login(login)
     assert len(access_token) == 64

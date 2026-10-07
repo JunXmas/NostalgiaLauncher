@@ -182,6 +182,8 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
         do_PUT = do_POST
 
         def do_GET(self) -> None:
+            if self.command == "GET":
+                self._received = b""
             with state.lock:
                 route = state.routes.get(self.path.split("?", 1)[0])
                 if route is not None:

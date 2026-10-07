@@ -3,24 +3,24 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import secrets
 from dataclasses import asdict
 from urllib.parse import urlsplit
 
-from nostalgia.errors import SessionRevoked, SocialError
-from nostalgia.model.json_value import JsonValue, as_mapping, as_string
+from nostalgia.errors import SocialError
+from nostalgia.model.json_value import as_mapping, as_string
 from nostalgia.net.http import HttpClient
-from nostalgia.net.payload import decode_json
+from nostalgia.net.session_proof import forget_session, public_key, register_session
 from nostalgia.social.envelope import InvitationCipher
 from nostalgia.social.model import FriendMessage, GoogleLogin, SocialSnapshot
 from nostalgia.social.parse import identifier, parse_messages, parse_snapshot, timestamp
 from nostalgia.social.profile_model import ProfileDraft, SocialProfile
 from nostalgia.social.profile_parse import parse_profile
+from nostalgia.social.transport import SocialTransport
 
 
-class HttpSocialGateway:
+class HttpSocialGateway(SocialTransport):
     def __init__(self, base_url: str, http_client: HttpClient) -> None:
         parts = urlsplit(base_url)
         if (
@@ -35,19 +35,31 @@ class HttpSocialGateway:
             raise SocialError("Cấu hình dịch vụ tài khoản không hợp lệ.")
         self.base_url = base_url.rstrip("/")
         self._http_client = http_client
-        self.access_token = ""
+        self._access_token = ""
         self._cipher: InvitationCipher | None = None
         self._registered_token = ""
         self._account_id = ""
 
+    @property
+    def access_token(self) -> str:
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, access_token: str) -> None:
+        if self._access_token and self._access_token != access_token:
+            forget_session(self._access_token)
+        self._access_token = access_token
+
     def start_login(self) -> GoogleLogin:
         verifier = secrets.token_hex(32)
+        proof_seed = secrets.token_hex(32)
         fields = as_mapping(
             self._request(
                 "POST",
                 "/v1/auth/google/start",
                 {
                     "challenge": hashlib.sha256(verifier.encode()).hexdigest(),
+                    "proof_public_key": public_key(proof_seed),
                 },
                 authenticated=False,
             )
@@ -67,6 +79,7 @@ class HttpSocialGateway:
             authorization_url,
             timestamp(fields.get("expires_at")),
             verifier,
+            proof_seed,
         )
 
     def poll_login(self, login: GoogleLogin) -> str:
@@ -90,6 +103,7 @@ class HttpSocialGateway:
             r"[A-Za-z0-9_-]{32,256}", access_token
         ):
             raise SocialError("Phiên đăng nhập Google không hợp lệ.")
+        register_session(access_token, login.proof_seed)
         return access_token
 
     def fetch_snapshot(self) -> SocialSnapshot:
@@ -184,38 +198,4 @@ class HttpSocialGateway:
 
     def logout(self) -> None:
         self._request("POST", "/v1/auth/logout", {})
-
-    def _request(
-        self, method: str, path: str, document: JsonValue = None, *, authenticated: bool = True
-    ) -> JsonValue:
-        headers = {"Accept": "application/json"}
-        if authenticated:
-            if not self.access_token:
-                raise SessionRevoked("Cần đăng nhập Google để dùng bạn bè và Plus.")
-            headers["Authorization"] = "Bearer " + self.access_token
-        payload = json.dumps(document).encode() if document is not None else None
-        if payload is not None:
-            headers["Content-Type"] = "application/json"
-        response = self._http_client.send(
-            method,
-            self.base_url + path,
-            headers=headers,
-            body=payload,
-            max_bytes=512_000 if path == "/v1/me" else 256_000,
-        )
-        if response.status == 401 and authenticated:
-            raise SessionRevoked(
-                "Phiên đã hết hạn hoặc tài khoản vừa đăng nhập trên máy khác. Hãy đăng nhập lại."
-            )
-        if not response.is_ok:
-            messages = {
-                403: "Không có quyền với tài khoản này.",
-                404: "Không tìm thấy bạn hoặc lời mời đã hết hạn.",
-                409: "Phòng không còn mở hoặc thao tác đã được thực hiện.",
-                429: "Bạn thao tác quá nhanh. Hãy thử lại sau.",
-                503: "Dịch vụ chưa sẵn sàng. Hãy thử lại sau.",
-            }
-            raise SocialError(
-                messages.get(response.status, "Không xác nhận được với dịch vụ tài khoản.")
-            )
-        return decode_json(response.body, what="dịch vụ tài khoản")
+        forget_session(self.access_token)

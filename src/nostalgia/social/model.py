@@ -14,6 +14,7 @@ class GoogleLogin:
     authorization_url: str
     expires_at: int
     verifier: str = field(repr=False)
+    proof_seed: str = field(default="", repr=False)
 
 
 @dataclass(frozen=True, slots=True)

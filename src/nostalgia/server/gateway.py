@@ -11,6 +11,7 @@ from nostalgia.errors import ServerError, SessionRevoked
 from nostalgia.model.json_value import JsonValue, as_integer, as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
+from nostalgia.net.session_proof import proof_headers
 from nostalgia.server.model import ServerAccess, ServerLease
 
 
@@ -64,11 +65,18 @@ class HttpServerGateway:
     def _request(self, method: str, path: str, document: JsonValue = None) -> dict[str, JsonValue]:
         if not self._token:
             raise SessionRevoked("Cần đăng nhập Google để dùng server.")
+        payload = json.dumps(document).encode() if document is not None else None
         response = self._http_client.send(
             method,
             self._base_url + "/v1/servers" + path,
-            headers={"Authorization": "Bearer " + self._token, "Content-Type": "application/json"},
-            body=json.dumps(document).encode() if document is not None else None,
+            headers={
+                "Authorization": "Bearer " + self._token,
+                "Content-Type": "application/json",
+                **proof_headers(
+                    self._token, method, self._base_url + "/v1/servers" + path, payload
+                ),
+            },
+            body=payload,
             max_bytes=8192,
         )
         if response.status == 401:

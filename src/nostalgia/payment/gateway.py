@@ -9,6 +9,7 @@ from nostalgia.errors import PaymentError
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
+from nostalgia.net.session_proof import proof_headers
 from nostalgia.payment.model import PaymentOffer, PaymentOrder
 from nostalgia.payment.parse import identifier, parse_offer, parse_order
 
@@ -88,6 +89,7 @@ class HttpPaymentGateway:
         if body is not None:
             headers["Content-Type"] = "application/json"
             headers["Idempotency-Key"] = request_id
+        headers.update(proof_headers(self._session_token, method, self._base_url + path, body))
         response = self._http_client.send(
             method, self._base_url + path, body=body, headers=headers, max_bytes=128_000
         )

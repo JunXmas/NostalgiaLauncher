@@ -13,6 +13,7 @@ from nostalgia.multiplayer.sync_manifest import manifest_document, parse_sync_ma
 from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
+from nostalgia.net.session_proof import proof_headers
 from nostalgia.operations.cancellation import CancelToken
 
 
@@ -123,6 +124,11 @@ class HttpRoomSyncGateway:
         max_bytes: int = 256_000,
         absent_ok: bool = False,
     ) -> bytes | None:
+        if "Authorization" in headers:
+            headers = {
+                **headers,
+                **proof_headers(self._session_token, method, self._base_url + path, body),
+            }
         response = self._http_client.send(
             method, self._base_url + path, headers=headers, body=body, max_bytes=max_bytes
         )

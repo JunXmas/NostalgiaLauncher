@@ -65,3 +65,32 @@ def test_plaintext_backend_refused_without_fallback(
     assert not store.save_access_token("a" * 64)
     assert not store.load_access_token() and not vault.credentials
     assert not list(tmp_path.iterdir())
+
+
+def test_bound_session_restores_its_signing_key_only_from_secure_vault(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from nostalgia.net.session_proof import (
+        forget_session,
+        proof_headers,
+        register_session,
+        session_seed,
+    )
+
+    vault = VaultFixture()
+    monkeypatch.setattr(VaultFixture, "__module__", "keyring.backends.Windows")
+    monkeypatch.setattr(
+        importlib, "import_module", lambda _name: SimpleNamespace(get_keyring=lambda: vault)
+    )
+    access_token = "vault_bound_" + "z" * 52
+    register_session(access_token, "1b" * 32)
+    store = service_store.KeyringSessionStore("https://accounts.test", tmp_path)
+    assert store.save_access_token(access_token)
+    forget_session(access_token)
+    assert not proof_headers(access_token, "GET", "https://accounts.test/v1/me", None)
+    assert store.load_access_token() == access_token
+    assert session_seed(access_token) == "1b" * 32
+    assert proof_headers(access_token, "GET", "https://accounts.test/v1/me", None)
+    assert not list(tmp_path.iterdir())
+    store.remove_access_token()
+    assert not store.load_access_token() and not session_seed(access_token)

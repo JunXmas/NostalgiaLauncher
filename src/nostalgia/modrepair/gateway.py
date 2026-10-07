@@ -15,6 +15,7 @@ from nostalgia.model.json_value import JsonValue, as_integer, as_list, as_mappin
 from nostalgia.modrepair.model import RepairChange, RepairPlan
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
+from nostalgia.net.session_proof import proof_headers
 
 
 def scan_payload(scan: ModScan) -> bytes:
@@ -54,6 +55,7 @@ class HttpRepairGateway:
             headers={
                 "Authorization": "Bearer " + self._access_token,
                 "Content-Type": "application/json",
+                **proof_headers(self._access_token, "POST", self._base_url + path, payload),
             },
             max_bytes=262144,
         )
