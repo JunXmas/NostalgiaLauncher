@@ -92,7 +92,10 @@ def _decode_model(reader: Callable[[str], bytes], block: str) -> BlockModel:
             reference = as_string(textures.get(reference[1:])) or ""
         if reference not in images:
             image = QImage()
-            if not image.loadFromData(reader(_resource(reference, "textures", ".png"))):
+            # Minecraft textures are PNG; avoid probing Qt's SVG plugin in worker threads.
+            texture_data = reader(_resource(reference, "textures", ".png"))
+            # PySide 6.11 stubs say bytes, but the binding accepts only str for format.
+            if not image.loadFromData(texture_data, "PNG"):  # type: ignore[arg-type]
                 raise ValueError("invalid Minecraft texture")
             images[reference] = image.copy(0, 0, image.width(), image.width())
         return images[reference]

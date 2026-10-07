@@ -28,7 +28,7 @@ Glass {
                     width: parent.width
                     color: GlassTheme.muted
                     text: socialBridge.signedIn ? (socialBridge.account.plus ? "Nostalgia Plus" + (socialBridge.account.badge ? " · " + socialBridge.account.badge : "") : "Miễn phí") + " · Tài khoản Google"
-                        : "Dùng Google để lưu bạn bè, nhận lời mời và mang Plus sang máy mới. Tài khoản Minecraft vẫn dùng riêng để chơi game."
+                        : "Dùng Google để lưu bạn bè và nhận lời mời trên các máy của bạn. Tài khoản Minecraft vẫn dùng riêng để chơi game."
                 }
             }
             Flow {
@@ -59,8 +59,8 @@ Glass {
             objectName: "socialAccountHint"
             width: parent.width
             text: socialBridge.signedIn ? "Mã kết bạn · " + socialBridge.account.friendCode + "  ·  Đăng nhập máy mới sẽ đăng xuất máy này."
-                : socialBridge.configured ? "Bạn bè, chat và chơi chung miễn phí. Chỉ chủ phòng cần Plus để đồng bộ modpack."
-                : "PREVIEW · Đăng nhập Google sẽ mở khi dịch vụ được cấu hình."
+                : socialBridge.configured ? "Hoàn tất đăng nhập trong trình duyệt. Launcher tự kết nối, không cần nhập mã."
+                : "Đăng nhập Google chưa khả dụng trong bản thử này. Chờ bản cập nhật từ Nostalgia."
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }

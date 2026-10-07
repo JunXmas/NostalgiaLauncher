@@ -33,7 +33,10 @@ def test_release_pages_offline_and_invalid_configuration(tmp_path: Path) -> None
         for page in range(7):
             root_item.setProperty("currentIndex", page)
             QTest.qWait(50)
-        assert root_item.findChild(QObject, "serviceAccountUrl") is not None
+        assert root_item.findChild(QObject, "serviceAccountUrl") is None
+        assert root_item.findChild(QObject, "saveServiceSettings") is None
+        assert root_item.findChild(QObject, "serviceStatus") is not None
+        assert view.rootContext().contextProperty("plusFeaturesEnabled") is False
         assert view.rootContext().contextProperty("paymentBridge").details["stage"] == "unavailable"
         configuration = view.rootContext().contextProperty("serviceConfiguration")
         configuration.save("http://bad", "")

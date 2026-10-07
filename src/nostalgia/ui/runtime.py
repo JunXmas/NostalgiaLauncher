@@ -11,8 +11,6 @@ from PySide6.QtWidgets import QApplication
 
 from nostalgia import __version__
 from nostalgia.api import (
-    HttpPaymentGateway,
-    HttpRepairGateway,
     HttpRoomSyncGateway,
     HttpSocialGateway,
     Launcher,
@@ -40,6 +38,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         session_store=launcher.make_service_session_store(configuration.account_url)
         if social_gateway
         else None,
+        plus_enabled=False,
     )
     view.rootContext().setContextProperty(
         "serviceConfiguration", ServiceConfigurationBridge(launcher, parent=view)
@@ -56,16 +55,8 @@ def build_release_view(launcher: Launcher) -> QQuickView:
 
     def connect_services() -> None:
         access_token = social_gateway.access_token if social_gateway else ""
-        payments.set_gateway(
-            HttpPaymentGateway(configuration.account_url, access_token, http_client)
-            if access_token
-            else None
-        )
-        repair.set_gateway(
-            HttpRepairGateway(configuration.account_url, access_token, http_client)
-            if access_token
-            else None
-        )
+        payments.set_gateway(None)
+        repair.set_gateway(None)
         synchronization.set_gateway(
             HttpRoomSyncGateway(configuration.room_sync_url, http_client, access_token)
             if access_token and configuration.room_sync_url

@@ -77,6 +77,7 @@ Controls.Popup {
         }
     }
     contentItem: Item {
+        id: dialogContent
         Item {
             id: header
             width: parent.width
@@ -252,6 +253,9 @@ Controls.Popup {
                 }
                 ProjectVersionPicker {
                     id: picker
+                    // The menu lives in Overlay, outside this popup's visual item.
+                    // Capture the dialog beneath it without capturing the menu itself.
+                    menuBackdrop: dialogContent.parent
                     width: parent.width
                     details: root.details
                     visible: !root.details.loading && root.details.versions.length > 0

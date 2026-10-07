@@ -10,6 +10,7 @@ Column {
     property string gameVersion: ""
     property string versionId: ""
     property string instanceId: ""
+    property Item menuBackdrop: GlassTheme.backdrop
     readonly property bool isPack: details.contentKind === "modpack"
     readonly property var gameChoices: {
         var values = [];
@@ -97,6 +98,8 @@ Column {
             }
             Select {
                 objectName: "projectGameVersion"
+                menuBackdrop: root.menuBackdrop
+                searchPlaceholder: "Tìm Minecraft…"
                 width: parent.width
                 model: root.gameChoices
                 currentIndex: Math.max(0, root.gameChoices.indexOf(root.gameVersion))
@@ -117,6 +120,8 @@ Column {
             }
             Select {
                 objectName: "projectRelease"
+                menuBackdrop: root.menuBackdrop
+                searchPlaceholder: "Tìm bản phát hành…"
                 width: parent.width
                 model: root.releases.map(function (release) {
                     return release.number + "  ·  " + release.type + (release.loaders.length && (root.details.contentKind === "mod" || root.isPack) ? "  ·  " + release.loaders.join(" / ") : "");
@@ -143,6 +148,7 @@ Column {
         }
         Select {
             objectName: "projectTarget"
+            menuBackdrop: root.menuBackdrop
             width: parent.width
             model: root.targets.map(function (target) {
                 return root.targetLabel(target);

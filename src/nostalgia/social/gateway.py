@@ -80,6 +80,8 @@ class HttpSocialGateway:
         )
         if fields.get("status") == "waiting":
             return ""
+        if fields.get("status") == "denied":
+            raise SocialError("Bạn đã hủy đăng nhập Google. Hãy thử lại khi sẵn sàng.")
         access_token = as_string(fields.get("access_token")) or ""
         if fields.get("status") != "signed_in" or not re.fullmatch(
             r"[A-Za-z0-9_-]{32,256}", access_token

@@ -21,6 +21,7 @@ class SocialState(WorkerBridge):
     _peer_id: str
     _login: GoogleLogin | None
     _note: str
+    _plus_enabled: bool
 
     @Property(bool, constant=True)
     def configured(self) -> bool:
@@ -47,22 +48,24 @@ class SocialState(WorkerBridge):
             "accountId": account.account_id,
             "name": account.name,
             "friendCode": account.friend_code,
-            "plus": account.plus_lifetime or account.plus_until > time.time(),
-            "plusLifetime": account.plus_lifetime,
+            "plus": self._plus_enabled
+            and (account.plus_lifetime or account.plus_until > time.time()),
+            "plusLifetime": self._plus_enabled and account.plus_lifetime,
             "badge": {
                 "plus-half-year-v1": "Đồng hành",
                 "plus-year-v2": "Tiên phong",
                 "plus-lifetime-v1": "Sáng lập",
             }.get(account.plus_plan, "")
-            if account.plus_lifetime or account.plus_until > time.time()
+            if self._plus_enabled and (account.plus_lifetime or account.plus_until > time.time())
             else "",
             "plusUntil": account.plus_until,
             "accent": account.accent,
             "showBadge": account.show_badge,
-            "profilePlus": account.plus_plan
-            in ("plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
+            "profilePlus": self._plus_enabled
+            and account.plus_plan in ("plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
             and (account.plus_lifetime or account.plus_until > time.time()),
-            "earlyPreview": account.plus_plan in ("plus-year-v2", "plus-lifetime-v1")
+            "earlyPreview": self._plus_enabled
+            and account.plus_plan in ("plus-year-v2", "plus-lifetime-v1")
             and (account.plus_lifetime or account.plus_until > time.time()),
         }
 

@@ -1,14 +1,10 @@
 import QtQuick
-import "../" as Legacy
 
 Column {
     width: parent.width
     spacing: 12
     visible: typeof serviceConfiguration !== "undefined"
-    PaymentText { width: parent.width; font.weight: Font.DemiBold; text: "Dịch vụ Google & Plus · bản draft" }
-    PaymentText { width: parent.width; text: "Chỉ nhập URL dịch vụ HTTPS do dự án cung cấp. Không nhập client secret, khóa payOS hoặc token Google."; color: GlassTheme.muted }
-    Input { id: account; objectName: "serviceAccountUrl"; width: parent.width; placeholder: "https://dịch-vụ-tài-khoản"; text: typeof serviceConfiguration !== "undefined" ? serviceConfiguration.accountUrl : "" }
-    Input { id: relay; width: parent.width; placeholder: "https://dịch-vụ-relay-đồng-bộ"; text: typeof serviceConfiguration !== "undefined" ? serviceConfiguration.roomSyncUrl : "" }
-    Button { objectName: "saveServiceSettings"; label: "Lưu cấu hình dịch vụ"; onClicked: serviceConfiguration.save(account.text,relay.text) }
-    PaymentText { width: parent.width; text: typeof serviceConfiguration !== "undefined" ? serviceConfiguration.note : ""; color: GlassTheme.accent }
+    PaymentText { width: parent.width; font.weight: Font.DemiBold; text: "Tài khoản Nostalgia" }
+    PaymentText { objectName: "serviceStatus"; width: parent.width; text: typeof socialBridge !== "undefined" && socialBridge.configured ? "Google đã được tích hợp. Đăng nhập trong mục Bạn bè hoặc màn hình chào." : "Đăng nhập Google chưa khả dụng trong bản thử này. Chờ bản cập nhật từ Nostalgia."; color: GlassTheme.muted }
+    PaymentText { width: parent.width; visible: typeof plusFeaturesEnabled !== "undefined" && !plusFeaturesEnabled; text: "Plus tạm thời vô hiệu hóa. Bản thử này không nhận thanh toán Plus."; color: GlassTheme.muted }
 }

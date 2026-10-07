@@ -1,4 +1,4 @@
-# Giao diện và chuyển động · draft 1.2.0rc7
+# Giao diện và chuyển động · preview 1.2.0rc8 (chưa build)
 
 Giữ bảng màu hiện tại: nền xám lạnh, accent theo trang và màu thương hiệu xanh.
 Mục tiêu là giảm sự rời rạc giữa các màn hình, đưa thao tác chính về cùng vị trí,
@@ -78,3 +78,12 @@ Viền focus trắng của theme cũ được tắt ở theme mới; ô phiên b
 của chính nút khi dùng chuột hoặc bàn phím. Thẻ Optimized tự tăng chiều cao;
 lưới loader giảm số cột theo cỡ chữ để mô tả/nhãn không đè lên nút ở cửa sổ nhỏ.
 Giữ bảng màu và ảnh Minecraft hiện có.
+
+## Google-only rc8
+
+Không đổi cơ chế cuộn/skin/mica của rc7. Bỏ form endpoint người chơi; mục ủng hộ
+hiện Plus tạm khóa và không mời thanh toán. Google dùng trình duyệt, tự nhận phiên.
+Google production còn chờ chủ dự án cấu hình theo GOOGLE_SETUP.md.
+
+Menu phiên bản rc8: tối đa 6 dòng, tìm kiếm danh sách dài, kính mờ lấy đúng nền
+trong popup và tự đặt lên/xuống. Xem ảnh RC8_VERSION_MENU/SEARCH/SMALL trong preview/rc8.

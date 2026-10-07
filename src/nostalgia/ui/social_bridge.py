@@ -96,13 +96,13 @@ class SocialBridge(SocialSession):
     @Slot(str, bool)
     def setProfile(self, accent: str, show_badge: bool) -> None:
         gateway = self._gateway
-        if gateway and self.signedIn and not self.busy:
+        if self._plus_enabled and gateway and self.signedIn and not self.busy:
             self._request("changed", lambda: gateway.update_profile(accent, show_badge))
 
     @Slot()
     def downloadEarlyPreview(self) -> None:
         gateway = self._gateway
-        if gateway and self.signedIn and not self.busy:
+        if self._plus_enabled and gateway and self.signedIn and not self.busy:
             target = (
                 "windows-x64"
                 if sys.platform == "win32"

@@ -12,8 +12,8 @@ Controls.Popup {
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     objectName: "supportDialog"
     parent: Controls.Overlay.overlay
-    width: Math.min(receiptMode ? 760 : 1000, parent ? parent.width - 48 : 1000)
-    height: Math.min(receiptMode ? 660 : details.stage === "pending" ? 840 : 780, parent ? parent.height - 48 : 780)
+    width: Math.min(plusPaused ? 680 : receiptMode ? 760 : 1000, parent ? parent.width - 48 : 1000)
+    height: Math.min(plusPaused ? 430 : receiptMode ? 660 : details.stage === "pending" ? 840 : 780, parent ? parent.height - 48 : 780)
     x: parent ? (parent.width - width) / 2 : 0
     y: parent ? (parent.height - height) / 2 : 0
     padding: 28
@@ -22,6 +22,7 @@ Controls.Popup {
     focus: true
     property Item backdrop: null
     property var details: paymentBridge.details
+    readonly property bool plusPaused: !plusFeaturesEnabled
     readonly property bool receiptMode: details.stage === "paid"
     readonly property bool compactLayout: height < 650
     property string displayedStage: ""
@@ -166,13 +167,13 @@ Controls.Popup {
                 width: parent.width - 60
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
-                    text: root.receiptMode ? "BIÊN NHẬN PLUS" : "ỦNG HỘ & PLUS"
+                    text: root.plusPaused ? "ỦNG HỘ NOSTALGIA" : root.receiptMode ? "BIÊN NHẬN PLUS" : "ỦNG HỘ & PLUS"
                     color: GlassTheme.brand
                     font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
-                    text: "Nostalgia Plus"
+                    text: root.plusPaused ? "Cùng Nostalgia phát triển" : "Nostalgia Plus"
                     font.pixelSize: (root.receiptMode ? (root.compactLayout ? 16 : 20) : (root.compactLayout ? 22 : 29)) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
@@ -224,7 +225,7 @@ Controls.Popup {
                 objectName: root.receiptMode ? "paymentDone" : root.details.stage === "pending" ? "paymentCheck" : "paymentCreate"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                visible: root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0
+                visible: !root.plusPaused && (root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0)
                 label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Kiểm tra thanh toán") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
                 primary: true
                 clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error)
@@ -271,10 +272,11 @@ Controls.Popup {
                 }
                 PaymentPlans {
                     width: parent.width
-                    visible: ["offer", "unavailable"].indexOf(root.details.stage) >= 0
+                    visible: !root.plusPaused && ["offer", "unavailable"].indexOf(root.details.stage) >= 0
                 }
                 Grid {
                     id: grid
+                    visible: !root.plusPaused
                     width: parent.width
                     columns: !root.receiptMode && width >= 780 * GlassTheme.scale ? 2 : 1
                     columnSpacing: 32
@@ -290,6 +292,17 @@ Controls.Popup {
                         active: visible
                         height: visible && item ? item.implicitHeight : 0
                         sourceComponent: grid.columns === 1 ? benefitsPanel : checkoutPanel
+                    }
+                }
+                Glass {
+                    objectName: "plusPausedCard"
+                    width: parent.width; height: pausedText.implicitHeight + 40; padding: 20
+                    visible: root.plusPaused
+                    Column {
+                        id: pausedText; width: parent.width; spacing: 12
+                        PaymentText { width: parent.width; text: "Plus đang tạm khóa"; font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: "Bản thử này tập trung vào tài khoản Google, bạn bè và chat. Thanh toán và các quyền Plus sẽ mở sau."; color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: "Ủng hộ tùy tâm vẫn có thể sử dụng, nhưng không kích hoạt Plus."; color: GlassTheme.muted }
                     }
                 }
             }

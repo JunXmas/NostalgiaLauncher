@@ -150,13 +150,13 @@ khởi đầu."
                     Button {
                         objectName: "loginGoogleService"
                         width: parent.width
-                        label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Kết nối Google · Bạn bè & Plus"
+                        label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Tiếp tục với Google  ↗"
                         clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn && !socialBridge.signedIn
                         onClicked: socialBridge.signIn()
                     }
                     PaymentText {
                         width: parent.width
-                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : "Google lưu bạn bè và Plus. Chọn tài khoản Minecraft bên dưới để chơi."
+                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : socialBridge.configured ? "Google lưu bạn bè. Đăng nhập qua trình duyệt, không cần nhập mã." : "Google chưa khả dụng trong bản thử này. Bạn vẫn có thể đăng nhập Minecraft bên dưới."
                         color: GlassTheme.muted
                         font.pixelSize: GlassTheme.fontNote
                     }

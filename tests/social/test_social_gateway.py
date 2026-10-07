@@ -29,6 +29,18 @@ def snapshot_document() -> dict[str, object]:
     }
 
 
+def test_google_consent_denied_stops_login(
+    server: LocalHttpsServer, server_state: ServerState, http_client: HttpClient
+) -> None:
+    from nostalgia.social.model import GoogleLogin
+
+    server_state.add("/v1/auth/google/poll", b'{"status":"denied"}')
+    with pytest.raises(SocialError, match="hủy"):
+        HttpSocialGateway(server.url(""), http_client).poll_login(
+            GoogleLogin("attempt", "", 4200000000, "a" * 64)
+        )
+
+
 def test_browser_login_proof_and_no_token_in_url(
     server: LocalHttpsServer, server_state: ServerState, http_client: HttpClient
 ) -> None:

@@ -35,6 +35,7 @@ def open_preview(
     room_sync_gateway: RoomSyncGateway | None = None,
     social_gateway: SocialGateway | None = None,
     session_store: ServiceSessionStore | None = None,
+    plus_enabled: bool = True,
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
@@ -52,8 +53,10 @@ def open_preview(
         room_sync_bridge,
         parent=view,
         session_store=session_store,
+        plus_enabled=plus_enabled,
     )
     context.setContextProperty("socialBridge", social_bridge)
+    context.setContextProperty("plusFeaturesEnabled", plus_enabled)
     if social_gateway is not None and social_gateway.access_token:
         social_bridge.refresh()
     elif social_gateway is not None and session_store is not None:

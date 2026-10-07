@@ -36,7 +36,7 @@ Controls.Popup {
                 id: contents
                 width: parent.width-8; spacing: 14
                 PaymentText { objectName: "modRepairNote"; width: parent.width; text: modRepairBridge.busy ? "Đang kiểm tra…" : root.details.note; color: GlassTheme.accent }
-                PaymentText { width: parent.width; text: "Free báo lỗi metadata. Plus lập phương án được hỗ trợ. Quét không chứng minh mọi mod chạy ổn trong game."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+                PaymentText { width: parent.width; text: plusFeaturesEnabled ? "Free báo lỗi metadata. Plus lập phương án được hỗ trợ. Quét không chứng minh mọi mod chạy ổn trong game." : "Kiểm tra mod miễn phí. Tự động sửa bằng Plus đang tạm khóa trong bản thử này."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
                 Repeater { model: root.details.findings; Glass { width: contents.width; padding: 14; height: finding.implicitHeight+28; Column { id: finding; width: parent.width; spacing: 5; PaymentText { width: parent.width; text: modelData.file; font.weight: Font.DemiBold } PaymentText { width: parent.width; text: modelData.reason; color: modelData.code === "unknown" ? GlassTheme.muted : GlassTheme.danger } } } }
                 PaymentText { width: parent.width; visible: root.details.changes.length>0; text: "PHƯƠNG ÁN PLUS"; font.weight: Font.DemiBold }
                 Repeater { model: root.details.changes; PaymentText { width: contents.width; text: (modelData.operation === "add" ? "+ Thêm " : "− Tắt ") + modelData.file + "\n" + modelData.reason } }
@@ -49,7 +49,7 @@ Controls.Popup {
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             spacing: 8
             Button { objectName: "modRescan"; label: "Quét lại"; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }
-            Button { objectName: "modPlan"; label: "Lập phương án · Plus"; clickable: root.details.canPlan && !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
+            Button { objectName: "modPlan"; label: "Lập phương án · Plus"; visible: plusFeaturesEnabled; clickable: root.details.canPlan && !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
             Button { objectName: "modApply"; label: "Áp dụng & sao lưu"; primary: true; visible: root.details.canApply; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: confirmDialog.ask("Áp phương án sửa mod?","Các mod trong phương án sẽ được thêm/tắt. Giữ bản trước sửa để hoàn tác.",function(){modRepairBridge.apply();}) }
             Button { objectName: "modUndo"; label: "Hoàn tác"; visible: root.details.canUndo; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.undo() }
         }

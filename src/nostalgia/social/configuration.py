@@ -43,14 +43,28 @@ def verify_service_url(value: str) -> str:
 
 
 def read_configuration(config_dir: Path) -> ServiceConfiguration:
+    defaults = as_mapping(read_json(Path(__file__).with_name("service-defaults.json")))
     path = config_dir / "services.json"
-    fields = as_mapping(read_json(path)) if path.exists() else {}
+    try:
+        fields = as_mapping(read_json(path)) if path.exists() else {}
+    except (NostalgiaError, OSError, ValueError):
+        fields = {}
     return ServiceConfiguration(
         verify_service_url(
-            os.environ.get("NOSTALGIA_ACCOUNT_URL", as_string(fields.get("account_url")) or "")
+            os.environ.get(
+                "NOSTALGIA_ACCOUNT_URL",
+                as_string(defaults.get("account_url"))
+                or as_string(fields.get("account_url"))
+                or "",
+            )
         ),
         verify_service_url(
-            os.environ.get("NOSTALGIA_ROOM_SYNC_URL", as_string(fields.get("room_sync_url")) or "")
+            os.environ.get(
+                "NOSTALGIA_ROOM_SYNC_URL",
+                as_string(defaults.get("room_sync_url"))
+                or as_string(fields.get("room_sync_url"))
+                or "",
+            )
         ),
     )
 
@@ -69,5 +83,5 @@ def load_configuration(config_dir: Path) -> ServiceConfiguration:
     try:
         return read_configuration(config_dir)
     except (NostalgiaError, OSError, ValueError):
-        logging.warning("Cấu hình dịch vụ không hợp lệ; hãy sửa URL trong Cài đặt.")
+        logging.warning("Cấu hình dịch vụ không hợp lệ; hãy cập nhật launcher.")
         return ServiceConfiguration()

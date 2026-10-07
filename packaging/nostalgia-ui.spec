@@ -26,6 +26,7 @@ APP_ICON = str(ICONS / "nostalgia.icns") if (ICONS / "nostalgia.icns").is_file()
 datas = [
     (str(PACKAGE / "ui" / "qml"), "nostalgia/ui/qml"),
     (str(PACKAGE / "skin" / "defaults"), "nostalgia/skin/defaults"),
+    (str(PACKAGE / "social" / "service-defaults.json"), "nostalgia/social"),
 ]
 datas += collect_data_files("PySide6", subdir="Qt/qml", includes=["QtQuick/**", "QtQml/**", "QtQuick.2/**"])
 

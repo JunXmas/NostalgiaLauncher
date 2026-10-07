@@ -75,6 +75,12 @@ jobs:
           python-version: "3.12"
       - run: uv sync --locked --extra ui --group build
 
+      - name: Tích hợp địa chỉ Google, không yêu cầu người chơi nhập
+        env:
+          NOSTALGIA_BUILD_ACCOUNT_URL: ${{ vars.NOSTALGIA_ACCOUNT_URL }}
+          NOSTALGIA_BUILD_ROOM_SYNC_URL: ${{ vars.NOSTALGIA_ROOM_SYNC_URL }}
+        run: uv run python packaging/configure-services.py
+
       - name: Icon .icns cho macOS
         if: matrix.bundle_os == 'macos'
         run: |
@@ -172,6 +178,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           assets=(bundles/*)
+          shopt -s nullglob
           review_dir="docs/preview/rc${GITHUB_REF_NAME##*rc}"
           if [[ "$GITHUB_REF_NAME" == *rc* && -d "$review_dir" ]]; then
             validation_name="RC${GITHUB_REF_NAME##*rc}_VALIDATION.md"
@@ -182,7 +189,7 @@ jobs:
           from pathlib import Path
           folder = Path(os.environ['NOSTALGIA_REVIEW_DIR'])
           artifacts = {path.name: path for path in folder.iterdir() if path.suffix in ('.png', '.gif')}
-          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', os.environ['NOSTALGIA_VALIDATION_NAME'], 'UI_MOTION_REVIEW.md')})
+          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', os.environ['NOSTALGIA_VALIDATION_NAME'], 'UI_MOTION_REVIEW.md', 'GOOGLE_SETUP.md')})
           seen = set()
           for line in (folder / 'PREVIEW_SHA256SUMS').read_text().splitlines():
               checksum, name = line.split(maxsplit=1)
@@ -192,7 +199,7 @@ jobs:
           assert seen == set(artifacts)
           PYREVIEW
             assets+=("$review_dir"/*.png "$review_dir"/*.gif "$review_dir/PREVIEW_SHA256SUMS"
-              docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md)
+              docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md)
           fi
           gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \

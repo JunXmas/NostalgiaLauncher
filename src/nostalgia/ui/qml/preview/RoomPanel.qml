@@ -34,7 +34,7 @@ Glass {
             Button { objectName: "socialStopRoom"; label: multiplayerBridge.role === "waiting_world" ? "Huỷ" : "Rời phòng"; quiet: true; onClicked: multiplayerBridge.stop() }
             Button { visible: multiplayerBridge.role === "waiting_world"; objectName: "showManualLan"; label: root.manualExpanded ? "Thu gọn  ↑" : "Không tìm thấy LAN?"; quiet: true; onClicked: root.manualExpanded = !root.manualExpanded }
             Button { visible: multiplayerBridge.role !== "waiting_world"; objectName: "showRoomOptions"; label: root.detailsExpanded ? "Thu gọn  ↑" : "Tùy chọn phòng  ↓"; quiet: true; onClicked: root.detailsExpanded = !root.detailsExpanded }
-            Button { visible: multiplayerBridge.role === "hosting"; label: root.sharingExpanded ? "Thu gọn modpack" : "Đồng bộ modpack · Plus"; onClicked: root.sharingExpanded = !root.sharingExpanded }
+            Button { visible: plusFeaturesEnabled && multiplayerBridge.role === "hosting"; label: root.sharingExpanded ? "Thu gọn modpack" : "Đồng bộ modpack · Plus"; onClicked: root.sharingExpanded = !root.sharingExpanded }
         }
         Flow {
             width: parent.width; spacing: 8
@@ -51,7 +51,7 @@ Glass {
         }
         Loader {
             width: parent.width
-            active: (multiplayerBridge.role === "hosting" && root.sharingExpanded) || (multiplayerBridge.role === "joined" && !!roomSyncBridge.offer.name)
+            active: plusFeaturesEnabled && ((multiplayerBridge.role === "hosting" && root.sharingExpanded) || (multiplayerBridge.role === "joined" && !!roomSyncBridge.offer.name))
             sourceComponent: Component { Legacy.RoomSyncCard { width: parent.width; hostMode: multiplayerBridge.role === "hosting" } }
             height: item ? item.implicitHeight : 0
         }

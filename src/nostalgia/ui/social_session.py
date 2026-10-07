@@ -31,9 +31,11 @@ class SocialSession(SocialState):
         sync_bridge: RoomSyncBridge,
         parent: QObject | None = None,
         session_store: ServiceSessionStore | None = None,
+        plus_enabled: bool = True,
     ) -> None:
         super().__init__(parent)
         self._gateway = gateway
+        self._plus_enabled = plus_enabled
         self._session_store = session_store
         self._multiplayer = multiplayer
         self._sync_bridge = sync_bridge
@@ -74,8 +76,12 @@ class SocialSession(SocialState):
 
     @Slot()
     def openGoogle(self) -> None:
-        if self._login:
-            QDesktopServices.openUrl(QUrl(self._login.authorization_url))
+        if self._login and not QDesktopServices.openUrl(QUrl(self._login.authorization_url)):
+            self._note = (
+                "Không mở được trình duyệt. Hãy kiểm tra trình duyệt mặc định "
+                "rồi bấm Mở lại Google."
+            )
+            self.changed.emit()
 
     @Slot()
     def signOut(self) -> None:

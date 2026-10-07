@@ -1,3 +1,14 @@
+## 1.2.0rc8 — preview mã nguồn, Google-only, Plus tạm khóa
+
+- Google mở trình duyệt và tự nhận phiên; bỏ ô yêu cầu người chơi nhập URL dịch vụ.
+- Build tích hợp endpoint công khai từ cấu hình của chủ dự án; hướng dẫn Google Cloud trong GOOGLE_SETUP.md.
+- Chưa có OAuth client/backend production: Google báo chưa khả dụng khi build không có endpoint, không dùng dịch vụ giả.
+- Hủy Google báo về launcher, lỗi mở trình duyệt cho phép thử lại.
+- Plus/payOS/tự sửa mod/đồng bộ pack Plus tạm khóa; Free quét mod và UI rc7 giữ nguyên.
+- Backend private cũng khóa quyền Plus mặc định, giữ Google/bạn bè/chat/phiên một máy.
+- **Chưa build bộ cài/tạo draft rc8**; chưa deploy backend hoặc nhận tiền thật.
+- Menu phiên bản thu gọn, tìm kiếm và kính mờ; hỗ trợ màn hình nhỏ/150% chữ.
+
 ## 1.2.0rc7 — Nhận diện modpack và cuộn quán tính
 
 - Tự đọc tên/phiên bản mod từ JAR Fabric, Quilt, Forge, NeoForge và mcmod.info; không cần bấm nhận diện. Hoạt động offline, quét ở nền và cache theo file.
