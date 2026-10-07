@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "CosmeticCatalog.js" as Cosmetics
 
 Column {
     property var profile: ({})
@@ -16,7 +17,7 @@ Column {
         }
     }
     PaymentText { text: "COSMETIC HỒ SƠ"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
-    PaymentText { width: parent.width; text: details.decor === "amethyst" ? "✧ Khung Thạch anh · Nền Thạch anh" : details.decor === "emerald" ? "✧ Khung Lục bảo · Nền Lục bảo" : details.decor === "amber" ? "✧ Khung Hổ phách · Nền Hổ phách" : "Phong cách nguyên bản"; font.weight: Font.DemiBold }
+    PaymentText { width: parent.width; text: details.decor && details.decor !== "none" ? Cosmetics.name(details.decor) + " · Khung avatar và nền hồ sơ" : "Phong cách nguyên bản"; font.weight: Font.DemiBold }
     PaymentText { text: "MODPACK HAY CHƠI"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
     Repeater { model: details.favorite_packs || []
         Glass { width: parent.width; padding: 16; height: packBody.implicitHeight + 32

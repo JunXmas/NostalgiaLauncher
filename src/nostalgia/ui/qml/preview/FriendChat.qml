@@ -10,6 +10,7 @@ Glass {
     property bool compact: false
     property real availableHeight: 480
     property bool optionsExpanded: false
+    readonly property var peer: socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || ({})
     padding: 20
     function send() {
         if (composer.text.trim() && !socialBridge.busy) socialBridge.sendMessage(composer.text);
@@ -44,7 +45,7 @@ Glass {
         Item {
             id: chatHeading
             width: parent.width; height: Math.max(heading.implicitHeight, invite.height, chatAvatar.height)
-            SocialAvatar { id: chatAvatar; objectName: "chatFriendAvatar"; anchors.verticalCenter: parent.verticalCenter; visible: !!socialBridge.peerId; playerName: socialBridge.peerName; source: (socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || {}).avatarUrl || ""; online: socialBridge.peerOnline; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
+            SocialAvatar { id: chatAvatar; objectName: "chatFriendAvatar"; anchors.verticalCenter: parent.verticalCenter; visible: !!socialBridge.peerId; playerName: socialBridge.peerName; source: root.peer.avatarUrl || ""; decor: root.peer.decor || "none"; online: socialBridge.peerOnline; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
             Column {
                 id: heading
                 x: chatAvatar.visible ? chatAvatar.width + 12 : 0

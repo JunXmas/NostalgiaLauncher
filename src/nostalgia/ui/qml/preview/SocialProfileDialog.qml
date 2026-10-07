@@ -27,15 +27,10 @@ Controls.Popup {
             anchors.bottom: actions.top; anchors.bottomMargin: 18
             contentHeight: profileBody.implicitHeight + 8
             Column { id: profileBody; width: parent.width - 8; spacing: 18
-                Item { width: parent.width; height: 110 * GlassTheme.scale
-                    Rectangle { anchors.fill: parent; radius: 18; color: GlassTheme.alpha(GlassTheme.accent, 0.10)
-                        gradient: Gradient { orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: GlassTheme.alpha(details.decor === "emerald" ? "#60ae7b" : details.decor === "amber" ? "#daa86c" : GlassTheme.accent, 0.25) }
-                            GradientStop { position: 1; color: GlassTheme.alpha(GlassTheme.surface, 0.15) }
-                        }
-                    }
-                    SocialAvatar { objectName: "profileAvatar"; x: 18; anchors.verticalCenter: parent.verticalCenter; size: 84 * GlassTheme.scale; playerName: root.profile.name || ""; source: root.profile.avatar_url || ""; decor: root.details.decor || "none"; online: root.profile.online === true }
-                    Column { x: 122 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: parent.width - x - 50; spacing: 7
+                Item { width: parent.width; height: 146 * GlassTheme.scale
+                    CosmeticBanner { objectName: "profileBanner"; anchors.fill: parent; decor: root.editing ? editor.previewDecor : root.details.decor || "none" }
+                    SocialAvatar { objectName: "profileAvatar"; x: 18; anchors.verticalCenter: parent.verticalCenter; size: 98 * GlassTheme.scale; playerName: root.profile.name || ""; source: root.profile.avatar_url || ""; decor: root.editing ? editor.previewDecor : root.details.decor || "none"; online: root.profile.online === true }
+                    Column { x: 132 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: parent.width - x - 24; spacing: 7
                         PaymentText { width: parent.width; text: root.profile.name || "Hồ sơ người chơi"; font.pixelSize: GlassTheme.fontDialog; font.family: GlassTheme.displayFont; font.weight: Font.DemiBold }
                         PaymentText { width: parent.width; text: root.profile.online ? "Trực tuyến · Sẵn sàng chơi cùng" : "Ngoại tuyến"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                         ProfileBadge { visible: !!root.profile.badge; badge: root.profile.badge || "" }
@@ -52,7 +47,7 @@ Controls.Popup {
         Flow { id: actions; anchors.bottom: parent.bottom; width: parent.width; spacing: 10
             Button { objectName: "editSocialProfile"; visible: root.mine && !root.editing; label: "Chỉnh sửa hồ sơ"; primary: true; clickable: !profileBridge.busy; onClicked: { editor.populate(); root.editing = true; } }
             Button { objectName: "saveSocialProfile"; visible: root.editing; label: "Lưu hồ sơ"; primary: true; clickable: !profileBridge.busy; onClicked: editor.save() }
-            Button { visible: root.editing; label: "Huỷ"; quiet: true; clickable: !profileBridge.busy; onClicked: root.editing = false }
+            Button { objectName: "cancelSocialProfileEdit"; visible: root.editing; label: "Huỷ"; quiet: true; clickable: !profileBridge.busy; onClicked: root.editing = false }
             Button { visible: !root.mine && !!root.profile.account_id; label: "Nhắn tin"; primary: true; onClicked: { socialBridge.selectFriend(root.profile.account_id); root.close(); } }
         }
     }

@@ -8,12 +8,13 @@ Column {
     property string skinEntryId: ""
     property string avatarMode: "google"
     property string decor: "none"
+    property string previewDecor: "none"
     property bool shareSkin: false
     property var favorites: []
     spacing: 14
     function populate() {
         bio.text = details.bio || ""; avatarMode = details.avatar_mode || "google";
-        decor = details.decor || "none"; shareSkin = !!profile.skinFile;
+        decor = details.decor || "none"; previewDecor = decor; shareSkin = !!profile.skinFile;
         skinEntryId = ""; favorites = (details.favorite_packs || []).slice();
     }
     function togglePack(pack) {
@@ -23,6 +24,15 @@ Column {
         favorites = next;
     }
     function save() { profileBridge.save(bio.text, avatarMode, skinEntryId, shareSkin, favorites, decor); }
+    CosmeticPicker {
+        width: parent.width; selectedDecor: root.decor; previewDecor: root.previewDecor
+        avatarSource: root.profile.avatar_url || ""; playerName: root.profile.name || ""
+        canEquip: socialBridge.account.profilePlus === true
+        onChosen: function(value) {
+            root.previewDecor = value;
+            if (value === "none" || canEquip) root.decor = value;
+        }
+    }
     PaymentText { text: "Giới thiệu"; font.weight: Font.DemiBold }
     Input { id: bio; objectName: "profileBio"; width: parent.width; placeholder: "Một vài lời về bạn · Tối đa 160 ký tự"; maximumLength: 160 }
     PaymentText { text: "Ảnh đại diện"; font.weight: Font.DemiBold }
@@ -37,13 +47,6 @@ Column {
     }
     Select { objectName: "profileSkinChoice"; width: parent.width; visible: root.shareSkin; model: [root.profile.skinFile ? "Giữ skin đang chia sẻ" : "Chọn skin…"].concat(profileBridge.skinOptions.map(function(s) { return s.name; })); onActivated: function(i) { root.skinEntryId = i > 0 ? profileBridge.skinOptions[i - 1].entryId : ""; } }
     PaymentText { width: parent.width; text: "Chỉ ảnh skin được chia sẻ. Tài khoản Minecraft, đường dẫn máy và lịch sử chơi không được đưa lên hồ sơ."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-    PaymentText { text: "Cosmetic hồ sơ"; font.weight: Font.DemiBold }
-    Flow { width: parent.width; spacing: 8
-        Repeater { model: [{key:"none", title:"Nguyên bản"}, {key:"amethyst", title:"Thạch anh"}, {key:"emerald", title:"Lục bảo"}, {key:"amber", title:"Hổ phách"}]
-            Button { objectName: "profileDecor-" + modelData.key; label: modelData.title; selected: root.decor === modelData.key; clickable: modelData.key === "none" || socialBridge.account.profilePlus === true; onClicked: root.decor = modelData.key }
-        }
-    }
-    PaymentText { width: parent.width; visible: !socialBridge.account.profilePlus; text: "Khung và nền trang trí dành cho Pro trở lên; quyền lợi trả phí hiện đang tạm tắt."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     PaymentText { text: "Modpack hay chơi · Chọn tối đa 3"; font.weight: Font.DemiBold }
     Flow { width: parent.width; spacing: 8
         Repeater { model: root.favorites
