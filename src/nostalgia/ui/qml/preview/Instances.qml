@@ -118,6 +118,7 @@ Item {
     ModRepairDialog { id: repair }
     Legacy.CreateInstanceDialog {
         id: create
+        objectName: "modernCreateDialog"
         parent: root.Window.window ? root.Window.window.contentItem : root
         anchors.fill: parent
     }

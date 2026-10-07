@@ -1,3 +1,12 @@
+## 1.2.0rc7 — Nhận diện modpack và cuộn quán tính
+
+- Tự đọc tên/phiên bản mod từ JAR Fabric, Quilt, Forge, NeoForge và mcmod.info; không cần bấm nhận diện. Hoạt động offline, quét ở nền và cache theo file.
+- Đối chiếu hash Modrinth tự bổ sung ID, icon và trạng thái Đã cài; pack CurseForge giữ ID từ manifest khi hash file khớp. Không đoán ID bằng tên file.
+- Thêm/xoá mod khi mở danh sách được cập nhật bằng watcher; đổi bản chơi không nhận kết quả cũ. Bật/tắt/gỡ vẫn dùng được trong lúc nhận diện nền.
+- Cuộn theo tham số Lenis đã tham khảo trên Skew: làm mượt cả nấc chuột và pixel trackpad, kéo nội dung rồi thả tiếp tục trôi và hãm dần. Danh sách phiên bản/loader, tài khoản, log và thư viện nâng cao dùng chung cơ chế.
+- Sửa viền focus trắng hình vuông quanh ô phiên bản đã chọn, giữ viền bo góc và hệ màu hiện có. Thẻ Optimized/lưới loader co giãn để chữ 150% không tràn ở cửa sổ nhỏ.
+- Giữ mica, skin 3D và các chức năng của rc6. Release DRAFT để thử, chưa deploy backend Google/payOS production.
+
 ## 1.2.0rc6 — Mica xuyên thấu và skin 3D
 
 - Popup thêm tài khoản, mã đăng nhập Microsoft và cài modpack lấy đúng nội dung trang phía sau, bỏ lớp nền đặc; kính không bị lệch khi mở.

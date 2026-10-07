@@ -128,3 +128,40 @@ def test_pack_version_prefers_the_filtered_game_version() -> None:
     assert choose_pack_version(newest_first, "1.20.1") is release_2612, (
         "không có bản khớp: rơi về release"
     )
+
+
+def test_new_modpack_exposes_mod_names_offline_without_a_hash_lookup(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import io
+    import json
+    import zipfile
+
+    import modpack_fixture
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "fabric.mod.json",
+            json.dumps({"id": "sodium", "name": "Sodium trong pack", "version": "0.5.8"}),
+        )
+    monkeypatch.setattr(modpack_fixture, "MOD_BODY", buffer.getvalue())
+    launcher, host = make_modpack_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher.install_modpack(modpack_project(), "named-pack", allowed_hosts=(host,))
+    installed_content = launcher.list_installed_content(
+        launcher.describe_content_target("named-pack"), "mod"
+    )[0]
+    assert (
+        installed_content.label,
+        installed_content.version_number,
+        installed_content.project_id,
+    ) == (
+        "Sodium trong pack",
+        "0.5.8",
+        "",
+    )
+    # Identity is not guessed from a name; this stage needs no online lookup.

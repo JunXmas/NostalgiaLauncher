@@ -112,3 +112,18 @@ def test_identify_hashes_unknown_files_and_writes_the_ledger(tmp_path: Path) -> 
         "v9",
     )
     assert identify_by_hash(tmp_path, "mod", list_installed(tmp_path, "mod"), lookup, describe) == 0
+
+
+def test_identification_never_records_a_file_replaced_during_lookup(tmp_path: Path) -> None:
+    mods = seed(tmp_path)
+    original = hashlib.sha1(b"chep tay").hexdigest()
+
+    def lookup(_hashes: tuple[str, ...]) -> dict[str, ProjectVersion]:
+        (mods / "la.jar").write_bytes(b"new unrelated mod")
+        return {original: make_version("v9", "L")}
+
+    assert (
+        identify_by_hash(tmp_path, "mod", list_installed(tmp_path, "mod"), lookup, lambda _ids: {})
+        == 0
+    )
+    assert "L" not in load_ledger(mods)

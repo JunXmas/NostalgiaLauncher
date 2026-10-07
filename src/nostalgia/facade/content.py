@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import cast
 
 from nostalgia.content import curseforge, modrinth
-from nostalgia.content.installed import list_installed, remove_installed, set_enabled
+from nostalgia.content.installed import content_dir, list_installed, remove_installed, set_enabled
 from nostalgia.content.installer import ContentInstallReport, install_project
+from nostalgia.content.local_metadata import refresh_metadata
 from nostalgia.content.model import (
     ContentKind,
     ContentSource,
@@ -156,6 +157,10 @@ class ContentOperations(ContentDetailOperations):
                 cancel_token=cancel_token,
             )
 
+    def content_directory(self, target: ContentTarget, content_kind: ContentKind) -> Path:
+        """Thư mục nội dung để UI theo dõi thay đổi file, không cần biết layout lõi."""
+        return content_dir(target.game_dir, content_kind)
+
     def list_installed_content(
         self, target: ContentTarget, content_kind: ContentKind
     ) -> tuple[InstalledContent, ...]:
@@ -203,7 +208,7 @@ class ContentOperations(ContentDetailOperations):
 
     def identify_installed_content(self, target: ContentTarget, content_kind: ContentKind) -> int:
         """Nhận diện file chép tay bằng sha1 trên Modrinth; trả số file nhận ra. CHẠM MẠNG."""
-        installed = list_installed(target.game_dir, content_kind)
+        installed = self.scan_installed_content(target, content_kind)
         with self.make_http_client() as http_client:
             return identify_by_hash(
                 target.game_dir,
@@ -216,6 +221,16 @@ class ContentOperations(ContentDetailOperations):
                     http_client, ids, content_kind, endpoints=self.endpoints
                 ),
             )
+
+    def scan_installed_content(
+        self, target: ContentTarget, content_kind: ContentKind
+    ) -> tuple[InstalledContent, ...]:
+        """Đọc tên/phiên bản JAR và cache cục bộ. Gọi ở worker; không mạng."""
+        installed = list_installed(target.game_dir, content_kind)
+        if content_kind == "mod":
+            refresh_metadata(content_dir(target.game_dir, content_kind), installed)
+            installed = list_installed(target.game_dir, content_kind)
+        return installed
 
     def set_content_enabled(
         self, target: ContentTarget, content_kind: ContentKind, file_name: str, enabled: bool

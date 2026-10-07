@@ -183,6 +183,7 @@ def test_check_updates_flags_rows_and_identify_names_hand_copied_files(
     assert sodium == []
     failures: list[str] = []
     content_bridge.failed.connect(failures.append)
+    wait_until(lambda: not content_bridge.identifying)
     content_bridge.checkUpdates("mod")
     wait_until(lambda: not content_bridge.busy)
     assert failures and "LAZ" in failures[0]

@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from nostalgia.content.local_metadata import cached_labels, load_metadata
 from nostalgia.content.model import FOLDER_BY_KIND, ContentKind, InstalledContent
 from nostalgia.errors import ContentError, DataFileError
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
@@ -54,6 +55,7 @@ def list_installed(game_dir: Path, content_kind: ContentKind) -> tuple[Installed
     by_file_name = {
         ledger_entry.file_name: ledger_entry for ledger_entry in load_ledger(directory).values()
     }
+    metadata = load_metadata(directory) if content_kind == "mod" else {}
     found: list[InstalledContent] = []
     for path in sorted(directory.iterdir(), key=lambda p: p.name.lower()):
         if not path.is_file():
@@ -63,6 +65,7 @@ def list_installed(game_dir: Path, content_kind: ContentKind) -> tuple[Installed
         if not file_name.lower().endswith(ACCEPTED_SUFFIXES[content_kind]):
             continue
         ledger_entry = by_file_name.get(file_name)
+        local_title, local_version = cached_labels(metadata.get(file_name), path)
         found.append(
             InstalledContent(
                 content_kind=content_kind,
@@ -70,9 +73,10 @@ def list_installed(game_dir: Path, content_kind: ContentKind) -> tuple[Installed
                 file_size=path.stat().st_size,
                 enabled=enabled,
                 project_id=ledger_entry.project_id if ledger_entry else "",
-                title=ledger_entry.title if ledger_entry else "",
+                title=(ledger_entry.title if ledger_entry else "") or local_title,
                 version_id=ledger_entry.version_id if ledger_entry else "",
-                version_number=ledger_entry.version_number if ledger_entry else "",
+                version_number=(ledger_entry.version_number if ledger_entry else "")
+                or local_version,
                 icon_url=ledger_entry.icon_url if ledger_entry else "",
                 source=ledger_entry.source if ledger_entry else "modrinth",
             )

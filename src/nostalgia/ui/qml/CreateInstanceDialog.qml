@@ -212,7 +212,7 @@ Item {
                         Rectangle {
                             objectName: "optimizedCard"
                             readonly property bool selected: dialog.isPreset
-                            width: parent.width; height: 74; radius: Theme.radiusSmall
+                            width: parent.width; height: Math.max(74, optText.implicitHeight + 24); radius: Theme.radiusSmall
                             color: selected ? Theme.accentSoft : Theme.surfaceHigh
                             border.color: selected ? Theme.accent : Theme.border
                             border.width: Theme.modern ? 1 : 2
@@ -225,16 +225,18 @@ Item {
                                 fillMode: Image.PreserveAspectFit; smooth: true; mipmap: true
                             }
                             Column {
+                                id: optText
                                 anchors { left: optIcon.right; leftMargin: 12; right: parent.right; rightMargin: 12
                                           verticalCenter: parent.verticalCenter }
                                 spacing: 3
-                                Row {
+                                Flow {
+                                    width: parent.width
                                     spacing: 8
-                                    Text { text: Tr.phrase("Tối ưu hiệu năng"); color: Theme.text
+                                    Text { width: Math.min(implicitWidth, parent.width); wrapMode: Text.WordWrap
+                                           text: Tr.phrase("Tối ưu hiệu năng"); color: Theme.text
                                            font.pixelSize: Theme.fontHeading; font.bold: true }
                                     Rectangle {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: recommendText.width + 12; height: 17; radius: Theme.modern ? 8 : 0
+                                        width: recommendText.width + 12; height: Math.max(17, recommendText.implicitHeight + 4); radius: Theme.modern ? 8 : 0
                                         color: Theme.accent
                                         Text { id: recommendText; anchors.centerIn: parent; text: Tr.phrase("ĐỀ XUẤT")
                                                color: "#11151c"; font.pixelSize: Theme.fontLabel
@@ -261,12 +263,12 @@ Item {
                         Grid {
                             id: loaderGrid
                             objectName: "loaderRow"
-                            columns: parent.width < 280 ? 2 : 3; spacing: 8
+                            columns: Math.max(2, Math.min(3, Math.floor((parent.width + 8) / (Math.max(94, Theme.fontBody * 5.5) + 8)))); spacing: 8
                             Repeater {
                                 model: dialog.gridChoices
                                 Rectangle {
                                     readonly property bool selected: modelData.key === dialog.loaderKind
-                                    width: Math.min(94, (form.width - (loaderGrid.columns - 1) * 8) / loaderGrid.columns); height: 66; radius: Theme.radiusSmall
+                                    width: (form.width - (loaderGrid.columns - 1) * 8) / loaderGrid.columns; height: Math.max(66, Theme.fontBody + 51); radius: Theme.radiusSmall
                                     color: selected ? Theme.accentSoft : Theme.surfaceHigh
                                     border.color: selected ? Theme.accent : Theme.border
                                     border.width: 1
@@ -477,6 +479,9 @@ Item {
                 }
                 ListView {
                     id: majorList
+                    objectName: "majorListScroll"
+                    acceptedButtons: Qt.LeftButton
+                    Preview.InertialMotion { id: majorMotion; objectName: "majorListMotion"; target: majorList; enabled: Theme.modern }
                     anchors.fill: parent
                     clip: true; spacing: 10
                     model: dialog.majors
@@ -577,6 +582,7 @@ Item {
                                 TapHandler {
                                     onTapped: {
                                         notifier.playUi(card.expanded ? "back" : "open");
+                                        majorMotion.stopMotion();
                                         dialog.expandedMajor = card.expanded ? "" : modelData.major;
                                         if (!card.expanded) majorList.positionViewAtIndex(index, ListView.Beginning);
                                     }
@@ -638,6 +644,7 @@ Item {
                                         }
                                         }
                                         ActionButton {
+                                            objectName: "versionChip-" + modelData.versionId
                                             anchors.fill: parent; visible: Theme.modern
                                             label: modelData.versionId; primary: versionCell.selected
                                             onClicked: dialog.pickGameVersion(modelData.versionId)
@@ -663,6 +670,10 @@ Item {
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 ListView {
+                    id: loaderList
+                    objectName: "loaderListScroll"
+                    acceptedButtons: Qt.LeftButton
+                    Preview.InertialMotion { target: loaderList; enabled: Theme.modern }
                     anchors.fill: parent
                     clip: true; spacing: 6
                     model: catalogBridge.loaderVersions

@@ -97,7 +97,11 @@ def read_manifest(zip_path: Path) -> PackManifest:
 
 
 def resolve_files(
-    manifest: PackManifest, fetch_file: FetchFileFn, game_dir: Path
+    manifest: PackManifest,
+    fetch_file: FetchFileFn,
+    game_dir: Path,
+    *,
+    on_resolved: Callable[[ProjectVersion], None] | None = None,
 ) -> list[DownloadTask]:
     """Hỏi API từng file (song song, giới hạn luồng) và dựng việc tải vào `mods/`."""
     with ThreadPoolExecutor(max_workers=RESOLVE_WORKERS) as pool:
@@ -123,6 +127,8 @@ def resolve_files(
                 size=project_version.file_size or None,
             )
         )
+        if on_resolved:
+            on_resolved(project_version)
     return tasks
 
 

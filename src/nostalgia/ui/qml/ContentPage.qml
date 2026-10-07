@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Preview
 
 /*
   Thư viện nội dung (mod, shader, gói tài nguyên) theo bản mẫu: hàng tab loại, ô tìm rộng kèm
@@ -231,6 +232,8 @@ Item {
                         color: Theme.accent; font.pixelSize: Theme.fontBody
                     }
                     GridView {
+                        id: browseGrid
+                        Preview.InertialMotion { target: browseGrid; enabled: Theme.modern }
                         anchors.fill: parent
                         anchors.topMargin: page.modsBlocked ? 22 : 0
                         visible: page.gridMode
@@ -254,6 +257,8 @@ Item {
                         footer: loadMore
                     }
                     ListView {
+                        id: browseList
+                        Preview.InertialMotion { target: browseList; enabled: Theme.modern }
                         anchors.fill: parent
                         anchors.topMargin: page.modsBlocked ? 22 : 0
                         visible: !page.gridMode
@@ -358,6 +363,7 @@ Item {
                 }
                 GridView {
                     id: installedGrid
+                    Preview.InertialMotion { target: installedGrid; enabled: Theme.modern }
                     anchors { top: installedCount.bottom; topMargin: 16; left: parent.left; right: parent.right; bottom: parent.bottom }
                     visible: page.gridMode
                     clip: true
@@ -377,6 +383,7 @@ Item {
                 }
                 ListView {
                     id: installedList
+                    Preview.InertialMotion { target: installedList; enabled: Theme.modern }
                     anchors { top: installedCount.bottom; topMargin: 16; left: parent.left; right: parent.right; bottom: parent.bottom }
                     visible: !page.gridMode
                     clip: true; spacing: 6

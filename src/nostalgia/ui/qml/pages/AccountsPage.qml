@@ -1,4 +1,5 @@
 import QtQuick
+import "../preview" as Preview
 import QtQuick.Window
 import "../"
 
@@ -63,6 +64,10 @@ Item {
         title: page.allAccounts.length + " TÀI KHOẢN"
 
         ListView {
+            id: accountList
+            objectName: "accountListScroll"
+            acceptedButtons: Qt.LeftButton
+            Preview.InertialMotion { target: accountList; enabled: Theme.modern }
             anchors.fill: parent
             clip: true; spacing: 8
             model: page.allAccounts

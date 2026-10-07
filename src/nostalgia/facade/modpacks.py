@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import zipfile
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from nostalgia.content import curseforge, mrpack
@@ -17,6 +17,7 @@ from nostalgia.content.cfpack import apply_overrides as cf_apply_overrides
 from nostalgia.content.cfpack import read_manifest, resolve_files
 from nostalgia.content.model import Project, ProjectVersion
 from nostalgia.content.mrpack import apply_overrides, plan_downloads, read_index
+from nostalgia.content.pack_inventory import record_pack_inventory
 from nostalgia.content.pack_version import choose_pack_version as choose_pack_version
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.content import ContentOperations
@@ -44,6 +45,7 @@ class PackPlan:
     loader_version: str
     tasks: Callable[[Path], list[DownloadTask]]
     apply_overrides: Callable[[Path], int]
+    resolved_versions: list[ProjectVersion] = field(default_factory=list)
 
 
 class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations):
@@ -184,6 +186,7 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
             )
             raise NetworkError(message)
         plan.apply_overrides(game_dir)
+        record_pack_inventory(game_dir, plan.resolved_versions)
         return instance
 
     def _plan_modrinth_pack(
@@ -203,6 +206,7 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
     def _plan_curseforge_pack(self, http_client: HttpClient, pack_path: Path) -> PackPlan:
         manifest = read_manifest(pack_path)
         api_key = self.load_settings().curseforge_api_key
+        resolved: list[ProjectVersion] = []
 
         def fetch_one(project_id: str, file_id: str) -> ProjectVersion:
             return curseforge.fetch_file(
@@ -214,8 +218,11 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
             game_version=manifest.game_version,
             loader_kind=manifest.loader_kind,
             loader_version=manifest.loader_version,
-            tasks=lambda game_dir: resolve_files(manifest, fetch_one, game_dir),
+            tasks=lambda game_dir: resolve_files(
+                manifest, fetch_one, game_dir, on_resolved=resolved.append
+            ),
             apply_overrides=lambda game_dir: cf_apply_overrides(
                 pack_path, game_dir, manifest.overrides_prefix
             ),
+            resolved_versions=resolved,
         )

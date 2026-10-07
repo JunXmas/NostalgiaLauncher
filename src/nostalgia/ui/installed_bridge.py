@@ -7,13 +7,18 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import (
+    Property,
+    QObject,
+    Signal,
+    Slot,
+)
 
-from nostalgia.api import ContentTarget, ContentUpdate, Launcher
+from nostalgia.api import ContentUpdate, Launcher
 from nostalgia.content.model import ContentKind
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.inventory_bridge import InventoryBridge
 from nostalgia.ui.row_model import KeyedRowModel
-from nostalgia.ui.worker import WorkerBridge
 
 INSTALLED_ROLES = (
     "fileName",
@@ -25,22 +30,20 @@ INSTALLED_ROLES = (
     "contentKind",
     "iconUrl",
     "latestVersion",
+    "source",
 )
 
 
-class InstalledContentBridge(WorkerBridge):
+class InstalledContentBridge(InventoryBridge):
     # Hợp đồng với lớp con (ContentBridge): cầu nối chính để báo tiến độ. Khai để mypy kiểm.
     _main_bridge: LauncherBridge
 
     installedChanged = Signal()
-    identified = Signal(int)
     # Luồng nền xong -> đọc lại đĩa ở luồng giao diện (mô hình chỉ được đổi ở đó).
     _installedDirty = Signal(str)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
-        super().__init__(parent)
-        self._launcher = launcher
-        self._target: ContentTarget | None = None
+        super().__init__(launcher, parent)
         self._installedDirty.connect(self.refreshInstalled)
         self._installed_model = KeyedRowModel(INSTALLED_ROLES, key="fileName", parent=self)
         self._installed_rows: list[dict[str, Any]] = []
@@ -74,7 +77,7 @@ class InstalledContentBridge(WorkerBridge):
     def checkUpdates(self, content_kind: str) -> None:
         """Hỏi nguồn từng dự án trong sổ; kết quả hiện thành nhãn "có bản mới" trên hàng."""
         target = self._target
-        if target is None:
+        if target is None or self.identifying:
             return
         chosen_kind = cast(ContentKind, content_kind)
 
@@ -105,7 +108,7 @@ class InstalledContentBridge(WorkerBridge):
     def identifyInstalled(self, content_kind: str) -> None:
         """Nhận diện file chép tay bằng sha1 trên Modrinth, rồi vẽ lại danh sách."""
         target = self._target
-        if target is None:
+        if target is None or self.identifying:
             return
         chosen_kind = cast(ContentKind, content_kind)
 
@@ -137,9 +140,11 @@ class InstalledContentBridge(WorkerBridge):
         self._launcher.remove_content(self._target, chosen_kind, file_name)
         self._reload_installed(chosen_kind)
 
-    def _reload_installed(self, content_kind: ContentKind) -> None:
+    def _reload_installed(self, content_kind: ContentKind, *, automatic: bool = True) -> None:
         if self._target is None:
             return
+        self._installed_kind = content_kind
+        self._watch_directory()
         rows: list[dict[str, Any]] = [
             {
                 "fileName": installed.file_name,
@@ -150,6 +155,7 @@ class InstalledContentBridge(WorkerBridge):
                 "versionNumber": installed.version_number,
                 "contentKind": installed.content_kind,
                 "iconUrl": installed.icon_url,
+                "source": installed.source,
                 "latestVersion": (
                     self._updates[installed.file_name].latest.version_number
                     if installed.file_name in self._updates
@@ -161,6 +167,8 @@ class InstalledContentBridge(WorkerBridge):
         self._installed_rows = rows
         self._sync_installed_model()
         self.installedChanged.emit()
+        if automatic:
+            self._schedule_inventory(self._target, content_kind)
 
     def _sync_installed_model(self) -> None:
         needle = self._installed_filter

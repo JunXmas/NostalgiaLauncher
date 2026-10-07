@@ -178,5 +178,10 @@ def test_curseforge_modpack_becomes_an_instance(
     game_dir = launcher.paths.instance_dir("goi-cf")
     assert (game_dir / "mods" / "sodium+mc26.2.jar").read_bytes() == MOD_BODY
     assert (game_dir / "config" / "cf.toml").read_bytes() == b"cau hinh cf"
+    from nostalgia.content.installed import list_installed
+
+    recognized = list_installed(game_dir, "mod")[0]
+    assert (recognized.project_id, recognized.source) == ("394468", "curseforge")
+    assert recognized.version_id == "8793729"
     assert server_state.request_count("/cf/mods/394468/files/8793729") == 1
     assert list((launcher.paths.data_dir / "installers").iterdir()) == []

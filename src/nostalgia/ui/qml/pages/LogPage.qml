@@ -1,4 +1,5 @@
 import QtQuick
+import "../preview" as Preview
 import "../"
 
 /*
@@ -72,6 +73,8 @@ Item {
 
         ListView {
             id: logList
+            acceptedButtons: Qt.LeftButton
+            Preview.InertialMotion { target: logList; enabled: Theme.modern }
             objectName: "logList"
             anchors.fill: parent
             clip: true

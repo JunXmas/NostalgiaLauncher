@@ -172,10 +172,12 @@ def test_scroll_wheel_reversal_trackpad_reduce_motion_and_bounds(preview: Previe
     assert scroll.property("destination") == pytest.approx(92)
     wait_until(lambda: not scroll.property("settling"))
     assert scroll.property("contentY") == pytest.approx(92)
-    # Pixel deltas already have OS inertia; no second smoothing layer.
+    # High-resolution wheel / touchpad deltas receive the same weighted coast.
     wheel(view, scroll, angle=0, pixels=-35)
+    assert scroll.property("settling")
+    assert scroll.property("contentY") < 127
+    wait_until(lambda: not scroll.property("settling"))
     assert scroll.property("contentY") == pytest.approx(127)
-    assert not scroll.property("settling")
     settings = view.rootContext().contextProperty("settingsBridge")
     settings.setAppearance(100, False, True, True, "vi")
     wheel(view, scroll)

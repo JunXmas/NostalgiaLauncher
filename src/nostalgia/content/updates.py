@@ -73,27 +73,36 @@ def identify_by_hash(
             if installed_file.enabled
             else installed_file.file_name + ".disabled"
         )
-        if path.is_file():
+        if path.is_file() and not path.is_symlink() and path.stat().st_size <= 536870912:
             by_hash[sha1_of_file(path)] = installed_file
     matches = lookup(tuple(by_hash))
     if not matches:
         return 0
     projects = describe(tuple({project_version.project_id for project_version in matches.values()}))
     ledger = load_ledger(directory)
+    recognized = 0
     for sha1, project_version in matches.items():
+        original = by_hash.get(sha1)
+        if original is None:
+            continue
         if project_version.project_id in ledger:
             # Đã có một file của dự án này trong sổ (bản cài qua launcher): không đè dòng đó
             # bằng bản chép tay — sổ mỗi dự án một dòng, file lạ vẫn liệt kê được theo tên.
             continue
         project = projects.get(project_version.project_id)
+        active = directory / original.file_name
+        path = active if active.is_file() else directory / (original.file_name + ".disabled")
+        if not path.is_file() or path.is_symlink() or sha1_of_file(path) != sha1:
+            continue  # removed/replaced while the lookup was in flight
         ledger[project_version.project_id] = LedgerEntry(
             project_id=project_version.project_id,
             title=project.title if project else "",
             version_id=project_version.version_id,
             version_number=project_version.version_number,
-            file_name=by_hash[sha1].file_name,
+            file_name=original.file_name,
             icon_url=project.icon_url if project else "",
             source="modrinth",
         )
+        recognized += 1
     save_ledger(directory, ledger)
-    return len(matches)
+    return recognized

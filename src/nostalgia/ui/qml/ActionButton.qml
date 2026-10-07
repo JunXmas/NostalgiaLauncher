@@ -23,9 +23,10 @@ Item {
         if (root.clickable) { notifier.playUi("select"); root.clicked(); }
     }
     Rectangle {
+        objectName: "legacyButtonFocus"
         anchors.fill: parent; anchors.margins: -3
         color: "transparent"; border.width: 2; border.color: Theme.text
-        visible: root.activeFocus; z: 2
+        visible: root.activeFocus && !Theme.modern; z: 2
     }
 
     readonly property int edge: 4         // cạnh dưới "khối"
@@ -87,11 +88,13 @@ Item {
 
     }
     Rectangle {
+        objectName: "modernButtonFace"
         anchors.fill: parent
         visible: Theme.modern
         radius: 12
         color: root.danger ? Theme.mix(Theme.surface, Theme.danger, hover.hovered ? 0.4 : 0.28) : root.primary ? root.faceColor : hover.hovered ? Theme.surfaceHigh : Theme.surface
         border.color: root.activeFocus ? Theme.accent : root.danger ? Theme.danger : Theme.border
+        border.width: root.activeFocus ? 2 : 1
         opacity: root.clickable ? 1 : 0.4
         scale: press.pressed ? 0.97 : 1
         Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }

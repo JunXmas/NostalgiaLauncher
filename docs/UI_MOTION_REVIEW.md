@@ -1,4 +1,4 @@
-# Giao diện và chuyển động · draft 1.2.0rc6
+# Giao diện và chuyển động · draft 1.2.0rc7
 
 Giữ bảng màu hiện tại: nền xám lạnh, accent theo trang và màu thương hiệu xanh.
 Mục tiêu là giảm sự rời rạc giữa các màn hình, đưa thao tác chính về cùng vị trí,
@@ -22,7 +22,8 @@ và tạo phản hồi dễ nhận thấy khi người chơi tương tác.
 
 ## Cuộn tham khảo Skew
 
-Đọc mã JavaScript được phục vụ tại https://skewclient.store ngày 2026-10-06.
+Tham khảo bản mã JavaScript của https://skewclient.store đã lưu ngày 2026-10-06.
+Lần truy cập lại ngày 2026-10-07 trong môi trường này trả HTTP 403.
 Trang dùng Lenis 1.3.26 với `lerp: 0.1`, `duration: 1.5`, `smoothWheel: true`.
 Khi có duration/easing, Lenis ưu tiên easing theo thời gian. Easing là exponential-out.
 
@@ -30,11 +31,15 @@ Launcher dùng FrameAnimation của Qt: mỗi frame tiến về vị trí đích
 `1 - exp(-(10 * ln(2) / 1.5) * dt)`. Đây là xấp xỉ liên tục của cùng độ hãm,
 giữ trọng lượng của chuyển động khi nhịp render thay đổi. Mỗi nấc chuột dịch đích
 92 px; nhiều nấc tích luỹ, đảo hướng không nhảy vị trí. Chặn ở đầu/cuối nội dung.
-Kéo thanh cuộn hoặc kéo trực tiếp dừng animation. Pixel delta của trackpad đã có
-quán tính hệ điều hành nên áp dụng trực tiếp; không chồng thêm một lớp quán tính.
+Kéo nội dung bám con trỏ; thả ra chuyển vận tốc kéo thành quãng trôi được hãm
+bằng cùng đường cong. Controller đo chuyển động lúc kéo để vẫn có quán tính khi Qt
+không phát native fling; giữ con trỏ đứng yên trước khi thả thì dừng. Nấc chuột và pixel delta đều được làm mượt. Kéo thanh cuộn
+dừng quán tính để đặt vị trí chính xác. Giảm chuyển động bỏ phần trôi.
 
 Áp dụng cho Home, thư viện, Đã cài, quản lý instance, popup, form tạo bản chơi và
-Cài đặt. Danh sách log và dropdown vẫn dùng điều khiển danh sách Qt của chúng.
+Cài đặt, danh sách phiên bản/loader, tài khoản, log và lưới/danh sách nâng cao của
+thư viện. ListView/GridView giữ cơ chế dựng mục trong vùng nhìn của Qt; dropdown
+nhỏ vẫn dùng cuộn Qt thông thường.
 Chưa đo thực tế trên màn hình 120/144 Hz hoặc mọi model chuột/trackpad Windows.
 
 ## Việc cần chủ dự án thử trên máy thật
@@ -61,3 +66,15 @@ Atlas 1536x1536: 9 MiB RGBA cho nhân vật đang tương tác; thẻ kho dùng 
 Cache CPU tối đa 32 frame (4 MiB) và tám mesh, cache đĩa giới hạn 64 MiB, map preview
 48 thumbnail/tám atlas. Không thêm QtQuick3D/Addons hoặc engine web. Giới hạn này
 không phải toàn bộ RAM launcher/GPU driver. Kết quả benchmark cục bộ ở RC6_VALIDATION.md.
+
+## Đã cài và ô phiên bản ở rc7
+
+Tên/phiên bản được đọc từ Fabric, Quilt, Forge, NeoForge hoặc mcmod.info ở worker.
+Cache mtime/size tránh giải nén lại khi bật/tắt/lọc; hash đối chiếu nguồn mới cấp
+ID dự án. Watcher thư mục có debounce 160 ms cập nhật file thêm/xoá. Quét nền có
+kết quả local trước mạng; đổi bản chơi không nhận nhầm kết quả của bản trước.
+
+Viền focus trắng của theme cũ được tắt ở theme mới; ô phiên bản giữ viền bo góc
+của chính nút khi dùng chuột hoặc bàn phím. Thẻ Optimized tự tăng chiều cao;
+lưới loader giảm số cột theo cỡ chữ để mô tả/nhãn không đè lên nút ở cửa sổ nhỏ.
+Giữ bảng màu và ảnh Minecraft hiện có.

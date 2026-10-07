@@ -1,4 +1,4 @@
-# Nostalgia 1.2.0rc6 — hướng dẫn thử draft
+# Nostalgia 1.2.0rc7 — hướng dẫn thử draft
 
 Bản này dành cho chủ dự án thử trước khi publish. Không thay bản ổn định và không
 phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu thư mục đang chơi.
@@ -11,6 +11,13 @@ phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu 
   Tab Đã cài và bộ lọc không mở lại trang thư viện cũ; nút và form dùng theme mới.
 - Manrope cho tiêu đề, Inter cho chữ đọc, block sidebar xoay trở lại, chuyển trang/popup
   có animation; cuộn theo tham số Lenis của Skew và thiết lập Giảm chuyển động.
+- Mod trong modpack/chép tay được nhận diện tự động: đọc tên/phiên bản trong JAR
+  ở nền rồi đối chiếu hash Modrinth để thêm icon và nhãn Đã cài. Pack CurseForge giữ
+  ID nguồn từ manifest khi hash file khớp. Có mạng hay không vẫn quản lý được file.
+- Cuộn cả nấc chuột và pixel trackpad có độ hãm 1,5 giây; kéo nội dung rồi thả
+  tiếp tục trôi. Danh sách phiên bản/loader cũng dùng cùng cơ chế.
+- Ô phiên bản được chọn dùng viền bo góc, bỏ khung focus trắng hình vuông. Thẻ
+  Optimized và lưới loader co giãn theo chữ, không đè mô tả lên nút ở cửa sổ nhỏ.
 - Popup thêm tài khoản, mã Microsoft và cài modpack lấy đúng nội dung trang phía sau để làm mica.
 - Skin/Cape hiển thị skin 3D đúng UV Steve/Alex; kéo hoặc dùng phím để xoay 360°.
   Thẻ skin trong kho dùng ảnh nhân vật 3D, chỉ nạp khi vào vùng nhìn; đứng yên không có timer render.
@@ -52,11 +59,15 @@ R2 private, các service bindings, INVITE_KEY và ba secret payOS. Đăng ký we
    Thử cửa sổ 1024×600 và chữ 150%; cuộn tới các thao tác nếu nội dung dài.
    Mở quản lý bản chơi, lưu tên/RAM, thử Đã cài, bật/tắt một mod rồi bật lại.
    Hover/focus sidebar, chuyển trang, mở/đóng popup; bật Giảm chuyển động.
-   Cuộn bằng chuột/trackpad, đảo hướng và kéo scrollbar; xem GIF preview đính kèm để đối chiếu.
+   Cuộn bằng chuột/trackpad, đảo hướng, kéo nội dung rồi thả và kéo scrollbar; xem GIF preview đính kèm để đối chiếu.
    Vào Skin, kéo nhân vật để xoay, dùng ← →, đổi Slim/Wide và cuộn kho nhiều skin.
    Đóng/thu nhỏ cửa sổ rồi mở lại: skin phải hiện lại và giữ đúng tài khoản.
 3. Cài Forge 1.20.1 số ngắn `47.4.23`, rồi một modpack Forge. Khởi chạy game để kiểm
-   cài đặt thực tế; fixture của CI không thay thế bước này.
+   cài đặt thực tế; fixture của CI không thay thế bước này. Mở Nội dung đã cài: tên
+   và phiên bản mod phải hiện tự động. Thêm/xoá JAR khi trang đang mở: danh sách
+   phải làm mới. Mod chưa có trên Modrinth vẫn hiện tên từ JAR; không đoán ID theo tên.
+   Tắt mạng rồi thử lại; bật/tắt file vẫn dùng được khi đang nhận diện. Nút Nhận diện
+   lại cho phép thử nguồn mạng thủ công khi cần.
 4. Bản chơi → quản lý → Sao lưu & dữ liệu → Kiểm tra xung đột mod. Quét bộ mod bình thường, thử hai JAR có
    cùng ID và một mod thiếu phụ thuộc. Quét phải chỉ đọc, không đổi file.
 5. Với dịch vụ staging và Plus: lập phương án, xem danh sách, áp dụng rồi hoàn tác.

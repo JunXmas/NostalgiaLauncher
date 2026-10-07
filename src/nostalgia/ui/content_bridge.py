@@ -66,6 +66,8 @@ class ContentBridge(FilterContentBridge):
         self._results_model.reset([])
         self._total_hits = 0
         self._installed_rows = []
+        self._updates.clear()
+        self._watch_directory()
         self._installed_model.sync([])
         self._filters_touched = False
         self.apply_default_filters()
@@ -175,7 +177,11 @@ class ContentBridge(FilterContentBridge):
 
     @Slot()
     def _refresh_flags(self) -> None:
-        installed_ids = {row["projectId"] for row in self._installed_rows if row["projectId"]}
+        installed_ids = {
+            row["projectId"]
+            for row in self._installed_rows
+            if row["projectId"] and row["source"] == self._source
+        }
         self._results_model.set_flags(installed_ids, set(self._installing))
 
     def _set_searching(self, searching: bool) -> None:
@@ -203,7 +209,7 @@ class ContentBridge(FilterContentBridge):
                 self._launcher.install_content(
                     target, project, on_progress=self._main_bridge.report_progress
                 )
-                self._reload_installed(project.content_kind)
+                self._installedFor.emit(target.instance_id, project.content_kind)
                 self.installFinished.emit(project.title)
             finally:
                 self._installing.discard(project_id)

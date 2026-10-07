@@ -44,8 +44,8 @@ Item {
                     onTextChanged: contentBridge.setInstalledFilter(text)
                     Component.onDestruction: contentBridge.setInstalledFilter("")
                 }
-                Button { label: "Kiểm tra cập nhật"; clickable: root.writable; onClicked: contentBridge.checkUpdates(root.kind) }
-                Button { label: "Nhận diện file"; quiet: true; clickable: root.writable; onClicked: contentBridge.identifyInstalled(root.kind) }
+                Button { label: "Kiểm tra cập nhật"; clickable: root.writable && !contentBridge.identifying; onClicked: contentBridge.checkUpdates(root.kind) }
+                Button { label: contentBridge.identifying ? "Đang nhận diện…" : "Nhận diện lại"; quiet: true; clickable: root.writable && !contentBridge.identifying; onClicked: contentBridge.identifyInstalled(root.kind) }
             }
             Flow {
                 id: kinds
