@@ -16,6 +16,7 @@ from nostalgia.api import (
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.host_bridge import HostBridge
 from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
@@ -56,6 +57,17 @@ def open_preview(
         plus_enabled=plus_enabled,
     )
     context.setContextProperty("socialBridge", social_bridge)
+    host_bridge = HostBridge(
+        launcher,
+        bridge,
+        multiplayer_bridge,
+        room_sync_bridge,
+        social_bridge,
+        plus_enabled=plus_enabled,
+        parent=view,
+    )
+    host_bridge.connect_workflow()
+    context.setContextProperty("hostBridge", host_bridge)
     context.setContextProperty("plusFeaturesEnabled", plus_enabled)
     if social_gateway is not None and social_gateway.access_token:
         social_bridge.refresh()
@@ -64,6 +76,7 @@ def open_preview(
     running_application = QGuiApplication.instance()
     if running_application is not None:
         running_application.aboutToQuit.connect(room_sync_bridge.cancel)
+        running_application.aboutToQuit.connect(host_bridge.stop)
         running_application.aboutToQuit.connect(social_bridge.shutdown)
     content_bridge = context.contextProperty("contentBridge")
     assert isinstance(content_bridge, ContentBridge)

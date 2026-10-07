@@ -39,7 +39,7 @@ Glass {
             visible: root.compact
             width: parent.width; height: backButton.height
             Button { id: backButton; objectName: "backToFriends"; quiet: true; label: "← Bạn bè"; onClicked: socialBridge.selectFriend("") }
-            Button { anchors.right: parent.right; visible: !multiplayerBridge.active; label: "Mở phòng"; primary: true; onClicked: multiplayerBridge.startHosting() }
+            Button { anchors.right: parent.right; visible: !multiplayerBridge.active && !hostBridge.details.active; label: "Mở phòng"; primary: true; onClicked: hostBridge.openSetup() }
         }
         Item {
             id: chatHeading
@@ -56,7 +56,7 @@ Glass {
                 objectName: "inviteSelectedFriend"
                 anchors.right: parent.right; visible: !!socialBridge.peerId
                 label: "Mời chơi"; primary: true
-                clickable: multiplayerBridge.role === "hosting" && socialBridge.peerOnline && !socialBridge.busy
+                clickable: multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && socialBridge.peerOnline && !socialBridge.busy
                 onClicked: socialBridge.inviteFriend(socialBridge.peerId)
             }
         }

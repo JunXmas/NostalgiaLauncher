@@ -69,6 +69,10 @@ class MultiplayerBridge(QObject):
     def startHosting(self) -> None:
         self._service.start_hosting()
 
+    def start_managed_hosting(self) -> None:
+        """The host workflow supplies the port from its own game; never pick another beacon."""
+        self._service.start_hosting(auto_detect=False)
+
     @Slot(str)
     def supplyLanPort(self, port_text: str) -> None:
         if (

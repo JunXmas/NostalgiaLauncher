@@ -136,6 +136,7 @@ Item {
             createForProject.expandedMajor = gameVersion.split(".").slice(0, 2).join(".");
         }
     }
+    HostDialog { backdrop: scene }
     SupportDialog {
         id: support
         backdrop: scene

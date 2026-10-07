@@ -15,7 +15,7 @@ from nostalgia.instance.store import create_instance, game_dir_of, load_instance
 from nostalgia.modloader.model import LoaderKind, detect_loader_kind
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.sync_manifest import manifest_document, parse_sync_manifest
-from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest
+from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest, SyncSnapshot
 from nostalgia.multiplayer.sync_snapshot import capture_sync_snapshot
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
@@ -36,29 +36,45 @@ class RoomSyncOperations(LoaderOperations):
     ) -> None:
         if status.role != "hosting" or not status.host_ticket:
             raise MultiplayerError("Relay chưa cấp vé xác thực chủ phòng; chưa thể chia sẻ Plus.")
-        instance = load_instance(self.paths, instance_id)
-        version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
-        loader_kind = detect_loader_kind(instance.version_id)
-        loader_version = _loader_version(
-            loader_kind, version_meta.libraries, version_meta.jar_owner_id
-        )
         self.paths.data_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(
             prefix="room-publish-", dir=self.paths.data_dir
         ) as temporary:
-            snapshot = capture_sync_snapshot(
-                game_dir_of(self.paths, instance),
-                Path(temporary),
-                name=instance.label,
-                game_version=version_meta.jar_owner_id,
-                loader_kind=loader_kind,
-                loader_version=loader_version,
-                cancel_token=cancel_token,
+            snapshot = self.capture_room_modpack(
+                instance_id, Path(temporary), cancel_token=cancel_token
             )
-            cancel_token.raise_if_cancelled()
-            gateway.publish(
-                status.room_code, status.host_ticket, snapshot, cancel_token=cancel_token
-            )
+            self.publish_room_snapshot(gateway, status, snapshot, cancel_token=cancel_token)
+
+    def capture_room_modpack(
+        self, instance_id: str, folder: Path, *, cancel_token: CancelToken
+    ) -> SyncSnapshot:
+        instance = load_instance(self.paths, instance_id)
+        version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
+        loader_kind = detect_loader_kind(instance.version_id)
+        return capture_sync_snapshot(
+            game_dir_of(self.paths, instance),
+            folder,
+            name=instance.label,
+            game_version=version_meta.jar_owner_id,
+            loader_kind=loader_kind,
+            loader_version=_loader_version(
+                loader_kind, version_meta.libraries, version_meta.jar_owner_id
+            ),
+            cancel_token=cancel_token,
+        )
+
+    def publish_room_snapshot(
+        self,
+        gateway: RoomSyncGateway,
+        status: RoomStatus,
+        snapshot: SyncSnapshot,
+        *,
+        cancel_token: CancelToken,
+    ) -> None:
+        if status.role != "hosting" or not status.host_ticket:
+            raise MultiplayerError("Relay chưa cấp vé xác thực chủ phòng; chưa thể chia sẻ Plus.")
+        cancel_token.raise_if_cancelled()
+        gateway.publish(status.room_code, status.host_ticket, snapshot, cancel_token=cancel_token)
 
     def sync_room_modpack(
         self,

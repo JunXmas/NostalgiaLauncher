@@ -73,7 +73,13 @@ class SocialBridge(SocialSession):
     @Slot(str)
     def inviteFriend(self, account_id: str) -> None:
         gateway, status = self._gateway, self._multiplayer.room_snapshot()
-        if self.signedIn and gateway and not self.busy and status.role == "hosting":
+        if (
+            self.signedIn
+            and gateway
+            and not self.busy
+            and status.role == "hosting"
+            and self._sync_bridge.hostReady
+        ):
             self._request(
                 "changed",
                 lambda: gateway.send_invite(
@@ -84,7 +90,13 @@ class SocialBridge(SocialSession):
     @Slot(str)
     def acceptInvite(self, invite_id: str) -> None:
         gateway = self._gateway
-        if self.signedIn and gateway and not self.busy and not self._multiplayer.active:
+        if (
+            self.signedIn
+            and gateway
+            and not self.busy
+            and not self._multiplayer.active
+            and self._sync_bridge.hostReady
+        ):
             self._request("join", lambda: gateway.accept_invite(invite_id))
 
     @Slot(str)

@@ -6,7 +6,7 @@ from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
-from nostalgia.api import Launcher, RoomSyncGateway, SyncManifest
+from nostalgia.api import Launcher, RoomSyncGateway, SyncManifest, SyncSnapshot
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
@@ -15,6 +15,7 @@ from nostalgia.ui.worker import WorkerBridge
 
 class RoomSyncBridge(WorkerBridge):
     stateChanged = Signal()
+    published = Signal()
     _offerArrived = Signal(object, int)
     _completed = Signal(str, str, int)
 
@@ -35,6 +36,7 @@ class RoomSyncBridge(WorkerBridge):
         self._joined_code = ""
         self._observed_role = "idle"
         self._note = ""
+        self._host_ready = True
         self._cancel = CancelToken()
         self._poll = QTimer(self)
         self._poll.setInterval(8000)
@@ -58,6 +60,14 @@ class RoomSyncBridge(WorkerBridge):
     def canShare(self) -> bool:
         status = self._multiplayer.room_snapshot()
         return self._gateway is not None and status.role == "hosting" and bool(status.host_ticket)
+
+    @Property(bool, notify=stateChanged)
+    def hostReady(self) -> bool:
+        return self._host_ready
+
+    def set_host_ready(self, ready: bool) -> None:
+        self._host_ready = ready
+        self.stateChanged.emit()
 
     @Property(dict, notify=stateChanged)
     def offer(self) -> dict[str, Any]:
@@ -86,6 +96,12 @@ class RoomSyncBridge(WorkerBridge):
 
     @Slot(str)
     def publish(self, instance_id: str) -> None:
+        self._publish(instance_id)
+
+    def publish_snapshot(self, snapshot: SyncSnapshot, cancel_token: CancelToken) -> None:
+        self._publish(snapshot, cancel_token)
+
+    def _publish(self, source: str | SyncSnapshot, cancel_token: CancelToken | None = None) -> None:
         if self.busy or not self.canShare:
             self.failed.emit("Cần phòng đang mở và relay hỗ trợ xác thực Plus trước khi chia sẻ.")
             return
@@ -94,12 +110,17 @@ class RoomSyncBridge(WorkerBridge):
             return
         status = self._multiplayer.room_snapshot()
         generation = self.next_generation()
-        cancel_token = self._cancel = CancelToken()
+        cancel_token = self._cancel = cancel_token or CancelToken()
 
         def work() -> None:
-            self._launcher.publish_room_modpack(
-                gateway, status, instance_id, cancel_token=cancel_token
-            )
+            if isinstance(source, str):
+                self._launcher.publish_room_modpack(
+                    gateway, status, source, cancel_token=cancel_token
+                )
+            else:
+                self._launcher.publish_room_snapshot(
+                    gateway, status, source, cancel_token=cancel_token
+                )
             self._completed.emit(
                 "Đã chia sẻ. Bạn bè nhận lời mời được đồng bộ miễn phí.", "", generation
             )
@@ -136,6 +157,7 @@ class RoomSyncBridge(WorkerBridge):
     @Slot()
     def cancel(self) -> None:
         self._cancel.cancel()
+        self.next_generation()
 
     @Slot()
     def _room_changed(self) -> None:
@@ -146,6 +168,7 @@ class RoomSyncBridge(WorkerBridge):
             self._cancel.cancel()
             self.next_generation()
             self._offer, self._note = None, ""
+            self._host_ready = True
         elif (
             role == "joined"
             and previous != "joined"
@@ -185,6 +208,8 @@ class RoomSyncBridge(WorkerBridge):
     def _apply_completed(self, note: str, instance_id: str, generation: int) -> None:
         if instance_id:
             self._launcher_bridge.instancesChanged.emit()
-        if self.is_current(generation):
+        if self.is_current(generation) and not self._cancel.is_cancelled():
             self._note = note
             self.stateChanged.emit()
+            if not instance_id and self._multiplayer.room_snapshot().role == "hosting":
+                self.published.emit()

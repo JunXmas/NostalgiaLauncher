@@ -8,6 +8,7 @@ Controls.ComboBox {
     font.family: GlassTheme.font
     font.pixelSize: GlassTheme.fontBody
     property string searchText: ""
+    property bool consumeChoiceRelease: false
     property string searchPlaceholder: "Tìm trong danh sách…"
     property Item menuBackdrop: GlassTheme.backdrop
     readonly property bool searchable: count > 8
@@ -22,13 +23,20 @@ Controls.ComboBox {
         }
         return choices;
     }
-    function choose(index) {
+    function choose(index, keyboard) {
         if (index < 0 || index >= filteredChoices.length)
             return;
         currentIndex = filteredChoices[index].sourceIndex;
+        consumeChoiceRelease = keyboard === true;
         activated(currentIndex);
         popup.close();
         forceActiveFocus();
+    }
+    Keys.onReleased: function (event) {
+        if (consumeChoiceRelease && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)) {
+            consumeChoiceRelease = false;
+            event.accepted = true;
+        }
     }
     background: Rectangle {
         radius: 12
@@ -120,8 +128,8 @@ Controls.ComboBox {
                 background: Rectangle { radius: 8; color: GlassTheme.alpha(GlassTheme.raised, 0.35); border.color: GlassTheme.stroke }
                 Keys.onDownPressed: choices.currentIndex = Math.min(choices.count - 1, choices.currentIndex + 1)
                 Keys.onUpPressed: choices.currentIndex = Math.max(0, choices.currentIndex - 1)
-                Keys.onReturnPressed: root.choose(choices.currentIndex)
-                Keys.onEnterPressed: root.choose(choices.currentIndex)
+                Keys.onReturnPressed: root.choose(choices.currentIndex, true)
+                Keys.onEnterPressed: root.choose(choices.currentIndex, true)
             }
             ListView {
                 id: choices
@@ -133,14 +141,19 @@ Controls.ComboBox {
                 model: root.filteredChoices
                 boundsBehavior: Flickable.StopAtBounds
                 keyNavigationEnabled: true
-                Keys.onReturnPressed: root.choose(currentIndex)
-                Keys.onEnterPressed: root.choose(currentIndex)
+                Keys.onDownPressed: currentIndex = Math.min(count - 1, currentIndex + 1)
+                Keys.onUpPressed: currentIndex = Math.max(0, currentIndex - 1)
+                Keys.onReturnPressed: root.choose(currentIndex, true)
+                Keys.onEnterPressed: root.choose(currentIndex, true)
                 delegate: Controls.ItemDelegate {
                     required property var modelData
                     required property int index
                     width: choices.width; height: menu.rowHeight
                     highlighted: hovered || choices.currentIndex === index
                     onClicked: root.choose(index)
+                    Keys.onReturnPressed: root.choose(choices.currentIndex, true)
+                    Keys.onEnterPressed: root.choose(choices.currentIndex, true)
+                    Keys.onSpacePressed: root.choose(choices.currentIndex, true)
                     contentItem: Text {
                         text: modelData.label
                         color: modelData.sourceIndex === root.currentIndex ? GlassTheme.accent : GlassTheme.text

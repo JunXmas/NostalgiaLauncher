@@ -73,6 +73,8 @@ class PlayOperations(AccountOperations):
             tuning=tuning,
             virtual_assets_dir=self._virtual_assets_dir(version_meta),
         )
+        if cancel_token is not None:
+            cancel_token.raise_if_cancelled()
         return start_game(command, on_output=on_output)
 
     def prefetch_skin_support(self) -> Path:

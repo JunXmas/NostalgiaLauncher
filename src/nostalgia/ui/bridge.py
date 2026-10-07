@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
@@ -17,6 +19,8 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from nostalgia.account.model import Account
 from nostalgia.api import GameProcess, Launcher
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.ui.game_lan import GameLanFeed
+from nostalgia.ui.game_launch import prepare_game
 from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
 from nostalgia.ui.instance_bridge import InstanceBridge
 
@@ -48,6 +52,7 @@ class LauncherBridge(InstanceBridge):
         self._accounts: tuple[Account, ...] | None = None
         # Nhật ký game: luồng đọc output đổ vào đây, trang NHẬT KÝ đọc model của nó.
         self._game_log = GameLogFeed(self)
+        self.game_lan = GameLanFeed(self)
         # `play` chạy ở luồng nền; timer gom lô phải bật/tắt ở luồng giao diện → đi qua tín hiệu.
         self.gameRunningChanged.connect(self._sync_game_log_session)
         # Game vừa tắt: thế giới vừa chơi phải lên đầu ô CHƠI TIẾP (chỉ xoá cache, quét khi đọc).
@@ -187,7 +192,23 @@ class LauncherBridge(InstanceBridge):
         """Ô CHƠI TIẾP, nhóm SERVER: mở bản chơi và vào thẳng máy chủ (`host[:port]`)."""
         self._launch(instance_id, server_address=server_address)
 
-    def _launch(self, instance_id: str, world_folder: str = "", server_address: str = "") -> None:
+    def play_hosted(
+        self,
+        instance_id: str,
+        scope: Callable[[], AbstractContextManager[None]],
+        cancel_token: CancelToken,
+    ) -> None:
+        self._launch(instance_id, host_scope=scope, cancel_token=cancel_token)
+
+    def _launch(
+        self,
+        instance_id: str,
+        world_folder: str = "",
+        server_address: str = "",
+        *,
+        host_scope: Callable[[], AbstractContextManager[None]] | None = None,
+        cancel_token: CancelToken | None = None,
+    ) -> None:
         # Khoá định danh chứ không phải tên: hai tài khoản trùng tên thì lõi tra theo tên sẽ
         # trả về cái đầu tiên, và người dùng chơi bằng tài khoản họ không chọn.
         if self.storageBusy:
@@ -196,55 +217,38 @@ class LauncherBridge(InstanceBridge):
         account_id = str(self.activeAccountId)
 
         def work() -> None:
-            # Bù phần thiếu TRƯỚC khi chạy: bản cài hụt một jar thì JVM chết ngay với mã 1 và
-            # không để lại log nào (đã xảy ra với Fabric thiếu fabric-loader). Đủ rồi thì bước
-            # này chỉ mất ~1 giây soi kích thước file.
-            version_id = next(
-                (
-                    i.version_id
-                    for i in self._launcher.list_instances()
-                    if i.instance_id == instance_id
-                ),
-                "",
-            )
-            if version_id:
-                self._launcher.install_version(version_id, on_progress=self.report_progress)
-            # Nos Client: nếu bật, inject mod jar trước khi chạy.
-            instance_obj = next(
-                (i for i in self._launcher.list_instances() if i.instance_id == instance_id),
-                None,
-            )
-            if instance_obj is not None and instance_obj.nos_client_enabled:
-                self._launcher.prepare_nos_client(instance_obj)
-            # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
-            self._game_log.reset()
-            game = self._launcher.launch_instance(
-                instance_id,
-                account_id,
-                world_folder=world_folder,
-                server_address=server_address,
-                on_output=self._game_log.receive,
-            )
-            started_at = time.time()
-            self._game = game
-            self._stop_requested = False
-            self._set_game_running(True)
-            self.gameStarted.emit(instance_id)
-            try:
-                exit_code = game.wait()
-            finally:
-                self._game = None
-                self._set_game_running(False)
-            # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
-            self._launcher.record_play_session(instance_id, started_at, time.time())
-            self.instancesChanged.emit()
-            if self._stop_requested:
-                # Người dùng bấm DỪNG: game chết vì tín hiệu ta gửi — báo là thoát bình thường.
-                self.gameStopped.emit(0)
-                return
-            self.gameStopped.emit(exit_code)
-            if exit_code != 0:
-                self.failed.emit(describe_game_failure(exit_code, self._game_log.tail_snapshot))
+            prepare_game(self._launcher, instance_id, self.report_progress, cancel_token)
+            with host_scope() if host_scope else nullcontext():
+                # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
+                self._game_log.reset()
+                game = self._launcher.launch_instance(
+                    instance_id,
+                    account_id,
+                    world_folder=world_folder,
+                    server_address=server_address,
+                    on_output=self.game_lan.receiver(instance_id, self._game_log.receive),
+                    cancel_token=cancel_token,
+                )
+                started_at = time.time()
+                self._game = game
+                self._stop_requested = False
+                self._set_game_running(True)
+                self.gameStarted.emit(instance_id)
+                try:
+                    exit_code = game.wait()
+                finally:
+                    self._game = None
+                    self._set_game_running(False)
+                # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
+                self._launcher.record_play_session(instance_id, started_at, time.time())
+                self.instancesChanged.emit()
+                if self._stop_requested:
+                    # Người dùng bấm DỪNG: game chết vì tín hiệu ta gửi — báo là thoát bình thường.
+                    self.gameStopped.emit(0)
+                    return
+                self.gameStopped.emit(exit_code)
+                if exit_code != 0:
+                    self.failed.emit(describe_game_failure(exit_code, self._game_log.tail_snapshot))
 
         if server_address:
             activity = f"Vào máy chủ {server_address} ({instance_id})"
@@ -262,6 +266,7 @@ class LauncherBridge(InstanceBridge):
             self._game_log.begin_session()
         else:
             self._game_log.end_session()
+            self.game_lan.clear()
 
     def _set_game_running(self, running: bool) -> None:
         self._game_running = running

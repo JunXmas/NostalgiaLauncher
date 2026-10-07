@@ -51,10 +51,11 @@ from nostalgia.launch.runner import InstallReport
 from nostalgia.modcheck.model import ModScan
 from nostalgia.modrepair.gateway import HttpRepairGateway
 from nostalgia.modrepair.model import RepairGateway, RepairPlan, RepairScan
+from nostalgia.multiplayer.lan_output import lan_port_from_output
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
-from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest
+from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest, SyncSnapshot
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.payment.gateway import HttpPaymentGateway
@@ -142,4 +143,6 @@ __all__ = [
     "SocialUpdate",
     "StagedUpdate",
     "SyncManifest",
+    "SyncSnapshot",
+    "lan_port_from_output",
 ]

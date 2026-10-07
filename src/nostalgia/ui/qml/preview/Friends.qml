@@ -28,7 +28,7 @@ Item {
                 visible: !root.compact || !socialBridge.peerId
                 height: Math.max(title.implicitHeight, openRoom.height)
                 PaymentText { id: title; width: parent.width - (openRoom.visible ? openRoom.width + 14 : 0); text: "Bạn bè"; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
-                Button { id: openRoom; objectName: "friendsOpenRoom"; anchors.right: parent.right; visible: socialBridge.signedIn && !multiplayerBridge.active; label: "Mở phòng"; primary: true; onClicked: multiplayerBridge.startHosting() }
+                Button { id: openRoom; objectName: "friendsOpenRoom"; anchors.right: parent.right; visible: socialBridge.signedIn && !multiplayerBridge.active && !hostBridge.details.active; label: "Mở phòng"; primary: true; onClicked: hostBridge.openSetup() }
             }
             Item {
                 width: parent.width
@@ -51,11 +51,11 @@ Item {
                 Column {
                     id: invitesArea
                     width: parent.width; spacing: 10
-                    visible: !multiplayerBridge.active && socialBridge.invitations.length > 0
+                    visible: !multiplayerBridge.active && !hostBridge.details.active && socialBridge.invitations.length > 0
                     Button { objectName: "showInvitations"; width: parent.width; visible: root.compact; quiet: true; label: "Lời mời · " + socialBridge.invitations.length + (root.invitesExpanded ? "  ↑" : "  ↓"); onClicked: root.invitesExpanded = !root.invitesExpanded }
                     InvitationList { width: parent.width; visible: !root.compact || root.invitesExpanded }
                 }
-                RoomPanel { id: roomPanel; width: parent.width; visible: multiplayerBridge.active }
+                RoomPanel { id: roomPanel; width: parent.width; visible: multiplayerBridge.active || hostBridge.details.active }
                 Grid {
                     id: panels
                     width: parent.width

@@ -57,8 +57,8 @@ class RoomService:
 
     # ----- lệnh từ luồng giao diện -----
 
-    def start_hosting(self) -> Future[None]:
-        return self._submit(self._host_flow())
+    def start_hosting(self, *, auto_detect: bool = True) -> Future[None]:
+        return self._submit(self._host_flow(auto_detect=auto_detect))
 
     def join(self, room_code: str) -> Future[None]:
         return self._submit(self._join_flow(room_code))
@@ -95,14 +95,14 @@ class RoomService:
     def _submit(self, coroutine: object) -> Future[None]:
         return asyncio.run_coroutine_threadsafe(coroutine, self._loop)  # type: ignore[arg-type]
 
-    async def _host_flow(self) -> None:
+    async def _host_flow(self, *, auto_detect: bool = True) -> None:
         await self._teardown()
         room_code = make_room_code()
         room_id, room_secret = split_room_code(room_code)
         self._publish(role="waiting_world", room_code=room_code)
         self._flow = asyncio.current_task()
         try:
-            world = await self._wait_for_world()
+            world = await self._wait_for_world(auto_detect=auto_detect)
             host = HostRelay(
                 self._relay_url,
                 room_id,
@@ -132,9 +132,9 @@ class RoomService:
         await self._teardown()
         self._on_failure("Mất kết nối relay. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.")
 
-    async def _wait_for_world(self) -> LanWorld:
+    async def _wait_for_world(self, *, auto_detect: bool = True) -> LanWorld:
         deadline = self._loop.time() + WORLD_WAIT_SECONDS
-        detector_available = True
+        detector_available = auto_detect
         while self._loop.time() < deadline:
             if self._manual_port:
                 world_port, self._manual_port = self._manual_port, 0
