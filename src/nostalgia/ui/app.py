@@ -30,6 +30,7 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
+from nostalgia.ui.skin_preview_bridge import SkinPreviewBridge
 from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.storage_bridge import StorageBridge
 from nostalgia.ui.update_bridge import UpdateBridge
@@ -119,6 +120,7 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("capeBridge", CapeBridge(launcher, bridge, parent=view))
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
+    context.setContextProperty("skinPreviews", SkinPreviewBridge(launcher.paths.data_dir, view))
     settings_bridge = SettingsBridge(launcher, parent=view)
     context.setContextProperty("settingsBridge", settings_bridge)
     notifier = build_notifier(launcher, bridge, settings_bridge, view)

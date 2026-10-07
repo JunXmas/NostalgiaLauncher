@@ -1,3 +1,11 @@
+## 1.2.0rc6 — Mica xuyên thấu và skin 3D
+
+- Popup thêm tài khoản, mã đăng nhập Microsoft và cài modpack lấy đúng nội dung trang phía sau, bỏ lớp nền đặc; kính không bị lệch khi mở.
+- Skin dùng mesh 3D đúng UV Minecraft, Steve/Alex, mũ/áo ngoài và skin 64x32 cũ; kéo/phím để xoay 360°. Thẻ skin trong kho hiện cả nhân vật 3D.
+- Một worker dựng ảnh và atlas, cache trên đĩa có giới hạn; xoay chỉ dịch texture đã nạp. Thẻ ngoài vùng nhìn không nạp preview, ẩn/thu nhỏ cửa sổ giải phóng nguồn ảnh; không có timer render lúc đứng yên.
+- Kho skin có cuộn quán tính; ảnh dựng không thêm QtQuick3D hoặc thư viện GPU mới vào bộ cài.
+- Giữ toàn bộ UI và tính năng của rc5. Draft dành cho thử, chưa deploy Google/payOS production.
+
 ## 1.2.0rc5 — Giao diện mới và popup co giãn
 
 - Giữ toàn bộ quản lý bản chơi, Đã cài, bộ lọc, font và chuyển động của giao diện mới ở rc4.

@@ -14,6 +14,36 @@ from qt_controls import find_control, press, wheel
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
+@pytest.mark.parametrize(
+    "surface_name",
+    ["AddAccountDialogSurface", "ModpackDialogSurface", "deviceLoginSurface", "loginCard"],
+)
+def test_mica_captures_page_instead_of_only_ambient(preview: Preview, surface_name: str) -> None:
+    _launcher, _view, _bridge, root_item = preview
+    root_item.setProperty("sessionSkipped", surface_name != "loginCard")
+    if surface_name == "AddAccountDialogSurface":
+        root_item.setProperty("currentIndex", 3)
+        find_control(root_item, "addAccountDialog").openDialog()
+    elif surface_name == "ModpackDialogSurface":
+        root_item.setProperty("currentIndex", 2)
+        find_control(root_item, "modernQuickModpack").openFor("sample", "Sample pack")
+    elif surface_name == "deviceLoginSurface":
+        find_control(root_item, "minimalDeviceLogin").setProperty("visible", True)
+    QTest.qWait(350)
+    surface = find_control(root_item, surface_name)
+    scene = find_control(root_item, "previewScene")
+    assert surface.property("color").alphaF() < 0.85
+    assert surface.property("backdrop") == scene
+    effect = find_control(surface, "glassEffect")
+    capture = effect.property("source")
+    assert capture.property("sourceItem") == scene
+    origin = surface.mapToItem(scene, 0, 0)
+    rectangle = capture.property("sourceRect")
+    assert rectangle.x() == pytest.approx(origin.x())
+    assert rectangle.y() == pytest.approx(origin.y())
+    assert rectangle.width() == pytest.approx(surface.width())
+
+
 def test_add_account_error_and_two_factor_fit_small_window(preview: Preview) -> None:
     _launcher, view, _bridge, root_item = preview
     root_item.setProperty("sessionSkipped", True)

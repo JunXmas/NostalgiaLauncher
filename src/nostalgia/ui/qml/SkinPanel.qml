@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Preview
 
 /*
   Ô Skin/Cape: tab, mô tả, nút làm mới, thư viện skin (nút "Thêm skin" duy nhất nằm ở đó)
@@ -12,8 +13,14 @@ Panel {
 
     title: ""
 
+    Preview.InertialScroll {
+        id: skinScroll
+        objectName: "skinLibraryScroll"
+        anchors.fill: parent
+        contentHeight: skinColumn.implicitHeight
     Column {
-        anchors.fill: parent; spacing: 12
+        id: skinColumn
+        width: skinScroll.width; spacing: 12
         Row {
             spacing: 18
             Repeater {
@@ -49,6 +56,7 @@ Panel {
             width: parent.width
             visible: skinPanel.tab === "skin"
             shown: skinPanel.shown; hasShown: skinPanel.hasShown
+            viewport: skinScroll
         }
         Text {
             id: uploadStatus
@@ -149,5 +157,6 @@ Panel {
                 }
             }
         }
+    }
     }
 }

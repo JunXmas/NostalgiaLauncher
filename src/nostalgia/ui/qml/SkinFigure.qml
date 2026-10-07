@@ -1,78 +1,88 @@
 import QtQuick
+import QtQuick.Window
 
-/*
-  Nhân vật vẽ từ skin 64x64 bằng cách cắt vùng UV, không cần OpenGL/three.js. Bốn hướng nhìn
-  (trước, phải, sau, trái) chuyển bằng `facing`; `slim` = tay 3 pixel (Alex). Lớp ngoài (áo/mũ)
-  vẽ đè lên lớp trong, nhô ra 1 pixel skin. `pixel` là số điểm màn hình cho một pixel skin.
-*/
+/* Mesh 3D đúng UV Steve/Alex; ảnh chiếu được dựng ở worker Qt, cache có giới hạn.
+   Không đồng hồ chạy nền. Chỉ đổi frame khi người dùng xoay hoặc nhấn đổi hướng. */
 Item {
     id: root
     property string source: ""
     property bool slim: false
-    property int facing: 0          // 0 trước, 1 phải, 2 sau, 3 trái
+    property string revision: ""
+    property int facing: 0
     property real pixel: 6
-    readonly property int armWidth: slim ? 3 : 4
-    width: pixel * 16; height: pixel * 32
-    // Layer: render 12 Image con vào 1 texture, chỉ re-render khi property đổi.
-    layer.enabled: source !== ""
-    layer.smooth: false
-
-    // Toạ độ UV (x, y, w, h) từng hộp theo hướng nhìn: [trước, phải, sau, trái].
-    // Đầu 8x8x8 tại (0,0); thân 8x12x4 tại (16,16); tay 4x12x4 tại (40,16)/(32,48); chân (0,16)/(16,48).
-    function box(originX, originY, w, h, depth, side) {
-        // Hộp UV chuẩn của Minecraft: [trái|trước|phải|sau] xếp ngang từ (originX, originY+depth).
-        var faces = [
-            Qt.rect(originX + depth, originY + depth, w, h),                 // trước
-            Qt.rect(originX, originY + depth, depth, h),                     // trái của nhân vật = phải người nhìn? (xem dưới)
-            Qt.rect(originX + depth + w + depth, originY + depth, w, h),     // sau
-            Qt.rect(originX + depth + w, originY + depth, depth, h)          // phải
-        ];
-        // Nhìn từ phía "phải" (facing 1) thấy mặt phải của hộp; hoán đổi cho đúng chiều.
-        var order = [0, 3, 2, 1];
-        return faces[order[side]];
+    property real yaw: 25
+    property bool interactive: true
+    property bool renderEnabled: true
+    property bool componentReady: false
+    readonly property int frame: ((Math.round(yaw / 5) % 72) + 72) % 72
+    readonly property bool renderActive: renderEnabled && visible && source !== "" &&
+        Window.window && Window.window.visible && Window.window.visibility !== Window.Minimized
+    readonly property string previewKey: source + (slim ? "|1|" : "|0|") + revision
+    readonly property string thumbnail: skinPreviews ? (skinPreviews.previews[previewKey] || "") : ""
+    readonly property string atlas: skinPreviews ? (skinPreviews.atlases[previewKey] || "") : ""
+    readonly property bool atlasReady: atlasImage.status === Image.Ready
+    readonly property bool ready: skinImage.status === Image.Ready || atlasReady
+    function requestPreview() {
+        if (componentReady && renderActive && skinPreviews) skinPreviews.ensurePreview(source, slim, revision, interactive);
     }
-    function partWidth(w, depth, side) { return (side === 0 || side === 2) ? w : depth; }
-
-    // Một bộ phận: lớp trong + lớp ngoài (nếu có), đặt theo pixel.
-    component Part: Item {
-        property int ox: 0; property int oy: 0; property int w: 8; property int h: 8; property int depth: 8
-        property int overlayX: -1; property int overlayY: -1
-        property real px: 0; property real py: 0
-        readonly property int shown: root.partWidth(w, depth, root.facing)
-        x: px * root.pixel; y: py * root.pixel
-        width: shown * root.pixel; height: h * root.pixel
-        Image {
-            anchors.fill: parent; cache: true
-            source: root.source; smooth: false
-            sourceClipRect: root.box(ox, oy, w, h, depth, root.facing)
+    function schedulePreview() { if (componentReady) Qt.callLater(root.requestPreview); }
+    Component.onCompleted: { componentReady = true; schedulePreview(); }
+    onRenderActiveChanged: schedulePreview()
+    onSourceChanged: schedulePreview()
+    onSlimChanged: schedulePreview()
+    onRevisionChanged: schedulePreview()
+    onInteractiveChanged: schedulePreview()
+    width: pixel * 16
+    height: pixel * 32
+    clip: true
+    activeFocusOnTab: interactive
+    onFacingChanged: yaw = 25 + facing * 90
+    Behavior on yaw {
+        enabled: !rotationArea.pressed && root.renderActive && !Theme.reducedMotion
+        NumberAnimation { duration: Theme.normal; easing.type: Easing.OutCubic }
+    }
+    Image {
+        id: skinImage
+        objectName: "skin3DImage"
+        anchors.fill: parent
+        source: root.renderActive ? root.thumbnail : ""
+        visible: !root.atlasReady
+        asynchronous: true
+        cache: false
+        sourceSize: Qt.size(Math.ceil(root.width), Math.ceil(root.height))
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+    }
+    Image {
+        id: atlasImage
+        objectName: "skin3DAtlas"
+        source: root.renderActive && root.interactive ? root.atlas : ""
+        width: root.width * 12
+        height: root.height * 6
+        x: -(root.frame % 12) * root.width
+        y: -Math.floor(root.frame / 12) * root.height
+        visible: root.atlasReady
+        asynchronous: true
+        cache: false
+        smooth: true
+    }
+    MouseArea {
+        id: rotationArea
+        objectName: "skinRotationArea"
+        anchors.fill: parent
+        enabled: root.interactive
+        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        property real pressX: 0
+        property real pressYaw: 0
+        onPressed: function(mouse) {
+            root.forceActiveFocus();
+            pressX = mouse.x;
+            pressYaw = root.yaw;
         }
-        Image {
-            visible: overlayX >= 0; cache: true
-            anchors.fill: parent; anchors.margins: -root.pixel * 0.5
-            source: root.source; smooth: false
-            sourceClipRect: root.box(overlayX, overlayY, w, h, depth, root.facing)
+        onPositionChanged: function(mouse) {
+            if (pressed) root.yaw = pressYaw + (mouse.x - pressX) * 0.9;
         }
     }
-
-    // Vị trí theo hướng: bề ngang nhân vật thay đổi giữa nhìn trước (16) và nhìn nghiêng (8).
-    readonly property bool sideways: facing === 1 || facing === 3
-    readonly property real centerX: 8
-    readonly property bool mirrored: facing === 2 || facing === 3
-
-    Part { ox: 0; oy: 0; w: 8; h: 8; depth: 8; overlayX: 32; overlayY: 0
-           px: root.centerX - 4; py: 0 }
-    Part { ox: 16; oy: 16; w: 8; h: 12; depth: 4; overlayX: 16; overlayY: 32
-           px: root.sideways ? root.centerX - 2 : root.centerX - 4; py: 8 }
-    // Tay: nhìn trước thấy tay phải nhân vật bên trái màn hình. Nhìn nghiêng chỉ thấy một tay.
-    Part { visible: !root.sideways || root.facing === 1
-           ox: 40; oy: 16; w: root.armWidth; h: 12; depth: 4; overlayX: 40; overlayY: 32
-           px: root.sideways ? root.centerX - 2 : (root.mirrored ? root.centerX + 4 : root.centerX - 4 - root.armWidth); py: 8 }
-    Part { visible: !root.sideways || root.facing === 3
-           ox: 32; oy: 48; w: root.armWidth; h: 12; depth: 4; overlayX: 48; overlayY: 48
-           px: root.sideways ? root.centerX - 2 : (root.mirrored ? root.centerX - 4 - root.armWidth : root.centerX + 4); py: 8 }
-    Part { ox: 0; oy: 16; w: 4; h: 12; depth: 4; overlayX: 0; overlayY: 32
-           px: root.sideways ? root.centerX - 2 : (root.mirrored ? root.centerX : root.centerX - 4); py: 20 }
-    Part { visible: !root.sideways
-           ox: 16; oy: 48; w: 4; h: 12; depth: 4; overlayX: 0; overlayY: 48
-           px: root.mirrored ? root.centerX - 4 : root.centerX; py: 20 }
+    Keys.onLeftPressed: yaw -= 30
+    Keys.onRightPressed: yaw += 30
 }

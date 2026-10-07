@@ -12,6 +12,7 @@ Item {
     property var shown: ({})
     property bool hasShown: false
     property bool slimImport: false
+    property var viewport: null
     readonly property var entries: accountBridge.skinLibrary
     readonly property string shownDigest: hasShown && shown.skinDigest !== undefined ? shown.skinDigest : ""
 
@@ -61,13 +62,26 @@ Item {
             Rectangle {
                 id: card
                 readonly property bool inUse: library.shownDigest !== "" && modelData.entryId === library.shownDigest
-                width: 132; height: 132; radius: Theme.radiusSmall
+                readonly property bool inViewport: {
+                    if (typeof library === "undefined" || !library) return false;
+                    if (!library.viewport) return true;
+                    var top = card.y + grid.y + library.y - library.viewport.contentY;
+                    return top + height > 0 && top < library.viewport.height;
+                }
+                width: 132; height: 190; radius: Theme.radiusSmall
                 color: inUse ? Theme.accentSoft : (cardHover.hovered ? Theme.surfaceHigh : Theme.surface)
                 border.color: inUse ? Theme.accent : Theme.border
                 Column {
                     anchors { top: parent.top; topMargin: 12; horizontalCenter: parent.horizontalCenter }
                     spacing: 6
-                    SkinFace { size: 44; source: modelData.skinFile; anchors.horizontalCenter: parent.horizontalCenter }
+                    SkinFigure {
+                        objectName: "skinLibraryFigure"
+                        pixel: 3; width: 64; height: 104
+                        source: modelData.skinFile; slim: modelData.slim
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        interactive: false
+                        renderEnabled: card.inViewport
+                    }
                     Text {
                         width: card.width - 16; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
                         text: modelData.name; color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true

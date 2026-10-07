@@ -1,4 +1,4 @@
-# Giao diện và chuyển động · draft 1.2.0rc5
+# Giao diện và chuyển động · draft 1.2.0rc6
 
 Giữ bảng màu hiện tại: nền xám lạnh, accent theo trang và màu thương hiệu xanh.
 Mục tiêu là giảm sự rời rạc giữa các màn hình, đưa thao tác chính về cùng vị trí,
@@ -34,7 +34,7 @@ Kéo thanh cuộn hoặc kéo trực tiếp dừng animation. Pixel delta của 
 quán tính hệ điều hành nên áp dụng trực tiếp; không chồng thêm một lớp quán tính.
 
 Áp dụng cho Home, thư viện, Đã cài, quản lý instance, popup, form tạo bản chơi và
-Cài đặt. Danh sách log/skin và dropdown vẫn dùng điều khiển danh sách Qt của chúng.
+Cài đặt. Danh sách log và dropdown vẫn dùng điều khiển danh sách Qt của chúng.
 Chưa đo thực tế trên màn hình 120/144 Hz hoặc mọi model chuột/trackpad Windows.
 
 ## Việc cần chủ dự án thử trên máy thật
@@ -44,3 +44,20 @@ Chưa đo thực tế trên màn hình 120/144 Hz hoặc mọi model chuột/tra
 - Độ mờ mica trên GPU máy đích; chế độ software có nền thay thế và không blur shader.
 - Không đồng nhất hoá launcher bằng cách tăng animation mọi nơi: chữ, form và hành
   động chính cần đọc rõ trước; animation chỉ giúp theo dõi thay đổi và phản hồi thao tác.
+
+## Mica và skin 3D ở rc6
+
+Popup đăng nhập/cài pack lấy scene bên ngoài popup, bỏ màu nền đặc và animation scale
+để sourceRect kính khớp nội dung phía sau. Thẻ đăng nhập đầu tiên, mã Microsoft và
+popup thêm tài khoản cùng dùng mica. Chế độ software có nền thay thế, không blur GPU.
+
+Skin dùng sáu hộp và lớp ngoài đúng UV Steve/Alex; chuẩn hoá skin 64x32 và skin HD.
+Một worker dựng thumbnail và atlas 72 hướng (bước 5 độ). Khi kéo/phím đổi góc, QML
+chỉ dịch atlas đã nạp; không giải mã PNG hoặc gọi Python render theo từng góc.
+Không có timer xoay lúc rảnh. Thẻ ngoài vùng nhìn không nạp preview; ẩn/thu nhỏ cửa
+sổ bỏ nguồn ảnh. Kho skin dùng cuộn quán tính và cỡ chữ của launcher.
+
+Atlas 1536x1536: 9 MiB RGBA cho nhân vật đang tương tác; thẻ kho dùng thumbnail nhỏ.
+Cache CPU tối đa 32 frame (4 MiB) và tám mesh, cache đĩa giới hạn 64 MiB, map preview
+48 thumbnail/tám atlas. Không thêm QtQuick3D/Addons hoặc engine web. Giới hạn này
+không phải toàn bộ RAM launcher/GPU driver. Kết quả benchmark cục bộ ở RC6_VALIDATION.md.

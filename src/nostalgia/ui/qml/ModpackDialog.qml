@@ -28,7 +28,10 @@ Item {
         width: Math.min(Theme.modern ? 620 * Theme.textScale : 460, parent.width - 40)
         height: Math.min(packColumn.implicitHeight + 52, parent.height - 40)
         radius: Theme.radius
-        color: Theme.surface
+        backdrop: Theme.modern ? Theme.modalBackdrop : null
+        blurOpacity: 0.9
+        finishOpacity: 0.65
+        color: Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, Theme.modern ? 0.78 : 1)
         border.color: Theme.border
         border.width: 1
         MouseArea { anchors.fill: parent }

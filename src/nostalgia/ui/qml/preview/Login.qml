@@ -106,6 +106,10 @@ khởi đầu."
     Glass {
         id: card
         objectName: "loginCard"
+        backdrop: Legacy.Theme.modalBackdrop
+        blurOpacity: 0.9
+        finishOpacity: 0.65
+        color: GlassTheme.alpha(GlassTheme.surface, 0.74)
         width: Math.min(440, root.width * 0.42)
         height: Math.min(root.height - 170, form.height + 72)
         anchors.right: parent.right

@@ -1,4 +1,4 @@
-# Nostalgia 1.2.0rc5 — hướng dẫn thử draft
+# Nostalgia 1.2.0rc6 — hướng dẫn thử draft
 
 Bản này dành cho chủ dự án thử trước khi publish. Không thay bản ổn định và không
 phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu thư mục đang chơi.
@@ -11,6 +11,9 @@ phát qua auto-update. Dùng một thư mục dữ liệu mới hoặc sao lưu 
   Tab Đã cài và bộ lọc không mở lại trang thư viện cũ; nút và form dùng theme mới.
 - Manrope cho tiêu đề, Inter cho chữ đọc, block sidebar xoay trở lại, chuyển trang/popup
   có animation; cuộn theo tham số Lenis của Skew và thiết lập Giảm chuyển động.
+- Popup thêm tài khoản, mã Microsoft và cài modpack lấy đúng nội dung trang phía sau để làm mica.
+- Skin/Cape hiển thị skin 3D đúng UV Steve/Alex; kéo hoặc dùng phím để xoay 360°.
+  Thẻ skin trong kho dùng ảnh nhân vật 3D, chỉ nạp khi vào vùng nhìn; đứng yên không có timer render.
 - Thư viện có popup dự án và chọn phiên bản cho mod, resourcepack, shader, modpack.
 - Tài khoản Google riêng cho Plus/bạn bè/chat/lời mời. Phiên mới thu hồi phiên dịch vụ
   cũ; tài khoản Minecraft vẫn dùng để khởi chạy game. Không đăng xuất Gmail trên máy khác.
@@ -49,7 +52,9 @@ R2 private, các service bindings, INVITE_KEY và ba secret payOS. Đăng ký we
    Thử cửa sổ 1024×600 và chữ 150%; cuộn tới các thao tác nếu nội dung dài.
    Mở quản lý bản chơi, lưu tên/RAM, thử Đã cài, bật/tắt một mod rồi bật lại.
    Hover/focus sidebar, chuyển trang, mở/đóng popup; bật Giảm chuyển động.
-   Cuộn bằng chuột/trackpad, đảo hướng và kéo scrollbar; xem RC5_MOTION.gif để đối chiếu.
+   Cuộn bằng chuột/trackpad, đảo hướng và kéo scrollbar; xem GIF preview đính kèm để đối chiếu.
+   Vào Skin, kéo nhân vật để xoay, dùng ← →, đổi Slim/Wide và cuộn kho nhiều skin.
+   Đóng/thu nhỏ cửa sổ rồi mở lại: skin phải hiện lại và giữ đúng tài khoản.
 3. Cài Forge 1.20.1 số ngắn `47.4.23`, rồi một modpack Forge. Khởi chạy game để kiểm
    cài đặt thực tế; fixture của CI không thay thế bước này.
 4. Bản chơi → quản lý → Sao lưu & dữ liệu → Kiểm tra xung đột mod. Quét bộ mod bình thường, thử hai JAR có

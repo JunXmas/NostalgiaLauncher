@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Item {
     id: root
@@ -31,6 +32,10 @@ Item {
         }
     }
     Glass {
+        objectName: "deviceLoginSurface"
+        backdrop: Legacy.Theme.modalBackdrop
+        blurOpacity: 0.9
+        finishOpacity: 0.65
         width: 480
         height: form.height + 64
         anchors.centerIn: parent

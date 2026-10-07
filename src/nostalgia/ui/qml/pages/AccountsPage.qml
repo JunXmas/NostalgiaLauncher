@@ -23,6 +23,7 @@ Item {
     readonly property bool shownSlim: hasShown ? shown.slim : false
 
     function _refreshShown() { page.shown = accountBridge.accountWithId(page.shownId); }
+    Component.onCompleted: _refreshShown()
     onShownIdChanged: _refreshShown()
     Connections {
         target: bridge
@@ -180,9 +181,11 @@ Item {
         }
         SkinFigure {
             id: figure
+            objectName: "accountSkinFigure"
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 110 }
             pixel: 8
             source: page.shownSkinFile
+            revision: page.hasShown ? (page.shown.skinDigest || "") : ""
             slim: page.shownSlim
             facing: page.facing
             visible: page.hasShown
@@ -200,6 +203,8 @@ Item {
         Column {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 26 }
             spacing: 6
+            Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
+                   text: Tr.phrase("Kéo để xoay · ← →"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel }
             Text { anchors.horizontalCenter: parent.horizontalCenter; text: page.hasShown ? page.shown.playerName : Tr.phrase("Chưa chọn")
                    color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown

@@ -10,6 +10,5 @@ Preview.Glass {
     ParallelAnimation {
         id: entrance
         NumberAnimation { target: root; property: "opacity"; from: Theme.reducedMotion ? 1 : 0; to: 1; duration: Theme.normal; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "scale"; from: Theme.reducedMotion ? 1 : 0.97; to: 1; duration: Theme.normal; easing.type: Easing.OutCubic }
     }
 }

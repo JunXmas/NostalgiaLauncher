@@ -37,7 +37,12 @@ Item {
         anchors.centerIn: parent
         width: Math.min(Theme.modern ? 560 * Theme.textScale : 440, parent.width - 40)
         height: Math.min(contentColumn.implicitHeight + 52, parent.height - 40)
-        radius: Theme.radius; color: Theme.surface; border.color: Theme.border
+        backdrop: Theme.modern ? Theme.modalBackdrop : null
+        blurOpacity: 0.9
+        finishOpacity: 0.65
+        radius: Theme.radius
+        color: Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, Theme.modern ? 0.78 : 1)
+        border.color: Theme.border
         MouseArea { anchors.fill: parent }
 
         Preview.InertialScroll {
@@ -61,8 +66,10 @@ Item {
                         { key: "offline",   title: Tr.phrase("Ngoại tuyến"), text: Tr.phrase("Chỉ nhập tên. Không skin riêng, tên có thể trùng người khác.") }
                     ]
                     Rectangle {
+                        readonly property color providerTint: pickArea.containsMouse ? Theme.surfaceHigh : Theme.surface
                         width: parent.width; height: Theme.modern ? Math.max(58, providerText.implicitHeight + 24) : 58; radius: Theme.radiusSmall
-                        color: pickArea.containsMouse ? Theme.surfaceHigh : Theme.surface; border.color: Theme.border
+                        color: Qt.rgba(providerTint.r, providerTint.g, providerTint.b, Theme.modern ? (pickArea.containsMouse ? 0.78 : 0.58) : 1)
+                        border.color: Theme.border
                         Behavior on color { ColorAnimation { duration: Theme.quick } }
                         Column {
                             id: providerText

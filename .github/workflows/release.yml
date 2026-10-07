@@ -171,6 +171,28 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" bundles/* \
+          assets=(bundles/*)
+          review_dir="docs/preview/rc${GITHUB_REF_NAME##*rc}"
+          if [[ "$GITHUB_REF_NAME" == *rc* && -d "$review_dir" ]]; then
+            export NOSTALGIA_REVIEW_DIR="$review_dir"
+            python - <<'PYREVIEW'
+          import hashlib
+          import os
+          from pathlib import Path
+          folder = Path(os.environ['NOSTALGIA_REVIEW_DIR'])
+          artifacts = {path.name: path for path in folder.iterdir() if path.suffix in ('.png', '.gif')}
+          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', 'RC6_VALIDATION.md', 'UI_MOTION_REVIEW.md')})
+          seen = set()
+          for line in (folder / 'PREVIEW_SHA256SUMS').read_text().splitlines():
+              checksum, name = line.split(maxsplit=1)
+              assert name in artifacts and name not in seen
+              assert hashlib.sha256(artifacts[name].read_bytes()).hexdigest() == checksum
+              seen.add(name)
+          assert seen == set(artifacts)
+          PYREVIEW
+            assets+=("$review_dir"/*.png "$review_dir"/*.gif "$review_dir/PREVIEW_SHA256SUMS"
+              docs/DRAFT_TEST_GUIDE.md docs/RC6_VALIDATION.md docs/UI_MOTION_REVIEW.md)
+          fi
+          gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
             --notes-file docs/RELEASE_NOTES.md
