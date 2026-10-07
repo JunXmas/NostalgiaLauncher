@@ -13,6 +13,7 @@ from nostalgia.social.model import (
     ServiceAccount,
     SocialSnapshot,
 )
+from nostalgia.social.profile_model import ProfileDraft, SocialProfile
 
 
 class DemoSocialGateway:
@@ -103,6 +104,31 @@ class DemoSocialGateway:
             self.snapshot,
             account=replace(self.snapshot.account, accent=accent, show_badge=show_badge),
         )
+
+    def fetch_profile(self, account_id: str) -> SocialProfile:
+        account = self.snapshot.account
+        if account_id == account.account_id:
+            return SocialProfile(
+                account_id,
+                account.name,
+                True,
+                account.avatar_url,
+                getattr(self, "profile_draft", ProfileDraft()),
+            )
+        friend = next(f for f in self.snapshot.friends if f.account_id == account_id)
+        return SocialProfile(
+            account_id,
+            friend.name,
+            friend.online,
+            friend.avatar_url,
+            ProfileDraft(),
+            friend.badge,
+            friend.accent,
+        )
+
+    def save_profile(self, draft: ProfileDraft) -> SocialProfile:
+        self.profile_draft = draft
+        return self.fetch_profile(self.snapshot.account.account_id)
 
     def fetch_preview_url(self, target: str) -> str:
         del target

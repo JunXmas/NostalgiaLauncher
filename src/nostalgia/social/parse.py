@@ -13,6 +13,7 @@ from nostalgia.social.model import (
     ServiceAccount,
     SocialSnapshot,
 )
+from nostalgia.social.profile_image import image_url
 
 
 def identifier(value: str) -> str:
@@ -68,6 +69,7 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
         plus_plan,
         accent(account_fields.get("accent")),
         account_fields.get("show_badge", True) is True,
+        image_url(account_fields.get("avatar_url")),
     )
 
     def parse_friend(document: JsonValue) -> Friend:
@@ -81,6 +83,8 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
             fields.get("incoming") is True,
             badge(fields.get("badge")),
             accent(fields.get("accent")),
+            image_url(fields.get("avatar_url")),
+            decor(fields.get("decor")),
         )
 
     invitations = []
@@ -129,4 +133,11 @@ def badge(document: JsonValue) -> str:
     value = as_string(document) or ""
     if value not in ("", "Đồng hành", "Tiên phong", "Sáng lập"):
         raise SocialError("Huy hiệu không hợp lệ.")
+    return value
+
+
+def decor(document: JsonValue) -> str:
+    value = as_string(document) or "none"
+    if value not in ("none", "amethyst", "emerald", "amber"):
+        raise SocialError("Khung hồ sơ không hợp lệ.")
     return value

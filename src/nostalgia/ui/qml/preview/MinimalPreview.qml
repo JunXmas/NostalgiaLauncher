@@ -187,6 +187,7 @@ Item {
                 recovery.report(message, accountBridge);
         }
     }
+    SocialProfileDialog { id: socialProfileDialog }
     Legacy.ConfirmDialog {
         objectName: "confirmDialog"
         anchors.fill: parent

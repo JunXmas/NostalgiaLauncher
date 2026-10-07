@@ -47,6 +47,7 @@ class SocialState(WorkerBridge):
         return {
             "accountId": account.account_id,
             "name": account.name,
+            "avatarUrl": account.avatar_url,
             "friendCode": account.friend_code,
             "plus": self._plus_enabled
             and (account.plus_lifetime or account.plus_until > time.time()),
@@ -82,9 +83,11 @@ class SocialState(WorkerBridge):
                 {
                     "accountId": friend.account_id,
                     "name": friend.name,
+                    "avatarUrl": friend.avatar_url,
                     "online": friend.online,
                     "badge": friend.badge,
                     "accent": friend.accent,
+                    "decor": friend.decor,
                 }
                 for friend in self._snapshot.friends
             ]
@@ -96,7 +99,13 @@ class SocialState(WorkerBridge):
     def requests(self) -> list[dict[str, Any]]:
         return (
             [
-                {"accountId": friend.account_id, "name": friend.name, "incoming": friend.incoming}
+                {
+                    "accountId": friend.account_id,
+                    "name": friend.name,
+                    "avatarUrl": friend.avatar_url,
+                    "incoming": friend.incoming,
+                    "online": friend.online,
+                }
                 for friend in self._snapshot.requests
             ]
             if self._snapshot

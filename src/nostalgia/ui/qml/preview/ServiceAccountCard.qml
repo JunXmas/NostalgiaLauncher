@@ -45,6 +45,7 @@ Glass {
                 }
                 Button { visible: socialBridge.signingIn; label: "Mở lại Google  ↗"; onClicked: socialBridge.openGoogle() }
                 Button { visible: socialBridge.signingIn; label: "Huỷ"; quiet: true; onClicked: socialBridge.cancelSignIn() }
+                Button { objectName: "openMyProfile"; visible: socialBridge.signedIn; label: "Hồ sơ của tôi"; quiet: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
                 Button { objectName: "copyFriendCode"; visible: socialBridge.signedIn; label: "Chép mã kết bạn"; onClicked: socialBridge.copyFriendCode() }
                 Button {
                     objectName: "socialLogout"

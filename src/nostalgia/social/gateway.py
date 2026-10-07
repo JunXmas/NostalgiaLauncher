@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import secrets
+from dataclasses import asdict
 from urllib.parse import urlsplit
 
 from nostalgia.errors import SessionRevoked, SocialError
@@ -15,6 +16,8 @@ from nostalgia.net.payload import decode_json
 from nostalgia.social.envelope import InvitationCipher
 from nostalgia.social.model import FriendMessage, GoogleLogin, SocialSnapshot
 from nostalgia.social.parse import identifier, parse_messages, parse_snapshot, timestamp
+from nostalgia.social.profile_model import ProfileDraft, SocialProfile
+from nostalgia.social.profile_parse import parse_profile
 
 
 class HttpSocialGateway:
@@ -160,6 +163,12 @@ class HttpSocialGateway:
     def update_profile(self, accent: str, show_badge: bool) -> None:
         self._request("POST", "/v1/profile", {"accent": accent, "show_badge": show_badge})
 
+    def fetch_profile(self, account_id: str) -> SocialProfile:
+        return parse_profile(self._request("GET", "/v1/profiles/" + identifier(account_id)))
+
+    def save_profile(self, draft: ProfileDraft) -> SocialProfile:
+        return parse_profile(self._request("POST", "/v1/profiles/me", asdict(draft)))
+
     def fetch_preview_url(self, target: str) -> str:
         fields = as_mapping(self._request("POST", "/v1/plus/preview", {"target": target}))
         value = as_string(fields.get("url")) or ""
@@ -188,7 +197,11 @@ class HttpSocialGateway:
         if payload is not None:
             headers["Content-Type"] = "application/json"
         response = self._http_client.send(
-            method, self.base_url + path, headers=headers, body=payload, max_bytes=256_000
+            method,
+            self.base_url + path,
+            headers=headers,
+            body=payload,
+            max_bytes=512_000 if path == "/v1/me" else 256_000,
         )
         if response.status == 401 and authenticated:
             raise SessionRevoked(

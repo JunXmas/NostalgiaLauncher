@@ -90,6 +90,9 @@ from nostalgia.social.model import (
     SocialSnapshot,
     SocialUpdate,
 )
+from nostalgia.social.profile_model import FavoritePack as FavoritePack
+from nostalgia.social.profile_model import ProfileDraft as ProfileDraft
+from nostalgia.social.profile_model import SocialProfile as SocialProfile
 from nostalgia.update.release import LauncherRelease
 
 
@@ -126,6 +129,7 @@ __all__ = [
     "DedicatedServer",
     "DeviceCode",
     "Diagnosis",
+    "FavoritePack",
     "Found",
     "FriendMessage",
     "GameProcess",
@@ -148,6 +152,7 @@ __all__ = [
     "PaymentOrder",
     "PlayerProfile",
     "PlayerSkin",
+    "ProfileDraft",
     "Progress",
     "QrCode",
     "RecentServer",
@@ -172,6 +177,7 @@ __all__ = [
     "ServiceSessionStore",
     "Settings",
     "SocialGateway",
+    "SocialProfile",
     "SocialSnapshot",
     "SocialUpdate",
     "StagedUpdate",

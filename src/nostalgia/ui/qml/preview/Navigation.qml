@@ -237,7 +237,7 @@ Glass {
             width: 32
             height: 32
             radius: 10
-            visible: !face.visible
+            visible: !face.visible && !socialBridge.signedIn
             color: Legacy.Theme.mix(GlassTheme.surface, GlassTheme.brand, 0.20)
             Text {
                 anchors.centerIn: parent
@@ -246,6 +246,7 @@ Glass {
                 font.pixelSize: GlassTheme.fontHeading
             }
         }
+        SocialAvatar { x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
         Column {
             x: 55
             anchors.verticalCenter: parent.verticalCenter

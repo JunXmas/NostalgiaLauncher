@@ -43,10 +43,12 @@ Glass {
         }
         Item {
             id: chatHeading
-            width: parent.width; height: Math.max(heading.implicitHeight, invite.height)
+            width: parent.width; height: Math.max(heading.implicitHeight, invite.height, chatAvatar.height)
+            SocialAvatar { id: chatAvatar; objectName: "chatFriendAvatar"; anchors.verticalCenter: parent.verticalCenter; visible: !!socialBridge.peerId; playerName: socialBridge.peerName; source: (socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || {}).avatarUrl || ""; online: socialBridge.peerOnline; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
             Column {
                 id: heading
-                width: parent.width - (invite.visible ? invite.width + 12 : 0)
+                x: chatAvatar.visible ? chatAvatar.width + 12 : 0
+                width: parent.width - x - (invite.visible ? invite.width + 12 : 0)
                 spacing: 4
                 PaymentText { width: parent.width; text: socialBridge.peerName || "Cùng nhau chơi"; font.pixelSize: GlassTheme.fontLead; font.weight: Font.DemiBold }
                 PaymentText { width: parent.width; visible: !!socialBridge.peerId; text: socialBridge.peerOnline ? "● Trực tuyến" : "○ Ngoại tuyến"; color: socialBridge.peerOnline ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
@@ -105,6 +107,7 @@ Glass {
         Flow {
             visible: root.optionsExpanded
             width: parent.width; spacing: 8
+            Button { objectName: "viewFriendProfile"; label: "Xem hồ sơ"; quiet: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
             Button { label: "Làm mới"; quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.refresh() }
             Button {
                 label: "Chặn người chơi"; quiet: true; clickable: !socialBridge.busy

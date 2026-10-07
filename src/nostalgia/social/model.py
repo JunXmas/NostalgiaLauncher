@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from nostalgia.social.profile_model import ProfileDraft, SocialProfile
+
 
 @dataclass(frozen=True, slots=True)
 class GoogleLogin:
@@ -24,6 +26,7 @@ class ServiceAccount:
     plus_plan: str = ""
     accent: str = ""
     show_badge: bool = True
+    avatar_url: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +37,8 @@ class Friend:
     incoming: bool = False
     badge: str = ""
     accent: str = ""
+    avatar_url: str = ""
+    decor: str = "none"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +81,9 @@ class SocialGateway(Protocol):
     def accept_invite(self, invite_id: str) -> str: ...
     def decline_invite(self, invite_id: str) -> None: ...
     def update_profile(self, accent: str, show_badge: bool) -> None: ...
+
+    def fetch_profile(self, account_id: str) -> SocialProfile: ...
+    def save_profile(self, draft: ProfileDraft) -> SocialProfile: ...
 
     def fetch_preview_url(self, target: str) -> str: ...
 

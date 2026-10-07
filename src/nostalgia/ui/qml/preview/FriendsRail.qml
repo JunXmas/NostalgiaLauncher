@@ -36,16 +36,17 @@ Glass {
                     Button {
                         objectName: "friend-" + modelData.accountId
                         width: friends.width
-                        height: labels.implicitHeight + 20
+                        height: Math.max(labels.implicitHeight + 20, 62 * GlassTheme.scale)
                         label: ""
                         selected: socialBridge.peerId === modelData.accountId
                         quiet: true
                         Accessible.name: modelData.name + (modelData.online ? ", trực tuyến" : ", ngoại tuyến")
                         onClicked: socialBridge.selectFriend(modelData.accountId)
+                        SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; decor: modelData.decor || "none"; clickable: true; onClicked: socialProfileDialog.showFor(modelData.accountId) }
                         Column {
                             id: labels
-                            x: 12; y: 10; width: parent.width - 24; spacing: 4
-                            PaymentText { width: parent.width; text: modelData.name + (modelData.badge ? " · " + modelData.badge : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
+                            x: 64 * GlassTheme.scale; y: 10; width: parent.width - x - 12; spacing: 4
+                            PaymentText { width: parent.width; text: modelData.name + (modelData.badge ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
                             PaymentText { width: parent.width; text: modelData.online ? "●  Trực tuyến" : "○  Ngoại tuyến"; color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                         }
                     }
@@ -60,7 +61,10 @@ Glass {
                 model: socialBridge.requests
                 Column {
                     width: contents.width; spacing: 8
-                    PaymentText { width: parent.width; text: modelData.name + (modelData.incoming ? " muốn kết bạn" : " · Đã gửi") }
+                    Row { width: parent.width; spacing: 10
+                        SocialAvatar { playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; showPresence: false; size: 32 }
+                        PaymentText { width: parent.width - 42; anchors.verticalCenter: parent.verticalCenter; text: modelData.name + (modelData.incoming ? " muốn kết bạn" : " · Đã gửi") }
+                    }
                     Flow {
                         width: parent.width; spacing: 8
                         Button { visible: modelData.incoming; label: "Chấp nhận"; clickable: !socialBridge.busy; onClicked: socialBridge.acceptFriend(modelData.accountId) }

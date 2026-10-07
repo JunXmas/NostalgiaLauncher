@@ -2,6 +2,7 @@ import QtQuick
 
 Rectangle {
     id: root
+    property alias maximumLength: field.maximumLength
     property alias text: field.text
     property alias echoMode: field.echoMode
     property string placeholder: ""

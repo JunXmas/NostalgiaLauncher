@@ -14,6 +14,7 @@ from nostalgia.api import (
     ServiceSessionStore,
     SocialGateway,
 )
+from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
@@ -22,6 +23,7 @@ from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
+from nostalgia.ui.profile_bridge import ProfileBridge
 from nostalgia.ui.project_bridge import ProjectBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.server_controller import ServerController
@@ -61,6 +63,12 @@ def open_preview(
         plus_enabled=plus_enabled,
     )
     context.setContextProperty("socialBridge", social_bridge)
+    accounts = context.contextProperty("accountBridge")
+    assert isinstance(accounts, AccountBridge)
+    profile_bridge = ProfileBridge(
+        launcher, social_bridge, social_gateway, accounts, bridge, parent=view
+    )
+    context.setContextProperty("profileBridge", profile_bridge)
     host_bridge = HostBridge(
         launcher,
         bridge,
@@ -86,6 +94,7 @@ def open_preview(
         running_application.aboutToQuit.connect(room_sync_bridge.cancel)
         running_application.aboutToQuit.connect(host_bridge.stop)
         running_application.aboutToQuit.connect(social_bridge.shutdown)
+        running_application.aboutToQuit.connect(profile_bridge.close)
         running_application.aboutToQuit.connect(server_bridge.shutdown)
         running_application.aboutToQuit.connect(server_room.close)
     content_bridge = context.contextProperty("contentBridge")
