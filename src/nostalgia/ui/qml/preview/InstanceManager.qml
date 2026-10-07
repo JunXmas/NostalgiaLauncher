@@ -47,15 +47,7 @@ Controls.Popup {
             PaymentText { width: parent.width; text: "Minecraft · " + (root.instance.versionId || ""); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontLabel }
         }
         Button { anchors.right: parent.right; width: 38; label: "×"; quiet: true; Accessible.name: "Đóng quản lý bản chơi"; onClicked: root.close() }
-        Flow {
-            id: tabs
-            anchors.top: header.bottom; anchors.topMargin: 20
-            width: parent.width; spacing: 6
-            Repeater {
-                model: ["Tổng quan", "Nội dung đã cài", "Hiệu năng", "Sao lưu & dữ liệu"]
-                Button { objectName: "instanceSection-" + index; label: modelData; selected: root.section === index; quiet: true; onClicked: root.section = index }
-            }
-        }
+        MotionTabs { id: tabs; anchors.top: header.bottom; anchors.topMargin: 20; width: parent.width; labels: ["Tổng quan", "Nội dung đã cài", "Hiệu năng", "Sao lưu & dữ liệu"]; currentIndex: root.section; namePrefix: "instanceSection-"; onSelected: function(index) { root.section = index; } }
         Row {
             id: footer
             anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 8

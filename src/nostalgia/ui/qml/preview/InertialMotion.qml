@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 
 /* One render-clock controller for both page Flickables and virtualized ListViews.
    Lenis on Skew smooths wheel input, including pixel deltas, with duration 1.5 s.
@@ -6,6 +7,8 @@ import QtQuick
 Item {
     id: root
     property Flickable target: null
+    readonly property bool renderActive: target && target.visible && target.Window.window && target.Window.window.visible && target.Window.window.visibility !== Window.Minimized
+    onRenderActiveChanged: if (!renderActive) stopMotion()
     readonly property real maxY: target ? Math.max(0, target.contentHeight - target.height) : 0
     property real destination: 0
     property real dragSpeed: 0
@@ -22,8 +25,9 @@ Item {
         }
     }
     function scrollBy(delta, immediate) {
-        if (!target || !enabled) return;
-        var origin = motion.running ? destination : target.contentY;
+        if (!target || !enabled || !renderActive) return;
+        var reversing = motion.running && delta * (destination - target.contentY) < 0;
+        var origin = motion.running && !reversing ? destination : target.contentY;
         target.cancelFlick();
         destination = clamp(origin + delta);
         if (GlassTheme.reducedMotion || immediate) {
@@ -34,7 +38,7 @@ Item {
         }
     }
     function coast(speed) {
-        if (!target || !enabled) return;
+        if (!target || !enabled || !renderActive) return;
         target.cancelFlick();
         destination = clamp(target.contentY);
         if (!GlassTheme.reducedMotion && Math.abs(speed) > 40)
@@ -96,7 +100,7 @@ Item {
     FrameAnimation {
         id: motion
         onTriggered: {
-            if (!root.enabled || !root.target || !root.target.visible) { root.stopMotion(); return; }
+            if (!root.enabled || !root.renderActive) { root.stopMotion(); return; }
             var dt = Math.min(0.05, Math.max(0.001, frameTime));
             var remaining = root.destination - root.target.contentY;
             if (Math.abs(remaining) < 0.4) {
@@ -109,7 +113,7 @@ Item {
     }
     WheelHandler {
         parent: root.target
-        enabled: root.enabled && root.target && root.target.interactive
+        enabled: root.enabled && root.renderActive && root.target.interactive
         target: null
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {

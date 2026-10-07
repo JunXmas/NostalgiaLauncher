@@ -4,13 +4,16 @@ Item {
     id: root
     property string label: ""
     property string icon: ""
+    property string provider: ""
+    property bool danger: false
     property bool primary: false
     property bool quiet: false
     property bool selected: false
+    property bool emphasized: false
     property bool clickable: true
     readonly property bool hovered: hover.hovered
     signal clicked
-    implicitWidth: caption.implicitWidth + 32
+    implicitWidth: labelRow.implicitWidth + 32
     implicitHeight: 42
     width: implicitWidth
     height: implicitHeight
@@ -34,7 +37,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: 12
-        color: root.primary ? (hover.hovered ? GlassTheme.primaryHover : GlassTheme.primaryFace) : root.selected ? GlassTheme.selectedSurface : root.quiet ? (hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.10) : "transparent") : (hover.hovered ? GlassTheme.raised : GlassTheme.surface)
+        color: root.danger ? GlassTheme.alpha(GlassTheme.danger, hover.hovered ? 0.22 : 0.10) : root.primary ? (hover.hovered ? GlassTheme.primaryHover : GlassTheme.primaryFace) : root.selected ? GlassTheme.selectedSurface : root.quiet ? (hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.10) : "transparent") : (hover.hovered ? GlassTheme.raised : GlassTheme.surface)
         border.color: root.activeFocus ? GlassTheme.accent : root.primary || root.quiet ? "transparent" : GlassTheme.stroke
         border.width: root.activeFocus ? 2 : 1
         opacity: root.clickable ? 1 : 0.4
@@ -43,14 +46,16 @@ Item {
                 duration: GlassTheme.quick
             }
         }
-        Text {
-            id: caption
-            anchors.centerIn: parent
-            text: (root.icon ? root.icon + "  " : "") + root.label
-            color: root.selected && !root.primary ? GlassTheme.accent : GlassTheme.text
-            font.family: GlassTheme.font
-            font.pixelSize: GlassTheme.fontControl
-            font.weight: Font.DemiBold
+        Row {
+            id: labelRow
+            anchors.centerIn: parent; spacing: 10
+            ProviderLogo { visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
+            Text {
+                id: caption
+                text: (root.icon ? root.icon + "  " : "") + root.label
+                color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
+                font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
+            }
         }
     }
     HoverHandler {

@@ -80,7 +80,7 @@ class ImportBridge(WorkerBridge):
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )
-            self._main_bridge.instancesChanged.emit()
+            self._main_bridge.announce_instances_changed()
             self.importDone.emit(instance.instance_id)
 
         self.run_in_background(work, f"Nhập modpack {pack_path.name}")
@@ -102,7 +102,7 @@ class ImportBridge(WorkerBridge):
                 final_label,
                 on_progress=self._main_bridge.report_progress,
             )
-            self._main_bridge.instancesChanged.emit()
+            self._main_bridge.announce_instances_changed()
             self.importDone.emit(instance.instance_id)
 
         self.run_in_background(work, f"Nhập {found.instance_name} từ {found.launcher}")

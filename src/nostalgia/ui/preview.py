@@ -18,6 +18,7 @@ from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
+from nostalgia.ui.cosmetic_bridge import CosmeticBridge
 from nostalgia.ui.host_bridge import HostBridge
 from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
@@ -73,6 +74,9 @@ def open_preview(
         launcher, social_bridge, social_gateway, accounts, bridge, parent=view
     )
     context.setContextProperty("profileBridge", profile_bridge)
+    cosmetic_bridge = CosmeticBridge(social_bridge, social_gateway, parent=view)
+    profile_bridge.saved.connect(cosmetic_bridge.refresh)
+    context.setContextProperty("cosmeticBridge", cosmetic_bridge)
     host_bridge = HostBridge(
         launcher,
         bridge,
@@ -99,6 +103,7 @@ def open_preview(
         running_application.aboutToQuit.connect(host_bridge.stop)
         running_application.aboutToQuit.connect(social_bridge.shutdown)
         running_application.aboutToQuit.connect(profile_bridge.close)
+        running_application.aboutToQuit.connect(cosmetic_bridge.close)
         running_application.aboutToQuit.connect(server_bridge.shutdown)
         running_application.aboutToQuit.connect(server_room.close)
     content_bridge = context.contextProperty("contentBridge")

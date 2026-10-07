@@ -169,19 +169,19 @@ def test_scroll_wheel_reversal_trackpad_reduce_motion_and_bounds(preview: Previe
     wheel(view, scroll)
     assert scroll.property("destination") == pytest.approx(184)
     wheel(view, scroll, angle=120)
-    assert scroll.property("destination") == pytest.approx(92)
+    assert scroll.property("destination") == pytest.approx(0)
     wait_until(lambda: not scroll.property("settling"))
-    assert scroll.property("contentY") == pytest.approx(92)
+    assert scroll.property("contentY") == pytest.approx(0)
     # High-resolution wheel / touchpad deltas receive the same weighted coast.
     wheel(view, scroll, angle=0, pixels=-35)
     assert scroll.property("settling")
-    assert scroll.property("contentY") < 127
+    assert scroll.property("contentY") < 35
     wait_until(lambda: not scroll.property("settling"))
-    assert scroll.property("contentY") == pytest.approx(127)
+    assert scroll.property("contentY") == pytest.approx(35)
     settings = view.rootContext().contextProperty("settingsBridge")
     settings.setAppearance(100, False, True, True, "vi")
     wheel(view, scroll)
-    assert scroll.property("contentY") == pytest.approx(219)
+    assert scroll.property("contentY") == pytest.approx(127)
     assert not scroll.property("settling")
     scroll.setProperty("contentHeight", 200)
     assert scroll.property("contentY") == 0
@@ -205,7 +205,7 @@ def test_resizing_all_preview_pages_and_live_instance_refresh(preview: Preview) 
             settings = view.rootContext().contextProperty("settingsBridge")
             settings.setAppearance(scale, False, False, True, "vi")
             view.resize(1024, 600)
-            for page in range(7):
+            for page in range(8):
                 root_item.setProperty("currentIndex", page)
                 QTest.qWait(40)
         assert not warnings

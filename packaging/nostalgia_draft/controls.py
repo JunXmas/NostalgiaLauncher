@@ -110,7 +110,7 @@ class ReviewControls(WorkerBridge):
         if self._bridge and self._syncing:
             self._syncing = False
             self._bridge.setStorageBusy(False)
-            self._bridge.instancesChanged.emit()
+            self._bridge.announce_instances_changed()
         self._set_note(message)
 
     def _set_note(self, message: str) -> None:

@@ -10,7 +10,27 @@ Item {
     property string source: "modrinth"
     property string projectId: ""
     property string versionId: ""
-    function resetLibrary() { root.projectId = ""; root.versionId = ""; serverBridge.clearContent(); }
+    property string loadedKey: ""
+    property bool autoPending: false
+    readonly property string selectionKey: (serverBridge.selected.server_id || "") + ":" + source + ":" + kind
+    function scheduleLibrary() {
+        if (!visible || !serverBridge.selected.server_id || !(supportsPlugins || supportsMods)) {
+            autoPending = false; autoSearch.stop(); return;
+        }
+        if (loadedKey !== selectionKey) {
+            autoPending = true; autoSearch.restart();
+        }
+    }
+    function searchLibrary() {
+        root.autoPending = false; root.loadedKey = root.selectionKey;
+        root.projectId = ""; root.versionId = "";
+        serverBridge.search(root.source, root.kind, query.text);
+    }
+    function resetLibrary() { root.projectId = ""; root.versionId = ""; serverBridge.clearContent(); root.loadedKey = ""; root.scheduleLibrary(); }
+    onVisibleChanged: { if (visible) scheduleLibrary(); else { autoPending = false; autoSearch.stop(); } }
+    onSelectionKeyChanged: scheduleLibrary()
+    Timer { id: autoSearch; interval: 80; onTriggered: { if (!root.visible || !root.autoPending) return; if (serverBridge.busy) restart(); else root.searchLibrary(); } }
+    Connections { target: serverBridge; function onSelectionLoaded() { root.loadedKey = ""; root.scheduleLibrary(); } }
     readonly property var engine: serverBridge.engines.filter(function(e) { return e.engine_id === serverBridge.selected.engine_id; })[0] || ({})
     readonly property bool supportsPlugins: engine.supports_plugins === true
     readonly property bool supportsMods: !!engine.mod_loader
@@ -19,11 +39,11 @@ Item {
         Flow { width: parent.width; spacing: 8
             Button { label: "Plugin"; visible: root.supportsPlugins; selected: root.kind === "plugin"; clickable: !serverBridge.busy; onClicked: { root.kind = "plugin"; root.resetLibrary(); } }
             Button { label: "Mod"; visible: root.supportsMods; selected: root.kind === "mod"; clickable: !serverBridge.busy; onClicked: { root.kind = "mod"; root.source = "modrinth"; root.resetLibrary(); } }
-            Select { objectName: "serverContentSource"; width: 180 * GlassTheme.scale; model: root.kind === "plugin" && ["paper", "purpur", "folia"].indexOf(serverBridge.selected.engine_id) >= 0 ? ["Modrinth", "Hangar"] : ["Modrinth"]; enabled: !serverBridge.busy; onActivated: function(i) { root.source = i === 1 ? "hangar" : "modrinth"; root.resetLibrary(); } }
+            Select { objectName: "serverContentSource"; currentIndex: root.source === "hangar" ? 1 : 0; width: 180 * GlassTheme.scale; model: root.kind === "plugin" && ["paper", "purpur", "folia"].indexOf(serverBridge.selected.engine_id) >= 0 ? ["Modrinth", "Hangar"] : ["Modrinth"]; enabled: !serverBridge.busy; onActivated: function(i) { root.source = i === 1 ? "hangar" : "modrinth"; root.resetLibrary(); } }
         }
         Row { width: parent.width; spacing: 10
             Input { id: query; objectName: "serverContentQuery"; width: Math.max(140, parent.width - search.width - 10); placeholder: root.kind === "plugin" ? "Tìm plugin tương thích…" : "Tìm mod dành cho server…"; onAccepted: search.trigger() }
-            Button { id: search; objectName: "serverContentSearch"; label: "Tìm kiếm"; primary: true; clickable: !serverBridge.busy && (root.supportsPlugins || root.supportsMods); onClicked: { root.projectId = ""; root.versionId = ""; serverBridge.search(root.source, root.kind, query.text); } }
+            Button { id: search; objectName: "serverContentSearch"; label: "Tìm kiếm"; primary: true; clickable: !serverBridge.busy && (root.supportsPlugins || root.supportsMods); onClicked: root.searchLibrary() }
         }
         PaymentText { width: parent.width; text: serverBridge.busy ? serverBridge.activity : root.supportsPlugins || root.supportsMods ? "Lọc theo Minecraft " + (serverBridge.selected.game_version || "") + " và " + (serverBridge.selected.engine_title || "") + ". Hangar chỉ hiển thị bản Release tải trực tiếp, không cần dependency ngoài." : "Vanilla không hỗ trợ plugin hoặc mod."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     }
@@ -32,16 +52,20 @@ Item {
         anchors.top: header.bottom; anchors.topMargin: 16; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         contentHeight: libraryRows.implicitHeight + 12
         Column { id: libraryRows; width: parent.width - 8; spacing: 14
-            Repeater {
-                model: serverBridge.projects
-                Glass { width: libraryRows.width; padding: 16; height: entry.implicitHeight + 32
-                    Column { id: entry; width: parent.width; spacing: 8
-                        PaymentText { width: parent.width; text: modelData.title; font.weight: Font.DemiBold; font.pixelSize: GlassTheme.fontSubheading }
-                        PaymentText { width: parent.width; text: modelData.description; color: GlassTheme.muted; maximumLineCount: 3; elide: Text.ElideRight }
-                        Button { objectName: "serverProject-" + modelData.project_id; label: "Chọn phiên bản"; clickable: !serverBridge.busy; onClicked: { root.projectId = modelData.project_id; root.source = modelData.source; root.versionId = ""; serverBridge.loadContentVersions(root.source, root.kind, root.projectId); versionPopup.open(); } }
+            PaymentText { text: query.text ? "Kết quả tìm kiếm" : "Khám phá " + (root.kind === "plugin" ? "plugin" : "mod"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontSubheading; font.weight: Font.DemiBold }
+            Flow {
+                width: parent.width; spacing: 12
+                Repeater {
+                    model: serverBridge.projects
+                    ServerProjectTile {
+                        width: libraryRows.width > 640 * GlassTheme.scale ? (libraryRows.width - 12) / 2 : libraryRows.width
+                        project: modelData; clickable: !serverBridge.busy
+                        onChosen: { root.projectId = project.project_id; root.source = project.source; root.versionId = ""; serverBridge.loadContentVersions(root.source, root.kind, root.projectId); versionPopup.open(); }
                     }
                 }
             }
+            PaymentText { width: parent.width; visible: !serverBridge.projects.length; text: serverBridge.busy || root.autoPending ? "Đang tìm nội dung tương thích…" : "Không tìm thấy nội dung tương thích. Thử từ khoá khác hoặc đổi nguồn."; color: GlassTheme.muted }
+            PaymentText { width: parent.width; visible: !!serverBridge.note; text: serverBridge.note; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
             PaymentText { text: "ĐÃ CÀI · " + serverBridge.installed.length; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1; color: GlassTheme.muted }
             Repeater {
                 model: serverBridge.installed

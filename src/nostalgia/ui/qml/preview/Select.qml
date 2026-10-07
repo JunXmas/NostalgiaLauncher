@@ -73,16 +73,16 @@ Controls.ComboBox {
         height: Math.min(Math.max(1, root.count) * rowHeight + searchHeight + 16, 6 * rowHeight + searchHeight + 16,
             root.Window.window ? root.Window.window.height * 0.48 : 320 * GlassTheme.scale)
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutsideParent
-        onOpened: {
+        onAboutToShow: {
             root.searchText = "";
-            choices.currentIndex = root.filteredChoices.findIndex(function (choice) { return choice.sourceIndex === root.currentIndex; });
+            choices.currentIndex = choices.count ? Math.max(0, root.filteredChoices.findIndex(function (choice) { return choice.sourceIndex === root.currentIndex; })) : -1;
             choices.positionViewAtIndex(Math.max(0, choices.currentIndex), ListView.Contain);
-            if (root.searchable)
-                search.forceActiveFocus();
-            else
-                choices.forceActiveFocus();
         }
-        onClosed: root.searchText = ""
+        onOpened: {
+            if (root.searchable) search.forceActiveFocus();
+            else choices.forceActiveFocus();
+        }
+        onClosed: { menuMotion.stopMotion(); root.searchText = ""; }
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.quick } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
         background: Glass {
@@ -166,7 +166,8 @@ Controls.ComboBox {
                         radius: 8
                     }
                 }
-                Controls.ScrollBar.vertical: Controls.ScrollBar { policy: choices.contentHeight > choices.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff }
+                InertialMotion { id: menuMotion; objectName: root.objectName + "Motion"; target: choices; enabled: menu.visible }
+                Controls.ScrollBar.vertical: Controls.ScrollBar { policy: choices.contentHeight > choices.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff; onPressedChanged: if (pressed) menuMotion.stopMotion() }
             }
             Text {
                 anchors.centerIn: choices

@@ -24,9 +24,11 @@ def press(view: QQuickView, control: Any, key: Qt.Key = Qt.Key.Key_Return) -> No
 
 def wheel(view: QQuickView, scroll: Any, angle: int = -120, pixels: int = 0) -> None:
     position = scroll.mapToScene(QPointF(scroll.width() / 2, scroll.height() / 2))
+    QTest.mouseMove(view, position.toPoint())
+    QGuiApplication.processEvents()
     event = QWheelEvent(
         position,
-        position,
+        QPointF(view.mapToGlobal(position.toPoint())),
         QPoint(0, pixels),
         QPoint(0, angle),
         Qt.MouseButton.NoButton,

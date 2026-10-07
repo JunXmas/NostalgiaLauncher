@@ -27,6 +27,13 @@ Rectangle {
                 return root.backdropRect;
             if (!root.backdrop)
                 return Qt.rect(0, 0, 1, 1);
+            // Follow the shared entrance transform without polling while idle.
+            var entranceOffset = GlassTheme.pageMotion;
+            var ancestor = root;
+            while (ancestor) {
+                var position = ancestor.x + ancestor.y + ancestor.width + ancestor.height + ancestor.scale;
+                ancestor = ancestor.parent;
+            }
             var p = root.mapToItem(root.backdrop, 0, 0);
             return Qt.rect(p.x, p.y, root.width, root.height);
         }

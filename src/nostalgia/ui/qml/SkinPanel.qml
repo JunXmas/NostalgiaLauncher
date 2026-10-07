@@ -21,7 +21,11 @@ Panel {
     Column {
         id: skinColumn
         width: skinScroll.width; spacing: 12
+        Preview.MotionTabs {
+            width: parent.width; visible: Theme.modern; labels: ["Skin", "Cape"]; currentIndex: skinPanel.tab === "skin" ? 0 : 1; namePrefix: "skinSection-"; onSelected: function(index) { skinPanel.tab = index === 0 ? "skin" : "cape"; }
+        }
         Row {
+            visible: !Theme.modern
             spacing: 18
             Repeater {
                 model: [{ key: "skin", label: "Skin" }, { key: "cape", label: "Cape" }]
@@ -41,7 +45,7 @@ Panel {
                   : skinPanel.shown.accountKind === "microsoft" ? Tr.phrase("Skin lấy từ hồ sơ Mojang. Bấm \"Thêm skin\" để upload file PNG lên Mojang — skin cũng được lưu vào thư viện bên dưới.")
                   : skinPanel.shown.accountKind === "ely" ? Tr.phrase("Skin lấy từ Ely.by. Bấm \"Thêm skin\" để upload PNG thẳng lên ely.by — bạn bè trong game thấy skin mới nhờ authlib-injector.")
                   : Tr.phrase("Tài khoản ngoại tuyến dùng skin mặc định (") + (skinPanel.shown.slim ? "Alex" : "Steve") + Tr.phrase("). Bấm \"Thêm skin\" để dùng file PNG riêng trong launcher.")
-            color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+            color: Theme.textMuted; font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody; lineHeight: 1.3
         }
         Row {
             spacing: 8
@@ -62,7 +66,7 @@ Panel {
             id: uploadStatus
             visible: text !== ""
             color: uploadStatus.isError ? Theme.danger : Theme.accent
-            font.pixelSize: Theme.fontBody
+            font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody
             property bool isError: false
             Connections {
                 target: accountBridge
@@ -90,7 +94,7 @@ Panel {
                       : skinPanel.shown.accountKind === "ely"
                       ? Tr.phrase("Ely.by không có API cape — đổi tại ely.by, launcher sẽ hiện theo.")
                       : Tr.phrase("Tài khoản ngoại tuyến không có cape.")
-                color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.3
+                color: Theme.textMuted; font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody; lineHeight: 1.3
             }
             Flow {
                 width: parent.width; spacing: 8
@@ -140,7 +144,7 @@ Panel {
                     }
                     Text {
                         visible: !((skinPanel.hasShown && skinPanel.shown.capeFile) || "")
-                        anchors.centerIn: parent; text: Tr.phrase("Không có cape"); color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                        anchors.centerIn: parent; text: Tr.phrase("Không có cape"); color: Theme.textMuted; font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody
                     }
                 }
             }
@@ -148,7 +152,7 @@ Panel {
                 id: capeStatus
                 visible: text !== ""
                 color: capeStatus.isError ? Theme.danger : Theme.accent
-                font.pixelSize: Theme.fontBody
+                font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody
                 property bool isError: false
                 Connections {
                     target: capeBridge

@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Glass {
     id: root
@@ -21,6 +22,7 @@ Glass {
         function onChanged() {
             if (root.displayedPeer !== socialBridge.peerId) {
                 root.displayedPeer = socialBridge.peerId;
+                chatEntrance.restart();
                 composer.text = ""; root.lastMessageId = ""; root.optionsExpanded = false;
             }
             var messages = socialBridge.messages;
@@ -32,6 +34,7 @@ Glass {
             if (follow) Qt.callLater(function() { chatScroll.contentY = Math.max(0, chatScroll.contentHeight - chatScroll.height); });
         }
     }
+    NumberAnimation { id: chatEntrance; target: contents; property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
     Column {
         id: contents
         width: parent.width; spacing: 12
@@ -73,9 +76,18 @@ Glass {
                 width: parent.width; spacing: 10
                 PaymentText {
                     width: parent.width
-                    visible: !socialBridge.messages.length
+                    visible: !!socialBridge.peerId && !socialBridge.messages.length
                     text: socialBridge.peerId ? "Bắt đầu câu chuyện. Chỉ bạn bè đã chấp nhận mới gửi tin được." : "Chọn một người bạn để trò chuyện."
                     color: GlassTheme.muted
+                }
+                Column {
+                    width: parent.width; visible: !socialBridge.peerId; spacing: 14
+                    Item { width: parent.width; height: 104
+                        Legacy.BlockIcon { anchors.centerIn: parent; width: 82; height: 82; block: "command"; spinning: emptyHover.hovered; glyph: "·" }
+                        HoverHandler { id: emptyHover }
+                    }
+                    PaymentText { width: parent.width; text: "Một lời chào, một chuyến phiêu lưu."; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle; horizontalAlignment: Text.AlignHCenter }
+                    PaymentText { width: parent.width; text: "Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."; color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
                 }
                 Repeater {
                     model: socialBridge.messages

@@ -63,7 +63,7 @@ class StorageBridge(WorkerBridge):
             raise InstanceError("hãy dừng game trước khi sao lưu hoặc thay đổi dữ liệu")
 
     def _changed(self, message: str) -> None:
-        self._main_bridge.instancesChanged.emit()
+        self._main_bridge.announce_instances_changed()
         self.entriesChanged.emit()
         self.completed.emit(message)
 
@@ -114,7 +114,7 @@ class StorageBridge(WorkerBridge):
             self._launcher.save_instance(
                 replace(current, group_name=group_name.strip()[:60], favorite=favorite)
             )
-            self._main_bridge.instancesChanged.emit()
+            self._main_bridge.announce_instances_changed()
         except (NostalgiaError, OSError) as error:
             self.failed.emit(str(error))
 

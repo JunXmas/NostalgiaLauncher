@@ -103,7 +103,7 @@ Item {
             anchors.centerIn: parent
             text: root.label
             color: Theme.text
-            font.family: Theme.sans
+            font.family: "Inter"
             font.pixelSize: root.fontSize
             font.weight: Font.DemiBold
         }

@@ -21,8 +21,9 @@ Item {
     Binding {
         target: Legacy.Theme
         property: "page"
-        value: root.loginVisible ? 0 : root.currentIndex
+        value: root.loginVisible ? 0 : root.currentIndex === 7 ? 3 : root.currentIndex
     }
+    Binding { target: GlassTheme; property: "pageMotion"; value: pageOffset.y }
     function navigate(index) {
         currentIndex = index;
         advancedLibrary = false;
@@ -80,6 +81,10 @@ Item {
                         return "Instances.qml";
                     if (root.currentIndex === 4)
                         return "Friends.qml";
+                    if (root.currentIndex === 7)
+                        return "CosmeticLibrary.qml";
+                    if (root.currentIndex === 3)
+                        return "Accounts.qml";
                     if (root.currentIndex === 2)
                         return "Library.qml";
                     return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
@@ -148,10 +153,9 @@ Item {
         backdrop: scene
         onDonateRequested: donateDialog.open()
     }
-    Legacy.CreateInstanceDialog {
+    ModernCreateInstanceDialog {
         id: createForProject
         objectName: "projectCreateInstance"
-        anchors.fill: parent
         onVisibleChanged: {
             if (!visible && projectDialog.openedProject) {
                 projectBridge.refreshTargets();

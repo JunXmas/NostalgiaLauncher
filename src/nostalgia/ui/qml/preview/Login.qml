@@ -149,6 +149,7 @@ khởi đầu."
                     spacing: 12
                     Button {
                         objectName: "loginGoogleService"
+                    provider: "google"
                         width: parent.width
                         label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Tiếp tục với Google  ↗"
                         clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn && !socialBridge.signedIn
@@ -162,6 +163,7 @@ khởi đầu."
                     }
                     Button {
                         objectName: "loginMicrosoft"
+                    provider: "microsoft"
                         width: parent.width
                         height: 50
                         primary: true

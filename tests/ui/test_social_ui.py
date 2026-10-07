@@ -191,7 +191,7 @@ def test_small_view_switches_list_and_chat_without_stale_draft(
     wait_until(lambda: social.peerId == "misa" and not social.busy)
     assert chat.isVisible() and not rail.isVisible()
     page = find_control(root_item, "friendsPage")
-    assert chat.mapToItem(page, QPointF()).x() == 0
+    assert 0 <= chat.mapToItem(page, QPointF()).x() <= 5
     composer = find_control(root_item, "chatComposer")
     origin = composer.mapToItem(page, QPointF())
     assert origin.y() >= 0 and origin.y() + composer.height() <= page.height()

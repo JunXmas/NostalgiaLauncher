@@ -207,7 +207,7 @@ class RoomSyncBridge(WorkerBridge):
     @Slot(str, str, int)
     def _apply_completed(self, note: str, instance_id: str, generation: int) -> None:
         if instance_id:
-            self._launcher_bridge.instancesChanged.emit()
+            self._launcher_bridge.announce_instances_changed()
         if self.is_current(generation) and not self._cancel.is_cancelled():
             self._note = note
             self.stateChanged.emit()

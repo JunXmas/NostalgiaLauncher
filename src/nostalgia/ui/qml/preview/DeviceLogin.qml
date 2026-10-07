@@ -44,6 +44,7 @@ Item {
             id: form
             width: parent.width
             spacing: 22
+            ProviderLogo { width: 32; height: 32; provider: "microsoft" }
             Text {
                 text: "Đăng nhập Microsoft"
                 color: GlassTheme.text

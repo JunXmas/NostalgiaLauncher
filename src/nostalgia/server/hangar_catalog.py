@@ -64,6 +64,7 @@ class HangarCatalog:
                     str(namespace.get("owner")) + "/" + str(namespace.get("slug")),
                     str(fields.get("name")),
                     str(fields.get("description")),
+                    as_string(fields.get("avatarUrl")) or "",
                 )
             )
         return tuple(projects)

@@ -145,7 +145,6 @@ def test_library_opens_centered_version_picker_and_installs_real_jar(
         lambda: manager.property("opened") and not servers.busy and manager.property("ready")
     )
     press(view, find_item(manager.property("contentItem"), "serverSection-1"))
-    press(view, find_control(root_item, "serverContentSearch"))
     wait_until(lambda: len(servers.property("projects")) == 3 and not servers.busy)
     project_button = find_item(manager.property("contentItem"), "serverProject-luckperms")
     assert project_button is not None

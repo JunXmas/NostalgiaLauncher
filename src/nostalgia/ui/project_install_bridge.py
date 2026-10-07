@@ -87,7 +87,7 @@ class ProjectInstallBridge(WorkerBridge):
                         version_id=version_id,
                         on_progress=self._main_bridge.report_progress,
                     )
-                    self._main_bridge.instancesChanged.emit()
+                    self._main_bridge.announce_instances_changed()
                 else:
                     target = self._launcher.describe_content_target(instance_id)
                     if target.game_version != game_version or not chosen.supports(

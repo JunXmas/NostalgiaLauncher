@@ -71,10 +71,11 @@ Item {
                         color: Qt.rgba(providerTint.r, providerTint.g, providerTint.b, Theme.modern ? (pickArea.containsMouse ? 0.78 : 0.58) : 1)
                         border.color: Theme.border
                         Behavior on color { ColorAnimation { duration: Theme.quick } }
+                        Preview.ProviderLogo { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 26; height: 26; provider: modelData.key; visible: modelData.key === "microsoft" }
                         Column {
                             id: providerText
-                            width: parent.width - 28
-                            anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
+                            width: parent.width - (modelData.key === "microsoft" ? 68 : 28)
+                            anchors { left: parent.left; leftMargin: modelData.key === "microsoft" ? 54 : 14; verticalCenter: parent.verticalCenter }
                             spacing: 3
                             Text { text: modelData.title; color: Theme.text; font.pixelSize: Theme.fontHeading; font.bold: true }
                             Text { width: parent.width; wrapMode: Text.WordWrap; text: modelData.text; color: Theme.textMuted; font.pixelSize: Theme.fontBody }

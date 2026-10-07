@@ -24,13 +24,14 @@ Glass {
             block: "bookshelf",
             index: 2
         },
+        { label: "Cosmetic", block: "diamond", index: 7 },
         {
             label: "Tài khoản",
             block: "diamond",
             index: 3
         },
         {
-            label: "Bạn bè & chơi chung",
+            label: "Bạn bè",
             block: "command",
             index: 4
         },
@@ -71,12 +72,13 @@ Glass {
         anchors.bottomMargin: 20
         contentHeight: links.height
         Rectangle {
-            readonly property color tint: Legacy.Theme.accents[Math.min(5, root.currentIndex)]
+            readonly property int selectedPosition: root.entries.findIndex(function(e) { return e.index === root.currentIndex; })
+            readonly property color tint: Legacy.Theme.accents[root.currentIndex === 7 ? 3 : Math.min(5, root.currentIndex)]
             objectName: "navigationIndicator"
             width: links.width; height: 48 * GlassTheme.scale
-            y: 32 + Math.min(5, root.currentIndex) * (48 * GlassTheme.scale + 6)
+            y: 32 + Math.max(0, selectedPosition) * (48 * GlassTheme.scale + 6)
             radius: 12
-            opacity: root.currentIndex < 6 ? 1 : 0
+            opacity: selectedPosition >= 0 ? 1 : 0
             color: Legacy.Theme.mix(GlassTheme.raised, tint, 0.22)
             Behavior on y { NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: GlassTheme.normal } }
@@ -100,7 +102,7 @@ Glass {
                 Item {
                     id: navEntry
                     objectName: "navigationEntry-" + modelData.index
-                    readonly property color tint: Legacy.Theme.accents[modelData.index]
+                    readonly property color tint: Legacy.Theme.accents[modelData.index === 7 ? 3 : modelData.index]
                     width: links.width
                     height: 48 * GlassTheme.scale
                     activeFocusOnTab: true
@@ -139,6 +141,8 @@ Glass {
                     Text {
                         x: 47
                         anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - x - 10
+                        elide: Text.ElideRight
                         text: modelData.label
                         font.family: GlassTheme.font
                         font.pixelSize: GlassTheme.fontBody
@@ -246,11 +250,12 @@ Glass {
                 font.pixelSize: GlassTheme.fontHeading
             }
         }
-        SocialAvatar { x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
+        SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
+        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 30; height: 34; label: "⌃"; quiet: true; Accessible.name: "Menu tài khoản"; onClicked: accountMenu.open() }
         Column {
             x: 55
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 64
+            width: parent.width - 97
             spacing: 4
             Text {
                 width: parent.width
@@ -269,9 +274,10 @@ Glass {
             }
         }
         MouseArea {
-            anchors.fill: parent
+            x: 55; width: parent.width - 97; height: parent.height
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.navigate(socialBridge.signedIn ? 4 : 3)
+            onClicked: { if (socialBridge.signedIn) socialProfileDialog.showFor(socialBridge.account.accountId); else root.navigate(3); }
         }
     }
+    AccountMenu { id: accountMenu; anchorItem: account; onNavigate: function(index) { root.navigate(index); } }
 }

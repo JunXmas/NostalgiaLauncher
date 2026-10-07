@@ -47,6 +47,7 @@ QtObject {
     readonly property int normal: reducedMotion ? 0 : 260
     readonly property int slow: reducedMotion ? 0 : 380
     readonly property int quick: reducedMotion ? 0 : 160
+    property real pageMotion: 0
     property var backdrop: null
     function alpha(color, opacity) {
         return Qt.rgba(color.r, color.g, color.b, opacity);

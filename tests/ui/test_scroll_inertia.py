@@ -9,7 +9,6 @@ from PySide6.QtCore import QPoint, QPointF, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlProperty
 from PySide6.QtTest import QTest
-from qml_tree import find_item
 from test_bridges import wait_until
 from test_minimal_preview import Preview
 from test_minimal_preview import preview as preview
@@ -75,50 +74,62 @@ def test_drag_release_coasts_and_reduced_motion_stops_drift(preview: Preview) ->
     QTest.qWait(120)
     assert not scroll.property("settling")
     assert float(scroll.property("contentY")) == pytest.approx(at_release)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        100, False, False, True, "vi"
+    )
+    scroll.scrollBy(70, False)
+    assert scroll.property("settling")
+    view.hide()
+    QGuiApplication.processEvents()
+    assert not scroll.property("settling")
 
 
-def test_version_list_has_pixel_inertia_and_selected_chip_has_no_square_focus(
-    preview: Preview,
-) -> None:
+def test_version_menu_reverses_from_visible_position_and_reaches_latest(preview: Preview) -> None:
     _launcher, view, _bridge, root_item = preview
     root_item.setProperty("sessionSkipped", True)
     root_item.setProperty("currentIndex", 1)
     catalog_bridge: Any = view.rootContext().contextProperty("catalogBridge")
-    catalog_bridge._released = [{"versionId": f"1.{n}.1", "major": f"1.{n}"} for n in range(1, 30)]
+    catalog_bridge._released = [
+        {"versionId": f"1.{n}.1", "major": f"1.{n}"} for n in range(40, 0, -1)
+    ]
+    catalog_bridge._preset_versions = ["1.40.1"]
     catalog_bridge.releasedVersionsChanged.emit()
+    catalog_bridge.presetVersionsChanged.emit()
     press(view, find_control(root_item, "createModernInstance"))
     dialog = find_control(root_item, "modernCreateDialog")
     dialog.setProperty("loaderKind", "vanilla")
-    dialog.setProperty("expandedMajor", "1.1")
-    QTest.qWait(300)
-    scroll = find_control(root_item, "majorListScroll")
-    wheel(view, scroll, angle=0, pixels=-70)
-    before = float(scroll.property("contentY"))
-    QTest.qWait(120)
-    assert before < float(scroll.property("contentY")) < 70
-    wait_until(lambda: abs(float(scroll.property("contentY")) - 70) < 0.5)
-    find_control(root_item, "majorListMotion").stopMotion()
-    scroll.setProperty("contentY", 0)
-    dialog.setProperty("expandedMajor", "1.1")
-    QTest.qWait(100)
-    chip = find_item(dialog, "versionChip-1.1.1")
-    assert chip is not None
-    press(view, chip)
-    assert dialog.property("gameVersion") == "1.1.1"
-    legacy = find_control(chip, "legacyButtonFocus")
-    assert not legacy.property("visible")
-    modern = find_control(chip, "modernButtonFace")
-    assert modern.property("visible") and modern.property("radius") > 0
-    QGuiApplication.processEvents()
-    # Repeated wheel input at a clamped destination must not fall through to
-    # native Qt scrolling while the visible content is still approaching it.
-    controller = find_control(root_item, "majorListMotion")
-    controller.stopMotion()
-    limit = float(controller.property("maxY"))
-    scroll.setProperty("contentY", limit - 300)
-    wheel(view, scroll, angle=0, pixels=-1000)
-    before_edge = float(scroll.property("contentY"))
-    wheel(view, scroll, angle=0, pixels=-1000)
-    assert float(scroll.property("contentY")) == pytest.approx(before_edge)
+    select = find_control(root_item, "createGameVersion")
+    press(view, select, Qt.Key.Key_Space)
+    scroll = find_control(root_item, "createGameVersionChoices")
+    controller = find_control(root_item, "createGameVersionMotion")
+    wait_until(lambda: scroll.isVisible() and scroll.property("contentHeight") > 1000)
+    QTest.qWait(250)
+    wheel(view, scroll, angle=0, pixels=-400)
+    QTest.qWait(70)
+    visible_position = float(scroll.property("contentY"))
+    assert 0 < visible_position < 400
+    assert controller.property("settling")
+    wheel(view, scroll, angle=0, pixels=70)
+    reversal_position = float(scroll.property("contentY"))
+    assert float(controller.property("destination")) == pytest.approx(
+        max(0, reversal_position - 70)
+    )
+    QTest.qWait(80)
+    assert float(scroll.property("contentY")) < reversal_position
+    # Reverse before reaching the queued lower edge; it must never drag us down.
+    wheel(view, scroll, angle=0, pixels=-3000)
+    QTest.qWait(60)
+    wheel(view, scroll, angle=0, pixels=3000)
+    at_edge = float(scroll.property("contentY"))
+    assert float(controller.property("destination")) == 0
+    QTest.qWait(90)
+    assert float(scroll.property("contentY")) < at_edge
     wait_until(lambda: not controller.property("settling"))
-    assert float(scroll.property("contentY")) == pytest.approx(float(controller.property("maxY")))
+    assert float(scroll.property("contentY")) == pytest.approx(0)
+    search = find_control(root_item, "createGameVersionSearch")
+    search.setProperty("text", "1.40.1")
+    QTest.keyClick(view, Qt.Key.Key_Return)
+    assert dialog.property("gameVersion") == "1.40.1"
+    catalog_bridge.releasedVersionsChanged.emit()
+    assert dialog.property("gameVersion") == "1.40.1"
+    assert dialog.property("canCreate")

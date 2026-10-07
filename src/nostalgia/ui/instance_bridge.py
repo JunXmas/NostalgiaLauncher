@@ -49,6 +49,14 @@ class InstanceBridge(WorkerBridge):
         self._storage_busy = busy
         self.storageBusyChanged.emit()
 
+    @Slot()
+    def announce_instances_changed(self) -> None:
+        """Invalidate snapshots before QML property notifications read them."""
+        self._instance_rows = None
+        self._recent_world_rows = None
+        self._recent_server_rows = None
+        self.instancesChanged.emit()
+
     def _forget_instance_rows(self) -> None:
         self._instance_rows = None
 
@@ -155,7 +163,7 @@ class InstanceBridge(WorkerBridge):
                 window_height=height or None,
             )
         )
-        self.instancesChanged.emit()
+        self.announce_instances_changed()
 
     @Slot(str)
     def openInstanceFolder(self, instance_id: str) -> None:
@@ -175,7 +183,7 @@ class InstanceBridge(WorkerBridge):
 
         def work() -> None:
             self._launcher.delete_instance(instance_id)
-            self.instancesChanged.emit()
+            self.announce_instances_changed()
 
         self.run_in_background(work, f"Xoá bản chơi {instance_id}")
 
@@ -194,7 +202,7 @@ class InstanceBridge(WorkerBridge):
                 self._launcher.prepare_nos_client(replace(current, nos_client_enabled=True))
             else:
                 self._launcher.cleanup_nos_client(current)
-            self.instancesChanged.emit()
+            self.announce_instances_changed()
 
         self.run_in_background(work, f"{'Bật' if enabled else 'Tắt'} Nos Client cho {instance_id}")
 
@@ -224,7 +232,7 @@ class InstanceBridge(WorkerBridge):
             cps=cps,
         )
         self._launcher.set_nos_client_config(current, config)
-        self.instancesChanged.emit()
+        self.announce_instances_changed()
 
     @Slot()
     def clearProgress(self) -> None:

@@ -241,7 +241,7 @@ class LauncherBridge(InstanceBridge):
                     self._set_game_running(False)
                 # Thống kê: cộng phiên chơi rồi báo danh sách đổi để thẻ bản chơi cập nhật số liệu.
                 self._launcher.record_play_session(instance_id, started_at, time.time())
-                self.instancesChanged.emit()
+                self.announce_instances_changed()
                 if self._stop_requested:
                     # Người dùng bấm DỪNG: game chết vì tín hiệu ta gửi — báo là thoát bình thường.
                     self.gameStopped.emit(0)

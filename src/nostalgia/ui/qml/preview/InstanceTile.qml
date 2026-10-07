@@ -87,15 +87,16 @@ Rectangle {
             onClicked: root.editRequested(root.entry)
         }
     }
-    Button {
-        visible: !root.compact && !root.pickOnly
-        x: parent.width - width - 16
-        y: 18
+    FavoriteButton {
+        objectName: "instanceFavorite-" + root.entry.instanceId
+        visible: !root.pickOnly
+        x: root.compact ? parent.width - 198 : parent.width - width - 16
+        y: root.compact ? 30 : 18
         width: 32
         height: 32
-        label: root.entry.favorite ? "★" : "☆"
+        favorite: root.entry.favorite === true
         quiet: true
-        Accessible.name: "Ghim " + (root.entry.label || "bản chơi")
+        Accessible.name: "Yêu thích " + (root.entry.label || "bản chơi")
         onClicked: storageBridge.setOrganization(root.entry.instanceId, root.entry.groupName || "", !root.entry.favorite)
     }
     HoverHandler {

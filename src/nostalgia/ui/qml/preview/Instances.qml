@@ -133,11 +133,9 @@ Item {
         active: root.serverMode; visible: active; source: "Servers.qml"
     }
     ModRepairDialog { id: repair }
-    Legacy.CreateInstanceDialog {
+    ModernCreateInstanceDialog {
         id: create
         objectName: "modernCreateDialog"
-        parent: root.Window.window ? root.Window.window.contentItem : root
-        anchors.fill: parent
     }
     InstanceManager {
         id: editor
@@ -145,12 +143,8 @@ Item {
     }
     Legacy.ImportInstanceDialog {
         id: imports
-        parent: root.Window.window ? root.Window.window.contentItem : root
-        anchors.fill: parent
     }
     Legacy.DataManager {
         id: manager
-        parent: root.Window.window ? root.Window.window.contentItem : root
-        anchors.fill: parent
     }
 }

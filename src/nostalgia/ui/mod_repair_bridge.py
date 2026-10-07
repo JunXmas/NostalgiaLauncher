@@ -131,9 +131,9 @@ class ModRepairBridge(WorkerBridge):
             elif operation == "applied" and isinstance(payload, str):
                 self._receipt_id, self._plan, self._scan = payload, None, None
                 self._note = "Đã sửa và kiểm lại. Bản mod trước sửa được giữ để hoàn tác."
-                self._bridge.instancesChanged.emit()
+                self._bridge.announce_instances_changed()
             elif operation == "undone":
                 self._receipt_id, self._plan, self._scan = "", None, None
                 self._note = "Đã khôi phục bộ mod trước sửa."
-                self._bridge.instancesChanged.emit()
+                self._bridge.announce_instances_changed()
         self.changed.emit()

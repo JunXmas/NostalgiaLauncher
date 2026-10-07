@@ -144,7 +144,7 @@ class CatalogBridge(WorkerBridge):
                 game_dir_override=game_dir_override,
             )
             self._launcher.create_instance(instance)
-            self._main_bridge.instancesChanged.emit()
+            self._main_bridge.announce_instances_changed()
             self.created.emit(instance.instance_id)
 
         loader_label = {"vanilla": "Minecraft", "optimized": "Fabulously Optimized"}.get(
@@ -163,7 +163,7 @@ class CatalogBridge(WorkerBridge):
             game_dir_override=game_dir_override,
             on_progress=self._main_bridge.report_progress,
         )
-        self._main_bridge.instancesChanged.emit()
+        self._main_bridge.announce_instances_changed()
         self.created.emit(instance.instance_id)
 
 

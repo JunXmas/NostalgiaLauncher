@@ -55,7 +55,7 @@ class ModpackContentBridge(InstalledContentBridge):
                     game_dir_override=game_dir_override,
                     on_progress=self._main_bridge.report_progress,
                 )
-                self._main_bridge.instancesChanged.emit()
+                self._main_bridge.announce_instances_changed()
                 self.modpackInstalled.emit(instance.instance_id)
             finally:
                 self._installing.discard(project_id)
@@ -84,7 +84,7 @@ class ModpackContentBridge(InstalledContentBridge):
                 game_dir_override=game_dir_override,
                 on_progress=self._main_bridge.report_progress,
             )
-            self._main_bridge.instancesChanged.emit()
+            self._main_bridge.announce_instances_changed()
             self.modpackInstalled.emit(instance.instance_id)
 
         self.run_in_background(work, f"Cài modpack {pack_path.name} thành bản chơi")

@@ -37,6 +37,7 @@ Glass {
                 spacing: 8
                 Button {
                     objectName: "socialGoogleLogin"
+                    provider: "google"
                     visible: !socialBridge.signedIn && !socialBridge.signingIn
                     label: "Tiếp tục với Google  ↗"
                     primary: true
@@ -45,17 +46,9 @@ Glass {
                 }
                 Button { visible: socialBridge.signingIn; label: "Mở lại Google  ↗"; onClicked: socialBridge.openGoogle() }
                 Button { visible: socialBridge.signingIn; label: "Huỷ"; quiet: true; onClicked: socialBridge.cancelSignIn() }
-                Button { objectName: "openMyProfile"; visible: socialBridge.signedIn; label: "Hồ sơ của tôi"; quiet: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
-                Button { objectName: "copyFriendCode"; visible: socialBridge.signedIn; label: "Chép mã kết bạn"; onClicked: socialBridge.copyFriendCode() }
-                Button {
-                    objectName: "socialLogout"
-                    visible: socialBridge.signedIn
-                    label: "Đăng xuất"; quiet: true; clickable: !socialBridge.busy
-                    onClicked: confirmDialog.ask("Đăng xuất Google?", "Phòng chơi chung sẽ đóng. Bản chơi và thế giới trên máy vẫn được giữ lại.", function() { socialBridge.signOut(); })
-                }
+
             }
         }
-        ProfilePerks { width: parent.width }
         PaymentText {
             objectName: "socialAccountHint"
             width: parent.width
