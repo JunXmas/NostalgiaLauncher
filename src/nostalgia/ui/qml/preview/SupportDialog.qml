@@ -270,6 +270,13 @@ Controls.Popup {
                         font.pixelSize: (root.compactLayout ? 10 : 11) * GlassTheme.scale
                     }
                 }
+                Button {
+                    objectName: "draftPaymentSimulate"
+                    visible: typeof draftReviewController !== "undefined" && draftReviewController !== null && root.details.stage === "pending"
+                    label: "TEST · Mô phỏng thanh toán thành công"
+                    clickable: !paymentBridge.busy
+                    onClicked: draftReviewController.simulatePaid()
+                }
                 PaymentPlans {
                     width: parent.width
                     visible: !root.plusPaused && ["offer", "unavailable"].indexOf(root.details.stage) >= 0

@@ -67,6 +67,7 @@ build = ["pyinstaller>=6.10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["packaging"]
 addopts = "-m 'not network' --strict-markers --strict-config"
 markers = [
     "network: cần Internet thật; mặc định bị bỏ qua",
@@ -91,7 +92,8 @@ select = ["E", "W", "F", "I", "UP", "B", "ANN", "ARG", "RUF", "PTH", "SIM", "C4"
 [tool.mypy]
 # Chú kiểu mà không kiểm kiểu thì chỉ tốn công. GLOSSARY.md dành hẳn hai mục nói về kiểu
 # (Path vs str, dataclass frozen), nên phần lớn từ điển chỉ có giá trị khi có bộ kiểm kiểu.
-files = ["src", "tests", "bench"]
+files = ["src", "tests", "bench", "packaging/nostalgia_draft"]
+mypy_path = "packaging"
 python_version = "3.12"
 strict = true
 warn_unreachable = true

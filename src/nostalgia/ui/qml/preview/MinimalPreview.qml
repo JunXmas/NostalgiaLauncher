@@ -113,6 +113,12 @@ Item {
             Button { id: invitationOpen; label: "Xem lời mời"; primary: true; onClicked: root.navigate(4) }
         }
     }
+    Loader {
+        anchors.fill: parent
+        z: 145
+        active: draftReviewPanel.length > 0
+        source: draftReviewPanel
+    }
     Login {
         objectName: "minimalLogin"
         anchors.fill: parent

@@ -43,10 +43,14 @@ def open_preview(
     session_store: ServiceSessionStore | None = None,
     plus_enabled: bool = True,
     server_gateway: ServerGateway | None = None,
+    review_controller: QObject | None = None,
+    review_panel_url: str = "",
 ) -> tuple[QQuickView, LauncherBridge]:
     """Use existing bridges and swap only the design root_item, before showing the window."""
     view, bridge = build_view(launcher)
     context = view.rootContext()
+    context.setContextProperty("draftReviewController", review_controller)
+    context.setContextProperty("draftReviewPanel", review_panel_url)
     context.setContextProperty("modRepairBridge", ModRepairBridge(launcher, bridge))
     multiplayer_bridge = context.contextProperty("multiplayerBridge")
     assert isinstance(multiplayer_bridge, MultiplayerBridge)

@@ -66,6 +66,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     env:
+      NOSTALGIA_BUILD_FLAVOR: ${{ github.ref_name == 'v1.2.0rc8' && 'review' || 'release' }}
       BUNDLE_NAME: nostalgia-${{ github.ref_name }}-${{ matrix.bundle_os }}-${{ matrix.bundle_arch }}
     steps:
       - uses: actions/checkout@v4
@@ -95,6 +96,9 @@ jobs:
 
       - name: Đóng gói bằng PyInstaller
         run: uv run pyinstaller --noconfirm packaging/nostalgia-ui.spec
+
+      - name: Kiểm tra tách biệt mã review và release
+        run: uv run python packaging/verify-build-flavor.py
 
       - name: Chạy thử gói đóng sẵn (Linux)
         if: matrix.bundle_os == 'linux'
@@ -171,6 +175,17 @@ jobs:
         with:
           path: bundles
           merge-multiple: true
+      - name: Chỉ kèm hướng dẫn kiểm thử, không kèm ảnh preview
+        shell: bash
+        run: |
+          review_dir="docs/preview/rc${GITHUB_REF_NAME##*rc}"
+          if [[ "$GITHUB_REF_NAME" == *rc* && -d "$review_dir" ]]; then
+            validation_name="RC${GITHUB_REF_NAME##*rc}_VALIDATION.md"
+            for document in docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md; do
+              test -s "$document"
+              cp "$document" bundles/
+            done
+          fi
       - name: SHA256SUMS
         run: cd bundles && sha256sum * > SHA256SUMS && cat SHA256SUMS
       - name: Tạo release DRAFT (chủ dự án publish tay)
@@ -178,29 +193,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           assets=(bundles/*)
-          shopt -s nullglob
-          review_dir="docs/preview/rc${GITHUB_REF_NAME##*rc}"
-          if [[ "$GITHUB_REF_NAME" == *rc* && -d "$review_dir" ]]; then
-            validation_name="RC${GITHUB_REF_NAME##*rc}_VALIDATION.md"
-            export NOSTALGIA_REVIEW_DIR="$review_dir" NOSTALGIA_VALIDATION_NAME="$validation_name"
-            python - <<'PYREVIEW'
-          import hashlib
-          import os
-          from pathlib import Path
-          folder = Path(os.environ['NOSTALGIA_REVIEW_DIR'])
-          artifacts = {path.name: path for path in folder.iterdir() if path.suffix in ('.png', '.gif')}
-          artifacts.update({name: Path('docs') / name for name in ('DRAFT_TEST_GUIDE.md', os.environ['NOSTALGIA_VALIDATION_NAME'], 'UI_MOTION_REVIEW.md', 'GOOGLE_SETUP.md')})
-          seen = set()
-          for line in (folder / 'PREVIEW_SHA256SUMS').read_text().splitlines():
-              checksum, name = line.split(maxsplit=1)
-              assert name in artifacts and name not in seen
-              assert hashlib.sha256(artifacts[name].read_bytes()).hexdigest() == checksum
-              seen.add(name)
-          assert seen == set(artifacts)
-          PYREVIEW
-            # Review screenshots stay outside release assets, as requested by the owner.
-            assets+=(docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md)
-          fi
           gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
             --notes-file docs/RELEASE_NOTES.md

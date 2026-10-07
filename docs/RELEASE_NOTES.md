@@ -1,13 +1,14 @@
-## 1.2.0rc8 — preview mã nguồn, Google-only, Plus tạm khóa
+## 1.2.0rc8 — draft nội bộ, Ultimate TEST
 
-- Google mở trình duyệt và tự nhận phiên; bỏ ô yêu cầu người chơi nhập URL dịch vụ.
-- Build tích hợp endpoint công khai từ cấu hình của chủ dự án; hướng dẫn Google Cloud trong GOOGLE_SETUP.md.
-- Chưa có OAuth client/backend production: Google báo chưa khả dụng khi build không có endpoint, không dùng dịch vụ giả.
-- Hủy Google báo về launcher, lỗi mở trình duyệt cho phép thử lại.
-- Plus/payOS/tự sửa mod/đồng bộ pack Plus tạm khóa; Free quét mod và UI rc7 giữ nguyên.
-- Backend private cũng khóa quyền Plus mặc định, giữ Google/bạn bè/chat/phiên một máy.
-- **Chưa build bộ cài/tạo draft rc8**; chưa deploy backend hoặc nhận tiền thật.
-- Menu phiên bản thu gọn, tìm kiếm và kính mờ; hỗ trợ màn hình nhỏ/150% chữ.
+- Mở đầy đủ quyền local Ultimate để chủ dự án test; Công cụ Draft đổi giữa Plus/Pro/Max/Ultimate.
+- Cosmetic gồm Amethyst/Grove/Eclipse; Plus chọn một trong ba. Avatar, hồ sơ và skin 3D giữ luồng hiện có.
+- Server local dùng cài đặt/config/plugin/mod/Java thật; kiểm thử sửa mod có sao lưu và hoàn tác.
+- Thêm bài thử đồng bộ modpack local: kiểm hash, cài loader, tạo instance mới và giữ nguyên nguồn.
+- Bạn bè/chat và thanh toán mô phỏng có nhãn TEST; QR không có tài khoản nhận tiền.
+- Menu phiên bản thu gọn, tìm kiếm và mica; giữ nhận diện modpack, cuộn quán tính và UI mới.
+- Google, mời bạn bè/chat/đồng bộ giữa hai máy cần URL backend HTTPS chưa được cung cấp. Chưa deploy backend hoặc thu tiền thật.
+- Chỉ tạo **draft**, chưa publish/prerelease. Không đính kèm ảnh preview. Xem DRAFT_TEST_GUIDE.md và RC8_VALIDATION.md.
+- Module mở quyền review chỉ được đóng gói qua entry riêng cho tag rc8; build thường giữ kiểm quyền hiện có.
 
 ## 1.2.0rc7 — Nhận diện modpack và cuộn quán tính
 

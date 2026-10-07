@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from nostalgia.errors import IntegrityError, ServerError
-from nostalgia.model.json_value import as_list, as_mapping
+from nostalgia.model.json_value import JsonValue, as_list, as_mapping
 from server_fixture import ServerAccountFixture, server_launcher
 from server_http_fixture import jar_bytes
 
@@ -51,9 +51,9 @@ def test_wrong_game_loader_and_client_only_mods_cannot_install(tmp_path: Path) -
     rows = as_list(http_client.document(query_url))
     fields = as_mapping(rows[0])
     for game_versions, loaders in ((["1.20.1"], ["paper"]), (["1.21.1"], ["fabric"])):
-        http_client.overrides[query_url] = [
-            fields | {"game_versions": game_versions, "loaders": loaders}
-        ]
+        changed: dict[str, JsonValue] = dict(fields)
+        changed.update(game_versions=list(game_versions), loaders=list(loaders))
+        http_client.overrides[query_url] = [changed]
         with pytest.raises(ServerError):
             manager.install_content(paper.server_id, "modrinth", "plugin", "chunky", "chunky-v1")
     assert manager.installed_content(paper.server_id) == ()
@@ -118,7 +118,7 @@ def test_hangar_release_filters_external_and_required_manual_dependencies(tmp_pa
     manager = launcher.make_server_manager(ServerAccountFixture())
     server = manager.install("Paper", "paper", "1.21.1", "132")
     url = "https://hangar.papermc.io/api/v1/projects/Owner/Plugin/versions?limit=100&platform=PAPER&channel=Release"
-    document = {
+    document: dict[str, JsonValue] = {
         "name": "1.0",
         "channel": {"name": "Release"},
         "platformDependencies": {"PAPER": ["1.21.1"]},

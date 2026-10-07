@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from functools import partial
+
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtTest import QTest
 from qml_tree import find_item
 from test_bridges import wait_until
@@ -12,6 +14,11 @@ from test_minimal_preview import preview as preview
 from test_modern_workspace import prepare_instance
 
 from qt_controls import find_control, press
+
+
+def modal_opened(modal: QObject) -> bool:
+    return bool(modal.property("opened"))
+
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -29,7 +36,7 @@ def test_delete_cancel_and_escape_keep_manager_then_accept_trashes_once(preview:
     for cancel_key in (None, Qt.Key.Key_Escape):
         press(view, find_control(root_item, "instanceTrash"))
         modal = find_control(root_item, "confirmationModal")
-        wait_until(lambda modal=modal: bool(modal.property("opened")))
+        wait_until(partial(modal_opened, modal))
         assert modal.property("z") > manager.property("z")
         assert manager.property("opened")
         assert len(launcher.list_instances()) == 1

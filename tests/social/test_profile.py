@@ -6,6 +6,7 @@ import struct
 import pytest
 
 from nostalgia.errors import SocialError
+from nostalgia.model.json_value import JsonValue
 from nostalgia.social.profile_image import image_url, png
 from nostalgia.social.profile_parse import parse_profile
 
@@ -29,7 +30,7 @@ def test_profile_images_and_pack_lists_are_bounded() -> None:
         png(base64.b64encode(payload).decode())
     with pytest.raises(SocialError):
         png("a" * 50_000)
-    document = {
+    document: dict[str, JsonValue] = {
         "account_id": "misa",
         "name": "Misa",
         "favorite_packs": [{"title": "Pack", "game_version": "1.21.1"}] * 4,

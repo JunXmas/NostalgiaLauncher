@@ -3,10 +3,11 @@
 import base64
 from dataclasses import replace
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from PySide6.QtCore import QPointF
-from PySide6.QtGui import QImage
+from PySide6.QtGui import QColor, QImage
 from PySide6.QtTest import QTest
 from qml_tree import find_item
 from test_bridges import wait_until
@@ -18,7 +19,7 @@ from qt_controls import find_control, press
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def open_editor(preview: tuple):
+def open_editor(preview: tuple[Any, ...]) -> tuple[Any, Any]:
     _launcher, _gateway, view, root_item, *_ = preview
     press(view, find_control(root_item, "socialAccountToggle"))
     press(view, find_control(root_item, "openMyProfile"))
@@ -29,7 +30,7 @@ def open_editor(preview: tuple):
 
 
 def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
-    social_preview: tuple,
+    social_preview: tuple[Any, ...],
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     login_preview(social_preview)
@@ -37,6 +38,7 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
     assert not social.account["cosmeticPlus"]
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-amber")
+    assert choice is not None
     press(view, choice)
     banner = find_control(dialog, "profileBanner")
     avatar = find_control(dialog, "profileAvatar")
@@ -59,7 +61,7 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
     ["plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1"],
 )
 def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
-    social_preview: tuple, decor: str, plan_id: str
+    social_preview: tuple[Any, ...], decor: str, plan_id: str
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     gateway.snapshot = replace(
@@ -78,6 +80,7 @@ def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
         assert social.account["badge"] == "" and not social.account["earlyPreview"]
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-" + decor)
+    assert choice is not None
     press(view, choice)
     assert choice.property("selected")
     press(view, find_control(root_item, "saveSocialProfile"))
@@ -98,7 +101,7 @@ def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
 def test_production_frames_leave_the_avatar_center_transparent() -> None:
     import nostalgia
 
-    cosmetic_dir = Path(nostalgia.__file__).parent / "ui/qml/assets/cosmetics"
+    cosmetic_dir = Path(nostalgia.__file__ or "").parent / "ui/qml/assets/cosmetics"
     for name in ("amethyst", "grove", "eclipse"):
         frame = QImage(str(cosmetic_dir / f"{name}-frame.png"))
         assert not frame.isNull() and frame.hasAlphaChannel()
@@ -110,7 +113,7 @@ def test_production_frames_leave_the_avatar_center_transparent() -> None:
 
 
 def test_loaded_avatar_and_banner_actually_render_pixels(
-    social_preview: tuple, tmp_path: Path
+    social_preview: tuple[Any, ...], tmp_path: Path
 ) -> None:
     _launcher, gateway, view, _root_item, *_ = social_preview
     image = QImage(8, 8, QImage.Format.Format_ARGB32)
@@ -133,10 +136,12 @@ def test_loaded_avatar_and_banner_actually_render_pixels(
     QTest.qWait(350)
     screenshot = view.grabWindow()
 
-    def pixel(control, x: float, y: float):
+    def pixel(control: Any, x: float, y: float) -> QColor:
         position = control.mapToScene(QPointF(control.width() * x, control.height() * y))
         dpr = screenshot.devicePixelRatio()
-        return screenshot.pixelColor(round(position.x() * dpr), round(position.y() * dpr))
+        return cast(
+            QColor, screenshot.pixelColor(round(position.x() * dpr), round(position.y() * dpr))
+        )
 
     avatar = find_control(dialog, "profileAvatar")
     center = pixel(avatar, 0.5, 0.5)

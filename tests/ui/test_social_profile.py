@@ -4,6 +4,7 @@ import base64
 import hashlib
 import threading
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from PySide6.QtCore import Qt
@@ -15,13 +16,16 @@ from test_social_ui import login_preview
 from test_social_ui import social_preview as social_preview
 
 from nostalgia.errors import SocialError
+from nostalgia.social.profile_model import SocialProfile
 from nostalgia.ui.profile_media import cache_skin, publish_skin
 from qt_controls import find_control, press
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def test_friend_avatar_opens_read_only_profile_and_revoke_closes_it(social_preview: tuple) -> None:
+def test_friend_avatar_opens_read_only_profile_and_revoke_closes_it(
+    social_preview: tuple[Any, ...],
+) -> None:
     _launcher, gateway, view, root_item, _social, *_ = social_preview
     login_preview(social_preview)
     press(view, find_item(root_item, "friendAvatar-misa"))
@@ -43,12 +47,12 @@ def test_friend_avatar_opens_read_only_profile_and_revoke_closes_it(social_previ
 
 
 def test_owner_shares_skin_without_changing_game_account_and_packs_opt_in(
-    social_preview: tuple,
+    social_preview: tuple[Any, ...],
 ) -> None:
     launcher, gateway, view, root_item, _social, *_ = social_preview
     login_preview(social_preview)
     accounts_before = launcher.list_accounts()
-    source = Path(__import__("nostalgia").__file__).parent / "skin" / "defaults" / "steve.png"
+    source = Path(__import__("nostalgia").__file__ or "").parent / "skin" / "defaults" / "steve.png"
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     skin_entry = launcher.import_skin(source, name="Steve")
     accounts = view.rootContext().contextProperty("accountBridge")
@@ -91,17 +95,17 @@ def test_owner_shares_skin_without_changing_game_account_and_packs_opt_in(
 
 
 def test_closed_profile_ignores_late_reply_and_invalid_skin_never_cached(
-    social_preview: tuple, tmp_path: Path
+    social_preview: tuple[Any, ...], tmp_path: Path
 ) -> None:
     _launcher, gateway, view, _root_item, *_ = social_preview
     login_preview(social_preview)
     begun, finished = threading.Event(), threading.Event()
     original = gateway.fetch_profile
 
-    def delayed(account_id: str):
+    def delayed(account_id: str) -> SocialProfile:
         begun.set()
         assert finished.wait(5)
-        return original(account_id)
+        return cast(SocialProfile, original(account_id))
 
     gateway.fetch_profile = delayed
     profiles = view.rootContext().contextProperty("profileBridge")
@@ -114,7 +118,7 @@ def test_closed_profile_ignores_late_reply_and_invalid_skin_never_cached(
     with pytest.raises(SocialError, match="hỏng"):
         cache_skin(tmp_path / "invalid-cache", "YQ==")
     assert not (tmp_path / "invalid-cache").exists()
-    source = Path(__import__("nostalgia").__file__).parent / "skin" / "defaults" / "steve.png"
+    source = Path(__import__("nostalgia").__file__ or "").parent / "skin" / "defaults" / "steve.png"
     encoded, head = publish_skin(source.as_uri())
     assert encoded and head
 

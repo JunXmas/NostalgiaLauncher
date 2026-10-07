@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from PySide6.QtCore import QObject, Qt, qInstallMessageHandler
@@ -52,7 +53,9 @@ def server_view(tmp_path: Path) -> Iterator[tuple[QQuickView, QObject, ServerCon
     QGuiApplication.processEvents()
 
 
-def test_settings_save_real_properties_and_console_saves_world(server_view: tuple) -> None:
+def test_settings_save_real_properties_and_console_saves_world(
+    server_view: tuple[Any, ...],
+) -> None:
     view, root_item, servers, server_id = server_view
     press(view, find_item(root_item, "serverManage-" + server_id))
     manager = find_control(root_item, "serverManagerDialog")
@@ -66,7 +69,9 @@ def test_settings_save_real_properties_and_console_saves_world(server_view: tupl
     content_item = manager.property("contentItem")
     heap = find_control(root_item, "serverHeap")
     heap.setProperty("text", "4096")
-    find_item(content_item, "serverProperty-max-players").setProperty("text", "12")
+    players = find_item(content_item, "serverProperty-max-players")
+    assert players is not None
+    players.setProperty("text", "12")
     eula = find_control(root_item, "serverEula")
     eula.toggled.emit(True)
     press(view, find_control(root_item, "serverSettingsSave"))
@@ -86,7 +91,9 @@ def test_settings_save_real_properties_and_console_saves_world(server_view: tupl
     assert (servers.domain_manager.directory(server_id) / "saved-world.txt").is_file()
 
 
-def test_server_confirm_stacks_correctly_and_small_window_scrolls(server_view: tuple) -> None:
+def test_server_confirm_stacks_correctly_and_small_window_scrolls(
+    server_view: tuple[Any, ...],
+) -> None:
     view, root_item, servers, server_id = server_view
     warnings: list[str] = []
     previous = qInstallMessageHandler(lambda _mode, _context, message: warnings.append(message))
@@ -128,7 +135,9 @@ def test_server_confirm_stacks_correctly_and_small_window_scrolls(server_view: t
     ]
 
 
-def test_library_opens_centered_version_picker_and_installs_real_jar(server_view: tuple) -> None:
+def test_library_opens_centered_version_picker_and_installs_real_jar(
+    server_view: tuple[Any, ...],
+) -> None:
     view, root_item, servers, server_id = server_view
     press(view, find_item(root_item, "serverManage-" + server_id))
     manager = find_control(root_item, "serverManagerDialog")
@@ -139,6 +148,7 @@ def test_library_opens_centered_version_picker_and_installs_real_jar(server_view
     press(view, find_control(root_item, "serverContentSearch"))
     wait_until(lambda: len(servers.property("projects")) == 3 and not servers.busy)
     project_button = find_item(manager.property("contentItem"), "serverProject-luckperms")
+    assert project_button is not None
     assert project_button.property("width") > 100
     assert project_button.parentItem().property("width") > 400
     press(view, project_button)

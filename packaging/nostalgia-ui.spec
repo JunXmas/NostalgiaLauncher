@@ -7,6 +7,7 @@ Onedir (một thư mục) thay vì onefile: bộ tự cập nhật tráo CẢ TH
 và khởi động nhanh hơn vì không phải bung 100 MB vào thư mục tạm mỗi lần mở.
 """
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -44,15 +45,20 @@ def filter_binaries(binaries):
         result.append((dst, src, typ))
     return result
 
+FLAVOR = os.environ.get("NOSTALGIA_BUILD_FLAVOR", "release")
+if FLAVOR not in ("release", "review"):
+    raise ValueError("Unknown build flavor")
+REVIEW = FLAVOR == "review"
+
 analysis = Analysis(
-    [str(ROOT / "packaging" / "entry_ui.py")],
-    pathex=[str(ROOT / "src")],
+    [str(ROOT / "packaging" / ("entry_review.py" if REVIEW else "entry_ui.py"))],
+    pathex=[str(ROOT / "src")] + ([str(ROOT / "packaging")] if REVIEW else []),
     binaries=[],
     datas=datas,
     hiddenimports=["PySide6.QtQuick", "PySide6.QtQml", "PySide6.QtQuickControls2", "truststore", "segno"] + collect_submodules("keyring") + collect_submodules("cryptography"),
     hookspath=[],
     runtime_hooks=[],
-    excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3DCore"],
+    excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3DCore"] + ([] if REVIEW else ["nostalgia_draft"]),
     noarchive=False,
 )
 
