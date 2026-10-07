@@ -14,7 +14,7 @@ Item {
     height: implicitHeight
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
-    Accessible.name: cosmetic.name + (selected ? ", đã chọn" : canEquip ? ", chọn trang trí hồ sơ" : ", xem thử, cần Pro để sử dụng")
+    Accessible.name: cosmetic.name + (selected ? ", đã chọn" : canEquip ? ", chọn trang trí hồ sơ" : ", xem thử, cần Plus để sử dụng")
     Accessible.onPressAction: root.clicked()
     Keys.onReturnPressed: root.clicked()
     Keys.onEnterPressed: root.clicked()
@@ -42,7 +42,7 @@ Item {
     Column {
         x: 12; y: 109 * GlassTheme.scale; width: parent.width - 24; spacing: 5
         PaymentText { width: parent.width; text: root.cosmetic.name; font.weight: Font.DemiBold; font.pixelSize: GlassTheme.fontSubheading }
-        PaymentText { width: parent.width; text: root.selected ? "✓ Đã chọn" : root.previewed ? "Đang xem thử" : root.canEquip ? root.cosmetic.description : "Xem thử · Pro"; color: root.selected ? root.cosmetic.tint : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        PaymentText { width: parent.width; text: root.selected ? "✓ Đã chọn" : root.previewed ? "Đang xem thử" : root.canEquip ? root.cosmetic.description : "Xem thử · Plus"; color: root.selected ? root.cosmetic.tint : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     }
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     TapHandler { id: tap; onTapped: { root.forceActiveFocus(); root.clicked(); } }

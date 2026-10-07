@@ -82,6 +82,7 @@ def test_release_google_auto_poll_and_plus_stays_disabled(
         assert len(urls) == 1 and urls[0].startswith("https://accounts.google.com/")
         assert social.account["name"] == "GooglePlayer"
         assert not social.account["plus"] and not social.account["profilePlus"]
+        assert not social.account["cosmeticPlus"]
         assert not social.account["earlyPreview"]
         assert view.rootObject().findChild(QObject, "serviceAccountUrl") is None
         payment = view.rootContext().contextProperty("paymentBridge")

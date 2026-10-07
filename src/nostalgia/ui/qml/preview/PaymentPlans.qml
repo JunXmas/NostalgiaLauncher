@@ -4,9 +4,9 @@ Column {
     id: root
     spacing: 10
     readonly property int selected: paymentBridge.details.months
-    readonly property var extra: selected === 0 ? ["Host server · Plugin & mod", "Huy hiệu Sáng lập & màu hồ sơ", "Tham gia preview sớm", "Các cập nhật Plus về sau"]
+    readonly property var extra: ["Chọn 1 trong 3 bộ cosmetic hồ sơ"].concat(selected === 0 ? ["Host server · Plugin & mod", "Huy hiệu Sáng lập & màu hồ sơ", "Tham gia preview sớm", "Các cập nhật Plus về sau"]
         : selected === 12 ? ["Host server · Plugin & mod", "Huy hiệu Tiên phong & màu hồ sơ", "Tham gia preview sớm"]
-        : selected === 6 ? ["Host server · Plugin & mod", "Huy hiệu Đồng hành & màu hồ sơ"] : ["Toàn bộ tính năng Plus cốt lõi"]
+        : selected === 6 ? ["Host server · Plugin & mod", "Huy hiệu Đồng hành & màu hồ sơ"] : ["Toàn bộ tính năng Plus cốt lõi"])
     Grid {
         id: grid
         width: parent.width

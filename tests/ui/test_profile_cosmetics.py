@@ -1,4 +1,4 @@
-"""Cosmetic thật: xem thử không mở khóa, lưu Pro và ảnh trong suốt có giới hạn."""
+"""Cosmetic thật: xem thử không mở khóa, lưu Plus và ảnh trong suốt có giới hạn."""
 
 import base64
 from dataclasses import replace
@@ -34,6 +34,7 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
     _launcher, gateway, view, root_item, social, *_ = social_preview
     login_preview(social_preview)
     assert not social.account["profilePlus"]
+    assert not social.account["cosmeticPlus"]
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-amber")
     press(view, choice)
@@ -53,18 +54,28 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
 
 
 @pytest.mark.parametrize("decor", ["amethyst", "emerald", "amber"])
-def test_pro_saves_matching_banner_and_frame_and_hides_image_on_close(
-    social_preview: tuple, decor: str
+@pytest.mark.parametrize(
+    "plan_id",
+    ["plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1"],
+)
+def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
+    social_preview: tuple, decor: str, plan_id: str
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     gateway.snapshot = replace(
         gateway.snapshot,
         account=replace(
-            gateway.snapshot.account, plus_until=4_000_000_000, plus_plan="plus-half-year-v1"
+            gateway.snapshot.account,
+            plus_until=4_000_000_000,
+            plus_plan=plan_id,
+            plus_lifetime=plan_id == "plus-lifetime-v1",
         ),
     )
     login_preview(social_preview)
-    assert social.account["profilePlus"]
+    assert social.account["cosmeticPlus"]
+    assert social.account["profilePlus"] == (plan_id != "plus-month-v1")
+    if plan_id == "plus-month-v1":
+        assert social.account["badge"] == "" and not social.account["earlyPreview"]
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-" + decor)
     press(view, choice)

@@ -14,9 +14,14 @@ profiles and backend validation remain compatible without a migration.
 Everyone can browse the local artwork. Selecting a locked card changes only
 `previewDecor`, while saving uses the entitled selection. Canceling restores the
 saved profile. Applying a set still requires the existing authoritative
-Pro/Max/Ultimate backend check, including active membership and the paid-feature
+Plus/Pro/Max/Ultimate backend check, including active membership and the paid-feature
 flag. Modifying local client artwork does not grant a saved/shared cosmetic or
 other service rights. Assets delivered to a desktop client remain extractable.
+
+Monthly Plus can choose one of the three sets, with one active set at a time and
+the option to switch later. This is independent of Pro+ badge/accent preferences,
+server hosting and Max+ early preview rights. Friends see the chosen frame under
+the same active-membership and paid-feature checks as the full profile.
 
 Paid release flags and payment gateways remain disabled. No production deployment,
 migration, version bump, installer build, tag or release was made. Review captures
@@ -50,3 +55,9 @@ the image without the shader mask, so its image corners can appear rectangular.
 
 These checks exercise the UI and local service integration. They do not claim
 production OAuth/payment verification or a hardware FPS benchmark.
+
+The monthly Plus permission extension additionally passes 39 targeted client
+tests (all four plans and all three sets, Free preview, paused release runtime,
+profiles, friends and payment UI) and 16 backend integration tests (single-set
+replacement, expired/revoked/paused memberships, bound sessions and unchanged
+higher-tier profile/server/preview permissions). Paid flags remain disabled.

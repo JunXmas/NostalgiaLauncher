@@ -28,8 +28,10 @@ Column {
         }
     }
     PaymentText {
-        width: parent.width; visible: !root.canEquip
-        text: root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Pro trở lên để áp dụng." : "Có thể xem thử mọi bộ. Quyền áp dụng dành cho Pro trở lên và hiện đang tạm tắt cùng các tính năng trả phí."
+        width: parent.width
+        text: root.canEquip ? "Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào."
+            : root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng."
+            : "Có thể xem thử mọi bộ. Quyền áp dụng dành cho Plus trở lên và hiện đang tạm tắt cùng các tính năng trả phí."
         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
     }
 }

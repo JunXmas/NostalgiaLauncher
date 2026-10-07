@@ -71,6 +71,10 @@ class SocialState(WorkerBridge):
             "profilePlus": self._plus_enabled
             and account.plus_plan in ("plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
             and (account.plus_lifetime or account.plus_until > time.time()),
+            "cosmeticPlus": self._plus_enabled
+            and account.plus_plan
+            in ("plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
+            and (account.plus_lifetime or account.plus_until > time.time()),
             "earlyPreview": self._plus_enabled
             and account.plus_plan in ("plus-year-v2", "plus-lifetime-v1")
             and (account.plus_lifetime or account.plus_until > time.time()),
