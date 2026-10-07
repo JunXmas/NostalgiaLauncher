@@ -7,12 +7,14 @@ Google giữ bạn bè và danh tính Nostalgia; Microsoft/Ely.by vẫn dùng ri
 Client ID công khai bạn gửi ngày 07/10/2026 đã được điền vào cấu hình backend:
 
 ```
-657365850471-pktashbc6knqn89r81gfgl77t50oshpr.apps.googleusercontent.com
+657365850471-ag1tbdb45ntb30lklacjlargpnpkbsmd.apps.googleusercontent.com
 ```
 
-Cần xác nhận loại **Web application**, địa chỉ HTTPS của account Worker và đặt
-Client Secret trong secret `GOOGLE_CLIENT_SECRET` của Worker. Workspace chưa có
-hai cấu hình cuối, nên chưa thể đăng nhập thật. Không gửi Client Secret vào chat.
+Bạn đã xác nhận client mới là **Web application**. Secret tạm được giữ trong file
+local bảo vệ, bị loại khỏi git; chưa được đặt trên Cloudflare. Workspace chưa có
+quyền Cloudflare, URL account Worker hoặc D1 staging nên chưa thể đăng nhập thật.
+Secret đã gửi qua chat cần thu hồi/thay trước khi đưa dịch vụ vào sử dụng chính thức.
+Xóa chat không thu hồi secret Google. Không gửi thêm secret/token vào chat.
 Client ID/Secret không cần nhập vào launcher của người chơi.
 
 ## 1. Chọn địa chỉ backend
@@ -21,6 +23,9 @@ Cần một Cloudflare Account Worker riêng, HTTPS, ví dụ
 `https://nostalgia-account-preview.<subdomain-của-bạn>.workers.dev` hoặc domain riêng.
 Đây là ví dụ cấu trúc địa chỉ, chưa phải dịch vụ đang chạy. Dùng tài nguyên staging riêng.
 Kho private `JunXmas/nostalgia-backend` có `GOOGLE_ONLY_SETUP.md` và mã Worker.
+Đã có config tối thiểu `account-service/wrangler.google-only.toml` và công cụ
+Wrangler đã khóa phiên bản; chỉ cần Worker + D1 cho Google/bạn bè/chat, chưa cần
+payOS, R2 hay relay. Hướng dẫn triển khai nằm trong kho backend private.
 Không dùng URL GitHub hoặc relay làm callback Google.
 
 ## 2. Tạo OAuth client
@@ -81,9 +86,12 @@ với tag mới sau khi backend và variable đã sẵn sàng. Mã nguồn local
 503 tại start: kiểm Worker secret, Client ID, PUBLIC_URL, D1 và deployment.
 
 Mã preview rc8 hiện chỉ kiểm luồng bằng Google giả ở biên mạng, RSA/D1/Qt thật.
-Đã nhận Client ID công khai; chưa có Client Secret/backend production nên chưa thử Google thật.
-Sau khi nhận ID, bộ kiểm thử backend **23 tests passed** (07/10/2026), có kiểm
+Đã nhận Client ID Web mới và secret tạm; chưa có backend được triển khai nên chưa thử Google thật.
+Sau khi nhận ID Web mới, bộ kiểm thử backend **23 tests passed**, 60,75s
+(07/10/2026), có kiểm
 đúng Client ID xuyên suốt OAuth và từ chối ID token của client khác. Google giả
 ở biên mạng; không dùng kết quả này để khẳng định Google Console đã cấu hình đúng.
+Backend standalone không có binding relay/R2 cũng qua; bundle dry-run thành công.
+Wrangler xác nhận chưa đăng nhập Cloudflare, nên chưa tạo Worker/D1/URL callback.
 
 Theo yêu cầu chủ dự án: chưa build bộ cài hoặc tạo release draft rc8.
