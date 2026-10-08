@@ -57,7 +57,7 @@ Một launcher quen thuộc, được làm mới từ cách nhìn đến cách c
 
 - Cả host và khách nên dùng **rc11** để có lựa chọn nội dung và cập nhật theo định danh pack. Bản đồng bộ từ client cũ thiếu định danh sẽ tạo một instance mới ở lần nhận đầu tiên; launcher không tự ghép theo tên để tránh ghi đè nhầm.
 - Host cần giữ launcher và phòng đang hoạt động trong khi khách nhận file riêng. Không đồng bộ khi Minecraft trên máy khách đang chạy.
-- Bản miễn phí vẫn chơi thường và nhận đồng bộ khi được host Plus mời. Các bộ cài trong draft giữ cơ chế kiểm quyền thật.
+- Bản miễn phí vẫn chơi thường và nhận đồng bộ khi được host Plus mời. Các bộ cài trong bản phát hành giữ cơ chế kiểm quyền thật.
 - Đã kiểm tra luồng chọn nội dung, cập nhật, chống ghi đè nhầm, kiểm hash, sao lưu/phục hồi và UI ở cửa sổ nhỏ/chữ 150%. Kiểm tra tự động không thay thế lượt thử chơi Minecraft thực tế trên hai máy.
 
-**Tải đúng bộ cài cho hệ điều hành của bạn bên dưới.** Linux Mint/Ubuntu dùng `.deb`; Windows dùng `setup.exe`; macOS chọn `.dmg` arm64 hoặc x64. Draft chỉ đính kèm bộ cài, không kèm ảnh preview hay tài liệu phụ.
+**Tải đúng bộ cài cho hệ điều hành của bạn bên dưới.** Linux Mint/Ubuntu dùng `.deb`; Windows dùng `setup.exe`; macOS chọn `.dmg` arm64 hoặc x64. Gói ZIP và `SHA256SUMS` phục vụ tự cập nhật; Linux có thêm TAR.GZ để chạy portable. Không kèm ảnh preview hay tài liệu phụ.

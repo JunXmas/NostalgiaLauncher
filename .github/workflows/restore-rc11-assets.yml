@@ -1,0 +1,106 @@
+name: Restore rc11 update assets
+
+# One-time recovery from the tested rc11 build; never rebuild or replace installers.
+on:
+  push:
+    branches: [release/restore-rc11-update-assets]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: restore-rc11-update-assets
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify the original tested build
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/37779864040" > original-run.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          run = json.loads(Path("original-run.json").read_text())
+          assert run["head_sha"] == "eed25a48855268bac7bd3a64354fce797f3a404b"
+          assert run["conclusion"] == "success"
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 37779864040
+          github-token: ${{ github.token }}
+          path: bundles
+          merge-multiple: true
+      - name: Verify archives and preserve existing installers
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v1.2.0rc11" > release.json
+          python - <<'PY'
+          import hashlib
+          import json
+          import zipfile
+          from pathlib import Path
+          expected = {
+              "nostalgia-1.2.0rc11-1.x86_64.rpm",
+              "nostalgia-1.2.0rc11-linux-x64.AppImage",
+              "nostalgia-1.2.0rc11-linux-x64.tar.gz",
+              "nostalgia-1.2.0rc11-linux-x64.zip",
+              "nostalgia-1.2.0rc11-macos-arm64.dmg",
+              "nostalgia-1.2.0rc11-macos-arm64.zip",
+              "nostalgia-1.2.0rc11-macos-x64.dmg",
+              "nostalgia-1.2.0rc11-macos-x64.zip",
+              "nostalgia-1.2.0rc11-windows-x64-setup.exe",
+              "nostalgia-1.2.0rc11-windows-x64.zip",
+              "nostalgia_1.2.0rc11_amd64.deb",
+          }
+          packages = sorted(Path("bundles").iterdir())
+          assert {p.name for p in packages} == expected
+          release = json.loads(Path("release.json").read_text())
+          assert release["tag_name"] == "v1.2.0rc11"
+          assert not release["draft"] and not release.get("immutable", False)
+          existing = {a["name"]: a for a in release["assets"]}
+          assert set(existing) <= expected | {"SHA256SUMS"}
+          sums, missing = [], []
+          for package in packages:
+              assert package.stat().st_size > 40_000_000
+              with package.open("rb") as source:
+                  digest = hashlib.file_digest(source, "sha256").hexdigest()
+              sums.append(f"{digest}  {package.name}\n")
+              if package.name in existing:
+                  assert existing[package.name]["digest"] == "sha256:" + digest, package.name
+              else:
+                  missing.append(str(package) + "\n")
+              if package.suffix == ".zip":
+                  with zipfile.ZipFile(package) as archive:
+                      assert archive.testzip() is None, package.name
+                      assert any(n.startswith("Nostalgia/") or n.startswith("Nostalgia Launcher.app/") for n in archive.namelist())
+          Path("SHA256SUMS").write_text("".join(sums), encoding="utf-8")
+          Path("upload-list.txt").write_text("".join(missing), encoding="utf-8")
+          print(f"Verified {len(packages)} packages; restoring {len(missing)} missing archives")
+          PY
+      - name: Restore missing archives, then publish complete checksums
+        run: |
+          while IFS= read -r asset; do
+            gh release upload v1.2.0rc11 "$asset" --repo "$GITHUB_REPOSITORY"
+          done < upload-list.txt
+          gh release upload v1.2.0rc11 SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v1.2.0rc11" > final-release.json
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          release = json.loads(Path("final-release.json").read_text())
+          assert not release["draft"]
+          actual = {a["name"]: a for a in release["assets"]}
+          sums = Path("SHA256SUMS").read_text().splitlines()
+          assert len(actual) == 12
+          for line in sums:
+              digest, name = line.split("  ", 1)
+              assert actual[name]["digest"] == "sha256:" + digest, name
+          assert actual["SHA256SUMS"]["digest"] == "sha256:" + hashlib.sha256(Path("SHA256SUMS").read_bytes()).hexdigest()
+          print("rc11 restored: 11 packages + SHA256SUMS; published state preserved")
+          PY

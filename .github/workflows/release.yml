@@ -5,7 +5,8 @@ name: Release
 #   Linux x64   : .zip (bộ tự cập nhật), .tar.gz, .AppImage, .deb, .rpm
 #   macOS       : .zip (bộ tự cập nhật) + .dmg, riêng cho Apple Silicon (arm64) và Intel (x64)
 #   Windows x64 : .zip (bộ tự cập nhật) + bộ cài setup.exe (Inno Setup)
-# Kết quả là GitHub Release DRAFT chỉ kèm bộ cài; checksum nằm trong nội dung release.
+# Kết quả là GitHub Release DRAFT kèm bộ cài, gói portable/cập nhật và SHA256SUMS.
+# Không đính kèm ảnh preview, hướng dẫn hay tài liệu nội bộ.
 # (bộ tự cập nhật chỉ nhìn thấy bản đã publish).
 
 on:
@@ -180,17 +181,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
-          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg)
+          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg bundles/*.zip bundles/*.tar.gz)
           test "${#assets[@]}" -gt 0
+          : > bundles/SHA256SUMS
+          for asset in "${assets[@]}"; do
+            digest="$(sha256sum "$asset")"
+            printf '%s  %s\n' "${digest%% *}" "${asset##*/}" >> bundles/SHA256SUMS
+          done
           cp docs/RELEASE_NOTES.md release-notes.md
           {
-            printf '\n<details>\n<summary>SHA-256 của các bộ cài</summary>\n\n```text\n'
-            for asset in "${assets[@]}"; do
-              digest="$(sha256sum "$asset")"
-              printf '%s  %s\n' "${digest%% *}" "${asset##*/}"
-            done
+            printf '\n<details>\n<summary>SHA-256 của các gói</summary>\n\n```text\n'
+            cat bundles/SHA256SUMS
             printf '```\n\n</details>\n'
           } >> release-notes.md
+          assets+=(bundles/SHA256SUMS)
           gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
             --notes-file release-notes.md
