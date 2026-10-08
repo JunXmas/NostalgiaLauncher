@@ -143,6 +143,8 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         assert social.account["planName"] == "Pro"
         servers.checkAccess()
         wait_until(lambda: servers.hasAccess and not servers.busy)
+        # The account menu also waits for its own update worker before enabling logout.
+        wait_until(lambda: not social.busy)
         social.signOut()
         wait_until(lambda: not social.signedIn and not social.busy)
         assert payments.details["stage"] == "unavailable" and repair._gateway is None
