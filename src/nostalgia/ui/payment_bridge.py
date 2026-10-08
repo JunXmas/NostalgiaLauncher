@@ -5,7 +5,6 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
@@ -13,7 +12,12 @@ from PySide6.QtGui import QDesktopServices, QGuiApplication
 
 from nostalgia.api import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
 from nostalgia.errors import NostalgiaError
-from nostalgia.ui.payment_plan import fetch_checkout, resolve_preview_offer
+from nostalgia.ui.payment_plan import (
+    describe_checkout,
+    fetch_checkout,
+    resolve_preview_offer,
+    send_manual_review,
+)
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -48,35 +52,14 @@ class PaymentBridge(WorkerBridge):
 
     @Property(dict, notify=changed)
     def details(self) -> dict[str, Any]:
-        order = self._order
-        remaining = max(0, order.expires_at - int(time.time())) if order else 0
-        status: str = order.status if order else "offer" if self._gateway else "unavailable"
-        if order and status == "pending" and not remaining:
-            status = "verifying"
-        return {
-            "stage": status,
-            "demonstration": self._demonstration,
-            "available": self._offer_loaded and self._gateway is not None,
-            "amount": self._offer.amount,
-            "regularAmount": self._offer.regular_amount,
-            "months": self._offer.duration_months,
-            "planName": self._offer.plan_name,
-            "lifetime": self._offer.lifetime,
-            "error": self._error,
-            "orderId": order.order_id if order else "",
-            "bank": order.bank_name if order else "",
-            "holder": order.holder if order else "",
-            "accountNumber": order.account_number if order else "",
-            "memo": order.transfer_memo if order else "",
-            "qr": order.qr_image if order and status == "pending" else "",
-            "checkoutUrl": order.checkout_url if order and status == "pending" else "",
-            "remaining": remaining,
-            "activeUntil": datetime.fromtimestamp(order.active_until, UTC).strftime("%d/%m/%Y")
-            if order and order.status == "paid" and not self._offer.lifetime
-            else "Không hết hạn"
-            if order and order.status == "paid"
-            else "",
-        }
+        return describe_checkout(
+            self._offer,
+            self._order,
+            gateway_available=self._gateway is not None,
+            offer_loaded=self._offer_loaded,
+            demonstration=self._demonstration,
+            error=self._error,
+        )
 
     def set_gateway(self, gateway: PaymentGateway | None) -> None:
         self.next_generation()
@@ -135,6 +118,21 @@ class PaymentBridge(WorkerBridge):
         if self.busy or gateway is None or order is None or order.status != "pending":
             return
         self._request("order", lambda: gateway.fetch_order(order))
+
+    @Slot()
+    def submitTransfer(self) -> None:
+        gateway, order = self._gateway, self._order
+        if (
+            self.busy
+            or gateway is None
+            or order is None
+            or not order.manual_review
+            or order.submitted
+            or order.status != "pending"
+            or order.expires_at <= time.time()
+        ):
+            return
+        self._request("order", lambda: send_manual_review(gateway, order))
 
     @Slot()
     def newOrder(self) -> None:
@@ -209,6 +207,7 @@ class PaymentBridge(WorkerBridge):
 
     def _sync_timers(self) -> None:
         active = self._watching and self._order is not None and self._order.status == "pending"
+        self._poll.setInterval(30_000 if self._order and self._order.manual_review else 5000)
         for timer in (self._poll, self._clock):
             if active:
                 timer.start()

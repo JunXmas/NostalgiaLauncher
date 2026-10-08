@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Literal, Protocol, runtime_checkable
 
 PaymentStatus = Literal["pending", "paid", "expired", "cancelled"]
 
@@ -36,6 +36,8 @@ class PaymentOrder:
     checkout_url: str = ""
     active_until: int = 0
     lifetime: bool = False
+    manual_review: bool = False
+    submitted: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,3 +56,10 @@ class PaymentGateway(Protocol):
     def fetch_current_order(self, offer: PaymentOffer) -> PaymentOrder | None: ...
 
     def fetch_order(self, order: PaymentOrder) -> PaymentOrder: ...
+
+
+@runtime_checkable
+class ManualPaymentGateway(Protocol):
+    """Gửi yêu cầu duyệt; không có thao tác cấp quyền từ client."""
+
+    def submit_transfer(self, order: PaymentOrder) -> PaymentOrder: ...

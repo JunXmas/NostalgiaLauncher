@@ -84,6 +84,21 @@ Rectangle {
             field: "memo"
         }
         Button {
+            objectName: "paymentSubmitTransfer"
+            width: parent.width
+            visible: !!root.details.manualReview && !root.details.demonstration
+            label: paymentBridge.busy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản · Gửi duyệt"
+            clickable: !paymentBridge.busy && root.details.remaining > 0
+            onClicked: paymentBridge.submitTransfer()
+        }
+        PaymentText {
+            width: parent.width
+            visible: !!root.details.manualReview
+            text: "Gói chỉ kích hoạt sau khi người quản trị đối chiếu tiền thực nhận."
+            color: GlassTheme.muted
+            font.pixelSize: GlassTheme.fontNote
+        }
+        Button {
             objectName: "paymentBrowser"
             width: parent.width
             visible: !!root.details.checkoutUrl && !root.details.demonstration

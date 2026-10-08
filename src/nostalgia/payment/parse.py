@@ -63,11 +63,16 @@ def parse_offer(document: JsonValue) -> PaymentOffer:
 def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
     fields = as_mapping(document)
     status = as_string(fields.get("status")) or ""
+    manual_review = fields.get("manual_review", False)
+    submitted = fields.get("submitted", False)
     expires_at = as_integer(fields.get("expires_at")) or 0
     recorded_until = as_integer(fields.get("active_until"))
     active_until = recorded_until or 0
     if (
-        fields.get("offer_id") != offer.offer_id
+        not isinstance(manual_review, bool)
+        or not isinstance(submitted, bool)
+        or (submitted and not manual_review)
+        or fields.get("offer_id") != offer.offer_id
         or as_integer(fields.get("amount")) != offer.amount
         or fields.get("currency") != "VND"
         or ("lifetime" in fields and fields["lifetime"] is not offer.lifetime)
@@ -113,6 +118,8 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         checkout_url=payment_url,
         active_until=active_until,
         lifetime=offer.lifetime,
+        manual_review=manual_review is True,
+        submitted=submitted is True,
     )
 
 

@@ -71,7 +71,9 @@ class HttpPaymentGateway:
         if current.order_id != order.order_id:
             raise PaymentError("Máy chủ trả về một đơn thanh toán khác.")
         if (
-            current.expires_at != order.expires_at
+            current.manual_review != order.manual_review
+            or (order.submitted and not current.submitted)
+            or current.expires_at != order.expires_at
             or (order.status != "pending" and current.status != order.status)
             or (
                 current.status == "pending"
@@ -81,6 +83,18 @@ class HttpPaymentGateway:
         ):
             raise PaymentError("Thông tin đơn thanh toán đã thay đổi; hãy liên hệ hỗ trợ.")
         return current
+
+    def submit_transfer(self, order: PaymentOrder) -> PaymentOrder:
+        if not order.manual_review or order.status != "pending":
+            raise PaymentError("Đơn này không hỗ trợ gửi yêu cầu duyệt thủ công.")
+        result = as_mapping(
+            self._request(
+                "POST", "/v1/plus/orders/" + identifier(order.order_id) + "/submit", body=b"{}"
+            )
+        )
+        if result.get("submitted") is not True or result.get("status") != "pending":
+            raise PaymentError("Máy chủ chưa nhận yêu cầu duyệt thanh toán.")
+        return self.fetch_order(order)
 
     def _request(
         self, method: str, path: str, *, body: bytes | None = None, request_id: str = ""

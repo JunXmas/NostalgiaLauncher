@@ -6,7 +6,8 @@ Rectangle {
     property var details: paymentBridge.details
     property bool compactLayout: false
     readonly property bool success: details.stage === "paid"
-    readonly property bool verifying: details.stage === "verifying"
+    readonly property bool reviewing: details.stage === "reviewing"
+    readonly property bool verifying: details.stage === "verifying" || reviewing
     width: parent.width
     implicitHeight: contents.implicitHeight + (compactLayout ? 40 : 48)
     height: implicitHeight
@@ -43,7 +44,7 @@ Rectangle {
                 PaymentText {
                     objectName: "paymentResultTitle"
                     width: parent.width
-                    text: root.success ? "Thanh toán thành công" : root.verifying ? "Đang đối chiếu giao dịch" : root.details.stage === "cancelled" ? "Đơn đã được hủy" : "Mã thanh toán đã hết hạn"
+                    text: root.success ? "Thanh toán thành công" : root.reviewing ? "Chờ duyệt thanh toán" : root.verifying ? "Đang đối chiếu giao dịch" : root.details.stage === "cancelled" ? "Đơn đã được hủy" : "Mã thanh toán đã hết hạn"
                     font.pixelSize: (root.compactLayout ? 20 : 24) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
@@ -58,7 +59,7 @@ Rectangle {
         PaymentText {
             width: parent.width
             visible: !root.success || !root.compactLayout
-            text: root.success ? "Cảm ơn bạn đã đồng hành cùng Nostalgia." : root.verifying ? "Thời gian quét mã đã kết thúc. Hệ thống đang kiểm tra lần cuối; chưa tạo đơn mới trong lúc này." : "Nếu bạn đã chuyển tiền, hãy liên hệ hỗ trợ kèm mã đơn. Đừng chuyển lại khi chưa đối chiếu giao dịch."
+            text: root.success ? "Cảm ơn bạn đã đồng hành cùng Nostalgia." : root.reviewing ? "Yêu cầu của bạn đã được gửi. Người quản trị sẽ đối chiếu giao dịch Vietcombank; gói chưa kích hoạt cho đến khi xác nhận tiền thực nhận." : root.verifying ? "Thời gian quét mã đã kết thúc. Hệ thống đang kiểm tra lần cuối; chưa tạo đơn mới trong lúc này." : "Nếu bạn đã chuyển tiền, hãy liên hệ hỗ trợ kèm mã đơn. Đừng chuyển lại khi chưa đối chiếu giao dịch."
             color: GlassTheme.muted
         }
         Grid {

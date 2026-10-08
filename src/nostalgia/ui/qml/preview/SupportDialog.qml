@@ -147,7 +147,7 @@ Controls.Popup {
             Loader {
                 id: cardLoader
                 anchors.fill: parent
-                source: root.details.stage === "pending" ? (root.details.qr ? "PaymentQrCard.qml" : "PaymentLinkCard.qml") : ["paid", "expired", "cancelled", "verifying"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
+                source: root.details.stage === "pending" ? (root.details.qr ? "PaymentQrCard.qml" : "PaymentLinkCard.qml") : ["paid", "expired", "cancelled", "verifying", "reviewing"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
                 onLoaded: {
                     if ("compactLayout" in item)
                         item.compactLayout = Qt.binding(function () {
