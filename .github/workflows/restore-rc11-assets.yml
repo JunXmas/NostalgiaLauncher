@@ -38,7 +38,7 @@ jobs:
           merge-multiple: true
       - name: Verify archives and preserve existing installers
         run: |
-          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v1.2.0rc11" > release.json
+          gh api "repos/${GITHUB_REPOSITORY}/releases/406838545" > release.json
           python - <<'PY'
           import hashlib
           import json
@@ -88,7 +88,7 @@ jobs:
             gh release upload v1.2.0rc11 "$asset" --repo "$GITHUB_REPOSITORY"
           done < upload-list.txt
           gh release upload v1.2.0rc11 SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
-          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v1.2.0rc11" > final-release.json
+          gh api "repos/${GITHUB_REPOSITORY}/releases/406838545" > final-release.json
           python - <<'PY'
           import hashlib
           import json
