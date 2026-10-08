@@ -49,10 +49,47 @@ Controls.Popup {
         loaderKind = kind; loaderVersion = "";
         if (needsLoaderStep && gameVersion) catalogBridge.loadLoaderVersions(kind, gameVersion);
     }
-    background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; color: GlassTheme.alpha(GlassTheme.surface, 0.88); blurOpacity: 0.95 }
+    background: Item {
+        clip: true
+        Glass { anchors.fill: parent; padding: 0; backdrop: Legacy.Theme.modalBackdrop; color: GlassTheme.alpha(GlassTheme.surface, 0.90); blurOpacity: 0.8; autoPaddingEnabled: false }
+        ArtworkTransition {
+            id: backdropArt; objectName: "createKeyArtBackdrop"
+            anchors.fill: parent; visible: false; active: dialog.visible
+            source: keyArt.artSource; fillMode: Image.PreserveAspectCrop; decodeWidth: 768
+            imageObjectName: "createKeyArtBackdropImage"
+        }
+        Glass {
+            objectName: "createArtworkGlass"
+            anchors.fill: parent; padding: 0
+            backdrop: dialog.visible && backdropArt.ready ? backdropArt : null
+            backdropRect: Qt.rect(0, 0, width, height)
+            frosted: dialog.visible && backdropArt.ready
+            color: "transparent"; blurRadius: 64; blurOpacity: 0.48; finishOpacity: 0
+            autoPaddingEnabled: false
+        }
+        Rectangle {
+            anchors.fill: parent; radius: 24
+            gradient: Gradient {
+                GradientStop { position: 0; color: GlassTheme.alpha(GlassTheme.surface, 0.36) }
+                GradientStop { position: 0.55; color: GlassTheme.alpha(GlassTheme.surface, 0.52) }
+                GradientStop { position: 1; color: GlassTheme.alpha(GlassTheme.background, 0.76) }
+            }
+            border.color: GlassTheme.alpha(GlassTheme.text, 0.17)
+        }
+    }
     Controls.Overlay.modal: Rectangle { color: "#99080b12" }
-    enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
-    exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick } }
+    enter: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "scale"; from: GlassTheme.reducedMotion ? 1 : 0.97; to: 1; duration: GlassTheme.slow; easing.type: Easing.OutCubic }
+        }
+    }
+    exit: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick; easing.type: Easing.InCubic }
+            NumberAnimation { property: "scale"; to: GlassTheme.reducedMotion ? 1 : 0.985; duration: GlassTheme.quick; easing.type: Easing.InCubic }
+        }
+    }
     contentItem: Item {
         Column {
             id: heading; width: parent.width - closeButton.width - 16; spacing: 6
@@ -115,12 +152,21 @@ Controls.Popup {
                         PaymentText { text: "Tên bản chơi"; font.weight: Font.DemiBold }
                         Input { id: nameField; objectName: "createInstanceName"; width: parent.width; placeholder: dialog.gameVersion ? dialog.defaultName : "Đặt tên, hoặc dùng tên tự động" }
                     }
-                    Button { label: dialog.advancedOpen ? "Thiết lập nâng cao  ⌃" : "Thiết lập nâng cao  ⌄"; quiet: true; onClicked: dialog.advancedOpen = !dialog.advancedOpen }
-                    Column { visible: dialog.advancedOpen; width: parent.width; spacing: 10
-                        Input { id: heapField; width: parent.width; placeholder: "RAM (MB) · để trống dùng cài đặt mặc định" }
-                        Flow { width: parent.width; spacing: 8
-                            Button { label: "Chọn thư mục chơi"; onClicked: folder.open() }
-                            PaymentText { width: Math.max(160, parent.width - 220 * GlassTheme.scale); text: dialog.gameDirUrl || "Thư mục mặc định của launcher"; color: GlassTheme.muted; wrapMode: Text.WrapAnywhere }
+                    Button { objectName: "createAdvancedToggle"; label: dialog.advancedOpen ? "Thiết lập nâng cao  ⌃" : "Thiết lập nâng cao  ⌄"; quiet: true; onClicked: dialog.advancedOpen = !dialog.advancedOpen }
+                    Item {
+                        id: advancedPanel; objectName: "createAdvancedPanel"
+                        width: parent.width; height: dialog.advancedOpen ? advancedFields.implicitHeight : 0
+                        visible: height > 0; clip: true
+                        opacity: dialog.advancedOpen ? 1 : 0
+                        enabled: dialog.advancedOpen
+                        Behavior on height { enabled: dialog.visible && !GlassTheme.reducedMotion; NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { enabled: dialog.visible && !GlassTheme.reducedMotion; NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
+                        Column { id: advancedFields; width: parent.width; spacing: 10
+                            Input { id: heapField; width: parent.width; placeholder: "RAM (MB) · để trống dùng cài đặt mặc định" }
+                            Flow { width: parent.width; spacing: 8
+                                Button { label: "Chọn thư mục chơi"; onClicked: folder.open() }
+                                PaymentText { width: Math.max(160, parent.width - 220 * GlassTheme.scale); text: dialog.gameDirUrl || "Thư mục mặc định của launcher"; color: GlassTheme.muted; wrapMode: Text.WrapAnywhere }
+                            }
                         }
                     }
                     PaymentText { width: parent.width; text: dialog.missingStep || (catalogBridge.busy ? catalogBridge.activity : ""); color: dialog.versionUnsupported ? GlassTheme.danger : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }

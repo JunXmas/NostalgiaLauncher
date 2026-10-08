@@ -10,6 +10,7 @@ Rectangle {
     property rect backdropRect: Qt.rect(0, 0, -1, -1)
     property real blurOpacity: 0.60
     property int blurRadius: 48
+    property bool autoPaddingEnabled: true
     property real finishOpacity: 1
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     radius: 24
@@ -47,6 +48,7 @@ Rectangle {
         visible: root.frosted && root.shaderAvailable
         source: capture
         blurEnabled: true
+        autoPaddingEnabled: root.autoPaddingEnabled
         blurMax: root.blurRadius
         blur: 0.8
         saturation: -0.15
