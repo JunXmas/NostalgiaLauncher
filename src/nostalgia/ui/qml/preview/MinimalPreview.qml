@@ -200,6 +200,8 @@ Item {
         }
     }
     SocialProfileDialog { id: socialProfileDialog }
+    UpdateNotice { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 24; z: 135; visible: active && !root.loginVisible; onDetailsRequested: updateDetails.open() }
+    UpdateDialog { id: updateDetails; backdrop: scene }
     Legacy.ConfirmDialog {
         objectName: "confirmDialog"
         anchors.fill: parent

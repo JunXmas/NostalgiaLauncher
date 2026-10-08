@@ -15,6 +15,11 @@ class PaymentOffer:
     regular_amount: int
     duration_months: int = 12
     lifetime: bool = False
+    upgrade_credit: int = 0
+    quote_id: str = ""
+    eligible: bool = True
+    upgrade: bool = False
+    current_plan: str = ""
 
     @property
     def plan_name(self) -> str:
@@ -38,6 +43,7 @@ class PaymentOrder:
     lifetime: bool = False
     manual_review: bool = False
     submitted: bool = False
+    payment_offer: PaymentOffer | None = None
 
 
 @dataclass(frozen=True, slots=True)

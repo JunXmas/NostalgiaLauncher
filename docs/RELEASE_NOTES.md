@@ -2,7 +2,18 @@
 
 Một launcher quen thuộc, được làm mới từ cách nhìn đến cách chơi. Nostalgia 1.2 giữ hệ màu của Nostalgia, đưa chất liệu kính vào giao diện, và giúp bạn cùng bạn bè bước vào một thế giới với ít thao tác hơn.
 
-**Đây là bản thử nghiệm 1.2.0rc11 để kiểm tra trước khi ra mắt.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+**Nostalgia 1.2.0rc12 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+
+## Mới trong rc12 — Gọn hơn, liền mạch hơn
+
+- **Sao lưu và nhập bản chơi đã có cửa sổ riêng đúng kích thước.** Sửa lỗi chữ và nút chồng lên trang Bản chơi; danh sách cuộn độc lập, vùng khôi phục luôn nằm trong cửa sổ. Kiểm tra ở 1024×600 và mức phóng chữ 150%.
+- **Mica đồng nhất trên popup của launcher:** quản lý bản chơi/server, hồ sơ, bộ lọc, sửa mods, xác nhận thao tác, sao lưu, nhập và cập nhật. Render phần mềm có nền dễ đọc; bộ chọn file của hệ điều hành giữ giao diện hệ thống.
+- **Cập nhật được trình bày rõ hơn:** thông báo kính gọn ở màn hình chính, changelog cuộn riêng, tiến độ tải và nút hành động cố định. Đóng thông báo theo phiên bản, không tự bật cửa sổ gây gián đoạn.
+- **Nâng cấp chỉ trả phần còn lại:** backend khấu trừ phần tiền đã mua chưa sử dụng. Khi vừa mua, Plus → Pro 40.000đ, Pro → Max 40.000đ, Max → Ultimate 100.000đ; giá thực tế được tính theo thời hạn còn lại và xác nhận trước khi tạo đơn. Giá đơn đã tạo không trôi theo thời gian.
+- **Giveaway từ web quản trị riêng:** chủ quản trị tìm người nhận bằng email Google, xác nhận tặng gói và xem lịch sử. Quà không tạo doanh thu giả hay tiền khấu trừ; thu hồi không ghi đè gói mua sau đó.
+- **Website Nostalgia được làm mới:** bố cục thoáng, ảnh giao diện thật, bảng quyền lợi, FAQ và bộ chọn Windows/Linux/Mac Intel/Apple Silicon. Giữ màu Nostalgia và đường tải dự phòng khi API GitHub không phản hồi.
+- Cắt gọn nhãn nút và placeholder dài, tránh chữ tràn qua ô kế bên.
+- Khôi phục đủ định dạng phát hành: bộ cài, ZIP tự cập nhật, Linux portable và SHA256SUMS. Không đính kèm ảnh preview hay dữ liệu quản trị.
 
 ## Một giao diện có sức sống
 

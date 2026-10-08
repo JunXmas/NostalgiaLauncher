@@ -31,7 +31,7 @@ Controls.Popup {
         storageBridge.setOrganization(instance.instanceId, groupField.text, favorite.checked);
         close();
     }
-    background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; blurOpacity: 0.9; color: GlassTheme.alpha(GlassTheme.surface, 0.90) }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#aa080b12" }
     enter: Transition {
         ParallelAnimation {

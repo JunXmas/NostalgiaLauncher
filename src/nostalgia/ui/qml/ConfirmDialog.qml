@@ -54,7 +54,7 @@ Item {
                 onWheel: function (wheel) { wheel.accepted = true; }
             }
         }
-        background: DialogFrame { color: Theme.surface; border.color: Theme.border; radius: Theme.radius }
+        background: DialogFrame { color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface; border.color: Theme.border; radius: Theme.radius }
         contentItem: Flickable {
             contentHeight: contents.implicitHeight
             clip: true

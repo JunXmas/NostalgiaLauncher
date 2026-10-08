@@ -110,7 +110,8 @@ class PaymentBridge(WorkerBridge):
     @Slot()
     def createOrder(self) -> None:
         gateway = self._gateway
-        if self.busy or self._order or not self._offer_loaded or gateway is None:
+        can_create = self._offer_loaded and self._offer.eligible
+        if self.busy or self._order or not can_create or gateway is None:
             return
         offer, request_id = self._offer, self._request_id
         self._request("order", lambda: gateway.create_order(offer, request_id))

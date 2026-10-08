@@ -39,10 +39,13 @@ class HttpPaymentGateway:
         return parse_offer(self._request("GET", "/v1/plus/offer" + query))
 
     def create_order(self, offer: PaymentOffer, request_id: str) -> PaymentOrder:
+        payload = {"offer_id": offer.offer_id}
+        if offer.quote_id:
+            payload["quote_id"] = offer.quote_id
         document = self._request(
             "POST",
             "/v1/plus/orders",
-            body=json.dumps({"offer_id": offer.offer_id}).encode(),
+            body=json.dumps(payload).encode(),
             request_id=identifier(request_id),
         )
         return parse_order(document, offer)
@@ -52,7 +55,12 @@ class HttpPaymentGateway:
         if document is None:
             return None
         current_id = as_string(as_mapping(document).get("offer_id")) or ""
-        if current_id != offer.offer_id:
+        snapshot = as_mapping(document).get("offer")
+        if snapshot is not None:
+            offer = parse_offer(snapshot)
+            if offer.offer_id != current_id:
+                raise PaymentError("Gói của đơn thanh toán không khớp.")
+        elif current_id != offer.offer_id:
             offer = self.fetch_offer(identifier(current_id))
         return parse_order(document, offer)
 
@@ -60,7 +68,8 @@ class HttpPaymentGateway:
         document = self._request("GET", "/v1/plus/orders/" + identifier(order.order_id))
         current = parse_order(
             document,
-            PaymentOffer(
+            order.payment_offer
+            or PaymentOffer(
                 order.offer_id,
                 order.amount,
                 order.amount,
@@ -111,6 +120,8 @@ class HttpPaymentGateway:
             raise PaymentError(
                 "Phiên tài khoản ủng hộ hết hạn. Hãy đăng nhập lại trước khi thanh toán."
             )
+        if response.status == 409:
+            raise PaymentError("Giá hoặc gói đã thay đổi. Hãy tải lại giá trước khi tạo đơn.")
         if not response.is_ok:
             raise PaymentError("Không xác nhận được với dịch vụ thanh toán. Hãy thử lại sau.")
         return decode_json(response.body, what="phản hồi thanh toán")

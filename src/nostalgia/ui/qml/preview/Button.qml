@@ -13,7 +13,7 @@ Item {
     property bool clickable: true
     readonly property bool hovered: hover.hovered
     signal clicked
-    implicitWidth: labelRow.implicitWidth + 32
+    implicitWidth: caption.implicitWidth + (root.provider ? providerLogo.width + labelRow.spacing : 0) + 32
     implicitHeight: 42
     width: implicitWidth
     height: implicitHeight
@@ -49,10 +49,12 @@ Item {
         Row {
             id: labelRow
             anchors.centerIn: parent; spacing: 10
-            ProviderLogo { visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
+            ProviderLogo { id: providerLogo; visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
             Text {
                 id: caption
                 text: (root.icon ? root.icon + "  " : "") + root.label
+                width: Math.max(0, Math.min(implicitWidth, root.width - 32 - (root.provider ? providerLogo.width + labelRow.spacing : 0)))
+                elide: Text.ElideRight
                 color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
                 font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
             }

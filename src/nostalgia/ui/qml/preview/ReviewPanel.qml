@@ -16,7 +16,7 @@ Item {
         height: Math.min(520, parent.height - 40)
         x: (parent.width - width) / 2; y: (parent.height - height) / 2
         modal: true; dim: true; focus: true; padding: 24
-        background: Glass { padding: 0; color: GlassTheme.alpha(GlassTheme.surface, 0.90) }
+        background: PopupGlass {}
         Controls.Overlay.modal: Rectangle { color: "#a8080b12" }
         contentItem: Item {
             Button { anchors.top: parent.top; anchors.right: parent.right; width: 36; label: "×"; quiet: true; onClicked: tools.close() }

@@ -39,7 +39,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(560, parent.width - 48); height: Math.min(490, parent.height - 32)
         radius: Theme.radius
-        color: Theme.surface
+        color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface
         border.color: Theme.border
         border.width: 1
         MouseArea { anchors.fill: parent }

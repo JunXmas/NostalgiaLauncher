@@ -20,7 +20,7 @@ Controls.Popup {
     }
     closePolicy: serverBridge.busy ? Controls.Popup.NoAutoClose : Controls.Popup.CloseOnEscape
     onOpened: { if (!serverBridge.gameVersions.length && !serverBridge.busy) root.chooseEngine(root.engineId); }
-    background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; blurOpacity: 0.9; color: GlassTheme.alpha(GlassTheme.surface, 0.88) }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#a8080b12" }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     contentItem: Item {

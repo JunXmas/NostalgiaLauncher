@@ -29,9 +29,11 @@ Item {
             width: parent.width; spacing: Theme.gap
             AppearanceSettings { width: parent.width; height: implicitHeight }
     Preview.ServiceSettings { width: parent.width }
-    UpdatePanel {
+    Loader {
         id: updatePanel
         width: parent.width
+        height: item ? item.implicitHeight : 0
+        source: Theme.modern ? "../preview/UpdateSettings.qml" : "../UpdatePanel.qml"
     }
 
     Panel {

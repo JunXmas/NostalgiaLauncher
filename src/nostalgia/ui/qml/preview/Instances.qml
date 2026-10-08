@@ -79,11 +79,13 @@ Item {
             }
         }
         Button {
+            objectName: "openImportDialog"
             label: "Nhập bản chơi"
             quiet: true
             onClicked: imports.openDialog()
         }
         Button {
+            objectName: "openBackupDialog"
             label: "Sao lưu"
             quiet: true
             Accessible.name: "Sao lưu và thùng rác"
@@ -141,10 +143,10 @@ Item {
         id: editor
         onRepairRequested: function(instance) { repair.openFor(instance); }
     }
-    Legacy.ImportInstanceDialog {
+    ImportDialog {
         id: imports
     }
-    Legacy.DataManager {
+    BackupDialog {
         id: manager
     }
 }

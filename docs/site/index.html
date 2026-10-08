@@ -1,303 +1,570 @@
 <!doctype html>
-<!-- `no-js` gỡ ngay ở dòng đầu `app.js`. Để sẵn chứ không thêm bằng JS: CSS cần biết "không có
-     JavaScript" NGAY lúc vẽ khung đầu tiên, và thứ duy nhất chắc chắn có mặt lúc đó là HTML. -->
 <html lang="vi" class="no-js">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
-<title>Nostalgia Launcher — Tải xuống</title>
-<meta name="description" content="Minecraft launcher miễn phí, mã nguồn công khai: tài khoản, bản chơi, mod, LAN qua relay. Trang tự dò hệ điều hành và đưa đúng một nút tải.">
-
-<!-- Thẻ xem trước khi ai đó dán link vào Discord, Messenger, Zalo, X. Thiếu bộ này thì nơi
-     người ta thật sự chia nhau link — một người tải được rồi gửi cho bạn — hiện ra một ô
-     trắng không ảnh không chữ, đọc ra như link rác. Và đó cũng chính là chỗ KHÔNG ai tự
-     kiểm được: người dán thấy thẻ hỏng, còn chủ trang thì không bao giờ thấy.
-
-     `url` và `og:image` phải TUYỆT ĐỐI: các trình quét không chạy JavaScript và không giải
-     đường dẫn tương đối — ghi `og-card.jpg` là mất ảnh ở mọi nơi.
-
-     `og:image:alt` chứ không bỏ trống: người dùng trình đọc màn hình gặp thẻ này trong dòng
-     tin, và nếu không có nó họ chỉ nghe "hình ảnh". -->
-<link rel="canonical" href="https://junxmas.github.io/NostalgiaLauncher/site/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Nostalgia Launcher">
-<meta property="og:locale" content="vi_VN">
-<meta property="og:url" content="https://junxmas.github.io/NostalgiaLauncher/site/">
-<meta property="og:title" content="Nostalgia Launcher — Minecraft launcher miễn phí, mã nguồn công khai">
-<meta property="og:description" content="Tài khoản Microsoft và Ely.by, bản chơi, mod, chơi LAN với bạn qua relay. Không quảng cáo, không thu thập dữ liệu, mỗi bản có SHA256.">
-<meta property="og:image" content="https://junxmas.github.io/NostalgiaLauncher/site/og-card.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Logo khối lá Nostalgia trên ảnh bình minh trong Minecraft, kèm dòng chữ Nostalgia Launcher">
-<meta name="twitter:card" content="summary_large_image">
-
-<!-- ĐÚNG file icon ứng dụng (`packaging/icons/nostalgia-32.png`), không phải SVG vẽ lại.
-     Tab trình duyệt và thanh tác vụ sau khi cài phải là cùng một hình — khác nhau thì người
-     dùng không nối được trang web với app vừa tải. -->
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<svg class="icon-defs" aria-hidden="true">
-  <!-- Bộ lọc làm ra chất "kính lỏng": nhiễu fractal → làm mềm → dùng chính nhiễu đó để DỜI
-       từng pixel của ảnh phía sau. Kết quả là ảnh sau tấm bị uốn như nhìn qua thấu kính,
-       chứ không chỉ mờ đi.
-
-       `baseFrequency` thấp (0.008) cho sóng DÀI — tần số cao ra vân lăn tăn, đọc ra "kính
-       mờ phòng tắm" chứ không ra thấu kính. `scale="34"` là biên độ dời tính bằng pixel;
-       trên 50 thì chữ sau tấm bắt đầu méo thấy rõ.
-
-       `color-interpolation-filters="sRGB"`: mặc định của SVG là linearRGB, và nhiễu sinh ra
-       trong không gian đó sẽ lệch sáng hẳn so với phần còn lại của trang. -->
-  <filter id="liquid" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.013" numOctaves="2" seed="11" result="noise"/>
-    <feGaussianBlur in="noise" stdDeviation="1.6" result="soft"/>
-    <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-
-  <symbol id="icon-download" viewBox="0 0 24 24">
-    <path d="M12 3v11m0 0l-4.5-4.5M12 14l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </symbol>
-  <symbol id="icon-craft" viewBox="0 0 24 24">
-    <rect x="2" y="8" width="7" height="8" fill="currentColor" opacity=".55"/>
-    <rect x="9" y="8" width="6" height="8" fill="currentColor"/>
-    <rect x="15" y="8" width="7" height="8" fill="currentColor" opacity=".75"/>
-    <rect x="2" y="16" width="20" height="4" fill="currentColor" opacity=".35"/>
-  </symbol>
-  <symbol id="icon-play" viewBox="0 0 24 24">
-    <path d="M6 4l14 8-14 8V4z" fill="currentColor"/>
-  </symbol>
-  <symbol id="icon-check" viewBox="0 0 24 24">
-    <path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </symbol>
-  <symbol id="icon-code" viewBox="0 0 24 24">
-    <path d="M9 7l-5 5 5 5m6-10l5 5-5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </symbol>
-</svg>
-
-<header class="nav" id="nav">
-  <a class="brand pixel" href="#top">
-    <img class="brand-logo" src="logo.webp" alt="" width="128" height="128" decoding="async">
-    <span>Nostal<b>gia</b></span>
-  </a>
-  <nav class="nav-links" aria-label="Điều hướng chính">
-    <a href="#download" class="nav-link">Tải xuống</a>
-    <a href="#steps" class="nav-link">Bắt đầu</a>
-    <a href="#showcase" class="nav-link">Giao diện</a>
-  </nav>
-  <a class="nav-cta" href="https://github.com/JunXmas/NostalgiaLauncher">GitHub <span aria-hidden="true">↗</span></a>
-</header>
-
-<main>
-  <section id="top" class="hero">
-    <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
-
-    <div class="hero-copy">
-      <p class="hero-badge rise" style="--i:0">
-        <span class="dot" aria-hidden="true"></span>
-        Mã nguồn công khai · không quảng cáo
-      </p>
-      <h1 class="rise" style="--i:1"><span>Thế giới quen thuộc.</span><span class="grad">Khởi đầu mới.</span></h1>
-      <p class="tagline rise" style="--i:2">Minecraft launcher miễn phí, không quảng cáo.</p>
-      <p class="subtitle rise" style="--i:3">Chọn bản chơi, thêm mod, chơi LAN với bạn bè qua relay. Tài khoản Microsoft và Ely.by đều vào được.</p>
-    </div>
-
-    <!-- Khối tải nằm cột PHẢI, tức đúng nửa khung có mặt trời. Đây là chủ ý: tấm kính chỉ
-         phô ra chất khi phía sau nó có gì sáng và có chi tiết để uốn. Đặt nó bên trái — nơi
-         mặt nạ dìm tối để chữ đọc được — thì nó lại thành ô xám, đúng lỗi của bản trước. -->
-    <div class="hero-action">
-      <div id="download" class="download-block glass rise" style="--i:4" aria-live="polite">
-        <p id="download-status" class="status">Đang dò bản mới nhất…</p>
-
-        <!-- Không có JavaScript thì không dò được bản mới nhất, và dòng "Đang dò…" ở trên
-             đứng im vĩnh viễn — người dùng nhìn thấy một khối tải không có nút nào. `<noscript>`
-             là đúng công cụ cho chỗ này: trình duyệt tự ẩn nó khi script chạy được, nên không
-             tốn một dòng JS và không có cách nào quên gỡ. -->
-        <noscript>
-          <a class="btn btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest">
-            <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
-            Tới trang tải trên GitHub
-          </a>
-        </noscript>
-
-        <a id="primary-download" class="btn btn-primary" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>
-          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
-          <span id="primary-label">Tải xuống</span>
-          <span id="primary-meta" class="btn-meta"></span>
-        </a>
-
-        <!-- Hai hệ CÒN LẠI, không phải hệ đang dùng. Thiếu nút Windows ở đây thì người dùng
-             Linux chỉ thấy đúng một nút phụ chiếm hết hàng, đọc ra như nút chính thứ hai. -->
-        <div class="secondary-row">
-          <a id="windows-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>Windows</a>
-          <a id="linux-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>Linux</a>
-          <a id="macos-download" class="btn" href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest" hidden>macOS</a>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Nostalgia — Về với thế giới của bạn.</title>
+    <meta
+      name="description"
+      content="Một Minecraft launcher gọn, đẹp và đầy sức sống. Khám phá modpack, quản lý bản chơi, skin và cùng bạn bè xây nên thế giới của riêng mình."
+    />
+    <link
+      rel="canonical"
+      href="https://junxmas.github.io/NostalgiaLauncher/site/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Nostalgia Launcher" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta
+      property="og:url"
+      content="https://junxmas.github.io/NostalgiaLauncher/site/"
+    />
+    <meta property="og:title" content="Nostalgia — Về với thế giới của bạn." />
+    <meta
+      property="og:description"
+      content="Thế giới quen thuộc. Những cách chơi mới. Minecraft launcher cho Windows, Linux và macOS."
+    />
+    <meta
+      property="og:image"
+      content="https://junxmas.github.io/NostalgiaLauncher/site/og-card.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Nostalgia Launcher và thế giới Minecraft lúc bình minh"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link
+      rel="preload"
+      href="fonts/Manrope-Bold.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header class="nav" id="nav">
+      <a class="brand" href="#top"
+        ><img
+          class="brand-logo"
+          src="logo.webp"
+          alt=""
+          width="128"
+          height="128"
+          decoding="async"
+        /><span>Nostalgia</span></a
+      >
+      <nav class="nav-links" aria-label="Điều hướng chính">
+        <a href="#features">Khám phá</a><a href="#showcase">Giao diện</a
+        ><a href="#premium">Ủng hộ</a><a href="#faq">FAQ</a>
+      </nav>
+      <a class="nav-cta" href="#download"
+        >Tải launcher <span aria-hidden="true">↗</span></a
+      >
+    </header>
+    <main id="main">
+      <section id="top" class="hero">
+        <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <a class="hero-badge" href="#showcase"
+            ><span class="live-dot"></span> Một Nostalgia mới, đang chờ bạn
+            <span aria-hidden="true">→</span></a
+          >
+          <h1>Về với thế giới<br /><span>của bạn.</span></h1>
+          <p class="hero-description">
+            Một nơi gọn gàng cho những cuộc phiêu lưu dài.<br />Từ bản chơi đầu
+            tiên đến thế giới cùng bạn bè.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#download"
+              >Tải Nostalgia <span aria-hidden="true">↓</span></a
+            ><a class="btn btn-quiet" href="#showcase"
+              >Khám phá giao diện <span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <p class="hero-note">
+            Miễn phí để bắt đầu <span>·</span> Windows, Linux & macOS
+          </p>
         </div>
-
-        <!-- Bốn câu này là thứ người lạ cần biết TRƯỚC khi bấm tải một file lạ. Mỗi câu
-             kiểm lại được trong kho — không có con số nào bịa. -->
-        <ul class="promises">
-          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Không quảng cáo</li>
-          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Không thu thập dữ liệu</li>
-          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Mỗi bản có SHA256</li>
-          <li><svg aria-hidden="true"><use href="#icon-check"></use></svg>Đọc được toàn bộ mã</li>
-        </ul>
-
-        <a class="all-releases-link" href="https://github.com/JunXmas/NostalgiaLauncher/releases">Xem tất cả bản tải →</a>
-
-        <details id="other-files" hidden>
-          <summary>Hệ điều hành khác / file khác</summary>
-          <ul id="other-files-list"></ul>
-        </details>
+        <figure class="hero-window">
+          <div class="window-top">
+            <span class="window-dots"><i></i><i></i><i></i></span
+            ><span>Nostalgia Launcher</span><span>THẾ GIỚI CỦA BẠN</span>
+          </div>
+          <img
+            src="media/home.webp"
+            alt="Trang chủ mới của Nostalgia với khối Minecraft, bản chơi và thanh điều hướng gọn"
+            width="1440"
+            height="900"
+            fetchpriority="high"
+            decoding="async"
+          />
+          <figcaption>Giao diện launcher thật · Dữ liệu minh hoạ</figcaption>
+        </figure>
+      </section>
+      <section
+        class="compatibility container"
+        aria-label="Các nền tảng Minecraft được hỗ trợ"
+      >
+        <p>CHỌN CÁCH CHƠI CỦA BẠN</p>
+        <div>
+          <span>Vanilla</span><span>Fabric</span><span>Forge</span
+          ><span>NeoForge</span><span>Quilt</span>
+        </div>
+      </section>
+      <section id="features" class="section container">
+        <div class="section-head">
+          <p class="eyebrow">QUEN THUỘC, THEO MỘT CÁCH MỚI</p>
+          <h2>Ít rối hơn.<br />Nhiều cảm hứng hơn.</h2>
+          <p>
+            Bản chơi, nội dung và người bạn muốn gặp.<br />Mọi thứ ở đúng chỗ,
+            để bạn dành thời gian cho game.
+          </p>
+        </div>
+        <div class="feature-grid" data-stagger>
+          <article class="feature-card glass">
+            <span class="feature-icon purple" aria-hidden="true">▦</span>
+            <h3>Thư viện trong tầm tay</h3>
+            <p>
+              Mods, modpack, shader và resource pack. Xem thông tin, chọn phiên
+              bản phù hợp rồi cài ngay trong launcher.
+            </p>
+            <div class="card-tags">
+              <span>Modrinth</span><span>CurseForge</span>
+            </div>
+          </article>
+          <article class="feature-card glass">
+            <span class="feature-icon amber" aria-hidden="true">◈</span>
+            <h3>Mỗi thế giới, một bản chơi</h3>
+            <p>
+              Tách nội dung và cấu hình, ghim bản yêu thích, nhập từ launcher
+              khác và sao lưu trước khi thử một điều mới.
+            </p>
+            <div class="card-tags">
+              <span>Nhập bản chơi</span><span>Sao lưu</span>
+            </div>
+          </article>
+          <article class="feature-card glass">
+            <span class="feature-icon pink" aria-hidden="true">✦</span>
+            <h3>Có bạn, vui hơn một chút</h3>
+            <p>
+              Kết bạn, chat và mời chơi. Tài khoản Nostalgia dùng Google; tài
+              khoản Minecraft được quản lý riêng.
+            </p>
+            <div class="card-tags"><span>Bạn bè</span><span>Hồ sơ</span></div>
+          </article>
+        </div>
+      </section>
+      <section id="showcase" class="section container showcase">
+        <div class="section-head">
+          <p class="eyebrow">MỘT LỚP KÍNH. MỘT THẾ GIỚI MỚI.</p>
+          <h2>Đẹp ở những điều<br />bạn dùng mỗi ngày.</h2>
+          <p>
+            Màu quen thuộc, bề mặt mica và chuyển động nhẹ nhàng.<br />Không
+            gian để nội dung Minecraft được nổi bật.
+          </p>
+        </div>
+        <div
+          class="showcase-tabs"
+          role="tablist"
+          aria-label="Xem giao diện launcher"
+        >
+          <button
+            id="tab-mods"
+            role="tab"
+            aria-controls="showcase-panel"
+            aria-selected="true"
+            data-shot="mods"
+          >
+            Thư viện</button
+          ><button
+            id="tab-create"
+            role="tab"
+            aria-controls="showcase-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-shot="create"
+          >
+            Tạo bản chơi</button
+          ><button
+            id="tab-skins"
+            role="tab"
+            aria-controls="showcase-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-shot="skins"
+          >
+            Skin 3D</button
+          ><button
+            id="tab-cosmetics"
+            role="tab"
+            aria-controls="showcase-panel"
+            aria-selected="false"
+            tabindex="-1"
+            data-shot="cosmetics"
+          >
+            Cosmetic
+          </button>
+        </div>
+        <figure
+          class="showcase-frame glass"
+          id="showcase-panel"
+          role="tabpanel"
+          aria-labelledby="tab-mods"
+          tabindex="0"
+        >
+          <img
+            id="showcase-image"
+            src="media/mods.webp"
+            alt="Thư viện mods với ảnh đại diện mờ phía sau từng ô nội dung"
+            width="1440"
+            height="900"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption id="showcase-caption">
+            Thư viện · Nội dung dễ tìm, phiên bản dễ chọn.
+          </figcaption>
+        </figure>
+      </section>
+      <section class="section container together" data-stagger>
+        <div class="together-copy">
+          <p class="eyebrow">CÙNG MỘT MODPACK. CÙNG MỘT CUỘC VUI.</p>
+          <h2>
+            Bớt chuẩn bị.<br />Thêm thời gian<br /><span>chơi cùng nhau.</span>
+          </h2>
+          <p>
+            Host với Plus có thể chia sẻ modpack cho bạn bè. Máy khách chọn nội
+            dung cần cài, xem cảnh báo trước khi nhận file và cập nhật vào đúng
+            bản chơi ở lần sau.
+          </p>
+          <a class="text-link" href="#premium"
+            >Khám phá các gói hỗ trợ <span aria-hidden="true">→</span></a
+          >
+        </div>
+        <div class="sync-card glass">
+          <div class="sync-header">
+            <span class="live-dot"></span><strong>Thế giới cùng bạn</strong
+            ><span class="mini-badge">PLUS</span>
+          </div>
+          <p class="sync-intro">Bạn quyết định những gì được đồng bộ.</p>
+          <div class="sync-line">
+            <span class="sync-symbol purple">▦</span>
+            <div>
+              <strong>Modpack & mods bổ sung</strong
+              ><small>Nội dung do host lựa chọn</small>
+            </div>
+            <span class="sync-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="sync-line">
+            <span class="sync-symbol green">▧</span>
+            <div>
+              <strong>Resource pack & shader</strong
+              ><small>Lựa chọn trước khi cài vào máy</small>
+            </div>
+            <span class="sync-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="sync-line">
+            <span class="sync-symbol amber">↻</span>
+            <div>
+              <strong>Bản chơi vẫn là của bạn</strong
+              ><small>Cập nhật lần sau, giữ đúng định danh</small>
+            </div>
+            <span class="sync-check" aria-hidden="true">✓</span>
+          </div>
+          <p class="security-note">
+            Chỉ nhận mods và file custom từ người bạn tin tưởng. Đồng bộ không
+            bảo đảm file an toàn.
+          </p>
+          <p class="diagram-label">
+            Minh hoạ luồng đồng bộ · Không phải cửa sổ launcher
+          </p>
+        </div>
+      </section>
+      <section id="premium" class="section container">
+        <div class="section-head">
+          <p class="eyebrow">ỦNG HỘ MỘT DỰ ÁN BẠN YÊU</p>
+          <h2>Một chút cho Nostalgia.<br />Thêm nhiều điều cho bạn.</h2>
+          <p>
+            Launcher cơ bản vẫn miễn phí. Các gói hỗ trợ mở thêm quyền<br />chơi
+            cùng, sửa mod và cá nhân hoá hồ sơ.
+          </p>
+        </div>
+        <div class="plans-grid" data-stagger>
+          <article class="plan glass">
+            <span class="plan-kicker">BẮT ĐẦU NHẸ NHÀNG</span>
+            <h3>Plus</h3>
+            <p class="plan-price">29k<span> / 1 tháng</span></p>
+            <ul>
+              <li>Host & đồng bộ modpack</li>
+              <li>Sửa xung đột mod được hỗ trợ</li>
+              <li>Chọn 1 trong 3 bộ cosmetic</li>
+            </ul>
+            <a href="#download" class="btn btn-outline"
+              >Chọn trong launcher <span aria-hidden="true">→</span></a
+            >
+          </article>
+          <article class="plan glass">
+            <span class="plan-kicker">CÙNG CHƠI LÂU HƠN</span>
+            <h3>Pro</h3>
+            <p class="plan-price">69k<span> / 6 tháng</span></p>
+            <ul>
+              <li>Mọi quyền của Plus</li>
+              <li>Tạo & quản lý server trên máy</li>
+              <li>Badge và điểm nhấn hồ sơ</li>
+            </ul>
+            <a href="#download" class="btn btn-outline"
+              >Chọn trong launcher <span aria-hidden="true">→</span></a
+            >
+          </article>
+          <article class="plan glass featured-plan">
+            <span class="plan-kicker">MỘT NĂM PHIÊU LƯU</span>
+            <h3>Max</h3>
+            <p class="plan-price">109k<span> / 12 tháng</span></p>
+            <ul>
+              <li>Mọi quyền của Pro</li>
+              <li>Badge Pioneer</li>
+              <li>Quyền xem preview sớm</li>
+            </ul>
+            <a href="#download" class="btn btn-primary"
+              >Chọn trong launcher <span aria-hidden="true">→</span></a
+            >
+          </article>
+          <article class="plan glass">
+            <span class="plan-kicker">GẮN BÓ CÙNG NOSTALGIA</span>
+            <h3>Ultimate</h3>
+            <p class="plan-price">209k<span> / mua một lần</span></p>
+            <ul>
+              <li>Mọi quyền của Max</li>
+              <li>Badge Founder</li>
+              <li>Không hết hạn theo gói</li>
+            </ul>
+            <a href="#download" class="btn btn-outline"
+              >Chọn trong launcher <span aria-hidden="true">→</span></a
+            >
+          </article>
+        </div>
+        <p class="plan-note">
+          Nâng cấp được khấu trừ phần tiền đã mua còn hiệu lực; giveaway không
+          tạo khoản khấu trừ. Giá cuối cùng hiện trước khi tạo đơn. Thanh toán
+          Vietcombank được đối chiếu và duyệt thủ công. Gói server chạy trên máy
+          của bạn, không gồm thuê máy chủ cloud. Ultimate có hiệu lực trong thời
+          gian dịch vụ hoạt động.
+        </p>
+      </section>
+      <section id="download" class="section container download-section">
+        <div class="download-world" aria-hidden="true"></div>
+        <div class="download-content">
+          <p class="eyebrow">CUỘC PHIÊU LƯU TIẾP THEO</p>
+          <h2>Mở launcher.<br />Về nhà thôi.</h2>
+          <p>Chọn đúng hệ điều hành, tải về và bắt đầu.</p>
+          <div class="platform-picker" aria-label="Chọn hệ điều hành">
+            <button
+              data-platform="windows"
+              data-arch="x64"
+              aria-pressed="false"
+            >
+              Windows</button
+            ><button data-platform="linux" data-arch="x64" aria-pressed="false">
+              Linux</button
+            ><button
+              data-platform="macos"
+              data-arch="arm64"
+              aria-pressed="false"
+            >
+              Mac · Apple Silicon</button
+            ><button data-platform="macos" data-arch="x64" aria-pressed="false">
+              Mac · Intel
+            </button>
+          </div>
+          <p id="download-status" class="download-status" role="status">
+            Đang dò bản phát hành mới nhất…
+          </p>
+          <a
+            class="btn btn-primary download-primary"
+            id="primary-download"
+            href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest"
+            hidden
+            ><span id="primary-label">Tải launcher</span
+            ><span id="primary-meta"></span><span aria-hidden="true">↓</span></a
+          >
+          <div class="secondary-downloads">
+            <a
+              id="windows-download"
+              href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest"
+              hidden
+              >Windows ↗</a
+            ><a
+              id="linux-download"
+              href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest"
+              hidden
+              >Linux ↗</a
+            ><a
+              id="macos-download"
+              href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest"
+              hidden
+              >macOS · Apple Silicon ↗</a
+            >
+          </div>
+          <noscript
+            ><p>
+              <a
+                class="btn btn-primary"
+                href="https://github.com/JunXmas/NostalgiaLauncher/releases/latest"
+                >Tải bản mới nhất trên GitHub ↗</a
+              >
+            </p></noscript
+          >
+          <details id="other-files" hidden>
+            <summary>Các định dạng khác · .deb, .rpm, ZIP & portable</summary>
+            <ul id="other-files-list"></ul>
+          </details>
+          <p class="download-hint">
+            Linux Mint: chọn Linux và tải .deb ở mục định dạng khác.<br />Bản
+            thử nghiệm và bản nháp không được chọn làm bản tải mặc định.
+          </p>
+        </div>
+      </section>
+      <section id="steps" class="section container steps">
+        <div class="section-head">
+          <p class="eyebrow">KHÔNG CẦN VỘI</p>
+          <h2>Vào thế giới của bạn,<br />trong ba bước.</h2>
+        </div>
+        <div class="steps-grid" data-stagger>
+          <article>
+            <span>01</span>
+            <h3>Cài launcher</h3>
+            <p>
+              Chọn bộ cài phù hợp với hệ điều hành và kiến trúc máy của bạn.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Đăng nhập theo cách bạn chơi</h3>
+            <p>
+              Microsoft hoặc Ely.by cho Minecraft. Google cho tài khoản
+              Nostalgia, bạn bè và gói hỗ trợ.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Chọn cuộc phiêu lưu</h3>
+            <p>
+              Tạo bản chơi, tìm modpack hoặc nhập thế giới đã có. Game và Java
+              được tải khi cần.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section id="faq" class="section container faq">
+        <div class="section-head">
+          <p class="eyebrow">TRƯỚC KHI BẮT ĐẦU</p>
+          <h2>Có thể bạn đang thắc mắc.</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Nostalgia có miễn phí không?</summary>
+            <p>
+              Có. Quản lý bản chơi, thư viện nội dung và tính năng launcher cơ
+              bản dùng miễn phí. Plus, Pro, Max và Ultimate là các gói hỗ trợ
+              tuỳ chọn; bạn xem quyền lợi và giá trong launcher trước khi mua.
+            </p>
+          </details>
+          <details>
+            <summary>Google có thay cho tài khoản Microsoft không?</summary>
+            <p>
+              Không. Google quản lý tài khoản Nostalgia, bạn bè và quyền
+              premium. Để chơi bằng tài khoản Minecraft Microsoft, bạn vẫn cần
+              đăng nhập Microsoft và có quyền sở hữu game phù hợp.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Chỉ một người mua Plus thì bạn bè đồng bộ được không?
+            </summary>
+            <p>
+              Được. Host có Plus trở lên mở chia sẻ modpack; bạn bè nhận lời mời
+              và chọn nội dung cần cài. Quyền host được kiểm tra trên backend.
+              Chỉ nhận mods từ người bạn tin tưởng.
+            </p>
+          </details>
+          <details>
+            <summary>Server Pro có phải máy chủ thuê trên cloud không?</summary>
+            <p>
+              Không. Launcher hỗ trợ tạo, cấu hình và chạy server trên máy của
+              bạn. Khả năng tương thích mod/plugin phụ thuộc nền tảng và phiên
+              bản; kết nối từ ngoài mạng còn phụ thuộc cấu hình mạng của bạn.
+            </p>
+          </details>
+          <details>
+            <summary>Tôi đã mua gói thấp hơn, nâng cấp thế nào?</summary>
+            <p>
+              Chọn gói cao hơn trong launcher. Backend tính khoản khấu trừ theo
+              phần tiền đã mua chưa sử dụng và hiện giá trước khi tạo đơn. Gia
+              hạn cùng gói dùng giá thường; phần quyền được giveaway không tạo
+              tiền khấu trừ.
+            </p>
+          </details>
+          <details>
+            <summary>Thanh toán xong gói có mở ngay không?</summary>
+            <p>
+              Hiện thanh toán Vietcombank được duyệt thủ công sau khi đối chiếu
+              tiền thực nhận. Nút “Tôi đã chuyển khoản” chỉ gửi yêu cầu kiểm
+              tra, không tự kích hoạt gói.
+            </p>
+          </details>
+          <details>
+            <summary>Ứng dụng dùng thông tin tài khoản nào?</summary>
+            <p>
+              Đăng nhập Google dùng email, tên và avatar để tạo tài khoản
+              Nostalgia. Dịch vụ lưu dữ liệu cần cho bạn bè, hồ sơ, phiên đăng
+              nhập và gói hỗ trợ. Bạn có thể chơi và quản lý bản chơi cơ bản mà
+              không mua premium.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer class="container">
+      <div class="footer-top">
+        <a class="brand" href="#top"
+          ><img
+            class="brand-logo"
+            src="logo.webp"
+            alt=""
+            width="128"
+            height="128"
+            decoding="async"
+          /><span>Nostalgia</span></a
+        >
+        <p>Thế giới quen thuộc.<br />Những cách chơi mới.</p>
+        <div class="footer-links">
+          <a href="https://github.com/JunXmas/NostalgiaLauncher">GitHub ↗</a
+          ><a href="https://github.com/JunXmas/NostalgiaLauncher/releases"
+            >Changelog ↗</a
+          ><a href="#faq">Trợ giúp</a>
+        </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Chỗ trang doanh nghiệp đặt logo khách hàng. Dự án này không có khách hàng để trưng, và
-       logo bịa thì lộ ngay — nên đặt bốn con số VỀ MÃ NGUỒN, đếm được lại trên GitHub. -->
-  <section class="proof" aria-label="Số liệu dự án">
-    <div class="proof-grid glass" data-stagger>
-      <div class="proof-item">
-        <span class="proof-num">1 567</span>
-        <span class="proof-label">test tự động mỗi lần commit</span>
+      <div class="project-proof">
+        <span
+          ><strong class="proof-num">1.198</strong> hàm kiểm thử trong mã
+          nguồn</span
+        ><span
+          ><strong id="download-total">758</strong> lượt tải các gói · gồm mốc
+          kho cũ</span
+        >
       </div>
-      <div class="proof-item">
-        <span class="proof-num">0</span>
-        <span class="proof-label">phụ thuộc runtime ở phần lõi</span>
+      <div class="footer-bottom">
+        <span>© Nostalgia · jun</span
+        ><span>Mã nguồn công khai · PolyForm Strict 1.0.0</span
+        ><span>Không liên kết với Mojang hoặc Microsoft.</span>
       </div>
-      <div class="proof-item">
-        <span class="proof-num">4</span>
-        <span class="proof-label">mod loader: Fabric, Quilt, Forge, NeoForge</span>
-      </div>
-      <!-- `app.js` thay con số này bằng tổng thật từ API GitHub. Viết sẵn một con số ĐÚNG ở
-           đây chứ không để trống hay ghi "—": người không có JavaScript, hoặc gặp lúc API
-           cháy ngưỡng 60 lượt/giờ, vẫn phải đọc được một con số thật. Ô trống trong một băng
-           bốn số liệu đọc ra như trang hỏng.
-
-           Số này không tự cập nhật nên nó sẽ cũ dần — chấp nhận được vì nó chỉ thấp hơn sự
-           thật, không bao giờ cao hơn. `data-*` ghi mốc để sau còn biết nó cũ tới đâu. -->
-      <div class="proof-item">
-        <span class="proof-num" id="download-total" data-as-of="2026-10-05">758</span>
-        <span class="proof-label">lượt tải launcher</span>
-      </div>
-    </div>
-  </section>
-
-  <section id="steps" class="steps">
-    <div class="section-head">
-      <p class="eyebrow pixel">Bắt đầu</p>
-      <h2>Vào game trong ba bước</h2>
-      <p>Không cần cài Java trước, không cần tìm bản mod loader đúng đời, không cần sửa file cấu hình nào.</p>
-    </div>
-    <div class="steps-grid" data-stagger>
-      <div class="step glass">
-        <svg class="step-icon" aria-hidden="true"><use href="#icon-download"></use></svg>
-        <p class="step-num pixel">01</p>
-        <h3>Tải launcher</h3>
-        <p>Trang tự nhận hệ điều hành và đưa đúng một file.</p>
-      </div>
-      <div class="step glass">
-        <svg class="step-icon" aria-hidden="true"><use href="#icon-craft"></use></svg>
-        <p class="step-num pixel">02</p>
-        <h3>Tạo bản chơi</h3>
-        <p>Chọn phiên bản, thêm Fabric/Forge và mod yêu thích.</p>
-      </div>
-      <div class="step glass">
-        <svg class="step-icon" aria-hidden="true"><use href="#icon-play"></use></svg>
-        <p class="step-num pixel">03</p>
-        <h3>Bắt đầu chơi</h3>
-        <p>Bấm CHƠI. Java tự tải nếu máy chưa có.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="showcase" class="showcase">
-    <div class="section-head">
-      <p class="eyebrow pixel">Giao diện</p>
-      <h2>Bảy trang, bảy màu</h2>
-      <p>Mỗi trang trong launcher mang một sắc riêng, nên nhìn một cái là biết đang ở đâu.</p>
-    </div>
-    <div class="shots" data-stagger>
-      <figure class="shot glass"><img src="../showcase/home.jpg" alt="Màn hình chính của launcher" loading="lazy" decoding="async"><figcaption>Trang chủ</figcaption></figure>
-      <figure class="shot glass"><img src="../showcase/create-instance.jpg" alt="Màn hình tạo bản chơi mới" loading="lazy" decoding="async"><figcaption>Tạo bản chơi</figcaption></figure>
-      <figure class="shot glass"><img src="../showcase/library.jpg" alt="Thư viện mod và modpack" loading="lazy" decoding="async"><figcaption>Thư viện mod</figcaption></figure>
-      <figure class="shot glass"><img src="../showcase/multiplayer.jpg" alt="Màn hình chơi mạng LAN qua relay" loading="lazy" decoding="async"><figcaption>Chơi chung</figcaption></figure>
-      <figure class="shot glass"><img src="../showcase/accounts-skins.jpg" alt="Trang tài khoản và thư viện skin" loading="lazy" decoding="async"><figcaption>Tài khoản &amp; skin</figcaption></figure>
-      <figure class="shot glass"><img src="../showcase/log.jpg" alt="Nhật ký game" loading="lazy" decoding="async"><figcaption>Nhật ký</figcaption></figure>
-    </div>
-  </section>
-
-  <section class="features">
-    <div class="section-head">
-      <p class="eyebrow pixel">Có sẵn</p>
-      <h2>Không cần cài thêm gì</h2>
-      <p>Những việc người chơi thường phải tự xoay, launcher lo sẵn.</p>
-    </div>
-    <div class="features-grid" data-stagger>
-      <div class="step glass">
-        <h3>Java tự lo</h3>
-        <p>Thiếu Java đúng đời thì launcher tự tải, không bắt đi tìm bản cài.</p>
-      </div>
-      <div class="step glass">
-        <h3>Modpack kéo-thả</h3>
-        <p>Thả file .mrpack hoặc .zip vào cửa sổ là xong. CurseForge và Modrinth đều nhận.</p>
-      </div>
-      <div class="step glass">
-        <h3>LAN qua relay</h3>
-        <p>Chơi chung với bạn mà không mở cổng router, không cần Hamachi.</p>
-      </div>
-      <div class="step glass">
-        <h3>Nhập từ launcher cũ</h3>
-        <p>Đang dùng launcher khác thì mang bản chơi và tài khoản sang.</p>
-      </div>
-      <div class="step glass">
-        <h3>Tự cập nhật</h3>
-        <p>Có bản mới thì báo ngay trong app, tải và áp một lần bấm.</p>
-      </div>
-      <div class="step glass">
-        <h3>Mã nguồn công khai</h3>
-        <p>PolyForm Strict 1.0.0. Toàn bộ mã đọc được trên GitHub, không có gì chạy ngầm.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Nút tải ở hero đã cuộn khỏi màn hình từ lâu lúc người đọc tới đây. Không có dải này
-       thì người vừa bị thuyết phục phải cuộn ngược lên đầu trang. -->
-  <section class="closing">
-    <div class="closing-card glass">
-      <h2>Tải về và chơi trong vài phút</h2>
-      <p>Miễn phí, không tài khoản bắt buộc, không quảng cáo. Mỗi bản phát hành đều kèm SHA256 để tự đối chiếu.</p>
-      <div class="closing-actions">
-        <a class="btn btn-primary" href="#download">
-          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
-          Lên đầu trang tải
-        </a>
-        <a class="btn" href="https://github.com/JunXmas/NostalgiaLauncher">
-          <svg class="icon" aria-hidden="true"><use href="#icon-code"></use></svg>
-          Đọc mã nguồn
-        </a>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <div class="footer-brand">
-    <img class="brand-logo" src="logo.webp" alt="" width="128" height="128" loading="lazy" decoding="async">
-    <span>
-      Nostalgia Launcher
-      <span class="footer-note">Dự án độc lập, không liên kết với Mojang hoặc Microsoft.</span>
-    </span>
-  </div>
-  <div class="footer-links">
-    <a href="https://github.com/JunXmas/NostalgiaLauncher#readme">Hướng dẫn cài đặt</a>
-    <a href="https://github.com/JunXmas/NostalgiaLauncher/releases">Bản phát hành</a>
-    <a href="https://github.com/JunXmas/NostalgiaLauncher">GitHub ↗</a>
-  </div>
-</footer>
-
-<script src="app.js"></script>
-</body>
+    </footer>
+  </body>
 </html>

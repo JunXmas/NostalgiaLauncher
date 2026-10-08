@@ -41,7 +41,7 @@ Rectangle {
         x: Math.round((parent.width - width) / 2); y: Math.round((parent.height - height) / 2)
         width: Math.min(760, parent.width - 48); height: Math.min(440, parent.height - 48)
         modal: true; focus: true; padding: 20
-        background: Rectangle { color: Theme.surface; border.color: Theme.border }
+        background: DialogFrame { color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface; border.color: Theme.border }
         Column {
             anchors.fill: parent; spacing: 12
             Text { text: Tr.phrase("Chi tiết lỗi"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }

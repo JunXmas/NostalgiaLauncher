@@ -34,6 +34,8 @@ def fetch_checkout(gateway: PaymentGateway, selected_offer_id: str) -> PaymentCh
         offer = gateway.fetch_offer(order.offer_id)
     if order is not None and order.status in ("expired", "cancelled"):
         order = None
+    if order is not None and order.payment_offer is not None:
+        offer = order.payment_offer
     return PaymentCheckout(offer, order)
 
 
@@ -61,9 +63,12 @@ def describe_checkout(
     return {
         "stage": status,
         "demonstration": demonstration,
-        "available": offer_loaded and gateway_available,
+        "available": offer_loaded and gateway_available and offer.eligible,
         "amount": offer.amount,
         "regularAmount": offer.regular_amount,
+        "upgradeCredit": offer.upgrade_credit,
+        "isUpgrade": offer.upgrade,
+        "eligible": offer.eligible,
         "months": offer.duration_months,
         "planName": offer.plan_name,
         "lifetime": offer.lifetime,

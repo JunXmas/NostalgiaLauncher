@@ -16,7 +16,7 @@ Controls.Popup {
     readonly property bool mine: profile.mine === true
     function showFor(accountId) { if (profileBridge.busy) return; root.editing = false; root.open(); profileBridge.open(accountId); }
     onClosed: profileBridge.close()
-    background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; blurOpacity: 0.85; color: GlassTheme.alpha(GlassTheme.surface, 0.90) }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#aa080b12" }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     contentItem: Item {

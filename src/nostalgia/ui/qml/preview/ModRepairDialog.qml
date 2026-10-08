@@ -19,7 +19,7 @@ Controls.Popup {
     property string instanceLabel: ""
     property var details: modRepairBridge.details
     function openFor(instance) { instanceId=instance.instanceId;instanceLabel=instance.label;open();modRepairBridge.scan(instanceId); }
-    background: Glass { padding: 0; radius: 24; color: GlassTheme.surface }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#aa080b12" }
     contentItem: Item {
         Column {

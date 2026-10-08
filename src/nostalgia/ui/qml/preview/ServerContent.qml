@@ -90,7 +90,7 @@ Item {
         x: parent ? (parent.width - width) / 2 : 0; y: parent ? (parent.height - height) / 2 : 0
         modal: true; dim: true; focus: true; padding: 24
         closePolicy: serverBridge.busy ? Controls.Popup.NoAutoClose : Controls.Popup.CloseOnEscape
-        background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; blurOpacity: 0.9; color: GlassTheme.alpha(GlassTheme.surface, 0.89) }
+        background: PopupGlass {}
         Controls.Overlay.modal: Rectangle { color: "#99080b12" }
         contentItem: InertialScroll {
             contentHeight: versionBody.implicitHeight

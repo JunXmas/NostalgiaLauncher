@@ -14,7 +14,7 @@ Controls.Popup {
     signal applied
     onOpened: if (!catalogBridge.releasedVersions.length) catalogBridge.loadReleasedVersions()
     onClosed: applied()
-    background: Glass { padding: 0 }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#aa080b12" }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick } }

@@ -45,13 +45,26 @@ Rectangle {
             color: GlassTheme.stroke
         }
         PaymentText {
+            objectName: "upgradeCreditNote"
+            width: parent.width
+            visible: root.details.upgradeCredit > 0
+            text: "Đã khấu trừ " + Number(root.details.upgradeCredit).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ từ gói đã mua còn hiệu lực. Thời hạn gói mới bắt đầu khi được kích hoạt."
+            color: GlassTheme.accent
+        }
+        PaymentText {
+            width: parent.width
+            visible: root.details.eligible === false
+            text: "Bạn đang có gói cao hơn hoặc Ultimate. Hãy chọn gói phù hợp; launcher không hạ quyền đang dùng."
+            color: GlassTheme.muted
+        }
+        PaymentText {
             width: parent.width
             text: root.details.lifetime ? "Gắn với tài khoản Google. Các cập nhật Plus về sau trong thời gian dịch vụ hoạt động." : "Gia hạn " + Number(root.details.regularAmount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ/" + root.details.months + " tháng. Không tự động gia hạn."
             color: GlassTheme.muted
         }
         PaymentText {
             width: parent.width
-            text: root.details.available ? "Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn." : "Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn."
+            text: root.details.amount === 0 && root.details.isUpgrade ? "Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm." : root.details.available ? "Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn." : "Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn."
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }

@@ -38,16 +38,29 @@ def checkout_url(value: str) -> str:
 
 def parse_offer(document: JsonValue) -> PaymentOffer:
     fields = as_mapping(document)
-    amount = as_integer(fields.get("amount")) or 0
-    regular = as_integer(fields.get("regular_amount")) or 0
+    amount = as_integer(fields.get("amount"))
+    regular = as_integer(fields.get("regular_amount"))
     months = as_integer(fields.get("duration_months"))
     lifetime = fields.get("lifetime", False)
+    credit = as_integer(fields.get("upgrade_credit", 0))
+    upgrade = fields.get("upgrade", False)
+    eligible = fields.get("eligible", True)
+    quote_id = as_string(fields.get("quote_id")) or ""
     valid_duration = isinstance(lifetime, bool) and (
         months == 0 if lifetime else months in (1, 6, 12)
     )
     if (
         fields.get("currency") != "VND"
-        or not 0 < amount <= regular <= 10_000_000
+        or amount is None
+        or regular is None
+        or not 0 <= amount <= regular <= 10_000_000
+        or regular <= 0
+        or not isinstance(upgrade, bool)
+        or not isinstance(eligible, bool)
+        or credit is None
+        or not 0 <= credit <= regular
+        or (upgrade and credit != regular - amount)
+        or (amount == 0 and not (upgrade and credit == regular))
         or not valid_duration
     ):
         raise PaymentError("Gói thanh toán không hợp lệ; hãy thử lại sau.")
@@ -57,6 +70,11 @@ def parse_offer(document: JsonValue) -> PaymentOffer:
         regular,
         months or 0,
         lifetime is True,
+        credit,
+        identifier(quote_id) if quote_id else "",
+        eligible is True,
+        upgrade is True,
+        as_string(fields.get("current_plan")) or "",
     )
 
 
@@ -77,6 +95,7 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         or fields.get("currency") != "VND"
         or ("lifetime" in fields and fields["lifetime"] is not offer.lifetime)
         or status not in {"pending", "paid", "expired", "cancelled"}
+        or (offer.amount == 0 and status != "paid")
         or not 0 < expires_at <= 4_102_444_800
         or (
             status == "paid"
@@ -120,6 +139,7 @@ def parse_order(document: JsonValue, offer: PaymentOffer) -> PaymentOrder:
         lifetime=offer.lifetime,
         manual_review=manual_review is True,
         submitted=submitted is True,
+        payment_offer=offer,
     )
 
 

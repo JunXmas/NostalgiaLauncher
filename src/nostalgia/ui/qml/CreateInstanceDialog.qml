@@ -148,7 +148,7 @@ Item {
         width: Math.min(parent.width - 40, 1120)
         height: Math.min(parent.height - 20, 760)
         radius: Theme.radius
-        color: Theme.surface
+        color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface
         // Nét mực tối 2 px như Panel.qml — hộp thoại phải cùng ngôn ngữ hình khối với thẻ.
         border.color: Theme.modern ? Theme.border : Qt.darker(Theme.background, 1.7)
         border.width: Theme.modern ? 1 : 2

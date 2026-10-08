@@ -41,7 +41,7 @@ Item {
         width: Math.min(parent.width - 40, 760)
         height: Math.min(parent.height - 20, 560)
         radius: Theme.radius
-        color: Theme.surface
+        color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface
         border.color: Theme.border
         border.width: 1
         scale: dialog.visible ? 1 : 0.96

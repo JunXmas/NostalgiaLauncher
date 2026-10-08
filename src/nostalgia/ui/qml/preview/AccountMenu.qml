@@ -12,7 +12,7 @@ Controls.Popup {
     x: anchorItem && parent ? Math.max(12, anchorItem.mapToItem(parent, 0, 0).x) : 12
     y: anchorItem && parent ? Math.max(12, anchorItem.mapToItem(parent, 0, 0).y - height - 10) : 12
     closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
-    background: Glass { padding: 0; color: GlassTheme.alpha(GlassTheme.surface, 0.94); backdrop: Legacy.Theme.modalBackdrop }
+    background: PopupGlass {}
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.quick } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     contentItem: Column {

@@ -37,7 +37,7 @@ Item {
         id: box
         anchors.centerIn: parent
         width: 460; height: contentColumn.height + 52
-        radius: Theme.radius; color: Theme.surface; border.color: Theme.border
+        radius: Theme.radius; color: Theme.modern ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.60) : Theme.surface; border.color: Theme.border
         focus: true
         Keys.onEscapePressed: dialog.dismiss()
         MouseArea { anchors.fill: parent; hoverEnabled: true }

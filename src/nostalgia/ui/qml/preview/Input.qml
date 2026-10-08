@@ -33,7 +33,10 @@ Rectangle {
     Text {
         anchors.left: parent.left
         anchors.leftMargin: 16
+        anchors.right: parent.right
+        anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
+        elide: Text.ElideRight
         visible: !field.text.length
         text: root.placeholder
         font.family: GlassTheme.font

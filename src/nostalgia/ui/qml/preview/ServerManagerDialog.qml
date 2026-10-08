@@ -16,7 +16,7 @@ Controls.Popup {
     readonly property bool running: serverBridge.runningId === serverId
     readonly property bool writable: ready && serverBridge.hasAccess && !serverBridge.busy && !serverBridge.runningId
     function openFor(serverId) { root.serverId = serverId; root.section = 0; serverBridge.select(serverId); root.open(); }
-    background: Glass { padding: 0; backdrop: Legacy.Theme.modalBackdrop; blurOpacity: 0.9; color: GlassTheme.alpha(GlassTheme.surface, 0.89) }
+    background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#aa080b12" }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     contentItem: Item {
