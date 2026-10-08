@@ -103,7 +103,15 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         payments.setWatching(True)
         social._login_timer.setInterval(40)
         social.signIn()
-        wait_until(lambda: social.signedIn and not social.busy and payments.details["available"])
+        # Match the UI: an offer arriving does not yet mean its worker is idle.
+        wait_until(
+            lambda: (
+                social.signedIn
+                and not social.busy
+                and payments.details["available"]
+                and not payments.busy
+            )
+        )
         assert not social.account["plus"] and repair._gateway is None
         assert synchronization.configured
         payments.createOrder()
