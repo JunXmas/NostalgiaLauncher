@@ -201,7 +201,7 @@ Glass {
                 anchors.left: parent.left
                 anchors.leftMargin: 36
                 width: parent.width - 36
-                label: "Nostalgia Premium"
+                label: "Premium"
                 quiet: true
                 objectName: "openSupport"
                 HoverHandler { id: donateHover }

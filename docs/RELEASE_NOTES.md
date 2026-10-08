@@ -12,7 +12,7 @@ Một launcher quen thuộc, được làm mới từ cách nhìn đến cách c
 - **Nâng cấp chỉ trả phần còn lại:** backend khấu trừ phần tiền đã mua chưa sử dụng. Khi vừa mua, Plus → Pro 40.000đ, Pro → Max 40.000đ, Max → Ultimate 100.000đ; giá thực tế được tính theo thời hạn còn lại và xác nhận trước khi tạo đơn. Giá đơn đã tạo không trôi theo thời gian.
 - **Giveaway từ web quản trị riêng:** chủ quản trị tìm người nhận bằng email Google, xác nhận tặng gói và xem lịch sử. Quà không tạo doanh thu giả hay tiền khấu trừ; thu hồi không ghi đè gói mua sau đó.
 - **Website Nostalgia được làm mới:** bố cục thoáng, ảnh giao diện thật, bảng quyền lợi, FAQ và bộ chọn Windows/Linux/Mac Intel/Apple Silicon. Giữ màu Nostalgia và đường tải dự phòng khi API GitHub không phản hồi.
-- Mục **Nostalgia Premium** thay cho “Ủng hộ dự án”, giúp tìm nơi mua và nâng cấp gói nhanh hơn.
+- Mục **Premium** với chú thích “Mua gói & nâng cấp” thay cho “Ủng hộ dự án”, giúp tìm nơi mua và nâng cấp gói nhanh hơn.
 - Cắt gọn nhãn nút và placeholder dài, tránh chữ tràn qua ô kế bên.
 - Khôi phục đủ định dạng phát hành: bộ cài, ZIP tự cập nhật, Linux portable và SHA256SUMS. Không đính kèm ảnh preview hay dữ liệu quản trị.
 
