@@ -53,7 +53,7 @@ from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
 from nostalgia.modcheck.model import ModScan
 from nostalgia.modrepair.gateway import HttpRepairGateway
-from nostalgia.modrepair.model import RepairGateway, RepairPlan, RepairScan
+from nostalgia.modrepair.model import RepairChange, RepairGateway, RepairPlan, RepairScan
 from nostalgia.multiplayer.lan_output import lan_port_from_output
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
@@ -169,6 +169,7 @@ __all__ = [
     "QrCode",
     "RecentServer",
     "RecentWorld",
+    "RepairChange",
     "RepairGateway",
     "RepairPlan",
     "RepairScan",

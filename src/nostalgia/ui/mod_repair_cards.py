@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from nostalgia.api import ModScan, RepairPlan
+from nostalgia.api import ModScan, RepairChange, RepairPlan
 from nostalgia.errors import ContentError
-from nostalgia.modrepair.model import RepairChange
 
 
 def repair_cards(plan: RepairPlan | None, scan: ModScan | None) -> list[dict[str, Any]]:
