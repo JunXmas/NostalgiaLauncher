@@ -17,6 +17,10 @@ class RepairChange:
     size: int
     sha512: str
     reason: str
+    group_id: str = ""
+    version_number: str = ""
+    project_name: str = ""
+    icon_url: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,10 +30,12 @@ class RepairPlan:
     expires_at: int
     changes: tuple[RepairChange, ...]
     unresolved: tuple[str, ...]
+    partial: bool = False
+    blocked_groups: tuple[str, ...] = ()
 
 
 class RepairGateway(Protocol):
-    def fetch_plan(self, scan: ModScan) -> RepairPlan: ...
+    def fetch_plan(self, scan: ModScan, selection: str = "") -> RepairPlan: ...
     def authorize(self, plan: RepairPlan) -> None: ...
 
 

@@ -27,6 +27,17 @@ class ModArchive:
     sha256: str
     descriptors: tuple[ModDescriptor, ...]
     problem: str = ""
+    sha512: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class LogDiagnostic:
+    mod_id: str
+    dependency_id: str
+    predicates: tuple[str, ...]
+    reported_version: str
+    source: str
+    code: str = "dependency"
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,3 +56,4 @@ class ModScan:
     java_major: int
     archives: tuple[ModArchive, ...]
     findings: tuple[ModFinding, ...]
+    diagnostics: tuple[LogDiagnostic, ...] = ()

@@ -46,5 +46,9 @@ Item {
             }
         }
     }
-    Legacy.AddAccountDialog { id: addDialog; objectName: "addAccountDialog"; anchors.fill: parent }
+    Legacy.AddAccountDialog {
+        id: addDialog; objectName: "addAccountDialog"
+        parent: page.Window.window ? page.Window.window.contentItem : page
+        anchors.fill: parent
+    }
 }

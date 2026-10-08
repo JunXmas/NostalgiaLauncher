@@ -10,7 +10,7 @@ Rectangle {
     property rect backdropRect: Qt.rect(0, 0, -1, -1)
     property real blurOpacity: 0.60
     property int blurRadius: 48
-    property bool autoPaddingEnabled: true
+    property bool autoPaddingEnabled: false
     property real finishOpacity: 1
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     radius: 24

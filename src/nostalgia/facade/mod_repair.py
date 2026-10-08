@@ -8,6 +8,7 @@ from nostalgia.facade.loaders import LoaderOperations
 from nostalgia.facade.sync_loader import resolve_sync_loader
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modcheck.archive import scan_archives
+from nostalgia.modcheck.game_logs import with_game_logs
 from nostalgia.modcheck.model import ModScan
 from nostalgia.modcheck.scan import build_scan
 from nostalgia.modloader.model import detect_loader_kind
@@ -29,13 +30,14 @@ class ModRepairOperations(LoaderOperations):
         java_major = (
             version_meta.java_runtime.major_version if version_meta.java_runtime else None
         ) or 8
-        return build_scan(
+        scan = build_scan(
             scan_archives(game_dir_of(self.paths, instance), loader_kind),
             version_meta.jar_owner_id,
             loader_kind,
             loader_version,
             java_major,
         )
+        return with_game_logs(scan, game_dir_of(self.paths, instance))
 
     def scan_mod_repair(self, instance_id: str) -> RepairScan:
         instance = load_instance(self.paths, instance_id)

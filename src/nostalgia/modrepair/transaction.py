@@ -13,11 +13,14 @@ from pathlib import Path
 
 from nostalgia.errors import ContentError, NostalgiaError
 from nostalgia.modcheck.archive import hash_archive, scan_archives
+from nostalgia.modcheck.game_logs import with_game_logs
 from nostalgia.modcheck.model import ModScan
 from nostalgia.modcheck.scan import build_scan
 from nostalgia.model.json_value import as_mapping, as_string
 from nostalgia.modrepair.gateway import scan_hash
 from nostalgia.modrepair.model import RepairGateway, RepairPlan
+from nostalgia.modrepair.staging import disable_archive
+from nostalgia.modrepair.verification import remaining_findings
 from nostalgia.net.http import HttpClient
 from nostalgia.storage.files import atomic_write_json, read_json, resolve_child
 
@@ -95,6 +98,7 @@ def apply_plan(
             scan.loader_version,
             scan.java_major,
         )
+        current = with_game_logs(current, game_dir)
         if scan_hash(current) != plan.scan_hash:
             raise ContentError("Bộ mod đã thay đổi; hãy quét lại.")
         with tempfile.TemporaryDirectory(prefix=".nostalgia-stage-", dir=game_dir) as temporary:
@@ -106,10 +110,7 @@ def apply_plan(
             for change in plan.changes:
                 destination = resolve_child(stage / "mods", change.file_name)
                 if change.operation == "disable":
-                    disabled = resolve_child(stage / "mods", change.file_name + ".disabled")
-                    if disabled.exists():
-                        raise ContentError("Đã có bản mod tắt cùng tên; không ghi đè.")
-                    destination.rename(disabled)
+                    disable_archive(destination)
                 else:
                     if destination.exists():
                         raise ContentError("Phụ thuộc tải về trùng file đang có.")
@@ -131,10 +132,9 @@ def apply_plan(
                 scan.loader_version,
                 scan.java_major,
             )
-            if repaired.findings:
-                raise ContentError(
-                    "Kiểm lại vẫn còn lỗi/chưa xác minh: " + repaired.findings[0].reason
-                )
+            remaining = remaining_findings(scan, repaired, plan)
+            if remaining:
+                raise ContentError("Kiểm lại vẫn còn lỗi/chưa xác minh: " + remaining[0].reason)
             gateway.authorize(plan)
             if is_running() or tree_hash(directory) != original:
                 raise ContentError("Game hoặc bộ mod thay đổi trong lúc chuẩn bị; đã hủy sửa.")

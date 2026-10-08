@@ -10,6 +10,7 @@ from PySide6.QtCore import Property, Signal, Slot
 from nostalgia.api import Launcher, ModScan, RepairGateway, RepairPlan, RepairScan
 from nostalgia.errors import NostalgiaError
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.mod_repair_cards import check_chosen_group, repair_cards
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -39,6 +40,12 @@ class ModRepairBridge(WorkerBridge):
             else [],
             "scanned": self._scan is not None,
             "fileCount": len(self._scan.archives) if self._scan else 0,
+            "gameVersion": self._scan.game_version if self._scan else "",
+            "loader": self._scan.loader_kind if self._scan else "",
+            "logSources": sorted({diagnostic.source for diagnostic in self._scan.diagnostics})
+            if self._scan
+            else [],
+            "recommendations": repair_cards(self._plan, self._scan),
             "changes": [
                 {"operation": change.operation, "file": change.file_name, "reason": change.reason}
                 for change in self._plan.changes
@@ -74,7 +81,15 @@ class ModRepairBridge(WorkerBridge):
     @Slot()
     def apply(self) -> None:
         gateway, scan, plan = self._gateway, self._scan, self._plan
-        if gateway and scan and plan and not self.busy and not self._bridge.gameRunning:
+        if (
+            gateway
+            and scan
+            and plan
+            and not self.busy
+            and not self._bridge.gameRunning
+            and not self._bridge.busy
+            and not self._bridge.storageBusy
+        ):
             self._request(
                 "applied",
                 lambda: self._launcher.apply_mod_repair(
@@ -82,9 +97,38 @@ class ModRepairBridge(WorkerBridge):
                 ),
             )
 
+    @Slot(str)
+    def replaceMod(self, selection: str) -> None:
+        gateway, scan, shown = self._gateway, self._scan, self._plan
+        if (
+            not gateway
+            or not scan
+            or not shown
+            or self.busy
+            or self._bridge.gameRunning
+            or self._bridge.busy
+            or self._bridge.storageBusy
+        ):
+            return
+
+        def replace_selected() -> str:
+            fresh = gateway.fetch_plan(scan, selection)
+            check_chosen_group(shown, fresh, selection)
+            return self._launcher.apply_mod_repair(
+                self._instance_id, scan, fresh, gateway, lambda: bool(self._bridge.gameRunning)
+            )
+
+        self._request("applied", replace_selected)
+
     @Slot()
     def undo(self) -> None:
-        if self._receipt_id and not self.busy and not self._bridge.gameRunning:
+        if (
+            self._receipt_id
+            and not self.busy
+            and not self._bridge.gameRunning
+            and not self._bridge.busy
+            and not self._bridge.storageBusy
+        ):
             self._request(
                 "undone",
                 lambda: self._launcher.undo_mod_repair(

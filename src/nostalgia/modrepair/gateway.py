@@ -61,12 +61,19 @@ class HttpRepairGateway:
         )
         if response.status in (401, 403):
             raise ContentError("Cần phiên Google hiện hành và quyền Plus để dùng phương án sửa.")
+        if response.status == 429:
+            raise ContentError("Bạn đang lập quá nhiều phương án. Chờ một phút rồi thử lại.")
         if not response.is_ok:
             raise ContentError("Dịch vụ sửa mod chưa sẵn sàng hoặc phương án đã hết hạn.")
         return decode_json(response.body, what="phương án sửa mod")
 
-    def fetch_plan(self, scan: ModScan) -> RepairPlan:
-        fields = as_mapping(self._request("/v1/plus/repair", scan_payload(scan)))
+    def fetch_plan(self, scan: ModScan, selection: str = "") -> RepairPlan:
+        document = json.loads(scan_payload(scan))
+        if selection:
+            if not re.fullmatch(r"[a-zA-Z0-9_.-]{1,96}", selection):
+                raise ContentError("Lựa chọn sửa mod không hợp lệ.")
+            document["selection"] = selection
+        fields = as_mapping(self._request("/v1/plus/repair", json.dumps(document).encode()))
         plan_id = as_string(fields.get("plan_id")) or ""
         digest = as_string(fields.get("scan_hash")) or ""
         expiry = as_integer(fields.get("expires_at")) or 0
@@ -86,6 +93,23 @@ class HttpRepairGateway:
             size = as_integer(change.get("size")) or 0
             sha512 = as_string(change.get("sha512")) or ""
             reason = as_string(change.get("reason")) or ""
+            group_id = as_string(change.get("group_id")) or ""
+            version_number = as_string(change.get("version_number")) or ""
+            project_name = as_string(change.get("project_name")) or ""
+            icon_url = as_string(change.get("icon_url")) or ""
+            if (
+                (group_id and not re.fullmatch(r"[a-zA-Z0-9_.-]{1,96}", group_id))
+                or len(version_number) > 128
+                or len(project_name) > 160
+                or (
+                    icon_url
+                    and not re.fullmatch(
+                        r"https://cdn\.modrinth\.com/data/[^\s?#]{1,400}", icon_url
+                    )
+                )
+                or (selection and group_id != selection)
+            ):
+                raise ContentError("Thông tin mod đề xuất chưa hợp lệ.")
             parts = urlsplit(url)
             if (
                 not re.fullmatch(r"[^/\\\x00-\x1f]{1,150}\.jar", file_name)
@@ -108,15 +132,41 @@ class HttpRepairGateway:
                 or not 0 < size <= 67108864
             ):
                 raise ContentError("Nguồn phụ thuộc hoặc hash không hợp lệ.")
-            changes.append(RepairChange(operation, file_name, sha256, url, size, sha512, reason))
-        if len(changes) > 100 or len({change.file_name.casefold() for change in changes}) != len(
-            changes
-        ):
+            changes.append(
+                RepairChange(
+                    operation,
+                    file_name,
+                    sha256,
+                    url,
+                    size,
+                    sha512,
+                    reason,
+                    group_id,
+                    version_number,
+                    project_name,
+                    icon_url,
+                )
+            )
+        if len(changes) > 100 or len(
+            {(change.group_id, change.operation, change.file_name.casefold()) for change in changes}
+        ) != len(changes):
             raise ContentError("Phương án có file trùng hoặc quá nhiều thay đổi.")
         unresolved = tuple(
             as_string(value) or "Chưa xác minh" for value in as_list(fields.get("unresolved"))
         )
-        return RepairPlan(plan_id, digest, expiry, tuple(changes), unresolved)
+        partial = fields.get("partial", False)
+        blocked_groups = tuple(
+            as_string(value) or "" for value in as_list(fields.get("blocked_groups"))
+        )
+        if len(blocked_groups) > 100 or any(
+            not re.fullmatch(r"[a-zA-Z0-9_.-]{1,96}", value) for value in blocked_groups
+        ):
+            raise ContentError("Danh sách mod chưa xác minh không hợp lệ.")
+        if not isinstance(partial, bool) or partial != bool(selection):
+            raise ContentError("Phương án không khớp mod đã chọn.")
+        return RepairPlan(
+            plan_id, digest, expiry, tuple(changes), unresolved, partial, blocked_groups
+        )
 
     def authorize(self, plan: RepairPlan) -> None:
         if time.time() >= plan.expires_at:

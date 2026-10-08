@@ -17,7 +17,8 @@ class ReviewRepair:
         self._social = social
         self._plans: dict[str, RepairPlan] = {}
 
-    def fetch_plan(self, scan: ModScan) -> RepairPlan:
+    def fetch_plan(self, scan: ModScan, selection: str = "") -> RepairPlan:
+        del selection
         changes: dict[str, RepairChange] = {}
         unresolved = []
         for finding in scan.findings:

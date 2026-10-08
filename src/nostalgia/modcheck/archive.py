@@ -18,6 +18,15 @@ def hash_archive(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def archive_hashes(path: Path) -> tuple[str, str]:
+    hashes = hashlib.sha256(), hashlib.sha512()
+    with path.open("rb") as stream:
+        while payload := stream.read(262144):
+            for digest in hashes:
+                digest.update(payload)
+    return hashes[0].hexdigest(), hashes[1].hexdigest()
+
+
 def read_member(archive: zipfile.ZipFile, name: str, maximum: int = 262144) -> bytes:
     try:
         information = archive.getinfo(name)
@@ -68,7 +77,7 @@ def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ..
     for path in paths:
         if path.is_symlink() or not path.is_file() or path.stat().st_size > 536870912:
             raise ContentError("JAR là symlink, không phải file thường hoặc vượt 512 MB.")
-        digest = hash_archive(path)
+        digest, sha512 = archive_hashes(path)
         try:
             with zipfile.ZipFile(path) as archive:
                 descriptors = read_descriptors(archive, [0], loader_kind=loader_kind)
@@ -77,7 +86,7 @@ def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ..
                 for descriptor in descriptors
             ):
                 raise ContentError("Không xác định được phiên bản mod.")
-            archives.append(ModArchive(path.name, digest, descriptors))
+            archives.append(ModArchive(path.name, digest, descriptors, sha512=sha512))
         except (
             ValueError,
             KeyError,
@@ -87,6 +96,6 @@ def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ..
             UnicodeError,
         ) as error:
             archives.append(
-                ModArchive(path.name, digest, (), "Metadata không kiểm được: " + str(error))
+                ModArchive(path.name, digest, (), "Metadata không kiểm được: " + str(error), sha512)
             )
     return tuple(archives)

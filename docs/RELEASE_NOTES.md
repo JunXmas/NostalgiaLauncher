@@ -2,7 +2,16 @@
 
 Một launcher quen thuộc, được làm mới từ cách nhìn đến cách chơi. Nostalgia 1.2 giữ hệ màu của Nostalgia, đưa chất liệu kính vào giao diện, và giúp bạn cùng bạn bè bước vào một thế giới với ít thao tác hơn.
 
-**Nostalgia 1.2.0rc12 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+**Nostalgia 1.2.0rc13 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+
+## Mới trong rc13 — Từ log lỗi đến bản mod phù hợp
+
+- **Sửa quầng blur ở cửa sổ thêm tài khoản:** popup không còn lấy chính mình làm nguồn mờ; hiệu ứng được giữ trong khung bo góc. Kiểm tra bằng renderer Qt thật, cả cửa sổ nhỏ và mức chữ 150%.
+- **Kiểm tra mod đọc thêm log game:** đối chiếu `latest.log`, `debug.log` và báo cáo crash gần nhất với bộ mod, phiên bản Minecraft đang dùng. Nhận diện các mẫu thiếu/sai phiên bản phụ thuộc của Fabric, Forge và NeoForge; Free vẫn xem được lỗi.
+- **Mỗi phương án có ô riêng:** icon mod, nền mica từ icon, phiên bản hiện tại → phiên bản đề xuất, Minecraft, loader và lý do từ log. Nhấn **Replace** ngay dưới ô để thay riêng mod đó cùng các phụ thuộc đã xác minh.
+- **Chọn bản phù hợp thay vì chỉ chọn bản mới nhất:** dịch vụ xác minh nguồn bằng hash Modrinth, đối chiếu Minecraft, loader và yêu cầu từ những mod đang cài. File riêng hoặc lỗi runtime/mixin chưa đủ bằng chứng vẫn được báo để xử lý, không tự đoán bản thay thế.
+- **Kiểm tra lại trước khi ghi:** đề xuất hoặc log thay đổi sẽ dừng thao tác; tải xong kiểm SHA-512 và quét lại phụ thuộc. Giữ bản trước sửa để hoàn tác, giữ nguyên worlds và những lỗi không liên quan khi thay riêng một mod; không ghi đè các bản mod đã tắt từ lần sửa trước.
+- Log đầy đủ ở trên máy người chơi; dịch vụ chỉ nhận metadata và bằng chứng phụ thuộc đã tách cấu trúc, không nhận nguyên log, token hay đường dẫn cá nhân.
 
 ## Mới trong rc12 — Gọn hơn, liền mạch hơn
 
@@ -67,7 +76,7 @@ Một launcher quen thuộc, được làm mới từ cách nhìn đến cách c
 
 ## Trước khi thử
 
-- Cả host và khách nên dùng **rc12** để có lựa chọn nội dung và cập nhật theo định danh pack. Bản đồng bộ từ client cũ thiếu định danh sẽ tạo một instance mới ở lần nhận đầu tiên; launcher không tự ghép theo tên để tránh ghi đè nhầm.
+- Cả host và khách nên dùng **rc13** để có lựa chọn nội dung và cập nhật theo định danh pack. Bản đồng bộ từ client cũ thiếu định danh sẽ tạo một instance mới ở lần nhận đầu tiên; launcher không tự ghép theo tên để tránh ghi đè nhầm.
 - Host cần giữ launcher và phòng đang hoạt động trong khi khách nhận file riêng. Không đồng bộ khi Minecraft trên máy khách đang chạy.
 - Bản miễn phí vẫn chơi thường và nhận đồng bộ khi được host Plus mời. Các bộ cài trong bản phát hành giữ cơ chế kiểm quyền thật.
 - Đã kiểm tra luồng chọn nội dung, cập nhật, chống ghi đè nhầm, kiểm hash, sao lưu/phục hồi và UI ở cửa sổ nhỏ/chữ 150%. Kiểm tra tự động không thay thế lượt thử chơi Minecraft thực tế trên hai máy.

@@ -35,6 +35,11 @@ def test_mica_captures_page_instead_of_only_ambient(preview: Preview, surface_na
     assert surface.property("color").alphaF() < 0.85
     assert surface.property("backdrop") == scene
     effect = find_control(surface, "glassEffect")
+    assert not effect.property("autoPaddingEnabled")
+    ancestor = surface.parentItem()
+    while ancestor:
+        assert ancestor != scene, "A modal must not capture itself in its backdrop"
+        ancestor = ancestor.parentItem()
     capture = effect.property("source")
     assert capture.property("sourceItem") == scene
     origin = surface.mapToItem(scene, 0, 0)
