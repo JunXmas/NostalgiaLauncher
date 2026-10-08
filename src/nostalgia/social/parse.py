@@ -137,7 +137,9 @@ def badge(document: JsonValue) -> str:
 
 
 def decor(document: JsonValue) -> str:
+    from nostalgia.social.cosmetic import is_cosmetic_id
+
     value = as_string(document) or "none"
-    if value not in ("none", "amethyst", "emerald", "amber"):
+    if not is_cosmetic_id(value):
         raise SocialError("Khung hồ sơ không hợp lệ.")
     return value

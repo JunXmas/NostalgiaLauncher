@@ -1,24 +1,22 @@
 .pragma library
 
-// Keep the existing service IDs so saved profiles remain compatible.
-var sets = [
-    {key: "amethyst", name: "Amethyst", artwork: "amethyst", tint: "#b79bdc", description: "Sắc tím thạch anh"},
-    {key: "emerald", name: "Grove", artwork: "grove", tint: "#80ad86", description: "Khoảng xanh yên bình"},
-    {key: "amber", name: "Eclipse", artwork: "eclipse", tint: "#d8b972", description: "Ánh vàng giữa trời đêm"}
-];
-
-function find(key) {
+// Danh mục do bridge đọc từ JSON; JS chỉ phân giải dữ liệu đã kiểm tra.
+function find(key, sets) {
     for (var i = 0; i < sets.length; ++i)
-        if (sets[i].key === key) return sets[i];
+        if (sets[i].key === key && sets[i].state !== "disabled") return sets[i];
     return null;
 }
 
-function name(key) {
-    var set = find(key);
+function available(sets) {
+    return sets.filter(function(set) { return set.state === "active"; });
+}
+
+function name(key, sets) {
+    var set = find(key, sets);
     return set ? set.name : "Nguyên bản";
 }
 
-function asset(key, kind) {
-    var set = find(key);
-    return set ? Qt.resolvedUrl("../assets/cosmetics/" + set.artwork + "-" + kind + ".png") : "";
+function asset(key, kind, sets) {
+    var set = find(key, sets);
+    return set && (kind === "frame" || kind === "banner") ? Qt.resolvedUrl("../assets/cosmetics/" + set.artwork + "-" + kind + ".png") : "";
 }

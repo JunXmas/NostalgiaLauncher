@@ -16,7 +16,7 @@ Column {
         Button { id: reset; objectName: "profileDecor-none"; label: "Nguyên bản"; selected: root.selectedDecor === "none"; quiet: true; onClicked: root.chosen("none") }
     }
     Flow { width: parent.width; spacing: 10
-        Repeater { model: Cosmetics.sets
+        Repeater { model: Cosmetics.available(cosmeticBridge.sets)
             CosmeticOption {
                 objectName: "profileDecor-" + modelData.key
                 width: (root.width - 10 * (root.columns - 1)) / root.columns
@@ -30,7 +30,7 @@ Column {
     PaymentText {
         width: parent.width
         text: root.canEquip ? "Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào."
-            : root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng."
+            : root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor, cosmeticBridge.sets) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng."
             : "Có thể xem thử mọi bộ. Quyền áp dụng dành cho Plus trở lên và hiện đang tạm tắt cùng các tính năng trả phí."
         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
     }

@@ -21,6 +21,7 @@ Item {
         function onTargetChanged() { root.refresh(); }
     }
     InertialScroll {
+        id: installedViewport
         objectName: "installedScroll"
         anchors.fill: parent
         contentHeight: contents.implicitHeight + 16
@@ -70,6 +71,7 @@ Item {
                 Repeater {
                     model: contentBridge.installedModel
                     Legacy.InstalledCard {
+                        artworkEnabled: root.visible && y + parent.y + height >= installedViewport.contentY && y + parent.y <= installedViewport.contentY + installedViewport.height
                         objectName: "installedCard-" + model.fileName
                         width: rows.width
                         installedContent: model

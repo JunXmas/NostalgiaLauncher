@@ -48,6 +48,7 @@ Item {
         PaymentText { width: parent.width; text: serverBridge.busy ? serverBridge.activity : root.supportsPlugins || root.supportsMods ? "Lọc theo Minecraft " + (serverBridge.selected.game_version || "") + " và " + (serverBridge.selected.engine_title || "") + ". Hangar chỉ hiển thị bản Release tải trực tiếp, không cần dependency ngoài." : "Vanilla không hỗ trợ plugin hoặc mod."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     }
     InertialScroll {
+        id: libraryViewport
         objectName: "serverContentScroll"
         anchors.top: header.bottom; anchors.topMargin: 16; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         contentHeight: libraryRows.implicitHeight + 12
@@ -58,6 +59,7 @@ Item {
                 Repeater {
                     model: serverBridge.projects
                     ServerProjectTile {
+                        renderEnabled: root.visible && y + parent.y + height >= libraryViewport.contentY && y + parent.y <= libraryViewport.contentY + libraryViewport.height
                         width: libraryRows.width > 640 * GlassTheme.scale ? (libraryRows.width - 12) / 2 : libraryRows.width
                         project: modelData; clickable: !serverBridge.busy
                         onChosen: { root.projectId = project.project_id; root.source = project.source; root.versionId = ""; serverBridge.loadContentVersions(root.source, root.kind, root.projectId); versionPopup.open(); }

@@ -3,20 +3,14 @@ Item {
     id: root
     property var project: ({})
     property bool clickable: true
+    property bool renderEnabled: visible
     signal chosen
     height: 210 * GlassTheme.scale
-    Image {
-        id: artwork; objectName: "serverProjectArtwork-" + root.project.project_id
-        anchors.fill: parent; source: root.visible ? root.project.icon_url || "" : ""
-        visible: false; asynchronous: true; cache: true; sourceSize.width: 320; sourceSize.height: 320
-        fillMode: Image.PreserveAspectCrop
-    }
+    CardMica { objectName: "serverProjectArtwork-" + root.project.project_id; source: root.project.icon_url || ""; radius: 20; renderEnabled: root.renderEnabled }
     Glass {
-        anchors.fill: parent; padding: 18; backdrop: artwork
-        backdropRect: Qt.rect(0, 0, root.width, root.height)
-        blurRadius: 32; blurOpacity: 0.28; radius: 20
+        anchors.fill: parent; padding: 18; frosted: false; backdrop: null; finishOpacity: 0; radius: 20
         border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
-        color: GlassTheme.alpha(GlassTheme.surface, 0.50)
+        color: "transparent"
         transform: Translate { y: hover.hovered && !GlassTheme.reducedMotion ? -3 : 0; Behavior on y { NumberAnimation { duration: GlassTheme.quick } } }
         Row {
             width: parent.width; spacing: 12

@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "revision": 1,
+  "items": [
+    {"key": "amethyst", "name": "Amethyst", "artwork": "amethyst", "tint": "#b79bdc", "accent": "amethyst", "description": "Sắc tím thạch anh", "state": "active"},
+    {"key": "emerald", "name": "Grove", "artwork": "grove", "tint": "#80ad86", "accent": "emerald", "description": "Khoảng xanh yên bình", "state": "active"},
+    {"key": "amber", "name": "Eclipse", "artwork": "eclipse", "tint": "#d8b972", "accent": "amber", "description": "Ánh vàng giữa trời đêm", "state": "active"}
+  ]
+}

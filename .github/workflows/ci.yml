@@ -44,6 +44,8 @@ jobs:
         run: uv run ruff format --check .
       - name: Kiểm kiểu
         run: uv run mypy
+      - name: Kiểm danh mục và ảnh cosmetic
+        run: uv run python bench/cosmetic_sync.py --check
       - name: Test (không cần mạng)
         run: uv run pytest -m "not network" -q
       - name: Đóng gói thử

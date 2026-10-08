@@ -17,7 +17,7 @@ Column {
         }
     }
     PaymentText { text: "COSMETIC HỒ SƠ"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
-    PaymentText { width: parent.width; text: details.decor && details.decor !== "none" ? Cosmetics.name(details.decor) + " · Khung avatar và nền hồ sơ" : "Phong cách nguyên bản"; font.weight: Font.DemiBold }
+    PaymentText { width: parent.width; text: Cosmetics.find(details.decor, cosmeticBridge.sets) ? Cosmetics.name(details.decor, cosmeticBridge.sets) + " · Khung avatar và nền hồ sơ" : "Phong cách nguyên bản"; font.weight: Font.DemiBold }
     PaymentText { text: "MODPACK HAY CHƠI"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
     Repeater { model: details.favorite_packs || []
         Glass { width: parent.width; padding: 16; height: packBody.implicitHeight + 32

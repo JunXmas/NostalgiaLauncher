@@ -100,9 +100,13 @@ def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
 
 def test_production_frames_leave_the_avatar_center_transparent() -> None:
     import nostalgia
+    from nostalgia.social.cosmetic import load_cosmetic_collection
 
     cosmetic_dir = Path(nostalgia.__file__ or "").parent / "ui/qml/assets/cosmetics"
-    for name in ("amethyst", "grove", "eclipse"):
+    for cosmetic in load_cosmetic_collection().sets:
+        if cosmetic.state == "disabled":
+            continue
+        name = cosmetic.artwork
         frame = QImage(str(cosmetic_dir / f"{name}-frame.png"))
         assert not frame.isNull() and frame.hasAlphaChannel()
         assert frame.width() == frame.height()

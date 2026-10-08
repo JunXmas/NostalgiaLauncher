@@ -13,10 +13,10 @@ Item {
     property int size: 40
     signal clicked
     width: size; height: size
-    readonly property bool decorated: !!Cosmetics.find(decor)
+    readonly property bool decorated: !!Cosmetics.find(decor, cosmeticBridge.sets)
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     readonly property real faceSize: decorated ? size * 0.70 : size
-    readonly property color tint: decorated ? Cosmetics.find(decor).tint : GlassTheme.accent
+    readonly property color tint: decorated ? Cosmetics.find(decor, cosmeticBridge.sets).tint : GlassTheme.accent
     Rectangle {
         anchors.centerIn: parent; width: root.faceSize; height: width; radius: width / 2
         color: GlassTheme.alpha(root.tint, 0.16)

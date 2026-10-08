@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Modern
 
 /* Thẻ lưới của tab "Đã cài": cùng bố cục và nền mica như thẻ thư viện; thêm công tắc bật/tắt
    (chỉ mod) và nút gỡ hai bước. File chép tay không có icon thì nền là chữ cái đầu. */
@@ -6,6 +7,7 @@ Rectangle {
     id: root
     property var installedContent: ({})
     property bool toggleable: true
+    property bool artworkEnabled: visible
     property bool confirmingRemove: false
     signal toggled(string fileName, bool enabled)
     signal removeRequested(string fileName)
@@ -23,7 +25,8 @@ Rectangle {
     Behavior on border.color { ColorAnimation { duration: Theme.quick } }
     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
 
-    MicaBackdrop { source: installedContent.iconUrl || "" }
+    MicaBackdrop { source: Theme.modern ? "" : installedContent.iconUrl || ""; visible: !Theme.modern }
+    Modern.CardMica { source: installedContent.iconUrl || ""; radius: root.radius; visible: Theme.modern; renderEnabled: root.artworkEnabled && visible }
 
     ProjectIcon {
         id: icon

@@ -146,6 +146,7 @@ Item {
         }
     }
     InertialScroll {
+        id: libraryViewport
         objectName: "libraryScroll"
         visible: !root.installedMode
         anchors.top: status.bottom
@@ -161,7 +162,7 @@ Item {
             Grid {
                 id: grid
                 width: parent.width
-                columns: Math.max(1, Math.floor((width + 16) / 300))
+                columns: Math.max(1, Math.floor((width + 16) / (300 * GlassTheme.scale)))
                 spacing: 16
                 Repeater {
                     model: contentBridge.resultsModel
@@ -175,7 +176,7 @@ Item {
                         Keys.onReturnPressed: projectBridge.openProject(model.projectId)
                         Keys.onEnterPressed: projectBridge.openProject(model.projectId)
                         width: (grid.width - (grid.columns - 1) * 16) / grid.columns
-                        height: 218
+                        height: 218 * GlassTheme.scale
                         radius: 18
                         color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
                         Behavior on color {
@@ -184,8 +185,10 @@ Item {
                             }
                         }
                         CardMica {
+                            objectName: "projectArtwork-" + model.projectId
                             source: model.iconUrl
                             radius: tile.radius
+                            renderEnabled: tile.visible && root.visible && tile.y + tile.height >= libraryViewport.contentY && tile.y <= libraryViewport.contentY + libraryViewport.height
                         }
                         Rectangle {
                             anchors.fill: parent
@@ -204,18 +207,18 @@ Item {
                         }
                         Legacy.ProjectIcon {
                             id: projectIcon
-                            x: 20
-                            y: 20
-                            width: 52
-                            height: 52
+                            x: 20 * GlassTheme.scale
+                            y: 20 * GlassTheme.scale
+                            width: 52 * GlassTheme.scale
+                            height: width
                             source: model.iconUrl
                             fallbackText: model.title
                         }
                         Column {
-                            x: 20
-                            y: 90
-                            width: parent.width - 40
-                            spacing: 8
+                            x: 20 * GlassTheme.scale
+                            y: 90 * GlassTheme.scale
+                            width: parent.width - 40 * GlassTheme.scale
+                            spacing: 8 * GlassTheme.scale
                             Text {
                                 width: parent.width
                                 text: model.title
@@ -228,6 +231,7 @@ Item {
                             Text {
                                 width: parent.width
                                 text: model.description
+                                objectName: "projectDescription-" + model.projectId
                                 color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                                 font.family: GlassTheme.font
                                 font.pixelSize: GlassTheme.fontLabel
@@ -238,10 +242,13 @@ Item {
                             }
                         }
                         Text {
+                            objectName: "projectMeta-" + model.projectId
+                            width: Math.max(0, downloadButton.x - 30 * GlassTheme.scale)
+                            elide: Text.ElideRight
                             anchors.left: parent.left
-                            anchors.leftMargin: 20
+                            anchors.leftMargin: 20 * GlassTheme.scale
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 25
+                            anchors.bottomMargin: 25 * GlassTheme.scale
                             text: Legacy.Theme.compact(model.downloads) + " tải  ·  " + (model.loaders.length ? model.loaders[0] : "Minecraft")
                             color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                             font.family: GlassTheme.font
@@ -251,11 +258,11 @@ Item {
                             id: downloadButton
                             objectName: "projectDownload-" + model.projectId
                             anchors.right: parent.right
-                            anchors.rightMargin: 14
+                            anchors.rightMargin: 14 * GlassTheme.scale
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 16
+                            anchors.bottomMargin: 16 * GlassTheme.scale
                             label: model.installing ? "Đang cài…" : model.contentKind === "modpack" ? "Tạo bản chơi" : model.installed ? "Đã cài" : "Cài đặt"
-                            height: 34
+                            height: 34 * GlassTheme.scale
                             clickable: !model.installing && !model.installed && !contentBridge.busy && (model.contentKind === "modpack" || (!!contentBridge.instanceId && !(root.kind === "mod" && contentBridge.loaderKind === "vanilla")))
                             onClicked: model.contentKind === "modpack" ? pack.openFor(model.projectId, model.title) : contentBridge.install(model.projectId)
                         }

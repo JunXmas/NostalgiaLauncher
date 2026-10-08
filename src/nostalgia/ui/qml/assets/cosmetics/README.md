@@ -20,3 +20,7 @@ client is extractable; authorization protects saved and shared profile state.
 
 The QML asset directory is included by the existing packaging specification.
 Review screenshots are kept outside the repository and release assets.
+
+Definitions and lifecycle now come from `social/cosmetics.json`. See
+[`docs/COSMETIC_MAINTENANCE.md`](../../../../../../docs/COSMETIC_MAINTENANCE.md)
+for adding artwork, retiring sets, disabling sets and synchronizing backend validation.

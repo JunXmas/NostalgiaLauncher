@@ -1,13 +1,14 @@
 """Own cosmetic library; save only decor while preserving all other profile fields."""
 
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import asdict, replace
 from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import SocialGateway, SocialProfile
 from nostalgia.errors import SessionRevoked
+from nostalgia.social.cosmetic import can_equip_cosmetic, load_cosmetic_collection
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.worker import WorkerBridge
 
@@ -22,6 +23,7 @@ class CosmeticBridge(WorkerBridge):
     ) -> None:
         super().__init__(parent)
         self._social, self._gateway = social, gateway
+        self._collection = load_cosmetic_collection()
         self._profile: SocialProfile | None = None
         self._pending = False
         self._owner_id = ""
@@ -39,6 +41,14 @@ class CosmeticBridge(WorkerBridge):
             "decor": social_profile.details.decor if social_profile else "none",
             "avatarUrl": social_profile.avatar_url if social_profile else "",
         }
+
+    @Property(list, constant=True)
+    def sets(self) -> list[dict[str, Any]]:
+        return [asdict(c) for c in self._collection.sets]
+
+    @Property(int, constant=True)
+    def revision(self) -> int:
+        return self._collection.revision
 
     @Slot()
     def refresh(self) -> None:
@@ -63,8 +73,8 @@ class CosmeticBridge(WorkerBridge):
             or not social_profile
             or not gateway
             or social_profile.account_id != account.get("accountId")
-            or not account.get("cosmeticPlus")
-            or decor not in ("none", "amethyst", "emerald", "amber")
+            or (decor != "none" and not account.get("cosmeticPlus"))
+            or not can_equip_cosmetic(self._collection, decor, social_profile.details.decor)
         ):
             return
         generation = self.next_generation()
@@ -73,6 +83,8 @@ class CosmeticBridge(WorkerBridge):
         def save() -> SocialProfile:
             latest = gateway.fetch_profile(account_id)
             if not self.is_current(generation) or latest.account_id != account_id:
+                return latest
+            if not can_equip_cosmetic(self._collection, decor, latest.details.decor):
                 return latest
             return gateway.save_profile(replace(latest.details, decor=decor))
 

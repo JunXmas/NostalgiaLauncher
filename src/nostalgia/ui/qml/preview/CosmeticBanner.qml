@@ -21,7 +21,7 @@ Item {
         Image {
             id: art; objectName: "cosmeticBannerImage"
             anchors.fill: parent
-            source: root.visible ? Cosmetics.asset(root.decor, "banner") : ""
+            source: root.visible ? Cosmetics.asset(root.decor, "banner", cosmeticBridge.sets) : ""
             sourceSize: Qt.size(Math.min(1536, Math.max(64, Math.ceil(width * Screen.devicePixelRatio))), 0)
             asynchronous: true; cache: true; smooth: true
             fillMode: Image.PreserveAspectCrop
