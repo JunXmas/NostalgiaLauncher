@@ -8,8 +8,6 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Launcher
 from nostalgia.errors import NostalgiaError
-from nostalgia.model.json_value import as_mapping
-from nostalgia.storage.files import atomic_write_json, read_json
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.social_bridge import SocialBridge
@@ -27,13 +25,12 @@ class GoogleLinkBridge(QObject):
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
-        self._path = launcher.paths.config_dir / "onboarding.json"
+        self._launcher = launcher
         self._social = social
         self._pending = False
         self._provider = ""
         try:
-            fields = as_mapping(read_json(self._path)) if self._path.is_file() else {}
-            self._reviewed = fields.get("google_link_reviewed") is True
+            self._reviewed = launcher.load_google_link_reviewed()
         except (NostalgiaError, OSError):
             self._reviewed = False
         main_bridge.signInFinished.connect(self._microsoft_finished)
@@ -80,7 +77,7 @@ class GoogleLinkBridge(QObject):
         self._pending = False
         self._reviewed = True
         try:
-            atomic_write_json(self._path, {"google_link_reviewed": True})
+            self._launcher.save_google_link_reviewed()
         except (NostalgiaError, OSError):
             logging.warning("Không lưu được lựa chọn liên kết Google.")
         self.changed.emit()

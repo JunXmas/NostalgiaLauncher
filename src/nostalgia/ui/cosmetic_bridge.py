@@ -6,9 +6,8 @@ from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import SocialGateway, SocialProfile
+from nostalgia.api import SocialGateway, SocialProfile, can_equip_cosmetic, load_cosmetic_collection
 from nostalgia.errors import SessionRevoked
-from nostalgia.social.cosmetic import can_equip_cosmetic, load_cosmetic_collection
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.worker import WorkerBridge
 

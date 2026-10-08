@@ -84,7 +84,7 @@ def test_owner_shares_skin_without_changing_game_account_and_packs_opt_in(
     assert launcher.list_accounts() == accounts_before
     assert hashlib.sha256(source.read_bytes()).hexdigest() == digest
     assert launcher.list_skin_library()[0].entry_id == skin_entry.entry_id
-    assert profiles.property("details")["skinFile"].startswith("file:")
+    wait_until(lambda: profiles.property("details")["skinFile"].startswith("file:"))
     figure = find_control(root_item, "profileSkin3D")
     assert abs(figure.property("height") - figure.property("width") * 2) < 1
     press(view, find_control(root_item, "editSocialProfile"))

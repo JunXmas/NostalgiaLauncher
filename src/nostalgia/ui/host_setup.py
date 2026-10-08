@@ -13,6 +13,7 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from nostalgia.api import Launcher, SyncSnapshot
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.host_selection import HostModSelection
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.social_bridge import SocialBridge
@@ -41,6 +42,8 @@ class HostSetup(QObject):
         self._share = self._room_seen = False
         self._snapshot: SyncSnapshot | None = None
         self._cancel = CancelToken()
+        self._mod_selection = HostModSelection(launcher, self)
+        self._excluded_mods: frozenset[str] | None = None
         social.changed.connect(self.changed)
         sync_bridge.stateChanged.connect(self.changed)
 
@@ -54,6 +57,10 @@ class HostSetup(QObject):
             "share": self._share,
             "note": self._note,
         }
+
+    @Property(QObject, constant=True)
+    def modSelection(self) -> QObject:
+        return self._mod_selection
 
     @Property(bool, notify=changed)
     def syncAvailable(self) -> bool:
@@ -86,6 +93,8 @@ class HostSetup(QObject):
             return "Bản chơi đã chọn không còn tồn tại."
         if share and not self.syncAvailable:
             return "Đồng bộ cần Plus đang hoạt động và dịch vụ hỗ trợ; hiện chưa khả dụng."
+        if share and self._mod_selection.pending_for(instance_id):
+            return "Hãy đợi danh sách mod tải xong; nếu có lỗi, chọn lại bản chơi."
         if self._sync.busy:
             return "Hãy đợi thao tác đồng bộ trước đó dừng hoàn toàn."
         return ""
@@ -101,8 +110,15 @@ class HostSetup(QObject):
                 with tempfile.TemporaryDirectory(
                     prefix="room-host-", dir=self._launcher.paths.data_dir
                 ) as temporary:
+                    excluded = self._excluded_mods
+                    if excluded is None:
+                        excluded = self._launcher.load_room_share_options(instance_id)
+                    self._launcher.save_room_share_options(instance_id, excluded)
                     snapshot = self._launcher.capture_room_modpack(
-                        instance_id, Path(temporary), cancel_token=cancel_token
+                        instance_id,
+                        Path(temporary),
+                        cancel_token=cancel_token,
+                        excluded_mods=excluded,
                     )
                     cancel_token.raise_if_cancelled()
                     self._prepared.emit(snapshot, cancel_token)

@@ -9,6 +9,10 @@ import "../"
 */
 Item {
     id: page
+    Loader {
+        active: typeof roomSyncBridge !== "undefined" && typeof roomSyncBridge.reviewReady !== "undefined"
+        sourceComponent: Component { Preview.GuestSyncDialog { backdrop: page } }
+    }
     signal navigate(int pageIndex)
     property string failure: ""
     function joinRoom(code) {

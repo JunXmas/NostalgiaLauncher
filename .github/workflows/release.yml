@@ -5,7 +5,7 @@ name: Release
 #   Linux x64   : .zip (bộ tự cập nhật), .tar.gz, .AppImage, .deb, .rpm
 #   macOS       : .zip (bộ tự cập nhật) + .dmg, riêng cho Apple Silicon (arm64) và Intel (x64)
 #   Windows x64 : .zip (bộ tự cập nhật) + bộ cài setup.exe (Inno Setup)
-# Kết quả là một GitHub Release DRAFT kèm SHA256SUMS của mọi file; chủ dự án soi rồi publish
+# Kết quả là GitHub Release DRAFT chỉ kèm bộ cài; checksum nằm trong nội dung release.
 # (bộ tự cập nhật chỉ nhìn thấy bản đã publish).
 
 on:
@@ -175,24 +175,22 @@ jobs:
         with:
           path: bundles
           merge-multiple: true
-      - name: Chỉ kèm hướng dẫn kiểm thử, không kèm ảnh preview
-        shell: bash
-        run: |
-          review_dir="docs/preview/rc${GITHUB_REF_NAME##*rc}"
-          if [[ "$GITHUB_REF_NAME" == *rc* && -d "$review_dir" ]]; then
-            validation_name="RC${GITHUB_REF_NAME##*rc}_VALIDATION.md"
-            for document in docs/DRAFT_TEST_GUIDE.md "docs/$validation_name" docs/UI_MOTION_REVIEW.md docs/GOOGLE_SETUP.md; do
-              test -s "$document"
-              cp "$document" bundles/
-            done
-          fi
-      - name: SHA256SUMS
-        run: cd bundles && sha256sum * > SHA256SUMS && cat SHA256SUMS
       - name: Tạo release DRAFT (chủ dự án publish tay)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          assets=(bundles/*)
+          shopt -s nullglob
+          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg)
+          test "${#assets[@]}" -gt 0
+          cp docs/RELEASE_NOTES.md release-notes.md
+          {
+            printf '\n<details>\n<summary>SHA-256 của các bộ cài</summary>\n\n```text\n'
+            for asset in "${assets[@]}"; do
+              digest="$(sha256sum "$asset")"
+              printf '%s  %s\n' "${digest%% *}" "${asset##*/}"
+            done
+            printf '```\n\n</details>\n'
+          } >> release-notes.md
           gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" --draft --title "Nostalgia Launcher ${GITHUB_REF_NAME}" \
-            --notes-file docs/RELEASE_NOTES.md
+            --notes-file release-notes.md

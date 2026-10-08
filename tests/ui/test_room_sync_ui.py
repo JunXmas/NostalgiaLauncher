@@ -108,7 +108,9 @@ def test_free_guest_sees_offer_and_creates_new_instance(
         manifest: SyncManifest,
         *,
         cancel_token: CancelToken,
+        excluded_paths: frozenset[str],
     ) -> Instance:
+        assert not excluded_paths
         cancel_token.raise_if_cancelled()
         received.append((transport, code, manifest))
         return self.create_instance(Instance("room-fixture", "1.20.1-forge-47.4.23", manifest.name))
@@ -117,6 +119,11 @@ def test_free_guest_sees_offer_and_creates_new_instance(
     multiplayer._apply_status(RoomStatus(role="joined", local_port=25566))
     wait_until(lambda: bool(sync_bridge.property("offer")) and not sync_bridge.property("busy"))
     press(view, find_control(root_item, "syncRoomPackButton"))
+    wait_until(lambda: sync_bridge.reviewReady and not sync_bridge.busy)
+    assert not received
+    assert not sync_bridge.confirmSync(False)
+    press(view, find_control(root_item, "guestSyncConsent"))
+    press(view, find_control(root_item, "guestSyncConfirm"))
     wait_until(lambda: bool(sync_bridge.property("note")))
     assert received == [(gateway, "ABCDEFGHJKMNPQRSTU", gateway.manifest)]
     assert len(launcher.list_instances()) == 1

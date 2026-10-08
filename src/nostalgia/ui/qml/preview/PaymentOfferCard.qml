@@ -51,7 +51,7 @@ Rectangle {
         }
         PaymentText {
             width: parent.width
-            text: root.details.available ? "Quyền Plus được ghi nhận sau khi hệ thống xác nhận giao dịch." : "Plus đang được chuẩn bị. Bạn chưa cần chuyển khoản để đăng ký."
+            text: root.details.available ? "Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn." : "Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn."
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }

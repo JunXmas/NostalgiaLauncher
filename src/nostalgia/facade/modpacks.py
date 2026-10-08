@@ -8,47 +8,29 @@ file của pack vào thư mục bản chơi -> chép overrides. Mọi bước đ
 from __future__ import annotations
 
 import zipfile
-from collections.abc import Callable
-from dataclasses import dataclass, field
 from pathlib import Path
 
-from nostalgia.content import curseforge, mrpack
-from nostalgia.content.cfpack import apply_overrides as cf_apply_overrides
-from nostalgia.content.cfpack import read_manifest, resolve_files
-from nostalgia.content.model import Project, ProjectVersion
-from nostalgia.content.mrpack import apply_overrides, plan_downloads, read_index
+from nostalgia.content import modrinth
+from nostalgia.content.model import Project
 from nostalgia.content.pack_inventory import record_pack_inventory
+from nostalgia.content.pack_origin import save_pack_origin
 from nostalgia.content.pack_version import choose_pack_version as choose_pack_version
 from nostalgia.errors import ContentError, NetworkError
-from nostalgia.facade.content import ContentOperations
 from nostalgia.facade.instances import InstanceOperations
-from nostalgia.facade.loaders import LoaderOperations
+from nostalgia.facade.pack_source import PackPlan, PackSourceOperations
 from nostalgia.instance.model import Instance
 from nostalgia.model.download import DownloadTask
-from nostalgia.modloader.model import LoaderKind
+from nostalgia.model.pack import PackReference
 from nostalgia.net.download import download_all, download_one
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
-from nostalgia.storage.files import ensure_dir
+from nostalgia.storage.files import ensure_dir, sha1_of_file
 
 MODPACK_WORKERS = 8
 
 
-@dataclass(frozen=True, slots=True)
-class PackPlan:
-    """Hai định dạng modpack, một luồng cài: cái gì cần biết trước, tải gì, chép gì."""
-
-    name: str
-    game_version: str
-    loader_kind: LoaderKind
-    loader_version: str
-    tasks: Callable[[Path], list[DownloadTask]]
-    apply_overrides: Callable[[Path], int]
-    resolved_versions: list[ProjectVersion] = field(default_factory=list)
-
-
-class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations):
+class ModpackOperations(PackSourceOperations, InstanceOperations):
     __slots__ = ()
 
     def install_modpack(
@@ -100,6 +82,13 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
                     instance_id,
                     display_name,
                     icon_url=project.icon_url,
+                    origin=PackReference(
+                        project.source,
+                        project.project_id,
+                        chosen.version_id,
+                        chosen.file_sha1,
+                        project.title[:160],
+                    ),
                     game_dir_override=game_dir_override,
                     on_progress=on_progress,
                     cancel_token=cancel_token,
@@ -136,6 +125,7 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
                 plan,
                 instance_id,
                 display_name,
+                origin=self._fetch_import_origin(http_client, pack_path, cancel_token),
                 game_dir_override=game_dir_override,
                 on_progress=on_progress,
                 cancel_token=cancel_token,
@@ -149,6 +139,7 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
         display_name: str,
         *,
         icon_url: str = "",
+        origin: PackReference | None = None,
         game_dir_override: str = "",
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
@@ -186,43 +177,24 @@ class ModpackOperations(LoaderOperations, ContentOperations, InstanceOperations)
             )
             raise NetworkError(message)
         plan.apply_overrides(game_dir)
+        if origin is not None:
+            save_pack_origin(
+                game_dir, origin, plan.game_version, plan.loader_kind, plan.loader_version
+            )
         record_pack_inventory(game_dir, plan.resolved_versions)
         return instance
 
-    def _plan_modrinth_pack(
-        self, pack_path: Path, allowed_hosts: tuple[str, ...] | None
-    ) -> PackPlan:
-        # Đọc danh sách chuẩn lúc gọi chứ không khoá vào default của tham số.
-        index = read_index(pack_path, allowed_hosts=allowed_hosts or mrpack.ALLOWED_HOSTS)
-        return PackPlan(
-            name=index.name,
-            game_version=index.game_version,
-            loader_kind=index.loader_kind,
-            loader_version=index.loader_version,
-            tasks=lambda game_dir: plan_downloads(index, game_dir),
-            apply_overrides=lambda game_dir: apply_overrides(pack_path, game_dir),
-        )
-
-    def _plan_curseforge_pack(self, http_client: HttpClient, pack_path: Path) -> PackPlan:
-        manifest = read_manifest(pack_path)
-        api_key = self.load_settings().curseforge_api_key
-        resolved: list[ProjectVersion] = []
-
-        def fetch_one(project_id: str, file_id: str) -> ProjectVersion:
-            return curseforge.fetch_file(
-                http_client, api_key, project_id, file_id, endpoints=self.endpoints
+    def _fetch_import_origin(
+        self, http_client: HttpClient, pack_path: Path, cancel_token: CancelToken | None
+    ) -> PackReference | None:
+        digest = sha1_of_file(pack_path)
+        try:
+            found = modrinth.lookup_versions_by_hash(
+                http_client, (digest,), endpoints=self.endpoints, cancel_token=cancel_token
             )
-
-        return PackPlan(
-            name=manifest.name,
-            game_version=manifest.game_version,
-            loader_kind=manifest.loader_kind,
-            loader_version=manifest.loader_version,
-            tasks=lambda game_dir: resolve_files(
-                manifest, fetch_one, game_dir, on_resolved=resolved.append
-            ),
-            apply_overrides=lambda game_dir: cf_apply_overrides(
-                pack_path, game_dir, manifest.overrides_prefix
-            ),
-            resolved_versions=resolved,
-        )
+        except (ContentError, NetworkError):
+            return None
+        chosen = found.get(digest)
+        if chosen is None or chosen.file_sha1 != digest:
+            return None
+        return PackReference("modrinth", chosen.project_id, chosen.version_id, digest)

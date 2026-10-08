@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from nostalgia.model.pack import PackReference
 from nostalgia.modloader.model import LoaderKind
 from nostalgia.operations.cancellation import CancelToken
 
@@ -15,6 +16,11 @@ class SyncFile:
     relative_path: str
     sha256: str
     size: int
+    source: PackReference | None = None
+    from_base: bool = False
+    sha1: str = ""
+    title: str = ""
+    icon_url: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +30,9 @@ class SyncManifest:
     loader_kind: LoaderKind
     loader_version: str
     files: tuple[SyncFile, ...]
+    base_pack: PackReference | None = None
+    pack_id: str = ""
+    owner_id: str = ""
 
     @property
     def total_bytes(self) -> int:

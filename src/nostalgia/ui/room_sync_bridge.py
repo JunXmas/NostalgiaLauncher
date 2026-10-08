@@ -7,17 +7,17 @@ from typing import Any
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 
 from nostalgia.api import Launcher, RoomSyncGateway, SyncManifest, SyncSnapshot
+from nostalgia.errors import MultiplayerError
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
+from nostalgia.ui.guest_sync_bridge import GuestSyncBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
-from nostalgia.ui.worker import WorkerBridge
 
 
-class RoomSyncBridge(WorkerBridge):
+class RoomSyncBridge(GuestSyncBridge):
     stateChanged = Signal()
     published = Signal()
     _offerArrived = Signal(object, int)
-    _completed = Signal(str, str, int)
 
     def __init__(
         self,
@@ -45,11 +45,13 @@ class RoomSyncBridge(WorkerBridge):
         self._offerArrived.connect(self._apply_offer)
         self._completed.connect(self._apply_completed)
         self._multiplayer.statusChanged.connect(self._room_changed)
+        self.initialize_guest_review()
 
     def set_gateway(self, gateway: RoomSyncGateway | None) -> None:
         self._cancel.cancel()
         self.next_generation()
         self._gateway = gateway
+        self.clear_guest_review()
         self.stateChanged.emit()
 
     @Property(bool, notify=stateChanged)
@@ -81,6 +83,13 @@ class RoomSyncBridge(WorkerBridge):
             "loaderVersion": manifest.loader_version,
             "fileCount": len(manifest.files),
             "sizeMiB": round(manifest.total_bytes / 1024**2, 1),
+            "basePack": manifest.base_pack.title or manifest.base_pack.project_id
+            if manifest.base_pack
+            else "",
+            "additionalMods": sum(
+                sync_file.relative_path.startswith("mods/") and not sync_file.from_base
+                for sync_file in manifest.files
+            ),
         }
 
     @Property(str, notify=stateChanged)
@@ -114,6 +123,11 @@ class RoomSyncBridge(WorkerBridge):
 
         def work() -> None:
             if isinstance(source, str):
+                if getattr(gateway, "requires_live_source", False):
+                    raise MultiplayerError(
+                        "Hãy mở lại phòng bằng Host & khởi chạy, "
+                        "chọn modpack và mod chia sẻ trước khi chơi."
+                    )
                 self._launcher.publish_room_modpack(
                     gateway, status, source, cancel_token=cancel_token
                 )
@@ -126,33 +140,6 @@ class RoomSyncBridge(WorkerBridge):
             )
 
         self.run_in_background(work, "Đang chia sẻ ảnh chụp modpack...")
-
-    @Slot()
-    def sync(self) -> None:
-        if (
-            self.busy
-            or self._offer is None
-            or self._gateway is None
-            or self._multiplayer.room_snapshot().role != "joined"
-        ):
-            return
-        gateway, manifest, room_code = self._gateway, self._offer, self._joined_code
-        generation = self.next_generation()
-        cancel_token = self._cancel = CancelToken()
-
-        def work() -> None:
-            instance = self._launcher.sync_room_modpack(
-                gateway, room_code, manifest, cancel_token=cancel_token
-            )
-            self._completed.emit(
-                "Đã tạo bản chơi “"
-                + instance.label
-                + "”. Chọn bản này trong Home để chơi cùng bạn.",
-                instance.instance_id,
-                generation,
-            )
-
-        self.run_in_background(work, "Đang đồng bộ modpack vào bản chơi mới...")
 
     @Slot()
     def cancel(self) -> None:
@@ -168,6 +155,7 @@ class RoomSyncBridge(WorkerBridge):
             self._cancel.cancel()
             self.next_generation()
             self._offer, self._note = None, ""
+            self.clear_guest_review()
             self._host_ready = True
         elif (
             role == "joined"

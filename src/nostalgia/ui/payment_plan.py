@@ -4,9 +4,14 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
-from nostalgia.api import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
+from nostalgia.api import (
+    ManualPaymentGateway,
+    PaymentCheckout,
+    PaymentGateway,
+    PaymentOffer,
+    PaymentOrder,
+)
 from nostalgia.errors import PaymentError
-from nostalgia.payment.model import ManualPaymentGateway
 
 
 def resolve_preview_offer(months: int) -> PaymentOffer | None:
@@ -56,7 +61,7 @@ def describe_checkout(
     return {
         "stage": status,
         "demonstration": demonstration,
-        "available": offer_loaded and gateway_available is not None,
+        "available": offer_loaded and gateway_available,
         "amount": offer.amount,
         "regularAmount": offer.regular_amount,
         "months": offer.duration_months,

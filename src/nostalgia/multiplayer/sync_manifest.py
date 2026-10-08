@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import PurePosixPath
 
+from nostalgia.content.pack_reference import parse_pack_reference, reference_document
+from nostalgia.content.sync_icon import safe_sync_icon
 from nostalgia.errors import MultiplayerError
 from nostalgia.model.json_value import JsonValue
 from nostalgia.modloader.model import LOADER_KINDS
@@ -43,7 +45,29 @@ def sync_path(text: str) -> str:
 
 def parse_sync_manifest(document: JsonValue) -> SyncManifest:
     try:
-        if not isinstance(document, dict) or document.get("format") != 1:
+        if (
+            not isinstance(document, dict)
+            or type(document.get("format")) is not int
+            or document.get("format") not in (1, 2)
+        ):
+            raise ValueError
+        extended = document.get("format") == 2
+        base_pack = (
+            parse_pack_reference(document["base_pack"])
+            if document.get("base_pack") is not None
+            else None
+        )
+        if base_pack is not None and not extended:
+            raise ValueError
+        pack_id, owner_id = document.get("pack_id", ""), document.get("owner_id", "")
+        if (
+            not isinstance(pack_id, str)
+            or (pack_id and not re.fullmatch(r"[0-9a-f]{32}", pack_id))
+            or not isinstance(owner_id, str)
+            or (owner_id and not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", owner_id))
+            or (owner_id and not pack_id)
+            or (pack_id and not extended)
+        ):
             raise ValueError
         name = document["name"]
         game_version = document["game_version"]
@@ -63,7 +87,7 @@ def parse_sync_manifest(document: JsonValue) -> SyncManifest:
             or (loader_kind != "vanilla" and not _IDENTIFIER.fullmatch(loader_version))
             or (loader_kind == "vanilla" and loader_version != "")
             or not isinstance(entries, list)
-            or not 1 <= len(entries) <= MAX_SYNC_FILES
+            or not (0 if extended else 1) <= len(entries) <= MAX_SYNC_FILES
         ):
             raise ValueError
         files: list[SyncFile] = []
@@ -81,17 +105,49 @@ def parse_sync_manifest(document: JsonValue) -> SyncManifest:
             ):
                 raise ValueError
             path = sync_path(path)
-            if path.casefold() in seen:
+            canonical = path.removesuffix(".disabled").casefold()
+            if canonical in seen:
                 raise ValueError
-            seen.add(path.casefold())
-            files.append(SyncFile(path, digest, size))
+            seen.add(canonical)
+            source = (
+                parse_pack_reference(sync_entry["source"])
+                if sync_entry.get("source") is not None
+                else None
+            )
+            from_base = sync_entry.get("from_base", False)
+            sha1 = sync_entry.get("sha1", "")
+            if not isinstance(sha1, str) or (sha1 and not re.fullmatch(r"[0-9a-f]{40}", sha1)):
+                raise ValueError
+            if type(from_base) is not bool or (from_base and base_pack is None):
+                raise ValueError
+            if (source is not None or from_base) and not extended:
+                raise ValueError
+            title, icon_url = sync_entry.get("title", ""), sync_entry.get("icon_url", "")
+            if (
+                not isinstance(title, str)
+                or len(title) > 160
+                or any(ord(char) < 32 or char in "<>" for char in title)
+            ):
+                raise ValueError
+            if not isinstance(icon_url, str) or (icon_url and safe_sync_icon(icon_url) != icon_url):
+                raise ValueError
+            files.append(SyncFile(path, digest, size, source, from_base, sha1, title, icon_url))
         if sum(sync_file.size for sync_file in files) > MAX_SYNC_BYTES:
             raise ValueError
         for path in seen:
             parts = path.split("/")
             if any("/".join(parts[:depth]) in seen for depth in range(1, len(parts))):
                 raise ValueError
-        return SyncManifest(name, game_version, loader_kind, loader_version, tuple(files))
+        return SyncManifest(
+            name,
+            game_version,
+            loader_kind,
+            loader_version,
+            tuple(files),
+            base_pack,
+            pack_id,
+            owner_id,
+        )
     except (KeyError, ValueError, TypeError):
         raise MultiplayerError(
             "Thông tin đồng bộ modpack không hợp lệ hoặc vượt giới hạn."
@@ -99,14 +155,36 @@ def parse_sync_manifest(document: JsonValue) -> SyncManifest:
 
 
 def manifest_document(manifest: SyncManifest) -> dict[str, JsonValue]:
-    return {
-        "format": 1,
+    extended = (
+        bool(manifest.pack_id)
+        or manifest.base_pack is not None
+        or not manifest.files
+        or any(sync_file.source is not None or sync_file.from_base for sync_file in manifest.files)
+    )
+    document: dict[str, JsonValue] = {
+        "format": 2 if extended else 1,
         "name": manifest.name,
         "game_version": manifest.game_version,
         "loader_kind": manifest.loader_kind,
         "loader_version": manifest.loader_version,
         "files": [
-            {"path": sync_file.relative_path, "sha256": sync_file.sha256, "size": sync_file.size}
+            {
+                "path": sync_file.relative_path,
+                "sha256": sync_file.sha256,
+                "size": sync_file.size,
+                **({"source": reference_document(sync_file.source)} if sync_file.source else {}),
+                **({"from_base": True} if sync_file.from_base else {}),
+                **({"sha1": sync_file.sha1} if sync_file.sha1 else {}),
+                **({"title": sync_file.title} if sync_file.title else {}),
+                **({"icon_url": sync_file.icon_url} if sync_file.icon_url else {}),
+            }
             for sync_file in manifest.files
         ],
     }
+    if manifest.base_pack is not None:
+        document["base_pack"] = reference_document(manifest.base_pack)
+    if manifest.pack_id:
+        document["pack_id"] = manifest.pack_id
+    if manifest.owner_id:
+        document["owner_id"] = manifest.owner_id
+    return document

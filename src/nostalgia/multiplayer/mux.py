@@ -9,6 +9,7 @@ from __future__ import annotations
 import struct
 
 DATA, OPEN, CLOSE = 0, 1, 2
+SYNC_REQUEST, SYNC_DATA = 3, 4
 HEADER = struct.Struct("!IB")
 # Gói Handshake của Minecraft: VarInt length, VarInt packet id 0, VarInt protocol, string
 # address (≤255 ký tự), u16 port, VarInt next_state (1 status / 2 login / 3 transfer).

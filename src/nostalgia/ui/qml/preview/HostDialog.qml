@@ -8,7 +8,7 @@ Controls.Popup {
     parent: Controls.Overlay.overlay
     width: Math.min(600, parent ? parent.width - 48 : 600)
     height: Math.min(heading.height + body.implicitHeight + footer.height + padding * 2 + 16,
-        470 * GlassTheme.scale, parent ? parent.height - 48 : 470)
+        650 * GlassTheme.scale, parent ? parent.height - 48 : 650)
     x: parent ? (parent.width - width) / 2 : 0
     y: parent ? (parent.height - height) / 2 : 0
     padding: 24
@@ -16,6 +16,7 @@ Controls.Popup {
     property Item backdrop: null
     readonly property var selectedInstance: bridge.instances[pack.currentIndex] || ({})
     property bool sharePack: false
+    onSelectedInstanceChanged: hostBridge.modSelection.selectInstance(selectedInstance.instanceId || "")
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     Controls.Overlay.modal: Rectangle { color: "#99080b12" }
@@ -42,6 +43,7 @@ Controls.Popup {
         function onSetupRequested() {
             root.sharePack = hostBridge.syncAvailable;
             if (pack.currentIndex < 0 && pack.count) pack.currentIndex = 0;
+            hostBridge.modSelection.selectInstance(root.selectedInstance.instanceId || "");
             root.open();
         }
     }
@@ -86,6 +88,7 @@ Controls.Popup {
                     opacity: enabled ? 1 : 0.5
                     onToggled: function (checked) { root.sharePack = checked; }
                 }
+                HostModList { visible: root.sharePack && hostBridge.syncAvailable; width: parent.width }
                 PaymentText {
                     width: parent.width
                     text: !plusFeaturesEnabled ? "Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack."
@@ -114,7 +117,7 @@ Controls.Popup {
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
                 label: "Host & khởi chạy"; primary: true
-                clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy
+                clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
                 onClicked: {
                     if (hostBridge.start(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();
                 }

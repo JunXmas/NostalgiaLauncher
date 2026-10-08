@@ -36,6 +36,7 @@ QtObject {
     readonly property int fontTitle: Math.round(22 * scale)
     readonly property int fontDialog: Math.round(24 * scale)
     readonly property int fontPage: Math.round(30 * scale)
+    readonly property int fontHero: Math.round(56 * scale)
     readonly property int fontPrice: Math.round(44 * scale)
     readonly property int fontMicro: Math.round(9 * scale)
     readonly property int fontAction: Math.round(16 * scale)

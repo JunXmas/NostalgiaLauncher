@@ -37,8 +37,10 @@ from nostalgia.facade.instances import InstanceOperations
 from nostalgia.facade.mod_repair import ModRepairOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
 from nostalgia.facade.nos_client import NosClientOperations
+from nostalgia.facade.onboarding import OnboardingOperations
 from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
+from nostalgia.facade.room_sharing import RoomSharingOperations
 from nostalgia.facade.room_sync import RoomSyncOperations
 from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.skins import SkinOperations
@@ -60,7 +62,13 @@ from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest, Sync
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.payment.gateway import HttpPaymentGateway
-from nostalgia.payment.model import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
+from nostalgia.payment.model import (
+    ManualPaymentGateway,
+    PaymentCheckout,
+    PaymentGateway,
+    PaymentOffer,
+    PaymentOrder,
+)
 from nostalgia.server.content_model import (
     InstalledServerContent,
     ServerContentVersion,
@@ -81,6 +89,7 @@ from nostalgia.server.properties import ServerProperties
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
 from nostalgia.social.configuration import ServiceConfiguration
+from nostalgia.social.cosmetic import can_equip_cosmetic, load_cosmetic_collection
 from nostalgia.social.gateway import HttpSocialGateway
 from nostalgia.social.model import (
     FriendMessage,
@@ -98,6 +107,8 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    RoomSharingOperations,
+    OnboardingOperations,
     ServerOperations,
     ModRepairOperations,
     BackupOperations,
@@ -144,6 +155,7 @@ __all__ = [
     "Instance",
     "Launcher",
     "LauncherRelease",
+    "ManualPaymentGateway",
     "ModScan",
     "NosClientConfig",
     "PaymentCheckout",
@@ -183,5 +195,7 @@ __all__ = [
     "StagedUpdate",
     "SyncManifest",
     "SyncSnapshot",
+    "can_equip_cosmetic",
     "lan_port_from_output",
+    "load_cosmetic_collection",
 ]

@@ -1,4 +1,4 @@
-"""Release login uses HTTPS and automatically receives a session; Plus remains disabled."""
+"""Release login wires authenticated services; a free Google account stays free."""
 
 import json
 import time
@@ -18,7 +18,7 @@ from nostalgia.ui.worker import wait_for_background
 
 
 @pytest.mark.usefixtures("qt_app")
-def test_release_google_auto_poll_and_plus_stays_disabled(
+def test_release_google_auto_poll_keeps_free_account_free(
     tmp_path: Path,
     server: LocalHttpsServer,
     server_state: ServerState,
@@ -31,6 +31,8 @@ def test_release_google_auto_poll_and_plus_stays_disabled(
     )
     launcher.add_offline_account("MinecraftLocal")
     launcher.save_service_configuration(ServiceConfiguration(server.url("")))
+    monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", server.url(""))
+    monkeypatch.setenv("NOSTALGIA_ROOM_SYNC_URL", "")
     monkeypatch.setattr(Launcher, "make_http_client", lambda _self: http_client)
     monkeypatch.setattr(Launcher, "make_service_session_store", lambda _self, _origin: None)
     urls: list[str] = []
@@ -64,8 +66,8 @@ def test_release_google_auto_poll_and_plus_stays_disabled(
                     "name": "GooglePlayer",
                     "friend_code": "ABCDEF0123456789",
                     "plus_until": 0,
-                    "plus_lifetime": True,
-                    "plus_plan": "plus-lifetime-v1",
+                    "plus_lifetime": False,
+                    "plus_plan": "",
                 },
                 "friends": [],
                 "requests": [],
@@ -87,7 +89,8 @@ def test_release_google_auto_poll_and_plus_stays_disabled(
         assert view.rootObject().findChild(QObject, "serviceAccountUrl") is None
         payment = view.rootContext().contextProperty("paymentBridge")
         payment.createOrder()
-        assert payment.details["stage"] == "unavailable" and not payment.busy
+        assert payment.details["stage"] == "offer" and not payment.busy
+        assert view.rootContext().contextProperty("plusFeaturesEnabled") is True
         assert not view.rootContext().contextProperty("modRepairBridge").details["canPlan"]
         assert launcher.list_accounts()[0].player_name == "MinecraftLocal"
     finally:

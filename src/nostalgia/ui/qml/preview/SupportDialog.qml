@@ -226,9 +226,9 @@ Controls.Popup {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 visible: !root.plusPaused && (root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0)
-                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Kiểm tra thanh toán") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : "Thanh toán sắp mở")
+                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Kiểm tra thanh toán") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? "Tiếp tục thanh toán  →" : root.details.stage === "unavailable" ? (socialBridge.signingIn ? "Đang chờ Google…" : "Đăng nhập Google") : "Tải thông tin gói")
                 primary: true
-                clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error)
+                clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error || root.details.stage === "offer" || root.details.stage === "unavailable" && socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn)
                 onClicked: {
                     if (root.receiptMode)
                         root.close();
@@ -236,6 +236,8 @@ Controls.Popup {
                         paymentBridge.checkPayment();
                     else if (root.details.available)
                         paymentBridge.createOrder();
+                    else if (root.details.stage === "unavailable")
+                        socialBridge.signIn();
                     else
                         paymentBridge.loadOffer();
                 }

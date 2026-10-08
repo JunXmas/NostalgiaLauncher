@@ -21,6 +21,7 @@ from nostalgia.multiplayer.lan import LanWorld, announce_forever, detect_open_to
 from nostalgia.multiplayer.lan_probe import probe_lan_port
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
+from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.websocket import TlsContext
 
 DetectWorld = Callable[[float], LanWorld | None]
@@ -80,6 +81,14 @@ class RoomService:
 
     def stop(self) -> Future[None]:
         return self._submit(self._teardown())
+
+    def set_sync_snapshot(self, snapshot: SyncSnapshot) -> Future[None]:
+        async def apply() -> None:
+            if self._host is None or self._status.role != "hosting":
+                raise MultiplayerError("Phòng host không còn hoạt động.")
+            self._host.sync_snapshot = snapshot
+
+        return self._submit(apply())
 
     def shutdown(self, timeout_seconds: float = 3.0) -> None:
         """Đóng launcher: dừng phòng rồi dừng vòng lặp. Không để luồng mồ côi."""

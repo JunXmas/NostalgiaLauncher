@@ -149,6 +149,7 @@ Item {
         }
     }
     HostDialog { backdrop: scene }
+    GuestSyncDialog { backdrop: scene }
     SupportDialog {
         id: support
         backdrop: scene

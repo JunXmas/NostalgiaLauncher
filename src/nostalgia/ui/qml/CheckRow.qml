@@ -11,6 +11,14 @@ Item {
     property string label: ""
     property bool checked: false
     signal toggled(bool checked)
+    activeFocusOnTab: enabled
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: label
+    Accessible.checkable: true
+    Accessible.checked: checked
+    Accessible.onToggleAction: root.toggled(!root.checked)
+    Keys.onSpacePressed: function(event) { if (!event.isAutoRepeat) root.toggled(!root.checked); }
+    Keys.onReturnPressed: function(event) { if (!event.isAutoRepeat) root.toggled(!root.checked); }
     // Cỡ hiện tại của dấu tick, lộ ra để test lấy mẫu giữa chừng hoạt ảnh. Đi vòng qua
     // cây con (children[0].children[3]) thì đổi thứ tự một Rectangle là test đỏ oan.
     readonly property real tickScale: tick.scale
@@ -96,6 +104,7 @@ Item {
         id: caption
         anchors { left: box.right; leftMargin: 9; right: parent.right; verticalCenter: parent.verticalCenter }
         text: root.label
+        textFormat: Text.PlainText
         color: root.checked ? Theme.text : Theme.textMuted
         font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         Behavior on color { ColorAnimation { duration: Theme.quick } }

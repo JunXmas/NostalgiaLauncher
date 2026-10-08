@@ -29,11 +29,13 @@ def capture_sync_snapshot(
     loader_kind: LoaderKind,
     loader_version: str,
     cancel_token: CancelToken,
+    excluded_mods: frozenset[str] = frozenset(),
 ) -> SyncSnapshot:
     if source.is_symlink():
         raise MultiplayerError("Không chia sẻ modpack từ liên kết thư mục.")
     files: list[SyncFile] = []
     total = 0
+    excluded_mods = frozenset(value.removesuffix(".disabled") for value in excluded_mods)
     for directory in sorted(SYNC_DIRECTORIES):
         folder = source / directory
         if folder.is_symlink():
@@ -43,10 +45,15 @@ def capture_sync_snapshot(
         for parent, directories, names in folder.walk(follow_symlinks=False, on_error=_walk_error):
             if any((parent / child).is_symlink() for child in directories):
                 raise MultiplayerError("Modpack có liên kết thư mục; chia sẻ đã dừng.")
+            directories[:] = [child for child in directories if not child.startswith(".")]
             for name_on_disk in sorted(names):
+                if name_on_disk.startswith("."):
+                    continue
                 cancel_token.raise_if_cancelled()
                 path = parent / name_on_disk
                 relative = sync_path(path.relative_to(source).as_posix())
+                if directory == "mods" and relative.removesuffix(".disabled") in excluded_mods:
+                    continue
                 if (
                     path.is_symlink()
                     or not path.is_file()
@@ -67,7 +74,14 @@ def capture_sync_snapshot(
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(payload)
                 target.chmod(0o600)
-                files.append(SyncFile(relative, hashlib.sha256(payload).hexdigest(), len(payload)))
+                files.append(
+                    SyncFile(
+                        relative,
+                        hashlib.sha256(payload).hexdigest(),
+                        len(payload),
+                        sha1=hashlib.sha1(payload).hexdigest(),
+                    )
+                )
     manifest = SyncManifest(name[:80], game_version, loader_kind, loader_version, tuple(files))
     return SyncSnapshot(parse_sync_manifest(manifest_document(manifest)), destination)
 

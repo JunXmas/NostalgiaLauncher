@@ -9,7 +9,7 @@ from typing import cast
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
 
-from nostalgia.api import Launcher, RoomService, RoomStatus
+from nostalgia.api import Launcher, RoomService, RoomStatus, SyncSnapshot
 
 
 class MultiplayerBridge(QObject):
@@ -110,6 +110,10 @@ class MultiplayerBridge(QObject):
 
     def room_snapshot(self) -> RoomStatus:
         return self._status
+
+    def prepare_sync_source(self, snapshot: SyncSnapshot) -> None:
+        """Gọi từ worker; vòng nhận game tiếp tục phục vụ snapshot trong đời phòng."""
+        self._service.set_sync_snapshot(snapshot).result(timeout=5)
 
     @Slot(result=str)
     def clipboardText(self) -> str:

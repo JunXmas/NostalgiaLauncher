@@ -14,7 +14,11 @@ from nostalgia.ui.worker import wait_for_background
 
 
 @pytest.mark.usefixtures("qt_app")
-def test_release_pages_offline_and_invalid_configuration(tmp_path: Path) -> None:
+def test_release_pages_offline_and_invalid_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", "")
+    monkeypatch.setenv("NOSTALGIA_ROOM_SYNC_URL", "")
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     launcher.save_settings(
         replace(launcher.load_settings(), auto_update_check=False, discord_presence=False)
@@ -42,6 +46,7 @@ def test_release_pages_offline_and_invalid_configuration(tmp_path: Path) -> None
         configuration.save("http://bad", "")
         assert "HTTPS" in configuration.note
         configuration.save("https://accounts.example.invalid", "https://relay.example.invalid")
+        monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", "https://accounts.example.invalid")
         assert (
             launcher.load_service_configuration().account_url == "https://accounts.example.invalid"
         )

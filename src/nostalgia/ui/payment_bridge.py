@@ -23,6 +23,7 @@ from nostalgia.ui.worker import WorkerBridge
 
 class PaymentBridge(WorkerBridge):
     changed = Signal()
+    paymentConfirmed = Signal()
     _arrived = Signal(int, str, object, str)
 
     def __init__(
@@ -70,6 +71,8 @@ class PaymentBridge(WorkerBridge):
         self._request_id = uuid.uuid4().hex
         self._error = ""
         self.changed.emit()
+        if self._watching:
+            self.loadOffer()
 
     @Slot(int)
     def selectPlan(self, months: int) -> None:
@@ -194,6 +197,7 @@ class PaymentBridge(WorkerBridge):
     def _apply(self, generation: int, operation: str, payload: object, error: str) -> None:
         if not self.is_current(generation):
             return
+        was_paid = self._order is not None and self._order.status == "paid"
         self._error = error
         if not error:
             if operation == "offer" and isinstance(payload, PaymentCheckout):
@@ -204,6 +208,8 @@ class PaymentBridge(WorkerBridge):
                 self._order = payload
         self._sync_timers()
         self.changed.emit()
+        if not error and self._order and self._order.status == "paid" and not was_paid:
+            self.paymentConfirmed.emit()
 
     def _sync_timers(self) -> None:
         active = self._watching and self._order is not None and self._order.status == "pending"

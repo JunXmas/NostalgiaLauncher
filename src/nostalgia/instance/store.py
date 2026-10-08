@@ -17,9 +17,13 @@ from pathlib import Path
 
 from nostalgia.errors import DataFileError, InstanceError
 from nostalgia.instance.model import Instance, check_instance_id
+from nostalgia.instance.sync_identity import remove_sync_pack_id
+from nostalgia.instance.sync_receipt import RECEIPT_FILE
+from nostalgia.instance.sync_transaction import JOURNAL_FILE, recover_sync_update
 from nostalgia.model.json_value import JsonValue, as_boolean, as_integer, as_mapping, as_string
 from nostalgia.storage.files import atomic_write_json, ensure_dir, read_json
 from nostalgia.storage.paths import DataPaths
+from nostalgia.storage.sync_lock import sync_lock
 
 FORMAT_VERSION = 1
 INSTANCE_FILE_NAME = "instance.json"
@@ -34,6 +38,8 @@ def create_instance(paths: DataPaths, instance: Instance) -> Instance:
     sang phiên bản khác.
     """
     check_instance_id(instance.instance_id)
+    if (paths.instance_dir(instance.instance_id) / JOURNAL_FILE).exists():
+        raise InstanceError("Bản chơi cũ có cập nhật chưa phục hồi; chưa thể đăng ký lại mã này.")
     if paths.instance_json(instance.instance_id).exists():
         message = f"đã có instance {instance.instance_id!r}"
         raise InstanceError(message)
@@ -43,6 +49,8 @@ def create_instance(paths: DataPaths, instance: Instance) -> Instance:
             if other.game_dir_override and Path(other.game_dir_override) == chosen:
                 message = f"thư mục {chosen} đã là thư mục chơi của {other.instance_id!r}"
                 raise InstanceError(message)
+    remove_sync_pack_id(paths, instance.instance_id)
+    (paths.instance_dir(instance.instance_id) / RECEIPT_FILE).unlink(missing_ok=True)
     save_instance(paths, instance)
     return instance
 
@@ -124,6 +132,10 @@ def load_instance(paths: DataPaths, instance_id: str) -> Instance:
     if instance is None:
         message = f"cấu hình instance {instance_id!r} thiếu phiên bản game: {path}"
         raise InstanceError(message)
+    if (path.parent / JOURNAL_FILE).exists():
+        with sync_lock(path.parent):
+            recover_sync_update(path.parent, game_dir_of(paths, instance))
+        return load_instance(paths, instance_id)
     return instance
 
 

@@ -3,7 +3,7 @@ Version: @VERSION@
 Section: games
 Priority: optional
 Architecture: amd64
-Depends: libxcb-cursor0, libxkbcommon0, libegl1, libgl1, libfontconfig1, libdbus-1-3, libglib2.0-0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-render-util0, libxcb-shape0, libxcb-xinerama0
+Depends: libxcb-cursor0, libxkbcommon0, libxkbcommon-x11-0, libegl1, libgl1, libfontconfig1, libdbus-1-3, libglib2.0-0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-render-util0, libxcb-shape0, libxcb-xinerama0
 Maintainer: JunXmas <JunXmas@users.noreply.github.com>
 Homepage: https://github.com/JunXmas/NostalgiaLauncher
 Description: Nostalgia Launcher - Minecraft launcher

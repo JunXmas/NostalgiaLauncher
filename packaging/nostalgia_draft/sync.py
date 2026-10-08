@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 from nostalgia.errors import MultiplayerError
@@ -28,6 +29,15 @@ class ReviewSync:
     ) -> None:
         del host_ticket
         manifest = parse_sync_manifest(manifest_document(snapshot.manifest))
+        # Bài thử nội bộ chỉ dùng bản cache trên đĩa, không truy vấn nguồn công khai.
+        manifest = replace(
+            manifest,
+            base_pack=None,
+            files=tuple(
+                replace(sync_file, sha1="", source=None, from_base=False)
+                for sync_file in manifest.files
+            ),
+        )
         self.directory.mkdir(parents=True, exist_ok=True)
         for sync_file in manifest.files:
             if cancel_token:

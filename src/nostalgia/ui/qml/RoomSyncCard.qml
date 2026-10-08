@@ -23,7 +23,7 @@ Rectangle {
             textFormat: Text.PlainText
             text: card.hostMode
                 ? "Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận lời mời được đồng bộ miễn phí."
-                : (card.info.name || "") + "\nMinecraft " + (card.info.gameVersion || "") + " · " + (card.info.loader || "") + " " + (card.info.loaderVersion || "") + "\n" + (card.info.fileCount || 0) + " file · " + ((card.info.sizeMiB || 0) === 0 ? "<0,1" : card.info.sizeMiB) + " MiB"
+                : (card.info.name || "") + "\nMinecraft " + (card.info.gameVersion || "") + " · " + (card.info.loader || "") + " " + (card.info.loaderVersion || "") + "\n" + (card.info.basePack ? "Pack gốc: " + card.info.basePack + " · " + (card.info.additionalMods || 0) + " mod bổ sung/thay đổi\n" : "Bộ mod tùy chỉnh của host\n") + (card.info.fileCount || 0) + " file · " + ((card.info.sizeMiB || 0) === 0 ? "<0,1" : card.info.sizeMiB) + " MiB"
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; lineHeight: 1.25
         }
         Dropdown {
@@ -41,13 +41,13 @@ Rectangle {
         }
         Text {
             visible: !card.hostMode; width: parent.width; wrapMode: Text.WordWrap
-            text: "Tạo bản chơi riêng, giữ nguyên modpack hiện có. Chỉ nhận mod từ chủ phòng bạn tin tưởng."
+            text: "Chọn nội dung trước khi nhận. Pack đã đồng bộ sẽ cập nhật đúng bản chơi; pack mới tạo bản riêng."
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         ActionButton {
             objectName: card.hostMode ? "shareRoomPackButton" : "syncRoomPackButton"
             width: parent.width
-            label: roomSyncBridge.busy ? "Đang xử lý..." : (card.hostMode ? "Chia sẻ modpack cho phòng" : "Đồng bộ vào bản chơi mới · Miễn phí")
+            label: roomSyncBridge.busy ? "Đang xử lý..." : (card.hostMode ? "Chia sẻ modpack cho phòng" : "Xem & chọn nội dung · Miễn phí")
             clickable: !roomSyncBridge.busy && (card.hostMode ? roomSyncBridge.canShare && packChoice.currentIndex >= 0 : true)
             onClicked: {
                 if (card.hostMode) roomSyncBridge.publish(bridge.instances[packChoice.currentIndex].instanceId);

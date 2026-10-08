@@ -77,7 +77,10 @@ def test_draft_opens_ultimate_tools_and_standard_release_stays_locked(tmp_path: 
         QGuiApplication.processEvents()
     view = build_release_view(launcher)
     try:
-        assert view.rootContext().contextProperty("plusFeaturesEnabled") is False
+        social = view.rootContext().contextProperty("socialBridge")
+        assert not social.signedIn and not social.property("account").get("plus", False)
+        assert not view.rootContext().contextProperty("hostBridge").syncAvailable
+        assert not view.rootContext().contextProperty("serverBridge").hasAccess
         assert not view.rootContext().contextProperty("draftReviewController")
         assert not view.rootContext().contextProperty("draftReviewPanel")
         assert (

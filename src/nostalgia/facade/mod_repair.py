@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from nostalgia.facade.loaders import LoaderOperations
-from nostalgia.facade.room_sync import _loader_version
+from nostalgia.facade.sync_loader import resolve_sync_loader
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modcheck.archive import scan_archives
 from nostalgia.modcheck.model import ModScan
@@ -23,7 +23,7 @@ class ModRepairOperations(LoaderOperations):
         instance = load_instance(self.paths, instance_id)
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         loader_kind = detect_loader_kind(instance.version_id)
-        loader_version = _loader_version(
+        loader_version = resolve_sync_loader(
             loader_kind, version_meta.libraries, version_meta.jar_owner_id
         )
         java_major = (

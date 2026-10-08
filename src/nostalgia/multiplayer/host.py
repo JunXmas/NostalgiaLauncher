@@ -13,7 +13,13 @@ from collections.abc import Callable
 
 from nostalgia.multiplayer.gate import HostGate
 from nostalgia.multiplayer.handshake import HANDSHAKE_TIMEOUT_SECONDS
-from nostalgia.multiplayer.mux import CLOSE, DATA, pack_mux_frame, unpack_mux_frame
+from nostalgia.multiplayer.host_transport import HostTransport
+from nostalgia.multiplayer.mux import (
+    CLOSE,
+    SYNC_REQUEST,
+    unpack_mux_frame,
+)
+from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.websocket import TlsContext, WebSocketClient
 
 MAX_PENDING = 32
@@ -22,7 +28,7 @@ READ_CHUNK = 65536
 SEND_QUEUE_SIZE = 128
 
 
-class HostRelay:
+class HostRelay(HostTransport):
     def __init__(
         self,
         relay_url: str,
@@ -49,6 +55,7 @@ class HostRelay:
         self._pumps: set[asyncio.Task[None]] = set()
         self._runner: asyncio.Task[None] | None = None
         self.locked = False
+        self.sync_snapshot: SyncSnapshot | None = None
 
     @property
     def joiner_count(self) -> int:
@@ -70,7 +77,11 @@ class HostRelay:
                 if unpacked is None:
                     continue
                 stream_id, flag, payload = unpacked
-                if flag == CLOSE:
+                if stream_id == 0 and flag == SYNC_REQUEST:
+                    pump = asyncio.create_task(self._sync_chunk(payload))
+                    self._pumps.add(pump)
+                    pump.add_done_callback(self._pumps.discard)
+                elif flag == CLOSE:
                     self._drop(stream_id)
                 elif stream_id in self._worlds:
                     await self._to_world(stream_id, payload)
@@ -96,6 +107,7 @@ class HostRelay:
             await self._runner
 
     async def close(self) -> None:
+        self.sync_snapshot = None
         for stream_id in list(self._gates) + list(self._worlds):
             self._drop(stream_id)
         for pump in list(self._pumps):
@@ -223,13 +235,3 @@ class HostRelay:
     def _notify(self) -> None:
         if self._on_joiners_changed is not None:
             self._on_joiners_changed(len(self._worlds))
-
-    async def _send(self, stream_id: int, payload: bytes) -> None:
-        if self._socket is not None:
-            with contextlib.suppress(OSError, ConnectionError):
-                await self._socket.send(pack_mux_frame(stream_id, DATA, payload))
-
-    async def _send_close(self, stream_id: int) -> None:
-        if self._socket is not None:
-            with contextlib.suppress(OSError, ConnectionError):
-                await self._socket.send(pack_mux_frame(stream_id, CLOSE))

@@ -23,7 +23,7 @@ Item {
         x: 64; y: Math.max(160, (root.height - height) * 0.46)
         width: Math.max(240, root.width - card.width - 180); spacing: 22
         PaymentText { text: "TÀI KHOẢN NOSTALGIA"; color: GlassTheme.accent; font.pixelSize: GlassTheme.fontNote; font.letterSpacing: 2 }
-        PaymentText { width: parent.width; text: "Thế giới của bạn.\nBạn bè của bạn."; font.family: GlassTheme.displayFont; font.pixelSize: 56; font.weight: Font.DemiBold; lineHeight: 1.1 }
+        PaymentText { width: parent.width; text: "Thế giới của bạn.\nBạn bè của bạn."; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontHero; font.weight: Font.DemiBold; lineHeight: 1.1 }
         PaymentText { width: Math.min(360, parent.width); text: "Giữ kết nối và mang hồ sơ của bạn sang máy mới."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontAction; lineHeight: 1.5 }
     }
     Glass {

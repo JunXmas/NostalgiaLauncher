@@ -30,6 +30,7 @@ class HostBridge(HostSetup):
             self.changed.emit()
             return False
         self._instance_id = instance_id
+        self._excluded_mods = self._mod_selection.excluded_for(instance_id)
         self._label = next(
             i["label"] for i in self._bridge.property("instances") if i["instanceId"] == instance_id
         )
