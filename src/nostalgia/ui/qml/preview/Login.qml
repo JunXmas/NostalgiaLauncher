@@ -149,7 +149,7 @@ khởi đầu."
                     spacing: 12
                     Button {
                         objectName: "loginGoogleService"
-                    provider: "google"
+                        provider: "google"
                         width: parent.width
                         label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Tiếp tục với Google  ↗"
                         clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn && !socialBridge.signedIn
@@ -157,13 +157,13 @@ khởi đầu."
                     }
                     PaymentText {
                         width: parent.width
-                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : socialBridge.configured ? "Google lưu bạn bè. Đăng nhập qua trình duyệt, không cần nhập mã." : "Google chưa khả dụng trong bản thử này. Bạn vẫn có thể đăng nhập Minecraft bên dưới."
+                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : socialBridge.configured ? "Tài khoản Nostalgia · đồng bộ bạn bè và Plus đã mua. Minecraft dùng tài khoản bên dưới." : "Google chưa khả dụng trong bản thử này. Bạn vẫn có thể đăng nhập Minecraft bên dưới."
                         color: GlassTheme.muted
                         font.pixelSize: GlassTheme.fontNote
                     }
                     Button {
                         objectName: "loginMicrosoft"
-                    provider: "microsoft"
+                        provider: "microsoft"
                         width: parent.width
                         height: 50
                         primary: true

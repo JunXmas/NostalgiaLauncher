@@ -19,6 +19,7 @@ from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.cosmetic_bridge import CosmeticBridge
+from nostalgia.ui.google_link_bridge import GoogleLinkBridge
 from nostalgia.ui.host_bridge import HostBridge
 from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
@@ -70,6 +71,9 @@ def open_preview(
     context.setContextProperty("socialBridge", social_bridge)
     accounts = context.contextProperty("accountBridge")
     assert isinstance(accounts, AccountBridge)
+    context.setContextProperty(
+        "googleLinkBridge", GoogleLinkBridge(launcher, bridge, accounts, social_bridge, parent=view)
+    )
     profile_bridge = ProfileBridge(
         launcher, social_bridge, social_gateway, accounts, bridge, parent=view
     )

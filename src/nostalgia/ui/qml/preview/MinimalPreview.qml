@@ -9,7 +9,7 @@ Item {
     property int currentIndex: 0
     property bool sessionSkipped: false
     property bool advancedLibrary: false
-    readonly property bool loginVisible: !bridge.activePlayerName && !sessionSkipped
+    readonly property bool loginVisible: (!bridge.activePlayerName && !sessionSkipped) || googleLinkBridge.pending
     Component.onCompleted: {
         GlassTheme.preferences = settingsBridge;
         GlassTheme.backdrop = ambient;
@@ -127,12 +127,13 @@ Item {
     Login {
         objectName: "minimalLogin"
         anchors.fill: parent
-        visible: root.loginVisible
+        visible: root.loginVisible && !googleLinkBridge.pending
         onEnterRequested: {
             root.sessionSkipped = true;
             root.navigate(2);
         }
     }
+    GoogleLink { anchors.fill: parent; visible: googleLinkBridge.pending }
     DeviceLogin {
         anchors.fill: parent
     }
