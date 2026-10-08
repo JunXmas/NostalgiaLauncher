@@ -19,9 +19,9 @@ WorkspaceDialog {
     InertialScroll {
         objectName: "importBodyScroll"
         anchors.fill: parent
-        contentHeight: content.implicitHeight + 8
+        contentHeight: importContent.implicitHeight + 8
         Column {
-            id: content
+            id: importContent
             width: parent.width - 10; spacing: 18
             MotionTabs { width: parent.width; labels: ["File modpack", "Launcher khác"]; currentIndex: root.section; namePrefix: "importSection-"; onSelected: function(index) { if (!root.busy) root.section = index; } }
             Column {
@@ -45,7 +45,7 @@ WorkspaceDialog {
                 Repeater {
                     model: importBridge.scanResults
                     Glass {
-                        width: content.width; height: details.implicitHeight + 32; padding: 16; frosted: false
+                        width: importContent.width; height: details.implicitHeight + 32; padding: 16; frosted: false
                         Column {
                             id: details
                             width: parent.width; spacing: 10

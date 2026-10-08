@@ -10,7 +10,7 @@ from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_select_menu import find_item
 
-from nostalgia.api import Launcher
+from nostalgia.api import Found, Launcher
 from nostalgia.instance.model import Instance
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
@@ -38,6 +38,8 @@ def test_backup_is_modal_and_restores_a_separate_world(tmp_path: Path, scale: in
     source.write_bytes(b"world-before")
     launcher.backup_instance("survival")
     source.write_bytes(b"world-after")
+    launcher.create_instance(Instance("creative", "1.20.1", "Sáng tạo"))
+    launcher.trash_instance("creative")
     warnings: list[str] = []
     qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
     view, _bridge = open_preview(launcher)
@@ -66,6 +68,17 @@ def test_backup_is_modal_and_restores_a_separate_world(tmp_path: Path, scale: in
             launcher.paths.instance_dir("restored") / "saves" / "level.dat"
         ).read_bytes() == b"world-before"
         assert source.read_bytes() == b"world-after"
+        trash_button = find_item(view.contentItem(), "restoreTrash-0")
+        assert trash_button is not None
+        trash_position = trash_button.mapToScene(QPointF())
+        assert (
+            dialog.property("x")
+            <= trash_position.x()
+            < dialog.property("x") + dialog.property("width")
+        )
+        press(view, trash_button)
+        wait_until(lambda: not storage.busy and len(launcher.list_instances()) == 3)
+        assert any(i.instance_id == "creative" for i in launcher.list_instances())
         QTest.keyClick(view, Qt.Key.Key_Escape)
         wait_until(lambda: not dialog.property("visible"))
         assert not warnings
@@ -91,7 +104,11 @@ def test_import_error_stays_in_modal_and_scrolling_does_not_move_workspace(
             ui_scale=150,
         )
     )
-    monkeypatch.setattr(Launcher, "scan_external_launchers", lambda _self: ())
+    external = tmp_path / "prism" / ".minecraft"
+    (external / "saves").mkdir(parents=True)
+    (external / "saves" / "level.dat").write_bytes(b"import-world")
+    found = Found("PrismLauncher", "Prism world", external, "1.20.1", "vanilla")
+    monkeypatch.setattr(Launcher, "scan_external_launchers", lambda _self: (found,))
     view, _bridge = open_preview(launcher)
     try:
         view.resize(1024, 600)
@@ -115,6 +132,23 @@ def test_import_error_stays_in_modal_and_scrolling_does_not_move_workspace(
         QTest.qWait(70)
         assert workspace_scroll.property("contentY") == before
         assert not launcher.list_instances()
+        dialog.setProperty("section", 1)
+        QTest.qWait(30)
+        import_button = find_item(view.contentItem(), "importExternal-0")
+        assert import_button is not None
+        import_position = import_button.mapToScene(QPointF())
+        assert (
+            dialog.property("x")
+            <= import_position.x()
+            < dialog.property("x") + dialog.property("width")
+        )
+        press(view, import_button)
+        wait_until(lambda: not imports.busy and len(launcher.list_instances()) == 1)
+        imported = launcher.list_instances()[0]
+        assert (
+            launcher.instance_game_dir(imported) / "saves" / "level.dat"
+        ).read_bytes() == b"import-world"
+        assert (external / "saves" / "level.dat").read_bytes() == b"import-world"
         QTest.keyClick(view, Qt.Key.Key_Escape)
         wait_until(lambda: not dialog.property("visible"))
     finally:

@@ -22,9 +22,9 @@ WorkspaceDialog {
     InertialScroll {
         objectName: "backupBodyScroll"
         anchors.fill: parent
-        contentHeight: content.implicitHeight + 8
+        contentHeight: backupContent.implicitHeight + 8
         Column {
-            id: content
+            id: backupContent
             width: parent.width - 10; spacing: 16
             Flow { width: parent.width; spacing: 8
                 Button { label: "Mở thư mục sao lưu ↗"; quiet: true; onClicked: storageBridge.openBackupsFolder() }
@@ -36,7 +36,7 @@ WorkspaceDialog {
                 model: storageBridge.backups
                 Button {
                     objectName: "backupRecord-" + index
-                    width: content.width; height: Math.max(54, GlassTheme.fontControl * 3)
+                    width: backupContent.width; height: Math.max(54, GlassTheme.fontControl * 3)
                     label: modelData.label + " · " + modelData.created + " · " + modelData.size
                     selected: root.selectedBackup === modelData.path
                     clickable: !root.busy
@@ -47,7 +47,7 @@ WorkspaceDialog {
             PaymentText { visible: !storageBridge.trash.length; width: parent.width; text: "Thùng rác trống. Bản chơi đã xoá có thể được đưa trở lại từ đây."; color: GlassTheme.muted }
             Repeater {
                 model: storageBridge.trash
-                Glass { width: content.width; height: row.implicitHeight + 32; padding: 16; frosted: false
+                Glass { width: backupContent.width; height: row.implicitHeight + 32; padding: 16; frosted: false
                     Row { id: row; width: parent.width; spacing: 12
                         PaymentText { width: parent.width - restoreTrash.width - 12; anchors.verticalCenter: parent.verticalCenter; text: modelData.label }
                         Button { id: restoreTrash; objectName: "restoreTrash-" + index; label: "Khôi phục"; clickable: !root.busy; onClicked: storageBridge.restoreTrash(modelData.trashId) }

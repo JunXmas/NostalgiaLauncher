@@ -167,13 +167,13 @@ Controls.Popup {
                 width: parent.width - 60
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
-                    text: root.plusPaused ? "ỦNG HỘ NOSTALGIA" : root.receiptMode ? "BIÊN NHẬN PLUS" : "ỦNG HỘ & PLUS"
+                    text: root.plusPaused ? "NOSTALGIA PREMIUM · TẠM KHÓA" : root.receiptMode ? "BIÊN NHẬN PREMIUM" : "MUA GÓI & NÂNG CẤP"
                     color: GlassTheme.brand
                     font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
-                    text: root.plusPaused ? "Cùng Nostalgia phát triển" : "Nostalgia Plus"
+                    text: "Nostalgia Premium"
                     font.pixelSize: (root.receiptMode ? (root.compactLayout ? 16 : 20) : (root.compactLayout ? 22 : 29)) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }

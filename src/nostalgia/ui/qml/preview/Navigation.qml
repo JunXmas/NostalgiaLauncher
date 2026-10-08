@@ -184,7 +184,7 @@ Glass {
         }
         Item {
             width: parent.width
-            height: 42
+            height: 60
             Legacy.BlockIcon {
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -201,11 +201,20 @@ Glass {
                 anchors.left: parent.left
                 anchors.leftMargin: 36
                 width: parent.width - 36
-                label: "Ủng hộ dự án"
+                label: "Nostalgia Premium"
                 quiet: true
                 objectName: "openSupport"
                 HoverHandler { id: donateHover }
                 onClicked: root.supportRequested()
+            }
+            PaymentText {
+                anchors.left: parent.left; anchors.leftMargin: 52
+                anchors.right: parent.right; anchors.rightMargin: 10
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 5
+                text: "Mua gói & nâng cấp"
+                color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
+                maximumLineCount: 1; elide: Text.ElideRight
+                TapHandler { onTapped: root.supportRequested() }
             }
         }
         Button {
