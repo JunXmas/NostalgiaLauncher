@@ -45,3 +45,20 @@ giấy phép của kho — PolyForm Strict 1.0.0.
 Ảnh chụp giao diện của chính launcher này. Trong đó `home.jpg`, `create-instance.jpg` và
 `library.jpg` có key art Minecraft hiện bên trong cửa sổ app — nguồn và giấy phép của phần
 key art ấy ghi ở `src/nostalgia/ui/qml/assets/keyart/CREDITS.md`.
+
+## `media/*.webp` (giao diện mới)
+
+Ảnh chụp giao diện Qt thật của Nostalgia, dùng dữ liệu minh hoạ để không lộ thông tin
+người chơi. Không phải mockup vẽ lại. `home.webp` chụp bản nguồn trong đợt sửa rc12;
+`mods.webp`, `skins.webp`, `cosmetics.webp` và `create.webp` chụp giao diện của cùng
+nhánh thiết kế đã kiểm tra ở rc11. Chuyển sang WebP q82 để giảm dung lượng tải trang.
+Key art bên trong launcher có nguồn ghi tại
+`src/nostalgia/ui/qml/assets/keyart/CREDITS.md`; icon dự án thuộc tác giả tương ứng.
+
+## `fonts/`
+
+Inter và Manrope được tự lưu trữ, không gọi dịch vụ font hay tracking bên ngoài.
+Giấy phép SIL Open Font License được giữ trong `Inter-OFL.txt` và `Manrope-OFL.txt`.
+
+Bố cục tham khảo Frost Client (https://frostclient.eu/), với hệ màu, logo, ảnh chụp và
+nội dung của Nostalgia. Không sao chép logo, ảnh, chỉ số hiệu năng hay đánh giá của Frost.

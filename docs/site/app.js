@@ -37,8 +37,10 @@ function detectPlatform() {
   }
   const ua = navigator.userAgent.toLowerCase();
   if (ua.includes("windows")) return { os: "windows", arch: "x64" };
-  if (ua.includes("mac os") || ua.includes("macintosh")) return { os: "macos", arch: detectMacArch() };
-  if (ua.includes("linux") || ua.includes("x11")) return { os: "linux", arch: "x64" };
+  if (ua.includes("mac os") || ua.includes("macintosh"))
+    return { os: "macos", arch: detectMacArch() };
+  if (ua.includes("linux") || ua.includes("x11"))
+    return { os: "linux", arch: "x64" };
   return { os: null, arch: null };
 }
 
@@ -61,8 +63,10 @@ function primaryAssetName(version, os, arch) {
 
 function labelFor(name) {
   if (name.endsWith("-setup.exe")) return "Tải cho Windows (bộ cài)";
-  if (name.endsWith(".dmg") && name.includes("arm64")) return "Tải cho macOS (Apple Silicon)";
-  if (name.endsWith(".dmg") && name.includes("x64")) return "Tải cho macOS (Intel)";
+  if (name.endsWith(".dmg") && name.includes("arm64"))
+    return "Tải cho macOS (Apple Silicon)";
+  if (name.endsWith(".dmg") && name.includes("x64"))
+    return "Tải cho macOS (Intel)";
   if (name.endsWith(".AppImage")) return "Tải cho Linux (AppImage)";
   return `Tải ${name}`;
 }
@@ -111,12 +115,15 @@ function showFallback(statusText) {
   status.textContent = statusText;
   primary.hidden = false;
   primary.href = RELEASES_URL;
-  document.getElementById("primary-label").textContent = "Xem mọi bản trên GitHub";
+  document.getElementById("primary-label").textContent =
+    "Xem mọi bản trên GitHub";
   document.getElementById("primary-meta").textContent = "";
 }
 
 function renderOtherFiles(assets, shownNames) {
-  const rest = assets.filter((a) => !shownNames.includes(a.name) && a.name !== "SHA256SUMS");
+  const rest = assets.filter(
+    (a) => !shownNames.includes(a.name) && a.name !== "SHA256SUMS",
+  );
   if (rest.length === 0) return;
   const list = document.getElementById("other-files-list");
   for (const a of rest) {
@@ -142,17 +149,23 @@ function wireSecondaryButton(id, assets, version, os, arch) {
   return asset.name;
 }
 
+let currentRelease = null;
+
 async function main() {
   const { os, arch } = detectPlatform();
 
   let releases;
   try {
-    const res = await fetch(API_URL, { headers: { Accept: "application/vnd.github+json" } });
+    const res = await fetch(API_URL, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     releases = await res.json();
     if (!Array.isArray(releases)) throw new Error("API không trả về danh sách");
   } catch (err) {
-    showFallback("Không dò được bản mới nhất tự động (API GitHub tạm không phản hồi).");
+    showFallback(
+      "Không dò được bản mới nhất tự động (API GitHub tạm không phản hồi).",
+    );
     return;
   }
 
@@ -176,9 +189,28 @@ async function main() {
     return;
   }
 
+  currentRelease = release;
+  renderRelease(release, os, arch);
+}
+
+function renderRelease(release, os, arch) {
+  document
+    .querySelectorAll("[data-platform]")
+    .forEach((button) =>
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.platform === os && button.dataset.arch === arch),
+      ),
+    );
+  document.getElementById("other-files-list").replaceChildren();
+  document.getElementById("other-files").hidden = true;
+  for (const id of ["windows-download", "linux-download", "macos-download"])
+    document.getElementById(id).hidden = true;
   const assets = release.assets || [];
   if (!os || assets.length === 0) {
-    showFallback("Không nhận diện được hệ điều hành — chọn file phù hợp bên dưới.");
+    showFallback(
+      "Không nhận diện được hệ điều hành — chọn file phù hợp bên dưới.",
+    );
     renderOtherFiles(assets, []);
     return;
   }
@@ -190,7 +222,9 @@ async function main() {
   const primary = document.getElementById("primary-download");
 
   if (!asset) {
-    showFallback(`Không thấy file cho hệ điều hành này trong bản ${release.tag_name}.`);
+    showFallback(
+      `Không thấy file cho hệ điều hành này trong bản ${release.tag_name}.`,
+    );
     renderOtherFiles(assets, []);
     return;
   }
@@ -203,15 +237,33 @@ async function main() {
 
   const shownNames = [asset.name];
   if (os !== "windows") {
-    const n = wireSecondaryButton("windows-download", assets, release.tag_name, "windows", "x64");
+    const n = wireSecondaryButton(
+      "windows-download",
+      assets,
+      release.tag_name,
+      "windows",
+      "x64",
+    );
     if (n) shownNames.push(n);
   }
   if (os !== "linux") {
-    const n = wireSecondaryButton("linux-download", assets, release.tag_name, "linux", "x64");
+    const n = wireSecondaryButton(
+      "linux-download",
+      assets,
+      release.tag_name,
+      "linux",
+      "x64",
+    );
     if (n) shownNames.push(n);
   }
   if (os !== "macos") {
-    const n = wireSecondaryButton("macos-download", assets, release.tag_name, "macos", "arm64");
+    const n = wireSecondaryButton(
+      "macos-download",
+      assets,
+      release.tag_name,
+      "macos",
+      "arm64",
+    );
     if (n) shownNames.push(n);
   }
 
@@ -373,7 +425,12 @@ if (SMOOTH_WHEEL) {
       if (event.ctrlKey) return;
       // `deltaMode` 1 = lăn theo DÒNG (Firefox hay báo kiểu này), 2 = theo TRANG. Nhân
       // thẳng `deltaY` mà không quy đổi thì trên Firefox một nấc chỉ đi được 3 px.
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+      const unit =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? window.innerHeight
+            : 1;
       event.preventDefault();
       target = Math.max(0, Math.min(target + event.deltaY * unit, maxScroll()));
       if (!running) {
@@ -402,3 +459,70 @@ if (SMOOTH_WHEEL) {
     { passive: true },
   );
 }
+
+// Chọn thủ công kiến trúc Mac; user agent không đủ tin cậy để phân biệt Intel/Rosetta.
+document.querySelectorAll("[data-platform]").forEach((button) =>
+  button.addEventListener("click", () => {
+    if (currentRelease)
+      renderRelease(
+        currentRelease,
+        button.dataset.platform,
+        button.dataset.arch,
+      );
+    else
+      showFallback(
+        "Chưa lấy được danh sách bộ cài. Bạn có thể chọn trực tiếp trên GitHub.",
+      );
+  }),
+);
+
+const shots = {
+  mods: [
+    "Thư viện mods với ảnh đại diện mờ phía sau từng ô nội dung",
+    "Thư viện · Nội dung dễ tìm, phiên bản dễ chọn.",
+  ],
+  create: [
+    "Cửa sổ tạo bản chơi với ảnh Minecraft và bố cục phiên bản, nền tảng, cấu hình",
+    "Tạo bản chơi · Chọn phiên bản và cách chơi của bạn.",
+  ],
+  skins: [
+    "Thư viện skin với mô hình nhân vật 3D ngay trong launcher",
+    "Skin 3D · Một diện mạo riêng cho cuộc phiêu lưu.",
+  ],
+  cosmetics: [
+    "Thư viện cosmetic với khung avatar và nền hồ sơ Grove, Amethyst, Eclipse",
+    "Cosmetic · Một dấu ấn của riêng bạn.",
+  ],
+};
+const shotTabs = [...document.querySelectorAll("[data-shot]")];
+function chooseShot(tab) {
+  const name = tab.dataset.shot,
+    info = shots[name];
+  if (!info) return;
+  for (const button of shotTabs) {
+    button.setAttribute("aria-selected", String(button === tab));
+    button.tabIndex = button === tab ? 0 : -1;
+  }
+  const picture = document.getElementById("showcase-image");
+  picture.src = "media/" + name + ".webp";
+  picture.alt = info[0];
+  document.getElementById("showcase-caption").textContent = info[1];
+  document
+    .getElementById("showcase-panel")
+    .setAttribute("aria-labelledby", tab.id);
+}
+shotTabs.forEach((tab, index) => {
+  tab.addEventListener("click", () => chooseShot(tab));
+  tab.addEventListener("keydown", (event) => {
+    let next;
+    if (event.key === "ArrowRight") next = (index + 1) % shotTabs.length;
+    else if (event.key === "ArrowLeft")
+      next = (index - 1 + shotTabs.length) % shotTabs.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = shotTabs.length - 1;
+    else return;
+    event.preventDefault();
+    chooseShot(shotTabs[next]);
+    shotTabs[next].focus();
+  });
+});

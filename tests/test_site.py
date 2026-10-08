@@ -83,8 +83,9 @@ def test_there_is_still_a_download_button_with_no_script() -> None:
     Đây là trang TẢI XUỐNG: mất hoạt ảnh thì thôi, mất đường tải thì trang mất lý do tồn tại.
     `<noscript>` dựng một nút tĩnh trỏ về `releases/latest`.
     """
-    assert "<noscript>" in HTML, "mất lối tải tĩnh cho người không chạy được JavaScript"
-    block = HTML[HTML.index("<noscript>") : HTML.index("</noscript>")]
+    found = re.search(r"<noscript\s*>(.*?)</noscript\s*>", HTML, re.S)
+    assert found is not None, "mất lối tải tĩnh cho người không chạy được JavaScript"
+    block = found.group(1)
     assert "releases/latest" in block, "nút dự phòng không trỏ tới bản phát hành mới nhất"
 
 
@@ -262,7 +263,7 @@ def test_the_brand_mark_is_the_real_app_logo_not_an_svg_redrawn_to_look_like_it(
     thầm quay về SVG vẽ tay, còn `icon-grass` quay lại thì nghĩa là có hai nhãn hiệu song
     song trong cùng một trang.
     """
-    assert 'class="brand-logo" src="logo.webp"' in HTML, (
+    assert re.search(r'class="brand-logo"\s+src="logo.webp"', HTML), (
         "nhãn hiệu không còn dùng logo thật `logo.webp` — nếu đã thay bằng SVG vẽ lại thì "
         "nó không còn khớp icon ứng dụng"
     )
@@ -271,7 +272,14 @@ def test_the_brand_mark_is_the_real_app_logo_not_an_svg_redrawn_to_look_like_it(
 
     # `width`/`height` phải khai trong HTML, nếu không trình duyệt không giữ chỗ trước khi ảnh
     # về và nav giật một nhịp khi tải (CLS).
-    assert HTML.count('class="brand-logo" src="logo.webp" alt="" width="128" height="128"') == 2, (
+    assert (
+        len(
+            re.findall(
+                r'class="brand-logo"\s+src="logo.webp"\s+alt=""\s+width="128"\s+height="128"', HTML
+            )
+        )
+        == 2
+    ), (
         "thẻ logo thiếu `width`/`height` khai sẵn, hoặc `alt` không rỗng (cạnh nó đã có chữ "
         "'Nostalgia' nên trình đọc màn hình sẽ đọc tên hai lần)"
     )
@@ -335,7 +343,7 @@ def test_the_link_preview_card_is_not_an_empty_box_when_someone_shares_the_page(
     )
 
     for prop in ("og:url", "og:image"):
-        found = re.search(rf'property="{prop}" content="([^"]+)"', HTML)
+        found = re.search(rf'property="{prop}"\s+content="([^"]+)"', HTML)
         assert found is not None, f"thẻ {prop} mất `content`"
         assert found.group(1).startswith(PAGES_BASE), (
             f"{prop} = {found.group(1)!r} không tuyệt đối dưới {PAGES_BASE}"
