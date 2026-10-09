@@ -67,6 +67,7 @@ Item {
                 onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.play(root.chosen.instanceId) : root.navigate(1)
                 onLibraryRequested: root.navigate(2)
             }
+            GuideCard { width: parent.width; topicId: "start" }
             Item {
                 width: parent.width
                 height: 34

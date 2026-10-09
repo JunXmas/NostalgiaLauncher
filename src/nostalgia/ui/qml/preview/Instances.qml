@@ -57,9 +57,13 @@ Item {
         Button { objectName: "workspaceInstances"; label: "Bản chơi"; selected: !root.serverMode; quiet: true; onClicked: root.serverMode = false }
         Button { objectName: "workspaceServers"; label: "Server · Pro+"; selected: root.serverMode; quiet: true; onClicked: root.serverMode = true }
     }
+    GuideCard {
+        id: guide; anchors.top: workspaceTabs.bottom; anchors.topMargin: 8
+        width: parent.width; visible: !root.serverMode; topicId: "create"
+    }
     Flow {
         id: filters
-        anchors.top: workspaceTabs.bottom
+        anchors.top: guide.bottom
         visible: !root.serverMode
         anchors.topMargin: 8
         width: parent.width

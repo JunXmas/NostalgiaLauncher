@@ -5,6 +5,19 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+### Hướng dẫn ngay tại thao tác, kéo thả mod vào đúng bản chơi
+
+Không cần đoán cách dùng: nút **Cách dùng** và phím **F1** mở hướng dẫn cho mục đang
+xem, với GIF quay từ launcher, các bước ngắn và lưu ý thực tế. Có 17 chủ đề, từ tài
+khoản, skin/cape đến đồng bộ pack và server. Popup mica giữ nguyên biểu mẫu bên
+dưới; đóng trợ giúp trở về thao tác đang làm. GIF dùng ngoại tuyến, chỉ nạp khi mở
+và dừng khi ẩn cửa sổ hoặc bật giảm chuyển động.
+
+Kéo một hoặc nhiều file mod `.jar` vào bất kỳ trang hay popup nào để chọn bản chơi
+đích. Chỉ cài sau khi xác nhận, giữ nguyên file gốc và chặn ghi khi Minecraft đang
+chạy. File trùng tên mặc định được bỏ qua; bật thay thế sẽ giữ bản cũ để khôi phục
+và giữ mod đang tắt ở trạng thái tắt. Nếu chép lỗi, launcher hoàn tác phần đã ghi.
+
 ### Đổi giấy phép: AGPL-3.0 → PolyForm Strict 1.0.0
 
 Mã nguồn vẫn công khai để ai cũng đọc và tự kiểm launcher có an toàn không, nhưng không còn

@@ -35,6 +35,7 @@ from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
 from nostalgia.facade.instances import InstanceOperations
+from nostalgia.facade.local_mod import LocalModOperations
 from nostalgia.facade.mod_repair import ModRepairOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
 from nostalgia.facade.nos_client import NosClientOperations
@@ -52,6 +53,7 @@ from nostalgia.instance.world import RecentWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
 from nostalgia.modcheck.model import ModScan
+from nostalgia.model.local_mod import LocalModImport
 from nostalgia.modrepair.gateway import HttpRepairGateway
 from nostalgia.modrepair.model import RepairChange, RepairGateway, RepairPlan, RepairScan
 from nostalgia.multiplayer.lan_output import lan_port_from_output
@@ -117,6 +119,7 @@ class Launcher(
     MultiplayerOperations,
     RoomSyncOperations,
     AppearanceOperations,
+    LocalModOperations,
     PresetOperations,
     NosClientOperations,
     ImportOperations,
@@ -155,6 +158,7 @@ __all__ = [
     "Instance",
     "Launcher",
     "LauncherRelease",
+    "LocalModImport",
     "ManualPaymentGateway",
     "ModScan",
     "NosClientConfig",

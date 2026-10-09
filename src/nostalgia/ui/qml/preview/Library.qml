@@ -96,6 +96,7 @@ Item {
             quiet: true
             onClicked: root.installedMode = !root.installedMode
         }
+        GuideButton { topicId: "library" }
     }
     Item {
         id: filters

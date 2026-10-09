@@ -14,6 +14,7 @@ Item {
             PaymentText { width: parent.width; text: "Một nơi để cùng chơi"; font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
             PaymentText { width: parent.width; text: "Pro · Max · Ultimate"; color: GlassTheme.accent }
             PaymentText { width: parent.width; text: "Server chạy trên máy bạn · Paper, Purpur, Folia, Fabric và hybrid."; color: GlassTheme.muted }
+            GuideButton { topicId: "server" }
             Flow { width: parent.width; spacing: 12
                 PaymentText { width: parent.width; text: serverBridge.enabled ? (!socialBridge.signedIn && !serverBridge.hasAccess ? "Đăng nhập Google để tự động kiểm tra quyền host server." : serverBridge.note) : "Host server trả phí đang tạm khoá. Server chạy trên máy bạn; không kèm VPS. Bạn có thể xem giao diện tạo server."; color: GlassTheme.muted }
                 Button { objectName: "serverGoogleLogin"; label: "Đăng nhập Google"; provider: "google"; visible: serverBridge.enabled && !socialBridge.signedIn && !serverBridge.hasAccess; clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn; onClicked: socialBridge.signIn() }

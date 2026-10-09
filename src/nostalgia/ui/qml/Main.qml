@@ -1,4 +1,5 @@
 import QtQuick
+import "preview" as Preview
 
 /* Gốc là `Item` chứ không phải `Window`.
 
@@ -8,6 +9,8 @@ import QtQuick
 Item {
     id: window
     property bool socialPreview: false
+    Preview.GuideDialog {}
+    Preview.LocalModDialog {}
     implicitWidth: 1360
     implicitHeight: 860
     Component.onCompleted: {

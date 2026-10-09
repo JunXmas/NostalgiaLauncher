@@ -54,6 +54,7 @@ Controls.Popup {
             Column {
                 id: body
                 width: parent.width - 10; spacing: 12
+                GuideButton { topicId: "sync" }
                 Rectangle {
                     width: parent.width; height: risk.implicitHeight + 24; radius: 14
                     color: GlassTheme.alpha(GlassTheme.accent, 0.12); border.color: GlassTheme.alpha(GlassTheme.accent, 0.25)

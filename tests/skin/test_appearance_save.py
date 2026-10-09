@@ -47,7 +47,9 @@ def test_microsoft_saves_preview_with_requested_variant_and_correct_account(
             mojang_session_profile=server.url("/session"),
         ),
     )
-    server._server.RequestHandlerClass.do_PUT = server._server.RequestHandlerClass.do_POST
+    handler = server._server.RequestHandlerClass
+    # HTTPServer chú kiểu factory; fixture dùng lớp handler với route POST làm PUT.
+    handler.do_PUT = handler.do_POST  # type: ignore[attr-defined]
     server_state.add("/skins/upload", b"", status=204)
     path = skin_png(tmp_path)
     launcher.save_skin_selection(account, path, slim=slim)

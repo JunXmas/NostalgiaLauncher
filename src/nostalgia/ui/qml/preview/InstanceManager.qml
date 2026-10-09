@@ -51,6 +51,7 @@ Controls.Popup {
         Row {
             id: footer
             anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 8
+            GuideButton { topicId: root.section === 3 ? "backup" : "library" }
             Button { label: "Mở thư mục"; quiet: true; onClicked: bridge.openInstanceFolder(root.instance.instanceId) }
             Button { objectName: "instanceSave"; visible: root.section === 0 || root.section === 2; label: "Lưu thay đổi"; primary: true; clickable: root.writable; onClicked: root.save() }
         }

@@ -1,1 +1,2 @@
 singleton GlassTheme 1.0 GlassTheme.qml
+singleton GuideCenter 1.0 GuideCenter.qml

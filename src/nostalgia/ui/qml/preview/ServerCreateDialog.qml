@@ -66,6 +66,7 @@ Controls.Popup {
             }
         }
         Row { id: footer; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 10
+            GuideButton { topicId: "server" }
             Button { visible: serverBridge.busy; label: "Huỷ tác vụ"; onClicked: serverBridge.cancel() }
             Button { objectName: "serverCreateSubmit"; label: "Tạo server"; primary: true; clickable: serverBridge.hasAccess && !serverBridge.busy && !!root.gameVersion && !!root.buildId && !!labelField.text.trim(); onClicked: serverBridge.create(labelField.text, root.engineId, root.gameVersion, root.buildId) }
         }

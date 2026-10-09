@@ -164,7 +164,7 @@ Controls.Popup {
             height: heading.implicitHeight + (root.compactLayout ? 12 : 18)
             Column {
                 id: heading
-                width: parent.width - 60
+                width: parent.width - 60 - paymentHelp.width - 12
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
                     width: parent.width
@@ -180,6 +180,7 @@ Controls.Popup {
                     font.weight: Font.DemiBold
                 }
             }
+            GuideButton { id: paymentHelp; topicId: "premium"; anchors.right: parent.right; anchors.rightMargin: 52; anchors.verticalCenter: parent.verticalCenter }
             Button {
                 objectName: "paymentClose"
                 anchors.right: parent.right

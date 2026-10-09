@@ -37,6 +37,7 @@ Item {
     onSupportsPluginsChanged: { root.kind = supportsPlugins ? "plugin" : "mod"; root.source = "modrinth"; }
     Column { id: header; width: parent.width; spacing: 12
         Flow { width: parent.width; spacing: 8
+            GuideButton { topicId: "plugin" }
             Button { label: "Plugin"; visible: root.supportsPlugins; selected: root.kind === "plugin"; clickable: !serverBridge.busy; onClicked: { root.kind = "plugin"; root.resetLibrary(); } }
             Button { label: "Mod"; visible: root.supportsMods; selected: root.kind === "mod"; clickable: !serverBridge.busy; onClicked: { root.kind = "mod"; root.source = "modrinth"; root.resetLibrary(); } }
             Select { objectName: "serverContentSource"; currentIndex: root.source === "hangar" ? 1 : 0; width: 180 * GlassTheme.scale; model: root.kind === "plugin" && ["paper", "purpur", "folia"].indexOf(serverBridge.selected.engine_id) >= 0 ? ["Modrinth", "Hangar"] : ["Modrinth"]; enabled: !serverBridge.busy; onActivated: function(i) { root.source = i === 1 ? "hangar" : "modrinth"; root.resetLibrary(); } }

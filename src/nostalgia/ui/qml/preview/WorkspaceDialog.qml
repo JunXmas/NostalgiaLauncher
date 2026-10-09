@@ -9,6 +9,7 @@ Controls.Popup {
     property string title: ""
     property string description: ""
     property bool busy: false
+    property string guideTopic: ""
     property int preferredWidth: 800
     property int preferredHeight: 670
     readonly property real bodyWidth: bodyArea.width
@@ -35,6 +36,7 @@ Controls.Popup {
             width: parent.width - closeButton.width - 12; spacing: 8
             PaymentText { width: parent.width; text: root.title; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold }
             PaymentText { width: parent.width; text: root.description; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+            GuideButton { topicId: root.guideTopic; visible: !!root.guideTopic }
         }
         Button { id: closeButton; anchors.right: parent.right; label: "×"; width: 36; quiet: true; Accessible.name: "Đóng " + root.title; clickable: !root.busy; onClicked: root.close() }
         Item {

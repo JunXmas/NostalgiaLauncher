@@ -13,10 +13,11 @@ Preview.Glass {
     Component.onCompleted: if (hasShown) skinEditor.showAccount(shown.accountId)
     Preview.MotionTabs {
         id: tabs
-        width: parent.width; labels: ["Skin", "Cape"]
+        width: Math.max(100, parent.width - help.width - 12); labels: ["Skin", "Cape"]
         currentIndex: skinPanel.tab === "skin" ? 0 : 1; namePrefix: "skinSection-"
         onSelected: function(index) { skinPanel.tab = index === 0 ? "skin" : "cape"; }
     }
+    Preview.GuideButton { id: help; anchors.right: parent.right; topicId: "appearance" }
     Preview.PaymentText {
         id: caption
         anchors.top: tabs.bottom; anchors.topMargin: 12

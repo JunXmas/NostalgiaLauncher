@@ -59,6 +59,7 @@ Item {
             font.weight: Font.DemiBold
         }
     }
+    GuideButton { topicId: "start"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 40 }
     Column {
         x: 64
         y: Math.max(150, (parent.height - height) * 0.46)

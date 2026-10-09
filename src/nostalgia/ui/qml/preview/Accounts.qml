@@ -16,6 +16,7 @@ Item {
         PaymentText { width: parent.width; text: "Nhân vật của bạn. Thay skin ngay tại đây."; color: GlassTheme.muted }
     }
     Button { id: add; objectName: "addAccountButton"; anchors.right: parent.right; label: "Thêm tài khoản  +"; primary: true; onClicked: addDialog.openDialog() }
+    GuideButton { topicId: "start"; anchors.right: add.left; anchors.rightMargin: 8 }
     InertialScroll {
         id: accountScroll; objectName: "accountsScroll"
         anchors.top: header.bottom; anchors.topMargin: 24; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom

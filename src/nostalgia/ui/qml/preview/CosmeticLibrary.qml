@@ -17,6 +17,7 @@ Item {
                 PaymentText { width: parent.width; text: "Thư viện cosmetic"; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold }
                 PaymentText { width: parent.width; text: "Một diện mạo riêng cho những cuộc gặp gỡ."; color: GlassTheme.muted }
             }
+            GuideCard { width: parent.width; topicId: "cosmetic" }
             Item {
                 width: parent.width; height: (width < 650 * GlassTheme.scale ? 290 : 210) * GlassTheme.scale
                 CosmeticBanner { anchors.fill: parent; decor: root.previewDecor }

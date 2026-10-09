@@ -26,6 +26,7 @@ from nostalgia.ui.cape_bridge import CapeBridge
 from nostalgia.ui.catalog_bridge import CatalogBridge
 from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.import_bridge import ImportBridge
+from nostalgia.ui.local_mod_bridge import LocalModBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
@@ -116,7 +117,9 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context = view.rootContext()
     context.setContextProperty("bridge", bridge)
     context.setContextProperty("storageBridge", StorageBridge(launcher, bridge, parent=view))
-    context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
+    content = ContentBridge(launcher, bridge, parent=view)
+    context.setContextProperty("contentBridge", content)
+    context.setContextProperty("localModBridge", LocalModBridge(launcher, bridge, content, view))
     accounts = AccountBridge(launcher, bridge, parent=view)
     capes = CapeBridge(launcher, bridge, parent=view)
     editor = SkinEditBridge(launcher, bridge, accounts, capes)

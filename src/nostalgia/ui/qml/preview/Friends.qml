@@ -33,6 +33,7 @@ Item {
             }
             PaymentText { width: parent.width; visible: !root.compact || !socialBridge.peerId; text: socialBridge.signedIn ? socialBridge.friends.filter(function(friend) { return friend.online; }).length + " bạn trực tuyến · Gặp nhau trong thế giới của bạn." : "Kết nối tài khoản để lưu bạn bè và nhận lời mời."; color: GlassTheme.muted }
             MotionTabs { width: parent.width; labels: ["Bạn bè", "Chơi chung"]; currentIndex: root.section; namePrefix: "friendsSection-"; onSelected: function(index) { root.section = index; } }
+            GuideCard { width: parent.width; topicId: root.section === 0 ? "friends" : "host"; visible: !root.compact || !socialBridge.peerId }
             ServiceAccountCard { width: parent.width; visible: !socialBridge.signedIn }
             PaymentText {
                 objectName: "socialNote"

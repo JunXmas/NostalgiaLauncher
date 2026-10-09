@@ -13,6 +13,7 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 50
+        Preview.GuideButton { topicId: "settings"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
         PageTitle {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             caption: Tr.phrase("Cài đặt")

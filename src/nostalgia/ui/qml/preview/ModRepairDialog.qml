@@ -48,6 +48,7 @@ Controls.Popup {
         }
         Flow {
             id: actions
+            GuideButton { topicId: "repair" }
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             spacing: 8
             Button { objectName: "modRescan"; label: "Đọc lại log"; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }

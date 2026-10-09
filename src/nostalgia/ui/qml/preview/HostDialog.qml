@@ -112,6 +112,7 @@ Controls.Popup {
             id: footer
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             height: launch.height
+            GuideButton { topicId: "host"; anchors.left: parent.left }
             Button {
                 id: launch
                 objectName: "hostLaunchButton"

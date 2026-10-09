@@ -48,6 +48,7 @@ Item {
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter }
             spacing: 8
+            Preview.GuideButton { topicId: "log"; height: 30 }
             Repeater {
                 model: [{ key: "info", text: Tr.phrase("Tất cả") }, { key: "warn", text: Tr.phrase("Cảnh báo+") }, { key: "error", text: Tr.phrase("Lỗi") }]
                 Rectangle {

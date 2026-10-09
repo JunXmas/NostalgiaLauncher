@@ -5,6 +5,7 @@ WorkspaceDialog {
     id: root
     objectName: "modernBackupDialog"
     title: "Sao lưu & khôi phục"
+    guideTopic: "backup"
     description: "Giữ an toàn cho thế giới của bạn. Khôi phục từ bản sao lưu sẽ tạo một bản chơi mới."
     busy: storageBridge.busy
     preferredWidth: 860

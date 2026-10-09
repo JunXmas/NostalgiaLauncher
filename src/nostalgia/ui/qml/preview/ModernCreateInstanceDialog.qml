@@ -182,6 +182,7 @@ Controls.Popup {
                 PaymentText { objectName: "createSelectionSummary"; width: parent.width; text: dialog.gameVersion ? dialog.loaderLabel + " · Minecraft " + dialog.gameVersion : "Chưa chọn phiên bản"; wrapMode: Text.NoWrap; elide: Text.ElideRight; font.weight: Font.DemiBold }
             }
             Row { id: footerActions; anchors.right: parent.right; spacing: 10
+                GuideButton { topicId: "create" }
                 Button { label: "Huỷ"; quiet: true; clickable: !bridge.busy; onClicked: dialog.close() }
                 Button { objectName: "createInstanceConfirm"; label: bridge.busy ? "Đang cài…" : "Tạo bản chơi"; primary: true; clickable: dialog.canCreate; onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName, dialog.gameVersion, dialog.loaderKind, dialog.loaderVersion, parseInt(heapField.text) || 0, dialog.gameDirUrl) }
             }

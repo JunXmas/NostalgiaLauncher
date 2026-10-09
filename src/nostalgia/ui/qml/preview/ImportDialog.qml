@@ -5,6 +5,7 @@ WorkspaceDialog {
     id: root
     objectName: "modernImportDialog"
     title: "Nhập bản chơi"
+    guideTopic: "import"
     description: "Tiếp tục thế giới quen thuộc của bạn, từ modpack hoặc launcher khác."
     busy: importBridge.busy
     property int section: 0

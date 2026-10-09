@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "GuideCatalog.js" as Guides
 
 Item {
     id: root
@@ -9,6 +10,9 @@ Item {
     property int currentIndex: 0
     property bool sessionSkipped: false
     property bool advancedLibrary: false
+    Shortcut { sequence: "F1"; onActivated: GuideCenter.show(root.loginVisible ? "start" : root.currentIndex === 1 && pages.item && pages.item.serverMode ? "server" : Guides.pageTopic(root.currentIndex)) }
+    GuideDialog {}
+    LocalModDialog {}
     readonly property bool loginVisible: (!bridge.activePlayerName && !sessionSkipped) || googleLinkBridge.pending
     Component.onCompleted: {
         GlassTheme.preferences = settingsBridge;
