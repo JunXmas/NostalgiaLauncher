@@ -11,6 +11,7 @@ Controls.Popup {
     }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
     objectName: "projectDialog"
+    z: contentBridge.browseInstanceId ? 200 : 0
     parent: Controls.Overlay.overlay
     width: Math.min(760, parent ? parent.width - 48 : 760)
     height: Math.min(620, parent ? parent.height - 48 : 620)
@@ -166,7 +167,7 @@ Controls.Popup {
                 anchors.bottom: parent.bottom
                 label: projectBridge.installing ? "Đang cài…" : picker.isPack ? "Tạo bản chơi" : "Cài phiên bản đã chọn"
                 primary: true
-                clickable: !root.details.loading && !projectBridge.installing && !contentBridge.busy && picker.canInstall && !root.success
+                clickable: !root.details.loading && !projectBridge.installing && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && picker.canInstall && !root.success
                 onClicked: projectBridge.installVersion(picker.versionId, picker.gameVersion, picker.instanceId, nameField.text)
             }
         }

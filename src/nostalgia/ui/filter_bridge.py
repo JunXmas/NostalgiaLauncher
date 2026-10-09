@@ -27,6 +27,27 @@ class FilterContentBridge(ModpackContentBridge):
         self._game_versions: list[str] = []
         self._kind: ContentKind = "mod"
         self._filters_touched = False
+        self._browse_instance_id = ""
+
+    @Property(str, notify=filtersChanged)
+    def browseInstanceId(self) -> str:
+        return self._browse_instance_id
+
+    @Slot(str, result=bool)
+    def pinBrowseTarget(self, instance_id: str) -> bool:
+        """Duyệt từ quản lý chỉ cài vào target đã chọn, không đổi target từ popup dự án."""
+        if not self._target or self._target.instance_id != instance_id:
+            return False
+        self._browse_instance_id = instance_id
+        self._filters_touched = False
+        self.apply_default_filters()
+        self.filtersChanged.emit()
+        return True
+
+    @Slot()
+    def unpinBrowseTarget(self) -> None:
+        self._browse_instance_id = ""
+        self.filtersChanged.emit()
 
     @Property(list, notify=filtersChanged)
     def selectedLoaders(self) -> list[str]:
@@ -38,24 +59,32 @@ class FilterContentBridge(ModpackContentBridge):
 
     @Slot(str, bool)
     def setLoaderSelected(self, loader_name: str, selected: bool) -> None:
+        if self._browse_instance_id:
+            return
         self._loaders = _toggle(self._loaders, loader_name, selected)
         self._filters_touched = True
         self.filtersChanged.emit()
 
     @Slot(str, bool)
     def setGameVersionSelected(self, game_version: str, selected: bool) -> None:
+        if self._browse_instance_id:
+            return
         self._game_versions = _toggle(self._game_versions, game_version, selected)
         self._filters_touched = True
         self.filtersChanged.emit()
 
     @Slot()
     def clearGameVersions(self) -> None:
+        if self._browse_instance_id:
+            return
         self._game_versions = []
         self._filters_touched = True
         self.filtersChanged.emit()
 
     @Slot()
     def clearLoaders(self) -> None:
+        if self._browse_instance_id:
+            return
         self._loaders = []
         self._filters_touched = True
         self.filtersChanged.emit()
@@ -68,6 +97,8 @@ class FilterContentBridge(ModpackContentBridge):
 
     @Slot(str)
     def setKind(self, content_kind: str) -> None:
+        if self._browse_instance_id and content_kind not in ("mod", "shader", "resourcepack"):
+            return
         if content_kind == self._kind:
             return
         self._kind = content_kind  # type: ignore[assignment]
@@ -81,7 +112,11 @@ class FilterContentBridge(ModpackContentBridge):
             self._loaders = []
             self._game_versions = []
             return
-        self._loaders = [self._target.loader_kind] if self._target.loader_kind != "vanilla" else []
+        self._loaders = (
+            [self._target.loader_kind]
+            if self._kind == "mod" and self._target.loader_kind != "vanilla"
+            else []
+        )
         self._game_versions = [self._target.game_version]
 
 

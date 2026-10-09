@@ -39,6 +39,13 @@ Controls.Popup {
         }
     }
     exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick } }
+    InstanceLibraryDialog {
+        id: addContent
+        onClosed: {
+            if (installedPanel.item) installedPanel.item.refresh();
+            Qt.callLater(function() { addContentButton.forceActiveFocus(); });
+        }
+    }
     contentItem: Item {
         Column {
             id: header
@@ -52,6 +59,7 @@ Controls.Popup {
             id: footer
             anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 8
             GuideButton { topicId: root.section === 3 ? "backup" : "library" }
+            Button { id: addContentButton; objectName: "instanceAddContent"; visible: root.section === 1; label: "Thêm nội dung  +"; primary: true; clickable: root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: addContent.openFor(root.instance, installedPanel.item ? installedPanel.item.kind : "mod") }
             Button { label: "Mở thư mục"; quiet: true; onClicked: bridge.openInstanceFolder(root.instance.instanceId) }
             Button { objectName: "instanceSave"; visible: root.section === 0 || root.section === 2; label: "Lưu thay đổi"; primary: true; clickable: root.writable; onClicked: root.save() }
         }
@@ -104,6 +112,7 @@ Controls.Popup {
             }
         }
         Loader {
+            id: installedPanel
             anchors.top: tabs.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right
             anchors.bottom: footer.top; anchors.bottomMargin: 20
             active: root.opened && root.section === 1

@@ -8,6 +8,9 @@ Item {
     property bool installedMode: false
     property string kind: "modpack"
     property string sort: "relevance"
+    property bool instanceScoped: false
+    property string instanceLabel: ""
+    readonly property bool compactScope: instanceScoped && height < 550 * GlassTheme.scale
     signal advancedRequested
     readonly property var kinds: [
         {
@@ -26,9 +29,10 @@ Item {
             label: "Gói tài nguyên",
             key: "resourcepack"
         }
-    ]
+    ].filter(function(choice) { return !root.instanceScoped || choice.key !== "modpack"; })
     function refresh() {
         contentBridge.setKind(root.kind);
+        if (root.instanceScoped && contentBridge.instanceId) contentBridge.refreshInstalled(root.kind);
         contentBridge.search(root.kind, search.text, root.sort);
     }
     Component.onCompleted: refresh()
@@ -40,28 +44,34 @@ Item {
     Item {
         id: header
         width: parent.width
-        height: 86
+        height: Math.max(root.compactScope ? 64 : 86, heading.implicitHeight + 16)
         Column {
+            id: heading
+            width: parent.width - sourcePicker.width - 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
             Text {
-                text: "Khám phá"
+                width: parent.width; wrapMode: Text.WordWrap
+                text: root.instanceScoped ? "Thêm nội dung" : "Khám phá"
                 color: GlassTheme.text
                 font.family: GlassTheme.displayFont
-                font.pixelSize: GlassTheme.fontPage
+                font.pixelSize: root.compactScope ? GlassTheme.fontSection : GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             Text {
-                text: "Một thế giới quen thuộc. Những cách chơi mới."
+                objectName: "libraryTargetNote"
+                width: parent.width; wrapMode: Text.WordWrap
+                text: root.instanceScoped ? root.instanceLabel + " · Minecraft " + contentBridge.gameVersion + " · " + contentBridge.loaderKind + (root.compactScope ? "" : "\nChỉ cài vào bản chơi này; phiên bản tương thích được lọc sẵn.") : "Một thế giới quen thuộc. Những cách chơi mới."
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
-                font.pixelSize: GlassTheme.fontBody
+                font.pixelSize: root.compactScope ? GlassTheme.fontNote : GlassTheme.fontBody
             }
         }
         Select {
+            id: sourcePicker
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 145
+            width: 145 * GlassTheme.scale
             model: ["Modrinth", "CurseForge"]
             currentIndex: contentBridge.source === "curseforge" ? 1 : 0
             onActivated: function (index) {
@@ -79,6 +89,7 @@ Item {
         Repeater {
             model: root.kinds
             Button {
+                objectName: "libraryKind-" + modelData.key
                 visible: !root.installedMode
                 label: modelData.label
                 selected: root.kind === modelData.key
@@ -91,6 +102,7 @@ Item {
         }
         Button {
             objectName: "openModernInstalled"
+            visible: !root.instanceScoped
             label: root.installedMode ? "Duyệt thư viện" : "Đã cài"
             selected: root.installedMode
             quiet: true
@@ -102,7 +114,7 @@ Item {
         id: filters
         visible: !root.installedMode
         anchors.top: types.bottom
-        anchors.topMargin: 24
+        anchors.topMargin: root.compactScope ? 12 : 24
         width: parent.width
         height: 46 * GlassTheme.scale
         Input {
@@ -117,7 +129,7 @@ Item {
         Select {
             id: sortPicker
             anchors.right: parent.right
-            width: 170
+            width: 170 * GlassTheme.scale
             model: ["Phù hợp nhất", "Nhiều lượt tải", "Mới nhất"]
             onActivated: function (index) {
                 root.sort = ["relevance", "downloads", "newest"][index];
@@ -129,7 +141,7 @@ Item {
         id: status
         visible: !root.installedMode
         anchors.top: filters.bottom
-        anchors.topMargin: 18
+        anchors.topMargin: root.compactScope ? 10 : 18
         width: parent.width
         height: 26
         Text {
@@ -140,6 +152,7 @@ Item {
         }
         Button {
             anchors.right: parent.right
+            visible: !root.instanceScoped
             height: 24
             label: "Bộ lọc nâng cao  ↗"
             quiet: true
@@ -163,7 +176,7 @@ Item {
             Grid {
                 id: grid
                 width: parent.width
-                columns: Math.max(1, Math.floor((width + 16) / (300 * GlassTheme.scale)))
+                columns: root.compactScope ? 1 : Math.max(1, Math.floor((width + 16) / (300 * GlassTheme.scale)))
                 spacing: 16
                 Repeater {
                     model: contentBridge.resultsModel
@@ -177,7 +190,7 @@ Item {
                         Keys.onReturnPressed: projectBridge.openProject(model.projectId)
                         Keys.onEnterPressed: projectBridge.openProject(model.projectId)
                         width: (grid.width - (grid.columns - 1) * 16) / grid.columns
-                        height: 218 * GlassTheme.scale
+                        height: (root.compactScope ? 126 : 218) * GlassTheme.scale
                         radius: 18
                         color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
                         Behavior on color {
@@ -216,9 +229,9 @@ Item {
                             fallbackText: model.title
                         }
                         Column {
-                            x: 20 * GlassTheme.scale
-                            y: 90 * GlassTheme.scale
-                            width: parent.width - 40 * GlassTheme.scale
+                            x: (root.compactScope ? 90 : 20) * GlassTheme.scale
+                            y: (root.compactScope ? 16 : 90) * GlassTheme.scale
+                            width: parent.width - x - 20 * GlassTheme.scale
                             spacing: 8 * GlassTheme.scale
                             Text {
                                 width: parent.width
@@ -244,10 +257,10 @@ Item {
                         }
                         Text {
                             objectName: "projectMeta-" + model.projectId
-                            width: Math.max(0, downloadButton.x - 30 * GlassTheme.scale)
+                            width: Math.max(0, downloadButton.x - (root.compactScope ? 100 : 30) * GlassTheme.scale)
                             elide: Text.ElideRight
                             anchors.left: parent.left
-                            anchors.leftMargin: 20 * GlassTheme.scale
+                            anchors.leftMargin: (root.compactScope ? 90 : 20) * GlassTheme.scale
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 25 * GlassTheme.scale
                             text: Legacy.Theme.compact(model.downloads) + " tải  ·  " + (model.loaders.length ? model.loaders[0] : "Minecraft")
@@ -264,7 +277,7 @@ Item {
                             anchors.bottomMargin: 16 * GlassTheme.scale
                             label: model.installing ? "Đang cài…" : model.contentKind === "modpack" ? "Tạo bản chơi" : model.installed ? "Đã cài" : "Cài đặt"
                             height: 34 * GlassTheme.scale
-                            clickable: !model.installing && !model.installed && !contentBridge.busy && (model.contentKind === "modpack" || (!!contentBridge.instanceId && !(root.kind === "mod" && contentBridge.loaderKind === "vanilla")))
+                            clickable: !model.installing && !model.installed && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && (model.contentKind === "modpack" || (!!contentBridge.instanceId && !(root.kind === "mod" && contentBridge.loaderKind === "vanilla")))
                             onClicked: model.contentKind === "modpack" ? pack.openFor(model.projectId, model.title) : contentBridge.install(model.projectId)
                         }
                         HoverHandler {

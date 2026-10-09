@@ -12,6 +12,18 @@ Mã trên nhánh `fix/account-menu-visibility`; chưa có trong bộ cài rc13.
 - Popup mica có GIF, các bước đánh số, lưu ý và tìm kiếm có/không dấu.
 - Mở trợ giúp trên một popup giữ nguyên biểu mẫu; đóng hướng dẫn trả focus về nút mở.
 
+### Thêm nội dung vào bản chơi đang quản lý
+
+Mở **Bản chơi → Quản lý → Nội dung đã cài → Thêm nội dung**. Cửa sổ này dùng lại
+`Library.qml`, chỉ hiện Mod, Shader và Gói tài nguyên. Bản chơi đích được giữ cố định;
+không đổi phiên bản Minecraft, loader hoặc target trong popup dự án. Với shader và
+gói tài nguyên chỉ lọc theo Minecraft. Nội dung không có bản phù hợp sẽ không cho cài.
+
+**Quay lại quản lý** (hoặc Escape) giữ nguyên tab, bộ lọc nội dung đã cài và các ô
+cấu hình chưa lưu, đồng thời đọc lại danh sách đã cài. Đóng cửa sổ bỏ chế độ ghim;
+thư viện ngoài vẫn có đầy đủ modpack và bộ lọc tự chọn. Game đang chạy hoặc tác vụ
+bản chơi đang bận thì không cho cài thêm nội dung.
+
 ## Media và hiệu năng
 
 17 GIF được quay từ Qt launcher bằng fixture cục bộ, có nhãn dữ liệu mẫu; không có

@@ -62,6 +62,8 @@ class ContentBridge(FilterContentBridge):
     @Slot(str)
     def selectInstance(self, instance_id: str) -> None:
         """Đọc đĩa (nhanh) nên làm ngay; bộ lọc nhảy về loader + phiên bản của bản chơi đó."""
+        if self._browse_instance_id and instance_id != self._browse_instance_id:
+            return
         self._target = self._launcher.describe_content_target(instance_id) if instance_id else None
         self._results_model.reset([])
         self._total_hits = 0
@@ -120,6 +122,8 @@ class ContentBridge(FilterContentBridge):
 
     @Slot(str, str, str)
     def search(self, content_kind: str, query: str, sort: str) -> None:
+        if self._browse_instance_id and content_kind == "modpack":
+            return
         self._last_query = (
             cast(ContentKind, content_kind),
             query.strip(),
@@ -193,6 +197,8 @@ class ContentBridge(FilterContentBridge):
 
     @Slot(str)
     def install(self, project_id: str) -> None:
+        if self._main_bridge.gameRunning or self._main_bridge.storageBusy or self._main_bridge.busy:
+            return
         target = self._target
         project = next(
             (p for p in self._results_model.projects if p.project_id == project_id), None

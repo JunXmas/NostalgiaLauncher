@@ -11,6 +11,7 @@ Column {
     property string versionId: ""
     property string instanceId: ""
     property Item menuBackdrop: GlassTheme.backdrop
+    readonly property string pinnedInstanceId: contentBridge.browseInstanceId
     readonly property bool isPack: details.contentKind === "modpack"
     readonly property var gameChoices: {
         var values = [];
@@ -20,16 +21,18 @@ Column {
                     values.push(game);
             });
         });
-        return values;
+        return root.pinnedInstanceId ? values.filter(function(game) { return game === contentBridge.gameVersion; }) : values;
     }
     readonly property var releases: (details.versions || []).filter(function (release) {
-        return release.gameVersions.indexOf(root.gameVersion) >= 0;
+        return release.gameVersions.indexOf(root.gameVersion) >= 0 && (!root.pinnedInstanceId || details.contentKind !== "mod" || release.loaders.indexOf(contentBridge.loaderKind) >= 0 || (contentBridge.loaderKind === "quilt" && release.loaders.indexOf("fabric") >= 0));
     })
     readonly property var chosen: releases.find(function (release) {
         return release.versionId === root.versionId;
     }) || null
     readonly property var targets: (details.targets || []).filter(function (target) {
         if (!root.chosen || target.gameVersion !== root.gameVersion)
+            return false;
+        if (root.pinnedInstanceId && target.instanceId !== root.pinnedInstanceId)
             return false;
         if (details.contentKind !== "mod")
             return true;
@@ -77,6 +80,7 @@ Column {
     onDetailsChanged: Qt.callLater(root.reconcile)
     onGameVersionChanged: Qt.callLater(root.reconcile)
     onVersionIdChanged: Qt.callLater(root.reconcile)
+    onPinnedInstanceIdChanged: Qt.callLater(root.reset)
     Text {
         text: "Phiên bản cài đặt"
         color: GlassTheme.text
@@ -103,7 +107,7 @@ Column {
                 width: parent.width
                 model: root.gameChoices
                 currentIndex: Math.max(0, root.gameChoices.indexOf(root.gameVersion))
-                enabled: model.length > 0 && !projectBridge.installing
+                enabled: model.length > 0 && !projectBridge.installing && !root.pinnedInstanceId
                 onActivated: function (index) {
                     root.gameVersion = root.gameChoices[index];
                 }
@@ -157,16 +161,17 @@ Column {
             currentIndex: Math.max(0, root.targets.findIndex(function (target) {
                 return target.instanceId === root.instanceId;
             }))
-            enabled: root.targets.length > 0 && !projectBridge.installing
+            enabled: root.targets.length > 0 && !projectBridge.installing && !root.pinnedInstanceId
             onActivated: function (index) {
                 root.instanceId = root.targets[index].instanceId;
             }
         }
     }
     Text {
+        objectName: "projectCompatibilityNote"
         width: parent.width
-        visible: !!root.chosen
-        text: !root.chosen ? "" : root.isPack ? "Tạo bản chơi mới với Minecraft và loader do modpack quy định." : root.targets.length ? "Chỉ hiện bản chơi khớp phiên bản Minecraft" + (root.details.contentKind === "mod" ? " và mod loader." : ".") : "Bạn cần một bản chơi Minecraft " + root.gameVersion + (root.details.contentKind === "mod" ? " với " + root.chosen.loaders.join(" / ") : "") + " để cài bản này."
+        visible: !!root.chosen || !!root.pinnedInstanceId
+        text: root.pinnedInstanceId ? (root.canInstall ? "Cài vào bản chơi đang quản lý. Minecraft và loader được giữ cố định." : "Không có bản phát hành phù hợp với bản chơi này. Hãy thử dự án khác.") : !root.chosen ? "" : root.isPack ? "Tạo bản chơi mới với Minecraft và loader do modpack quy định." : root.targets.length ? "Chỉ hiện bản chơi khớp phiên bản Minecraft" + (root.details.contentKind === "mod" ? " và mod loader." : ".") : "Bạn cần một bản chơi Minecraft " + root.gameVersion + (root.details.contentKind === "mod" ? " với " + root.chosen.loaders.join(" / ") : "") + " để cài bản này."
         color: GlassTheme.muted
         font.family: GlassTheme.font
         font.pixelSize: GlassTheme.fontLabel
@@ -175,7 +180,7 @@ Column {
     }
     Button {
         objectName: "projectCreateCompatible"
-        visible: !!root.chosen && !root.isPack && root.targets.length === 0
+        visible: !!root.chosen && !root.isPack && root.targets.length === 0 && !root.pinnedInstanceId
         label: "Tạo bản chơi phù hợp  ↗"
         quiet: true
         clickable: !projectBridge.installing

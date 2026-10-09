@@ -5,6 +5,17 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+### Thêm nội dung ngay từ quản lý bản chơi
+
+Trong **Nội dung đã cài**, nút **Thêm nội dung** mở chính thư viện của launcher với
+Mod, Shader và Gói tài nguyên. Minecraft, loader và bản chơi đích được lọc sẵn;
+popup dự án chỉ cho cài phiên bản phù hợp vào bản chơi đang quản lý. Shader và
+gói tài nguyên lọc theo Minecraft, không bị ghim nhầm vào loader của mod.
+
+Bấm **Quay lại quản lý** để xem danh sách đã cài được cập nhật; tên, cấu hình đang
+sửa vẫn được giữ. Thư viện chính vẫn dành cho khám phá toàn bộ kho và tạo bản chơi
+từ modpack. Không thay đổi nội dung khi Minecraft đang chạy hoặc bản chơi đang bận.
+
 ### Hướng dẫn ngay tại thao tác, kéo thả mod vào đúng bản chơi
 
 Không cần đoán cách dùng: nút **Cách dùng** và phím **F1** mở hướng dẫn cho mục đang

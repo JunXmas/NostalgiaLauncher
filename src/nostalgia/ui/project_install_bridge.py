@@ -64,6 +64,13 @@ class ProjectInstallBridge(WorkerBridge):
         project, project_catalog = self._project, self._catalog
         if self._installing or project is None or project_catalog is None:
             return
+        if self._main_bridge.gameRunning or self._main_bridge.storageBusy or self._main_bridge.busy:
+            self.failed.emit("Đóng game hoặc đợi tác vụ bản chơi hoàn tất trước khi cài.")
+            return
+        pinned = self._content_bridge._browse_instance_id
+        if pinned and (instance_id != pinned or project.content_kind == "modpack"):
+            self.failed.emit("Chỉ cài nội dung vào bản chơi đang quản lý.")
+            return
         if cast(bool, self._content_bridge.busy):
             self.failed.emit("Đợi tác vụ thư viện hiện tại hoàn tất rồi thử lại.")
             return
