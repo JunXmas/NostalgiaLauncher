@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.0rc18 — 2026-10-09
 
 - Nhận đúng phiên bản Forge hiện đại từ `net.minecraftforge:fmlloader`, khắc phục
   lỗi yêu cầu cài lại loader khi host/chia sẻ modpack đã chạy được. Xuất modpack và
