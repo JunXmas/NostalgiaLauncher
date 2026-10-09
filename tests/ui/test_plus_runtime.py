@@ -2,6 +2,7 @@
 
 import json
 import time
+import traceback
 from dataclasses import replace
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from PySide6.QtGui import QDesktopServices, QGuiApplication
 from test_bridges import wait_until
 
 from local_https_server import LocalHttpsServer, ServerState
-from nostalgia.api import Launcher
+from nostalgia.api import GoogleLogin, HttpSocialGateway, Launcher
 from nostalgia.model.json_value import JsonValue, as_mapping
 from nostalgia.net.http import HttpClient
 from nostalgia.ui.runtime import build_release_view
@@ -97,6 +98,19 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
     repair = view.rootContext().contextProperty("modRepairBridge")
     servers = view.rootContext().contextProperty("serverBridge")
     synchronization = view.rootContext().contextProperty("roomSyncBridge")
+    gateway = social._gateway
+    assert isinstance(gateway, HttpSocialGateway)
+    start_login = gateway.start_login
+    login_errors: list[str] = []
+
+    def observed_start() -> GoogleLogin:
+        try:
+            return start_login()
+        except Exception:
+            login_errors.append(traceback.format_exc())
+            raise
+
+    monkeypatch.setattr(gateway, "start_login", observed_start)
     try:
         assert view.rootContext().contextProperty("plusFeaturesEnabled") is True
         assert not payments.details["available"]
@@ -120,7 +134,8 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
             }
             raise AssertionError(
                 f"login={social.signedIn}, busy={social.busy}, note={social.note}; "
-                f"checkout={payments.details}, watching={payments._watching}; requests={counts}"
+                f"checkout={payments.details}, watching={payments._watching}; requests={counts}; "
+                f"start_errors={login_errors}"
             ) from error
         assert not social.account["plus"] and repair._gateway is None
         assert synchronization.configured
