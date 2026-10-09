@@ -3,6 +3,7 @@ import QtQuick
 Item {
     id: root
     objectName: "dedicatedServers"
+    Component.onCompleted: serverBridge.checkAccess()
     function openCreate() { create.open(); }
     Glass {
         id: access
@@ -14,8 +15,9 @@ Item {
             PaymentText { width: parent.width; text: "Pro · Max · Ultimate"; color: GlassTheme.accent }
             PaymentText { width: parent.width; text: "Server chạy trên máy bạn · Paper, Purpur, Folia, Fabric và hybrid."; color: GlassTheme.muted }
             Flow { width: parent.width; spacing: 12
-                PaymentText { width: Math.max(200, parent.width - verify.width - 12); text: serverBridge.enabled ? serverBridge.note : "Host server trả phí đang tạm khoá. Server chạy trên máy bạn; không kèm VPS. Bạn có thể xem giao diện tạo server."; color: GlassTheme.muted }
-                Button { id: verify; objectName: "serverVerifyAccess"; label: "Kiểm tra quyền"; visible: serverBridge.enabled && !serverBridge.hasAccess; clickable: !serverBridge.busy; onClicked: serverBridge.checkAccess() }
+                PaymentText { width: parent.width; text: serverBridge.enabled ? (!socialBridge.signedIn && !serverBridge.hasAccess ? "Đăng nhập Google để tự động kiểm tra quyền host server." : serverBridge.note) : "Host server trả phí đang tạm khoá. Server chạy trên máy bạn; không kèm VPS. Bạn có thể xem giao diện tạo server."; color: GlassTheme.muted }
+                Button { objectName: "serverGoogleLogin"; label: "Đăng nhập Google"; provider: "google"; visible: serverBridge.enabled && !socialBridge.signedIn && !serverBridge.hasAccess; clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn; onClicked: socialBridge.signIn() }
+                Button { objectName: "serverRetry"; label: "Thử lại"; visible: serverBridge.enabled && serverBridge.canRetry && socialBridge.signedIn; clickable: !serverBridge.busy; onClicked: serverBridge.retry() }
             }
         }
     }

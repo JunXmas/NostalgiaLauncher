@@ -7,6 +7,7 @@ Item {
     property string icon: ""
     property string provider: ""
     property bool chevron: false
+    readonly property string symbol: label === "×" ? "close" : label === "···" ? "more" : label === "★" ? "star-filled" : label === "☆" ? "star" : ""
     property bool danger: false
     property bool primary: false
     property bool quiet: false
@@ -16,7 +17,7 @@ Item {
     readonly property bool hovered: hover.hovered
     readonly property real captionPadding: Math.max(4, Math.min(16, (root.width - caption.implicitWidth - (root.provider ? providerLogo.width + labelRow.spacing : 0)) / 2))
     signal clicked
-    implicitWidth: caption.implicitWidth + (root.provider ? providerLogo.width + labelRow.spacing : 0) + 32
+    implicitWidth: root.symbol || root.chevron ? 42 : caption.implicitWidth + (root.provider ? providerLogo.width + labelRow.spacing : 0) + 32
     implicitHeight: Math.max(42, caption.implicitHeight + 16)
     width: implicitWidth
     height: implicitHeight
@@ -51,7 +52,7 @@ Item {
         }
         Row {
             id: labelRow
-            visible: !root.chevron
+            visible: !root.chevron && !root.symbol
             anchors.centerIn: parent; spacing: 10
             ProviderLogo { id: providerLogo; visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
             Text {
@@ -63,6 +64,12 @@ Item {
                 color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
                 font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
             }
+        }
+        ButtonSymbol {
+            anchors.centerIn: parent
+            visible: !!root.symbol
+            symbol: root.symbol
+            color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
         }
         Shape {
             objectName: "buttonChevron"

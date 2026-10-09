@@ -43,7 +43,6 @@ def server_view(tmp_path: Path) -> Iterator[tuple[QQuickView, QObject, ServerCon
     wait_until(lambda: root_item.findChild(QObject, "dedicatedServers") is not None)
     servers = view.rootContext().contextProperty("serverBridge")
     assert isinstance(servers, ServerController)
-    servers.checkAccess()
     wait_until(lambda: bool(servers.property("hasAccess")) and not servers.busy)
     yield view, root_item, servers, server.server_id
     servers.shutdown()

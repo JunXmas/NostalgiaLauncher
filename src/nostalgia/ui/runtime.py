@@ -62,6 +62,18 @@ def build_release_view(launcher: Launcher) -> QQuickView:
     servers = view.rootContext().contextProperty("serverBridge")
     assert isinstance(servers, ServerController)
     repair_access_token = ""
+    server_membership: tuple[object, ...] = ()
+
+    def refresh_server_rights() -> None:
+        nonlocal server_membership
+        account = social.account
+        next_membership = tuple(
+            account.get(key)
+            for key in ("accountId", "planName", "plus", "plusUntil", "plusLifetime")
+        )
+        if next_membership != server_membership:
+            server_membership = next_membership
+            servers.refreshAccess()
 
     def connect_repair() -> None:
         nonlocal repair_access_token
@@ -101,7 +113,9 @@ def build_release_view(launcher: Launcher) -> QQuickView:
 
     social.sessionChanged.connect(connect_services)
     social.changed.connect(connect_repair)
+    social.changed.connect(refresh_server_rights)
     payments.paymentConfirmed.connect(social.refresh)
+    payments.paymentConfirmed.connect(servers.refreshAccess)
     connect_services()
     application = QApplication.instance()
     if application is not None:

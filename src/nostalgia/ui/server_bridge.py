@@ -26,6 +26,7 @@ class ServerBridge(ServerResults):
     ) -> None:
         super().__init__(parent)
         self._enabled, self._access = enabled, False
+        self._access_pending, self._access_requested = False, False
         self._manager = launcher.make_server_manager(gateway if enabled else None)
         self._note = "Server chạy trên máy bạn · Pro / Max / Ultimate · Không kèm VPS"
         self._servers, self._selected = [], {}
@@ -36,6 +37,7 @@ class ServerBridge(ServerResults):
         self._feed = GameLogFeed(self)
         self._result.connect(self._apply)
         self.failed.connect(self._failure)
+        self.busyChanged.connect(self._check_when_ready)
         self._poll = QTimer(self)
         self._poll.setInterval(1000)
         self._poll.timeout.connect(self.changed.emit)
@@ -57,6 +59,8 @@ class ServerBridge(ServerResults):
         self.changed.emit()
         if self._manager.running_id:
             self.stop()
+        if self._access_requested:
+            self.checkAccess()
 
     def _work(self, operation: Callable[[], None], activity: str) -> None:
         if not self.busy:
@@ -82,7 +86,26 @@ class ServerBridge(ServerResults):
         self.changed.emit()
 
     @Slot()
+    def refreshAccess(self) -> None:
+        if self._access_requested:
+            self.checkAccess()
+
+    @Slot()
     def checkAccess(self) -> None:
+        if not self._enabled:
+            return
+        self._access_pending, self._access_requested = True, True
+        QTimer.singleShot(0, self._check_when_ready)
+
+    @Slot()
+    def _check_when_ready(self) -> None:
+        if not self._access_pending or self.busy:
+            return
+        self._access_pending = False
+        self._access = False
+        self._note = "Đang kiểm tra quyền host của tài khoản Google…"
+        self.changed.emit()
+
         def work() -> None:
             access = self._manager.authorize()
             self._publish("access", access.plan_name)

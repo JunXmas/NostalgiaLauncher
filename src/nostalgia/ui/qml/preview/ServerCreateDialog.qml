@@ -13,13 +13,17 @@ Controls.Popup {
     property string engineId: "paper"
     property string gameVersion: ""
     property string buildId: ""
+    property bool initialVersionsRequested: false
     readonly property var engine: serverBridge.engines.filter(function(e) { return e.engine_id === root.engineId; })[0] || ({})
     function chooseEngine(engineId) {
+        root.initialVersionsRequested = true;
         root.engineId = engineId; root.gameVersion = ""; root.buildId = "";
         serverBridge.loadVersions(engineId);
     }
     closePolicy: serverBridge.busy ? Controls.Popup.NoAutoClose : Controls.Popup.CloseOnEscape
-    onOpened: { if (!serverBridge.gameVersions.length && !serverBridge.busy) root.chooseEngine(root.engineId); }
+    function requestInitialVersions() { if (root.opened && !root.initialVersionsRequested && !serverBridge.busy) root.chooseEngine(root.engineId); }
+    onOpened: { root.initialVersionsRequested = serverBridge.gameVersions.length > 0; root.requestInitialVersions(); }
+    Connections { target: serverBridge; function onBusyChanged() { root.requestInitialVersions(); } }
     background: PopupGlass {}
     Controls.Overlay.modal: Rectangle { color: "#a8080b12" }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }

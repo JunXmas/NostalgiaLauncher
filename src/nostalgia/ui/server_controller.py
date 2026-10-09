@@ -111,6 +111,8 @@ class ServerController(ServerBridge):
 
     @Slot()
     def shutdown(self) -> None:
+        self._access_pending, self._access_requested = False, False
+        self.next_generation()
         self._poll.stop()
         self._heartbeat.stop()
         self._cancel.cancel()
