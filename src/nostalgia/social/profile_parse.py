@@ -15,6 +15,11 @@ def parse_profile(document: JsonValue) -> SocialProfile:
     if avatar_mode not in ("google", "skin", "initials") or not is_cosmetic_id(decor):
         raise SocialError("Trang trí hồ sơ không hợp lệ.")
     skin_png = png(fields.get("skin_png"))
+    owned = tuple(text(value, 64) for value in rows(fields.get("owned_cosmetics", []), 128))
+    if len(set(owned)) != len(owned) or any(
+        not is_cosmetic_id(value) or value == "none" for value in owned
+    ):
+        raise SocialError("Quyền cosmetic không hợp lệ.")
     return SocialProfile(
         identifier(text(fields.get("account_id"), 96)),
         text(fields.get("name")),
@@ -37,4 +42,5 @@ def parse_profile(document: JsonValue) -> SocialProfile:
         ),
         badge(fields.get("badge")),
         accent(fields.get("accent")),
+        owned,
     )

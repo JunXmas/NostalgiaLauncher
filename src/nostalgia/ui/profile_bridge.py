@@ -63,6 +63,7 @@ class ProfileBridge(WorkerBridge):
                 "avatar_mode": p.details.avatar_mode,
                 "slim": p.details.slim,
                 "decor": p.details.decor,
+                "ownedCosmetics": list(p.owned_cosmetics),
                 "favorite_packs": [
                     asdict(favorite_pack) for favorite_pack in p.details.favorite_packs
                 ],

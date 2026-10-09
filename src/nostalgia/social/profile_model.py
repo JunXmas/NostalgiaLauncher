@@ -29,3 +29,4 @@ class SocialProfile:
     details: ProfileDraft
     badge: str = ""
     accent: str = ""
+    owned_cosmetics: tuple[str, ...] = ()

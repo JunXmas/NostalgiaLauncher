@@ -8,6 +8,7 @@ Column {
     property string avatarSource: ""
     property string playerName: ""
     property bool canEquip: false
+    property var ownedCosmetics: []
     signal chosen(string decor)
     readonly property int columns: width >= 540 * GlassTheme.scale ? 3 : width >= 350 * GlassTheme.scale ? 2 : 1
     spacing: 12
@@ -21,7 +22,7 @@ Column {
                 objectName: "profileDecor-" + modelData.key
                 width: (root.width - 10 * (root.columns - 1)) / root.columns
                 cosmetic: modelData; selected: root.selectedDecor === modelData.key
-                previewed: root.previewDecor === modelData.key; canEquip: root.canEquip
+                previewed: root.previewDecor === modelData.key; canEquip: root.canEquip || root.ownedCosmetics.indexOf(modelData.key) >= 0
                 avatarSource: root.avatarSource; playerName: root.playerName
                 onClicked: root.chosen(modelData.key)
             }
@@ -30,8 +31,9 @@ Column {
     PaymentText {
         width: parent.width
         text: root.canEquip ? "Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào."
+            : root.ownedCosmetics.indexOf(root.previewDecor) >= 0 ? "Bộ cosmetic này đã được tặng cho bạn. Có thể sử dụng mà không cần Premium."
             : root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor, cosmeticBridge.sets) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng."
-            : "Có thể xem thử mọi bộ. Quyền áp dụng dành cho Plus trở lên và hiện đang tạm tắt cùng các tính năng trả phí."
+            : "Có thể xem thử mọi bộ. Dùng cosmetic được tặng hoặc mở Plus để chọn các bộ còn lại."
         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
     }
 }

@@ -39,6 +39,7 @@ class CosmeticBridge(WorkerBridge):
             "loaded": social_profile is not None,
             "decor": social_profile.details.decor if social_profile else "none",
             "avatarUrl": social_profile.avatar_url if social_profile else "",
+            "ownedCosmetics": list(social_profile.owned_cosmetics) if social_profile else [],
         }
 
     @Property(list, constant=True)
@@ -72,7 +73,11 @@ class CosmeticBridge(WorkerBridge):
             or not social_profile
             or not gateway
             or social_profile.account_id != account.get("accountId")
-            or (decor != "none" and not account.get("cosmeticPlus"))
+            or (
+                decor != "none"
+                and not account.get("cosmeticPlus")
+                and decor not in social_profile.owned_cosmetics
+            )
             or not can_equip_cosmetic(self._collection, decor, social_profile.details.decor)
         ):
             return

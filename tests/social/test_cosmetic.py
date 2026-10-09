@@ -74,3 +74,21 @@ def test_new_service_ids_survive_parsing_without_becoming_asset_paths() -> None:
     for value in ("../../secret", "file:///secret", "x" * 65):
         with pytest.raises(SocialError):
             parse_profile(document | {"decor": value})
+
+
+def test_profile_parses_owned_cosmetics_without_granting_unknown_payloads() -> None:
+    document: dict[str, JsonValue] = {
+        "account_id": "player",
+        "name": "Player",
+        "owned_cosmetics": ["amethyst"],
+    }
+    assert parse_profile(document).owned_cosmetics == ("amethyst",)
+    invalid_values: tuple[JsonValue, ...] = (
+        ["amethyst", "amethyst"],
+        ["../model"],
+        ["none"],
+        [True],
+    )
+    for invalid in invalid_values:
+        with pytest.raises(SocialError):
+            parse_profile(document | {"owned_cosmetics": invalid})

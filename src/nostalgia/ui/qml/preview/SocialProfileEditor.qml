@@ -28,9 +28,10 @@ Column {
         width: parent.width; selectedDecor: root.decor; previewDecor: root.previewDecor
         avatarSource: root.profile.avatar_url || ""; playerName: root.profile.name || ""
         canEquip: socialBridge.account.cosmeticPlus === true
+        ownedCosmetics: root.details.ownedCosmetics || []
         onChosen: function(value) {
             root.previewDecor = value;
-            if (value === "none" || canEquip) root.decor = value;
+            if (value === "none" || canEquip || ownedCosmetics.indexOf(value) >= 0) root.decor = value;
         }
     }
     PaymentText { text: "Giới thiệu"; font.weight: Font.DemiBold }
