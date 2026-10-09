@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from PySide6.QtCore import QPoint, QPointF, Qt
@@ -133,3 +133,54 @@ def test_version_menu_reverses_from_visible_position_and_reaches_latest(preview:
     catalog_bridge.releasedVersionsChanged.emit()
     assert dialog.property("gameVersion") == "1.40.1"
     assert dialog.property("canCreate")
+
+
+def test_log_bounds_do_not_bounce_or_pull_reader_back_to_tail(preview: Preview) -> None:
+    _launcher, view, bridge, root_item = preview
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 5)
+    page = find_control(root_item, "logPage")
+    scroll = find_control(root_item, "logList")
+    controller = find_control(root_item, "logMotion")
+    feed = cast(Any, bridge.property("gameLog"))
+    feed.begin_session()
+    for number in range(5200):
+        feed.receive(f"[main/INFO]: {number} " + "Long wrapped line " * (number % 4 + 1))
+    feed.drain()
+    wait_until(lambda: scroll.property("count") == 5000)
+    QTest.qWait(120)
+    wheel(view, scroll, angle=0, pixels=-3000)
+    QTest.qWait(150)
+    assert float(scroll.property("contentY")) <= float(controller.property("maxY")) + 1
+    start = scroll.mapToScene(QPointF(scroll.width() - 25, scroll.height() * 0.8)).toPoint()
+    QTest.mousePress(view, Qt.MouseButton.LeftButton, pos=start)
+    for offset in range(20, 121, 20):
+        QTest.mouseMove(view, start - QPoint(0, offset))
+        QTest.qWait(20)
+        assert float(scroll.property("contentY")) <= float(controller.property("maxY")) + 1
+    QTest.mouseRelease(view, Qt.MouseButton.LeftButton, pos=start - QPoint(0, 120))
+    QTest.qWait(120)
+    wheel(view, scroll, angle=0, pixels=500)
+    QTest.qWait(100)
+    assert not page.property("followTail")
+    position = float(scroll.property("contentY")) - float(controller.property("minY"))
+    for number in range(20):
+        feed.receive(f"[main/INFO]: added {number}")
+    feed.drain()
+    QTest.qWait(120)
+    assert not page.property("followTail")
+    assert float(scroll.property("contentY")) - float(controller.property("minY")) < position + 10
+    # The virtualized origin may move after old rows are removed; it is not zero.
+    wheel(view, scroll, angle=0, pixels=1_000_000)
+    wait_until(lambda: not controller.property("settling"))
+    assert float(scroll.property("contentY")) == pytest.approx(
+        float(controller.property("minY")), abs=1
+    )
+    for _ in range(5):
+        wheel(view, scroll, angle=0, pixels=1000)
+        QTest.qWait(20)
+    assert not controller.property("settling")
+    assert float(scroll.property("contentY")) == pytest.approx(
+        float(controller.property("minY")), abs=1
+    )
+    feed.end_session()

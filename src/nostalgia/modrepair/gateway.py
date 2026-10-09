@@ -21,6 +21,7 @@ from nostalgia.net.session_proof import proof_headers
 def scan_payload(scan: ModScan) -> bytes:
     fields = asdict(scan)
     del fields["findings"]
+    fields["repair_policy"] = "log-confirmed"
     return json.dumps(fields, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 

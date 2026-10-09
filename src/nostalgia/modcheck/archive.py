@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 
 from nostalgia.errors import ContentError
@@ -45,25 +46,62 @@ def read_descriptors(
     if loader_kind in ("forge", "neoforge"):
         name = "META-INF/neoforge.mods.toml" if loader_kind == "neoforge" else "META-INF/mods.toml"
         if payload := read_member(archive, name):
-            return parse_forge(payload, read_member(archive, "META-INF/MANIFEST.MF"), loader_kind)
+            return read_forge_archive(archive, payload, budget, depth, loader_kind)
+        if loader_kind == "neoforge" and (payload := read_member(archive, "META-INF/mods.toml")):
+            return read_forge_archive(archive, payload, budget, depth, loader_kind)
     fabric = read_member(archive, "fabric.mod.json")
     if fabric:
         descriptors = list(parse_fabric(fabric))
-        for reference in json.loads(fabric).get("jars", []):
-            nested = read_member(archive, reference["file"], 8388608)
-            budget[0] += len(nested)
-            if not nested or budget[0] > 33554432:
-                raise ContentError("Mod lồng thiếu hoặc vượt giới hạn 32 MB.")
-            with zipfile.ZipFile(io.BytesIO(nested)) as embedded:
-                descriptors.extend(read_descriptors(embedded, budget, depth + 1))
+        paths = [reference["file"] for reference in json.loads(fabric).get("jars", [])]
+        descriptors.extend(read_nested(archive, paths, budget, depth, "fabric"))
         return tuple(descriptors)
     for name, loader_kind in (
         ("META-INF/neoforge.mods.toml", "neoforge"),
         ("META-INF/mods.toml", "forge"),
     ):
         if payload := read_member(archive, name):
-            return parse_forge(payload, read_member(archive, "META-INF/MANIFEST.MF"), loader_kind)
+            return read_forge_archive(archive, payload, budget, depth, loader_kind)
     raise ContentError("Không có metadata Fabric/Forge/NeoForge được hỗ trợ.")
+
+
+def read_forge_archive(
+    archive: zipfile.ZipFile, payload: bytes, budget: list[int], depth: int, loader_kind: str
+) -> tuple[ModDescriptor, ...]:
+    descriptors = parse_forge(payload, read_member(archive, "META-INF/MANIFEST.MF"), loader_kind)
+    jarjar = read_member(archive, "META-INF/jarjar/metadata.json")
+    paths = (
+        [reference["path"] for reference in json.loads(jarjar).get("jars", [])] if jarjar else []
+    )
+    return descriptors + read_nested(archive, paths, budget, depth, loader_kind)
+
+
+def read_nested(
+    archive: zipfile.ZipFile, paths: list[str], budget: list[int], depth: int, loader_kind: str
+) -> tuple[ModDescriptor, ...]:
+    if len(paths) > 128:
+        raise ContentError("Quá nhiều JAR lồng trong một mod.")
+    descriptors: list[ModDescriptor] = []
+    for name in paths:
+        nested = read_member(archive, name, 8388608)
+        budget[0] += len(nested)
+        if not nested or budget[0] > 33554432:
+            raise ContentError("Mod lồng thiếu hoặc vượt giới hạn 32 MB.")
+        with zipfile.ZipFile(io.BytesIO(nested)) as embedded:
+            # Forge JarJar also bundles ordinary Java libraries without mod descriptors.
+            if loader_kind in ("forge", "neoforge") and not any(
+                member_name in embedded.namelist()
+                for member_name in (
+                    "fabric.mod.json",
+                    "META-INF/mods.toml",
+                    "META-INF/neoforge.mods.toml",
+                )
+            ):
+                continue
+            descriptors.extend(
+                replace(mod, embedded=True)
+                for mod in read_descriptors(embedded, budget, depth + 1, loader_kind)
+            )
+    return tuple(descriptors)
 
 
 def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ...]:

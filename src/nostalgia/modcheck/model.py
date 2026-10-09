@@ -19,6 +19,8 @@ class ModDescriptor:
     loader_kind: str
     dependencies: tuple[ModDependency, ...]
     provides: tuple[str, ...] = ()
+    environment: str = "*"
+    embedded: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +48,8 @@ class ModFinding:
     file_name: str
     mod_id: str
     reason: str
+    source: str = "metadata"
+    severity: str = "warning"
 
 
 @dataclass(frozen=True, slots=True)

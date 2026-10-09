@@ -22,6 +22,9 @@ def parse_fabric(payload: bytes) -> tuple[ModDescriptor, ...]:
     mod_id = identifier(as_string(fields.get("id")) or "")
     version_number = as_string(fields.get("version")) or ""
     dependencies = []
+    environment = as_string(fields.get("environment")) or "*"
+    if environment not in ("*", "client", "server"):
+        raise ContentError("Môi trường mod chưa được hỗ trợ.")
     for section, relationship in (("depends", "required"), ("breaks", "conflict")):
         for target, ranges in as_mapping(fields.get(section)).items():
             predicates = (
@@ -39,6 +42,7 @@ def parse_fabric(payload: bytes) -> tuple[ModDescriptor, ...]:
             "fabric",
             tuple(dependencies),
             tuple(identifier(as_string(value) or "") for value in as_list(fields.get("provides"))),
+            environment,
         ),
     )
 

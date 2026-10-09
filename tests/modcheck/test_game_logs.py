@@ -101,3 +101,16 @@ def test_runtime_fault_is_reported_without_a_guessed_version(tmp_path: Path) -> 
 def test_log_tail_is_bounded_and_deduplicated() -> None:
     assert len(parse_log((FABRIC_FAILURE + "\n") * 20000, "latest.log")) == 1
     assert not parse_log(FABRIC_FAILURE + "\n" + "x" * 2097152, "latest.log")
+
+
+def test_crash_from_previous_attempt_is_not_reused_after_newer_log(tmp_path: Path) -> None:
+    write_fabric(tmp_path / "mods/alpha.jar", "alpha")
+    scan = build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17)
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "crash-reports").mkdir()
+    latest = tmp_path / "logs/latest.log"
+    latest.write_text("Game successfully started")
+    crash = tmp_path / "crash-reports/crash-previous.txt"
+    crash.write_text(FABRIC_FAILURE)
+    os.utime(crash, (time.time() - 10, time.time() - 10))
+    assert not with_game_logs(scan, tmp_path).diagnostics

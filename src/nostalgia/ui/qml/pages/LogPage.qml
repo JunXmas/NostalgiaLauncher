@@ -74,15 +74,34 @@ Item {
         ListView {
             id: logList
             acceptedButtons: Qt.LeftButton
-            Preview.InertialMotion { target: logList; enabled: Theme.modern }
+            boundsBehavior: Flickable.StopAtBounds
+            maximumFlickVelocity: 2200
+            flickDeceleration: 1800
+            Preview.InertialMotion {
+                id: logMotion
+                objectName: "logMotion"
+                target: logList; enabled: Theme.modern
+                onScrollRequested: function(delta) { if (delta < 0) page.followTail = false; }
+                onSettlingChanged: if (!settling && logList.atYEnd && !logList.dragging) {
+                    page.followTail = true;
+                    Qt.callLater(logList.followLatest);
+                }
+            }
             objectName: "logList"
             anchors.fill: parent
             clip: true
             model: page.feed.logModel
             // Bám đuôi: dòng mới thì cuộn xuống, trừ khi người dùng đã kéo lên xem lại.
-            onCountChanged: if (page.followTail) positionViewAtEnd()
+            function followLatest() {
+                if (page.followTail && !dragging && !logMotion.settling) {
+                    logMotion.stopMotion();
+                    positionViewAtEnd();
+                }
+            }
+            onCountChanged: Qt.callLater(followLatest)
+            onContentYChanged: if (dragging && !atYEnd) page.followTail = false
             onMovingChanged: if (moving) page.followTail = atYEnd
-            onAtYEndChanged: if (atYEnd) page.followTail = true
+            onAtYEndChanged: if (atYEnd && !logMotion.settling && !dragging) page.followTail = true
             delegate: Text {
                 readonly property bool shown: page.passes(model.level)
                 width: ListView.view.width

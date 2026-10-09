@@ -96,3 +96,66 @@ def test_broken_metadata_and_symlink_never_become_clean(tmp_path: Path) -> None:
 )
 def test_version_rules(version_number: str, predicate: str, result: bool | None) -> None:
     assert matches(version_number, predicate) is result
+
+
+def test_server_only_mod_and_shared_aliases_are_not_client_conflicts(tmp_path: Path) -> None:
+    write_fabric(
+        tmp_path / "mods/server.jar", "server", environment="server", depends={"server_lib": "*"}
+    )
+    write_fabric(tmp_path / "mods/alpha.jar", "alpha", provides=["shared"], depends={"shared": "*"})
+    write_fabric(tmp_path / "mods/beta.jar", "beta", provides=["shared"])
+    scan = build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17)
+    assert not scan.findings
+
+
+def test_nested_library_candidates_do_not_duplicate_or_override_root_mod(tmp_path: Path) -> None:
+    for mod_id, number in (("alpha", "1.0.0"), ("beta", "2.0.0")):
+        payload = io.BytesIO()
+        with zipfile.ZipFile(payload, "w") as archive:
+            archive.writestr("fabric.mod.json", '{"id":"library","version":"' + number + '"}')
+        path = tmp_path / ("mods/" + mod_id + ".jar")
+        write_fabric(path, mod_id, depends={"library": ">=2"}, jars=[{"file": "library.jar"}])
+        with zipfile.ZipFile(path, "a") as archive:
+            archive.writestr("library.jar", payload.getvalue())
+    scan = build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17)
+    assert not scan.findings
+    write_fabric(tmp_path / "mods/root-library.jar", "library", version="3.0.0")
+    assert not build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17).findings
+
+
+def test_forge_jarjar_dependency_is_recognized_without_disabling_parent(tmp_path: Path) -> None:
+    payload = io.BytesIO()
+    with zipfile.ZipFile(payload, "w") as archive:
+        archive.writestr("META-INF/mods.toml", '[[mods]]\nmodId="library"\nversion="2.0.0"\n')
+    path = tmp_path / "mods/alpha.jar"
+    path.parent.mkdir()
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "META-INF/mods.toml",
+            '[[mods]]\nmodId="alpha"\nversion="1.0.0"\n[[dependencies.alpha]]\nmodId="library"\nmandatory=true\nversionRange="[2,)"\n',
+        )
+        archive.writestr("META-INF/jarjar/metadata.json", '{"jars":[{"path":"library.jar"}]}')
+        archive.writestr("library.jar", payload.getvalue())
+    scan = build_scan(scan_archives(tmp_path, "forge"), "1.20.1", "forge", "47.4.23", 17)
+    assert not scan.findings
+    assert scan.archives[0].descriptors[1].embedded
+
+
+def test_metadata_mismatch_is_warning_not_confirmed_game_failure(tmp_path: Path) -> None:
+    write_fabric(tmp_path / "mods/alpha.jar", "alpha", depends={"missing": "*"})
+    scan = build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17)
+    assert scan.findings[0].code == "missing"
+    assert scan.findings[0].severity == "warning" and scan.findings[0].source == "metadata"
+
+
+def test_neoforge_1201_reads_legacy_forge_metadata_and_loader_id(tmp_path: Path) -> None:
+    path = tmp_path / "mods/alpha.jar"
+    path.parent.mkdir()
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "META-INF/mods.toml",
+            '[[mods]]\nmodId="alpha"\nversion="1.0.0"\n[[dependencies.alpha]]\nmodId="forge"\nmandatory=true\nversionRange="[47,)"\n',
+        )
+    scan = build_scan(scan_archives(tmp_path, "neoforge"), "1.20.1", "neoforge", "47.1.106", 17)
+    assert not scan.findings
+    assert scan.archives[0].descriptors[0].loader_kind == "neoforge"

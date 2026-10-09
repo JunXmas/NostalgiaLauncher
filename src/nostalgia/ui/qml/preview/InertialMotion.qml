@@ -9,14 +9,18 @@ Item {
     property Flickable target: null
     readonly property bool renderActive: target && target.visible && target.Window.window && target.Window.window.visible && target.Window.window.visibility !== Window.Minimized
     onRenderActiveChanged: if (!renderActive) stopMotion()
-    readonly property real maxY: target ? Math.max(0, target.contentHeight - target.height) : 0
+    readonly property real minY: target ? target.originY : 0
+    readonly property real maxY: target ? minY + Math.max(0, target.contentHeight - target.height) : 0
+    property real previousOrigin: 0
+    Component.onCompleted: previousOrigin = minY
+    signal scrollRequested(real delta)
     property real destination: 0
     property real dragSpeed: 0
     property real dragY: 0
     property real dragTime: 0
     readonly property real damping: 10 * Math.LN2 / 1.5
     readonly property bool settling: motion.running
-    function clamp(y) { return Math.max(0, Math.min(maxY, y)); }
+    function clamp(y) { return Math.max(minY, Math.min(maxY, y)); }
     function stopMotion() {
         motion.stop();
         if (target) {
@@ -26,6 +30,7 @@ Item {
     }
     function scrollBy(delta, immediate) {
         if (!target || !enabled || !renderActive) return;
+        scrollRequested(delta);
         var reversing = motion.running && delta * (destination - target.contentY) < 0;
         var origin = motion.running && !reversing ? destination : target.contentY;
         target.cancelFlick();
@@ -46,8 +51,8 @@ Item {
     }
     function fitBounds() {
         destination = clamp(destination);
-        if (target && !target.dragging && target.contentY > maxY)
-            target.contentY = maxY;
+        if (target && !target.dragging && (target.contentY < minY || target.contentY > maxY))
+            target.contentY = clamp(target.contentY);
     }
     onEnabledChanged: if (!enabled) stopMotion()
     Connections {
@@ -84,6 +89,11 @@ Item {
             if (!motion.running) root.destination = root.clamp(root.target.contentY);
         }
         function onContentHeightChanged() { root.fitBounds(); }
+        function onOriginYChanged() {
+            if (motion.running) root.destination += root.minY - root.previousOrigin;
+            root.previousOrigin = root.minY;
+            root.fitBounds();
+        }
         function onHeightChanged() { root.fitBounds(); }
         function onVisibleChanged() { if (!root.target.visible) root.stopMotion(); }
     }
@@ -119,7 +129,7 @@ Item {
         onWheel: function(event) {
             var delta = event.pixelDelta.y ? -event.pixelDelta.y : -event.angleDelta.y / 120 * 92;
             var origin = motion.running ? root.destination : root.target.contentY;
-            if (!delta || !root.maxY || (!motion.running && ((delta < 0 && origin <= 0) || (delta > 0 && origin >= root.maxY)))) {
+            if (!delta || root.maxY <= root.minY || (!motion.running && ((delta < 0 && origin <= root.minY) || (delta > 0 && origin >= root.maxY)))) {
                 event.accepted = false;
                 return;
             }

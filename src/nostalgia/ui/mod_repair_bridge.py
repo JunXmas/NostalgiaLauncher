@@ -11,6 +11,7 @@ from nostalgia.api import Launcher, ModScan, RepairGateway, RepairPlan, RepairSc
 from nostalgia.errors import NostalgiaError
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.mod_repair_cards import check_chosen_group, repair_cards
+from nostalgia.ui.mod_scan_summary import scan_note
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -33,7 +34,13 @@ class ModRepairBridge(WorkerBridge):
             "instanceId": self._instance_id,
             "note": self._note,
             "findings": [
-                {"code": finding.code, "file": finding.file_name, "reason": finding.reason}
+                {
+                    "code": finding.code,
+                    "file": finding.file_name,
+                    "reason": finding.reason,
+                    "source": finding.source,
+                    "severity": finding.severity,
+                }
                 for finding in self._scan.findings
             ]
             if self._scan
@@ -53,7 +60,7 @@ class ModRepairBridge(WorkerBridge):
             if self._plan
             else [],
             "unresolved": list(self._plan.unresolved) if self._plan else [],
-            "canPlan": bool(self._gateway and self._scan and self._scan.findings),
+            "canPlan": bool(self._gateway and self._scan and self._scan.diagnostics),
             "canApply": bool(
                 self._gateway and self._plan and self._plan.changes and not self._plan.unresolved
             ),
@@ -75,7 +82,7 @@ class ModRepairBridge(WorkerBridge):
     @Slot()
     def plan(self) -> None:
         gateway, scan = self._gateway, self._scan
-        if gateway and scan and not self.busy:
+        if gateway and scan and scan.diagnostics and not self.busy:
             self._request("plan", lambda: gateway.fetch_plan(scan))
 
     @Slot()
@@ -164,11 +171,7 @@ class ModRepairBridge(WorkerBridge):
             if isinstance(payload, RepairScan):
                 self._scan = payload.scan
                 self._receipt_id = payload.receipt_id
-                self._note = (
-                    "Đã quét. Không có lỗi metadata được nhận diện."
-                    if not payload.scan.findings
-                    else "Phát hiện " + str(len(payload.scan.findings)) + " lỗi/điểm chưa xác minh."
-                )
+                self._note = scan_note(payload.scan)
             elif isinstance(payload, RepairPlan):
                 self._plan = payload
                 self._note = "Xem thay đổi và lý do trước khi áp dụng."

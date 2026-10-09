@@ -16,6 +16,7 @@ from nostalgia.api import Launcher, ModScan, RepairPlan, RepairScan
 from nostalgia.instance.model import Instance
 from nostalgia.modcheck.archive import scan_archives
 from nostalgia.modcheck.game_logs import with_game_logs
+from nostalgia.modcheck.model import ModFinding
 from nostalgia.modcheck.scan import build_scan
 from nostalgia.modrepair.gateway import scan_hash
 from nostalgia.modrepair.model import RepairChange
@@ -125,3 +126,29 @@ def test_replace_button_downloads_verified_mod_and_can_undo(
         assert not (game_dir / "mods/beta-new.jar").exists()
     assert (game_dir / "saves/world.dat").read_bytes() == b"world"
     dialog.close()
+
+
+def test_metadata_warning_does_not_offer_or_request_a_repair_plan(
+    preview: Preview, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _launcher, view, _bridge, root_item = preview
+    scan = build_scan((), "1.20.1", "fabric", "0.16.0", 17)
+
+    scan = replace(
+        scan, findings=(ModFinding("missing", "alpha.jar", "beta", "Metadata mismatch"),)
+    )
+    monkeypatch.setattr(Launcher, "scan_mod_repair", lambda _self, _id: RepairScan(scan, ""))
+    gateway = ProposedRepair(RepairPlan("a" * 64, scan_hash(scan), int(time.time()) + 900, (), ()))
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    QTest.qWait(100)
+    repair = view.rootContext().contextProperty("modRepairBridge")
+    assert isinstance(repair, ModRepairBridge)
+    repair.set_gateway(gateway)
+    repair.scan("working-instance")
+    wait_until(lambda: repair.details["scanned"] and not repair.busy)
+    assert not repair.details["canPlan"]
+    assert repair.details["findings"][0]["severity"] == "warning"
+    assert "không kết luận" in repair.details["note"]
+    repair.plan()
+    assert not repair.busy

@@ -8,6 +8,7 @@ import stat
 from dataclasses import replace
 from pathlib import Path
 
+from nostalgia.modcheck.inventory import client_descriptors, version_choices
 from nostalgia.modcheck.log_patterns import parse_log
 from nostalgia.modcheck.model import ModFinding, ModScan
 from nostalgia.modcheck.predicate import matches_any
@@ -23,31 +24,31 @@ def recent_logs(game_dir: Path) -> tuple[tuple[Path, str], ...]:
                 paths.append((path, name))
     latest = next((p for p, name in paths if name == "latest.log"), None)
     if latest:
-        paths = [
-            (p, name) for p, name in paths if p.stat().st_mtime >= latest.stat().st_mtime - 120
-        ]
+        paths = [(p, name) for p, name in paths if p.stat().st_mtime >= latest.stat().st_mtime - 2]
     reports = game_dir / "crash-reports"
     if reports.is_dir() and not reports.is_symlink():
         candidates = [p for p in reports.glob("crash-*.txt") if not p.is_symlink() and p.is_file()]
         newest = max(candidates, key=lambda p: p.stat().st_mtime, default=None)
-        if newest and (not latest or newest.stat().st_mtime >= latest.stat().st_mtime - 120):
+        if newest and (not latest or newest.stat().st_mtime >= latest.stat().st_mtime - 2):
             paths.append((newest, "crash-report"))
     return tuple(paths)
 
 
 def with_game_logs(scan: ModScan, game_dir: Path) -> ModScan:
     owners = {
-        m.mod_id: (a.file_name, m.version_number) for a in scan.archives for m in a.descriptors
+        m.mod_id: (a.file_name, m.version_number)
+        for a in scan.archives
+        for m in client_descriptors(a)
     }
-    versions = {mod_id: owner[1] for mod_id, owner in owners.items()}
-    versions.update(minecraft=scan.game_version, java=str(scan.java_major))
+    versions = version_choices(scan.archives)
+    versions.update(minecraft=(scan.game_version,), java=(str(scan.java_major),))
     versions[
         "fabricloader"
         if scan.loader_kind == "fabric"
         else "quilt_loader"
         if scan.loader_kind == "quilt"
         else scan.loader_kind
-    ] = scan.loader_version
+    ] = (scan.loader_version,)
     diagnostics = []
     for path, source in recent_logs(game_dir):
         try:
@@ -78,7 +79,8 @@ def with_game_logs(scan: ModScan, game_dir: Path) -> ModScan:
             if (
                 present
                 and diagnostic.predicates
-                and matches_any(present, diagnostic.predicates) is True
+                and len(present) == 1
+                and matches_any(present[0], diagnostic.predicates) is True
             ):
                 continue
             if diagnostic not in diagnostics:
@@ -104,6 +106,8 @@ def with_game_logs(scan: ModScan, game_dir: Path) -> ModScan:
             + d.dependency_id
             + " "
             + (" | ".join(d.predicates) or "khoảng phiên bản chưa hỗ trợ"),
+            "log",
+            "warning" if d.code == "runtime" else "error",
         )
         for d in diagnostics[:100]
     )
