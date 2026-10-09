@@ -2,9 +2,20 @@
 
 Một launcher quen thuộc, được làm mới từ cách nhìn đến cách chơi. Nostalgia 1.2 giữ hệ màu của Nostalgia, đưa chất liệu kính vào giao diện, và giúp bạn cùng bạn bè bước vào một thế giới với ít thao tác hơn.
 
-**Nostalgia 1.2.0rc13 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+**Nostalgia 1.2.0rc14 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
 
-## Mới trong rc13 — Từ log lỗi đến bản mod phù hợp
+## Mới trong rc14 — Ít đoán hơn, dễ chơi hơn
+
+- **Thêm nội dung ngay trong bản chơi:** từ Quản lý → Nội dung đã cài → Thêm nội dung, mở kho Mod, Shader và Gói tài nguyên với Minecraft, loader và bản chơi đích được lọc sẵn. Chỉ cài bản tương thích vào đúng instance; quay lại quản lý vẫn giữ tên và cấu hình đang sửa. Kho chính vẫn dành cho khám phá và tạo instance từ modpack.
+- **17 hướng dẫn ngay tại thao tác:** nút Cách dùng và phím F1 mở các bước ngắn kèm GIF từ launcher. GIF chạy ngoại tuyến, chỉ nạp khi cần và dừng khi ẩn cửa sổ hoặc giảm chuyển động. Đóng hướng dẫn để tiếp tục đúng biểu mẫu đang làm.
+- **Kéo thả mod từ bất kỳ trang hay popup nào:** chọn một hoặc nhiều JAR rồi chọn instance đích, xác nhận trước khi cài. Giữ file gốc, mặc định bỏ qua file trùng tên; khi thay thế có bản sao lưu, giữ trạng thái mod đã tắt và hoàn tác nếu chép lỗi. Chặn cài khi Minecraft đang chạy.
+- **Skin và cape: xem trước rồi mới Lưu.** Công tắc Classic/Slim thay model trực tiếp; cape được mặc trên nhân vật. Mỗi tài khoản giữ bản xem trước riêng; chỉ bấm Lưu mới đổi skin Microsoft/Ely.by và cape Microsoft đã sở hữu. Nếu một phần lưu lỗi, phần chưa lưu vẫn còn để thử lại.
+- **Sửa mod dựa trên lỗi thực tế trong log:** chỉ đưa phương án sửa cho crash hoặc lỗi không tương thích có bằng chứng; metadata cảnh báo đơn thuần không còn biến thành lỗi bắt buộc sửa. Cuộn Nhật ký được chặn ở biên để tránh giật khi kéo quá tay.
+- **Gọn và rõ hơn ở các thao tác nhỏ:** khôi phục icon nút, sửa chữ tràn ở Premium, canh giữa mũi tên tài khoản và làm nơi đăng xuất Google dễ tìm. Cosmetic dùng khối amethyst Minecraft; quyền host server được kiểm tra tự động khi cần.
+- **Giữ cách cập nhật quen thuộc:** launcher tự kiểm bản mới khi mở; người chơi bấm Cập nhật ngay để tải, kiểm SHA-256, cài và mở lại. Không tự tải hoặc khởi động lại khi chưa bấm cập nhật.
+- **Gói phát hành dùng quyền thật:** không mở Ultimate TEST. Có Windows x64, Linux x64, macOS Intel và Apple Silicon; chỉ đính kèm bộ cài/gói portable, ZIP cập nhật và SHA256SUMS.
+
+## Các cải tiến đã có trong rc13 — Từ log lỗi đến bản mod phù hợp
 
 - **Sửa quầng blur ở cửa sổ thêm tài khoản:** popup không còn lấy chính mình làm nguồn mờ; hiệu ứng được giữ trong khung bo góc. Kiểm tra bằng renderer Qt thật, cả cửa sổ nhỏ và mức chữ 150%.
 - **Kiểm tra mod đọc thêm log game:** đối chiếu `latest.log`, `debug.log` và báo cáo crash gần nhất với bộ mod, phiên bản Minecraft đang dùng. Nhận diện các mẫu thiếu/sai phiên bản phụ thuộc của Fabric, Forge và NeoForge; Free vẫn xem được lỗi.
@@ -76,7 +87,7 @@ Một launcher quen thuộc, được làm mới từ cách nhìn đến cách c
 
 ## Trước khi thử
 
-- Cả host và khách nên dùng **rc13** để có lựa chọn nội dung và cập nhật theo định danh pack. Bản đồng bộ từ client cũ thiếu định danh sẽ tạo một instance mới ở lần nhận đầu tiên; launcher không tự ghép theo tên để tránh ghi đè nhầm.
+- Cả host và khách nên dùng **rc13 trở lên** để có lựa chọn nội dung và cập nhật theo định danh pack. Bản đồng bộ từ client cũ thiếu định danh sẽ tạo một instance mới ở lần nhận đầu tiên; launcher không tự ghép theo tên để tránh ghi đè nhầm.
 - Host cần giữ launcher và phòng đang hoạt động trong khi khách nhận file riêng. Không đồng bộ khi Minecraft trên máy khách đang chạy.
 - Bản miễn phí vẫn chơi thường và nhận đồng bộ khi được host Plus mời. Các bộ cài trong bản phát hành giữ cơ chế kiểm quyền thật.
 - Đã kiểm tra luồng chọn nội dung, cập nhật, chống ghi đè nhầm, kiểm hash, sao lưu/phục hồi và UI ở cửa sổ nhỏ/chữ 150%. Kiểm tra tự động không thay thế lượt thử chơi Minecraft thực tế trên hai máy.

@@ -3,7 +3,14 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.0rc14 — 2026-10-09
+
+Skin/cape có bản xem trước riêng theo tài khoản và nút Lưu; Classic/Slim đổi model ngay.
+Sửa mod chỉ đọc bằng chứng lỗi trong log, không biến cảnh báo metadata thành lỗi game.
+Cuộn Nhật ký giữ biên ổn định. Khôi phục icon, sửa nhãn Premium bị tràn, canh mũi tên tài
+khoản, đưa đăng xuất Google về nơi dễ tìm và dùng khối amethyst cho Cosmetic. Quyền host
+server được kiểm tra tự động. Giữ luồng cập nhật cũ: tự kiểm khi mở, chỉ tải/cài sau khi
+người chơi bấm Cập nhật ngay. Gói phát hành không mở quyền Ultimate thử nghiệm.
 
 ### Thêm nội dung ngay từ quản lý bản chơi
 
