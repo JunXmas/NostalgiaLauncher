@@ -32,12 +32,12 @@ def test_guide_from_login_and_f1_never_signs_in_or_changes_accounts(preview: Pre
     wait_until(lambda: dialog.property("opened"))
     assert dialog.property("topicId") == "start"
     QTest.keyClick(view, Qt.Key.Key_Escape)
-    wait_until(lambda: not dialog.property("opened"))
+    wait_until(lambda: not dialog.property("visible"))
     assert root_item.property("loginVisible") and not launcher.list_accounts()
     root_item.setProperty("sessionSkipped", True)
     root_item.setProperty("currentIndex", 1)
-    QTest.qWait(100)
-    QTest.keyClick(view, Qt.Key.Key_F1)
+    wait_until(lambda: not root_item.property("loginVisible"))
+    press(view, root_item, Qt.Key.Key_F1)
     wait_until(lambda: dialog.property("opened"))
     assert dialog.property("topicId") == "create"
     assert not launcher.list_instances() and not launcher.list_accounts()

@@ -2,9 +2,9 @@
 
 Một launcher quen thuộc, được làm mới từ cách nhìn đến cách chơi. Nostalgia 1.2 giữ hệ màu của Nostalgia, đưa chất liệu kính vào giao diện, và giúp bạn cùng bạn bè bước vào một thế giới với ít thao tác hơn.
 
-**Nostalgia 1.2.0rc16 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+**Nostalgia 1.2.0rc17 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
 
-## Mới trong rc16 — Ít đoán hơn, dễ chơi hơn
+## Mới trong rc17 — Ít đoán hơn, dễ chơi hơn
 
 - **Thêm nội dung ngay trong bản chơi:** từ Quản lý → Nội dung đã cài → Thêm nội dung, mở kho Mod, Shader và Gói tài nguyên với Minecraft, loader và bản chơi đích được lọc sẵn. Chỉ cài bản tương thích vào đúng instance; quay lại quản lý vẫn giữ tên và cấu hình đang sửa. Kho chính vẫn dành cho khám phá và tạo instance từ modpack.
 - **17 hướng dẫn ngay tại thao tác:** nút Cách dùng và phím F1 mở các bước ngắn kèm GIF từ launcher. GIF chạy ngoại tuyến, chỉ nạp khi cần và dừng khi ẩn cửa sổ hoặc giảm chuyển động. Đóng hướng dẫn để tiếp tục đúng biểu mẫu đang làm.

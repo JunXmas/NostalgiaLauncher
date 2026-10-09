@@ -1,6 +1,7 @@
 """Release checkout keeps pending orders, refreshes server rights, and clears them on logout."""
 
 import json
+import ssl
 import time
 import traceback
 from dataclasses import replace
@@ -24,7 +25,7 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
     tmp_path: Path,
     server: LocalHttpsServer,
     server_state: ServerState,
-    http_client: HttpClient,
+    certificate_pair: tuple[Path, Path],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
@@ -32,9 +33,20 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         replace(launcher.load_settings(), auto_update_check=False, discord_presence=False)
     )
     launcher.add_offline_account("MinecraftLocal")
+    certificate, _key = certificate_pair
+    trusting = ssl.create_default_context(cafile=str(certificate))
+    http_clients: list[HttpClient] = []
+
+    def make_client() -> HttpClient:
+        # Production creates a new owner per operation. Sharing one allows a skin or
+        # catalog task to close the social session's in-flight response.
+        http_client = HttpClient(timeout_seconds=5.0, tls_context=trusting)
+        http_clients.append(http_client)
+        return http_client
+
+    launcher = replace(launcher, make_http_client=make_client)
     monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", server.url(""))
     monkeypatch.setenv("NOSTALGIA_ROOM_SYNC_URL", server.url(""))
-    monkeypatch.setattr(Launcher, "make_http_client", lambda _self: http_client)
     monkeypatch.setattr(Launcher, "make_service_session_store", lambda _self, _origin: None)
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda _url: True)
     server_state.add(
@@ -182,3 +194,5 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         view.close()
         view.deleteLater()
         QGuiApplication.processEvents()
+        for http_client in http_clients:
+            http_client.close()

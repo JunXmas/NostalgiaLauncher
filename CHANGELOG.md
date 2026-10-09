@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.2.0rc16 — 2026-10-09
+## 1.2.0rc17 — 2026-10-09
 
 Kết quả worker được giao tới UI trước khi báo rảnh; tác vụ cũ không làm tác vụ mới mất
 trạng thái bận. Tránh bỏ kết quả tải phiên bản server và checkout ở yêu cầu nối tiếp.
