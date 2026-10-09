@@ -15,6 +15,7 @@ BLOCK_MODELS: dict[str, str] = {
     "crafting": "crafting_table",
     "bookshelf": "bookshelf",
     "diamond": "diamond_block",
+    "amethyst": "amethyst_block",
     "command": "command_block",
     "barrel": "barrel",
     "redstone": "redstone_block",

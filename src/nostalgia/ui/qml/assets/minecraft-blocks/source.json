@@ -2,6 +2,7 @@
   "minecraft_version": "1.20.1",
   "client_sha1": "0c3ec587af28e5a785c0b4a7b8a30f9a8f78f838",
   "files": {
+    "models/block/amethyst_block.json": "94bf90dbc58b06a074fa4a922dcbc7391c8e13a2063fc3c7c29e31afd400ffb2",
     "models/block/barrel.json": "e4c191bd192361dcdb36c8f98af43a1ee1435f676409a6d0465641e4a5830cc5",
     "models/block/beacon.json": "04abc04bab23a8e42eac76e0b30402d69090334beb69fcad0917247f3e80ce71",
     "models/block/block.json": "3ef6c442f1ab55d2a57fa58e28bb831268159052659f12b453b637b31ded1da8",
@@ -23,6 +24,7 @@
     "models/block/redstone_block.json": "ad70aa86b0b82e1b1c21a0dbd32d3131eeb6a4b9575cacb9ec822f81ad39e4c8",
     "models/block/stone.json": "c0734082e7f1e2f44809737b2fbe1136fc7304bde7232e45fbe921884a4a327e",
     "models/block/template_command_block.json": "f96d09cfe3151170486e2d0ec7b87a88aac44c3164d2cdf5d4cd8282e076d0da",
+    "textures/block/amethyst_block.png": "dfb74da859b6945a662cd9abe60a0ba2e68c53c362dd552dc1008f99cc2fb10a",
     "textures/block/barrel_bottom.png": "8ccdd7e1a4d80667bd1822adce69297cc7749a95e15c585906921820df57d650",
     "textures/block/barrel_side.png": "ae51d8f37e224b82a578a52c63c37fd854383ed56882494d18f978b716f9fc30",
     "textures/block/barrel_top.png": "2a3f0b53fb90f30a7d3481deff7bfd787880a37f0b0f8174e2bad0edbd64be12",

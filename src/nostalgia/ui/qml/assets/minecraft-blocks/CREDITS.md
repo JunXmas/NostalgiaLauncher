@@ -7,7 +7,7 @@ Source: https://piston-data.mojang.com/v1/objects/0c3ec587af28e5a785c0b4a7b8a30f
 
 Client SHA-1: `0c3ec587af28e5a785c0b4a7b8a30f9a8f78f838`
 
-Includes the UI blocks (grass, crafting table, bookshelf, diamond block, command block,
+Includes the UI blocks (grass, crafting table, bookshelf, diamond block, amethyst block, command block,
 barrel, redstone block, beacon), home scene blocks (oak log/leaves, dirt, stone, glowstone),
 parent models, referenced textures, and grass/foliage biome colormaps. `source.json`
 records SHA-256 for every copied file. PNGs and model JSON are copied without edits.

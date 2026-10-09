@@ -24,7 +24,7 @@ Glass {
             block: "bookshelf",
             index: 2
         },
-        { label: "Cosmetic", block: "diamond", index: 7 },
+        { label: "Cosmetic", block: "amethyst", index: 7 },
         {
             label: "Tài khoản",
             block: "diamond",
