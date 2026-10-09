@@ -90,9 +90,9 @@ Item {
         }
         Button {
             objectName: "openBackupDialog"
-            label: "Sao lưu"
+            label: "Xuất modpack"
             quiet: true
-            Accessible.name: "Sao lưu và thùng rác"
+            Accessible.name: "Đóng gói modpack thành MRPACK hoặc ZIP"
             onClicked: manager.openDialog()
         }
     }
@@ -146,6 +146,7 @@ Item {
     InstanceManager {
         id: editor
         onRepairRequested: function(instance) { repair.openFor(instance); }
+        onExportRequested: function(instance) { manager.openDialog(instance.instanceId); }
     }
     ImportDialog {
         id: imports

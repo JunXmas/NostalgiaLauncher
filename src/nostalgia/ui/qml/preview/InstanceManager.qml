@@ -15,6 +15,9 @@ Controls.Popup {
     property int section: 0
     readonly property bool writable: !bridge.gameRunning && !bridge.storageBusy && !bridge.busy
     signal repairRequested(var instance)
+    signal exportRequested(var instance)
+    property bool exportingAfterClose: false
+    onClosed: { if (exportingAfterClose) { exportingAfterClose = false; exportRequested(instance); } }
     function openFor(entry) {
         instance = entry; section = 0;
         nameField.text = entry.label || "";
@@ -23,6 +26,7 @@ Controls.Popup {
         widthField.text = entry.windowWidth ? String(entry.windowWidth) : "";
         heightField.text = entry.windowHeight ? String(entry.windowHeight) : "";
         favorite.checked = entry.favorite === true;
+        deleteExternal.checked = false;
         contentBridge.selectInstance(entry.instanceId);
         open();
     }
@@ -54,7 +58,7 @@ Controls.Popup {
             PaymentText { width: parent.width; text: "Minecraft · " + (root.instance.versionId || ""); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontLabel }
         }
         Button { anchors.right: parent.right; width: 38; label: "×"; quiet: true; Accessible.name: "Đóng quản lý bản chơi"; onClicked: root.close() }
-        MotionTabs { id: tabs; anchors.top: header.bottom; anchors.topMargin: 20; width: parent.width; labels: ["Tổng quan", "Nội dung đã cài", "Hiệu năng", "Sao lưu & dữ liệu"]; currentIndex: root.section; namePrefix: "instanceSection-"; onSelected: function(index) { root.section = index; } }
+        MotionTabs { id: tabs; anchors.top: header.bottom; anchors.topMargin: 20; width: parent.width; labels: ["Tổng quan", "Nội dung đã cài", "Hiệu năng", "Xuất & dữ liệu"]; currentIndex: root.section; namePrefix: "instanceSection-"; onSelected: function(index) { root.section = index; } }
         Row {
             id: footer
             anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 8
@@ -98,14 +102,18 @@ Controls.Popup {
                 Column {
                     visible: root.section === 3
                     width: parent.width; spacing: 14
-                    PaymentText { text: "Bảo vệ bản chơi"; font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
-                    PaymentText { width: parent.width; text: "Tạo bản sao trước khi đổi mod. Bản sao lưu và bản chơi đã xoá có thể khôi phục trong Sao lưu & thùng rác."; color: GlassTheme.muted }
-                    Flow { width: parent.width; spacing: 8; Button { label: "Sao lưu bản chơi"; clickable: root.writable; onClicked: storageBridge.backup(root.instance.instanceId) } Button { label: "Kiểm tra xung đột mod"; clickable: root.writable; onClicked: { root.close(); root.repairRequested(root.instance); } } }
+                    PaymentText { text: "Đóng gói & dữ liệu"; font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+                    PaymentText { width: parent.width; text: "Xuất MRPACK hoặc ZIP để chia sẻ và nhập lại. Bạn có thể chọn đóng gói cả thế giới đã chơi."; color: GlassTheme.muted }
+                    Flow { width: parent.width; spacing: 8; Button { objectName: "instanceExport"; label: "Xuất modpack…"; clickable: root.writable; onClicked: { root.exportingAfterClose = true; root.close(); } } Button { label: "Kiểm tra xung đột mod"; clickable: root.writable; onClicked: { root.close(); root.repairRequested(root.instance); } } }
                     Glass {
-                        width: parent.width; height: trashNote.implicitHeight + trashButton.height + 44; padding: 16
-                        Column { width: parent.width; spacing: 12
-                            PaymentText { id: trashNote; width: parent.width; text: "Thùng rác\nChuyển bản chơi vào thùng rác để gỡ khỏi danh sách. Thư mục chơi ngoài launcher được giữ nguyên."; color: GlassTheme.muted }
-                            Button { id: trashButton; objectName: "instanceTrash"; label: "Chuyển vào thùng rác"; clickable: root.writable; onClicked: confirmDialog.ask("Chuyển bản chơi vào thùng rác?", "Bạn có thể khôi phục trong Sao lưu & thùng rác.", function() { storageBridge.moveToTrash(root.instance.instanceId); root.close(); }) }
+                        width: parent.width; height: deleteColumn.implicitHeight + 32; padding: 16
+                        Column { id: deleteColumn; width: parent.width; spacing: 12
+                            PaymentText { id: trashNote; width: parent.width; text: "Xóa vĩnh viễn\nMods, cấu hình và thế giới trong thư mục do launcher quản lý sẽ bị xóa. Không thể hoàn tác."; color: GlassTheme.muted }
+                            Row { visible: root.instance.customGameDir === true; width: parent.width; spacing: 12
+                                Legacy.Toggle { id: deleteExternal; objectName: "deleteExternalGameDir"; enabled: root.writable; accessibleLabel: "Xóa cả thư mục game riêng"; onToggled: function(value) { checked = value; } }
+                                PaymentText { width: parent.width - deleteExternal.width - 12; text: "Xóa cả thư mục game riêng"; anchors.verticalCenter: parent.verticalCenter }
+                            }
+                            Button { id: trashButton; objectName: "instanceTrash"; label: "Xóa vĩnh viễn"; danger: true; quiet: true; clickable: root.writable; onClicked: { var instanceId = root.instance.instanceId; var eraseExternal = root.instance.customGameDir === true && deleteExternal.checked; confirmDialog.ask("Xóa vĩnh viễn " + root.instance.label + "?", root.instance.customGameDir ? (eraseExternal ? "Xóa toàn bộ mods, cấu hình và thế giới tại: " : "Gỡ bản chơi khỏi launcher. Giữ lại thư mục game riêng: ") + root.instance.gameDir + (eraseExternal ? "\nKhông thể hoàn tác." : "") : "Toàn bộ mods, cấu hình và thế giới của bản chơi sẽ bị xóa. Không thể hoàn tác. Bạn có thể xuất modpack trước khi xóa.", function() { storageBridge.deletePermanently(instanceId, eraseExternal); root.close(); }); } }
                         }
                     }
                 }

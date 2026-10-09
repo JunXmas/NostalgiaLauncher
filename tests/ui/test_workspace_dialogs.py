@@ -56,6 +56,9 @@ def test_backup_is_modal_and_restores_a_separate_world(tmp_path: Path, scale: in
         assert dialog.property("modal") and dialog.property("dim")
         assert dialog.property("y") >= 0
         assert dialog.property("height") <= view.height() - 40
+        press(view, find_control(dialog, "openLegacyBackups"))
+        dialog = find_control(root_item, "legacyBackupDialog")
+        wait_until(lambda: bool(dialog.property("opened")))
         press(view, find_item(view.contentItem(), "backupRecord-0"))
         find_control(dialog, "restoreName").setProperty("text", "restored")
         restore_button = find_control(dialog, "restoreBackupButton")

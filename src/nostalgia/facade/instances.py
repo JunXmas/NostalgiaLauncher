@@ -70,13 +70,12 @@ class InstanceOperations(LauncherContext):
     def save_instance(self, instance: Instance) -> None:
         save_instance(self.paths, instance)
 
-    def delete_instance(self, instance_id: str) -> None:
+    def delete_instance(self, instance_id: str, *, delete_external: bool = False) -> None:
         """Xoá hẳn bản chơi khỏi danh sách VÀ xoá toàn bộ thư mục game.
 
-        Nếu instance dùng thư mục ngoài (game_dir_override), chỉ gỡ đăng ký,
-        không đụng thư mục ngoài vì launcher không sở hữu nó.
+        Thư mục ngoài chỉ xóa khi người chơi chọn rõ delete_external.
         """
-        delete_instance(self.paths, instance_id)
+        delete_instance(self.paths, instance_id, delete_external=delete_external)
 
     def describe_instance_stats(self, instance_id: str) -> InstanceStats:
         """Chỉ đọc đĩa: số liệu đã ghi + đếm thế giới trong `saves/` và mod trong `mods/`."""

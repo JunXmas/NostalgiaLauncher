@@ -3,6 +3,20 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+- Thay **Sao lưu** bằng **Xuất modpack**: chọn bản chơi, MRPACK Modrinth hoặc ZIP
+  modpack CurseForge, nơi lưu và tùy chọn kèm thế giới. Giữ mods đang tắt, resourcepack,
+  shader, cấu hình và đúng Minecraft/loader. File xuất có thể nhập lại qua Nhập bản chơi.
+- **Xóa vĩnh viễn** có xác nhận: xóa dữ liệu bản chơi được launcher quản lý, không chuyển
+  qua thùng rác. Thư mục game riêng chỉ xóa khi bật lựa chọn tương ứng và xác nhận đường
+  dẫn; chặn thư mục chứa kho launcher hoặc được bản chơi khác sử dụng.
+- Bản sao lưu/thùng rác cũ vẫn có thể khôi phục qua **Khôi phục dữ liệu cũ**. Thêm nút
+  xóa hẳn từng bản chơi trong thùng rác cũ; giữ các file đã xuất độc lập với bản chơi.
+- Xuất chạy ở nền, ghi file nguyên tử, giữ file đích cũ khi thất bại và chặn liên kết,
+  tên file trùng khi đổi hệ điều hành hoặc dữ liệu thay đổi trong lúc đóng gói. Nhập
+  overrides theo từng khối để không nạp cả thế giới lớn vào RAM. Cập nhật GIF hướng dẫn.
+
 ## 1.2.0rc17 — 2026-10-09
 
 Kết quả worker được giao tới UI trước khi báo rảnh; tác vụ cũ không làm tác vụ mới mất

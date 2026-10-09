@@ -1,4 +1,4 @@
-"""Sao lưu, thùng rác và tổ chức bản chơi qua façade; tác vụ nặng chạy nền."""
+"""Xuất modpack, xóa và khôi phục dữ liệu cũ qua façade; tác vụ nặng chạy nền."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from nostalgia.ui.worker import WorkerBridge, local_path
 class StorageBridge(WorkerBridge):
     entriesChanged = Signal()
     completed = Signal(str)
+    modpackExported = Signal(str)
 
     def __init__(
         self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
@@ -60,7 +61,72 @@ class StorageBridge(WorkerBridge):
 
     def _require_stopped(self) -> None:
         if self._main_bridge.gameRunning or self._main_bridge.busy:
-            raise InstanceError("hãy dừng game trước khi sao lưu hoặc thay đổi dữ liệu")
+            raise InstanceError("hãy dừng game trước khi đóng gói hoặc thay đổi dữ liệu")
+
+    @Slot(str, str, str, bool)
+    def exportModpack(
+        self,
+        instance_id: str,
+        file_url: str,
+        archive_format: str,
+        include_worlds: bool,
+    ) -> None:
+        def work() -> None:
+            self._require_stopped()
+            exported = self._launcher.export_instance_modpack(
+                instance_id,
+                Path(local_path(file_url)),
+                archive_format,
+                include_worlds=include_worlds,
+                overwrite=True,
+            )
+            self.modpackExported.emit(str(exported.path))
+            self._changed(f"Đã xuất {exported.file_count} file thành {archive_format.upper()}")
+
+        self.run_in_background(work, "Đang đóng gói modpack…")
+
+    @Slot(str, str, result=str)
+    def suggestedExportFile(self, instance_id: str, archive_format: str) -> str:
+        folder = self._launcher.paths.data_dir / "exports"
+        folder.mkdir(parents=True, exist_ok=True)
+        # Chỉ dùng mã đã đăng ký, không ghép đường dẫn từ một tên nhập tự do.
+        if archive_format not in ("mrpack", "zip") or not any(
+            instance.instance_id == instance_id for instance in self._launcher.list_instances()
+        ):
+            return ""
+        filename = instance_id + "-" + time.strftime("%Y%m%d-%H%M%S") + "." + archive_format
+        return (folder / filename).as_uri()
+
+    @Slot()
+    @Slot(str)
+    def openExportsFolder(self, file_path: str = "") -> None:
+        folder = (
+            Path(local_path(file_path)).parent
+            if file_path
+            else self._launcher.paths.data_dir / "exports"
+        )
+        if not file_path:
+            folder.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+
+    @Slot(str)
+    @Slot(str, bool)
+    def deletePermanently(self, instance_id: str, delete_external: bool = False) -> None:
+        def work() -> None:
+            self._require_stopped()
+            self._launcher.delete_instance(instance_id, delete_external=delete_external)
+            self._changed("Đã xóa vĩnh viễn bản chơi")
+
+        self.run_in_background(work, "Xóa vĩnh viễn bản chơi")
+
+    @Slot(str)
+    def purgeTrash(self, trash_id: str) -> None:
+        def work() -> None:
+            self._require_stopped()
+            self._launcher.remove_trashed_instance(trash_id)
+            self._changed("Đã xóa vĩnh viễn bản chơi trong thùng rác")
+
+        self.run_in_background(work, "Xóa vĩnh viễn dữ liệu cũ")
 
     def _changed(self, message: str) -> None:
         self._main_bridge.announce_instances_changed()

@@ -17,6 +17,7 @@ from pathlib import Path
 
 from nostalgia.errors import DataFileError, InstanceError
 from nostalgia.instance.model import Instance, check_instance_id
+from nostalgia.instance.removal import remove_external_game_dir
 from nostalgia.instance.sync_identity import remove_sync_pack_id
 from nostalgia.instance.sync_receipt import RECEIPT_FILE
 from nostalgia.instance.sync_transaction import JOURNAL_FILE, recover_sync_update
@@ -172,44 +173,28 @@ def unregister_instance(paths: DataPaths, instance_id: str) -> Path:
     return game_dir_of(paths, instance)
 
 
-def delete_instance(paths: DataPaths, instance_id: str) -> None:
+def delete_instance(paths: DataPaths, instance_id: str, *, delete_external: bool = False) -> None:
     """Xoá hẳn bản chơi: gỡ đăng ký **và** xoá toàn bộ thư mục game (mods, saves, config…).
 
     Hành động không thể hoàn tác. Caller phải hỏi lại người dùng trước khi gọi.
 
-    Nếu instance dùng `game_dir_override` (thư mục ngoài do người dùng tự chọn),
-    chỉ xoá `instance.json` và thư mục đăng ký trong kho — KHÔNG đụng đến thư mục ngoài,
-    vì launcher không sở hữu nó.
+    Thư mục ngoài mặc định được giữ; chỉ xóa nếu người chơi chọn rõ delete_external.
     """
     check_instance_id(instance_id)
+    registry_dir = paths.instance_dir(instance_id)
     path = paths.instance_json(instance_id)
+    if registry_dir.is_symlink() or path.is_symlink():
+        raise InstanceError("không xoá bản chơi qua liên kết thư mục hoặc metadata")
     if not path.is_file():
         message = f"chưa có instance {instance_id!r}"
         raise InstanceError(message)
     instance = _read_if_usable(path, instance_id)
-
-    # Xoá file cấu hình trước để ngay cả khi rmtree thất bại, instance vẫn biến khỏi danh sách.
-    path.unlink()
-
-    registry_dir = paths.instance_dir(instance_id)
-    if instance is not None and instance.game_dir_override:
-        # Thư mục ngoài — chỉ dọn thư mục đăng ký trong kho, không đụng game_dir_override.
-        if registry_dir.is_dir():
-            shutil.rmtree(registry_dir, ignore_errors=True)
-        logger.info(
-            "instance %r đã gỡ (thư mục ngoài %s giữ nguyên)",
-            instance_id,
-            instance.game_dir_override,
-        )
-    else:
-        # Thư mục mặc định trong kho — xoá toàn bộ.
-        target = game_dir_of(paths, instance) if instance is not None else registry_dir
-        if target.is_dir():
-            shutil.rmtree(target)
-            logger.info("đã xoá hẳn instance %r tại %s", instance_id, target)
-        # Nếu registry_dir ≠ target (không xảy ra với game_dir mặc định, phòng thủ thêm):
-        if registry_dir != target and registry_dir.is_dir():
-            shutil.rmtree(registry_dir, ignore_errors=True)
+    if delete_external and instance and instance.game_dir_override:
+        remove_external_game_dir(paths, instance, list_instances(paths))
+    # Luôn dọn thư mục đăng ký và game mặc định bên trong; thư mục game ngoài chỉ
+    # được dọn bởi lựa chọn rõ ràng và kiểm tra phạm vi ở trên.
+    shutil.rmtree(registry_dir)
+    logger.info("đã xoá hẳn dữ liệu đăng ký của instance %r", instance_id)
 
 
 def _read_if_usable(path: Path, fallback_id: str) -> Instance | None:

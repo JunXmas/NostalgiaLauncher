@@ -6,6 +6,7 @@ Dùng chung cho `overrides/` của mrpack và của manifest CurseForge. Mọi t
 
 from __future__ import annotations
 
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -24,6 +25,6 @@ def copy_prefixed_members(zip_path: Path, game_dir: Path, prefixes: tuple[str, .
                 destination = resolve_within(game_dir, member.filename[len(normalised) :])
                 ensure_dir(destination.parent)
                 with archive.open(member) as source, destination.open("wb") as target:
-                    target.write(source.read())
+                    shutil.copyfileobj(source, target, length=1024 * 1024)
                 written += 1
     return written

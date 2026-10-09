@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import uuid
 from dataclasses import dataclass, replace
 
@@ -61,6 +62,16 @@ def trash_instance(paths: DataPaths, instance_id: str) -> str:
     trash_id = uuid.uuid4().hex
     source.rename(trash_dir / trash_id)
     return trash_id
+
+
+def remove_trashed_instance(paths: DataPaths, trash_id: str) -> None:
+    """Xóa vĩnh viễn một bản chơi cũ trong thùng rác; không đi theo thư mục ngoài."""
+    check_instance_id(trash_id)
+    trash_dir = paths.data_dir / "trash"
+    source = trash_dir / trash_id
+    if trash_dir.is_symlink() or source.is_symlink() or not source.is_dir():
+        raise InstanceError("không còn thư mục bản chơi hợp lệ trong thùng rác")
+    shutil.rmtree(source)
 
 
 def restore_trashed_instance(paths: DataPaths, trash_id: str) -> Instance:

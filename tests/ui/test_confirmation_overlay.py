@@ -23,7 +23,7 @@ def modal_opened(modal: QObject) -> bool:
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def test_delete_cancel_and_escape_keep_manager_then_accept_trashes_once(preview: Preview) -> None:
+def test_delete_cancel_and_escape_keep_manager_then_accept_deletes_once(preview: Preview) -> None:
     launcher, view, _bridge, root_item = preview
     prepare_instance(preview)
     press(view, find_item(root_item, "manageInstance-survival"))
@@ -52,5 +52,7 @@ def test_delete_cancel_and_escape_keep_manager_then_accept_trashes_once(preview:
     wait_until(lambda: not launcher.list_instances())
     wait_until(lambda: not manager.property("visible"))
     assert accepted == [True]
+    assert not launcher.paths.instance_dir("survival").exists()
+    assert not launcher.list_trashed_instances()
     confirmation.accept()
     assert accepted == [True]
