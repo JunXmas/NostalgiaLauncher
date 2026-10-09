@@ -65,11 +65,12 @@ def test_old_worker_cannot_enable_launch_for_new_selection(
 ) -> None:
     launcher = Launcher.for_data_dir(tmp_path)
     release_first, release_second = threading.Event(), threading.Event()
-    entered_second = threading.Event()
+    entered_second, finished_first = threading.Event(), threading.Event()
 
     def read(_self: Launcher, instance_id: str) -> tuple[object, ...]:
         if instance_id == "a":
             assert release_first.wait(5)
+            finished_first.set()
         else:
             entered_second.set()
             assert release_second.wait(5)
@@ -82,10 +83,11 @@ def test_old_worker_cannot_enable_launch_for_new_selection(
         selection.selectInstance("b")
         wait_until(entered_second.is_set)
         release_first.set()
-        wait_until(lambda: not selection.busy)
+        wait_until(finished_first.is_set)
+        assert selection.busy
         assert not selection.ready and selection.excluded_for("b") is None
         release_second.set()
-        wait_until(lambda: bool(selection.ready))
+        wait_until(lambda: bool(selection.ready) and not selection.busy)
         assert selection.excluded_for("b") == frozenset()
         assert selection.excluded_for("a") is None
     finally:

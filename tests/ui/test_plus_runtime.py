@@ -104,14 +104,24 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         social._login_timer.setInterval(40)
         social.signIn()
         # Match the UI: an offer arriving does not yet mean its worker is idle.
-        wait_until(
-            lambda: (
-                social.signedIn
-                and not social.busy
-                and payments.details["available"]
-                and not payments.busy
+        try:
+            wait_until(
+                lambda: (
+                    social.signedIn
+                    and not social.busy
+                    and payments.details["available"]
+                    and not payments.busy
+                )
             )
-        )
+        except AssertionError as error:
+            counts = {
+                path: server_state.request_count(path)
+                for path in ("/v1/auth/google/poll", "/v1/me", "/v1/plus/offer")
+            }
+            raise AssertionError(
+                f"login={social.signedIn}, busy={social.busy}, note={social.note}; "
+                f"checkout={payments.details}, watching={payments._watching}; requests={counts}"
+            ) from error
         assert not social.account["plus"] and repair._gateway is None
         assert synchronization.configured
         payments.createOrder()

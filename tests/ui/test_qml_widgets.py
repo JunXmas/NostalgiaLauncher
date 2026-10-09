@@ -22,6 +22,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import Q_ARG, QEventLoop, QMetaObject, QObject, Qt, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlComponent, QQmlEngine
+from test_bridges import wait_until
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -191,6 +192,7 @@ def test_the_check_tick_springs_past_full_size_before_settling() -> None:
     peak = float(scene.property("peak"))
 
     assert peak > 1.08, f"dấu tick KHÔNG nảy ra (đỉnh chỉ {peak:.3f}, chờ vượt 1)"
+    wait_until(lambda: abs(float(tick.property("scale")) - 1) < 0.01, seconds=2)
     assert tick.property("scale") == pytest.approx(1.0, abs=0.01), "nảy xong phải về đúng cỡ"
 
 
@@ -215,6 +217,7 @@ def test_unticking_shrinks_away_without_bouncing() -> None:
     dip = float(scene.property("dip"))
 
     assert dip >= -0.005, f"dấu tick NẢY NGƯỢC lúc biến mất (xuống tới {dip:.3f})"
+    wait_until(lambda: abs(float(find(row, "checkTick").property("scale"))) < 0.01, seconds=2)
     assert find(row, "checkTick").property("scale") == pytest.approx(0.0, abs=0.01)
 
 
@@ -239,6 +242,7 @@ def test_the_dropdown_tray_overshoots_then_settles_into_place() -> None:
     peak = float(scene.property("peak"))
 
     assert peak > settled + 4, f"khay KHÔNG vọt quá đà (đỉnh {peak}, đích {settled})"
+    wait_until(lambda: abs(float(drop.property("trayHeight")) - settled) < 0.01, seconds=2)
     assert drop.property("trayHeight") == pytest.approx(settled), "vọt xong phải về đúng bố cục"
 
 
@@ -259,4 +263,5 @@ def test_closing_the_dropdown_does_not_bounce_below_zero() -> None:
     run_animation(400)
 
     assert float(scene.property("dip")) >= -0.01, "khay nảy ngược xuống dưới 0 khi đóng"
+    wait_until(lambda: abs(float(drop.property("trayHeight"))) < 0.01, seconds=2)
     assert drop.property("trayHeight") == pytest.approx(0.0, abs=0.01)

@@ -3,6 +3,9 @@
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("PySide6")
+
 from PySide6.QtGui import QGuiApplication
 from test_bridges import wait_until
 

@@ -38,6 +38,7 @@ class WorkerBridge(QObject):
     activityChanged = Signal()
     failed = Signal(str)
     retryChanged = Signal()
+    _workFinished = Signal(int)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -48,6 +49,8 @@ class WorkerBridge(QObject):
         self._generation = 0
         self._retry_work: Callable[[], None] | None = None
         self._retry_activity = ""
+        self._work_serial = 0
+        self._workFinished.connect(self._finish_work)
 
     @Property(bool, notify=retryChanged)
     def canRetry(self) -> bool:
@@ -83,6 +86,8 @@ class WorkerBridge(QObject):
         self.activityChanged.emit()
         self._retry_work = None
         self.retryChanged.emit()
+        self._work_serial += 1
+        work_serial = self._work_serial
 
         def guarded() -> None:
             message = ""
@@ -99,8 +104,9 @@ class WorkerBridge(QObject):
                     self._retry_work = work
                     self._retry_activity = activity
                     self.failed.emit(message)
-                self._set_busy(False)
-                self.retryChanged.emit()
+                # Kết quả phải tới UI trước cờ rảnh. Đổi cờ trực tiếp tại worker cho phép
+                # timer bắt đầu yêu cầu mới và làm kết quả đang xếp hàng bị coi là lỗi thời.
+                self._workFinished.emit(work_serial)
 
         def tracked() -> None:
             try:
@@ -119,6 +125,13 @@ class WorkerBridge(QObject):
         if self._busy != busy:
             self._busy = busy
             self.busyChanged.emit()
+
+    @Slot(int)
+    def _finish_work(self, work_serial: int) -> None:
+        if work_serial != self._work_serial:
+            return
+        self._set_busy(False)
+        self.retryChanged.emit()
 
 
 def local_path(text: str) -> str:
