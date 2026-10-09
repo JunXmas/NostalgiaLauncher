@@ -1,16 +1,19 @@
-"""Keep metadata warnings distinct from explicit current-log failures."""
+"""Chỉ trình bày lỗi có bằng chứng trong log, không suy đoán từ metadata."""
 
 from nostalgia.api import ModScan
 
 
+def has_repair_evidence(scan: ModScan) -> bool:
+    return any(
+        diagnostic.code == "dependency" and bool(diagnostic.predicates)
+        for diagnostic in scan.diagnostics
+    )
+
+
 def scan_note(scan: ModScan) -> str:
-    errors = sum(finding.severity == "error" for finding in scan.findings)
-    warnings = len(scan.findings) - errors
-    if errors:
-        return f"Log ghi nhận {errors} lỗi; {warnings} cảnh báo/chưa xác minh từ metadata."
-    if warnings:
-        return (
-            f"Có {warnings} cảnh báo/chưa xác minh. Chưa có lỗi được xác nhận từ log; "
-            "metadata không kết luận bản chơi không chạy được."
-        )
-    return "Không có vấn đề thuộc mẫu nhận diện. Kết quả quét không bảo đảm mọi mod tương thích."
+    count = sum(finding.source == "log" for finding in scan.findings)
+    if not count:
+        return "Chưa nhận diện được lỗi từ log gần nhất. Không đề xuất thay mod."
+    if not has_repair_evidence(scan):
+        return "Log ghi nhận lỗi mod, nhưng chưa đủ dữ liệu để chọn bản thay thế."
+    return f"Log ghi nhận {count} lỗi mod."

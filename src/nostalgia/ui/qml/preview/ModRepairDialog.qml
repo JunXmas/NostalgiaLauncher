@@ -25,7 +25,7 @@ Controls.Popup {
         Column {
             id: header
             width: parent.width; spacing: 8
-            PaymentText { width: parent.width-40; text: "Kiểm tra & sửa mod"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+            PaymentText { width: parent.width-40; text: "Sửa lỗi mod từ log"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
             PaymentText { width: parent.width; text: root.instanceLabel; color: GlassTheme.muted }
         }
         Button { anchors.right: parent.right; label: "×"; quiet: true; width: 40; Accessible.name: "Đóng kiểm tra mod"; onClicked: root.close() }
@@ -36,10 +36,10 @@ Controls.Popup {
             Column {
                 id: contents
                 width: parent.width-8; spacing: 14
-                PaymentText { objectName: "modRepairNote"; width: parent.width; text: modRepairBridge.busy ? "Đang kiểm tra…" : root.details.note; color: GlassTheme.accent }
-                PaymentText { width: parent.width; text: plusFeaturesEnabled ? "Đọc log game và metadata trên máy. Metadata chỉ cảnh báo; lỗi được đối chiếu với log game. Premium đề xuất thay mod khi có bằng chứng trong log." : "Kiểm tra mod miễn phí. Tự động sửa bằng Plus đang tạm khóa trong bản thử này."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
-                PaymentText { width: parent.width; visible: root.details.scanned; text: root.details.logSources.length ? "Nguồn lỗi: " + root.details.logSources.join(", ") + " · " + root.details.gameVersion + " / " + root.details.loader : "Chưa có lỗi log thuộc mẫu nhận diện. Kết quả metadata bên dưới chưa chứng minh bản chơi bị lỗi; nếu game vẫn chạy, bạn không cần thay mod."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
-                Repeater { model: root.details.findings; Glass { width: contents.width; padding: 14; height: finding.implicitHeight+28; Column { id: finding; width: parent.width; spacing: 5; PaymentText { width: parent.width; text: modelData.file; font.weight: Font.DemiBold } PaymentText { width: parent.width; text: modelData.source === "log" ? "LOG GAME" : "METADATA · CHƯA XÁC NHẬN LỖI GAME"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption } PaymentText { width: parent.width; text: modelData.reason; color: modelData.severity === "error" ? GlassTheme.danger : GlassTheme.muted } } } }
+                PaymentText { objectName: "modRepairNote"; width: parent.width; text: modRepairBridge.busy ? "Đang xử lý…" : root.details.note; color: GlassTheme.accent }
+                PaymentText { width: parent.width; text: "Đọc lỗi crash và không tương thích từ log game. Chỉ đề xuất sửa khi xác định được yêu cầu phiên bản."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+                PaymentText { width: parent.width; visible: root.details.scanned && root.details.logSources.length > 0; text: "Nguồn: " + root.details.logSources.join(", ") + " · " + root.details.gameVersion + " / " + root.details.loader; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+                Repeater { model: root.details.findings; Glass { objectName: "modLogFinding-" + index; width: contents.width; padding: 14; height: finding.implicitHeight+28; Column { id: finding; width: parent.width; spacing: 5; PaymentText { width: parent.width; text: modelData.file; font.weight: Font.DemiBold } PaymentText { width: parent.width; text: modelData.reason; color: modelData.severity === "error" ? GlassTheme.danger : GlassTheme.muted } } } }
                 PaymentText { width: parent.width; visible: root.details.changes.length>0; text: "PHƯƠNG ÁN PLUS"; font.weight: Font.DemiBold }
                 Repeater { model: root.details.recommendations; ModRepairCard { width: contents.width; onReplaceRequested: function(groupId) { modRepairBridge.replaceMod(groupId); } } }
                 Repeater { model: root.details.unresolved; PaymentText { width: contents.width; text: "Chưa giải được: " + modelData; color: GlassTheme.danger } }
@@ -50,8 +50,8 @@ Controls.Popup {
             id: actions
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             spacing: 8
-            Button { objectName: "modRescan"; label: "Quét lại"; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }
-            Button { objectName: "modPlan"; label: "Lập phương án · Plus"; visible: plusFeaturesEnabled; clickable: root.details.canPlan && !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
+            Button { objectName: "modRescan"; label: "Đọc lại log"; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }
+            Button { objectName: "modPlan"; label: "Tìm bản phù hợp · Plus"; visible: plusFeaturesEnabled && root.details.canPlan; clickable: !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
             Button { objectName: "modApply"; label: "Áp dụng tất cả & sao lưu"; primary: true; visible: root.details.canApply; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: confirmDialog.ask("Áp phương án sửa mod?","Các mod trong phương án sẽ được thêm/tắt. Giữ bản trước sửa để hoàn tác.",function(){modRepairBridge.apply();}) }
             Button { objectName: "modUndo"; label: "Hoàn tác"; visible: root.details.canUndo; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.undo() }
         }

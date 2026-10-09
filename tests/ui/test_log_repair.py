@@ -16,7 +16,6 @@ from nostalgia.api import Launcher, ModScan, RepairPlan, RepairScan
 from nostalgia.instance.model import Instance
 from nostalgia.modcheck.archive import scan_archives
 from nostalgia.modcheck.game_logs import with_game_logs
-from nostalgia.modcheck.model import ModFinding
 from nostalgia.modcheck.scan import build_scan
 from nostalgia.modrepair.gateway import scan_hash
 from nostalgia.modrepair.model import RepairChange
@@ -29,8 +28,10 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 class ProposedRepair:
     def __init__(self, proposal: RepairPlan, changed: bool = False) -> None:
         self.proposal, self.changed, self.authorizations = proposal, changed, 0
+        self.requests = 0
 
     def fetch_plan(self, scan: ModScan, selection: str = "") -> RepairPlan:
+        self.requests += 1
         assert scan_hash(scan) == self.proposal.scan_hash
         proposal = replace(self.proposal, partial=bool(selection))
         if selection and self.changed:
@@ -104,6 +105,9 @@ def test_replace_button_downloads_verified_mod_and_can_undo(
     dialog.openFor({"instanceId": "repair", "label": "Mod repair test"})
     wait_until(lambda: repair.details["scanned"] and not repair.busy)
     assert "latest.log" in repair.details["logSources"]
+    assert len(repair.details["findings"]) == 1
+    assert repair.details["findings"][0]["source"] == "log"
+    assert "metadata" not in repair.details["note"].lower()
     press(view, find_control(root_item, "modPlan"))
     wait_until(lambda: bool(repair.details["recommendations"]) and not repair.busy)
     card = repair.details["recommendations"][0]
@@ -128,15 +132,29 @@ def test_replace_button_downloads_verified_mod_and_can_undo(
     dialog.close()
 
 
-def test_metadata_warning_does_not_offer_or_request_a_repair_plan(
-    preview: Preview, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "line,log_fault",
+    [
+        ("Game successfully started", False),
+        ("Mixin apply for mod alpha failed at injected method", True),
+        (
+            "Mod 'Alpha' (alpha) 1.0.0 requires a special build of mod 'Beta' (beta), "
+            "which is missing!",
+            True,
+        ),
+    ],
+)
+def test_no_verified_log_requirement_hides_predictions_and_repair_action(
+    preview: Preview, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line: str, log_fault: bool
 ) -> None:
     _launcher, view, _bridge, root_item = preview
-    scan = build_scan((), "1.20.1", "fabric", "0.16.0", 17)
-
-    scan = replace(
-        scan, findings=(ModFinding("missing", "alpha.jar", "beta", "Metadata mismatch"),)
+    write_fabric(tmp_path / "mods/alpha.jar", "alpha", depends={"beta": ">=2.0.0"})
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs/latest.log").write_text(line)
+    scan = with_game_logs(
+        build_scan(scan_archives(tmp_path), "1.20.1", "fabric", "0.16.0", 17), tmp_path
     )
+    assert any(finding.source == "metadata" for finding in scan.findings)
     monkeypatch.setattr(Launcher, "scan_mod_repair", lambda _self, _id: RepairScan(scan, ""))
     gateway = ProposedRepair(RepairPlan("a" * 64, scan_hash(scan), int(time.time()) + 900, (), ()))
     root_item.setProperty("sessionSkipped", True)
@@ -145,10 +163,17 @@ def test_metadata_warning_does_not_offer_or_request_a_repair_plan(
     repair = view.rootContext().contextProperty("modRepairBridge")
     assert isinstance(repair, ModRepairBridge)
     repair.set_gateway(gateway)
-    repair.scan("working-instance")
+    dialog = find_control(root_item, "modRepairDialog")
+    dialog.openFor({"instanceId": "working-instance", "label": "Working instance"})
     wait_until(lambda: repair.details["scanned"] and not repair.busy)
     assert not repair.details["canPlan"]
-    assert repair.details["findings"][0]["severity"] == "warning"
-    assert "không kết luận" in repair.details["note"]
+    assert len(repair.details["findings"]) == int(log_fault)
+    assert all(finding["source"] == "log" for finding in repair.details["findings"])
+    assert "metadata" not in repair.details["note"].lower()
+    assert ("chưa đủ dữ liệu" if log_fault else "Không đề xuất thay mod") in repair.details["note"]
+    assert not find_control(root_item, "modPlan").property("visible")
+    assert not repair.details["recommendations"]
     repair.plan()
     assert not repair.busy
+    assert gateway.requests == 0
+    dialog.close()

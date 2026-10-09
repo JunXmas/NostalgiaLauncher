@@ -14,9 +14,11 @@ layout sau và không tranh vị trí với kéo/cuộn quán tính. Reduced mot
 
 ## Độ chắc chắn
 
-Metadata sinh cảnh báo; không chứng minh instance không chạy được. UI ghi nguồn
-metadata/log và mức độ. Runtime/mixin chưa đủ bằng chứng chọn phiên bản vẫn là
-cảnh báo. Mẫu lỗi dependency rõ ràng trong log mới được ghi là lỗi.
+Mục sửa mod chỉ hiển thị lỗi nhận diện được từ log gần nhất. Không hiển thị hay
+đếm các cảnh báo metadata trong kết quả và thông báo tổng kết. Nếu không có bằng
+chứng trong log, không đề xuất thay mod. Runtime/mixin và yêu cầu phiên bản chưa
+đọc được vẫn được báo ngắn gọn, nhưng không cho lập phương án đoán bản thay thế.
+Metadata chỉ dùng nội bộ để nhận diện JAR và kiểm tra an toàn của bản tải về.
 
 Fabric environment=server không tham gia inventory client. Alias không tạo lỗi
 trùng mod độc lập và không ghi đè mod ID thực. JAR lồng là các ứng viên loader,

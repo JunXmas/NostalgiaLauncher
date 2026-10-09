@@ -11,7 +11,7 @@ from nostalgia.api import Launcher, ModScan, RepairGateway, RepairPlan, RepairSc
 from nostalgia.errors import NostalgiaError
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.mod_repair_cards import check_chosen_group, repair_cards
-from nostalgia.ui.mod_scan_summary import scan_note
+from nostalgia.ui.mod_scan_summary import has_repair_evidence, scan_note
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -42,6 +42,7 @@ class ModRepairBridge(WorkerBridge):
                     "severity": finding.severity,
                 }
                 for finding in self._scan.findings
+                if finding.source == "log"
             ]
             if self._scan
             else [],
@@ -60,7 +61,7 @@ class ModRepairBridge(WorkerBridge):
             if self._plan
             else [],
             "unresolved": list(self._plan.unresolved) if self._plan else [],
-            "canPlan": bool(self._gateway and self._scan and self._scan.diagnostics),
+            "canPlan": bool(self._gateway and self._scan and has_repair_evidence(self._scan)),
             "canApply": bool(
                 self._gateway and self._plan and self._plan.changes and not self._plan.unresolved
             ),
@@ -82,7 +83,7 @@ class ModRepairBridge(WorkerBridge):
     @Slot()
     def plan(self) -> None:
         gateway, scan = self._gateway, self._scan
-        if gateway and scan and scan.diagnostics and not self.busy:
+        if gateway and scan and has_repair_evidence(scan) and not self.busy:
             self._request("plan", lambda: gateway.fetch_plan(scan))
 
     @Slot()
