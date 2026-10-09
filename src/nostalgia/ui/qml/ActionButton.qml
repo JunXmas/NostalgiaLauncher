@@ -46,7 +46,7 @@ Item {
     readonly property color glintColor: root.primary ? "#66ffffff" : "#33ffffff"
 
     height: Math.max(36, root.fontSize + 22)
-    implicitWidth: caption.width + 34
+    implicitWidth: (Theme.modern ? modernCaption.implicitWidth : caption.implicitWidth) + 34
 
     Item {
         anchors.fill: parent
@@ -75,6 +75,8 @@ Item {
             id: caption
             anchors.centerIn: parent
             text: root.label
+            width: Math.max(0, Math.min(implicitWidth, root.width - 34))
+            elide: Text.ElideRight
             color: !root.clickable ? "#b9b9b9" : "white"
             // Font pixel CHỈ cho nhãn viết hoa ("CHƠI ▶", "DỪNG ■"). Nhãn có chữ thường
             // ("Đăng nhập Microsoft") đặt vào F2D thì chật và khó đọc — chữ thường của font
@@ -100,8 +102,12 @@ Item {
         Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutCubic } }
         Behavior on color { ColorAnimation { duration: Theme.quick } }
         Text {
+            id: modernCaption
+            objectName: "actionButtonCaption"
             anchors.centerIn: parent
             text: root.label
+            width: Math.max(0, Math.min(implicitWidth, root.width - 34))
+            elide: Text.ElideRight
             color: Theme.text
             font.family: "Inter"
             font.pixelSize: root.fontSize

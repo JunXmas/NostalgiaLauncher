@@ -31,6 +31,82 @@ def assert_within(control: Any, container: Any) -> None:
 
 
 @pytest.mark.parametrize("scale", [100, 150])
+def test_payment_actions_and_donation_text_do_not_overlap_or_overflow(
+    payment_preview: PaymentPreview, scale: int
+) -> None:
+    preview = payment_preview
+    settings = preview.view.rootContext().contextProperty("settingsBridge")
+    settings.setAppearance(scale, False, False, True, "vi")
+    for stage in ("offer", "pending"):
+        if stage == "pending":
+            create_order(preview)
+        for width in (1440, 1024, 800, 640, 500):
+            preview.view.resize(width, 600)
+            QTest.qWait(80)
+            footer = find_control(preview.root_item, "paymentFooter")
+            if width == 500 and scale == 150:
+                assert footer.property("stacked")
+            donation = find_control(preview.root_item, "paymentDonation")
+            action = find_control(
+                preview.root_item, "paymentCheck" if stage == "pending" else "paymentCreate"
+            )
+            for control in (donation, action):
+                assert_within(control, footer)
+                caption = find_control(control, "buttonCaption")
+                assert_within(caption, control)
+                assert caption.width() >= caption.implicitWidth() > 0
+            origin = donation.mapToItem(footer, QPointF())
+            destination = action.mapToItem(footer, QPointF())
+            assert (
+                origin.x() + donation.width() + 10 <= destination.x()
+                or origin.y() + donation.height() + 10 <= destination.y()
+            )
+    press(preview.view, donation)
+    dialog = find_control(preview.root_item, "donateDialog")
+    assert dialog.property("visible")
+    for width in (1024, 800, 640):
+        preview.view.resize(width, 600)
+        QTest.qWait(80)
+        frame = find_control(preview.root_item, "donateFrame")
+        assert_within(frame, dialog)
+        close = find_control(dialog, "donateClose")
+        assert_within(close, frame)
+        caption = find_control(close, "actionButtonCaption")
+        assert_within(caption, close)
+        assert caption.width() >= caption.implicitWidth() > 0
+        details = find_control(dialog, "donateTransferDetails")
+        for field in ("donateHolderText", "donateBankText", "donateMemoText", "donateQrFrame"):
+            assert_within(find_control(dialog, field), details)
+        scroll = find_control(dialog, "donateScroll")
+        scroll.setProperty("contentY", max(0, scroll.property("contentHeight") - scroll.height()))
+        assert_within(find_control(dialog, "donateMemoText"), scroll)
+    press(preview.view, close)
+    assert not dialog.property("visible")
+
+
+@pytest.mark.parametrize("scale", [100, 150])
+def test_expired_order_donation_note_fits_in_the_footer(
+    payment_preview: PaymentPreview, scale: int
+) -> None:
+    preview = payment_preview
+    create_order(preview)
+    document = json.loads(preview.server_state.routes["/v1/plus/orders"].body)
+    document["status"] = "expired"
+    preview.server_state.add("/v1/plus/orders/order_123", json.dumps(document).encode())
+    preview.payments.checkPayment()
+    wait_until(lambda: preview.payments.details["stage"] == "expired")
+    preview.view.rootContext().contextProperty("settingsBridge").setAppearance(
+        scale, False, False, True, "vi"
+    )
+    for width in (1024, 640, 500):
+        preview.view.resize(width, 600)
+        QTest.qWait(80)
+        note = find_control(preview.root_item, "paymentDonationNote")
+        assert note.isVisible()
+        assert_within(note, find_control(preview.root_item, "paymentFooter"))
+
+
+@pytest.mark.parametrize("scale", [100, 150])
 def test_qr_and_transfer_fields_fit_the_card_after_resize(
     payment_preview: PaymentPreview, scale: int
 ) -> None:

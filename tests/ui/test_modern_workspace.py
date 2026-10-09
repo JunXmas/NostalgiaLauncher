@@ -43,6 +43,25 @@ def prepare_instance(context: Preview) -> None:
     QTest.qWait(300)
 
 
+@pytest.mark.parametrize("scale", [100, 150])
+def test_small_instance_action_keeps_its_complete_label(preview: Preview, scale: int) -> None:
+    _launcher, view, _bridge, root_item = preview
+    prepare_instance(preview)
+    view.resize(1024, 600)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        scale, False, False, True, "vi"
+    )
+    QTest.qWait(100)
+    action = find_control(root_item, "instanceAction-survival")
+    caption = find_control(action, "buttonCaption")
+    assert caption.width() >= caption.implicitWidth() > 0
+    origin = caption.mapToItem(action, QPointF())
+    assert origin.x() >= 4
+    assert origin.x() + caption.width() <= action.width() - 4
+    assert origin.y() >= 0
+    assert origin.y() + caption.height() <= action.height()
+
+
 def test_manager_saves_real_settings_and_keeps_sections_scrollable(preview: Preview) -> None:
     launcher, view, bridge, root_item = preview
     prepare_instance(preview)

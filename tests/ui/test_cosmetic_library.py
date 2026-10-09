@@ -98,8 +98,11 @@ def test_own_avatar_opens_profile_and_logout_confirms_without_removing_minecraft
     modal.close()
     QTest.qWait(150)
     toggle = find_control(root_item, "socialAccountToggle")
-    caption = find_control(toggle, "buttonCaption")
-    assert caption.width() >= caption.implicitWidth() > 0
+    chevron = find_control(toggle, "buttonChevron")
+    assert chevron.isVisible()
+    center = chevron.mapToItem(toggle, QPointF(chevron.width() / 2, chevron.height() / 2))
+    assert center.x() == pytest.approx(toggle.width() / 2)
+    assert center.y() == pytest.approx(toggle.height() / 2)
     QTest.mouseClick(
         view,
         Qt.MouseButton.LeftButton,

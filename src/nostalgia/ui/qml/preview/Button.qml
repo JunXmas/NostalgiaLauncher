@@ -1,10 +1,12 @@
 import QtQuick
+import QtQuick.Shapes
 
 Item {
     id: root
     property string label: ""
     property string icon: ""
     property string provider: ""
+    property bool chevron: false
     property bool danger: false
     property bool primary: false
     property bool quiet: false
@@ -12,10 +14,10 @@ Item {
     property bool emphasized: false
     property bool clickable: true
     readonly property bool hovered: hover.hovered
-    readonly property real captionPadding: !root.provider && root.width <= 48 ? 4 : 16
+    readonly property real captionPadding: Math.max(4, Math.min(16, (root.width - caption.implicitWidth - (root.provider ? providerLogo.width + labelRow.spacing : 0)) / 2))
     signal clicked
     implicitWidth: caption.implicitWidth + (root.provider ? providerLogo.width + labelRow.spacing : 0) + 32
-    implicitHeight: 42
+    implicitHeight: Math.max(42, caption.implicitHeight + 16)
     width: implicitWidth
     height: implicitHeight
     scale: press.pressed && clickable ? 0.97 : 1
@@ -49,6 +51,7 @@ Item {
         }
         Row {
             id: labelRow
+            visible: !root.chevron
             anchors.centerIn: parent; spacing: 10
             ProviderLogo { id: providerLogo; visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
             Text {
@@ -59,6 +62,22 @@ Item {
                 elide: Text.ElideRight
                 color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
                 font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
+            }
+        }
+        Shape {
+            objectName: "buttonChevron"
+            visible: root.chevron
+            anchors.centerIn: parent
+            width: 14; height: 8
+            ShapePath {
+                strokeColor: GlassTheme.text
+                strokeWidth: 2
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                fillColor: "transparent"
+                startX: 1; startY: 7
+                PathLine { x: 7; y: 1 }
+                PathLine { x: 13; y: 7 }
             }
         }
     }

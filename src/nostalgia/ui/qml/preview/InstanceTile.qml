@@ -69,7 +69,8 @@ Rectangle {
         anchors.bottomMargin: root.compact ? 24 : 16
         spacing: 6
         Button {
-            width: root.compact ? 84 : 75
+            objectName: "instanceAction-" + root.entry.instanceId
+            width: Math.max(root.compact ? 84 : 75, implicitWidth)
             height: 36
             label: root.pickOnly ? (root.selected ? "Đã chọn" : "Chọn") : "Chơi"
             selected: root.selected

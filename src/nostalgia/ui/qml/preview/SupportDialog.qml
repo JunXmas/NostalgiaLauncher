@@ -167,12 +167,14 @@ Controls.Popup {
                 width: parent.width - 60
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
+                    width: parent.width
                     text: root.plusPaused ? "NOSTALGIA PREMIUM · TẠM KHÓA" : root.receiptMode ? "BIÊN NHẬN PREMIUM" : "MUA GÓI & NÂNG CẤP"
                     color: GlassTheme.brand
                     font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
+                    width: parent.width
                     text: "Nostalgia Premium"
                     font.pixelSize: (root.receiptMode ? (root.compactLayout ? 16 : 20) : (root.compactLayout ? 22 : 29)) * GlassTheme.scale
                     font.weight: Font.DemiBold
@@ -190,10 +192,12 @@ Controls.Popup {
         }
         Item {
             id: footer
+            objectName: "paymentFooter"
+            readonly property bool stacked: donation.visible && paymentAction.visible && donation.implicitWidth + paymentAction.implicitWidth + 16 > width
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: donation.height + 12
+            height: (stacked ? donation.height + paymentAction.height + 10 : Math.max(donation.height, paymentAction.height, donationNote.visible ? donationNote.implicitHeight : 0)) + 12
             Rectangle {
                 width: parent.width
                 height: 1
@@ -203,6 +207,8 @@ Controls.Popup {
                 id: donation
                 objectName: "paymentDonation"
                 anchors.bottom: parent.bottom
+                anchors.bottomMargin: footer.stacked ? paymentAction.height + 10 : 0
+                width: Math.min(implicitWidth, parent.width)
                 label: "Ủng hộ tùy tâm  ↗"
                 visible: !root.receiptMode
                 quiet: true
@@ -212,8 +218,10 @@ Controls.Popup {
                 }
             }
             PaymentText {
+                id: donationNote
+                objectName: "paymentDonationNote"
                 anchors.right: parent.right
-                anchors.verticalCenter: donation.verticalCenter
+                anchors.bottom: parent.bottom
                 width: Math.max(0, parent.width - donation.width - 24)
                 horizontalAlignment: Text.AlignRight
                 text: "Ủng hộ tùy tâm không kích hoạt Plus."
@@ -222,7 +230,9 @@ Controls.Popup {
                 font.pixelSize: GlassTheme.fontCaption
             }
             Button {
+                id: paymentAction
                 objectName: root.receiptMode ? "paymentDone" : root.details.stage === "pending" ? "paymentCheck" : "paymentCreate"
+                width: Math.min(implicitWidth, parent.width)
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 visible: !root.plusPaused && (root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0)

@@ -184,7 +184,7 @@ Glass {
         }
         Item {
             width: parent.width
-            height: 60
+            height: Math.max(60, premiumLabels.implicitHeight + 16)
             Legacy.BlockIcon {
                 x: 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -201,20 +201,31 @@ Glass {
                 anchors.left: parent.left
                 anchors.leftMargin: 36
                 width: parent.width - 36
-                label: "Premium"
+                height: parent.height
+                Accessible.name: "Premium · Mua gói và nâng cấp"
                 quiet: true
                 objectName: "openSupport"
                 HoverHandler { id: donateHover }
                 onClicked: root.supportRequested()
-            }
-            PaymentText {
-                anchors.left: parent.left; anchors.leftMargin: 52
-                anchors.right: parent.right; anchors.rightMargin: 10
-                anchors.bottom: parent.bottom; anchors.bottomMargin: 5
-                text: "Mua gói & nâng cấp"
-                color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
-                maximumLineCount: 1; elide: Text.ElideRight
-                TapHandler { onTapped: root.supportRequested() }
+                Column {
+                    id: premiumLabels
+                    objectName: "premiumNavigationLabels"
+                    anchors.centerIn: parent
+                    width: parent.width - 24
+                    spacing: 4
+                    PaymentText {
+                        width: parent.width; text: "Premium"
+                        horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
+                        maximumLineCount: 1; elide: Text.ElideRight
+                    }
+                    PaymentText {
+                        width: parent.width; text: "Mua gói & nâng cấp"
+                        horizontalAlignment: Text.AlignHCenter
+                        color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
+                        maximumLineCount: 1; elide: Text.ElideRight
+                    }
+                }
             }
         }
         Button {
@@ -260,7 +271,7 @@ Glass {
             }
         }
         SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
-        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; label: "⌃"; Accessible.name: "Menu tài khoản Google và Minecraft"; onClicked: accountMenu.open() }
+        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; chevron: true; Accessible.name: "Menu tài khoản Google và Minecraft"; onClicked: accountMenu.open() }
         Column {
             x: 55
             anchors.verticalCenter: parent.verticalCenter
