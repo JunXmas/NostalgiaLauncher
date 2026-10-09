@@ -2,9 +2,9 @@
 
 Một launcher quen thuộc, được làm mới từ cách nhìn đến cách chơi. Nostalgia 1.2 giữ hệ màu của Nostalgia, đưa chất liệu kính vào giao diện, và giúp bạn cùng bạn bè bước vào một thế giới với ít thao tác hơn.
 
-**Nostalgia 1.2.0rc14 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
+**Nostalgia 1.2.0rc15 tiếp tục hoàn thiện diện mạo mới trước bản ổn định 1.2.** Đăng nhập Google và Plus kết nối dịch vụ thật; quyền trả phí được xác nhận từ tài khoản, không mở khóa mô phỏng như draft Ultimate TEST trước đây.
 
-## Mới trong rc14 — Ít đoán hơn, dễ chơi hơn
+## Mới trong rc15 — Ít đoán hơn, dễ chơi hơn
 
 - **Thêm nội dung ngay trong bản chơi:** từ Quản lý → Nội dung đã cài → Thêm nội dung, mở kho Mod, Shader và Gói tài nguyên với Minecraft, loader và bản chơi đích được lọc sẵn. Chỉ cài bản tương thích vào đúng instance; quay lại quản lý vẫn giữ tên và cấu hình đang sửa. Kho chính vẫn dành cho khám phá và tạo instance từ modpack.
 - **17 hướng dẫn ngay tại thao tác:** nút Cách dùng và phím F1 mở các bước ngắn kèm GIF từ launcher. GIF chạy ngoại tuyến, chỉ nạp khi cần và dừng khi ẩn cửa sổ hoặc giảm chuyển động. Đóng hướng dẫn để tiếp tục đúng biểu mẫu đang làm.
@@ -12,6 +12,7 @@ Một launcher quen thuộc, được làm mới từ cách nhìn đến cách c
 - **Skin và cape: xem trước rồi mới Lưu.** Công tắc Classic/Slim thay model trực tiếp; cape được mặc trên nhân vật. Mỗi tài khoản giữ bản xem trước riêng; chỉ bấm Lưu mới đổi skin Microsoft/Ely.by và cape Microsoft đã sở hữu. Nếu một phần lưu lỗi, phần chưa lưu vẫn còn để thử lại.
 - **Sửa mod dựa trên lỗi thực tế trong log:** chỉ đưa phương án sửa cho crash hoặc lỗi không tương thích có bằng chứng; metadata cảnh báo đơn thuần không còn biến thành lỗi bắt buộc sửa. Cuộn Nhật ký được chặn ở biên để tránh giật khi kéo quá tay.
 - **Gọn và rõ hơn ở các thao tác nhỏ:** khôi phục icon nút, sửa chữ tràn ở Premium, canh giữa mũi tên tài khoản và làm nơi đăng xuất Google dễ tìm. Cosmetic dùng khối amethyst Minecraft; quyền host server được kiểm tra tự động khi cần.
+- **Đăng nhập không bỏ lỡ lần đồng bộ đầu tiên:** nếu worker còn bận, yêu cầu đọc tài khoản được thực hiện ngay khi worker xong. Việc đăng xuất/hủy phiên hủy yêu cầu chờ, giữ cơ chế kiểm quyền từ server.
 - **Giữ cách cập nhật quen thuộc:** launcher tự kiểm bản mới khi mở; người chơi bấm Cập nhật ngay để tải, kiểm SHA-256, cài và mở lại. Không tự tải hoặc khởi động lại khi chưa bấm cập nhật.
 - **Gói phát hành dùng quyền thật:** không mở Ultimate TEST. Có Windows x64, Linux x64, macOS Intel và Apple Silicon; chỉ đính kèm bộ cài/gói portable, ZIP cập nhật và SHA256SUMS.
 

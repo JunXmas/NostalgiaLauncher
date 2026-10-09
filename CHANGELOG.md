@@ -3,7 +3,10 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.2.0rc14 — 2026-10-09
+## 1.2.0rc15 — 2026-10-09
+
+Yêu cầu đọc lại tài khoản Google trong lúc worker bận được thực hiện ngay khi worker
+xong, thay vì đợi chu kỳ tiếp theo. Đăng xuất/hủy phiên hủy cả yêu cầu đang chờ.
 
 Skin/cape có bản xem trước riêng theo tài khoản và nút Lưu; Classic/Slim đổi model ngay.
 Sửa mod chỉ đọc bằng chứng lỗi trong log, không biến cảnh báo metadata thành lỗi game.

@@ -44,7 +44,9 @@ class SocialSession(SocialState):
         self._peer_id = ""
         self._login: GoogleLogin | None = None
         self._note = ""
+        self._refresh_pending = False
         self._arrived.connect(self._apply)
+        self.busyChanged.connect(self._flush_refresh)
         self._timer = QTimer(self)
         self._timer.setInterval(15000)
         self._timer.timeout.connect(self.refresh)
@@ -93,6 +95,7 @@ class SocialSession(SocialState):
     @Slot()
     def shutdown(self) -> None:
         self.next_generation()
+        self._refresh_pending = False
         self._timer.stop()
         self._login_timer.stop()
         if self._gateway:
@@ -101,8 +104,12 @@ class SocialSession(SocialState):
     @Slot()
     def refresh(self) -> None:
         gateway, peer_id = self._gateway, self._peer_id
-        if gateway is None or not gateway.access_token or self.busy:
+        if gateway is None or not gateway.access_token:
             return
+        if self.busy:
+            self._refresh_pending = True
+            return
+        self._refresh_pending = False
 
         def fetch() -> SocialUpdate:
             snapshot = gateway.fetch_snapshot()
@@ -114,6 +121,11 @@ class SocialSession(SocialState):
             return SocialUpdate(snapshot, messages, peer_id)
 
         self._request("update", fetch)
+
+    @Slot()
+    def _flush_refresh(self) -> None:
+        if self._refresh_pending and not self.busy:
+            QTimer.singleShot(0, self.refresh)
 
     @Slot()
     def _poll_login(self) -> None:
@@ -178,16 +190,7 @@ class SocialSession(SocialState):
             QTimer.singleShot(30, self.refresh)
         elif isinstance(payload, SocialUpdate):
             self._snapshot = payload.snapshot
-            if self._peer_id == payload.peer_id:
-                self._messages = [
-                    {
-                        "id": message.message_id,
-                        "sender": message.sender,
-                        "text": message.body,
-                        "mine": message.sender == payload.snapshot.account.account_id,
-                    }
-                    for message in payload.messages
-                ]
+            self.update_messages(payload)
             if not any(friend.account_id == self._peer_id for friend in payload.snapshot.friends):
                 self._peer_id, self._messages = "", []
             self._note = ""
@@ -211,6 +214,7 @@ class SocialSession(SocialState):
 
     def _reset_session(self, note: str) -> None:
         self.next_generation()
+        self._refresh_pending = False
         self._timer.stop()
         self._login_timer.stop()
         self._login = self._snapshot = None

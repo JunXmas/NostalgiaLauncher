@@ -7,7 +7,7 @@ from typing import Any
 
 from PySide6.QtCore import Property, Signal
 
-from nostalgia.api import GoogleLogin, SocialGateway, SocialSnapshot
+from nostalgia.api import GoogleLogin, SocialGateway, SocialSnapshot, SocialUpdate
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -22,6 +22,18 @@ class SocialState(WorkerBridge):
     _login: GoogleLogin | None
     _note: str
     _plus_enabled: bool
+
+    def update_messages(self, update: SocialUpdate) -> None:
+        if self._peer_id == update.peer_id:
+            self._messages = [
+                {
+                    "id": message.message_id,
+                    "sender": message.sender,
+                    "text": message.body,
+                    "mine": message.sender == update.snapshot.account.account_id,
+                }
+                for message in update.messages
+            ]
 
     @Property(bool, constant=True)
     def configured(self) -> bool:
