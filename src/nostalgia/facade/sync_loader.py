@@ -11,17 +11,21 @@ def resolve_sync_loader(
     # Chỉ nhận phiên bản từ tọa độ loader đã cài; không chuyển JSON/classpath của host sang khách.
     if loader_kind == "vanilla":
         return ""
-    artifact_names = {
-        "fabric": "fabric-loader",
-        "quilt": "quilt-loader",
-        "forge": "forge",
-        "neoforge": "neoforge",
+    coordinate_names = {
+        "fabric": (("net.fabricmc", "fabric-loader"),),
+        "quilt": (("org.quiltmc", "quilt-loader"),),
+        # Forge mới chỉ khai fmlloader trong version.json; forge universal nằm ngoài
+        # danh sách thư viện client. Cả hai tọa độ mang cùng phiên bản Forge.
+        "forge": (("net.minecraftforge", "forge"), ("net.minecraftforge", "fmlloader")),
+        "neoforge": (("net.neoforged", "neoforge"), ("net.neoforged", "forge")),
     }
-    for library in libraries:
-        if library.coordinate.artifact == artifact_names[loader_kind]:
-            return (
-                library.coordinate.artifact_version.removeprefix(game_version + "-")
-                if loader_kind == "forge"
-                else library.coordinate.artifact_version
-            )
+    for loader_group, loader_artifact in coordinate_names[loader_kind]:
+        for library in libraries:
+            coordinate = library.coordinate
+            if (coordinate.group, coordinate.artifact) == (loader_group, loader_artifact):
+                return (
+                    coordinate.artifact_version.removeprefix(game_version + "-")
+                    if loader_kind == "forge" or loader_artifact == "forge"
+                    else coordinate.artifact_version
+                )
     raise MultiplayerError("Không tìm thấy phiên bản loader. Hãy cài lại loader trước khi chia sẻ.")

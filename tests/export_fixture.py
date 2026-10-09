@@ -13,7 +13,7 @@ def prepared_export(tmp_path: Path, loader_kind: LoaderKind = "fabric") -> Launc
     coordinates = {
         "fabric": "net.fabricmc:fabric-loader:0.16.9",
         "quilt": "org.quiltmc:quilt-loader:0.26.0",
-        "forge": "net.minecraftforge:forge:1.20.1-47.4.23",
+        "forge": "net.minecraftforge:fmlloader:1.20.1-47.4.23",
         "neoforge": "net.neoforged:neoforge:21.1.9",
     }
     atomic_write_json(launcher.paths.version_json(game_version), {"id": game_version})

@@ -130,7 +130,7 @@ class HostRig:
                 "id": version_id,
                 "inheritsFrom": "1.20.1",
                 "mainClass": "Main",
-                "libraries": [{"name": "net.minecraftforge:forge:1.20.1-47.4.23"}],
+                "libraries": [{"name": "net.minecraftforge:fmlloader:1.20.1-47.4.23"}],
             },
         )
         self.launcher.create_instance(Instance("other", "1.20.1", "Other pack"))

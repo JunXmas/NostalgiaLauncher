@@ -134,7 +134,10 @@ def test_cape_cards_preview_on_body_and_partial_save_retries_only_cape(
     press(view, find_control(root_item, "skinSaveButton"))
     wait_until(lambda: not editor.busy and "cape chưa lưu" in editor.details["note"])
     assert not editor.details["skinDirty"] and editor.details["capeDirty"]
-    press(view, find_control(root_item, "skinSaveButton"))
+    # Skin đã lưu còn được tải lại qua accountBridge; nút chỉ mở khi refresh xong.
+    save_button = find_control(root_item, "skinSaveButton")
+    wait_until(lambda: bool(save_button.property("clickable")))
+    press(view, save_button)
     wait_until(lambda: not editor.busy and not editor.details["dirty"])
     assert skin_calls == [account.account_id] and cape_calls == ["orange", "orange"]
 

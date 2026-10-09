@@ -5,6 +5,11 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Nhận đúng phiên bản Forge hiện đại từ `net.minecraftforge:fmlloader`, khắc phục
+  lỗi yêu cầu cài lại loader khi host/chia sẻ modpack đã chạy được. Xuất modpack và
+  quét sửa mod cũng dùng cùng cách nhận diện; không nhầm phiên bản FML độc lập của
+  NeoForge hay các mod trùng tên loader.
+
 - Thay **Sao lưu** bằng **Xuất modpack**: chọn bản chơi, MRPACK Modrinth hoặc ZIP
   modpack CurseForge, nơi lưu và tùy chọn kèm thế giới. Giữ mods đang tắt, resourcepack,
   shader, cấu hình và đúng Minecraft/loader. File xuất có thể nhập lại qua Nhập bản chơi.
