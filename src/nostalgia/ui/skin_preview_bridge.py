@@ -11,7 +11,7 @@ from pathlib import Path
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
 from nostalgia.ui.skin_frame_cache import SkinFrameCache
-from nostalgia.ui.skin_sprite import ensure_skin_preview, prune_skin_previews
+from nostalgia.ui.skin_sprite import SkinPreview, ensure_skin_preview, prune_skin_previews
 from nostalgia.ui.worker import WorkerBridge
 
 logger = logging.getLogger(__name__)
@@ -23,10 +23,20 @@ class SkinRequest:
     slim: bool
     revision: str
     animated: bool
+    cape_source: str = ""
+    preview_frame: int = 5
 
     @property
     def key(self) -> str:
-        return self.source + ("|1|" if self.slim else "|0|") + self.revision
+        return (
+            self.source
+            + ("|1|" if self.slim else "|0|")
+            + self.revision
+            + "|cape|"
+            + self.cape_source
+            + "|view|"
+            + str(self.preview_frame)
+        )
 
 
 class SkinPreviewBridge(WorkerBridge):
@@ -54,8 +64,18 @@ class SkinPreviewBridge(WorkerBridge):
             return dict(self._atlases)
 
     @Slot(str, bool, str, bool)
-    def ensurePreview(self, source: str, slim: bool, revision: str, animated: bool) -> None:
-        request = SkinRequest(source, slim, revision, animated)
+    @Slot(str, bool, str, bool, str)
+    @Slot(str, bool, str, bool, str, int)
+    def ensurePreview(
+        self,
+        source: str,
+        slim: bool,
+        revision: str,
+        animated: bool,
+        cape_source: str = "",
+        preview_frame: int = 5,
+    ) -> None:
+        request = SkinRequest(source, slim, revision, animated, cape_source, preview_frame)
         with self._queue_lock:
             if request.key in self._previews and (not animated or request.key in self._atlases):
                 return
@@ -85,30 +105,43 @@ class SkinPreviewBridge(WorkerBridge):
                     request.source,
                     request.slim,
                     request.revision,
-                    request.animated,
+                    False,
+                    request.cape_source,
+                    request.preview_frame,
                 )
-                with self._queue_lock:
-                    self._previews[request.key] = QUrl.fromLocalFile(
-                        str(preview.thumbnail)
-                    ).toString()
-                    self._previews.move_to_end(request.key)
-                    if preview.atlas:
-                        self._atlases[request.key] = QUrl.fromLocalFile(
-                            str(preview.atlas)
-                        ).toString()
-                        self._atlases.move_to_end(request.key)
-                    if len(self._previews) > 48:
-                        self._previews.popitem(last=False)
-                    if len(self._atlases) > 8:
-                        self._atlases.popitem(last=False)
-                    protected = frozenset(
-                        Path(QUrl(url).toLocalFile())
-                        for url in (*self._previews.values(), *self._atlases.values())
+                self._publish(request, preview)
+                if request.animated:
+                    preview = ensure_skin_preview(
+                        self._cache_dir,
+                        self._renderer,
+                        request.source,
+                        request.slim,
+                        request.revision,
+                        True,
+                        request.cape_source,
+                        request.preview_frame,
                     )
-                self.previewsChanged.emit()
-                prune_skin_previews(self._cache_dir, protected)
+                    self._publish(request, preview)
             except OSError:
                 logger.warning("không ghi được cache skin 3D", exc_info=True)
             finally:
                 with self._queue_lock:
                     self._queued.discard(request)
+
+    def _publish(self, request: SkinRequest, preview: SkinPreview) -> None:
+        with self._queue_lock:
+            self._previews[request.key] = QUrl.fromLocalFile(str(preview.thumbnail)).toString()
+            self._previews.move_to_end(request.key)
+            if preview.atlas:
+                self._atlases[request.key] = QUrl.fromLocalFile(str(preview.atlas)).toString()
+                self._atlases.move_to_end(request.key)
+            if len(self._previews) > 48:
+                self._previews.popitem(last=False)
+            if len(self._atlases) > 8:
+                self._atlases.popitem(last=False)
+            protected = frozenset(
+                Path(QUrl(url).toLocalFile())
+                for url in (*self._previews.values(), *self._atlases.values())
+            )
+        self.previewsChanged.emit()
+        prune_skin_previews(self._cache_dir, protected)

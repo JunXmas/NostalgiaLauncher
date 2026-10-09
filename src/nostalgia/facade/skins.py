@@ -12,6 +12,7 @@ from nostalgia.errors import AccountError, SkinError
 from nostalgia.facade.accounts import AccountOperations
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.skin.capes import OwnedCape, list_owned_capes, set_active_cape
+from nostalgia.skin.ely_skin_model import set_ely_skin_model
 from nostalgia.skin.ely_web_upload import upload_skin_to_ely, wear_ely_skin
 from nostalgia.skin.library import (
     SkinEntry,
@@ -111,6 +112,7 @@ class SkinOperations(AccountOperations):
         skin_path: Path,
         *,
         cancel_token: CancelToken | None = None,
+        slim: bool | None = None,
     ) -> PlayerSkin:
         """Đổi skin THẬT trên ely.by: upload vào kho skin của tài khoản rồi mặc nó. CHẠM MẠNG.
 
@@ -135,6 +137,10 @@ class SkinOperations(AccountOperations):
             skin_id = upload_skin_to_ely(
                 http_client, web_session, skin_bytes, skin_path.name, cancel_token=cancel_token
             )
+            if slim is not None:
+                set_ely_skin_model(
+                    http_client, web_session, skin_id, slim, cancel_token=cancel_token
+                )
             wear_ely_skin(http_client, web_session, skin_id, cancel_token=cancel_token)
             # Server đã đổi: tải lại từ skinsystem để cache launcher khớp game.
             skin = refresh_ely_skin(
@@ -170,7 +176,7 @@ class SkinOperations(AccountOperations):
         """
         if account.account_kind != MICROSOFT:
             raise AccountError("chỉ tài khoản Microsoft mới upload được skin lên Mojang")
-        account = self._require_account(account.player_name, client_id, cancel_token)
+        account = self._require_account(account.account_id, client_id, cancel_token)
         with self.make_http_client() as http_client:
             upload_skin_to_mojang(
                 http_client, account.access_token, skin_path, slim=slim, endpoints=self.endpoints
@@ -193,7 +199,7 @@ class SkinOperations(AccountOperations):
         """CHẠM MẠNG. Cape người chơi SỞ HỮU (đa số là rỗng — Mojang phát theo sự kiện)."""
         if account.account_kind != MICROSOFT:
             return ()
-        account = self._require_account(account.player_name, client_id, cancel_token)
+        account = self._require_account(account.account_id, client_id, cancel_token)
         with self.make_http_client() as http_client:
             return list_owned_capes(
                 http_client,
@@ -213,7 +219,7 @@ class SkinOperations(AccountOperations):
         """CHẠM MẠNG. Mặc cape theo id (rỗng = gỡ), rồi tải lại texture để cache khớp game."""
         if account.account_kind != MICROSOFT:
             raise AccountError("chỉ tài khoản Microsoft mới đổi được cape qua Mojang")
-        account = self._require_account(account.player_name, client_id, cancel_token)
+        account = self._require_account(account.account_id, client_id, cancel_token)
         with self.make_http_client() as http_client:
             set_active_cape(
                 http_client,

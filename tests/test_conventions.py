@@ -29,6 +29,8 @@ NAMES_REQUIRED_BY_STDLIB = frozenset(
         "do_GET",  # http.server.BaseHTTPRequestHandler định tuyến theo đúng tên này
         "do_POST",  # cùng lý do: tên phương thức chính là tên HTTP method
         "handle_error",  # socketserver.BaseServer gọi đúng tên này khi xử lý request lỗi
+        "handle_starttag",  # HTMLParser gọi đúng tên callback khi mở thẻ HTML
+        "handle_endtag",  # HTMLParser gọi đúng tên callback khi đóng thẻ HTML
     }
 )
 

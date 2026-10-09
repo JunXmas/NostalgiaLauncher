@@ -6,6 +6,8 @@ import QtQuick.Window
 Item {
     id: root
     property string source: ""
+    property string capeSource: ""
+    property int previewFrame: 5
     property bool slim: false
     property string revision: ""
     property int facing: 0
@@ -17,18 +19,20 @@ Item {
     readonly property int frame: ((Math.round(yaw / 5) % 72) + 72) % 72
     readonly property bool renderActive: renderEnabled && visible && source !== "" &&
         Window.window && Window.window.visible && Window.window.visibility !== Window.Minimized
-    readonly property string previewKey: source + (slim ? "|1|" : "|0|") + revision
+    readonly property string previewKey: source + (slim ? "|1|" : "|0|") + revision + "|cape|" + capeSource + "|view|" + previewFrame
     readonly property string thumbnail: skinPreviews ? (skinPreviews.previews[previewKey] || "") : ""
     readonly property string atlas: skinPreviews ? (skinPreviews.atlases[previewKey] || "") : ""
     readonly property bool atlasReady: atlasImage.status === Image.Ready
     readonly property bool ready: skinImage.status === Image.Ready || atlasReady
     function requestPreview() {
-        if (componentReady && renderActive && skinPreviews) skinPreviews.ensurePreview(source, slim, revision, interactive);
+        if (componentReady && renderActive && skinPreviews) skinPreviews.ensurePreview(source, slim, revision, interactive, capeSource, previewFrame);
     }
     function schedulePreview() { if (componentReady) Qt.callLater(root.requestPreview); }
     Component.onCompleted: { componentReady = true; schedulePreview(); }
     onRenderActiveChanged: schedulePreview()
     onSourceChanged: schedulePreview()
+    onCapeSourceChanged: schedulePreview()
+    onPreviewFrameChanged: schedulePreview()
     onSlimChanged: schedulePreview()
     onRevisionChanged: schedulePreview()
     onInteractiveChanged: schedulePreview()

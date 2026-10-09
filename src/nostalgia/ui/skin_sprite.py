@@ -15,7 +15,7 @@ from nostalgia.ui.skin_renderer import FRAME_COUNT, FRAME_HEIGHT, FRAME_WIDTH
 
 ATLAS_COLUMNS = 12
 MAX_DISK_BYTES = 64 * 1024 * 1024
-RENDER_REVISION = 1
+RENDER_REVISION = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,19 +43,25 @@ def ensure_skin_preview(
     slim: bool,
     revision: str,
     animated: bool,
+    cape_source: str = "",
+    preview_frame: int = 5,
 ) -> SkinPreview:
     cache_dir.mkdir(parents=True, exist_ok=True)
     try:
         stamp = Path(QUrl(source).toLocalFile()).stat().st_mtime_ns
     except OSError:
         stamp = 0
+    try:
+        cape_stamp = Path(QUrl(cape_source).toLocalFile()).stat().st_mtime_ns if cape_source else 0
+    except OSError:
+        cape_stamp = 0
     digest = hashlib.sha256(
-        f"{RENDER_REVISION}|{source}|{slim}|{revision}|{stamp}".encode()
+        f"{RENDER_REVISION}|{source}|{slim}|{revision}|{stamp}|{cape_source}|{cape_stamp}|{preview_frame}".encode()
     ).hexdigest()
     thumbnail = cache_dir / f"{digest}-thumb.png"
     atlas = cache_dir / f"{digest}-atlas.png" if animated else None
     if not thumbnail.is_file():
-        save_image(renderer.render(source, slim, 5), thumbnail)
+        save_image(renderer.render(source, slim, preview_frame, cape_source), thumbnail)
     if atlas is not None and not atlas.is_file():
         image = QImage(
             FRAME_WIDTH * ATLAS_COLUMNS,
@@ -68,7 +74,7 @@ def ensure_skin_preview(
             painter.drawImage(
                 (frame_index % ATLAS_COLUMNS) * FRAME_WIDTH,
                 (frame_index // ATLAS_COLUMNS) * FRAME_HEIGHT,
-                renderer.render(source, slim, frame_index),
+                renderer.render(source, slim, frame_index, cape_source),
             )
         painter.end()
         save_image(image, atlas)

@@ -266,6 +266,7 @@ def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:
         "skinFile": _file_url(skin.skin_path),
         "skinDigest": launcher.skin_digest(skin),
         "capeFile": _file_url(skin.cape_path),
+        "capeDigest": launcher.cape_digest(skin),
         "slim": skin.slim,
         "isDefaultSkin": skin.is_default,
     }

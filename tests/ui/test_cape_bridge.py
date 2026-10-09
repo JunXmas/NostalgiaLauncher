@@ -78,7 +78,13 @@ def test_load_capes_fills_the_list_for_a_microsoft_account(
     wait_until(lambda: bridge.loadedFor == account_id and not bridge.busy)
 
     assert bridge.capes == [
-        {"capeId": "cape-1", "alias": "Migrator", "textureUrl": "http://t/x", "active": True}
+        {
+            "capeId": "cape-1",
+            "alias": "Migrator",
+            "textureUrl": "http://t/x",
+            "active": True,
+            "textureFile": "",
+        }
     ]
 
 

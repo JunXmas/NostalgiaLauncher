@@ -1,17 +1,14 @@
 import QtQuick
 import QtQuick.Dialogs
+import "preview" as Preview
 
 /*
-  Thư viện skin: mọi skin launcher từng thấy (tải về cho tài khoản, đã upload, tự nhập) xếp
-  thành lưới thẻ; thẻ đang dùng cho tài khoản được chọn có viền xanh và nhãn "Đang dùng".
-  "Thêm skin" là nút duy nhất để đưa file PNG vào: Microsoft thì upload lên Mojang (và vào kho),
-  tài khoản khác thì vào kho rồi dùng ngay; "Dùng" trên thẻ cũng theo đúng luật đó.
+  Nhập/chọn skin chỉ thay bản xem trước. Nút Lưu trong SkinPanel mới áp dụng tài khoản.
 */
 Item {
     id: library
     property var shown: ({})
     property bool hasShown: false
-    property bool slimImport: false
     property var viewport: null
     readonly property var entries: accountBridge.skinLibrary
     readonly property string shownDigest: hasShown && shown.skinDigest !== undefined ? shown.skinDigest : ""
@@ -25,8 +22,7 @@ Item {
         id: header
         width: parent.width; spacing: 12
         Text { height: 36 * Theme.textScale; verticalAlignment: Text.AlignVCenter; text: Tr.phrase("Thư viện skin") + " · " + library.entries.length; color: Theme.text; font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody; font.bold: true }
-        CheckRow { height: 36 * Theme.textScale; label: "Slim"; checked: library.slimImport; onToggled: library.slimImport = !library.slimImport }
-        ActionButton { objectName: "importSkinButton"; label: Tr.phrase("Thêm skin  +"); onClicked: importDialog.open() }
+        Preview.Button { objectName: "importSkinButton"; label: Tr.phrase("Thêm skin  +"); clickable: !skinEditor.busy; onClicked: importDialog.open() }
     }
 
     Flow {
@@ -39,6 +35,7 @@ Item {
             Rectangle {
                 id: card
                 readonly property bool inUse: library.shownDigest !== "" && modelData.entryId === library.shownDigest
+                readonly property bool inPreview: modelData.entryId === skinEditor.details.entryId
                 readonly property bool inViewport: {
                     if (typeof library === "undefined" || !library) return false;
                     if (!library.viewport) return true;
@@ -47,14 +44,15 @@ Item {
                 }
                 width: 148 * (Theme.modern ? Theme.textScale : 1); height: 224 * (Theme.modern ? Theme.textScale : 1); radius: Theme.radiusSmall
                 color: inUse ? Theme.accentSoft : (cardHover.hovered ? Theme.surfaceHigh : Theme.surface)
-                border.color: inUse ? Theme.accent : Theme.border
+                border.color: inPreview ? Theme.accent : Theme.border
+                Behavior on border.color { ColorAnimation { duration: Theme.quick } }
                 Column {
                     anchors { top: parent.top; topMargin: 12; horizontalCenter: parent.horizontalCenter }
                     spacing: 6
                     SkinFigure {
                         objectName: "skinLibraryFigure"
                         pixel: 3; width: 64 * (Theme.modern ? Theme.textScale : 1); height: width * 2
-                        source: modelData.skinFile; slim: modelData.slim
+                        source: modelData.skinFile; slim: card.inPreview ? skinEditor.details.slim : modelData.slim
                         anchors.horizontalCenter: parent.horizontalCenter
                         interactive: false
                         renderEnabled: card.inViewport
@@ -65,27 +63,28 @@ Item {
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: card.inUse ? Tr.phrase("Đang dùng") : modelData.sourceLabel + (modelData.slim ? " · slim" : "")
-                        color: card.inUse ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
+                        text: card.inPreview && skinEditor.details.skinDirty ? "Đang xem trước" : card.inUse ? Tr.phrase("Đang dùng") : modelData.sourceLabel + (modelData.slim ? " · slim" : "")
+                        color: card.inPreview ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
                     }
                 }
                 Rectangle {
                     anchors { top: parent.top; right: parent.right; margins: 6 }
                     width: 8; height: 8; radius: 4; color: Theme.accent; visible: card.inUse
                 }
-                // Hai nút chỉ hiện khi trỏ vào: Dùng (khi chưa dùng) và ✕ gỡ khỏi kho.
+                // Chọn để xem trước hoặc gỡ khỏi kho; không upload từ thẻ.
                 Row {
                     anchors { bottom: parent.bottom; bottomMargin: 6; horizontalCenter: parent.horizontalCenter }
                     spacing: 8
                     opacity: Theme.modern || cardHover.hovered ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
-                    ActionButton {
-                        visible: !card.inUse && library.hasShown
-                        height: 30 * (Theme.modern ? Theme.textScale : 1); fontSize: Theme.fontLabel; label: Tr.phrase("Dùng")
-                        onClicked: accountBridge.applyLibrarySkin(library.shown.accountId, modelData.entryId)
+                    Preview.Button {
+                        objectName: "previewSkin-" + modelData.entryId
+                        visible: library.hasShown
+                        height: 30 * Theme.textScale; label: "Xem trước"; clickable: !skinEditor.busy
+                        onClicked: skinEditor.selectSkin(modelData.entryId)
                     }
-                    ActionButton {
-                        primary: false; height: 30 * (Theme.modern ? Theme.textScale : 1); fontSize: Theme.fontLabel; label: "✕"
+                    Preview.Button {
+                        quiet: true; danger: true; width: 28; height: 30 * Theme.textScale; label: "×"; clickable: !skinEditor.busy
                         onClicked: accountBridge.removeLibrarySkin(modelData.entryId)
                     }
                 }
@@ -106,6 +105,6 @@ Item {
         id: importDialog
         title: Tr.phrase("Chọn file skin PNG")
         nameFilters: ["Ảnh PNG (*.png)"]
-        onAccepted: accountBridge.addSkin(library.hasShown ? library.shown.accountId : "", selectedFile, library.slimImport)
+        onAccepted: skinEditor.importSkin("" + selectedFile)
     }
 }

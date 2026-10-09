@@ -20,8 +20,8 @@ Item {
     property var shown: ({})
     readonly property bool hasShown: shown && shown.playerName !== undefined
     // Cache các field dùng nhiều lần trong right column — tránh đọc shown.xxx 7+ chỗ.
-    readonly property string shownSkinFile: hasShown ? shown.skinFile : ""
-    readonly property bool shownSlim: hasShown ? shown.slim : false
+    readonly property string shownSkinFile: hasShown ? skinEditor.details.source || shown.skinFile : ""
+    readonly property bool shownSlim: hasShown && skinEditor.details.slim === true
 
     function _refreshShown() { page.shown = accountBridge.accountWithId(page.shownId); }
     Component.onCompleted: _refreshShown()
@@ -190,7 +190,8 @@ Item {
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 110 }
             pixel: 8
             source: page.shownSkinFile
-            revision: page.hasShown ? (page.shown.skinDigest || "") : ""
+            capeSource: skinEditor.details.capeSource || ""
+            revision: (skinEditor.details.entryId || "") + "|" + (page.shown.capeDigest || "")
             slim: page.shownSlim
             facing: page.facing
             visible: page.hasShown

@@ -9,6 +9,7 @@ from pathlib import Path
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QImage, QImageReader
 
+from nostalgia.ui.cape_mesh import cape_surfaces
 from nostalgia.ui.skin_mesh import SkinSurface, normalize_skin, skin_surfaces
 from nostalgia.ui.skin_renderer import FRAME_COUNT, render_skin
 
@@ -21,14 +22,12 @@ class SkinFrameCache:
     """Chỉ đọc PNG cục bộ có kích thước hữu hạn; không mạng, không thread riêng mỗi skin."""
 
     def __init__(self) -> None:
-        self._frames: OrderedDict[tuple[str, int, int, bool, int], QImage] = OrderedDict()
-        self._meshes: OrderedDict[tuple[str, int, int, bool], tuple[SkinSurface, ...]] = (
-            OrderedDict()
-        )
+        self._frames: OrderedDict[tuple[object, ...], QImage] = OrderedDict()
+        self._meshes: OrderedDict[tuple[object, ...], tuple[SkinSurface, ...]] = OrderedDict()
         self._lock = threading.Lock()
         self._fallback: QImage | None = None
 
-    def render(self, source: str, slim: bool, frame_index: int) -> QImage:
+    def render(self, source: str, slim: bool, frame_index: int, cape_source: str = "") -> QImage:
         """Gọi ở worker; texture cục bộ và hình học đã cache không nạp lại theo từng góc."""
         try:
             source_url = QUrl(source)
@@ -39,7 +38,21 @@ class SkinFrameCache:
             if stamp.st_size > MAX_TEXTURE_BYTES:
                 raise ValueError("skin texture exceeds preview limit")
             frame_index %= FRAME_COUNT
-            signature = (str(path), stamp.st_mtime_ns, stamp.st_size, slim)
+            cape_path = (
+                Path(QUrl(cape_source).toLocalFile()) if QUrl(cape_source).isLocalFile() else None
+            )
+            try:
+                cape_stamp = cape_path.stat() if cape_path else None
+            except OSError:
+                cape_stamp = None
+            signature = (
+                str(path),
+                stamp.st_mtime_ns,
+                stamp.st_size,
+                slim,
+                cape_source,
+                cape_stamp.st_mtime_ns if cape_stamp else 0,
+            )
             key = (*signature, frame_index)
             with self._lock:
                 if key in self._frames:
@@ -59,6 +72,16 @@ class SkinFrameCache:
                     if image.isNull():
                         raise ValueError("cannot decode skin texture")
                     self._meshes[signature] = skin_surfaces(normalize_skin(image), slim)
+                    if cape_path and cape_stamp and cape_stamp.st_size <= MAX_TEXTURE_BYTES:
+                        reader = QImageReader(str(cape_path), b"png")
+                        dimensions = reader.size()
+                        if (
+                            64 <= dimensions.width() <= 1024
+                            and dimensions.width() == dimensions.height() * 2
+                        ):
+                            cape = reader.read()
+                            if not cape.isNull():
+                                self._meshes[signature] += cape_surfaces(cape)
                     if len(self._meshes) > MAX_MESH_CACHE:
                         self._meshes.popitem(last=False)
                 self._meshes.move_to_end(signature)

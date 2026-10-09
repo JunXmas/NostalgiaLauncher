@@ -5,6 +5,7 @@ Item {
     property string shownId: bridge.activeAccountId
     property var shown: ({})
     readonly property bool hasShown: !!shown && !!shown.playerName
+    readonly property var draft: skinEditor.details
     function refreshShown() { page.shown = accountBridge.accountWithId(page.shownId); }
     Component.onCompleted: refreshShown()
     onShownIdChanged: refreshShown()
@@ -36,13 +37,22 @@ Item {
             Grid {
                 width: parent.width; columns: width > 860 * GlassTheme.scale ? 2 : 1; columnSpacing: 20; rowSpacing: 20
                 Glass {
-                    width: parent.columns === 2 ? 300 * GlassTheme.scale : parent.width; height: 430 * GlassTheme.scale; padding: 24
+                    width: parent.columns === 2 ? 300 * GlassTheme.scale : parent.width; height: 560 * GlassTheme.scale; padding: 24
                     PaymentText { width: parent.width; text: page.hasShown ? page.shown.playerName : "Nhân vật của bạn"; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle }
-                    Legacy.SkinFigure { objectName: "accountSkinFigure"; anchors.centerIn: parent; width: 150 * GlassTheme.scale; height: width * 2; source: page.hasShown ? page.shown.skinFile || "" : ""; slim: page.hasShown && page.shown.slim === true; revision: page.hasShown ? page.shown.skinDigest || "" : ""; visible: page.hasShown }
+                    PaymentText { anchors.top: parent.top; anchors.topMargin: 34; width: parent.width; text: page.draft.dirty ? "XEM TRƯỚC · CHƯA LƯU" : "ĐANG SỬ DỤNG"; color: page.draft.dirty ? GlassTheme.accent : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                    Legacy.SkinFigure {
+                        id: figure; objectName: "accountSkinFigure"
+                        anchors.centerIn: parent; width: 170 * GlassTheme.scale; height: width * 2
+                        source: page.hasShown ? page.draft.source || page.shown.skinFile || "" : ""
+                        slim: page.draft.slim || false; capeSource: page.draft.capeSource || ""
+                        revision: (page.draft.entryId || "") + "|" + (page.shown.capeDigest || "")
+                        visible: page.hasShown
+                        onCapeSourceChanged: if (capeSource !== "" && skinPanel.tab === "cape") yaw = 205
+                    }
                     PaymentText { anchors.bottom: parent.bottom; width: parent.width; text: page.hasShown ? "Kéo để xoay · ← →
-" + (page.shown.slim ? "Alex · Slim" : "Steve · Wide") : "Thêm tài khoản để xem nhân vật và sử dụng skin."; color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
+" + (page.draft.slim ? "Alex · Slim" : "Steve · Classic") : "Thêm tài khoản để xem nhân vật và sử dụng skin."; color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
                 }
-                Legacy.SkinPanel { objectName: "skinPanel"; width: parent.columns === 2 ? parent.width - 300 * GlassTheme.scale - 20 : parent.width; height: 520 * GlassTheme.scale; shown: page.shown; hasShown: page.hasShown }
+                Legacy.SkinPanel { id: skinPanel; objectName: "skinPanel"; width: parent.columns === 2 ? parent.width - 300 * GlassTheme.scale - 20 : parent.width; height: 560 * GlassTheme.scale; shown: page.shown; hasShown: page.hasShown; onTabChanged: figure.yaw = tab === "cape" ? 205 : 25 }
             }
         }
     }

@@ -29,6 +29,7 @@ from nostalgia.auth.qr import QrCode
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.donate.vietqr import BankAccount
+from nostalgia.facade.appearance import AppearanceOperations
 from nostalgia.facade.backups import BackupOperations
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
@@ -43,7 +44,6 @@ from nostalgia.facade.presets import PresetOperations
 from nostalgia.facade.room_sharing import RoomSharingOperations
 from nostalgia.facade.room_sync import RoomSyncOperations
 from nostalgia.facade.servers import ServerOperations
-from nostalgia.facade.skins import SkinOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
@@ -116,7 +116,7 @@ class Launcher(
     UpdateOperations,
     MultiplayerOperations,
     RoomSyncOperations,
-    SkinOperations,
+    AppearanceOperations,
     PresetOperations,
     NosClientOperations,
     ImportOperations,

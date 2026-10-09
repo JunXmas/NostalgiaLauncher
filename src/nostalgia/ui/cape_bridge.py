@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 
 from nostalgia.account.model import MICROSOFT, Account
 from nostalgia.api import Launcher
@@ -25,6 +25,7 @@ class CapeBridge(WorkerBridge):
     capesChanged = Signal()
     capeApplied = Signal(str)
     capeFailed = Signal(str)
+    _loaded = Signal(int, str, object)
 
     def __init__(
         self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
@@ -34,6 +35,7 @@ class CapeBridge(WorkerBridge):
         self._main_bridge = main_bridge
         self._capes: list[dict[str, Any]] = []
         self._loaded_for = ""  # account_id của lần tải gần nhất — đổi tài khoản thì tải lại
+        self._loaded.connect(self._finish_load)
 
     @Property(list, notify=capesChanged)
     def capes(self) -> list[dict[str, Any]]:
@@ -47,6 +49,7 @@ class CapeBridge(WorkerBridge):
     def loadCapes(self, account_id: str) -> None:
         """Tải danh sách cape của một tài khoản. Gọi khi mở tab Cape — không tải trước."""
         account = self._find_account(account_id)
+        generation = self.next_generation()
         if account is None or account.account_kind != MICROSOFT:
             self._capes = []
             self._loaded_for = account_id
@@ -60,19 +63,38 @@ class CapeBridge(WorkerBridge):
                 logger.warning("không đọc được cape cho %s: %s", account_id, exc)
                 self.capeFailed.emit(str(exc))
                 return
-            self._capes = [
-                {
-                    "capeId": cape.cape_id,
-                    "alias": cape.alias or "Cape",
-                    "textureUrl": cape.texture_url,
-                    "active": cape.active,
-                }
-                for cape in owned
-            ]
-            self._loaded_for = account_id
-            self.capesChanged.emit()
+            rows = []
+            for cape in owned:
+                texture_file = ""
+                try:
+                    path = self._launcher.cache_cape_texture(cape)
+                    if path:
+                        texture_file = QUrl.fromLocalFile(str(path)).toString()
+                except (NostalgiaError, OSError):
+                    pass
+                rows.append(
+                    {
+                        "capeId": cape.cape_id,
+                        "alias": cape.alias or "Cape",
+                        "textureUrl": cape.texture_url,
+                        "active": cape.active,
+                        "textureFile": texture_file,
+                    }
+                )
+            self._loaded.emit(generation, account_id, rows)
 
         self.run_in_background(work, "Đọc cape")
+
+    def _finish_load(self, generation: int, account_id: str, rows: list[dict[str, Any]]) -> None:
+        if self.is_current(generation):
+            self._capes, self._loaded_for = rows, account_id
+            self.capesChanged.emit()
+
+    def rememberApplied(self, account_id: str, cape_id: str) -> None:
+        """API vừa xác nhận lưu: cập nhật cờ tại chỗ, không gọi lại danh sách có thể còn cũ."""
+        if self._loaded_for == account_id:
+            self._capes = [{**cape, "active": cape["capeId"] == cape_id} for cape in self._capes]
+            self.capesChanged.emit()
 
     @Slot(str, str)
     def applyCape(self, account_id: str, cape_id: str) -> None:

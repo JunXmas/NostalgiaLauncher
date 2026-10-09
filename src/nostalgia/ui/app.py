@@ -30,6 +30,7 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.presence_bridge import PresenceBridge
 from nostalgia.ui.settings_bridge import SettingsBridge
+from nostalgia.ui.skin_edit_bridge import SkinEditBridge
 from nostalgia.ui.skin_preview_bridge import SkinPreviewBridge
 from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.storage_bridge import StorageBridge
@@ -116,8 +117,14 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     context.setContextProperty("bridge", bridge)
     context.setContextProperty("storageBridge", StorageBridge(launcher, bridge, parent=view))
     context.setContextProperty("contentBridge", ContentBridge(launcher, bridge, parent=view))
-    context.setContextProperty("accountBridge", AccountBridge(launcher, bridge, parent=view))
-    context.setContextProperty("capeBridge", CapeBridge(launcher, bridge, parent=view))
+    accounts = AccountBridge(launcher, bridge, parent=view)
+    capes = CapeBridge(launcher, bridge, parent=view)
+    editor = SkinEditBridge(launcher, bridge, accounts, capes)
+    editor.skinSaved.connect(accounts._skinsRefreshed)
+    editor.capeSaved.connect(accounts._skinsRefreshed)
+    context.setContextProperty("accountBridge", accounts)
+    context.setContextProperty("capeBridge", capes)
+    context.setContextProperty("skinEditor", editor)
     context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
     context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
     context.setContextProperty("skinPreviews", SkinPreviewBridge(launcher.paths.data_dir, view))
