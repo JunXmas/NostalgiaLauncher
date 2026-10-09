@@ -59,11 +59,18 @@ def test_library_preview_and_equip_preserve_latest_profile(
     assert not cosmetics.property("details")["loaded"]
 
 
+@pytest.mark.parametrize("ui_scale", [100, 150])
 def test_own_avatar_opens_profile_and_logout_confirms_without_removing_minecraft(
     social_preview: tuple[Any, ...],
+    ui_scale: int,
 ) -> None:
     launcher, _gateway, view, root_item, social, *_ = social_preview
     login_preview(social_preview)
+    view.resize(1024, 600)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        ui_scale, False, False, True, "vi"
+    )
+    QTest.qWait(200)
     accounts_before = launcher.list_accounts()
     avatar = find_control(root_item, "ownProfileAvatar")
     QTest.mouseClick(
@@ -71,10 +78,34 @@ def test_own_avatar_opens_profile_and_logout_confirms_without_removing_minecraft
     )
     modal = find_control(root_item, "socialProfileDialog")
     profiles = view.rootContext().contextProperty("profileBridge")
-    wait_until(lambda: modal.property("opened") and profiles.property("details").get("mine"))
+    wait_until(
+        lambda: (
+            modal.property("opened")
+            and profiles.property("details").get("mine")
+            and not profiles.busy
+            and not social.busy
+        )
+    )
+    assert find_control(root_item, "profileGoogleLogout").property("visible")
+    close_caption = find_control(find_control(root_item, "closeSocialProfile"), "buttonCaption")
+    assert close_caption.width() >= close_caption.implicitWidth() > 0
+    press(view, find_control(root_item, "profileGoogleLogout"))
+    confirm = find_control(root_item, "confirmationModal")
+    wait_until(lambda: confirm.property("opened"))
+    assert social.signedIn
+    press(view, find_control(root_item, "confirmCancel"))
+    assert social.signedIn
     modal.close()
     QTest.qWait(150)
-    press(view, find_control(root_item, "socialAccountToggle"))
+    toggle = find_control(root_item, "socialAccountToggle")
+    caption = find_control(toggle, "buttonCaption")
+    assert caption.width() >= caption.implicitWidth() > 0
+    QTest.mouseClick(
+        view,
+        Qt.MouseButton.LeftButton,
+        pos=toggle.mapToScene(QPointF(toggle.width() / 2, toggle.height() / 2)).toPoint(),
+    )
+    wait_until(lambda: find_control(root_item, "accountMenu").property("opened"))
     press(view, find_control(root_item, "socialLogout"))
     confirm = find_control(root_item, "confirmationModal")
     wait_until(lambda: confirm.property("opened"))

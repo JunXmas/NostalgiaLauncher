@@ -12,6 +12,7 @@ Item {
     property bool emphasized: false
     property bool clickable: true
     readonly property bool hovered: hover.hovered
+    readonly property real captionPadding: !root.provider && root.width <= 48 ? 4 : 16
     signal clicked
     implicitWidth: caption.implicitWidth + (root.provider ? providerLogo.width + labelRow.spacing : 0) + 32
     implicitHeight: 42
@@ -52,8 +53,9 @@ Item {
             ProviderLogo { id: providerLogo; visible: !!root.provider; provider: root.provider; anchors.verticalCenter: parent.verticalCenter }
             Text {
                 id: caption
+                objectName: "buttonCaption"
                 text: (root.icon ? root.icon + "  " : "") + root.label
-                width: Math.max(0, Math.min(implicitWidth, root.width - 32 - (root.provider ? providerLogo.width + labelRow.spacing : 0)))
+                width: Math.max(0, Math.min(implicitWidth, root.width - root.captionPadding * 2 - (root.provider ? providerLogo.width + labelRow.spacing : 0)))
                 elide: Text.ElideRight
                 color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
                 font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold

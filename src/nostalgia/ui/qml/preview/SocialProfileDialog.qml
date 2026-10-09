@@ -46,6 +46,7 @@ Controls.Popup {
         }
         Flow { id: actions; anchors.bottom: parent.bottom; width: parent.width; spacing: 10
             Button { objectName: "editSocialProfile"; visible: root.mine && !root.editing; label: "Chỉnh sửa hồ sơ"; primary: true; clickable: !profileBridge.busy; onClicked: { editor.populate(); root.editing = true; } }
+            Button { objectName: "profileGoogleLogout"; visible: root.mine && !root.editing && socialBridge.signedIn; label: "Đăng xuất Google"; quiet: true; danger: true; clickable: !socialBridge.busy && !profileBridge.busy; onClicked: { root.close(); confirmDialog.ask("Đăng xuất Google khỏi Nostalgia?", "Phòng chơi chung sẽ đóng. Tài khoản Minecraft, bản chơi và thế giới trên máy vẫn được giữ lại.", function() { socialBridge.signOut(); }); } }
             Button { objectName: "saveSocialProfile"; visible: root.editing; label: "Lưu hồ sơ"; primary: true; clickable: !profileBridge.busy; onClicked: editor.save() }
             Button { objectName: "cancelSocialProfileEdit"; visible: root.editing; label: "Huỷ"; quiet: true; clickable: !profileBridge.busy; onClicked: root.editing = false }
             Button { visible: !root.mine && !!root.profile.account_id; label: "Nhắn tin"; primary: true; onClicked: { socialBridge.selectFriend(root.profile.account_id); root.close(); } }

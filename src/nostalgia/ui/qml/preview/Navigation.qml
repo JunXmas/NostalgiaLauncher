@@ -260,11 +260,11 @@ Glass {
             }
         }
         SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
-        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 30; height: 34; label: "⌃"; quiet: true; Accessible.name: "Menu tài khoản"; onClicked: accountMenu.open() }
+        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; label: "⌃"; Accessible.name: "Menu tài khoản Google và Minecraft"; onClicked: accountMenu.open() }
         Column {
             x: 55
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 97
+            width: parent.width - 105
             spacing: 4
             Text {
                 width: parent.width
@@ -276,14 +276,16 @@ Glass {
                 elide: Text.ElideRight
             }
             Text {
+                width: parent.width
                 text: typeof draftReviewController !== "undefined" && draftReviewController !== null && socialBridge.signedIn ? "Local TEST · " + socialBridge.account.planName : socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + socialBridge.account.planName : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
+                elide: Text.ElideRight
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontNote
             }
         }
         MouseArea {
-            x: 55; width: parent.width - 97; height: parent.height
+            x: 55; width: parent.width - 105; height: parent.height
             cursorShape: Qt.PointingHandCursor
             onClicked: { if (socialBridge.signedIn) socialProfileDialog.showFor(socialBridge.account.accountId); else root.navigate(3); }
         }

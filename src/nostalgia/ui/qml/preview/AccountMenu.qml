@@ -18,13 +18,13 @@ Controls.Popup {
     contentItem: Column {
         id: menu; spacing: 6
         PaymentText { width: parent.width; text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || "Khách"; font.weight: Font.DemiBold }
-        PaymentText { width: parent.width; text: socialBridge.signedIn ? "Nostalgia · " + (socialBridge.account.plus ? socialBridge.account.planName : "Miễn phí") : "Tài khoản Minecraft"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        PaymentText { width: parent.width; text: socialBridge.signedIn ? "Google · " + (socialBridge.account.plus ? socialBridge.account.planName : "Miễn phí") : "Tài khoản Minecraft"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
         Rectangle { width: parent.width; height: 1; color: GlassTheme.stroke }
         Button { objectName: "openMyProfile"; width: parent.width; visible: socialBridge.signedIn; label: "Hồ sơ của tôi"; quiet: true; onClicked: { root.close(); socialProfileDialog.showFor(socialBridge.account.accountId); } }
         Button { objectName: "openCosmeticLibrary"; width: parent.width; label: "Thư viện cosmetic"; quiet: true; onClicked: { root.close(); root.navigate(7); } }
         Button { width: parent.width; label: "Tài khoản Minecraft"; quiet: true; onClicked: { root.close(); root.navigate(3); } }
         Button { objectName: "copyFriendCode"; width: parent.width; visible: socialBridge.signedIn; label: "Chép mã kết bạn"; quiet: true; onClicked: socialBridge.copyFriendCode() }
         Rectangle { width: parent.width; height: 1; visible: socialBridge.signedIn; color: GlassTheme.stroke }
-        Button { objectName: "socialLogout"; width: parent.width; visible: socialBridge.signedIn; label: "Đăng xuất Nostalgia"; quiet: true; danger: true; clickable: !socialBridge.busy; onClicked: { root.close(); confirmDialog.ask("Đăng xuất Nostalgia?", "Phòng chơi chung sẽ đóng. Tài khoản Minecraft, bản chơi và thế giới trên máy vẫn được giữ lại.", function() { socialBridge.signOut(); }); } }
+        Button { objectName: "socialLogout"; width: parent.width; visible: socialBridge.signedIn; label: "Đăng xuất Google"; quiet: true; danger: true; clickable: !socialBridge.busy; onClicked: { root.close(); confirmDialog.ask("Đăng xuất Google khỏi Nostalgia?", "Phòng chơi chung sẽ đóng. Tài khoản Minecraft, bản chơi và thế giới trên máy vẫn được giữ lại.", function() { socialBridge.signOut(); }); } }
     }
 }
