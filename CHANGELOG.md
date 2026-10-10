@@ -5,6 +5,8 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+## 1.2.0rc20 — 2026-10-10
+
 - Sửa vệt trắng ở hướng dẫn và ô thư viện khi ảnh chưa tải hoặc blur tắt:
   mask chỉ dùng để cắt hiệu ứng, không xuất hiện trên giao diện.
 - Sửa lưới thư viện, bản chơi và cosmetic xuống dòng sớm, để trống cột;
