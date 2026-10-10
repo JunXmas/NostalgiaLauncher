@@ -53,13 +53,13 @@ Item {
                 spacing: 8
                 PaymentText {
                     width: parent.width
-                    text: "Chọn không gian của bạn."
+                    text: Legacy.Tr.phrase("Chọn không gian của bạn.")
                     font.pixelSize: (root.compact ? 22 : 36) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
                 PaymentText {
                     width: parent.width
-                    text: "Hai diện mạo Nostalgia. Bạn thích cách nào?"
+                    text: Legacy.Tr.phrase("Hai diện mạo Nostalgia. Bạn thích cách nào?")
                     color: GlassTheme.muted
                     font.pixelSize: (root.compact ? 12 : 14) * GlassTheme.scale
                 }
@@ -77,8 +77,8 @@ Item {
                     width: choices.tileWidth
                     height: choices.tileHeight
                     style: "classic"
-                    title: "Giao diện cũ"
-                    description: "Bố cục quen thuộc, nét Minecraft cổ điển."
+                    title: Legacy.Tr.phrase("Giao diện cũ")
+                    description: Legacy.Tr.phrase("Bố cục quen thuộc, nét Minecraft cổ điển.")
                     previewSource: "../assets/interface/classic.png"
                     compact: root.compact
                     selected: root.selectedStyle === style
@@ -92,8 +92,8 @@ Item {
                     width: choices.tileWidth
                     height: choices.tileHeight
                     style: "modern"
-                    title: "Giao diện mới"
-                    description: "Bố cục thoáng, kính mờ nhẹ và màu Nostalgia."
+                    title: Legacy.Tr.phrase("Giao diện mới")
+                    description: Legacy.Tr.phrase("Bố cục thoáng, kính mờ nhẹ và màu Nostalgia.")
                     previewSource: "../assets/interface/modern.png"
                     compact: root.compact
                     selected: root.selectedStyle === style
@@ -123,14 +123,14 @@ Item {
             spacing: 4
             PaymentText {
                 width: parent.width
-                text: settingsBridge.interfaceSelectionError || (root.switchBusy ? "Đợi tác vụ hiện tại hoàn tất để đổi giao diện." : "Có thể đổi trong Cài đặt → Giao diện.")
+                text: settingsBridge.interfaceSelectionError || (root.switchBusy ? Legacy.Tr.phrase("Đợi tác vụ hiện tại hoàn tất để đổi giao diện.") : Legacy.Tr.phrase("Có thể đổi trong Cài đặt → Giao diện."))
                 font.pixelSize: GlassTheme.fontLabel
                 color: settingsBridge.interfaceSelectionError ? GlassTheme.danger : GlassTheme.muted
             }
             Button {
                 objectName: "interfaceChoiceCancel"
                 visible: !!settingsBridge.interfaceStyle
-                label: "← Giữ giao diện hiện tại"
+                label: Legacy.Tr.phrase("← Giữ giao diện hiện tại")
                 quiet: true
                 onClicked: interfaceSetup.cancel()
             }
@@ -140,7 +140,7 @@ Item {
             objectName: "interfaceChoiceContinue"
             anchors.right: parent.right
             y: 20
-            label: "Tiếp tục  →"
+            label: Legacy.Tr.phrase("Tiếp tục  →")
             primary: true
             clickable: !!root.selectedStyle && !root.switchBusy
             onClicked: interfaceSetup.choose(root.selectedStyle)

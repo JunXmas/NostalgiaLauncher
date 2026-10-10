@@ -29,7 +29,7 @@ Item {
        hiểu "loader" là gì. Vanilla vẫn nằm ngay ô đầu lưới — dễ tìm, nhưng không còn là mặc
        định, vì mặc định cũ khiến người mới chơi bản chậm rồi tưởng máy yếu. */
     readonly property var loaderChoices: [
-        { key: "optimized", label: "Optimized", icon: "assets/loaders/optimized.png" },
+        { key: "optimized", label: Tr.phrase("Optimized"), icon: "assets/loaders/optimized.png" },
         { key: "vanilla",  label: "Vanilla",  icon: "assets/loaders/vanilla.png" },
         { key: "fabric",   label: "Fabric",   icon: "assets/loaders/fabric.png" },
         { key: "quilt",    label: "Quilt",    icon: "assets/loaders/quilt.png" },
@@ -375,9 +375,9 @@ Item {
                     Item { width: 1; height: 8 }  // spacer
 
                     Text {
-                        visible: !bridge.busy && dialog.missingStep.length > 0
+                        visible: !bridge.busy && Tr.message(dialog.missingStep).length > 0
                         width: parent.width
-                        text: Tr.phrase("Còn thiếu: ") + dialog.missingStep
+                        text: Tr.phrase("Còn thiếu: ") + Tr.message(dialog.missingStep)
                         color: Theme.accent; font.pixelSize: Theme.fontBody; wrapMode: Text.WordWrap
                     }
                     Text {
@@ -409,7 +409,7 @@ Item {
                     Text {
                         visible: bridge.busy
                         width: parent.width
-                        text: bridge.progressText
+                        text: Tr.message(bridge.progressText)
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
                     }
 

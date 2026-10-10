@@ -71,12 +71,12 @@ Item {
                 }
                 Column {
                     spacing: 6
-                    Text { text: "CỬA SỔ RỘNG"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                    Text { text: Tr.phrase("CỬA SỔ RỘNG"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                     TextField { id: widthField; width: 130; placeholder: Tr.phrase("mặc định") }
                 }
                 Column {
                     spacing: 6
-                    Text { text: "CỬA SỔ CAO"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                    Text { text: Tr.phrase("CỬA SỔ CAO"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                     TextField { id: heightField; width: 130; placeholder: Tr.phrase("mặc định") }
                 }
             }
@@ -96,7 +96,7 @@ Item {
             }
             Flow {
                 width: parent.width; spacing: 8
-                ActionButton { primary: false; label: "Kiểm tra mod"; visible: typeof modRepairBridge !== "undefined"; clickable: !bridge.gameRunning && !bridge.storageBusy; onClicked: dialog.repairRequested(dialog.instance) }
+                ActionButton { primary: false; label: Tr.phrase("Kiểm tra mod"); visible: typeof modRepairBridge !== "undefined"; clickable: !bridge.gameRunning && !bridge.storageBusy; onClicked: dialog.repairRequested(dialog.instance) }
                 ActionButton { primary: false; label: Tr.phrase("Sao lưu"); clickable: !storageBridge.busy && !bridge.gameRunning; onClicked: storageBridge.backup(dialog.instance.instanceId) }
                 ActionButton {
                     primary: false; label: Tr.phrase("Chuyển vào thùng rác"); clickable: !storageBridge.busy && !bridge.gameRunning

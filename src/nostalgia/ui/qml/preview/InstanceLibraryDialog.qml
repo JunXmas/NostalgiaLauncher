@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Controls as Controls
 
 Controls.Popup {
@@ -32,7 +33,7 @@ Controls.Popup {
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick } }
     contentItem: Item {
-        Button { id: back; objectName: "instanceLibraryBack"; width: parent.width; label: "‹  Quay lại quản lý · " + (root.instance.label || "Bản chơi"); quiet: true; clickable: !root.installing; onClicked: root.close() }
+        Button { id: back; objectName: "instanceLibraryBack"; width: parent.width; label: Legacy.Tr.phrase("‹  Quay lại quản lý · ") + (root.instance.label || Legacy.Tr.phrase("Bản chơi")); quiet: true; clickable: !root.installing; onClicked: root.close() }
         Loader {
             anchors.top: back.bottom; anchors.topMargin: 12
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom

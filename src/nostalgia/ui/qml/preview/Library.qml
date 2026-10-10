@@ -26,7 +26,7 @@ Item {
             key: "shader"
         },
         {
-            label: "Gói tài nguyên",
+            label: Legacy.Tr.phrase("Gói tài nguyên"),
             key: "resourcepack"
         }
     ].filter(function(choice) { return !root.instanceScoped || choice.key !== "modpack"; })
@@ -52,7 +52,7 @@ Item {
             spacing: 8
             Text {
                 width: parent.width; wrapMode: Text.WordWrap
-                text: root.instanceScoped ? "Thêm nội dung" : "Khám phá"
+                text: root.instanceScoped ? Legacy.Tr.phrase("Thêm nội dung") : Legacy.Tr.phrase("Khám phá")
                 color: GlassTheme.text
                 font.family: GlassTheme.displayFont
                 font.pixelSize: root.compactScope ? GlassTheme.fontSection : GlassTheme.fontPage
@@ -61,7 +61,7 @@ Item {
             Text {
                 objectName: "libraryTargetNote"
                 width: parent.width; wrapMode: Text.WordWrap
-                text: root.instanceScoped ? root.instanceLabel + " · Minecraft " + contentBridge.gameVersion + " · " + contentBridge.loaderKind + (root.compactScope ? "" : "\nChỉ cài vào bản chơi này; phiên bản tương thích được lọc sẵn.") : "Một thế giới quen thuộc. Những cách chơi mới."
+                text: root.instanceScoped ? root.instanceLabel + " · Minecraft " + contentBridge.gameVersion + " · " + contentBridge.loaderKind + (root.compactScope ? "" : Legacy.Tr.phrase("\nChỉ cài vào bản chơi này; phiên bản tương thích được lọc sẵn.")) : Legacy.Tr.phrase("Một thế giới quen thuộc. Những cách chơi mới.")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: root.compactScope ? GlassTheme.fontNote : GlassTheme.fontBody
@@ -103,7 +103,7 @@ Item {
         Button {
             objectName: "openModernInstalled"
             visible: !root.instanceScoped
-            label: root.installedMode ? "Duyệt thư viện" : "Đã cài"
+            label: root.installedMode ? Legacy.Tr.phrase("Duyệt thư viện") : Legacy.Tr.phrase("Đã cài")
             selected: root.installedMode
             quiet: true
             onClicked: root.installedMode = !root.installedMode
@@ -123,14 +123,14 @@ Item {
             anchors.left: parent.left
             anchors.right: sortPicker.left
             anchors.rightMargin: 12
-            placeholder: "Tìm điều mới mẻ cho thế giới của bạn…"
+            placeholder: Legacy.Tr.phrase("Tìm điều mới mẻ cho thế giới của bạn…")
             onTextChanged: debounce.restart()
         }
         Select {
             id: sortPicker
             anchors.right: parent.right
             width: 170 * GlassTheme.scale
-            model: ["Phù hợp nhất", "Nhiều lượt tải", "Mới nhất"]
+            model: [Legacy.Tr.phrase("Phù hợp nhất"), Legacy.Tr.phrase("Nhiều lượt tải"), Legacy.Tr.phrase("Mới nhất")]
             onActivated: function (index) {
                 root.sort = ["relevance", "downloads", "newest"][index];
                 root.refresh();
@@ -145,7 +145,7 @@ Item {
         width: parent.width
         height: 26
         Text {
-            text: contentBridge.searching ? "Đang tìm kiếm…" : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), 'f', 0) + " kết quả"
+            text: contentBridge.searching ? Legacy.Tr.phrase("Đang tìm kiếm…") : contentBridge.totalHits.toLocaleString(Qt.locale(Legacy.Tr.localeName), 'f', 0) + Legacy.Tr.plural(" kết quả", contentBridge.totalHits)
             color: GlassTheme.muted
             font.family: GlassTheme.font
             font.pixelSize: GlassTheme.fontNote
@@ -154,7 +154,7 @@ Item {
             anchors.right: parent.right
             visible: !root.instanceScoped
             height: 24
-            label: "Bộ lọc nâng cao  ↗"
+            label: Legacy.Tr.phrase("Bộ lọc nâng cao  ↗")
             quiet: true
             onClicked: advanced.open()
         }
@@ -185,7 +185,7 @@ Item {
                         objectName: "projectCard-" + model.projectId
                         activeFocusOnTab: true
                         Accessible.role: Accessible.Button
-                        Accessible.name: model.title + ", xem giới thiệu và phiên bản"
+                        Accessible.name: model.title + Legacy.Tr.phrase(", xem giới thiệu và phiên bản")
                         Accessible.onPressAction: projectBridge.openProject(model.projectId)
                         Keys.onReturnPressed: projectBridge.openProject(model.projectId)
                         Keys.onEnterPressed: projectBridge.openProject(model.projectId)
@@ -263,7 +263,7 @@ Item {
                             anchors.leftMargin: (root.compactScope ? 90 : 20) * GlassTheme.scale
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 25 * GlassTheme.scale
-                            text: Legacy.Theme.compact(model.downloads) + " tải  ·  " + (model.loaders.length ? model.loaders[0] : "Minecraft")
+                            text: Legacy.Theme.compact(model.downloads) + Legacy.Tr.phrase(" tải  ·  ") + (model.loaders.length ? model.loaders[0] : "Minecraft")
                             color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
                             font.family: GlassTheme.font
                             font.pixelSize: GlassTheme.fontNote
@@ -275,7 +275,7 @@ Item {
                             anchors.rightMargin: 14 * GlassTheme.scale
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 16 * GlassTheme.scale
-                            label: model.installing ? "Đang cài…" : model.contentKind === "modpack" ? "Tạo bản chơi" : model.installed ? "Đã cài" : "Cài đặt"
+                            label: model.installing ? Legacy.Tr.phrase("Đang cài…") : model.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : model.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài đặt")
                             height: 34 * GlassTheme.scale
                             clickable: !model.installing && !model.installed && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && (model.contentKind === "modpack" || (!!contentBridge.instanceId && !(root.kind === "mod" && contentBridge.loaderKind === "vanilla")))
                             onClicked: model.contentKind === "modpack" ? pack.openFor(model.projectId, model.title) : contentBridge.install(model.projectId)
@@ -289,7 +289,7 @@ Item {
             }
             Text {
                 visible: !contentBridge.searching && !contentBridge.results.length
-                text: "Chưa có kết quả. Thử đổi từ khóa hoặc nguồn nội dung."
+                text: Legacy.Tr.phrase("Chưa có kết quả. Thử đổi từ khóa hoặc nguồn nội dung.")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontControl
@@ -297,7 +297,7 @@ Item {
             Button {
                 visible: contentBridge.hasMore
                 anchors.horizontalCenter: parent.horizontalCenter
-                label: contentBridge.searching ? "Đang tải…" : "Xem thêm"
+                label: contentBridge.searching ? Legacy.Tr.phrase("Đang tải…") : Legacy.Tr.phrase("Xem thêm")
                 clickable: !contentBridge.searching
                 onClicked: contentBridge.loadMore()
             }

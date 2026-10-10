@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Glass {
     id: root
@@ -40,7 +41,7 @@ Glass {
             }
             PaymentText {
                 width: parent.width - 14
-                text: root.chosen ? "THẾ GIỚI CỦA BẠN VẪN Ở ĐÂY" : "MỘT KHỞI ĐẦU MỚI"
+                text: root.chosen ? Legacy.Tr.phrase("THẾ GIỚI CỦA BẠN VẪN Ở ĐÂY") : Legacy.Tr.phrase("MỘT KHỞI ĐẦU MỚI")
                 color: GlassTheme.accent
                 font.pixelSize: GlassTheme.fontCaption
                 font.letterSpacing: 1.2
@@ -48,7 +49,7 @@ Glass {
         }
         PaymentText {
             width: parent.width
-            text: root.chosen ? "Về với thế giới\ncủa bạn." : "Một thế giới mới.\nMột cuộc phiêu lưu."
+            text: root.chosen ? Legacy.Tr.phrase("Về với thế giới\ncủa bạn.") : Legacy.Tr.phrase("Một thế giới mới.\nMột cuộc phiêu lưu.")
             font.pixelSize: (root.narrow ? 28 : 38) * GlassTheme.scale
             font.weight: Font.DemiBold
             font.letterSpacing: -1
@@ -56,7 +57,7 @@ Glass {
         }
         PaymentText {
             width: parent.width
-            text: root.chosen ? root.chosen.label + " · " + root.chosen.versionId : "Từ một góc nhỏ, đến những điều chưa khám phá."
+            text: root.chosen ? root.chosen.label + " · " + root.chosen.versionId : Legacy.Tr.phrase("Từ một góc nhỏ, đến những điều chưa khám phá.")
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontBody
         }
@@ -67,13 +68,13 @@ Glass {
                 objectName: "minimalPlay"
                 height: 46
                 primary: true
-                label: bridge.gameRunning ? "Dừng game" : root.chosen ? "Chơi ngay  →" : "Tạo bản chơi  +"
+                label: bridge.gameRunning ? Legacy.Tr.phrase("Dừng game") : root.chosen ? Legacy.Tr.phrase("Chơi ngay  →") : Legacy.Tr.phrase("Tạo bản chơi  +")
                 clickable: bridge.gameRunning || (!bridge.busy && !bridge.storageBusy && (!root.chosen || !!bridge.activePlayerName))
                 onClicked: root.playRequested()
             }
             Button {
                 height: 46
-                label: "Khám phá modpack"
+                label: Legacy.Tr.phrase("Khám phá modpack")
                 quiet: true
                 onClicked: root.libraryRequested()
             }

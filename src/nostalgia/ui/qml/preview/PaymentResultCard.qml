@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Rectangle {
     id: root
@@ -44,13 +45,13 @@ Rectangle {
                 PaymentText {
                     objectName: "paymentResultTitle"
                     width: parent.width
-                    text: root.success ? "Thanh toán thành công" : root.reviewing ? "Chờ duyệt thanh toán" : root.verifying ? "Đang đối chiếu giao dịch" : root.details.stage === "cancelled" ? "Đơn đã được hủy" : "Mã thanh toán đã hết hạn"
+                    text: root.success ? Legacy.Tr.phrase("Thanh toán thành công") : root.reviewing ? Legacy.Tr.phrase("Chờ duyệt thanh toán") : root.verifying ? Legacy.Tr.phrase("Đang đối chiếu giao dịch") : root.details.stage === "cancelled" ? Legacy.Tr.phrase("Đơn đã được hủy") : Legacy.Tr.phrase("Mã thanh toán đã hết hạn")
                     font.pixelSize: (root.compactLayout ? 20 : 24) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
                 PaymentText {
                     visible: root.success
-                    text: "Nostalgia Plus · " + (root.details.lifetime ? "Mua đứt" : root.details.months + " tháng")
+                    text: "Nostalgia Plus · " + (root.details.lifetime ? Legacy.Tr.phrase("Mua đứt") : root.details.months + Legacy.Tr.phrase(" tháng"))
                     font.pixelSize: (root.compactLayout ? 10 : 13) * GlassTheme.scale
                     color: GlassTheme.muted
                 }
@@ -59,7 +60,7 @@ Rectangle {
         PaymentText {
             width: parent.width
             visible: !root.success || !root.compactLayout
-            text: root.success ? "Cảm ơn bạn đã đồng hành cùng Nostalgia." : root.reviewing ? "Yêu cầu của bạn đã được gửi. Người quản trị sẽ đối chiếu giao dịch Vietcombank; gói chưa kích hoạt cho đến khi xác nhận tiền thực nhận." : root.verifying ? "Thời gian quét mã đã kết thúc. Hệ thống đang kiểm tra lần cuối; chưa tạo đơn mới trong lúc này." : "Nếu bạn đã chuyển tiền, hãy liên hệ hỗ trợ kèm mã đơn. Đừng chuyển lại khi chưa đối chiếu giao dịch."
+            text: root.success ? Legacy.Tr.phrase("Cảm ơn bạn đã đồng hành cùng Nostalgia.") : root.reviewing ? Legacy.Tr.phrase("Yêu cầu của bạn đã được gửi. Người quản trị sẽ đối chiếu giao dịch Vietcombank; gói chưa kích hoạt cho đến khi xác nhận tiền thực nhận.") : root.verifying ? Legacy.Tr.phrase("Thời gian quét mã đã kết thúc. Hệ thống đang kiểm tra lần cuối; chưa tạo đơn mới trong lúc này.") : Legacy.Tr.phrase("Nếu bạn đã chuyển tiền, hãy liên hệ hỗ trợ kèm mã đơn. Đừng chuyển lại khi chưa đối chiếu giao dịch.")
             color: GlassTheme.muted
         }
         Grid {
@@ -70,11 +71,11 @@ Rectangle {
             Repeater {
                 model: [
                     {
-                        label: "Đã thanh toán",
-                        value: Number(root.details.amount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ"
+                        label: Legacy.Tr.phrase("Đã thanh toán"),
+                        value: Number(root.details.amount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0) + Legacy.Tr.phrase("đ")
                     },
                     {
-                        label: "Có hiệu lực đến",
+                        label: Legacy.Tr.phrase("Có hiệu lực đến"),
                         value: root.details.activeUntil
                     }
                 ]
@@ -107,7 +108,7 @@ Rectangle {
             }
         }
         PaymentCopyLine {
-            label: "Mã đơn · lưu để liên hệ hỗ trợ"
+            label: Legacy.Tr.phrase("Mã đơn · lưu để liên hệ hỗ trợ")
             value: root.details.orderId
             field: "orderId"
         }
@@ -115,7 +116,7 @@ Rectangle {
             objectName: "paymentNewOrder"
             width: parent.width
             visible: !root.success && !root.verifying
-            label: "Xem lại gói Plus"
+            label: Legacy.Tr.phrase("Xem lại gói Plus")
             clickable: !paymentBridge.busy
             onClicked: paymentBridge.newOrder()
         }
@@ -123,13 +124,13 @@ Rectangle {
             objectName: "paymentVerify"
             width: parent.width
             visible: root.verifying
-            label: "Kiểm tra giao dịch"
+            label: Legacy.Tr.phrase("Kiểm tra giao dịch")
             clickable: !paymentBridge.busy
             onClicked: paymentBridge.checkPayment()
         }
         Button {
             width: parent.width
-            label: "Liên hệ hỗ trợ  ↗"
+            label: Legacy.Tr.phrase("Liên hệ hỗ trợ  ↗")
             quiet: true
             visible: !root.success
             onClicked: settingsBridge.openCommunityPage()

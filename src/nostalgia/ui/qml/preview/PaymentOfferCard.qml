@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Rectangle {
     id: root
@@ -16,7 +17,7 @@ Rectangle {
         width: parent.width - 48
         spacing: 18
         PaymentText {
-            text: "GÓI " + root.details.planName.toUpperCase()
+            text: Legacy.Tr.phrase("GÓI ") + root.details.planName.toUpperCase()
             color: GlassTheme.brand
             font.pixelSize: GlassTheme.fontCaption
             font.letterSpacing: 1.3
@@ -28,14 +29,14 @@ Rectangle {
             PaymentText {
                 objectName: "paymentPrice"
                 width: parent.width
-                text: Number(root.details.amount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ"
+                text: Number(root.details.amount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0) + Legacy.Tr.phrase("đ")
                 font.pixelSize: GlassTheme.fontPrice
                 font.weight: Font.DemiBold
                 lineHeight: 1
             }
             PaymentText {
                 width: parent.width
-                text: root.details.lifetime ? "Mua một lần · Ultimate không hết hạn" : root.details.amount < root.details.regularAmount ? "Ưu đãi cho " + root.details.months + " tháng" : root.details.months + " tháng sử dụng " + root.details.planName
+                text: root.details.lifetime ? Legacy.Tr.phrase("Mua một lần · Ultimate không hết hạn") : root.details.amount < root.details.regularAmount ? Legacy.Tr.format("Ưu đãi cho %1 tháng", [root.details.months]) : Legacy.Tr.format("Tháng sử dụng: %1 · %2", [root.details.months, root.details.planName])
                 color: GlassTheme.muted
             }
         }
@@ -48,23 +49,23 @@ Rectangle {
             objectName: "upgradeCreditNote"
             width: parent.width
             visible: root.details.upgradeCredit > 0
-            text: "Đã khấu trừ " + Number(root.details.upgradeCredit).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ từ gói đã mua còn hiệu lực. Thời hạn gói mới bắt đầu khi được kích hoạt."
+            text: Legacy.Tr.format("Đã khấu trừ %1đ từ gói đã mua còn hiệu lực. Thời hạn gói mới bắt đầu khi được kích hoạt.", [Number(root.details.upgradeCredit).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0)])
             color: GlassTheme.accent
         }
         PaymentText {
             width: parent.width
             visible: root.details.eligible === false
-            text: "Bạn đang có gói cao hơn hoặc Ultimate. Hãy chọn gói phù hợp; launcher không hạ quyền đang dùng."
+            text: Legacy.Tr.phrase("Bạn đang có gói cao hơn hoặc Ultimate. Hãy chọn gói phù hợp; launcher không hạ quyền đang dùng.")
             color: GlassTheme.muted
         }
         PaymentText {
             width: parent.width
-            text: root.details.lifetime ? "Gắn với tài khoản Google. Các cập nhật Plus về sau trong thời gian dịch vụ hoạt động." : "Gia hạn " + Number(root.details.regularAmount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ/" + root.details.months + " tháng. Không tự động gia hạn."
+            text: root.details.lifetime ? Legacy.Tr.phrase("Gắn với tài khoản Google. Các cập nhật Plus về sau trong thời gian dịch vụ hoạt động.") : Legacy.Tr.format("Gia hạn %1đ/%2 tháng. Không tự động gia hạn.", [Number(root.details.regularAmount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0), root.details.months])
             color: GlassTheme.muted
         }
         PaymentText {
             width: parent.width
-            text: root.details.amount === 0 && root.details.isUpgrade ? "Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm." : root.details.available ? "Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn." : "Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn."
+            text: root.details.amount === 0 && root.details.isUpgrade ? Legacy.Tr.phrase("Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm.") : root.details.available ? Legacy.Tr.phrase("Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn.") : Legacy.Tr.phrase("Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn.")
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }

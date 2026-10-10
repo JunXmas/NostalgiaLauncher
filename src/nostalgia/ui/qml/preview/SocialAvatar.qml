@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Effects
 import "CosmeticCatalog.js" as Cosmetics
 
@@ -38,7 +39,7 @@ Item {
     MouseArea { anchors.fill: parent; enabled: root.clickable; cursorShape: Qt.PointingHandCursor; onClicked: root.clicked() }
     activeFocusOnTab: clickable
     Accessible.role: Accessible.Button
-    Accessible.name: "Hồ sơ của " + playerName
+    Accessible.name: Legacy.Tr.phrase("Hồ sơ của ") + playerName
     Accessible.onPressAction: if (clickable) root.clicked()
     Keys.onReturnPressed: if (clickable) root.clicked()
     Keys.onSpacePressed: if (clickable) root.clicked()

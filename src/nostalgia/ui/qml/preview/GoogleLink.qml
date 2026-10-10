@@ -18,13 +18,14 @@ Item {
         Image { width: 32; height: 32; source: "../assets/logo.png"; mipmap: true }
         PaymentText { anchors.verticalCenter: parent.verticalCenter; text: "Nostalgia"; font.pixelSize: GlassTheme.fontBrand; font.weight: Font.DemiBold }
     }
+    LanguagePicker { anchors.right: parent.right; anchors.top: parent.top; anchors.margins: root.compact ? 24 : 48 }
     Column {
         visible: !root.compact
         x: 64; y: Math.max(160, (root.height - height) * 0.46)
         width: Math.max(240, root.width - card.width - 180); spacing: 22
-        PaymentText { text: "TÀI KHOẢN NOSTALGIA"; color: GlassTheme.accent; font.pixelSize: GlassTheme.fontNote; font.letterSpacing: 2 }
-        PaymentText { width: parent.width; text: "Thế giới của bạn.\nBạn bè của bạn."; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontHero; font.weight: Font.DemiBold; lineHeight: 1.1 }
-        PaymentText { width: Math.min(360, parent.width); text: "Giữ kết nối và mang hồ sơ của bạn sang máy mới."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontAction; lineHeight: 1.5 }
+        PaymentText { text: Legacy.Tr.phrase("TÀI KHOẢN NOSTALGIA"); color: GlassTheme.accent; font.pixelSize: GlassTheme.fontNote; font.letterSpacing: 2 }
+        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Thế giới của bạn.\nBạn bè của bạn."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontHero; font.weight: Font.DemiBold; lineHeight: 1.1 }
+        PaymentText { width: Math.min(360, parent.width); text: Legacy.Tr.phrase("Giữ kết nối và mang hồ sơ của bạn sang máy mới."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontAction; lineHeight: 1.5 }
     }
     Glass {
         id: card
@@ -48,17 +49,17 @@ Item {
                     Row {
                         width: parent.width; spacing: 8
                         PaymentText { text: "✓"; color: GlassTheme.accent }
-                        PaymentText { width: parent.width - 24; text: bridge.activePlayerName + " · " + googleLinkBridge.provider + " đã đăng nhập"; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontLabel }
+                        PaymentText { width: parent.width - 24; text: bridge.activePlayerName + " · " + googleLinkBridge.provider + Legacy.Tr.phrase(" đã đăng nhập"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontLabel }
                     }
                     Column {
                         width: parent.width; spacing: 10 * GlassTheme.scale
-                        PaymentText { width: parent.width; text: root.compact ? "Liên kết Google với Nostalgia" : "Liên kết Google\nvới Nostalgia"; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontLogin; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; visible: !root.compact || !socialBridge.signingIn; text: root.compact ? "Google đồng bộ bạn bè, hồ sơ và Plus đã mua." : "Minecraft đã sẵn sàng. Thêm tài khoản Google để sử dụng và đồng bộ các dịch vụ Nostalgia."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontBody; lineHeight: 1.4 }
+                        PaymentText { width: parent.width; text: root.compact ? Legacy.Tr.phrase("Liên kết Google với Nostalgia") : Legacy.Tr.phrase("Liên kết Google\nvới Nostalgia"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontLogin; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; visible: !root.compact || !socialBridge.signingIn; text: root.compact ? Legacy.Tr.phrase("Google đồng bộ bạn bè, hồ sơ và Plus đã mua.") : Legacy.Tr.phrase("Minecraft đã sẵn sàng. Thêm tài khoản Google để sử dụng và đồng bộ các dịch vụ Nostalgia."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontBody; lineHeight: 1.4 }
                     }
                     Column {
                         visible: !root.compact; width: parent.width; spacing: 12 * GlassTheme.scale
-                        PaymentText { width: parent.width; text: "Bạn bè & lời mời chơi chung"; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: "Hồ sơ & quyền lợi Plus đã mua trên các máy"; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bạn bè & lời mời chơi chung"); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Hồ sơ & quyền lợi Plus đã mua trên các máy"); font.weight: Font.DemiBold }
                     }
                 }
             }
@@ -70,22 +71,22 @@ Item {
                     id: connectButton; objectName: "googleLinkConnect"
                     width: parent.width; height: 48 * GlassTheme.scale
                     provider: "google"; primary: true
-                    label: socialBridge.signingIn ? "Đang chờ Google…" : socialBridge.busy ? "Đang kết nối…" : "Liên kết với Google  ↗"
+                    label: socialBridge.signingIn ? Legacy.Tr.phrase("Đang chờ Google…") : socialBridge.busy ? Legacy.Tr.phrase("Đang kết nối…") : Legacy.Tr.phrase("Liên kết với Google  ↗")
                     clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn
                     onClicked: socialBridge.signIn()
                 }
                 PaymentText {
                     objectName: "googleLinkStatus"; width: parent.width
-                    text: socialBridge.note || (socialBridge.configured ? "Xác thực qua trình duyệt. Launcher tự kết nối khi hoàn tất." : "Google chưa khả dụng trong bản thử này. Bạn có thể để sau và tiếp tục chơi Minecraft.")
+                    text: Legacy.Tr.message(socialBridge.note) || (socialBridge.configured ? Legacy.Tr.phrase("Xác thực qua trình duyệt. Launcher tự kết nối khi hoàn tất.") : Legacy.Tr.phrase("Google chưa khả dụng trong bản thử này. Bạn có thể để sau và tiếp tục chơi Minecraft."))
                     color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote
                     maximumLineCount: 3; elide: Text.ElideRight
                 }
                 Row {
                     width: parent.width; spacing: 8 * GlassTheme.scale
-                    Button { objectName: "googleLinkReopen"; visible: socialBridge.signingIn; width: (parent.width - parent.spacing) / 2; height: 42 * GlassTheme.scale; label: "Mở lại Google  ↗"; quiet: true; onClicked: socialBridge.openGoogle() }
-                    Button { id: laterButton; objectName: "googleLinkLater"; width: socialBridge.signingIn ? (parent.width - parent.spacing) / 2 : parent.width; height: 42 * GlassTheme.scale; label: socialBridge.signingIn ? "Để sau" : "Để sau · Vào launcher"; quiet: true; onClicked: googleLinkBridge.defer() }
+                    Button { objectName: "googleLinkReopen"; visible: socialBridge.signingIn; width: (parent.width - parent.spacing) / 2; height: 42 * GlassTheme.scale; label: Legacy.Tr.phrase("Mở lại Google  ↗"); quiet: true; onClicked: socialBridge.openGoogle() }
+                    Button { id: laterButton; objectName: "googleLinkLater"; width: socialBridge.signingIn ? (parent.width - parent.spacing) / 2 : parent.width; height: 42 * GlassTheme.scale; label: socialBridge.signingIn ? Legacy.Tr.phrase("Để sau") : Legacy.Tr.phrase("Để sau · Vào launcher"); quiet: true; onClicked: googleLinkBridge.defer() }
                 }
-                PaymentText { width: parent.width; visible: !root.compact; text: "Bạn vẫn chơi Minecraft bình thường. Có thể liên kết Google sau tại mục Bạn bè."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote; horizontalAlignment: Text.AlignHCenter }
+                PaymentText { width: parent.width; visible: !root.compact; text: Legacy.Tr.phrase("Bạn vẫn chơi Minecraft bình thường. Có thể liên kết Google sau tại mục Bạn bè."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote; horizontalAlignment: Text.AlignHCenter }
             }
         }
     }

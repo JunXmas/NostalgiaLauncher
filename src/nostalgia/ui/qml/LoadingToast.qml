@@ -10,9 +10,9 @@ Rectangle {
     // Game đang chạy thì cầu nối vẫn bận (chờ tiến trình) nhưng không phải "đang tải": ẩn.
     readonly property bool active: storageBridge.busy || (bridge.busy && !bridge.gameRunning) || contentBridge.busy || catalogBridge.busy
     // Việc nào đang chạy thì nói việc đó; nhiều việc cùng lúc thì ưu tiên cái nặng nhất.
-    readonly property string activity: storageBridge.busy ? storageBridge.activity : bridge.busy && !bridge.gameRunning ? bridge.activity
-                                     : catalogBridge.busy ? catalogBridge.activity
-                                     : contentBridge.busy ? contentBridge.activity : ""
+    readonly property string activity: storageBridge.busy ? Tr.message(storageBridge.activity) : bridge.busy && !bridge.gameRunning ? Tr.message(bridge.activity)
+                                     : catalogBridge.busy ? Tr.message(catalogBridge.activity)
+                                     : contentBridge.busy ? Tr.message(contentBridge.activity) : ""
     readonly property bool hasFraction: bridge.progressFraction > 0 && bridge.progressFraction < 1
 
     width: Math.min(420, parent.width - 48)
@@ -56,13 +56,13 @@ Rectangle {
         spacing: 5
         Text {
             width: parent.width
-            text: toast.activity
+            text: Tr.message(toast.activity)
             color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true; elide: Text.ElideRight
         }
         Text {
             width: parent.width
-            visible: bridge.progressText.length > 0
-            text: bridge.progressText
+            visible: Tr.message(bridge.progressText).length > 0
+            text: Tr.message(bridge.progressText)
             color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
         }
         Rectangle {

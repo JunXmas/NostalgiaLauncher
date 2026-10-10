@@ -26,7 +26,7 @@ Item {
         }
         function onTwoFactorRequired() {
             root.needsTotp = true;
-            root.failure = "Nhập mã xác thực hai bước để tiếp tục.";
+            root.failure = Legacy.Tr.phrase("Nhập mã xác thực hai bước để tiếp tục.");
         }
         function onElySignedIn(playerName) {
             password.text = "";
@@ -59,7 +59,13 @@ Item {
             font.weight: Font.DemiBold
         }
     }
-    GuideButton { topicId: "start"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 40 }
+    Row {
+        id: welcomeActions
+        objectName: "welcomeActions"
+        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 40; spacing: 12
+        LanguagePicker {}
+        GuideButton { topicId: "start"; anchors.verticalCenter: parent.verticalCenter }
+    }
     Column {
         x: 64
         y: Math.max(150, (parent.height - height) * 0.46)
@@ -75,7 +81,7 @@ Item {
                 color: GlassTheme.accent
             }
             Text {
-                text: "MINECRAFT, THEO CÁCH CỦA BẠN"
+                text: Legacy.Tr.phrase("MINECRAFT, THEO CÁCH CỦA BẠN")
                 color: GlassTheme.accent
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontNote
@@ -84,9 +90,7 @@ Item {
         }
         Text {
             width: parent.width
-            text: "Một thế giới.
-Vô vàn
-khởi đầu."
+            text: Legacy.Tr.phrase("Một thế giới.\nVô vàn\nkhởi đầu.")
             color: GlassTheme.text
             font.family: GlassTheme.font
             font.pixelSize: root.width < 1200 ? 54 : 76
@@ -97,7 +101,7 @@ khởi đầu."
         Text {
             width: Math.min(360, parent.width)
             wrapMode: Text.WordWrap
-            text: "Chơi, khám phá và trở lại những điều bạn yêu. Tất cả bắt đầu ở đây."
+            text: Legacy.Tr.phrase("Chơi, khám phá và trở lại những điều bạn yêu. Tất cả bắt đầu ở đây.")
             color: GlassTheme.muted
             font.family: GlassTheme.font
             font.pixelSize: GlassTheme.fontAction
@@ -112,7 +116,7 @@ khởi đầu."
         finishOpacity: 0.65
         color: GlassTheme.alpha(GlassTheme.surface, 0.74)
         width: Math.min(440, root.width * 0.42)
-        height: Math.min(root.height - 170, form.height + 72)
+        height: Math.min(root.height - Math.max(170, 2 * (welcomeActions.y + welcomeActions.height + 16)), form.height + 72)
         anchors.right: parent.right
         anchors.rightMargin: 64
         anchors.verticalCenter: parent.verticalCenter
@@ -128,7 +132,7 @@ khởi đầu."
                     width: parent.width
                     spacing: 10
                     Text {
-                        text: root.mode === "choose" ? "Chào mừng về nhà." : root.mode === "ely" ? "Đăng nhập Ely.by" : "Chơi ngoại tuyến"
+                        text: root.mode === "choose" ? Legacy.Tr.phrase("Chào mừng về nhà.") : root.mode === "ely" ? Legacy.Tr.phrase("Đăng nhập Ely.by") : Legacy.Tr.phrase("Chơi ngoại tuyến")
                         color: GlassTheme.text
                         font.family: GlassTheme.font
                         font.pixelSize: GlassTheme.fontResult
@@ -137,7 +141,7 @@ khởi đầu."
                     Text {
                         width: parent.width
                         wrapMode: Text.WordWrap
-                        text: root.mode === "choose" ? "Chọn tài khoản để bắt đầu hành trình." : root.mode === "ely" ? "Sử dụng tài khoản và skin Ely.by của bạn." : "Đặt tên nhân vật để chơi trên máy này."
+                        text: root.mode === "choose" ? Legacy.Tr.phrase("Chọn tài khoản để bắt đầu hành trình.") : root.mode === "ely" ? Legacy.Tr.phrase("Sử dụng tài khoản và skin Ely.by của bạn.") : Legacy.Tr.phrase("Đặt tên nhân vật để chơi trên máy này.")
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
                         font.pixelSize: GlassTheme.fontControl
@@ -152,13 +156,13 @@ khởi đầu."
                         objectName: "loginGoogleService"
                         provider: "google"
                         width: parent.width
-                        label: socialBridge.signedIn ? "Google đã kết nối ✓" : "Tiếp tục với Google  ↗"
+                        label: socialBridge.signedIn ? Legacy.Tr.phrase("Google đã kết nối ✓") : Legacy.Tr.phrase("Tiếp tục với Google  ↗")
                         clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn && !socialBridge.signedIn
                         onClicked: socialBridge.signIn()
                     }
                     PaymentText {
                         width: parent.width
-                        text: socialBridge.signingIn || socialBridge.note ? socialBridge.note : socialBridge.configured ? "Tài khoản Nostalgia · đồng bộ bạn bè và Plus đã mua. Minecraft dùng tài khoản bên dưới." : "Google chưa khả dụng trong bản thử này. Bạn vẫn có thể đăng nhập Minecraft bên dưới."
+                        text: socialBridge.signingIn || Legacy.Tr.message(socialBridge.note) ? Legacy.Tr.message(socialBridge.note) : socialBridge.configured ? Legacy.Tr.phrase("Tài khoản Nostalgia · đồng bộ bạn bè và Plus đã mua. Minecraft dùng tài khoản bên dưới.") : Legacy.Tr.phrase("Google chưa khả dụng trong bản thử này. Bạn vẫn có thể đăng nhập Minecraft bên dưới.")
                         color: GlassTheme.muted
                         font.pixelSize: GlassTheme.fontNote
                     }
@@ -168,7 +172,7 @@ khởi đầu."
                         width: parent.width
                         height: 50
                         primary: true
-                        label: root.busy ? "Đang kết nối…" : "Tiếp tục với Microsoft"
+                        label: root.busy ? Legacy.Tr.phrase("Đang kết nối…") : Legacy.Tr.phrase("Tiếp tục với Microsoft")
                         clickable: !root.busy
                         onClicked: {
                             root.failure = "";
@@ -177,7 +181,7 @@ khởi đầu."
                     }
                     Text {
                         width: parent.width
-                        text: "Dành cho tài khoản sở hữu Minecraft Java."
+                        text: Legacy.Tr.phrase("Dành cho tài khoản sở hữu Minecraft Java.")
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
                         font.pixelSize: GlassTheme.fontNote
@@ -200,7 +204,7 @@ khởi đầu."
                         objectName: "loginEly"
                         width: parent.width
                         height: 48
-                        label: "Đăng nhập Ely.by"
+                        label: Legacy.Tr.phrase("Đăng nhập Ely.by")
                         clickable: !root.busy
                         onClicked: {
                             root.failure = "";
@@ -210,7 +214,7 @@ khởi đầu."
                     Button {
                         objectName: "loginOffline"
                         width: parent.width
-                        label: "Chơi ngoại tuyến"
+                        label: Legacy.Tr.phrase("Chơi ngoại tuyến")
                         quiet: true
                         clickable: !root.busy
                         onClicked: {
@@ -227,13 +231,13 @@ khởi đầu."
                         id: offlineName
                         objectName: "loginOfflineName"
                         width: parent.width
-                        placeholder: "Tên nhân vật"
+                        placeholder: Legacy.Tr.phrase("Tên nhân vật")
                         onAccepted: root.submitOffline()
                     }
                     Button {
                         objectName: "loginOfflineSubmit"
                         width: parent.width
-                        label: root.busy ? "Đang tạo…" : "Bắt đầu chơi"
+                        label: root.busy ? Legacy.Tr.phrase("Đang tạo…") : Legacy.Tr.phrase("Bắt đầu chơi")
                         primary: true
                         clickable: !!offlineName.text.trim() && !root.busy
                         onClicked: root.submitOffline()
@@ -247,13 +251,13 @@ khởi đầu."
                         id: email
                         objectName: "loginElyEmail"
                         width: parent.width
-                        placeholder: "Email hoặc tên Ely.by"
+                        placeholder: Legacy.Tr.phrase("Email hoặc tên Ely.by")
                     }
                     Input {
                         id: password
                         objectName: "loginElyPassword"
                         width: parent.width
-                        placeholder: "Mật khẩu"
+                        placeholder: Legacy.Tr.phrase("Mật khẩu")
                         echoMode: TextInput.Password
                         onAccepted: root.submitEly()
                     }
@@ -262,29 +266,29 @@ khởi đầu."
                         objectName: "loginTotp"
                         visible: root.needsTotp
                         width: parent.width
-                        placeholder: "Mã xác thực 2 bước"
+                        placeholder: Legacy.Tr.phrase("Mã xác thực 2 bước")
                         onAccepted: root.submitEly()
                     }
                     Button {
                         objectName: "loginElySubmit"
                         width: parent.width
-                        label: root.busy ? "Đang đăng nhập…" : "Đăng nhập"
+                        label: root.busy ? Legacy.Tr.phrase("Đang đăng nhập…") : Legacy.Tr.phrase("Đăng nhập")
                         primary: true
                         clickable: !!email.text.trim() && !!password.text && !root.busy
                         onClicked: root.submitEly()
                     }
                     Button {
                         width: parent.width
-                        label: "Tạo tài khoản Ely.by ↗"
+                        label: Legacy.Tr.phrase("Tạo tài khoản Ely.by ↗")
                         quiet: true
                         onClicked: Qt.openUrlExternally("https://account.ely.by/register")
                     }
                 }
                 Text {
-                    visible: !!root.failure
+                    visible: !!Legacy.Tr.message(root.failure)
                     width: parent.width
                     wrapMode: Text.Wrap
-                    text: root.failure
+                    text: Legacy.Tr.message(root.failure)
                     color: GlassTheme.danger
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontBody
@@ -293,7 +297,7 @@ khởi đầu."
                     visible: root.mode !== "choose"
                     width: parent.width
                     quiet: true
-                    label: "← Quay lại"
+                    label: Legacy.Tr.phrase("← Quay lại")
                     clickable: !root.busy
                     onClicked: {
                         root.mode = "choose";
@@ -305,7 +309,7 @@ khởi đầu."
                 Text {
                     visible: root.mode === "choose"
                     width: parent.width
-                    text: "Tài khoản của bạn. Thế giới của bạn."
+                    text: Legacy.Tr.phrase("Tài khoản của bạn. Thế giới của bạn.")
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontLabel
@@ -329,7 +333,7 @@ khởi đầu."
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 40
-        label: "Khám phá trước  →"
+        label: Legacy.Tr.phrase("Khám phá trước  →")
         quiet: true
         clickable: !root.busy
         onClicked: root.enterRequested()

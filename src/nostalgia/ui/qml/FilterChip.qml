@@ -173,7 +173,7 @@ Item {
                 width: parent.width; height: visible ? 24 : 0
                 verticalAlignment: Text.AlignVCenter
                 leftPadding: 8
-                text: root.options.length === 0 ? root.emptyNote : Tr.phrase("Không có mục nào khớp.")
+                text: root.options.length === 0 ? Tr.message(root.emptyNote) : Tr.phrase("Không có mục nào khớp.")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
         }

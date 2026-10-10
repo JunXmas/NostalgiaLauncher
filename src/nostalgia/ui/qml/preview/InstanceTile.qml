@@ -72,7 +72,7 @@ Rectangle {
             objectName: "instanceAction-" + root.entry.instanceId
             width: Math.max(root.compact ? 84 : 75, implicitWidth)
             height: 36
-            label: root.pickOnly ? (root.selected ? "Đã chọn" : "Chọn") : "Chơi"
+            label: root.pickOnly ? (root.selected ? Legacy.Tr.phrase("Đã chọn") : Legacy.Tr.phrase("Chọn")) : Legacy.Tr.phrase("Chơi")
             selected: root.selected
             clickable: root.pickOnly || (!!bridge.activePlayerName && !bridge.busy && !bridge.storageBusy && !bridge.gameRunning)
             onClicked: root.pickOnly ? root.picked() : bridge.play(root.entry.instanceId)
@@ -84,7 +84,7 @@ Rectangle {
             objectName: "manageInstance-" + root.entry.instanceId
             label: "···"
             quiet: true
-            Accessible.name: "Quản lý " + (root.entry.label || "bản chơi")
+            Accessible.name: Legacy.Tr.phrase("Quản lý ") + (root.entry.label || Legacy.Tr.phrase("bản chơi"))
             onClicked: root.editRequested(root.entry)
         }
     }
@@ -97,7 +97,7 @@ Rectangle {
         height: 32
         favorite: root.entry.favorite === true
         quiet: true
-        Accessible.name: "Yêu thích " + (root.entry.label || "bản chơi")
+        Accessible.name: Legacy.Tr.phrase("Yêu thích ") + (root.entry.label || Legacy.Tr.phrase("bản chơi"))
         onClicked: storageBridge.setOrganization(root.entry.instanceId, root.entry.groupName || "", !root.entry.favorite)
     }
     HoverHandler {

@@ -136,9 +136,9 @@ Item {
                 font.letterSpacing: Theme.trackLabel
                 function greeting() {
                     var hour = new Date().getHours();
-                    if (hour < 11) return "CHÀO BUỔI SÁNG";
-                    if (hour < 18) return "CHÀO BUỔI CHIỀU";
-                    return "CHÀO BUỔI TỐI";
+                    if (hour < 11) return Tr.phrase("CHÀO BUỔI SÁNG");
+                    if (hour < 18) return Tr.phrase("CHÀO BUỔI CHIỀU");
+                    return Tr.phrase("CHÀO BUỔI TỐI");
                 }
             }
             Text {

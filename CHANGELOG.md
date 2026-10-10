@@ -3,6 +3,17 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+- Hoàn thiện giao diện **Tiếng Việt / English**: trang chính, tài khoản và skin/cape,
+  thư viện, quản lý bản chơi, bạn bè/đồng bộ, server, cosmetic, Premium và cập nhật.
+- Chọn ngôn ngữ ngay trên màn hình đăng nhập hoặc trong Cài đặt; áp dụng ngay cho
+  cửa sổ đang mở, hướng dẫn và menu khay hệ thống, lưu cho lần khởi động sau.
+- Dịch trạng thái và lỗi do launcher tạo, giữ tên người chơi, phiên bản, đường dẫn và
+  log gốc. Định dạng số theo ngôn ngữ; giữ tiền thanh toán là VND.
+- Chỉnh khoảng cách màn hình đăng nhập khi cửa sổ nhỏ và cỡ chữ 150%; thêm kiểm tra
+  bản dịch, tham số câu, chuyển ngôn ngữ và hướng dẫn bảo trì bộ ngôn ngữ.
+
 ## 1.2.0rc18 — 2026-10-09
 
 - Nhận đúng phiên bản Forge hiện đại từ `net.minecraftforge:fmlloader`, khắc phục

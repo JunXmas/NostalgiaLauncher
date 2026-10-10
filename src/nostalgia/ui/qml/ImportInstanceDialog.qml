@@ -121,7 +121,7 @@ Item {
 
                 Text {
                     visible: importBridge.busy
-                    text: bridge.progressText
+                    text: Tr.message(bridge.progressText)
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }
@@ -133,7 +133,7 @@ Item {
                 spacing: 12
 
                 Text {
-                    text: importBridge.busy && importBridge.activity === Tr.phrase("Đang quét launcher trên máy...")
+                    text: importBridge.busy && Tr.message(importBridge.activity) === Tr.phrase("Đang quét launcher trên máy...")
                           ? Tr.phrase("Đang quét...")
                           : importBridge.scanResults.length === 0 ? Tr.phrase("Không tìm thấy launcher nào trên máy.")
                           : importBridge.scanResults.length + Tr.phrase(" bản chơi tìm thấy")

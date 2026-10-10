@@ -52,8 +52,8 @@ Controls.Popup {
         Item {
             id: heading
             width: parent.width; height: 54 * GlassTheme.scale
-            PaymentText { width: parent.width - closeButton.width - 12; text: "Chơi cùng bạn bè"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
-            Button { id: closeButton; anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; Accessible.name: "Đóng chọn bản chơi"; onClicked: root.close() }
+            PaymentText { width: parent.width - closeButton.width - 12; text: Legacy.Tr.phrase("Chơi cùng bạn bè"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+            Button { id: closeButton; anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; Accessible.name: Legacy.Tr.phrase("Đóng chọn bản chơi"); onClicked: root.close() }
         }
         InertialScroll {
             objectName: "hostSetupScroll"
@@ -63,8 +63,8 @@ Controls.Popup {
             Column {
                 id: body
                 width: parent.width - 10; spacing: 14
-                PaymentText { width: parent.width; text: "Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng."; color: GlassTheme.muted }
-                PaymentText { text: "Bản chơi / modpack đã cài"; font.weight: Font.DemiBold }
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng."); color: GlassTheme.muted }
+                PaymentText { text: Legacy.Tr.phrase("Bản chơi / modpack đã cài"); font.weight: Font.DemiBold }
                 Select {
                     id: pack
                     objectName: "hostPackPicker"
@@ -82,7 +82,7 @@ Controls.Popup {
                 Legacy.CheckRow {
                     objectName: "hostSharePack"
                     width: parent.width
-                    label: "Đồng bộ modpack cho bạn bè · Plus"
+                    label: Legacy.Tr.phrase("Đồng bộ modpack cho bạn bè · Plus")
                     checked: root.sharePack && hostBridge.syncAvailable
                     enabled: hostBridge.syncAvailable
                     opacity: enabled ? 1 : 0.5
@@ -91,18 +91,18 @@ Controls.Popup {
                 HostModList { visible: root.sharePack && hostBridge.syncAvailable; width: parent.width }
                 PaymentText {
                     width: parent.width
-                    text: !plusFeaturesEnabled ? "Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack."
-                        : !hostBridge.syncAvailable ? "Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí."
-                        : root.sharePack ? "Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất."
-                        : "Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng."
+                    text: !plusFeaturesEnabled ? Legacy.Tr.phrase("Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.")
+                        : !hostBridge.syncAvailable ? Legacy.Tr.phrase("Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí.")
+                        : root.sharePack ? Legacy.Tr.phrase("Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất.")
+                        : Legacy.Tr.phrase("Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng.")
                     color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
                 }
                 PaymentText {
                     width: parent.width
-                    text: !pack.count ? "Chưa có bản chơi. Cài modpack ở Thư viện hoặc tạo bản chơi trước."
-                        : bridge.gameRunning ? "Hãy đóng Minecraft đang chạy để host đúng bản chơi bạn chọn."
-                        : !bridge.activeAccountId ? "Bạn cần thêm tài khoản Minecraft trước khi chơi."
-                        : hostBridge.details.note
+                    text: !pack.count ? Legacy.Tr.phrase("Chưa có bản chơi. Cài modpack ở Thư viện hoặc tạo bản chơi trước.")
+                        : bridge.gameRunning ? Legacy.Tr.phrase("Hãy đóng Minecraft đang chạy để host đúng bản chơi bạn chọn.")
+                        : !bridge.activeAccountId ? Legacy.Tr.phrase("Bạn cần thêm tài khoản Minecraft trước khi chơi.")
+                        : Legacy.Tr.message(hostBridge.details.note)
                     visible: !!text
                     color: GlassTheme.accent
                 }
@@ -117,7 +117,7 @@ Controls.Popup {
                 id: launch
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
-                label: "Host & khởi chạy"; primary: true
+                label: Legacy.Tr.phrase("Host & khởi chạy"); primary: true
                 clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
                 onClicked: {
                     if (hostBridge.start(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();

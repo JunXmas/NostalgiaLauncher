@@ -22,7 +22,7 @@ Rectangle {
         }
         Text {
             width: parent.width; maximumLineCount: 2; wrapMode: Text.WordWrap; elide: Text.ElideRight
-            text: root.message; color: Theme.textMuted; font.pixelSize: Theme.fontBody
+            text: Tr.message(root.message); color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
         Flow {
             width: parent.width; spacing: 10
@@ -48,7 +48,7 @@ Rectangle {
             ScrollView {
                 width: parent.width; height: parent.height - 110
                 TextArea {
-                    id: diagnostic; text: root.message; readOnly: true; selectByMouse: true
+                    id: diagnostic; text: Tr.message(root.message); readOnly: true; selectByMouse: true
                     wrapMode: TextEdit.Wrap; color: Theme.text; font.pixelSize: Theme.fontBody
                     background: Rectangle { color: Theme.background }
                 }

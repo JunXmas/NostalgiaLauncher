@@ -68,7 +68,7 @@ Controls.Popup {
             root.open();
         }
         function onInstalled(title) {
-            root.success = "Đã cài " + title + " thành công.";
+            root.success = Legacy.Tr.phrase("Đã cài ") + title + Legacy.Tr.phrase(" thành công.");
         }
         function onInstallingChanged() {
             if (projectBridge.installing) {
@@ -123,7 +123,7 @@ Controls.Popup {
                 label: "×"
                 quiet: true
                 clickable: !projectBridge.installing
-                Accessible.name: "Đóng giới thiệu dự án"
+                Accessible.name: Legacy.Tr.phrase("Đóng giới thiệu dự án")
                 onClicked: root.close()
             }
         }
@@ -139,7 +139,7 @@ Controls.Popup {
                 visible: projectBridge.installing
                 Text {
                     width: parent.width
-                    text: bridge.progressText || projectBridge.activity
+                    text: Legacy.Tr.message(bridge.progressText) || Legacy.Tr.message(projectBridge.activity)
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontLabel
@@ -156,7 +156,7 @@ Controls.Popup {
                 objectName: "projectWebsite"
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                label: "Trang dự án  ↗"
+                label: Legacy.Tr.phrase("Trang dự án  ↗")
                 quiet: true
                 visible: !!root.details.websiteUrl
                 onClicked: Qt.openUrlExternally(root.details.websiteUrl)
@@ -165,7 +165,7 @@ Controls.Popup {
                 objectName: "projectInstall"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                label: projectBridge.installing ? "Đang cài…" : picker.isPack ? "Tạo bản chơi" : "Cài phiên bản đã chọn"
+                label: projectBridge.installing ? Legacy.Tr.phrase("Đang cài…") : picker.isPack ? Legacy.Tr.phrase("Tạo bản chơi") : Legacy.Tr.phrase("Cài phiên bản đã chọn")
                 primary: true
                 clickable: !root.details.loading && !projectBridge.installing && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && picker.canInstall && !root.success
                 onClicked: projectBridge.installVersion(picker.versionId, picker.gameVersion, picker.instanceId, nameField.text)
@@ -186,7 +186,7 @@ Controls.Popup {
                 width: parent.width - 10
                 spacing: 16
                 Text {
-                    text: "Giới thiệu"
+                    text: Legacy.Tr.phrase("Giới thiệu")
                     color: GlassTheme.text
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontSubheading
@@ -207,7 +207,7 @@ Controls.Popup {
                             id: aboutText
                             objectName: "projectAbout"
                             width: parent.width - 10
-                            text: root.details.about || root.details.description || "Chưa có giới thiệu cho dự án này."
+                            text: root.details.about || root.details.description || Legacy.Tr.phrase("Chưa có giới thiệu cho dự án này.")
                             textFormat: TextEdit.PlainText
                             readOnly: true
                             selectByMouse: true
@@ -230,7 +230,7 @@ Controls.Popup {
                 Text {
                     objectName: "projectLoading"
                     visible: root.details.loading === true
-                    text: "Đang lấy giới thiệu và các phiên bản…"
+                    text: Legacy.Tr.phrase("Đang lấy giới thiệu và các phiên bản…")
                     color: GlassTheme.muted
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontBody
@@ -248,7 +248,7 @@ Controls.Popup {
                 Button {
                     objectName: "projectRetry"
                     visible: !!root.details.error && !root.details.versions.length
-                    label: "Thử lại"
+                    label: Legacy.Tr.phrase("Thử lại")
                     quiet: true
                     onClicked: projectBridge.reload()
                 }
@@ -269,7 +269,7 @@ Controls.Popup {
                     objectName: "projectPackName"
                     width: parent.width
                     visible: picker.visible && picker.isPack
-                    placeholder: "Tên bản chơi mới (mặc định: " + (root.details.title || "") + ")"
+                    placeholder: Legacy.Tr.phrase("Tên bản chơi mới (mặc định: ") + (root.details.title || "") + ")"
                     enabled: !projectBridge.installing
                 }
                 Text {

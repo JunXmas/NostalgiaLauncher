@@ -192,9 +192,9 @@ Rectangle {
         }
         Text {
             objectName: "instanceStats"
-            visible: root.playtimeText.length > 0
+            visible: Tr.message(root.playtimeText).length > 0
             // Ngắn để vừa thẻ 230 px: ⏱ giờ chơi · ▶ số lần chạy · 🌍 thế giới · ⚙ mod.
-            text: "⏱ " + root.playtimeText
+            text: "⏱ " + Tr.message(root.playtimeText)
                   + (root.launchCount > 0 ? "  ·  ▶ " + root.launchCount : "")
                   + "  ·  🌍 " + root.worldCount + "  ·  ⚙ " + root.modCount
             width: parent.width; elide: Text.ElideRight

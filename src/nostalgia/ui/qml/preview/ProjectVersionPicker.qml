@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Column {
     id: root
@@ -82,7 +83,7 @@ Column {
     onVersionIdChanged: Qt.callLater(root.reconcile)
     onPinnedInstanceIdChanged: Qt.callLater(root.reset)
     Text {
-        text: "Phiên bản cài đặt"
+        text: Legacy.Tr.phrase("Phiên bản cài đặt")
         color: GlassTheme.text
         font.family: GlassTheme.font
         font.pixelSize: GlassTheme.fontSubheading
@@ -103,7 +104,7 @@ Column {
             Select {
                 objectName: "projectGameVersion"
                 menuBackdrop: root.menuBackdrop
-                searchPlaceholder: "Tìm Minecraft…"
+                searchPlaceholder: Legacy.Tr.phrase("Tìm Minecraft…")
                 width: parent.width
                 model: root.gameChoices
                 currentIndex: Math.max(0, root.gameChoices.indexOf(root.gameVersion))
@@ -117,7 +118,7 @@ Column {
             width: (parent.width - 12) * 0.66
             spacing: 7
             Text {
-                text: "Bản phát hành"
+                text: Legacy.Tr.phrase("Bản phát hành")
                 color: GlassTheme.muted
                 font.pixelSize: GlassTheme.fontLabel
                 font.family: GlassTheme.font
@@ -125,7 +126,7 @@ Column {
             Select {
                 objectName: "projectRelease"
                 menuBackdrop: root.menuBackdrop
-                searchPlaceholder: "Tìm bản phát hành…"
+                searchPlaceholder: Legacy.Tr.phrase("Tìm bản phát hành…")
                 width: parent.width
                 model: root.releases.map(function (release) {
                     return release.number + "  ·  " + release.type + (release.loaders.length && (root.details.contentKind === "mod" || root.isPack) ? "  ·  " + release.loaders.join(" / ") : "");
@@ -145,7 +146,7 @@ Column {
         spacing: 7
         visible: !root.isPack
         Text {
-            text: "Cài vào bản chơi"
+            text: Legacy.Tr.phrase("Cài vào bản chơi")
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontLabel
             font.family: GlassTheme.font
@@ -157,7 +158,7 @@ Column {
             model: root.targets.map(function (target) {
                 return root.targetLabel(target);
             })
-            displayText: root.targets.length ? currentText : "Chưa có bản chơi tương thích"
+            displayText: root.targets.length ? currentText : Legacy.Tr.phrase("Chưa có bản chơi tương thích")
             currentIndex: Math.max(0, root.targets.findIndex(function (target) {
                 return target.instanceId === root.instanceId;
             }))
@@ -171,7 +172,7 @@ Column {
         objectName: "projectCompatibilityNote"
         width: parent.width
         visible: !!root.chosen || !!root.pinnedInstanceId
-        text: root.pinnedInstanceId ? (root.canInstall ? "Cài vào bản chơi đang quản lý. Minecraft và loader được giữ cố định." : "Không có bản phát hành phù hợp với bản chơi này. Hãy thử dự án khác.") : !root.chosen ? "" : root.isPack ? "Tạo bản chơi mới với Minecraft và loader do modpack quy định." : root.targets.length ? "Chỉ hiện bản chơi khớp phiên bản Minecraft" + (root.details.contentKind === "mod" ? " và mod loader." : ".") : "Bạn cần một bản chơi Minecraft " + root.gameVersion + (root.details.contentKind === "mod" ? " với " + root.chosen.loaders.join(" / ") : "") + " để cài bản này."
+        text: root.pinnedInstanceId ? (root.canInstall ? Legacy.Tr.phrase("Cài vào bản chơi đang quản lý. Minecraft và loader được giữ cố định.") : Legacy.Tr.phrase("Không có bản phát hành phù hợp với bản chơi này. Hãy thử dự án khác.")) : !root.chosen ? "" : root.isPack ? Legacy.Tr.phrase("Tạo bản chơi mới với Minecraft và loader do modpack quy định.") : root.targets.length ? Legacy.Tr.phrase("Chỉ hiện bản chơi khớp phiên bản Minecraft") + (root.details.contentKind === "mod" ? Legacy.Tr.phrase(" và mod loader.") : ".") : Legacy.Tr.phrase("Bạn cần một bản chơi Minecraft ") + root.gameVersion + (root.details.contentKind === "mod" ? Legacy.Tr.phrase(" với ") + root.chosen.loaders.join(" / ") : "") + Legacy.Tr.phrase(" để cài bản này.")
         color: GlassTheme.muted
         font.family: GlassTheme.font
         font.pixelSize: GlassTheme.fontLabel
@@ -181,7 +182,7 @@ Column {
     Button {
         objectName: "projectCreateCompatible"
         visible: !!root.chosen && !root.isPack && root.targets.length === 0 && !root.pinnedInstanceId
-        label: "Tạo bản chơi phù hợp  ↗"
+        label: Legacy.Tr.phrase("Tạo bản chơi phù hợp  ↗")
         quiet: true
         clickable: !projectBridge.installing
         onClicked: root.createRequested(root.gameVersion, root.details.contentKind === "mod" ? root.chosen.loaders[0] : "vanilla")

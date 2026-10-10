@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 Item {
     id: root
     property var project: ({})
@@ -24,7 +25,7 @@ Item {
             }
         }
         PaymentText { width: parent.width; y: 62 * GlassTheme.scale; text: root.project.description || ""; color: GlassTheme.muted; maximumLineCount: 3; elide: Text.ElideRight; font.pixelSize: GlassTheme.fontCaption }
-        Button { objectName: "serverProject-" + root.project.project_id; anchors.bottom: parent.bottom; label: "Chọn phiên bản"; clickable: root.clickable; onClicked: root.chosen() }
+        Button { objectName: "serverProject-" + root.project.project_id; anchors.bottom: parent.bottom; label: Legacy.Tr.phrase("Chọn phiên bản"); clickable: root.clickable; onClicked: root.chosen() }
     }
     HoverHandler { id: hover }
 }

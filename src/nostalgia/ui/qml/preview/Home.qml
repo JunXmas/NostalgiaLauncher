@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Item {
     id: root
@@ -46,13 +47,13 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 8
                     Text {
-                        text: "Hôm nay, mình chơi gì?"
+                        text: Legacy.Tr.phrase("Hôm nay, mình chơi gì?")
                         color: GlassTheme.muted
                         font.family: GlassTheme.font
                         font.pixelSize: GlassTheme.fontBody
                     }
                     Text {
-                        text: "Chào " + (bridge.activePlayerName || "bạn") + "."
+                        text: Legacy.Tr.phrase("Chào ") + (bridge.activePlayerName || Legacy.Tr.phrase("bạn")) + "."
                         color: GlassTheme.text
                         font.family: GlassTheme.displayFont
                         font.pixelSize: GlassTheme.fontPage
@@ -73,7 +74,7 @@ Item {
                 height: 34
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Bản chơi của bạn"
+                    text: Legacy.Tr.phrase("Bản chơi của bạn")
                     color: GlassTheme.text
                     font.family: GlassTheme.font
                     font.pixelSize: GlassTheme.fontSection
@@ -82,7 +83,7 @@ Item {
                 Button {
                     anchors.right: parent.right
                     height: 34
-                    label: "Xem tất cả  →"
+                    label: Legacy.Tr.phrase("Xem tất cả  →")
                     quiet: true
                     onClicked: root.navigate(1)
                 }
@@ -104,7 +105,7 @@ Item {
             }
             Text {
                 visible: !root.instances.length
-                text: "Bản chơi bạn tạo sẽ xuất hiện tại đây."
+                text: Legacy.Tr.phrase("Bản chơi bạn tạo sẽ xuất hiện tại đây.")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontBody

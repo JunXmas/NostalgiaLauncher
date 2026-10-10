@@ -35,7 +35,7 @@ Item {
                     Preview.Button {
                         objectName: "previewCape-" + modelData.capeId
                         width: parent.width; height: 32
-                        label: root.draft.capeId === modelData.capeId ? "Đang xem trước" : "Thử cape"
+                        label: root.draft.capeId === modelData.capeId ? Tr.phrase("Đang xem trước") : Tr.phrase("Thử cape")
                         selected: root.draft.capeId === modelData.capeId
                         clickable: !skinEditor.busy && !!modelData.textureFile
                         onClicked: skinEditor.selectCape(modelData.capeId)
@@ -46,7 +46,7 @@ Item {
                 HoverHandler { id: hover }
             }
         }
-        Preview.Button { objectName: "previewNoCape"; visible: root.microsoft && root.capes.length > 0; label: "Không mặc cape"; selected: root.draft.capeId === ""; clickable: !skinEditor.busy; onClicked: skinEditor.selectCape("") }
+        Preview.Button { objectName: "previewNoCape"; visible: root.microsoft && root.capes.length > 0; label: Tr.phrase("Không mặc cape"); selected: root.draft.capeId === ""; clickable: !skinEditor.busy; onClicked: skinEditor.selectCape("") }
         Preview.Glass {
             width: 156 * Theme.textScale; height: 220 * Theme.textScale; padding: 12
             visible: !root.microsoft && !!root.shown.capeFile
@@ -56,7 +56,7 @@ Item {
     Preview.PaymentText {
         id: notice; anchors.top: grid.bottom; anchors.topMargin: 12; width: parent.width
         visible: root.capes.length === 0 && !root.shown.capeFile
-        text: capeBridge.busy ? "Đang tải cape…" : "Chưa có áo choàng."
+        text: capeBridge.busy ? Tr.phrase("Đang tải cape…") : Tr.phrase("Chưa có áo choàng.")
         color: Theme.textMuted
     }
 }

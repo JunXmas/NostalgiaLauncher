@@ -21,11 +21,11 @@ Controls.Popup {
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     contentItem: Item {
         Column { id: header; width: parent.width - 46; spacing: 8
-            PaymentText { width: parent.width; text: root.ready ? serverBridge.selected.display_name : "Đang đọc server…"; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont; elide: Text.ElideRight; maximumLineCount: 1 }
-            PaymentText { width: parent.width; text: root.ready ? serverBridge.selected.engine_title + " · Minecraft " + serverBridge.selected.game_version + (root.running ? "  ·  ● Đang chạy" : "  ·  ○ Đã dừng") : ""; color: GlassTheme.muted }
+            PaymentText { width: parent.width; text: root.ready ? serverBridge.selected.display_name : Legacy.Tr.phrase("Đang đọc server…"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont; elide: Text.ElideRight; maximumLineCount: 1 }
+            PaymentText { width: parent.width; text: root.ready ? serverBridge.selected.engine_title + " · Minecraft " + serverBridge.selected.game_version + (root.running ? Legacy.Tr.phrase("  ·  ● Đang chạy") : Legacy.Tr.phrase("  ·  ○ Đã dừng")) : ""; color: GlassTheme.muted }
         }
-        Button { anchors.right: parent.right; width: 38; label: "×"; quiet: true; Accessible.name: "Đóng quản lý server"; onClicked: root.close() }
-        MotionTabs { id: tabs; anchors.top: header.bottom; anchors.topMargin: 18; width: parent.width; labels: ["Cấu hình", "Nội dung", "Console", "Nâng cao"]; currentIndex: root.section; namePrefix: "serverSection-"; onSelected: function(index) { root.section = index; } }
+        Button { anchors.right: parent.right; width: 38; label: "×"; quiet: true; Accessible.name: Legacy.Tr.phrase("Đóng quản lý server"); onClicked: root.close() }
+        MotionTabs { id: tabs; anchors.top: header.bottom; anchors.topMargin: 18; width: parent.width; labels: [Legacy.Tr.phrase("Cấu hình"), Legacy.Tr.phrase("Nội dung"), "Console", Legacy.Tr.phrase("Nâng cao")]; currentIndex: root.section; namePrefix: "serverSection-"; onSelected: function(index) { root.section = index; } }
         Item {
             id: body
             NumberAnimation { id: paneEntrance; target: body; property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal }
@@ -37,10 +37,10 @@ Controls.Popup {
             ServerConsole { anchors.fill: parent; visible: root.section === 2; running: root.running && root.ready }
             ServerAdvanced { anchors.fill: parent; visible: root.section === 3; writable: root.writable; serverId: root.serverId; onTrashRequested: root.close() }
         }
-        Button { anchors.left: parent.left; anchors.bottom: parent.bottom; objectName: "serverDeleteFromManager"; label: "Xoá server"; danger: true; quiet: true; clickable: root.writable; onClicked: { var serverId = root.serverId; confirmDialog.ask("Chuyển server vào thùng rác?", "Thế giới, plugin và mod được giữ trong servers/.trash.", function() { root.close(); serverBridge.trash(serverId); }); } }
+        Button { anchors.left: parent.left; anchors.bottom: parent.bottom; objectName: "serverDeleteFromManager"; label: Legacy.Tr.phrase("Xoá server"); danger: true; quiet: true; clickable: root.writable; onClicked: { var serverId = root.serverId; confirmDialog.ask(Legacy.Tr.phrase("Chuyển server vào thùng rác?"), Legacy.Tr.phrase("Thế giới, plugin và mod được giữ trong servers/.trash."), function() { root.close(); serverBridge.trash(serverId); }); } }
         Row { id: footer; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 10
-            Button { label: "Mở thư mục"; quiet: true; clickable: root.ready; onClicked: serverBridge.openFolder(root.serverId) }
-            Button { objectName: "serverSettingsSave"; visible: root.section === 0; label: "Lưu cấu hình"; primary: true; clickable: root.writable; onClicked: settings.save() }
+            Button { label: Legacy.Tr.phrase("Mở thư mục"); quiet: true; clickable: root.ready; onClicked: serverBridge.openFolder(root.serverId) }
+            Button { objectName: "serverSettingsSave"; visible: root.section === 0; label: Legacy.Tr.phrase("Lưu cấu hình"); primary: true; clickable: root.writable; onClicked: settings.save() }
         }
     }
 }

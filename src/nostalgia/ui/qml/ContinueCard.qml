@@ -19,7 +19,7 @@ Panel {
     Column {
         anchors.fill: parent
         spacing: 5
-        Text { text: "THẾ GIỚI"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2 }
+        Text { text: Tr.phrase("THẾ GIỚI"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2 }
         Text {
             objectName: "continueEmpty"
             visible: root.worlds.length === 0
@@ -33,14 +33,14 @@ Panel {
                 objectName: "continueRow"
                 width: parent.width
                 worldName: modelData.worldName
-                detail: modelData.instanceLabel + Tr.phrase("  ·  chơi ") + modelData.lastPlayedText
+                detail: modelData.instanceLabel + Tr.phrase("  ·  chơi ") + Tr.message(modelData.lastPlayedText)
                 clickable: root.playable
                 onChosen: root.worldChosen(modelData.instanceId, modelData.worldFolder)
             }
         }
         Text {
             topPadding: 6
-            text: "SERVER"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2
+            text: Tr.phrase("SERVER"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 1.2
         }
         Text {
             objectName: "continueServerEmpty"

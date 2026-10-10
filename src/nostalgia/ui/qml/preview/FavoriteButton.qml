@@ -1,10 +1,11 @@
 import QtQuick
+import "../" as Legacy
 Button {
     id: root
     property bool favorite: false
     emphasized: favorite
     label: favorite ? "★" : "☆"; quiet: true
-    Accessible.name: favorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"
+    Accessible.name: favorite ? Legacy.Tr.phrase("Bỏ yêu thích") : Legacy.Tr.phrase("Thêm vào yêu thích")
     onFavoriteChanged: { if (!GlassTheme.reducedMotion && visible) pop.restart(); }
     SequentialAnimation {
         id: pop

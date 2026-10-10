@@ -9,14 +9,14 @@ Grid {
     Repeater {
         model: [
             {
-                title: "Một thế giới khác để khám phá",
-                description: "Modpack, shader và tài nguyên cho lần chơi tiếp theo.",
+                title: Legacy.Tr.phrase("Một thế giới khác để khám phá"),
+                description: Legacy.Tr.phrase("Modpack, shader và tài nguyên cho lần chơi tiếp theo."),
                 block: "bookshelf",
                 page: 2
             },
             {
-                title: "Có bạn, vui hơn một chút",
-                description: "Mở Chơi chung và tiếp tục hành trình cùng bạn bè.",
+                title: Legacy.Tr.phrase("Có bạn, vui hơn một chút"),
+                description: Legacy.Tr.phrase("Mở Chơi chung và tiếp tục hành trình cùng bạn bè."),
                 block: "command",
                 page: 4
             }

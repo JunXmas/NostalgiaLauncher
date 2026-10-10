@@ -38,7 +38,7 @@ Controls.Popup {
             PaymentText { width: parent.width; text: root.description; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             GuideButton { topicId: root.guideTopic; visible: !!root.guideTopic }
         }
-        Button { id: closeButton; anchors.right: parent.right; label: "×"; width: 36; quiet: true; Accessible.name: "Đóng " + root.title; clickable: !root.busy; onClicked: root.close() }
+        Button { id: closeButton; anchors.right: parent.right; label: "×"; width: 36; quiet: true; Accessible.name: Legacy.Tr.phrase("Đóng ") + root.title; clickable: !root.busy; onClicked: root.close() }
         Item {
             id: bodyArea
             anchors { top: heading.bottom; topMargin: 20; left: parent.left; right: parent.right; bottom: footerArea.top; bottomMargin: 18 }

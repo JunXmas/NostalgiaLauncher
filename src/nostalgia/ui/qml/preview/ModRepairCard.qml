@@ -32,20 +32,20 @@ Item {
                 Column {
                     width: parent.width - 58; spacing: 4
                     PaymentText { width: parent.width; text: root.proposal.name; font.pixelSize: GlassTheme.fontHeading; font.weight: Font.DemiBold; textFormat: Text.PlainText }
-                    PaymentText { width: parent.width; text: root.proposal.currentVersion + "  →  " + root.proposal.version; color: GlassTheme.accent; textFormat: Text.PlainText }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase(root.proposal.currentVersion) + "  →  " + Legacy.Tr.phrase(root.proposal.version); color: GlassTheme.accent; textFormat: Text.PlainText }
                 }
             }
             PaymentText { width: parent.width; text: "Minecraft " + root.proposal.minecraft + " · " + root.proposal.loader; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote; textFormat: Text.PlainText }
-            PaymentText { width: parent.width; text: root.proposal.reason; textFormat: Text.PlainText }
-            PaymentText { width: parent.width; text: root.proposal.downloads > 1 ? "Bao gồm " + root.proposal.downloads + " mod và phụ thuộc. Tải, kiểm hash, sao lưu trước khi thay." : "Kiểm hash và lưu bản trước để hoàn tác. Giữ nguyên worlds."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+            PaymentText { width: parent.width; text: Legacy.Tr.message(root.proposal.reason); textFormat: Text.PlainText }
+            PaymentText { width: parent.width; text: root.proposal.downloads > 1 ? Legacy.Tr.phrase("Bao gồm ") + root.proposal.downloads + Legacy.Tr.phrase(" mod và phụ thuộc. Tải, kiểm hash, sao lưu trước khi thay.") : Legacy.Tr.phrase("Kiểm hash và lưu bản trước để hoàn tác. Giữ nguyên worlds."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             Button {
                 objectName: "replaceMod-" + root.proposal.groupId
-                label: root.proposal.isReplacement ? "Replace  ↓" : "Tắt bản trùng/xung đột"
+                label: root.proposal.isReplacement ? Legacy.Tr.phrase("Replace  ↓") : Legacy.Tr.phrase("Tắt bản trùng/xung đột")
                 primary: true
                 clickable: root.proposal.canReplace && !modRepairBridge.busy && !bridge.gameRunning && !bridge.busy && !bridge.storageBusy
                 onClicked: root.replaceRequested(root.proposal.groupId)
             }
-            PaymentText { width: parent.width; visible: !root.proposal.canReplace; text: "Còn phụ thuộc chưa xác minh; xem lý do bên dưới trước khi sửa."; color: GlassTheme.danger; font.pixelSize: GlassTheme.fontNote }
+            PaymentText { width: parent.width; visible: !root.proposal.canReplace; text: Legacy.Tr.phrase("Còn phụ thuộc chưa xác minh; xem lý do bên dưới trước khi sửa."); color: GlassTheme.danger; font.pixelSize: GlassTheme.fontNote }
         }
     }
 }

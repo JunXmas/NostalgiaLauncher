@@ -62,7 +62,7 @@ Item {
                     }
                 }
             }
-            Text { width: parent.width; wrapMode: Text.WordWrap; visible: root.statusMessage.length > 0; text: root.statusMessage; color: Theme.brand; font.pixelSize: Theme.fontBody }
+            Text { width: parent.width; wrapMode: Text.WordWrap; visible: Tr.message(root.statusMessage).length > 0; text: Tr.message(root.statusMessage); color: Theme.brand; font.pixelSize: Theme.fontBody }
             Text { text: storageBridge.busy ? Tr.phrase("Đang xử lý…") : Tr.phrase("Mã bản chơi mới khi khôi phục"); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
             Flow {
                 width: parent.width; spacing: 10

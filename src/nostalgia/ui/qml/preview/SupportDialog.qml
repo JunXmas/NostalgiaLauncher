@@ -81,28 +81,28 @@ Controls.Popup {
             }
             PaymentText {
                 width: parent.width
-                text: "Ít lo lỗi mod.\nNhiều thời gian chơi."
+                text: Legacy.Tr.phrase("Ít lo lỗi mod.\nNhiều thời gian chơi.")
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             PaymentText {
                 width: parent.width
-                text: "Plus giúp bạn tìm nguyên nhân và sửa các lỗi mod được hỗ trợ, đồng thời đóng góp cho Nostalgia phát triển."
+                text: Legacy.Tr.phrase("Plus giúp bạn tìm nguyên nhân và sửa các lỗi mod được hỗ trợ, đồng thời đóng góp cho Nostalgia phát triển.")
                 color: GlassTheme.muted
             }
             Repeater {
                 model: [
                     {
-                        title: "Hiểu rõ nguyên nhân",
-                        description: "Phân tích xung đột và phụ thuộc theo bộ mod của bạn."
+                        title: Legacy.Tr.phrase("Hiểu rõ nguyên nhân"),
+                        description: Legacy.Tr.phrase("Phân tích xung đột và phụ thuộc theo bộ mod của bạn.")
                     },
                     {
-                        title: "Sửa với một phương án rõ ràng",
-                        description: "Xem mod nào sẽ được thêm, đổi hoặc tắt trước khi áp dụng."
+                        title: Legacy.Tr.phrase("Sửa với một phương án rõ ràng"),
+                        description: Legacy.Tr.phrase("Xem mod nào sẽ được thêm, đổi hoặc tắt trước khi áp dụng.")
                     },
                     {
-                        title: "Có thể quay lại",
-                        description: "Sao lưu trước sửa và hoàn tác khi cần."
+                        title: Legacy.Tr.phrase("Có thể quay lại"),
+                        description: Legacy.Tr.phrase("Sao lưu trước sửa và hoàn tác khi cần.")
                     }
                 ]
                 Row {
@@ -132,7 +132,7 @@ Controls.Popup {
             }
             PaymentText {
                 width: parent.width
-                text: "Dự kiến: Free báo xung đột, Plus hỗ trợ sửa. Không bảo đảm sửa được mọi lỗi."
+                text: Legacy.Tr.phrase("Dự kiến: Free báo xung đột, Plus hỗ trợ sửa. Không bảo đảm sửa được mọi lỗi.")
                 color: GlassTheme.muted
                 font.pixelSize: GlassTheme.fontNote
             }
@@ -168,7 +168,7 @@ Controls.Popup {
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
                     width: parent.width
-                    text: root.plusPaused ? "NOSTALGIA PREMIUM · TẠM KHÓA" : root.receiptMode ? "BIÊN NHẬN PREMIUM" : "MUA GÓI & NÂNG CẤP"
+                    text: root.plusPaused ? Legacy.Tr.phrase("NOSTALGIA PREMIUM · TẠM KHÓA") : root.receiptMode ? Legacy.Tr.phrase("BIÊN NHẬN PREMIUM") : Legacy.Tr.phrase("MUA GÓI & NÂNG CẤP")
                     color: GlassTheme.brand
                     font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
@@ -187,7 +187,7 @@ Controls.Popup {
                 width: 40
                 label: "×"
                 quiet: true
-                Accessible.name: "Đóng thanh toán"
+                Accessible.name: Legacy.Tr.phrase("Đóng thanh toán")
                 onClicked: root.close()
             }
         }
@@ -210,7 +210,7 @@ Controls.Popup {
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: footer.stacked ? paymentAction.height + 10 : 0
                 width: Math.min(implicitWidth, parent.width)
-                label: "Ủng hộ tùy tâm  ↗"
+                label: Legacy.Tr.phrase("Ủng hộ tùy tâm  ↗")
                 visible: !root.receiptMode
                 quiet: true
                 onClicked: {
@@ -225,7 +225,7 @@ Controls.Popup {
                 anchors.bottom: parent.bottom
                 width: Math.max(0, parent.width - donation.width - 24)
                 horizontalAlignment: Text.AlignRight
-                text: "Ủng hộ tùy tâm không kích hoạt Plus."
+                text: Legacy.Tr.phrase("Ủng hộ tùy tâm không kích hoạt Plus.")
                 visible: !root.receiptMode && ["offer", "unavailable", "pending"].indexOf(root.details.stage) < 0
                 color: GlassTheme.muted
                 font.pixelSize: GlassTheme.fontCaption
@@ -237,7 +237,7 @@ Controls.Popup {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 visible: !root.plusPaused && (root.receiptMode || ["offer", "unavailable", "pending"].indexOf(root.details.stage) >= 0)
-                label: root.receiptMode ? "Quay lại launcher" : root.details.stage === "pending" ? (paymentBridge.busy ? "Đang kiểm tra…" : "Kiểm tra thanh toán") : (paymentBridge.busy ? (root.details.available ? "Đang tạo đơn…" : "Đang tải gói…") : root.details.error ? "Thử lại" : root.details.available ? (root.details.amount === 0 && root.details.isUpgrade ? "Dùng khoản khấu trừ  →" : root.details.isUpgrade ? "Nâng cấp gói  →" : "Tiếp tục thanh toán  →") : root.details.stage === "unavailable" ? (socialBridge.signingIn ? "Đang chờ Google…" : "Đăng nhập Google") : "Tải thông tin gói")
+                label: root.receiptMode ? Legacy.Tr.phrase("Quay lại launcher") : root.details.stage === "pending" ? (paymentBridge.busy ? Legacy.Tr.phrase("Đang kiểm tra…") : Legacy.Tr.phrase("Kiểm tra thanh toán")) : (paymentBridge.busy ? (root.details.available ? Legacy.Tr.phrase("Đang tạo đơn…") : Legacy.Tr.phrase("Đang tải gói…")) : root.details.error ? Legacy.Tr.phrase("Thử lại") : root.details.available ? (root.details.amount === 0 && root.details.isUpgrade ? Legacy.Tr.phrase("Dùng khoản khấu trừ  →") : root.details.isUpgrade ? Legacy.Tr.phrase("Nâng cấp gói  →") : Legacy.Tr.phrase("Tiếp tục thanh toán  →")) : root.details.stage === "unavailable" ? (socialBridge.signingIn ? Legacy.Tr.phrase("Đang chờ Google…") : Legacy.Tr.phrase("Đăng nhập Google")) : Legacy.Tr.phrase("Tải thông tin gói"))
                 primary: true
                 clickable: root.receiptMode || !paymentBridge.busy && (root.details.stage === "pending" || root.details.available || !!root.details.error || root.details.stage === "offer" || root.details.stage === "unavailable" && socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn)
                 onClicked: {
@@ -278,7 +278,7 @@ Controls.Popup {
                         x: 12
                         y: root.compactLayout ? 8 : 10
                         width: parent.width - 24
-                        text: (root.details.demonstration ? "BẢN XEM TRƯỚC · QR mẫu, không chuyển tiền." : "") + (root.details.error ? (root.details.demonstration ? "\n" : "") + root.details.error : "")
+                        text: (root.details.demonstration ? Legacy.Tr.phrase("BẢN XEM TRƯỚC · QR mẫu, không chuyển tiền.") : "") + (root.details.error ? (root.details.demonstration ? "\n" : "") + root.details.error : "")
                         color: root.details.error ? GlassTheme.danger : "#e6bb68"
                         font.pixelSize: (root.compactLayout ? 10 : 11) * GlassTheme.scale
                     }
@@ -286,7 +286,7 @@ Controls.Popup {
                 Button {
                     objectName: "draftPaymentSimulate"
                     visible: typeof draftReviewController !== "undefined" && draftReviewController !== null && root.details.stage === "pending"
-                    label: "TEST · Mô phỏng thanh toán thành công"
+                    label: Legacy.Tr.phrase("TEST · Mô phỏng thanh toán thành công")
                     clickable: !paymentBridge.busy
                     onClicked: draftReviewController.simulatePaid()
                 }
@@ -320,9 +320,9 @@ Controls.Popup {
                     visible: root.plusPaused
                     Column {
                         id: pausedText; width: parent.width; spacing: 12
-                        PaymentText { width: parent.width; text: "Plus đang tạm khóa"; font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: "Bản thử này tập trung vào tài khoản Google, bạn bè và chat. Thanh toán và các quyền Plus sẽ mở sau."; color: GlassTheme.muted }
-                        PaymentText { width: parent.width; text: "Ủng hộ tùy tâm vẫn có thể sử dụng, nhưng không kích hoạt Plus."; color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Plus đang tạm khóa"); font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bản thử này tập trung vào tài khoản Google, bạn bè và chat. Thanh toán và các quyền Plus sẽ mở sau."); color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Ủng hộ tùy tâm vẫn có thể sử dụng, nhưng không kích hoạt Plus."); color: GlassTheme.muted }
                     }
                 }
             }

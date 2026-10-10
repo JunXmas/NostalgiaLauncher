@@ -1,10 +1,11 @@
 import QtQuick
+import "../" as Legacy
 import "GuideCatalog.js" as Guides
 
 Rectangle {
     id: root
     property string topicId: "start"
-    readonly property var topic: Guides.find(topicId)
+    readonly property var topic: Guides.find(topicId, Legacy.Tr)
     readonly property bool stacked: width < 480 * GlassTheme.scale
     objectName: "guideCard-" + topicId
     radius: 14

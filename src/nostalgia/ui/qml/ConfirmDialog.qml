@@ -67,13 +67,13 @@ Item {
                 spacing: 16
                 Text {
                     width: parent.width; wrapMode: Text.Wrap
-                    text: dialog.title; color: Theme.text
+                    text: Tr.message(dialog.title); color: Theme.text
                     font.family: Theme.sans; font.pixelSize: Theme.fontTitle; font.bold: true
                 }
                 Text {
                     objectName: "confirmMessage"
                     width: parent.width; wrapMode: Text.Wrap
-                    text: dialog.message; color: Theme.textMuted
+                    text: Tr.message(dialog.message); color: Theme.textMuted
                     font.family: Theme.sans; font.pixelSize: Theme.fontBody; lineHeight: 1.3
                 }
                 Flow {

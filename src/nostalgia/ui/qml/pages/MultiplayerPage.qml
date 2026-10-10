@@ -44,7 +44,7 @@ Item {
             id: subtitle
             width: parent.width; wrapMode: Text.WordWrap
             anchors { left: parent.left; top: pageTitle.bottom; topMargin: 6 }
-            text: "Mở LAN, gửi mã và chơi cùng bạn bè khác mạng."
+            text: Tr.phrase("Mở LAN, gửi mã và chơi cùng bạn bè khác mạng.")
             color: Theme.textMuted; font.pixelSize: Theme.fontBody
         }
     }
@@ -52,14 +52,14 @@ Item {
     Rectangle {
         id: failureBar
         anchors { top: header.bottom; left: parent.left; right: parent.right; margins: Theme.gap; topMargin: 4 }
-        height: page.failure ? failureText.implicitHeight + 16 : 0
-        visible: page.failure !== ""
+        height: Tr.message(page.failure) ? failureText.implicitHeight + 16 : 0
+        visible: Tr.message(page.failure) !== ""
         radius: Theme.modern ? 8 : 0; color: "#33ff5555"; border.color: "#80ff5555"
         Text {
             id: failureText
             width: parent.width - 24; wrapMode: Text.WordWrap
             anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-            text: page.failure; color: Theme.text; font.pixelSize: Theme.fontBody
+            text: Tr.message(page.failure); color: Theme.text; font.pixelSize: Theme.fontBody
         }
     }
 
@@ -79,7 +79,7 @@ Item {
             visible: multiplayerBridge.role !== "joined"
             width: panels.width >= 900 && multiplayerBridge.role === "idle" ? (panels.width - Theme.gap) / 2 : panels.width
             height: contentTop + hostContent.height + Theme.pad
-            title: "MỞ PHÒNG"
+            title: Tr.phrase("MỞ PHÒNG")
             readonly property bool hosting: multiplayerBridge.role === "hosting"
             readonly property bool waiting: multiplayerBridge.role === "waiting_world"
 
@@ -155,7 +155,7 @@ Item {
             visible: multiplayerBridge.role === "idle" || multiplayerBridge.role === "joined"
             width: panels.width >= 900 && multiplayerBridge.role === "idle" ? (panels.width - Theme.gap) / 2 : panels.width
             height: contentTop + joinContent.height + Theme.pad
-            title: "VÀO PHÒNG"
+            title: Tr.phrase("VÀO PHÒNG")
             readonly property bool joined: multiplayerBridge.role === "joined"
 
             Column {
@@ -200,7 +200,7 @@ Item {
                 }
                 Column {
                     visible: joinPanel.joined; spacing: 10; width: parent.width
-                    StatusPill { dotColor: Theme.accent; pulsing: true; text: "Đã nối phòng" }
+                    StatusPill { dotColor: Theme.accent; pulsing: true; text: Tr.phrase("Đã nối phòng") }
                     Text {
                         width: parent.width; wrapMode: Text.WordWrap
                         text: Tr.phrase("Cổng cục bộ 127.0.0.1:") + multiplayerBridge.localPort + Tr.phrase(" — chỉ máy này thấy.")
@@ -208,16 +208,16 @@ Item {
                     }
                     Text {
                         width: parent.width; wrapMode: Text.WordWrap
-                        text: "Nếu modpack không hiện mục LAN: Multiplayer → Direct Connection → dán địa chỉ ở trên. Cần cùng Minecraft, loader và bộ mod với host."
+                        text: Tr.phrase("Nếu modpack không hiện mục LAN: Multiplayer → Direct Connection → dán địa chỉ ở trên. Cần cùng Minecraft, loader và bộ mod với host.")
                         color: Theme.textMuted; font.pixelSize: Theme.fontBody
                     }
                     Flow {
                         width: parent.width; spacing: 8
-                        ActionButton { objectName: "copyLocalAddressButton"; primary: false; label: "Chép địa chỉ kết nối"; onClicked: multiplayerBridge.copyLocalAddress() }
+                        ActionButton { objectName: "copyLocalAddressButton"; primary: false; label: Tr.phrase("Chép địa chỉ kết nối"); onClicked: multiplayerBridge.copyLocalAddress() }
                         ActionButton { primary: false; label: Tr.phrase("Rời phòng"); onClicked: { multiplayerBridge.stop(); codeField.clear(); } }
                         ActionButton {
                             visible: typeof roomSyncBridge !== "undefined" && roomSyncBridge.configured
-                            primary: false; label: "Kiểm tra modpack của phòng"
+                            primary: false; label: Tr.phrase("Kiểm tra modpack của phòng")
                             clickable: typeof roomSyncBridge !== "undefined" && !roomSyncBridge.busy
                             onClicked: roomSyncBridge.checkRoomPack()
                         }

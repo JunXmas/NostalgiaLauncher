@@ -44,7 +44,7 @@ Rectangle {
         x: selection.x; y: selection.y + selection.height + 3
         width: selection.width; wrapMode: Text.NoWrap; elide: Text.ElideRight
         font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted
-        text: (root.content.added ? "Mới · " : "") + (root.content.enabled === false ? "Đang tắt · " : "") + (root.content.path || "").split("/").pop().replace(/\.disabled$/, "")
+        text: (root.content.added ? Legacy.Tr.phrase("Mới · ") : "") + (root.content.enabled === false ? Legacy.Tr.phrase("Đang tắt · ") : "") + (root.content.path || "").split("/").pop().replace(/\.disabled$/, "")
     }
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     opacity: root.selected ? 1 : 0.7

@@ -66,12 +66,12 @@ Item {
             Text {
                 objectName: "notificationTitle"
                 width: parent.width
-                text: card.shown ? root.current.title : ""
+                text: card.shown ? Tr.message(root.current.title) : ""
                 color: Theme.text; font.pixelSize: Theme.fontBody; font.bold: true; elide: Text.ElideRight
             }
             Text {
                 width: parent.width
-                text: card.shown ? root.current.detail : ""
+                text: card.shown ? (card.eventKind === "crashed" || card.eventKind === "update" ? Tr.message(root.current.detail) : root.current.detail) : ""
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody; elide: Text.ElideRight
             }
         }

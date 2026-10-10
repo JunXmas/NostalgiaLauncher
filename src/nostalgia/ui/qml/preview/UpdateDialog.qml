@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Controls as Controls
 
 Controls.Popup {
@@ -41,14 +42,14 @@ Controls.Popup {
                 width: parent.width; spacing: 16
                 Column {
                     width: parent.width - closeButton.width - 16; spacing: 7
-                    PaymentText { width: parent.width; text: "NOSTALGIA · CHUYẾN PHIÊU LƯU MỚI"; color: GlassTheme.accent; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
-                    PaymentText { width: parent.width; text: root.phase === "failed" ? "Cần thử lại một chút." : root.phase === "upToDate" ? "Bạn đã có bản mới nhất." : "Một khởi đầu mới,\nvẫn là Nostalgia."; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; lineHeight: 1.1 }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("NOSTALGIA · CHUYẾN PHIÊU LƯU MỚI"); color: GlassTheme.accent; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
+                    PaymentText { width: parent.width; text: root.phase === "failed" ? Legacy.Tr.phrase("Cần thử lại một chút.") : root.phase === "upToDate" ? Legacy.Tr.phrase("Bạn đã có bản mới nhất.") : Legacy.Tr.phrase("Một khởi đầu mới,\nvẫn là Nostalgia."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; lineHeight: 1.1 }
                 }
                 Button { id: closeButton; objectName: "updateDialogClose"; label: "×"; quiet: true; width: 36; onClicked: root.close() }
             }
             Flow {
                 width: parent.width; spacing: 10
-                PaymentText { text: "Đang dùng  " + settingsBridge.launcherVersion; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+                PaymentText { text: Legacy.Tr.phrase("Đang dùng  ") + settingsBridge.launcherVersion; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
                 PaymentText { text: root.latestVersion ? "→  " + root.latestVersion : ""; color: GlassTheme.accent; font.pixelSize: GlassTheme.fontNote; font.weight: Font.DemiBold }
             }
             Rectangle { width: parent.width; height: 1; color: GlassTheme.stroke }
@@ -65,7 +66,7 @@ Controls.Popup {
                 id: changelog
                 objectName: "updateChangelog"
                 width: notes.width - 12
-                text: root.notesText ? root.notesText.split("<details>")[0] : "Mỗi bản mới mang theo những sửa lỗi và cải thiện trải nghiệm. Kiểm tra phiên bản để xem có gì mới."
+                text: root.notesText ? root.notesText.split("<details>")[0] : Legacy.Tr.phrase("Mỗi bản mới mang theo những sửa lỗi và cải thiện trải nghiệm. Kiểm tra phiên bản để xem có gì mới.")
                 textFormat: Text.MarkdownText; wrapMode: Text.WordWrap
                 font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontBody
                 color: GlassTheme.text; linkColor: GlassTheme.accent; lineHeight: 1.35
@@ -77,17 +78,17 @@ Controls.Popup {
             anchors.bottom: parent.bottom
             width: parent.width
             spacing: 12
-            PaymentText { objectName: "modernUpdateMessage"; width: parent.width; text: root.statusMessage; color: root.phase === "failed" ? GlassTheme.danger : GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+            PaymentText { objectName: "modernUpdateMessage"; width: parent.width; text: Legacy.Tr.message(root.statusMessage); color: root.phase === "failed" ? GlassTheme.danger : GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             Rectangle {
                 visible: root.phase === "downloading"
                 width: parent.width; height: 5; radius: 3; color: GlassTheme.stroke
                 Rectangle { width: parent.width * Math.max(0,Math.min(1,root.fraction)); height: parent.height; radius: 3; color: GlassTheme.accent; Behavior on width { NumberAnimation { duration: GlassTheme.quick } } }
             }
-            PaymentText { width: parent.width; text: root.selfUpdate ? "Gói được kiểm SHA-256 trước khi cài. Launcher sẽ mở lại sau khi cập nhật." : "Tải bộ cài phù hợp trên trang phát hành để cập nhật phiên bản này."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+            PaymentText { width: parent.width; text: root.selfUpdate ? Legacy.Tr.phrase("Gói được kiểm SHA-256 trước khi cài. Launcher sẽ mở lại sau khi cập nhật.") : Legacy.Tr.phrase("Tải bộ cài phù hợp trên trang phát hành để cập nhật phiên bản này."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             Flow {
                 width: parent.width; spacing: 10
-                Button { objectName: "modernUpdateNow"; primary: true; label: root.phase === "downloading" ? "Đang tải · " + Math.round(root.fraction * 100) + "%" : root.phase === "applying" ? "Đang cài…" : root.phase === "ready" ? "Cài & mở lại" : root.phase === "available" ? (root.selfUpdate ? "Cập nhật ngay →" : "Tải bản mới ↗") : "Kiểm tra bản mới"; clickable: !root.working; onClicked: { if (root.phase === "available") updateBridge.updateNow(); else if (root.phase === "ready") updateBridge.applyAndRestart(); else updateBridge.checkNow(); } }
-                Button { label: "Để sau"; quiet: true; onClicked: root.close() }
+                Button { objectName: "modernUpdateNow"; primary: true; label: root.phase === "downloading" ? Legacy.Tr.phrase("Đang tải · ") + Math.round(root.fraction * 100) + "%" : root.phase === "applying" ? Legacy.Tr.phrase("Đang cài…") : root.phase === "ready" ? Legacy.Tr.phrase("Cài & mở lại") : root.phase === "available" ? (root.selfUpdate ? Legacy.Tr.phrase("Cập nhật ngay →") : Legacy.Tr.phrase("Tải bản mới ↗")) : Legacy.Tr.phrase("Kiểm tra bản mới"); clickable: !root.working; onClicked: { if (root.phase === "available") updateBridge.updateNow(); else if (root.phase === "ready") updateBridge.applyAndRestart(); else updateBridge.checkNow(); } }
+                Button { label: Legacy.Tr.phrase("Để sau"); quiet: true; onClicked: root.close() }
             }
         }
     }

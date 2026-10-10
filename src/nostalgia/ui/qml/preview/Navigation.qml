@@ -10,33 +10,33 @@ Glass {
     radius: 22
     readonly property var entries: [
         {
-            label: "Trang chủ",
+            label: Legacy.Tr.phrase("Trang chủ"),
             block: "grass",
             index: 0
         },
         {
-            label: "Bản chơi",
+            label: Legacy.Tr.phrase("Bản chơi"),
             block: "crafting",
             index: 1
         },
         {
-            label: "Thư viện",
+            label: Legacy.Tr.phrase("Thư viện"),
             block: "bookshelf",
             index: 2
         },
-        { label: "Cosmetic", block: "amethyst", index: 7 },
+        { label: Legacy.Tr.phrase("Cosmetic"), block: "amethyst", index: 7 },
         {
-            label: "Tài khoản",
+            label: Legacy.Tr.phrase("Tài khoản"),
             block: "diamond",
             index: 3
         },
         {
-            label: "Bạn bè",
+            label: Legacy.Tr.phrase("Bạn bè"),
             block: "command",
             index: 4
         },
         {
-            label: "Nhật ký",
+            label: Legacy.Tr.phrase("Nhật ký"),
             block: "barrel",
             index: 5
         }
@@ -91,7 +91,7 @@ Glass {
             Text {
                 x: 12
                 height: 26
-                text: "KHÔNG GIAN CỦA BẠN"
+                text: Legacy.Tr.phrase("KHÔNG GIAN CỦA BẠN")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontMicro
@@ -178,7 +178,7 @@ Glass {
             Button {
                 id: settingsAction
                 anchors.left: parent.left; anchors.leftMargin: 36
-                width: parent.width - 36; label: "Cài đặt"; quiet: true
+                width: parent.width - 36; label: Legacy.Tr.phrase("Cài đặt"); quiet: true
                 onClicked: root.navigate(6)
             }
         }
@@ -202,7 +202,7 @@ Glass {
                 anchors.leftMargin: 36
                 width: parent.width - 36
                 height: parent.height
-                Accessible.name: "Premium · Mua gói và nâng cấp"
+                Accessible.name: Legacy.Tr.phrase("Premium · Mua gói và nâng cấp")
                 quiet: true
                 objectName: "openSupport"
                 HoverHandler { id: donateHover }
@@ -220,7 +220,7 @@ Glass {
                         maximumLineCount: 1; elide: Text.ElideRight
                     }
                     PaymentText {
-                        width: parent.width; text: "Mua gói & nâng cấp"
+                        width: parent.width; text: Legacy.Tr.phrase("Mua gói & nâng cấp")
                         horizontalAlignment: Text.AlignHCenter
                         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
                         maximumLineCount: 1; elide: Text.ElideRight
@@ -230,7 +230,7 @@ Glass {
         }
         Button {
             width: parent.width
-            label: "Cộng đồng  ↗"
+            label: Legacy.Tr.phrase("Cộng đồng  ↗")
             quiet: true
             onClicked: settingsBridge.openCommunityPage()
         }
@@ -271,7 +271,7 @@ Glass {
             }
         }
         SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
-        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; chevron: true; Accessible.name: "Menu tài khoản Google và Minecraft"; onClicked: accountMenu.open() }
+        Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; chevron: true; Accessible.name: Legacy.Tr.phrase("Menu tài khoản Google và Minecraft"); onClicked: accountMenu.open() }
         Column {
             x: 55
             anchors.verticalCenter: parent.verticalCenter
@@ -279,7 +279,7 @@ Glass {
             spacing: 4
             Text {
                 width: parent.width
-                text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || "Khách"
+                text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || Legacy.Tr.phrase("Khách")
                 color: GlassTheme.text
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontBody
@@ -288,7 +288,7 @@ Glass {
             }
             Text {
                 width: parent.width
-                text: typeof draftReviewController !== "undefined" && draftReviewController !== null && socialBridge.signedIn ? "Local TEST · " + socialBridge.account.planName : socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + socialBridge.account.planName : "Google · Miễn phí") : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : "Ngoại tuyến") : "Chưa đăng nhập"
+                text: typeof draftReviewController !== "undefined" && draftReviewController !== null && socialBridge.signedIn ? "Local TEST · " + socialBridge.account.planName : socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + socialBridge.account.planName : Legacy.Tr.phrase("Google · Miễn phí")) : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : Legacy.Tr.phrase("Ngoại tuyến")) : Legacy.Tr.phrase("Chưa đăng nhập")
                 elide: Text.ElideRight
                 color: GlassTheme.muted
                 font.family: GlassTheme.font

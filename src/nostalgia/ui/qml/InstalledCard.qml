@@ -80,7 +80,7 @@ Rectangle {
         spacing: 10
         Toggle {
             objectName: "installedToggle-" + installedContent.fileName
-            accessibleLabel: "Bật " + (installedContent.label || installedContent.fileName)
+            accessibleLabel: Tr.phrase("Bật ") + (installedContent.label || installedContent.fileName)
             visible: root.toggleable
             anchors.right: parent.right
             checked: !!installedContent.enabled
@@ -93,7 +93,7 @@ Rectangle {
             Text {
                 id: removeText
                 anchors.centerIn: parent
-                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : Theme.modern ? "Gỡ" : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
+                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : Theme.modern ? Tr.phrase("Gỡ") : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
                 color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
             }
             HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }

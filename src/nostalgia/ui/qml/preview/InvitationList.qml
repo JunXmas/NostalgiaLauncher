@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Column {
     id: root
@@ -21,18 +22,18 @@ Column {
                     Column {
                         width: grid.columns === 2 ? grid.width - actions.width - 18 : grid.width
                         spacing: 8
-                        PaymentText { width: parent.width; text: modelData.name + " mời bạn chơi"; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: modelData.world + " · Hiệu lực 5 phút"; color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: modelData.name + Legacy.Tr.phrase(" mời bạn chơi"); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: modelData.world + Legacy.Tr.phrase(" · Hiệu lực 5 phút"); color: GlassTheme.muted }
                     }
                     Flow {
                         id: actions
                         width: grid.columns === 2 ? 230 * GlassTheme.scale : grid.width
                         spacing: 10
-                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: "Vào phòng"; primary: true; clickable: !socialBridge.busy && !multiplayerBridge.active; onClicked: socialBridge.acceptInvite(modelData.inviteId) }
-                        Button { label: "Từ chối"; quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.declineInvite(modelData.inviteId) }
+                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Vào phòng"); primary: true; clickable: !socialBridge.busy && !multiplayerBridge.active; onClicked: socialBridge.acceptInvite(modelData.inviteId) }
+                        Button { label: Legacy.Tr.phrase("Từ chối"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.declineInvite(modelData.inviteId) }
                     }
                 }
-                PaymentText { visible: multiplayerBridge.active; width: parent.width; text: "Rời phòng hiện tại để nhận lời mời này."; color: GlassTheme.muted }
+                PaymentText { visible: multiplayerBridge.active; width: parent.width; text: Legacy.Tr.phrase("Rời phòng hiện tại để nhận lời mời này."); color: GlassTheme.muted }
             }
         }
     }

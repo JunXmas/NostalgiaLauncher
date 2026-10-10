@@ -98,9 +98,9 @@ Item {
                 TextField { id: emailField; objectName: "elyEmailField"; width: parent.width; placeholder: "ban@example.com" }
                 Text { text: Tr.phrase("MẬT KHẨU"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: passwordField; objectName: "elyPasswordField"; width: parent.width; placeholder: "••••••••"; echoMode: TextInput.Password; onAccepted: dialog.submitEly() }
-                Text { visible: dialog.needsTotp; text: "MÃ 2FA"; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
+                Text { visible: dialog.needsTotp; text: Tr.phrase("MÃ 2FA"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: totpField; visible: dialog.needsTotp; width: 160; placeholder: "123456"; onAccepted: dialog.submitEly() }
-                Text { visible: dialog.failure !== ""; width: parent.width; wrapMode: Text.WordWrap; text: dialog.failure; color: Theme.danger; font.pixelSize: Theme.fontBody }
+                Text { visible: Tr.message(dialog.failure) !== ""; width: parent.width; wrapMode: Text.WordWrap; text: Tr.message(dialog.failure); color: Theme.danger; font.pixelSize: Theme.fontBody }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
                     text: Tr.phrase("Chưa có tài khoản? Bấm \"Đăng ký ↗\" để mở ely.by. Mật khẩu chỉ gửi tới Ely.by, launcher không lưu.")
@@ -129,7 +129,7 @@ Item {
             Column {
                 visible: dialog.mode === "offline"; width: parent.width; spacing: 10
                 Text { text: Tr.phrase("TÊN NGOẠI TUYẾN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
-                TextField { id: nameField; width: parent.width; placeholder: "vd. Steve"; onAccepted: dialog.submitOffline() }
+                TextField { id: nameField; width: parent.width; placeholder: Tr.phrase("vd. Steve"); onAccepted: dialog.submitOffline() }
                 Flow {
                     width: parent.width; spacing: 8
                     ActionButton { label: Tr.phrase("Thêm"); clickable: nameField.text.trim() !== ""; onClicked: dialog.submitOffline() }

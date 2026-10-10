@@ -61,7 +61,7 @@ Item {
         id: listPanel
         anchors { top: header.bottom; left: parent.left; right: rightColumn.left; margins: Theme.gap; topMargin: 6 }
         height: Math.min(parent.height * 0.52, 90 + page.allAccounts.length * 62)
-        title: page.allAccounts.length + " TÀI KHOẢN"
+        title: page.allAccounts.length + Tr.phrase(" TÀI KHOẢN")
 
         ListView {
             id: accountList
@@ -98,7 +98,7 @@ Item {
                                 width: kindText.width + 12; height: 16; radius: Theme.modern ? 8 : 0
                                 color: modelData.accountKind === "microsoft" ? "#1d4d13" : Theme.surfaceHigh
                                 border.color: Theme.border
-                                Text { id: kindText; anchors.centerIn: parent; text: modelData.kindLabel
+                                Text { id: kindText; anchors.centerIn: parent; text: Tr.message(modelData.kindLabel)
                                        color: Theme.text; font.pixelSize: Theme.fontLabel; font.bold: true; font.letterSpacing: 0.8 }
                             }
                         }
@@ -216,7 +216,7 @@ Item {
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
                    text: page.hasShown ? page.shown.playerUuid : ""; color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.family: "monospace" }
             Text { anchors.horizontalCenter: parent.horizontalCenter; visible: page.hasShown
-                   text: page.hasShown ? page.shown.kindLabel + (page.shownSlim ? "  ·  Slim" : "  ·  Wide") : ""; color: Theme.accent; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1 }
+                   text: page.hasShown ? Tr.message(page.shown.kindLabel) + (page.shownSlim ? Tr.phrase("  ·  Slim") : Tr.phrase("  ·  Wide")) : ""; color: Theme.accent; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1 }
         }
     }
 

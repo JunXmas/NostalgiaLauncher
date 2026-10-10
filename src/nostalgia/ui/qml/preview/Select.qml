@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Window
 import QtQuick.Controls as Controls
 
@@ -9,7 +10,7 @@ Controls.ComboBox {
     font.pixelSize: GlassTheme.fontBody
     property string searchText: ""
     property bool consumeChoiceRelease: false
-    property string searchPlaceholder: "Tìm trong danh sách…"
+    property string searchPlaceholder: Legacy.Tr.phrase("Tìm trong danh sách…")
     property Item menuBackdrop: GlassTheme.backdrop
     readonly property bool searchable: count > 8
     readonly property var filteredChoices: {
@@ -172,7 +173,7 @@ Controls.ComboBox {
             Text {
                 anchors.centerIn: choices
                 visible: !choices.count
-                text: "Không tìm thấy phiên bản"
+                text: Legacy.Tr.phrase("Không tìm thấy phiên bản")
                 color: GlassTheme.muted; font: root.font
             }
         }

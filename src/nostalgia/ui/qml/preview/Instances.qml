@@ -13,7 +13,7 @@ Item {
         return a.favorite !== b.favorite ? (a.favorite ? -1 : 1) : a.label.localeCompare(b.label);
     })
     readonly property var groups: {
-        var r = ["Tất cả nhóm"];
+        var r = [Legacy.Tr.phrase("Tất cả nhóm")];
         bridge.instances.forEach(function (i) {
             if (i.groupName && r.indexOf(i.groupName) < 0)
                 r.push(i.groupName);
@@ -28,14 +28,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
             Text {
-                text: root.serverMode ? "Máy chủ của bạn" : "Bản chơi"
+                text: root.serverMode ? Legacy.Tr.phrase("Máy chủ của bạn") : Legacy.Tr.phrase("Bản chơi")
                 color: GlassTheme.text
                 font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             Text {
-                text: root.serverMode ? "Cùng xây một thế giới. Theo cách của bạn." : bridge.instances.length + " thế giới, theo cách của bạn."
+                text: root.serverMode ? Legacy.Tr.phrase("Cùng xây một thế giới. Theo cách của bạn.") : bridge.instances.length + Legacy.Tr.plural(" thế giới, theo cách của bạn.", bridge.instances.length)
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontBody
@@ -45,7 +45,7 @@ Item {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             objectName: "createModernInstance"
-            label: root.serverMode ? "Tạo server  +" : "Tạo bản chơi  +"
+            label: root.serverMode ? Legacy.Tr.phrase("Tạo server  +") : Legacy.Tr.phrase("Tạo bản chơi  +")
             primary: true
             onClicked: { if (root.serverMode && servers.item) servers.item.openCreate(); else create.openDialog(); }
         }
@@ -54,7 +54,7 @@ Item {
         id: workspaceTabs
         anchors.top: header.bottom
         spacing: 8
-        Button { objectName: "workspaceInstances"; label: "Bản chơi"; selected: !root.serverMode; quiet: true; onClicked: root.serverMode = false }
+        Button { objectName: "workspaceInstances"; label: Legacy.Tr.phrase("Bản chơi"); selected: !root.serverMode; quiet: true; onClicked: root.serverMode = false }
         Button { objectName: "workspaceServers"; label: "Server · Pro+"; selected: root.serverMode; quiet: true; onClicked: root.serverMode = true }
     }
     GuideCard {
@@ -73,7 +73,7 @@ Item {
             objectName: "minimalInstanceSearch"
             width: Math.max(200, Math.min(360, root.width - 405))
             height: 42 * GlassTheme.scale
-            placeholder: "Tìm bản chơi…"
+            placeholder: Legacy.Tr.phrase("Tìm bản chơi…")
         }
         Select {
             width: Math.min(190, root.width * 0.23)
@@ -84,15 +84,15 @@ Item {
         }
         Button {
             objectName: "openImportDialog"
-            label: "Nhập bản chơi"
+            label: Legacy.Tr.phrase("Nhập bản chơi")
             quiet: true
             onClicked: imports.openDialog()
         }
         Button {
             objectName: "openBackupDialog"
-            label: "Xuất modpack"
+            label: Legacy.Tr.phrase("Xuất modpack")
             quiet: true
-            Accessible.name: "Đóng gói modpack thành MRPACK hoặc ZIP"
+            Accessible.name: Legacy.Tr.phrase("Đóng gói modpack thành MRPACK hoặc ZIP")
             onClicked: manager.openDialog()
         }
     }
@@ -124,7 +124,7 @@ Item {
             Text {
                 visible: !root.filtered.length
                 width: grid.width
-                text: bridge.instances.length ? "Không có bản chơi phù hợp." : "Tạo bản chơi đầu tiên của bạn để bắt đầu."
+                text: bridge.instances.length ? Legacy.Tr.phrase("Không có bản chơi phù hợp.") : Legacy.Tr.phrase("Tạo bản chơi đầu tiên của bạn để bắt đầu.")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontSubheading

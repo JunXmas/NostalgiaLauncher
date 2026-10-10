@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Rectangle {
     id: root
@@ -37,10 +38,10 @@ Rectangle {
         anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         visible: !!root.field
-        label: copied ? "Đã chép" : "Chép"
+        label: copied ? Legacy.Tr.phrase("Đã chép") : Legacy.Tr.phrase("Chép")
         property bool copied: false
         quiet: true
-        Accessible.name: "Sao chép " + root.label
+        Accessible.name: Legacy.Tr.phrase("Sao chép ") + root.label
         onClicked: {
             paymentBridge.copyField(root.field);
             copied = true;

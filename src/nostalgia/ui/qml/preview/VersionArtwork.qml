@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Effects
 
 Item {
@@ -6,7 +7,7 @@ Item {
     property string gameVersion: ""
     readonly property string major: gameVersion.startsWith("1.") ? gameVersion.split(".").slice(0, 2).join(".") : gameVersion.split(".")[0]
     readonly property var titles: ({"26": "Wilderness Bound", "1.21": "Tricky Trials", "1.20": "Trails & Tales", "1.19": "The Wild Update", "1.18": "Caves & Cliffs II", "1.17": "Caves & Cliffs I", "1.16": "Nether Update", "1.15": "Buzzy Bees", "1.14": "Village & Pillage", "1.13": "Update Aquatic", "1.12": "World of Color", "1.11": "Exploration Update", "1.10": "Frostburn Update", "1.9": "Combat Update", "1.8": "Bountiful Update"})
-    readonly property string title: titles[major] || "Minecraft: Java Edition"
+    readonly property string title: titles[major] || Legacy.Tr.phrase("Minecraft: Java Edition")
     readonly property url artSource: Qt.resolvedUrl("../assets/keyart/" + (titles[major] ? major : "old") + ".jpg")
     readonly property bool ready: artwork.ready
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown

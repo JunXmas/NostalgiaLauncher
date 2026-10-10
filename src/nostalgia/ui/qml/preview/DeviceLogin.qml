@@ -46,7 +46,7 @@ Item {
             spacing: 22
             ProviderLogo { width: 32; height: 32; provider: "microsoft" }
             Text {
-                text: "Đăng nhập Microsoft"
+                text: Legacy.Tr.phrase("Đăng nhập Microsoft")
                 color: GlassTheme.text
                 font.family: GlassTheme.displayFont
                 font.pixelSize: GlassTheme.fontLogin
@@ -55,7 +55,7 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.Wrap
-                text: "Mở trang Microsoft, nhập mã bên dưới và đăng nhập tài khoản sở hữu Minecraft Java."
+                text: Legacy.Tr.phrase("Mở trang Microsoft, nhập mã bên dưới và đăng nhập tài khoản sở hữu Minecraft Java.")
                 color: GlassTheme.muted
                 font.family: GlassTheme.font
                 font.pixelSize: GlassTheme.fontControl
@@ -81,7 +81,7 @@ Item {
             }
             Button {
                 width: parent.width
-                label: "Mở trang Microsoft  ↗"
+                label: Legacy.Tr.phrase("Mở trang Microsoft  ↗")
                 primary: true
                 onClicked: Qt.openUrlExternally(root.url)
             }
@@ -90,7 +90,7 @@ Item {
                 spacing: 12
                 Button {
                     width: (parent.width - 12) / 2
-                    label: "Sao chép mã"
+                    label: Legacy.Tr.phrase("Sao chép mã")
                     quiet: true
                     onClicked: {
                         codeText.selectAll();
@@ -101,7 +101,7 @@ Item {
                 Button {
                     width: (parent.width - 12) / 2
                     objectName: "cancelMicrosoft"
-                    label: "Hủy đăng nhập"
+                    label: Legacy.Tr.phrase("Hủy đăng nhập")
                     quiet: true
                     onClicked: {
                         bridge.cancelSignIn();

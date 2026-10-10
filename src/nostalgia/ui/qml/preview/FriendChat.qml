@@ -42,8 +42,8 @@ Glass {
             id: backRow
             visible: root.compact
             width: parent.width; height: backButton.height
-            Button { id: backButton; objectName: "backToFriends"; quiet: true; label: "← Bạn bè"; onClicked: socialBridge.selectFriend("") }
-            Button { anchors.right: parent.right; visible: !multiplayerBridge.active && !hostBridge.details.active; label: "Mở phòng"; primary: true; onClicked: hostBridge.openSetup() }
+            Button { id: backButton; objectName: "backToFriends"; quiet: true; label: Legacy.Tr.phrase("← Bạn bè"); onClicked: socialBridge.selectFriend("") }
+            Button { anchors.right: parent.right; visible: !multiplayerBridge.active && !hostBridge.details.active; label: Legacy.Tr.phrase("Mở phòng"); primary: true; onClicked: hostBridge.openSetup() }
         }
         Item {
             id: chatHeading
@@ -54,14 +54,14 @@ Glass {
                 x: chatAvatar.visible ? chatAvatar.width + 12 : 0
                 width: parent.width - x - (invite.visible ? invite.width + 12 : 0)
                 spacing: 4
-                PaymentText { width: parent.width; text: socialBridge.peerName || "Cùng nhau chơi"; font.pixelSize: GlassTheme.fontLead; font.weight: Font.DemiBold }
-                PaymentText { width: parent.width; visible: !!socialBridge.peerId; text: socialBridge.peerOnline ? "● Trực tuyến" : "○ Ngoại tuyến"; color: socialBridge.peerOnline ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                PaymentText { width: parent.width; text: socialBridge.peerName || Legacy.Tr.phrase("Cùng nhau chơi"); font.pixelSize: GlassTheme.fontLead; font.weight: Font.DemiBold }
+                PaymentText { width: parent.width; visible: !!socialBridge.peerId; text: socialBridge.peerOnline ? Legacy.Tr.phrase("● Trực tuyến") : Legacy.Tr.phrase("○ Ngoại tuyến"); color: socialBridge.peerOnline ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
             }
             Button {
                 id: invite
                 objectName: "inviteSelectedFriend"
                 anchors.right: parent.right; visible: !!socialBridge.peerId
-                label: "Mời chơi"; primary: true
+                label: Legacy.Tr.phrase("Mời chơi"); primary: true
                 clickable: multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && socialBridge.peerOnline && !socialBridge.busy
                 onClicked: socialBridge.inviteFriend(socialBridge.peerId)
             }
@@ -77,7 +77,7 @@ Glass {
                 PaymentText {
                     width: parent.width
                     visible: !!socialBridge.peerId && !socialBridge.messages.length
-                    text: socialBridge.peerId ? "Bắt đầu câu chuyện. Chỉ bạn bè đã chấp nhận mới gửi tin được." : "Chọn một người bạn để trò chuyện."
+                    text: socialBridge.peerId ? Legacy.Tr.phrase("Bắt đầu câu chuyện. Chỉ bạn bè đã chấp nhận mới gửi tin được.") : Legacy.Tr.phrase("Chọn một người bạn để trò chuyện.")
                     color: GlassTheme.muted
                 }
                 Column {
@@ -86,8 +86,8 @@ Glass {
                         Legacy.BlockIcon { anchors.centerIn: parent; width: 82; height: 82; block: "command"; spinning: emptyHover.hovered; glyph: "·" }
                         HoverHandler { id: emptyHover }
                     }
-                    PaymentText { width: parent.width; text: "Một lời chào, một chuyến phiêu lưu."; font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle; horizontalAlignment: Text.AlignHCenter }
-                    PaymentText { width: parent.width; text: "Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."; color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Một lời chào, một chuyến phiêu lưu."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle; horizontalAlignment: Text.AlignHCenter }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."); color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
                 }
                 Repeater {
                     model: socialBridge.messages
@@ -107,24 +107,24 @@ Glass {
             id: composerRow
             visible: !!socialBridge.peerId
             width: parent.width; spacing: 8
-            Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: "Nhắn tin…"; onAccepted: root.send() }
-            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: "Gửi"; primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.busy; onClicked: root.send() }
+            Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: Legacy.Tr.phrase("Nhắn tin…"); onAccepted: root.send() }
+            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.busy; onClicked: root.send() }
         }
         Item {
             id: chatFooter
             visible: !!socialBridge.peerId
             width: parent.width; height: more.height
-            PaymentText { width: parent.width - more.width - 8; anchors.verticalCenter: parent.verticalCenter; text: "Tin nhắn lưu 30 ngày"; font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted }
-            Button { id: more; objectName: "chatOptions"; anchors.right: parent.right; width: 40; height: 30; label: "···"; quiet: true; Accessible.name: "Tùy chọn trò chuyện"; onClicked: root.optionsExpanded = !root.optionsExpanded }
+            PaymentText { width: parent.width - more.width - 8; anchors.verticalCenter: parent.verticalCenter; text: Legacy.Tr.phrase("Tin nhắn lưu 30 ngày"); font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted }
+            Button { id: more; objectName: "chatOptions"; anchors.right: parent.right; width: 40; height: 30; label: "···"; quiet: true; Accessible.name: Legacy.Tr.phrase("Tùy chọn trò chuyện"); onClicked: root.optionsExpanded = !root.optionsExpanded }
         }
         Flow {
             visible: root.optionsExpanded
             width: parent.width; spacing: 8
-            Button { objectName: "viewFriendProfile"; label: "Xem hồ sơ"; quiet: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
-            Button { label: "Làm mới"; quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.refresh() }
+            Button { objectName: "viewFriendProfile"; label: Legacy.Tr.phrase("Xem hồ sơ"); quiet: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
+            Button { label: Legacy.Tr.phrase("Làm mới"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.refresh() }
             Button {
-                label: "Chặn người chơi"; quiet: true; clickable: !socialBridge.busy
-                onClicked: { var selected = socialBridge.peerId; confirmDialog.ask("Chặn người chơi?", "Người này sẽ không gửi chat hay lời mời cho bạn được nữa.", function() { socialBridge.blockFriend(selected); }); }
+                label: Legacy.Tr.phrase("Chặn người chơi"); quiet: true; clickable: !socialBridge.busy
+                onClicked: { var selected = socialBridge.peerId; confirmDialog.ask(Legacy.Tr.phrase("Chặn người chơi?"), Legacy.Tr.phrase("Người này sẽ không gửi chat hay lời mời cho bạn được nữa."), function() { socialBridge.blockFriend(selected); }); }
             }
         }
     }

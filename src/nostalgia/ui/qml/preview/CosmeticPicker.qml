@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import "CosmeticCatalog.js" as Cosmetics
 
 Column {
@@ -13,8 +14,8 @@ Column {
     readonly property int columns: width >= 540 * GlassTheme.scale ? 3 : width >= 350 * GlassTheme.scale ? 2 : 1
     spacing: 12
     Row { width: parent.width; spacing: 12
-        PaymentText { width: parent.width - reset.width - parent.spacing; text: "Diện mạo hồ sơ"; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
-        Button { id: reset; objectName: "profileDecor-none"; label: "Nguyên bản"; selected: root.selectedDecor === "none"; quiet: true; onClicked: root.chosen("none") }
+        PaymentText { width: parent.width - reset.width - parent.spacing; text: Legacy.Tr.phrase("Diện mạo hồ sơ"); font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
+        Button { id: reset; objectName: "profileDecor-none"; label: Legacy.Tr.phrase("Nguyên bản"); selected: root.selectedDecor === "none"; quiet: true; onClicked: root.chosen("none") }
     }
     Flow { width: parent.width; spacing: 10
         Repeater { model: Cosmetics.available(cosmeticBridge.sets)
@@ -30,10 +31,10 @@ Column {
     }
     PaymentText {
         width: parent.width
-        text: root.canEquip ? "Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào."
-            : root.ownedCosmetics.indexOf(root.previewDecor) >= 0 ? "Bộ cosmetic này đã được tặng cho bạn. Có thể sử dụng mà không cần Premium."
-            : root.previewDecor !== root.selectedDecor ? "Đang xem thử " + Cosmetics.name(root.previewDecor, cosmeticBridge.sets) + ". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng."
-            : "Có thể xem thử mọi bộ. Dùng cosmetic được tặng hoặc mở Plus để chọn các bộ còn lại."
+        text: root.canEquip ? Legacy.Tr.phrase("Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào.")
+            : root.ownedCosmetics.indexOf(root.previewDecor) >= 0 ? Legacy.Tr.phrase("Bộ cosmetic này đã được tặng cho bạn. Có thể sử dụng mà không cần Premium.")
+            : root.previewDecor !== root.selectedDecor ? Legacy.Tr.phrase("Đang xem thử ") + Cosmetics.name(root.previewDecor, cosmeticBridge.sets) + Legacy.Tr.phrase(". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng.")
+            : Legacy.Tr.phrase("Có thể xem thử mọi bộ. Dùng cosmetic được tặng hoặc mở Plus để chọn các bộ còn lại.")
         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
     }
 }

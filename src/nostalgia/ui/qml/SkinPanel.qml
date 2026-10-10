@@ -13,7 +13,7 @@ Preview.Glass {
     Component.onCompleted: if (hasShown) skinEditor.showAccount(shown.accountId)
     Preview.MotionTabs {
         id: tabs
-        width: Math.max(100, parent.width - help.width - 12); labels: ["Skin", "Cape"]
+        width: Math.max(100, parent.width - help.width - 12); labels: [Tr.phrase("Skin"), Tr.phrase("Cape")]
         currentIndex: skinPanel.tab === "skin" ? 0 : 1; namePrefix: "skinSection-"
         onSelected: function(index) { skinPanel.tab = index === 0 ? "skin" : "cape"; }
     }
@@ -22,9 +22,9 @@ Preview.Glass {
         id: caption
         anchors.top: tabs.bottom; anchors.topMargin: 12
         width: parent.width
-        text: skinPanel.tab === "skin" ? "Chọn skin, xem trước rồi lưu cho tài khoản đang chọn." :
-              skinPanel.shown.accountKind === "microsoft" ? "Thử áo choàng đã sở hữu trên nhân vật trước khi lưu." :
-              skinPanel.shown.accountKind === "ely" ? "Áo choàng đang dùng trên Ely.by. Thay cape tại ely.by." : "Tài khoản ngoại tuyến chưa có cape."
+        text: skinPanel.tab === "skin" ? Tr.phrase("Chọn skin, xem trước rồi lưu cho tài khoản đang chọn.") :
+              skinPanel.shown.accountKind === "microsoft" ? Tr.phrase("Thử áo choàng đã sở hữu trên nhân vật trước khi lưu.") :
+              skinPanel.shown.accountKind === "ely" ? Tr.phrase("Áo choàng đang dùng trên Ely.by. Thay cape tại ely.by.") : Tr.phrase("Tài khoản ngoại tuyến chưa có cape.")
         color: Theme.textMuted; font.pixelSize: Theme.fontBody
     }
     Row {
@@ -36,13 +36,13 @@ Preview.Glass {
             anchors.verticalCenter: parent.verticalCenter
             checked: skinPanel.draft.slim || false
             enabled: !skinEditor.busy
-            accessibleLabel: "Dáng tay Slim"
+            accessibleLabel: Tr.phrase("Dáng tay Slim")
             onToggled: function(checked) { skinEditor.setSlim(checked); }
         }
         Preview.PaymentText {
             objectName: "skinModelLabel"
             anchors.verticalCenter: parent.verticalCenter
-            text: skinPanel.draft.slim ? "Slim · tay 3 px" : "Classic · tay 4 px"
+            text: skinPanel.draft.slim ? Tr.phrase("Slim · tay 3 px") : Tr.phrase("Classic · tay 4 px")
         }
     }
     Preview.InertialScroll {
@@ -69,14 +69,14 @@ Preview.Glass {
         Preview.PaymentText {
             objectName: "appearanceStatus"
             width: parent.width; visible: text.length > 0
-            text: skinEditor.busy ? "Đang lưu…" : skinPanel.draft.note || ""
+            text: skinEditor.busy ? Tr.phrase("Đang lưu…") : Tr.message(skinPanel.draft.note) || ""
             color: Theme.textMuted; font.pixelSize: Theme.fontLabel
         }
         Flow {
             width: parent.width; spacing: 8
-            Preview.Button { objectName: "skinSaveButton"; label: "Lưu thay đổi"; primary: true; clickable: skinPanel.hasShown && skinPanel.draft.dirty && !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinEditor.save() }
-            Preview.Button { objectName: "skinDiscardButton"; label: "Hủy thay đổi"; visible: skinPanel.draft.dirty; clickable: !skinEditor.busy; onClicked: skinEditor.discard() }
-            Preview.Button { objectName: "skinRefreshButton"; label: "Làm mới"; quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind !== "offline"; clickable: !skinEditor.busy && !accountBridge.busy && !skinPanel.draft.dirty; onClicked: { accountBridge.refreshSkins(); if (skinPanel.tab === "cape") capeBridge.loadCapes(skinPanel.shown.accountId); } }
+            Preview.Button { objectName: "skinSaveButton"; label: Tr.phrase("Lưu thay đổi"); primary: true; clickable: skinPanel.hasShown && skinPanel.draft.dirty && !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinEditor.save() }
+            Preview.Button { objectName: "skinDiscardButton"; label: Tr.phrase("Hủy thay đổi"); visible: skinPanel.draft.dirty; clickable: !skinEditor.busy; onClicked: skinEditor.discard() }
+            Preview.Button { objectName: "skinRefreshButton"; label: Tr.phrase("Làm mới"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind !== "offline"; clickable: !skinEditor.busy && !accountBridge.busy && !skinPanel.draft.dirty; onClicked: { accountBridge.refreshSkins(); if (skinPanel.tab === "cape") capeBridge.loadCapes(skinPanel.shown.accountId); } }
         }
     }
 }

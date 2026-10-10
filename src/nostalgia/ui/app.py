@@ -35,6 +35,7 @@ from nostalgia.ui.skin_edit_bridge import SkinEditBridge
 from nostalgia.ui.skin_preview_bridge import SkinPreviewBridge
 from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.storage_bridge import StorageBridge
+from nostalgia.ui.translations import phrase
 from nostalgia.ui.update_bridge import UpdateBridge
 from nostalgia.ui.worker import wait_for_background
 
@@ -217,6 +218,15 @@ def build_tray(
     stop_action.triggered.connect(bridge.stopGame)
     menu.addSeparator()
     quit_action = menu.addAction("Thoát")
+
+    def translate_tray() -> None:
+        language = str(settings_bridge.property("language"))
+        show_action.setText(phrase("Hiện lại Launcher", language))
+        stop_action.setText(phrase("Dừng game", language))
+        quit_action.setText(phrase("Thoát", language))
+
+    translate_tray()
+    settings_bridge.appearanceChanged.connect(translate_tray)
     running_app = QApplication.instance()
     if running_app is not None:
         quit_action.triggered.connect(running_app.quit)

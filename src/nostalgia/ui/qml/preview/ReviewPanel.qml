@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 import QtQuick.Controls as Controls
 
 Item {
@@ -6,7 +7,7 @@ Item {
     Button {
         objectName: "draftToolsOpen"
         anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
-        height: 26; label: "Ultimate TEST · Công cụ Draft"
+        height: 26; label: Legacy.Tr.phrase("Ultimate TEST · Công cụ Draft")
         onClicked: tools.open()
     }
     Controls.Popup {
@@ -26,8 +27,8 @@ Item {
                 contentHeight: form.implicitHeight + 8
                 Column {
                     id: form; width: parent.width - 8; spacing: 16
-                    PaymentText { width: parent.width; text: "Bản thử nội bộ"; font.pixelSize: GlassTheme.fontDialog }
-                    PaymentText { width: parent.width; text: "Mặc định mở Ultimate. Server, cosmetic và sửa mod chạy trên dữ liệu local. Bạn bè/chat và thanh toán là mô phỏng. Google và đồng bộ giữa hai máy cần backend thật."; color: GlassTheme.muted }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bản thử nội bộ"); font.pixelSize: GlassTheme.fontDialog }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mặc định mở Ultimate. Server, cosmetic và sửa mod chạy trên dữ liệu local. Bạn bè/chat và thanh toán là mô phỏng. Google và đồng bộ giữa hai máy cần backend thật."); color: GlassTheme.muted }
                     Flow {
                         width: parent.width; spacing: 8
                         Repeater {
@@ -35,11 +36,11 @@ Item {
                             Button { objectName: "draftPlan-" + modelData.id; label: modelData.name; clickable: !draftReviewController.busy; onClicked: draftReviewController.selectPlan(modelData.id) }
                         }
                     }
-                    PaymentText { width: parent.width; text: "Đồng bộ local sẽ tạo một bản chơi mới từ modpack bạn chọn; không gửi file cho người khác."; color: GlassTheme.muted }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Đồng bộ local sẽ tạo một bản chơi mới từ modpack bạn chọn; không gửi file cho người khác."); color: GlassTheme.muted }
                     Select { id: source; objectName: "draftSyncSource"; width: parent.width; model: bridge.instances; textRole: "label"; currentIndex: model.length ? 0 : -1 }
-                    Button { objectName: "draftSyncLocal"; label: "Đồng bộ local · Tạo bản chơi mới"; clickable: source.currentIndex >= 0 && !draftReviewController.busy; onClicked: draftReviewController.syncLocal(bridge.instances[source.currentIndex].instanceId) }
-                    Button { objectName: "draftSimulatePaid"; label: "Mô phỏng thanh toán thành công"; clickable: !draftReviewController.busy && paymentBridge.details.stage === "pending"; onClicked: draftReviewController.simulatePaid() }
-                    PaymentText { width: parent.width; text: draftReviewController.busy ? draftReviewController.activity : draftReviewController.note; color: GlassTheme.accent }
+                    Button { objectName: "draftSyncLocal"; label: Legacy.Tr.phrase("Đồng bộ local · Tạo bản chơi mới"); clickable: source.currentIndex >= 0 && !draftReviewController.busy; onClicked: draftReviewController.syncLocal(bridge.instances[source.currentIndex].instanceId) }
+                    Button { objectName: "draftSimulatePaid"; label: Legacy.Tr.phrase("Mô phỏng thanh toán thành công"); clickable: !draftReviewController.busy && paymentBridge.details.stage === "pending"; onClicked: draftReviewController.simulatePaid() }
+                    PaymentText { width: parent.width; text: draftReviewController.busy ? Legacy.Tr.message(draftReviewController.activity) : Legacy.Tr.message(draftReviewController.note); color: GlassTheme.accent }
                 }
             }
         }

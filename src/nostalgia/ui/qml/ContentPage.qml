@@ -199,7 +199,7 @@ Item {
                 Text {
                     id: countLine
                     anchors { top: searchRow.bottom; topMargin: 18; right: parent.right }
-                    text: contentBridge.searching ? Tr.phrase("Đang tìm...") : contentBridge.totalHits.toLocaleString(Qt.locale("vi_VN"), "f", 0) + Tr.phrase(" kết quả")
+                    text: contentBridge.searching ? Tr.phrase("Đang tìm...") : contentBridge.totalHits.toLocaleString(Qt.locale(Tr.localeName), "f", 0) + Tr.plural(" kết quả", contentBridge.totalHits)
                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
                 Rectangle {

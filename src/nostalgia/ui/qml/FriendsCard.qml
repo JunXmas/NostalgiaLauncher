@@ -8,7 +8,7 @@ Panel {
     id: root
     signal openMultiplayer()
 
-    title: "BẠN BÈ"
+    title: Tr.phrase("BẠN BÈ")
 
     Column {
         anchors.fill: parent

@@ -22,6 +22,10 @@ Item {
         Legacy.Theme.preferences = settingsBridge;
         Legacy.Tr.setLanguage(settingsBridge.language);
     }
+    Connections {
+        target: settingsBridge
+        function onAppearanceChanged() { Legacy.Tr.setLanguage(settingsBridge.language); }
+    }
     Binding {
         target: Legacy.Theme
         property: "page"
@@ -118,8 +122,8 @@ Item {
         Column {
             width: parent.width
             spacing: 12
-            PaymentText { id: invitationNote; width: parent.width; text: socialBridge.invitations.length ? socialBridge.invitations[0].name + " mời bạn chơi cùng" : "" }
-            Button { id: invitationOpen; label: "Xem lời mời"; primary: true; onClicked: root.navigate(4) }
+            PaymentText { id: invitationNote; width: parent.width; text: socialBridge.invitations.length ? socialBridge.invitations[0].name + Legacy.Tr.phrase(" mời bạn chơi cùng") : "" }
+            Button { id: invitationOpen; label: Legacy.Tr.phrase("Xem lời mời"); primary: true; onClicked: root.navigate(4) }
         }
     }
     Loader {

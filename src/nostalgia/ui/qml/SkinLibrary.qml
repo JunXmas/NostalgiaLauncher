@@ -63,7 +63,7 @@ Item {
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: card.inPreview && skinEditor.details.skinDirty ? "Đang xem trước" : card.inUse ? Tr.phrase("Đang dùng") : modelData.sourceLabel + (modelData.slim ? " · slim" : "")
+                        text: card.inPreview && skinEditor.details.skinDirty ? Tr.phrase("Đang xem trước") : card.inUse ? Tr.phrase("Đang dùng") : modelData.sourceLabel + (modelData.slim ? Tr.phrase(" · slim") : "")
                         color: card.inPreview ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontLabel
                     }
                 }
@@ -80,7 +80,7 @@ Item {
                     Preview.Button {
                         objectName: "previewSkin-" + modelData.entryId
                         visible: library.hasShown
-                        height: 30 * Theme.textScale; label: "Xem trước"; clickable: !skinEditor.busy
+                        height: 30 * Theme.textScale; label: Tr.phrase("Xem trước"); clickable: !skinEditor.busy
                         onClicked: skinEditor.selectSkin(modelData.entryId)
                     }
                     Preview.Button {
@@ -104,7 +104,7 @@ Item {
     FileDialog {
         id: importDialog
         title: Tr.phrase("Chọn file skin PNG")
-        nameFilters: ["Ảnh PNG (*.png)"]
+        nameFilters: [Tr.phrase("Ảnh PNG (*.png)")]
         onAccepted: skinEditor.importSkin("" + selectedFile)
     }
 }

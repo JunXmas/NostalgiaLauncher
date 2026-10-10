@@ -42,9 +42,9 @@ Controls.Popup {
         Item {
             id: heading
             width: parent.width; height: 72 * GlassTheme.scale
-            PaymentText { width: parent.width - 44; text: roomSyncBridge.updateLabel ? "Cập nhật bản chơi" : "Nhận modpack từ bạn bè"; font.pixelSize: GlassTheme.fontDialog; font.family: GlassTheme.displayFont; font.weight: Font.DemiBold }
+            PaymentText { width: parent.width - 44; text: roomSyncBridge.updateLabel ? Legacy.Tr.phrase("Cập nhật bản chơi") : Legacy.Tr.phrase("Nhận modpack từ bạn bè"); font.pixelSize: GlassTheme.fontDialog; font.family: GlassTheme.displayFont; font.weight: Font.DemiBold }
             PaymentText { y: 36 * GlassTheme.scale; width: parent.width - 44; wrapMode: Text.NoWrap; elide: Text.ElideRight; text: roomSyncBridge.updateLabel || roomSyncBridge.offer.name || ""; color: GlassTheme.brand }
-            Button { anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; onClicked: root.close(); Accessible.name: "Đóng lựa chọn đồng bộ" }
+            Button { anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; onClicked: root.close(); Accessible.name: Legacy.Tr.phrase("Đóng lựa chọn đồng bộ") }
         }
         InertialScroll {
             objectName: "guestSyncScroll"
@@ -60,14 +60,14 @@ Controls.Popup {
                     color: GlassTheme.alpha(GlassTheme.accent, 0.12); border.color: GlassTheme.alpha(GlassTheme.accent, 0.25)
                     PaymentText {
                         id: risk; x: 12; y: 12; width: parent.width - 24
-                        text: "Cảnh báo bảo mật\nMods là mã thực thi, có thể đọc file và chạy chương trình trên máy. Scripts và KubeJS cũng có thể chạy mã. Chỉ nhận từ host bạn tin tưởng. SHA-256 kiểm tra toàn vẹn, không phát hiện virus; tên, icon và nguồn hiển thị do host cung cấp."
+                        text: Legacy.Tr.phrase("Cảnh báo bảo mật\nMods là mã thực thi, có thể đọc file và chạy chương trình trên máy. Scripts và KubeJS cũng có thể chạy mã. Chỉ nhận từ host bạn tin tưởng. SHA-256 kiểm tra toàn vẹn, không phát hiện virus; tên, icon và nguồn hiển thị do host cung cấp.")
                         font.pixelSize: GlassTheme.fontBody; color: GlassTheme.text
                     }
                 }
                 PaymentText {
                     width: parent.width; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
-                    text: roomSyncBridge.updateLabel ? "Giữ thế giới và file khách tự thêm. Thay phần đã đồng bộ; file cũ được sao lưu. Nội dung mới mặc định chưa chọn. Host đổi phiên bản game có thể ảnh hưởng thế giới đã lưu."
-                        : "Tạo một bản chơi riêng. Có thể bỏ chọn mods, texture pack và shader pack. Cấu hình và scripts đi cùng pack; thiếu mod bắt buộc có thể khiến game không chạy hoặc không vào được phòng."
+                    text: roomSyncBridge.updateLabel ? Legacy.Tr.phrase("Giữ thế giới và file khách tự thêm. Thay phần đã đồng bộ; file cũ được sao lưu. Nội dung mới mặc định chưa chọn. Host đổi phiên bản game có thể ảnh hưởng thế giới đã lưu.")
+                        : Legacy.Tr.phrase("Tạo một bản chơi riêng. Có thể bỏ chọn mods, texture pack và shader pack. Cấu hình và scripts đi cùng pack; thiếu mod bắt buộc có thể khiến game không chạy hoặc không vào được phòng.")
                 }
                 MotionTabs {
                     width: parent.width; labels: ["Mods", "Texture pack", "Shader pack"]
@@ -75,12 +75,12 @@ Controls.Popup {
                     currentIndex: ["mods", "resourcepacks", "shaderpacks"].indexOf(root.kind)
                     onSelected: function(index) { root.kind = ["mods", "resourcepacks", "shaderpacks"][index]; query.text = ""; }
                 }
-                Input { id: query; width: parent.width; placeholder: "Tìm trong nội dung của host…"; maximumLength: 160 }
+                Input { id: query; width: parent.width; placeholder: Legacy.Tr.phrase("Tìm trong nội dung của host…"); maximumLength: 160 }
                 Flow {
                     width: parent.width; spacing: 8
-                    Button { label: "Chọn tất cả"; quiet: true; onClicked: roomSyncBridge.selectGuestAll(true, root.kind) }
-                    Button { label: "Bỏ chọn"; quiet: true; onClicked: roomSyncBridge.selectGuestAll(false, root.kind) }
-                    PaymentText { height: 36 * GlassTheme.scale; verticalAlignment: Text.AlignVCenter; text: root.rows.filter(function(choice) { return choice.selected; }).length + "/" + root.rows.length + " đã chọn"; color: GlassTheme.muted }
+                    Button { label: Legacy.Tr.phrase("Chọn tất cả"); quiet: true; onClicked: roomSyncBridge.selectGuestAll(true, root.kind) }
+                    Button { label: Legacy.Tr.phrase("Bỏ chọn"); quiet: true; onClicked: roomSyncBridge.selectGuestAll(false, root.kind) }
+                    PaymentText { height: 36 * GlassTheme.scale; verticalAlignment: Text.AlignVCenter; text: root.rows.filter(function(choice) { return choice.selected; }).length + "/" + root.rows.length + Legacy.Tr.phrase(" đã chọn"); color: GlassTheme.muted }
                 }
                 ListView {
                     id: choices
@@ -95,19 +95,19 @@ Controls.Popup {
                         onToggled: function(selected) { roomSyncBridge.setGuestSelected(modelData.path, selected); }
                     }
                 }
-                PaymentText { visible: !root.rows.length; width: parent.width; text: "Không có nội dung phù hợp trong mục này."; color: GlassTheme.muted }
-                PaymentText { width: parent.width; font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted; text: "Texture pack được cài vào resourcepacks. Bạn bật pack muốn dùng trong Minecraft; tùy chọn cá nhân của bạn được giữ." }
+                PaymentText { visible: !root.rows.length; width: parent.width; text: Legacy.Tr.phrase("Không có nội dung phù hợp trong mục này."); color: GlassTheme.muted }
+                PaymentText { width: parent.width; font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted; text: Legacy.Tr.phrase("Texture pack được cài vào resourcepacks. Bạn bật pack muốn dùng trong Minecraft; tùy chọn cá nhân của bạn được giữ.") }
             }
         }
         Column {
             id: footer
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             spacing: 12
-            Legacy.CheckRow { objectName: "guestSyncConsent"; width: parent.width; label: "Tôi tin tưởng host và hiểu rủi ro"; checked: root.acknowledged; onToggled: function(checked) { root.acknowledged = checked; } }
+            Legacy.CheckRow { objectName: "guestSyncConsent"; width: parent.width; label: Legacy.Tr.phrase("Tôi tin tưởng host và hiểu rủi ro"); checked: root.acknowledged; onToggled: function(checked) { root.acknowledged = checked; } }
             Button {
                 objectName: "guestSyncConfirm"
                 width: parent.width; primary: true
-                label: roomSyncBridge.updateLabel ? "Cập nhật bản chơi đã đồng bộ" : "Tạo bản chơi & đồng bộ"
+                label: roomSyncBridge.updateLabel ? Legacy.Tr.phrase("Cập nhật bản chơi đã đồng bộ") : Legacy.Tr.phrase("Tạo bản chơi & đồng bộ")
                 clickable: root.acknowledged && roomSyncBridge.reviewReady && !roomSyncBridge.busy && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy
                 onClicked: { if (roomSyncBridge.confirmSync(root.acknowledged)) root.close(); }
             }

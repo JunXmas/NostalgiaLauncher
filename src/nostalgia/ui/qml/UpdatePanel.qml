@@ -54,7 +54,7 @@ Panel {
             Text {
                 objectName: "updateMessage"
 
-                text: updateBridge.message
+                text: Tr.message(updateBridge.message)
                 color: panel.state === "failed" ? Theme.danger
                        : panel.state === "available" || panel.state === "ready" ? Theme.accent : Theme.textMuted
                 font.pixelSize: Theme.fontBody

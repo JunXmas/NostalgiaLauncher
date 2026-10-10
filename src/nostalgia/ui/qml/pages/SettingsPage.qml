@@ -194,7 +194,7 @@ Item {
                 }
                 Text {
 
-                    text: presenceBridge.statusText
+                    text: Tr.message(presenceBridge.statusText)
                     color: presenceBridge.connected ? Theme.accent : Theme.textMuted; font.pixelSize: Theme.fontBody
                 }
             }

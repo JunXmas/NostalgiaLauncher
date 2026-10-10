@@ -1,4 +1,5 @@
 import QtQuick
+import "../" as Legacy
 
 Rectangle {
     id: root
@@ -23,13 +24,13 @@ Rectangle {
             visible: !root.compactLayout
             PaymentText {
                 width: parent.width / 2
-                text: root.details.demonstration ? "QR minh họa" : "Quét mã VietQR"
+                text: root.details.demonstration ? Legacy.Tr.phrase("QR minh họa") : Legacy.Tr.phrase("Quét mã VietQR")
                 font.weight: Font.DemiBold
             }
             PaymentText {
                 width: parent.width / 2
                 horizontalAlignment: Text.AlignRight
-                text: "Còn " + root.timeLeft
+                text: Legacy.Tr.phrase("Còn ") + root.timeLeft
                 color: GlassTheme.muted
                 font.pixelSize: GlassTheme.fontNote
             }
@@ -58,19 +59,19 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 color: "#333333"
                 visible: qr.status === Image.Error
-                text: "Không tải được mã QR.\nHãy kiểm tra lại giao dịch."
+                text: Legacy.Tr.phrase("Không tải được mã QR.\nHãy kiểm tra lại giao dịch.")
             }
         }
         PaymentText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: (root.compactLayout ? "Còn " + root.timeLeft + " · " : "") + (root.details.demonstration ? "Mã mẫu, không thanh toán." : "Mở ứng dụng ngân hàng để quét mã.")
+            text: (root.compactLayout ? Legacy.Tr.phrase("Còn ") + root.timeLeft + " · " : "") + (root.details.demonstration ? Legacy.Tr.phrase("Mã mẫu, không thanh toán.") : Legacy.Tr.phrase("Mở ứng dụng ngân hàng để quét mã."))
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }
         PaymentCopyLine {
-            label: "Số tiền"
-            value: Number(root.details.amount).toLocaleString(Qt.locale("vi_VN"), "f", 0) + "đ"
+            label: Legacy.Tr.phrase("Số tiền")
+            value: Number(root.details.amount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0) + Legacy.Tr.phrase("đ")
             field: "amount"
         }
         PaymentCopyLine {
@@ -79,7 +80,7 @@ Rectangle {
             field: "accountNumber"
         }
         PaymentCopyLine {
-            label: "Nội dung chuyển khoản · giữ nguyên"
+            label: Legacy.Tr.phrase("Nội dung chuyển khoản · giữ nguyên")
             value: root.details.memo
             field: "memo"
         }
@@ -87,14 +88,14 @@ Rectangle {
             objectName: "paymentSubmitTransfer"
             width: parent.width
             visible: !!root.details.manualReview && !root.details.demonstration
-            label: paymentBridge.busy ? "Đang gửi yêu cầu…" : "Đã chuyển khoản · Gửi duyệt"
+            label: paymentBridge.busy ? Legacy.Tr.phrase("Đang gửi yêu cầu…") : Legacy.Tr.phrase("Đã chuyển khoản · Gửi duyệt")
             clickable: !paymentBridge.busy && root.details.remaining > 0
             onClicked: paymentBridge.submitTransfer()
         }
         PaymentText {
             width: parent.width
             visible: !!root.details.manualReview
-            text: "Gói chỉ kích hoạt sau khi người quản trị đối chiếu tiền thực nhận."
+            text: Legacy.Tr.phrase("Gói chỉ kích hoạt sau khi người quản trị đối chiếu tiền thực nhận.")
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }
@@ -102,7 +103,7 @@ Rectangle {
             objectName: "paymentBrowser"
             width: parent.width
             visible: !!root.details.checkoutUrl && !root.details.demonstration
-            label: "Mở trang thanh toán  ↗"
+            label: Legacy.Tr.phrase("Mở trang thanh toán  ↗")
             quiet: true
             onClicked: Qt.openUrlExternally(root.details.checkoutUrl)
         }

@@ -72,8 +72,12 @@ var topics = [
      tip: "Một dòng WARN/ERROR không tự chứng minh mod bị lỗi. Đọc ngữ cảnh và thông báo crash; kiểm tra thông tin riêng tư trước khi chia sẻ log cho người khác."}
 ];
 
-function find(topicId) {
-    return topics.find(function(topic) { return topic.id === topicId; }) || topics[0];
+function find(topicId, translator) {
+    var topic = topics.find(function(topic) { return topic.id === topicId; }) || topics[0];
+    if (!translator) return topic;
+    return {id: topic.id, clip: topic.clip, title: translator.phrase(topic.title),
+            summary: translator.phrase(topic.summary), tip: translator.phrase(topic.tip),
+            steps: topic.steps.map(function(step) { return translator.phrase(step); })};
 }
 
 function pageTopic(index) {
