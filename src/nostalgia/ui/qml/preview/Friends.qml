@@ -4,11 +4,13 @@ import "../" as Legacy
 Item {
     id: root
     objectName: "friendsPage"
-    Component.onCompleted: socialBridge.setWatching(true)
+    Component.onCompleted: socialBridge.setWatching(root.chatWatching)
     Component.onDestruction: socialBridge.setWatching(false)
     property string roomError: ""
     property int section: 0
     property bool invitesExpanded: true
+    readonly property bool chatWatching: visible && section === 0
+    onChatWatchingChanged: socialBridge.setWatching(root.chatWatching)
     readonly property bool compact: width < 860 * GlassTheme.scale
     Connections {
         target: multiplayerBridge
