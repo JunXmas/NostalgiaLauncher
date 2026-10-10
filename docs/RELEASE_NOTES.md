@@ -1,39 +1,42 @@
-# Nostalgia 1.2.0rc18 — Modpack của bạn, mang đi dễ dàng hơn
+# Nostalgia 1.2.0rc19 — Cuộn nhẹ hơn, chơi chung liền mạch hơn
 
-Chia sẻ đúng bộ mod, mang bản chơi sang máy khác và dọn những thế giới không còn dùng. Bản cập nhật này sửa lỗi nhận diện Forge khi chơi chung, thay thao tác sao lưu bằng xuất modpack và bổ sung xóa vĩnh viễn ngay trong launcher.
+Thư viện lớn vẫn cần dễ khám phá, bạn bè cần nhắn được ngay, và một bản NeoForge đã cài đúng cần chia sẻ được. rc19 tập trung vào những thao tác đó, cùng giao diện Tiếng Việt và English đầy đủ hơn.
 
-## Forge: chơi được thì chia sẻ đúng phiên bản
+## NeoForge: mở phòng với bản chơi hiện có
 
-Profile Forge hiện đại khai `fmlloader` thay vì thư viện tên `forge`. Launcher đã nhận đúng phiên bản từ profile chính thức, khắc phục thông báo **“Không tìm thấy phiên bản loader. Hãy cài lại loader trước khi chia sẻ”** với bộ cài hợp lệ.
+Sửa lỗi **“Không tìm thấy phiên bản loader. Hãy cài lại loader trước khi chia sẻ”** khi mở phòng với NeoForge. Launcher đọc phiên bản từ metadata khởi động chính thức, không nhầm số hiệu FML với NeoForge.
 
-- Host và đồng bộ modpack dùng đúng Minecraft và phiên bản Forge đã cài.
-- Xuất modpack và quét sửa mod dùng cùng bộ nhận diện đã sửa.
-- Giữ hỗ trợ Fabric, Quilt, Forge cũ và NeoForge; không nhầm phiên bản thư viện FML độc lập của NeoForge thành phiên bản loader.
+- Áp dụng cho chia sẻ/đồng bộ modpack, xuất modpack và kiểm tra mod.
+- Không cần cài lại loader chỉ để khắc phục lỗi nhận diện này.
+- Nhận đúng nhánh NeoForge của Minecraft 26.x khi cài cho máy khách.
+- Kiểm tra hồi quy bằng metadata từ installer chính thức cho Minecraft 1.21.1, 1.21.11 và 26.2.
 
-## Từ Sao lưu sang Xuất modpack
+## Danh sách dài, ít gánh nặng hơn
 
-Vào **Bản chơi → Xuất modpack**, chọn bản chơi, định dạng và nơi lưu:
+Launcher chỉ dựng các ô gần màn hình và tái sử dụng chúng khi cuộn, thay vì giữ mọi ô cùng lúc. Áp dụng cho thư viện mod, modpack, resourcepack, shader, bản chơi, nội dung đã cài, server, sửa mod, bạn bè, chat, cosmetic và đồng bộ.
 
-- **MRPACK** theo định dạng Modrinth hoặc **ZIP** theo định dạng modpack CurseForge; có thể nhập lại qua **Nhập bản chơi**.
-- Đóng gói các file hiện có, gồm mod tự thêm, mods đang bật hoặc tắt, resourcepack, shader, cấu hình và script. Giữ đúng Minecraft và loader.
-- Bật **Đóng gói cả thế giới** nếu muốn mang theo thư mục `saves`. Mặc định giữ thế giới riêng trên máy.
-- Xuất chạy ở nền và giữ bản chơi gốc. Nếu ghi file thất bại hoặc nội dung thay đổi trong lúc xuất, giữ file đích cũ và báo lỗi thay vì để lại gói nửa vời.
-- Bản sao lưu/thùng rác từ phiên bản cũ vẫn có mục **Khôi phục dữ liệu cũ**, kèm hướng dẫn GIF mới.
+- Giữ hiệu ứng mica và quán tính cuộn; giảm kích thước ảnh blur và capture nền không cần thiết.
+- Bật/tắt mod giữ vị trí cuộn; trạng thái xác nhận gỡ không chuyển nhầm sang mod khác khi ô được tái sử dụng.
+- Kiểm tra cuộn tới đầu/cuối với danh sách 2.000 mục. Hiệu năng thực tế phụ thuộc máy và driver đồ họa.
 
-## Xóa hẳn, rõ ràng trước khi xác nhận
+## Bạn bè: gửi lời chào ngay
 
-Trong **Quản lý bản chơi → Xuất & dữ liệu → Xóa vĩnh viễn**, launcher xác nhận trước khi xóa mods, cấu hình và thế giới thuộc bản chơi. Không chuyển dữ liệu sang thùng rác.
+Sau khi kết bạn thành công, người chơi có thể gửi tin nhắn ngay, kể cả khi bạn mình ngoại tuyến. Làm mới tài khoản ở nền không khóa nút **Gửi**. Bản nháp được giữ nếu gửi thất bại; người bị chặn hoặc yêu cầu kết bạn chưa được chấp nhận vẫn không thể nhắn.
 
-Nếu dùng thư mục game riêng, bật **Xóa cả thư mục game riêng** để xóa cả dữ liệu tại đường dẫn được hiển thị. Launcher chặn đường dẫn chứa kho chung hoặc trùng với bản chơi khác. File modpack đã xuất ở bên ngoài được giữ lại. Có thêm nút xóa hẳn từng bản chơi trong thùng rác cũ.
+## Tiếng Việt / English
 
-**Xóa vĩnh viễn không thể hoàn tác. Hãy xuất modpack kèm thế giới trước nếu còn muốn giữ dữ liệu.**
+Hoàn thiện bản dịch cho trang chính, thư viện, bản chơi, tài khoản/skin/cape, bạn bè, server, cosmetic, Premium, cập nhật và hướng dẫn.
 
-## Cập nhật và bộ cài
+Chọn ngôn ngữ trên màn hình đăng nhập hoặc trong **Cài đặt**; giao diện và cửa sổ đang mở đổi ngay, lựa chọn được lưu cho lần sau. Tên người chơi, đường dẫn và log game giữ nguyên; tiền thanh toán vẫn dùng VND.
 
-Giữ cách cập nhật quen thuộc: launcher báo bản mới, chỉ tải và cài khi bạn bấm **Cập nhật ngay**. Gói cập nhật được kiểm SHA-256 trước khi áp dụng.
+## Dành cho chủ launcher
+
+Trang quản trị riêng có mục **Số liệu launcher**: hoạt động tài khoản Google theo ngày/tuần/tháng, phiên đang trực tuyến và lượt tải GitHub theo nền tảng/bản phát hành. Số liệu hoạt động tính theo giờ Việt Nam, bắt đầu từ khi triển khai bộ thu thập; lượt tải không phải số người cài duy nhất. Bộ thu thập gặp lỗi không chặn đăng nhập hoặc chat.
+
+## Tải và cập nhật
 
 - **Windows x64:** bộ cài `setup.exe` và ZIP portable/cập nhật.
 - **Linux x64:** `.deb` cho Linux Mint/Ubuntu/Debian, `.rpm`, AppImage, `.tar.gz` và ZIP cập nhật.
 - **macOS:** DMG và ZIP riêng cho Apple Silicon và Intel.
 
-Google và Premium dùng dịch vụ thật; bản phát hành không mở Ultimate TEST. Chỉ đính kèm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
+Launcher tiếp tục thông báo bản mới và chỉ tải/cài khi bạn chọn cập nhật. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật; bản phát hành không mở Ultimate TEST. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.

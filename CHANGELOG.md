@@ -5,6 +5,8 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+## 1.2.0rc19 — 2026-10-10
+
 - Sửa mở phòng/chia sẻ NeoForge bị báo không tìm thấy phiên bản loader dù đã cài:
   đọc phiên bản NeoForge từ metadata khởi động chính thức, không nhầm số hiệu FML.
   Áp dụng cho đồng bộ phòng, xuất modpack và kiểm tra mod; không cần cài lại loader.
