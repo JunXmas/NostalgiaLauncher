@@ -1,6 +1,6 @@
-# Nostalgia 1.2.0rc24 — Mời bạn dễ hơn, click đúng chỗ
+# Nostalgia 1.2.0rc25 — Mời bạn dễ hơn, click đúng chỗ
 
-rc24 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+rc25 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
 
 ## Cùng vào world, dễ hiểu hơn
 

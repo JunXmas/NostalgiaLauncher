@@ -181,7 +181,7 @@ def http_client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
 
 
 @pytest.fixture
-def qt_app() -> Iterator[object]:
+def qt_app(monkeypatch: pytest.MonkeyPatch) -> Iterator[object]:
     """Một `QGuiApplication` cho cả phiên — Qt không cho tạo hai. Chỉ test trong `tests/ui/`
     dùng; PySide6 là phụ thuộc tuỳ chọn nên import lười và bỏ qua nếu thiếu."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -191,7 +191,8 @@ def qt_app() -> Iterator[object]:
     application = QApplication.instance() or QApplication(["test"])
     assert isinstance(application, QApplication)
     application.setQuitOnLastWindowClosed(False)
-    yield application
-    from qt_lifetime import finish_windows
+    from qt_lifetime import finish_windows, retain_windows
 
-    finish_windows(application)
+    windows = retain_windows(monkeypatch)
+    yield application
+    finish_windows(application, windows)
