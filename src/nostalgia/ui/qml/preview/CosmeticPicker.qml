@@ -21,7 +21,7 @@ Column {
         id: options
         objectName: "cosmeticOptionsGrid"
         width: parent.width
-        cellWidth: (width + 10) / root.columns
+        cellWidth: Math.max(1, Math.floor(width / root.columns))
         cellHeight: 180 * GlassTheme.scale + 10
         height: Math.min(Math.ceil(count / root.columns) * cellHeight, 440 * GlassTheme.scale)
         model: Cosmetics.available(cosmeticBridge.sets)

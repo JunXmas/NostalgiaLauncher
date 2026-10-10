@@ -76,7 +76,7 @@ Rectangle {
             font.family: GlassTheme.font
             font.pixelSize: GlassTheme.fontLabel
             wrapMode: Text.WordWrap
-            maximumLineCount: 2
+            maximumLineCount: tile.compactScope ? 1 : 2
             elide: Text.ElideRight
             lineHeight: 1.3
         }

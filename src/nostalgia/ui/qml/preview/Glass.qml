@@ -14,12 +14,13 @@ Rectangle {
     property bool autoPaddingEnabled: false
     property real finishOpacity: 1
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
+    readonly property bool backdropActive: visible && frosted && shaderAvailable && backdrop !== null && width > 0 && height > 0
     radius: 24
     color: GlassTheme.glassSurface
     border.width: 1
     border.color: GlassTheme.stroke
     function refreshBackdrop() {
-        if (root.visible && root.frosted && root.shaderAvailable) {
+        if (root.backdropActive) {
             capture.scheduleUpdate();
             maskCapture.scheduleUpdate();
         }
@@ -32,7 +33,7 @@ Rectangle {
         id: capture
         anchors.fill: parent
         visible: false
-        sourceItem: root.visible && root.frosted && root.shaderAvailable ? root.backdrop : null
+        sourceItem: root.backdropActive ? root.backdrop : null
         sourceRect: {
             if (root.backdropRect.width >= 0)
                 return root.backdropRect;
@@ -49,13 +50,13 @@ Rectangle {
             return Qt.rect(p.x, p.y, root.width, root.height);
         }
         textureSize: Qt.size(Math.max(1, root.width / 2), Math.max(1, root.height / 2))
-        live: root.visible && root.frosted && root.shaderAvailable && root.liveBackdrop
+        live: root.backdropActive && root.liveBackdrop
         hideSource: false
     }
     MultiEffect {
         objectName: "glassEffect"
         anchors.fill: parent
-        visible: root.frosted && root.shaderAvailable
+        visible: root.backdropActive
         source: capture
         blurEnabled: true
         autoPaddingEnabled: root.autoPaddingEnabled
@@ -68,14 +69,17 @@ Rectangle {
     }
     Rectangle {
         id: mask
+        objectName: "glassMask"
         anchors.fill: parent
         radius: root.radius
         color: "white"
-        visible: root.shaderAvailable
+        // ShaderEffectSource thu được item ẩn; mask không bao giờ được vẽ ra UI,
+        // kể cả khi ảnh chưa tải hoặc sourceItem vừa được giải phóng.
+        visible: false
     }
     ShaderEffectSource {
         id: maskCapture
-        sourceItem: root.visible && root.frosted && root.shaderAvailable ? mask : null
+        sourceItem: root.backdropActive ? mask : null
         hideSource: true
         visible: false
         anchors.fill: parent

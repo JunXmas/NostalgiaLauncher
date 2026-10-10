@@ -104,7 +104,7 @@ Item {
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         readonly property bool compact: GlassTheme.preferences && GlassTheme.preferences.compactUi
         readonly property int columns: compact ? 1 : Math.max(1, Math.floor((width + 8) / (270 * GlassTheme.scale)))
-        cellWidth: Math.max(1, (width - 8 + 16) / columns)
+        cellWidth: Math.max(1, Math.floor((width - 8) / columns))
         cellHeight: (compact ? 92 : 204) * GlassTheme.scale + 16
         model: root.filtered
         delegate: Item {

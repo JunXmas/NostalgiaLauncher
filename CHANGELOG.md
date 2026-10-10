@@ -5,6 +5,11 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Sửa vệt trắng ở hướng dẫn và ô thư viện khi ảnh chưa tải hoặc blur tắt:
+  mask chỉ dùng để cắt hiệu ứng, không xuất hiện trên giao diện.
+- Sửa lưới thư viện, bản chơi và cosmetic xuống dòng sớm, để trống cột;
+  hướng dẫn chuyển bố cục theo chiều rộng và cỡ chữ để nội dung không chồng nhau.
+
 ## 1.2.0rc19 — 2026-10-10
 
 - Sửa mở phòng/chia sẻ NeoForge bị báo không tìm thấy phiên bản loader dù đã cài:

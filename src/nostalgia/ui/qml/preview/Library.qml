@@ -166,7 +166,7 @@ Item {
         anchors.top: status.bottom; anchors.topMargin: 12
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         readonly property int columns: root.compactScope ? 1 : Math.max(1, Math.floor((width + 8) / (300 * GlassTheme.scale)))
-        cellWidth: Math.max(1, (width - 8 + 16) / columns)
+        cellWidth: Math.max(1, Math.floor((width - 8) / columns))
         cellHeight: (root.compactScope ? 126 : 218) * GlassTheme.scale + 16
         model: contentBridge.resultsModel
         delegate: Item {
