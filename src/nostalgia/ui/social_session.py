@@ -46,6 +46,7 @@ class SocialSession(SocialState):
         self._login: GoogleLogin | None = None
         self._note = ""
         self._refresh_pending = False
+        self._watching = False
         self._arrived.connect(self._apply)
         self.busyChanged.connect(self._flush_refresh)
         self._timer = QTimer(self)
@@ -59,9 +60,6 @@ class SocialSession(SocialState):
     def restoreSession(self) -> None:
         if self._session_store and not self.busy and not self.access_token():
             self._request("signed", self._session_store.load_access_token)
-
-    def access_token(self) -> str:
-        return self._gateway.access_token if self._gateway is not None else ""
 
     @Slot()
     def signIn(self) -> None:
@@ -105,6 +103,7 @@ class SocialSession(SocialState):
     @Slot()
     def refresh(self) -> None:
         gateway, peer_id = self._gateway, self._peer_id
+        watching, cached_messages = self._watching, self.resolve_cached_messages(peer_id)
         if gateway is None or not gateway.access_token:
             return
         if self.busy:
@@ -115,7 +114,7 @@ class SocialSession(SocialState):
         def fetch() -> SocialUpdate:
             snapshot = gateway.fetch_snapshot()
             messages = (
-                gateway.fetch_messages(peer_id)
+                (gateway.fetch_messages(peer_id) if watching else cached_messages)
                 if any(friend.account_id == peer_id for friend in snapshot.friends)
                 else ()
             )

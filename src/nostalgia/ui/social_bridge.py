@@ -36,6 +36,7 @@ class SocialBridge(SocialInvitations):
         self._friend_sender = FriendSender(self)
         self._friend_sender.busyChanged.connect(self.friendBusyChanged)
         self._friend_sender.completed.connect(self._apply_friend_action)
+        self.changed.connect(self._configure_poll_interval)
 
     @Property(bool, notify=friendBusyChanged)
     def friendBusy(self) -> bool:
@@ -86,18 +87,29 @@ class SocialBridge(SocialInvitations):
 
     @Slot(bool)
     def setWatching(self, watching: bool) -> None:
-        self._timer.setInterval(3000 if watching else 15000)
+        changed = watching != self._watching
+        self._watching = watching
+        self._configure_poll_interval()
+        if watching and changed:
+            self.refresh()
+
+    def _configure_poll_interval(self) -> None:
+        interval = 5000 if self._watching and self._peer_id else 15000
+        if self._timer.interval() != interval:
+            self._timer.setInterval(interval)
 
     @Slot(str)
     def selectFriend(self, account_id: str) -> None:
         if not account_id:
             self._peer_id, self._messages = "", []
+            self._configure_poll_interval()
             self.changed.emit()
             return
         if self._snapshot and any(
             friend.account_id == account_id for friend in self._snapshot.friends
         ):
             self._peer_id, self._messages = account_id, []
+            self._configure_poll_interval()
             self.changed.emit()
             self.refresh()
 
