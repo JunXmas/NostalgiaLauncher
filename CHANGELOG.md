@@ -5,7 +5,10 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
-## 1.2.0rc23 — 2026-10-10
+## 1.2.0rc24 — 2026-10-10
+
+- Đóng dịch vụ phòng nhiều lần an toàn, không tạo coroutine sau khi vòng lặp đã đóng;
+  bộ test thu hồi cửa sổ/worker Qt sau từng test để tránh ảnh hưởng giữa các màn hình.
 
 - Sửa lỗi vòng đời bộ lọc kéo thả Qt có thể làm các màn hình skin, tạo bản chơi,
   xác nhận xóa hoặc trang chủ lỗi khi mở cửa sổ mới.

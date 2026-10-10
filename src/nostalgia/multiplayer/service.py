@@ -92,6 +92,8 @@ class RoomService:
 
     def shutdown(self, timeout_seconds: float = 3.0) -> None:
         """Đóng launcher: dừng phòng rồi dừng vòng lặp. Không để luồng mồ côi."""
+        if self._loop.is_closed():
+            return
         with contextlib.suppress(Exception):
             self.stop().result(timeout_seconds)
         self._loop.call_soon_threadsafe(self._loop.stop)

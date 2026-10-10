@@ -180,7 +180,7 @@ def http_client(certificate_pair: tuple[Path, Path]) -> Iterator[HttpClient]:
         http_client.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def qt_app() -> Iterator[object]:
     """Một `QGuiApplication` cho cả phiên — Qt không cho tạo hai. Chỉ test trong `tests/ui/`
     dùng; PySide6 là phụ thuộc tuỳ chọn nên import lười và bỏ qua nếu thiếu."""
@@ -189,7 +189,9 @@ def qt_app() -> Iterator[object]:
     from PySide6.QtWidgets import QApplication
 
     application = QApplication.instance() or QApplication(["test"])
+    assert isinstance(application, QApplication)
+    application.setQuitOnLastWindowClosed(False)
     yield application
-    from nostalgia.ui.worker import wait_for_background
+    from qt_lifetime import finish_windows
 
-    wait_for_background()
+    finish_windows(application)

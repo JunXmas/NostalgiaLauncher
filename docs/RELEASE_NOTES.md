@@ -1,6 +1,6 @@
-# Nostalgia 1.2.0rc23 — Mời bạn dễ hơn, click đúng chỗ
+# Nostalgia 1.2.0rc24 — Mời bạn dễ hơn, click đúng chỗ
 
-rc23 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+rc24 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
 
 ## Cùng vào world, dễ hiểu hơn
 
@@ -38,7 +38,7 @@ Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm 
 
 ## Cửa sổ mở ổn định hơn
 
-Sửa lỗi bộ lọc kéo thả mod nhận sự kiện trong lúc cửa sổ đang được thu hồi, có thể làm các màn hình skin, tạo bản chơi, xác nhận xóa hoặc trang chủ lỗi khi mở. Kéo thả mod vẫn hỏi bản chơi đích trước khi cài.
+Sửa lỗi bộ lọc kéo thả mod nhận sự kiện trong lúc cửa sổ đang được thu hồi, có thể làm các màn hình skin, tạo bản chơi, xác nhận xóa hoặc trang chủ lỗi khi mở. Kéo thả mod vẫn hỏi bản chơi đích trước khi cài. Dịch vụ phòng đóng an toàn kể cả khi có nhiều yêu cầu đóng liên tiếp.
 
 ## Các ô nằm đúng chỗ
 
