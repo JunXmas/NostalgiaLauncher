@@ -5,6 +5,7 @@ Rectangle {
     id: tile
     property var project: ({})
     property bool compactScope: false
+    property bool instanceScoped: false
     property string contentKind: "modpack"
     property bool artworkEnabled: true
     signal modpackRequested(string projectId, string title)
@@ -101,10 +102,10 @@ Rectangle {
         anchors.rightMargin: 14 * GlassTheme.scale
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 16 * GlassTheme.scale
-        label: tile.project.installing ? Legacy.Tr.phrase("Đang cài…") : tile.project.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : tile.project.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài đặt")
+        label: tile.project.installing ? Legacy.Tr.phrase("Đang cài…") : tile.project.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : tile.instanceScoped && tile.project.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài")
         height: 34 * GlassTheme.scale
-        clickable: !tile.project.installing && !tile.project.installed && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && (tile.project.contentKind === "modpack" || (!!contentBridge.instanceId && !(tile.contentKind === "mod" && contentBridge.loaderKind === "vanilla")))
-        onClicked: tile.project.contentKind === "modpack" ? tile.modpackRequested(tile.project.projectId, tile.project.title) : contentBridge.install(tile.project.projectId)
+        clickable: !tile.project.installing && (!tile.instanceScoped || !tile.project.installed) && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && (tile.project.contentKind === "modpack" || !tile.instanceScoped || (!!contentBridge.instanceId && !(tile.contentKind === "mod" && contentBridge.loaderKind === "vanilla")))
+        onClicked: tile.project.contentKind === "modpack" ? tile.modpackRequested(tile.project.projectId, tile.project.title) : tile.instanceScoped ? contentBridge.install(tile.project.projectId) : projectBridge.openProject(tile.project.projectId)
     }
     HoverHandler {
         id: hover

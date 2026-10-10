@@ -68,6 +68,7 @@ Controls.ComboBox {
         y: root.height + 6
         width: root.searchable ? Math.max(root.width, Math.min(240 * GlassTheme.scale, root.Window.window ? root.Window.window.width - 24 : root.width)) : root.width
         padding: 8
+        modal: true; dim: false
         margins: 12
         readonly property real rowHeight: 34 * GlassTheme.scale
         readonly property real searchHeight: root.searchable ? 44 * GlassTheme.scale : 0

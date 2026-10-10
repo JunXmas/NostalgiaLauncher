@@ -95,6 +95,7 @@ Item {
     TapHandler {
         id: press
         enabled: root.clickable
+        gesturePolicy: TapHandler.WithinBounds
         onTapped: {
             root.forceActiveFocus();
             root.trigger();

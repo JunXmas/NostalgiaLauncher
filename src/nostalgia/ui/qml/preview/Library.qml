@@ -174,7 +174,7 @@ Item {
             width: libraryViewport.cellWidth; height: libraryViewport.cellHeight
             ProjectTile {
                 width: parent.width - 16; height: parent.height - 16
-                project: parent.model; compactScope: root.compactScope; contentKind: root.kind
+                project: parent.model; compactScope: root.compactScope; contentKind: root.kind; instanceScoped: root.instanceScoped
                 artworkEnabled: libraryViewport.visible && parent.y + parent.height >= libraryViewport.contentY && parent.y <= libraryViewport.contentY + libraryViewport.height
                 onModpackRequested: function(projectId, title) { pack.openFor(projectId, title); }
             }

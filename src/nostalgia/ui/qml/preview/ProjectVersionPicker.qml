@@ -60,9 +60,9 @@ Column {
         if (!targets.some(function (target) {
             return target.instanceId === root.instanceId;
         })) {
-            var preferredTarget = targets.find(function (target) {
-                return target.instanceId === contentBridge.instanceId;
-            }) || targets[0];
+            var preferredTarget = root.pinnedInstanceId ? targets.find(function (target) {
+                return target.instanceId === root.pinnedInstanceId;
+            }) : null;
             instanceId = preferredTarget ? preferredTarget.instanceId : "";
         }
     }
@@ -155,16 +155,17 @@ Column {
             objectName: "projectTarget"
             menuBackdrop: root.menuBackdrop
             width: parent.width
-            model: root.targets.map(function (target) {
+            model: (root.pinnedInstanceId ? [] : [Legacy.Tr.phrase("Chọn bản chơi")]).concat(root.targets.map(function (target) {
                 return root.targetLabel(target);
-            })
+            }))
             displayText: root.targets.length ? currentText : Legacy.Tr.phrase("Chưa có bản chơi tương thích")
             currentIndex: Math.max(0, root.targets.findIndex(function (target) {
                 return target.instanceId === root.instanceId;
-            }))
+            }) + (root.pinnedInstanceId ? 0 : 1))
             enabled: root.targets.length > 0 && !projectBridge.installing && !root.pinnedInstanceId
             onActivated: function (index) {
-                root.instanceId = root.targets[index].instanceId;
+                var target = root.targets[index - (root.pinnedInstanceId ? 0 : 1)];
+                root.instanceId = target ? target.instanceId : "";
             }
         }
     }

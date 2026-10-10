@@ -9,6 +9,7 @@ Controls.Popup {
     parent: Controls.Overlay.overlay
     width: Math.min(300 * GlassTheme.scale, parent ? parent.width - 24 : 300)
     height: menu.implicitHeight + 24; padding: 12
+    modal: true; dim: false; focus: true
     x: anchorItem && parent ? Math.max(12, anchorItem.mapToItem(parent, 0, 0).x) : 12
     y: anchorItem && parent ? Math.max(12, anchorItem.mapToItem(parent, 0, 0).y - height - 10) : 12
     closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside

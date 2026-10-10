@@ -27,8 +27,9 @@ Item {
 
     MouseArea {
         anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
         onWheel: function(event) { event.accepted = true; }
-        onClicked: if (!accountBridge.busy) dialog.visible = false
+        onClicked: function(mouse) { if (mouse.button === Qt.LeftButton && !accountBridge.busy) dialog.visible = false; }
         Rectangle { anchors.fill: parent; color: "#b3000000" }
     }
     DialogFrame {
@@ -43,7 +44,7 @@ Item {
         radius: Theme.radius
         color: Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, Theme.modern ? 0.78 : 1)
         border.color: Theme.border
-        MouseArea { anchors.fill: parent }
+        MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onWheel: function(event) { event.accepted = true; } }
 
         Preview.InertialScroll {
             id: accountFormScroll

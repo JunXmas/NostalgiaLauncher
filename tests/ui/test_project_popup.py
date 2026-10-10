@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -17,54 +17,15 @@ from test_minimal_preview import find_control, press
 
 from nostalgia.api import ContentTarget, Launcher
 from nostalgia.content.installer import ContentInstallReport
-from nostalgia.content.model import ContentKind, Project, ProjectDetails, ProjectVersion, SearchPage
+from nostalgia.content.model import ContentKind, Project, ProjectDetails, SearchPage
 from nostalgia.instance.model import Instance
 from nostalgia.ui.preview import open_preview
 from nostalgia.ui.worker import wait_for_background
+from project_popup_fixture import InstallChoice, assert_mica_alignment
+from project_popup_fixture import find_visual as find_visual
+from project_popup_fixture import release as release
 
 pytestmark = pytest.mark.usefixtures("qt_app")
-
-
-@dataclass(frozen=True, slots=True)
-class InstallChoice:
-    version_id: str
-    game_version: str
-    instance_id: str
-
-
-def release(version_id: str, game_version: str, loader_kind: str) -> ProjectVersion:
-    return ProjectVersion(
-        version_id,
-        "demo",
-        version_id,
-        "release",
-        (game_version,),
-        (loader_kind,),
-        "2026-01-01",
-        "https://example.invalid/file",
-        "mod.jar",
-        "0" * 40,
-        1,
-        (),
-    )
-
-
-def find_visual(root_item: Any, name: str) -> Any:
-    if root_item.objectName() == name:
-        return root_item
-    for child in root_item.childItems():
-        result = find_visual(child, name)
-        if result is not None:
-            return result
-    return None
-
-
-def assert_mica_alignment(root_item: Any) -> None:
-    QTest.qWait(30)
-    mica = find_control(root_item, "projectMica")
-    origin = mica.mapToScene(QPointF())
-    assert mica.property("backdropRect").x() == pytest.approx(origin.x())
-    assert mica.property("backdropRect").y() == pytest.approx(origin.y())
 
 
 @pytest.mark.parametrize("content_kind", ["mod", "resourcepack", "shader", "modpack"])
@@ -145,6 +106,9 @@ def test_card_popup_selects_version_and_installs(
         root_item = view.rootObject()
         view.show()
         view.requestActivate()
+        view.rootContext().contextProperty("settingsBridge").setAppearance(
+            100, False, False, True, "en"
+        )
         root_item.setProperty("currentIndex", 2)
         library = find_control(root_item, "minimalLibrary")
         library.setProperty("kind", content_kind)
@@ -171,19 +135,25 @@ def test_card_popup_selects_version_and_installs(
         picker = find_control(root_item, "projectVersionPicker")
         wait_until(lambda: bool(picker.property("gameVersion")))
         assert picker.property("gameVersion") == "1.20.1"
-        assert picker.property("instanceId") == "fabric"
+        assert picker.property("instanceId") == ""
         game_select = find_control(root_item, "projectGameVersion")
         game_select.forceActiveFocus()
         QTest.keyClick(view, Qt.Key.Key_Down)
         wait_until(lambda: picker.property("versionId") == "forge-new")
         assert picker.property("gameVersion") == "1.21.1"
-        assert picker.property("instanceId") == "forge"
+        assert picker.property("instanceId") == ""
         QTest.keyClick(view, Qt.Key.Key_Up)
         wait_until(lambda: picker.property("versionId") == "new")
         select = find_control(root_item, "projectRelease")
         select.forceActiveFocus()
         QTest.keyClick(view, Qt.Key.Key_Down)
         assert picker.property("versionId") == "old"
+        if content_kind != "modpack":
+            assert not find_control(root_item, "projectInstall").property("clickable")
+            target_select = find_control(root_item, "projectTarget")
+            target_select.forceActiveFocus()
+            QTest.keyClick(view, Qt.Key.Key_Down)
+            assert picker.property("instanceId") == "fabric"
         press(view, find_control(root_item, "projectInstall"))
         wait_until(lambda: bool(choices) and not project_bridge.installing)
         assert choices[0].version_id == "old"
@@ -194,15 +164,25 @@ def test_card_popup_selects_version_and_installs(
         assert not find_control(root_item, "projectInstall").property("clickable")
         press(view, find_control(root_item, "projectClose"))
         assert not dialog.property("opened")
-        # The existing quick-download action stays separate from the card action.
+        # Global download always asks for the target, even with an old library selection.
         if content_kind != "modpack":
             content_bridge.selectInstance("fabric")
             library.refresh()
             wait_until(lambda: not content_bridge.searching and len(content_bridge.results) == 1)
+            assert find_visual(root_item, "projectDownload-demo").property("label") == "Install"
             press(view, find_visual(root_item, "projectDownload-demo"))
+            wait_until(lambda: dialog.property("opened") and not project_bridge.details["loading"])
+            assert len(choices) == 1
+            assert picker.property("instanceId") == ""
+            assert not find_control(root_item, "projectInstall").property("clickable")
+            target_select.forceActiveFocus()
+            QTest.keyClick(view, Qt.Key.Key_Down)
+            assert picker.property("instanceId") == "fabric"
+            press(view, find_control(root_item, "projectInstall"))
             wait_until(lambda: len(choices) == 2)
-            assert not dialog.property("opened")
-            assert choices[1].version_id == ""
+            assert dialog.property("opened")
+            assert choices[1] == InstallChoice("new", "1.20.1", "fabric")
+            press(view, find_control(root_item, "projectClose"))
         # The same dialog also fits the smallest supported window at 150% text.
         view.resize(1024, 600)
         view.rootContext().contextProperty("settingsBridge").setAppearance(

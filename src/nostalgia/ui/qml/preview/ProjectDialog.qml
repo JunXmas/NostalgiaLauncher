@@ -59,10 +59,10 @@ Controls.Popup {
         target: projectBridge
         function onOpened() {
             root.success = "";
+            picker.reset();
             if (root.openedProject !== root.details.projectId) {
                 root.openedProject = root.details.projectId;
                 nameField.text = "";
-                picker.reset();
                 aboutScroll.contentY = 0;
             }
             root.open();

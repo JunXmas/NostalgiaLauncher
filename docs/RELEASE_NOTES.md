@@ -1,6 +1,21 @@
-# Nostalgia 1.2.0rc20 — Mica sạch hơn, bố cục gọn hơn
+# Nostalgia 1.2.0rc21 — Click đúng chỗ, mica sạch hơn
 
-rc20 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+rc21 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+
+## Cài nội dung vào đúng bản chơi
+
+Nút tải ở thư viện tổng hiển thị **Cài / Install**. Bấm vào sẽ mở popup để bạn chọn bản chơi đích và bản phát hành tương thích trước khi tải mod, shader hoặc resourcepack. Launcher không tự cài vào bản chơi đã được chọn từ trước. Nếu mở thư viện từ quản lý một bản chơi, đích cài vẫn cố định ở bản chơi đó.
+
+## Chấp nhận lời mời kết bạn ngay
+
+Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm mới ở nền. Yêu cầu đến hiện sẵn để dễ tìm; thao tác gửi/chấp nhận/từ chối chỉ khóa trong lúc chính thao tác đó đang xử lý. Chặn gửi trùng và bỏ kết quả từ phiên tài khoản đã đổi hoặc bị thu hồi.
+
+## Popup nhận đúng một lần bấm
+
+- Sửa nút trong popup/menu kích hoạt cả nút ở trang phía sau.
+- Menu tài khoản và danh sách chọn phiên bản chặn thao tác ở nền trong lúc mở.
+- Nút nhận click riêng biệt; kéo từ nút để cuộn danh sách vẫn hoạt động, không kích hoạt nút khi kéo.
+- Khung thêm tài khoản và cài modpack chặn cả nút chuột phải, chuột giữa và cuộn xuyên nền.
 
 ## Tạm biệt vệt trắng
 

@@ -5,8 +5,15 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
-## 1.2.0rc20 — 2026-10-10
+## 1.2.0rc21 — 2026-10-10
 
+- Thư viện tổng mở chọn bản chơi và phiên bản trước khi cài mod, shader hoặc
+  resourcepack; không tự cài vào đích đã chọn trước đó. Sửa nhãn Install bị dịch
+  thành Settings. Thư viện trong bản chơi giữ đích cài cố định.
+- Nút Chấp nhận kết bạn không bị khóa bởi cập nhật danh sách ở nền; thao tác
+  kết bạn chạy riêng, chặn gửi lặp và bỏ kết quả của phiên cũ. Hiện sẵn yêu cầu đến.
+- Chặn click xuyên popup/menu: mỗi lần bấm chỉ kích hoạt nút đang hiển thị;
+  menu tài khoản và chọn phiên bản chặn thao tác ở nền, giữ kéo cuộn bình thường.
 - Sửa vệt trắng ở hướng dẫn và ô thư viện khi ảnh chưa tải hoặc blur tắt:
   mask chỉ dùng để cắt hiệu ứng, không xuất hiện trên giao diện.
 - Sửa lưới thư viện, bản chơi và cosmetic xuống dòng sớm, để trống cột;

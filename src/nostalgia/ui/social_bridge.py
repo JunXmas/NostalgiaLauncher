@@ -10,6 +10,7 @@ from PySide6.QtGui import QGuiApplication
 
 from nostalgia.api import ServiceSessionStore, SocialGateway
 from nostalgia.ui.chat_sender import ChatSender
+from nostalgia.ui.friend_sender import FriendSender
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.social_session import SocialSession
@@ -17,6 +18,7 @@ from nostalgia.ui.social_session import SocialSession
 
 class SocialBridge(SocialSession):
     chatBusyChanged = Signal()
+    friendBusyChanged = Signal()
 
     def __init__(
         self,
@@ -31,6 +33,26 @@ class SocialBridge(SocialSession):
         self._chat = ChatSender(self)
         self._chat.busyChanged.connect(self.chatBusyChanged)
         self._chat.completed.connect(self._apply_delivery)
+        self._friend_sender = FriendSender(self)
+        self._friend_sender.busyChanged.connect(self.friendBusyChanged)
+        self._friend_sender.completed.connect(self._apply_friend_action)
+
+    @Property(bool, notify=friendBusyChanged)
+    def friendBusy(self) -> bool:
+        return bool(self._friend_sender.busy)
+
+    @Slot(str, bool)
+    def _apply_friend_action(self, error: str, revoked: bool) -> None:
+        if revoked:
+            if self._session_store:
+                self._session_store.remove_access_token()
+            self._reset_session(error)
+        elif error:
+            self._note = error
+        else:
+            self._note = "Đã gửi."
+            self.refresh()
+        self.changed.emit()
 
     @Property(bool, notify=chatBusyChanged)
     def chatBusy(self) -> bool:
@@ -54,10 +76,12 @@ class SocialBridge(SocialSession):
     @Slot()
     def shutdown(self) -> None:
         self._chat.cancel()
+        self._friend_sender.cancel()
         super().shutdown()
 
     def _reset_session(self, note: str) -> None:
         self._chat.cancel()
+        self._friend_sender.cancel()
         super()._reset_session(note)
 
     @Slot(bool)
@@ -95,8 +119,8 @@ class SocialBridge(SocialSession):
 
     def _friend_action(self, action: str, account_id: str) -> None:
         gateway = self._gateway
-        if self.signedIn and gateway and not self.busy:
-            self._request("changed", lambda: gateway.friend_action(action, account_id))
+        if self.signedIn and gateway and account_id and not self.friendBusy:
+            self._friend_sender.submit(gateway, action, account_id)
 
     @Slot(str)
     def sendMessage(self, text: str) -> None:

@@ -5,7 +5,7 @@ Glass {
     id: root
     objectName: "friendsRail"
     property bool adding: false
-    property bool requestsExpanded: false
+    property bool requestsExpanded: true
     implicitHeight: contents.implicitHeight + 32
     height: implicitHeight
     padding: 16
@@ -21,7 +21,7 @@ Glass {
             visible: root.adding
             width: parent.width; spacing: 8
             Input { id: friendCode; objectName: "friendCodeInput"; width: parent.width; placeholder: Legacy.Tr.phrase("Mã kết bạn"); onAccepted: socialBridge.requestFriend(text) }
-            Button { objectName: "requestFriend"; width: parent.width; label: Legacy.Tr.phrase("Gửi yêu cầu"); clickable: !!friendCode.text.trim() && !socialBridge.busy; onClicked: socialBridge.requestFriend(friendCode.text) }
+            Button { objectName: "requestFriend"; width: parent.width; label: Legacy.Tr.phrase("Gửi yêu cầu"); clickable: !!friendCode.text.trim() && !socialBridge.friendBusy; onClicked: socialBridge.requestFriend(friendCode.text) }
             Button { label: Legacy.Tr.phrase("Chép mã của tôi"); quiet: true; onClicked: socialBridge.copyFriendCode() }
         }
         PaymentText { width: parent.width; visible: !socialBridge.friends.length; text: Legacy.Tr.phrase("Bấm + để thêm người bạn đầu tiên."); color: GlassTheme.muted }
@@ -64,8 +64,8 @@ Glass {
                     }
                     Flow {
                         width: parent.width; spacing: 8
-                        Button { visible: modelData.incoming; label: Legacy.Tr.phrase("Chấp nhận"); clickable: !socialBridge.busy; onClicked: socialBridge.acceptFriend(modelData.accountId) }
-                        Button { label: modelData.incoming ? Legacy.Tr.phrase("Từ chối") : Legacy.Tr.phrase("Huỷ"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.removeFriend(modelData.accountId) }
+                        Button { objectName: "acceptFriend-" + modelData.accountId; visible: modelData.incoming; label: Legacy.Tr.phrase("Chấp nhận"); clickable: !socialBridge.friendBusy; onClicked: socialBridge.acceptFriend(modelData.accountId) }
+                        Button { objectName: "removeFriend-" + modelData.accountId; label: modelData.incoming ? Legacy.Tr.phrase("Từ chối") : Legacy.Tr.phrase("Huỷ"); quiet: true; clickable: !socialBridge.friendBusy; onClicked: socialBridge.removeFriend(modelData.accountId) }
                     }
                 }
             }

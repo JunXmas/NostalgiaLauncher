@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QColor, QImage
 from PySide6.QtTest import QTest
 from qml_tree import find_item
@@ -28,7 +28,10 @@ def test_friend_avatar_opens_read_only_profile_and_revoke_closes_it(
 ) -> None:
     _launcher, gateway, view, root_item, _social, *_ = social_preview
     login_preview(social_preview)
-    press(view, find_item(root_item, "friendAvatar-misa"))
+    avatar = find_item(root_item, "friendAvatar-misa")
+    assert avatar is not None
+    center = avatar.mapToScene(QPointF(avatar.width() / 2, avatar.height() / 2)).toPoint()
+    QTest.mouseClick(view, Qt.MouseButton.LeftButton, pos=center)
     modal = find_control(root_item, "socialProfileDialog")
     profiles = view.rootContext().contextProperty("profileBridge")
     wait_until(

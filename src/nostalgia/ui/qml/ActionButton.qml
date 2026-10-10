@@ -116,5 +116,5 @@ Item {
     }
 
     HoverHandler { id: hover; enabled: root.clickable; cursorShape: Qt.PointingHandCursor }
-    TapHandler { id: press; enabled: root.clickable; onTapped: { root.forceActiveFocus(); root.trigger(); } }
+    TapHandler { id: press; enabled: root.clickable; gesturePolicy: TapHandler.WithinBounds; onTapped: { root.forceActiveFocus(); root.trigger(); } }
 }
