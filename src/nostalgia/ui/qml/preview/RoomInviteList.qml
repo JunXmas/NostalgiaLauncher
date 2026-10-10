@@ -1,10 +1,12 @@
 import QtQuick
 import "../" as Legacy
+import "FriendFilter.js" as FriendFilter
 
 Column {
     id: root
     objectName: "roomInviteArea"
     readonly property var onlineFriends: socialBridge.friends.filter(function(friend) { return friend.online; })
+    readonly property var filteredFriends: FriendFilter.filter(root.onlineFriends, search.text)
     width: parent.width; spacing: 10
     PaymentText {
         width: parent.width
@@ -18,12 +20,20 @@ Column {
             : Legacy.Tr.phrase("Thêm bạn ở tab Bạn bè trước, rồi quay lại đây để mời vào room.")
         color: GlassTheme.muted
     }
+    FriendSearch {
+        id: search; objectName: "roomFriendSearch"; width: parent.width
+        visible: root.onlineFriends.length > 0
+        placeholder: Legacy.Tr.phrase("Tìm bạn để mời…")
+        onTextChanged: { friends.stopMotion(); friends.positionViewAtBeginning(); }
+    }
+    PaymentText { width: parent.width; visible: !!search.text.trim(); text: Legacy.Tr.phrase("Kết quả · ") + root.filteredFriends.length + " / " + root.onlineFriends.length; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+    PaymentText { objectName: "roomFriendSearchEmpty"; width: parent.width; visible: !!root.onlineFriends.length && !root.filteredFriends.length; text: Legacy.Tr.phrase("Không có bạn trực tuyến phù hợp. Thử tên khác nhé."); color: GlassTheme.muted }
     InertialList {
         id: friends
         objectName: "roomOnlineFriends"
         width: parent.width
         height: Math.min(count * (72 * GlassTheme.scale + spacing), 240 * GlassTheme.scale)
-        spacing: 6; model: root.onlineFriends
+        spacing: 6; model: root.filteredFriends
         delegate: Rectangle {
             required property var modelData
             width: friends.width; height: 72 * GlassTheme.scale; radius: 12

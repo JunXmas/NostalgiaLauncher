@@ -4115,5 +4115,11 @@
   "p:Người nhận: khi host mở LAN, bấm Khởi chạy & vào world. Launcher chạy đúng bản chơi đã đồng bộ và kết nối đến world.": "Guest: once the host opens LAN, click Launch & join world. The launcher starts the synced instance and connects to the world.",
   "p:Đang chuẩn bị modpack để bạn bè đồng bộ. Chờ xong để mời bạn.": "Preparing the modpack for your friends. Wait for it to finish before inviting them.",
   "p:Bấm Mở phòng, chọn bản chơi và tạo room để mời bạn trước khi khởi chạy Minecraft.": "Click Open room, select an instance and create a room to invite friends before launching Minecraft.",
-  "p:Kết bạn & mời chơi": "Friends & invitations"
+  "p:Kết bạn & mời chơi": "Friends & invitations",
+  "p:Tìm bạn theo tên…": "Search friends by name…",
+  "p:Tìm bạn để mời…": "Find a friend to invite…",
+  "p:Xóa tìm kiếm": "Clear search",
+  "p:Kết quả · ": "Results · ",
+  "p:Không tìm thấy bạn phù hợp. Thử tên khác nhé.": "No matching friends. Try another name.",
+  "p:Không có bạn trực tuyến phù hợp. Thử tên khác nhé.": "No matching online friends. Try another name."
 }

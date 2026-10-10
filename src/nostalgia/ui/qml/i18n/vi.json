@@ -4115,5 +4115,11 @@
   "p:Người nhận: khi host mở LAN, bấm Khởi chạy & vào world. Launcher chạy đúng bản chơi đã đồng bộ và kết nối đến world.": "Người nhận: khi host mở LAN, bấm Khởi chạy & vào world. Launcher chạy đúng bản chơi đã đồng bộ và kết nối đến world.",
   "p:Đang chuẩn bị modpack để bạn bè đồng bộ. Chờ xong để mời bạn.": "Đang chuẩn bị modpack để bạn bè đồng bộ. Chờ xong để mời bạn.",
   "p:Bấm Mở phòng, chọn bản chơi và tạo room để mời bạn trước khi khởi chạy Minecraft.": "Bấm Mở phòng, chọn bản chơi và tạo room để mời bạn trước khi khởi chạy Minecraft.",
-  "p:Kết bạn & mời chơi": "Kết bạn & mời chơi"
+  "p:Kết bạn & mời chơi": "Kết bạn & mời chơi",
+  "p:Tìm bạn theo tên…": "Tìm bạn theo tên…",
+  "p:Tìm bạn để mời…": "Tìm bạn để mời…",
+  "p:Xóa tìm kiếm": "Xóa tìm kiếm",
+  "p:Kết quả · ": "Kết quả · ",
+  "p:Không tìm thấy bạn phù hợp. Thử tên khác nhé.": "Không tìm thấy bạn phù hợp. Thử tên khác nhé.",
+  "p:Không có bạn trực tuyến phù hợp. Thử tên khác nhé.": "Không có bạn trực tuyến phù hợp. Thử tên khác nhé."
 }

@@ -1,11 +1,13 @@
 import QtQuick
 import "../" as Legacy
+import "FriendFilter.js" as FriendFilter
 
 Glass {
     id: root
     objectName: "friendsRail"
     property bool adding: false
     property bool requestsExpanded: true
+    readonly property var filteredFriends: FriendFilter.filter(socialBridge.friends, search.text)
     implicitHeight: contents.implicitHeight + 32
     height: implicitHeight
     padding: 16
@@ -24,13 +26,20 @@ Glass {
             Button { objectName: "requestFriend"; width: parent.width; label: Legacy.Tr.phrase("Gửi yêu cầu"); clickable: !!friendCode.text.trim() && !socialBridge.friendBusy; onClicked: socialBridge.requestFriend(friendCode.text) }
             Button { label: Legacy.Tr.phrase("Chép mã của tôi"); quiet: true; onClicked: socialBridge.copyFriendCode() }
         }
+        FriendSearch {
+            id: search; objectName: "friendSearch"; width: parent.width
+            visible: socialBridge.friends.length > 0
+            onTextChanged: { friends.stopMotion(); friends.positionViewAtBeginning(); }
+        }
+        PaymentText { width: parent.width; visible: !!search.text.trim(); text: Legacy.Tr.phrase("Kết quả · ") + root.filteredFriends.length + " / " + socialBridge.friends.length; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        PaymentText { objectName: "friendSearchEmpty"; width: parent.width; visible: !!socialBridge.friends.length && !root.filteredFriends.length; text: Legacy.Tr.phrase("Không tìm thấy bạn phù hợp. Thử tên khác nhé."); color: GlassTheme.muted }
         PaymentText { width: parent.width; visible: !socialBridge.friends.length; text: Legacy.Tr.phrase("Bấm + để thêm người bạn đầu tiên."); color: GlassTheme.muted }
         InertialList {
             id: friends
             objectName: "friendsList"
             width: parent.width; height: Math.min(count * (62 * GlassTheme.scale + 6), 340 * GlassTheme.scale)
             spacing: 6
-            model: socialBridge.friends
+            model: root.filteredFriends
     delegate: Button {
     required property var modelData
         objectName: "friend-" + modelData.accountId
