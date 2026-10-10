@@ -536,7 +536,7 @@ wheels = [
 
 [[package]]
 name = "nostalgia"
-version = "1.2.0rc22"
+version = "1.2.0rc23"
 source = { editable = "." }
 
 [package.optional-dependencies]

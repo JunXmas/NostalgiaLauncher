@@ -45,11 +45,11 @@ class LocalModBridge(WorkerBridge):
         }
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        if watched != self._view or event.type() not in (
+        if event.type() not in (
             QEvent.Type.DragEnter,
             QEvent.Type.DragMove,
             QEvent.Type.Drop,
-        ):
+        ) or watched is not getattr(self, "_view", None):
             return False
         drop = cast(QDropEvent | QDragEnterEvent, event)
         urls = drop.mimeData().urls()

@@ -1,6 +1,6 @@
-# Nostalgia 1.2.0rc22 — Mời bạn dễ hơn, click đúng chỗ
+# Nostalgia 1.2.0rc23 — Mời bạn dễ hơn, click đúng chỗ
 
-rc22 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+rc23 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
 
 ## Cùng vào world, dễ hiểu hơn
 
@@ -35,6 +35,10 @@ Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm 
 - Sửa lớp mask của blur hiện thành mảng trắng khi ảnh chưa tải, tải thất bại hoặc hiệu ứng blur tắt.
 - Sửa vệt trắng trong ô ghi chú của hướng dẫn và trên các ô thư viện.
 - Giữ mica trên ảnh đã tải và các cửa sổ, cùng quán tính cuộn hiện có.
+
+## Cửa sổ mở ổn định hơn
+
+Sửa lỗi bộ lọc kéo thả mod nhận sự kiện trong lúc cửa sổ đang được thu hồi, có thể làm các màn hình skin, tạo bản chơi, xác nhận xóa hoặc trang chủ lỗi khi mở. Kéo thả mod vẫn hỏi bản chơi đích trước khi cài.
 
 ## Các ô nằm đúng chỗ
 
