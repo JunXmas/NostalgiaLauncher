@@ -23,14 +23,14 @@ Column {
                     Column {
                         width: grid.columns === 2 ? grid.width - actions.width - 18 : grid.width
                         spacing: 8
-                        PaymentText { width: parent.width; text: modelData.name + Legacy.Tr.phrase(" mời bạn vào room"); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: modelData.name + Legacy.Tr.phrase(" mời bạn vào phòng"); font.weight: Font.DemiBold }
                         PaymentText { width: parent.width; text: modelData.world + Legacy.Tr.phrase(" · Hiệu lực 5 phút"); color: GlassTheme.muted }
                     }
                     Flow {
                         id: actions
                         width: grid.columns === 2 ? 230 * GlassTheme.scale : grid.width
                         spacing: 10
-                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Vào room"); primary: true; clickable: !socialBridge.inviteBusy && !multiplayerBridge.active; onClicked: { multiplayerBridge.setDirectAllowed(root.directAllowed); socialBridge.acceptInvite(modelData.inviteId); } }
+                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Vào phòng"); primary: true; clickable: !socialBridge.inviteBusy && !multiplayerBridge.active; onClicked: { multiplayerBridge.setDirectAllowed(root.directAllowed); socialBridge.acceptInvite(modelData.inviteId); } }
                         Button { objectName: "declineInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Từ chối"); quiet: true; clickable: !socialBridge.inviteBusy; onClicked: socialBridge.declineInvite(modelData.inviteId) }
                     }
                 }

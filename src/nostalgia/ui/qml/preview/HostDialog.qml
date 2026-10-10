@@ -53,7 +53,7 @@ Controls.Popup {
         Item {
             id: heading
             width: parent.width; height: Math.max(hostTitle.implicitHeight, closeButton.height) + 12
-            PaymentText { id: hostTitle; width: parent.width - closeButton.width - 12; text: Legacy.Tr.phrase("Mở phòng chơi chung"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+            PaymentText { id: hostTitle; width: parent.width - closeButton.width - 12; text: Legacy.Tr.phrase("Tạo phòng chơi chung"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
             Button { id: closeButton; anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; Accessible.name: Legacy.Tr.phrase("Đóng chọn bản chơi"); onClicked: root.close() }
         }
         InertialScroll {
@@ -126,7 +126,7 @@ Controls.Popup {
                 id: launch
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
-                label: Legacy.Tr.phrase("Tạo room"); primary: true
+                label: Legacy.Tr.phrase("Tạo phòng"); primary: true
                 clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
                 onClicked: {
                     multiplayerBridge.setDirectAllowed(root.directAllowed);

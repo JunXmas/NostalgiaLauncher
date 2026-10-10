@@ -21,7 +21,7 @@ Glass {
             text: hostBridge.details.active ? hostBridge.details.label
                 : multiplayerBridge.role === "hosting" ? Legacy.Tr.phrase("●  Phòng đang mở · ") + multiplayerBridge.joinerCount + Legacy.Tr.plural(" kết nối", multiplayerBridge.joinerCount)
                 : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Phòng chờ đã mở")
-                : multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("●  Đã vào phòng của bạn") : Legacy.Tr.phrase("Chơi chung")
+                : multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("●  Đã vào phòng của bạn") : Legacy.Tr.phrase("Phòng chơi")
             color: multiplayerBridge.role === "hosting" || multiplayerBridge.role === "joined" ? GlassTheme.brand : GlassTheme.text
             font.weight: Font.DemiBold
         }
@@ -36,8 +36,8 @@ Glass {
         PaymentText {
             width: parent.width
             visible: multiplayerBridge.role === "joined" || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
-            text: multiplayerBridge.role === "joined" ? (multiplayerBridge.worldReady ? Legacy.Tr.phrase("World đã mở. Khởi chạy đúng bản chơi bên dưới để vào cùng bạn.") : Legacy.Tr.phrase("Bạn đã vào room. Đồng bộ modpack trong lúc chờ host mở world."))
-                : root.stage === "lobby" ? Legacy.Tr.phrase("Mời bạn vào room và đồng bộ trước. Bấm Khởi chạy Minecraft khi bạn muốn mở world.")
+            text: multiplayerBridge.role === "joined" ? (multiplayerBridge.worldReady ? Legacy.Tr.phrase("World đã mở. Khởi chạy đúng bản chơi bên dưới để vào cùng bạn.") : Legacy.Tr.phrase("Bạn đã vào phòng. Đồng bộ modpack trong lúc chờ host mở world."))
+                : root.stage === "lobby" ? Legacy.Tr.phrase("Mời bạn vào phòng và đồng bộ trước. Bấm Khởi chạy Minecraft khi bạn muốn mở world.")
                 : root.readyToInvite ? Legacy.Tr.phrase("Phòng sẵn sàng. Mời bạn bên dưới và giữ Minecraft cùng launcher mở khi chơi.")
                 : root.stage === "waiting_world" ? Legacy.Tr.phrase("Bước tiếp theo nằm trong Minecraft: mở world của bạn, rồi bật LAN.")
                 : Legacy.Tr.phrase("Launcher đang chuẩn bị phòng. Nút mời sẽ xuất hiện khi world và modpack sẵn sàng.")

@@ -15,15 +15,15 @@ Column {
     }
     PaymentText {
         width: parent.width
-        text: root.onlineFriends.length ? Legacy.Tr.phrase("Bấm Mời vào room cạnh tên bạn. Người nhận chỉ cần mở launcher và chấp nhận lời mời.")
+        text: root.onlineFriends.length ? Legacy.Tr.phrase("Bấm Mời vào phòng cạnh tên bạn. Người nhận chỉ cần mở launcher và chấp nhận lời mời.")
             : socialBridge.friends.length ? Legacy.Tr.phrase("Chưa có bạn trực tuyến. Nhờ bạn mở launcher và đăng nhập Google để nhận lời mời.")
-            : Legacy.Tr.phrase("Thêm bạn ở tab Bạn bè trước, rồi quay lại đây để mời vào room.")
+            : Legacy.Tr.phrase("Thêm bạn ở tab Bạn bè trước, rồi quay lại đây để mời vào phòng.")
         color: GlassTheme.muted
     }
     FriendSearch {
         id: search; objectName: "roomFriendSearch"; width: parent.width
         visible: root.onlineFriends.length > 0
-        placeholder: Legacy.Tr.phrase("Tìm bạn để mời…")
+        placeholder: Legacy.Tr.phrase("Tìm bạn trực tuyến để mời…")
         onTextChanged: { friends.stopMotion(); friends.positionViewAtBeginning(); }
     }
     PaymentText { width: parent.width; visible: !!search.text.trim(); text: Legacy.Tr.phrase("Kết quả · ") + root.filteredFriends.length + " / " + root.onlineFriends.length; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
@@ -39,12 +39,13 @@ Column {
             width: friends.width; height: 72 * GlassTheme.scale; radius: 12
             color: GlassTheme.alpha(GlassTheme.raised, 0.5)
             SocialAvatar { id: avatar; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 36 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; decor: modelData.decor || "none"; online: true }
-            PaymentText { x: avatar.x + avatar.width + 10; anchors.verticalCenter: parent.verticalCenter; width: Math.max(0, invite.x - x - 10); text: modelData.name; maximumLineCount: 2; elide: Text.ElideRight; font.weight: Font.DemiBold }
+            PaymentText { x: avatar.x + avatar.width + 10; anchors.verticalCenter: parent.verticalCenter; width: Math.max(0, (invite.visible ? invite.x : parent.width - 12) - x - 10); text: modelData.name; maximumLineCount: 2; elide: Text.ElideRight; font.weight: Font.DemiBold }
             Button {
                 id: invite
                 objectName: "roomInvite-" + modelData.accountId
                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                label: Legacy.Tr.phrase("Mời vào room"); primary: true
+                visible: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !multiplayerBridge.locked
+                label: Legacy.Tr.phrase("Mời vào phòng"); primary: true
                 clickable: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !multiplayerBridge.locked && !socialBridge.inviteBusy
                 onClicked: socialBridge.inviteFriend(modelData.accountId)
             }

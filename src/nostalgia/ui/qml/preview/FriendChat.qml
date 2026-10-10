@@ -12,6 +12,7 @@ Glass {
     property real availableHeight: 480
     property bool optionsExpanded: false
     property bool chatExpanded: false
+    readonly property bool readyToInvite: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !multiplayerBridge.locked && !!multiplayerBridge.roomCode
     readonly property var peer: socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || ({})
     padding: 20
     function send() {
@@ -44,11 +45,10 @@ Glass {
             visible: root.compact
             width: parent.width; height: backButton.height
             Button { id: backButton; objectName: "backToFriends"; quiet: true; label: Legacy.Tr.phrase("← Bạn bè"); onClicked: socialBridge.selectFriend("") }
-            Button { anchors.right: parent.right; visible: !multiplayerBridge.active && !hostBridge.details.active; label: Legacy.Tr.phrase("Mở phòng"); primary: true; onClicked: hostBridge.openSetup() }
         }
         Item {
             id: chatHeading
-            width: parent.width; height: Math.max(heading.implicitHeight, invite.height, chatAvatar.height)
+            width: parent.width; height: Math.max(heading.implicitHeight, invite.visible ? invite.height : 0, chatAvatar.height)
             SocialAvatar { id: chatAvatar; objectName: "chatFriendAvatar"; anchors.verticalCenter: parent.verticalCenter; visible: !!socialBridge.peerId; playerName: socialBridge.peerName; source: root.peer.avatarUrl || ""; decor: root.peer.decor || "none"; online: socialBridge.peerOnline; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.peerId) }
             Column {
                 id: heading
@@ -61,26 +61,26 @@ Glass {
             Button {
                 id: invite
                 objectName: "inviteSelectedFriend"
-                anchors.right: parent.right; visible: !!socialBridge.peerId
-                label: multiplayerBridge.active || hostBridge.details.active ? Legacy.Tr.phrase("Mời vào room") : Legacy.Tr.phrase("Mở phòng"); primary: true
-                clickable: !socialBridge.inviteBusy && ((!multiplayerBridge.active && !hostBridge.details.active) || ((multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && socialBridge.peerOnline && !multiplayerBridge.locked))
-                onClicked: { if (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") socialBridge.inviteFriend(socialBridge.peerId); else hostBridge.openSetup(); }
+                anchors.right: parent.right; visible: !!socialBridge.peerId && socialBridge.peerOnline && root.readyToInvite
+                label: Legacy.Tr.phrase("Mời vào phòng"); primary: true
+                clickable: !socialBridge.inviteBusy
+                onClicked: socialBridge.inviteFriend(socialBridge.peerId)
             }
         }
         Column {
             id: inviteHelp
             visible: !!socialBridge.peerId
             width: parent.width; spacing: 6
-            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Mời bạn vào room") }
+            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Cách mời bạn vào phòng") }
             PaymentText {
                 width: parent.width
-                visible: multiplayerBridge.role !== "hosting" || !roomSyncBridge.hostReady || !socialBridge.peerOnline
+                visible: !root.readyToInvite || !socialBridge.peerOnline
                 color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
                 text: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Rời phòng hiện tại để mở phòng của bạn.")
-                    : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Mời bạn vào room trước, rồi khởi chạy Minecraft và mở LAN khi sẵn sàng.")
                     : hostBridge.details.active && !roomSyncBridge.hostReady ? Legacy.Tr.phrase("Chờ phòng và modpack sẵn sàng trước khi gửi lời mời.")
-                    : multiplayerBridge.role === "hosting" && !socialBridge.peerOnline ? Legacy.Tr.phrase("Bạn đang ngoại tuyến. Người nhận cần mở launcher để nhận lời mời.")
-                    : Legacy.Tr.phrase("Bấm Mở phòng, chọn bản chơi và tạo room để mời bạn trước khi khởi chạy Minecraft.")
+                    : multiplayerBridge.locked ? Legacy.Tr.phrase("Phòng đang khóa nhận khách mới. Mở khóa trong Tùy chọn phòng để mời bạn.")
+                    : multiplayerBridge.active && !socialBridge.peerOnline ? Legacy.Tr.phrase("Người bạn này đang ngoại tuyến. Nhờ họ mở launcher để nhận lời mời.")
+                    : Legacy.Tr.phrase("Bấm Tạo phòng ở phía trên. Khi phòng sẵn sàng, bạn có thể mời người đang trực tuyến.")
             }
         }
         InertialList {
@@ -144,7 +144,7 @@ Glass {
                 onClicked: { var selected = socialBridge.peerId; confirmDialog.ask(Legacy.Tr.phrase("Chặn người chơi?"), Legacy.Tr.phrase("Người này sẽ không gửi chat hay lời mời cho bạn được nữa."), function() { socialBridge.blockFriend(selected); }); }
             }
         }
-        PaymentText { width: parent.width; visible: !socialBridge.peerId; text: Legacy.Tr.phrase("Chọn bạn trong danh sách để mời vào room. Lời mời nhận được sẽ hiện ngay phía trên."); color: GlassTheme.muted }
+        PaymentText { width: parent.width; visible: !socialBridge.peerId; text: Legacy.Tr.phrase("Chọn bạn trong danh sách để mời vào phòng. Lời mời nhận được sẽ hiện ngay phía trên."); color: GlassTheme.muted }
         Button { objectName: "showOptionalChat"; visible: !!socialBridge.peerId; label: root.chatExpanded ? Legacy.Tr.phrase("Thu gọn nhắn tin") : Legacy.Tr.phrase("Nhắn tin · tuỳ chọn"); quiet: true; onClicked: root.chatExpanded = !root.chatExpanded }
     }
 }

@@ -99,7 +99,7 @@ def test_google_opens_browser_and_account_is_separate_from_minecraft(
 
 
 def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, ...]) -> None:
-    _, gateway, view, root_item, social, multiplayer, _, _ = social_preview
+    _, gateway, view, root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
     press(view, find_control(root_item, "friend-misa"))
     wait_until(lambda: social.peerId == "misa" and not social.busy)
@@ -110,8 +110,8 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
     wait_until(lambda: gateway.sent and not social.busy)
     assert gateway.sent == ["Chơi thôi"]
     wait_until(lambda: len(social.messages) == 2 and not social.busy)
-    assert find_control(root_item, "inviteSelectedFriend").property("clickable")
-    assert find_control(root_item, "inviteSelectedFriend").property("label") == "Mở phòng"
+    assert not find_control(root_item, "inviteSelectedFriend").isVisible()
+    assert find_control(root_item, "friendsOpenRoom").property("label") == "Tạo phòng"
     multiplayer._apply_status(
         RoomStatus(
             role="hosting",
@@ -120,9 +120,26 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
             world_name="World",
         )
     )
+    assert find_control(root_item, "inviteSelectedFriend").isVisible()
+    assert find_control(root_item, "inviteSelectedFriend").property("label") == "Mời vào phòng"
     press(view, find_control(root_item, "inviteSelectedFriend"))
     wait_until(lambda: gateway.invited and not social.busy)
     assert gateway.invited == ["misa"]
+    invite = find_control(root_item, "inviteSelectedFriend")
+    status = multiplayer.room_snapshot()
+    multiplayer._apply_status(replace(status, locked=True))
+    assert not invite.isVisible()
+    multiplayer._apply_status(status)
+    sync_bridge.set_host_ready(False)
+    assert not invite.isVisible()
+    sync_bridge.set_host_ready(True)
+    assert invite.isVisible()
+    gateway.snapshot = replace(
+        gateway.snapshot, friends=(replace(gateway.snapshot.friends[0], online=False),)
+    )
+    social.refresh()
+    wait_until(lambda: not social.busy)
+    assert not invite.isVisible()
 
 
 def test_accept_invitation_joins_without_visible_room_code(

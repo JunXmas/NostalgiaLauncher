@@ -3,6 +3,7 @@
 from typing import Any
 
 import pytest
+from PySide6.QtQuick import QQuickItem
 from test_bridges import wait_until
 from test_social_ui import find_control, login_preview
 from test_social_ui import social_preview as social_preview
@@ -33,7 +34,7 @@ def test_chat_opens_world_invitation_guide_with_lan_and_guest_steps(
     steps = " ".join(topic["steps"])
     assert "Open to LAN" in steps and "Start LAN World" in steps
     assert (
-        ("Tạo room" in steps and "Khởi chạy & vào world" in steps)
+        ("Tạo phòng" in steps and "Khởi chạy & vào world" in steps)
         if language == "vi"
         else ("Create room" in steps and "Launch & join world" in steps)
     )
@@ -45,15 +46,32 @@ def test_chat_opens_world_invitation_guide_with_lan_and_guest_steps(
     dialog.close()
 
 
-def test_invite_entry_opens_host_selection_before_world_is_ready(
+@pytest.mark.parametrize("scale", [100, 150])
+def test_single_create_entry_stays_visible_when_a_friend_is_selected(
     social_preview: tuple[Any, ...],
+    scale: int,
 ) -> None:
     _, gateway, view, root_item, social, *_rest = social_preview
     login_preview(social_preview)
+    view.resize(1024, 600)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        scale, False, False, True, "vi"
+    )
     social.selectFriend("misa")
     wait_until(lambda: not social.busy)
-    button = find_control(root_item, "inviteSelectedFriend")
-    assert button.property("label") == "Mở phòng" and button.property("clickable")
+    assert not find_control(root_item, "inviteSelectedFriend").isVisible()
+    button = find_control(root_item, "friendsOpenRoom")
+    assert button.isVisible() and button.property("label") == "Tạo phòng"
+    assert button.property("clickable")
+    page = find_control(root_item, "friendsPage")
+    for section in (0, 1):
+        page.setProperty("section", section)
+        create_buttons = [
+            control
+            for control in page.findChildren(QQuickItem)
+            if control.isVisible() and control.property("label") == "Tạo phòng"
+        ]
+        assert create_buttons == [button]
     press(view, button)
     dialog = find_popup(root_item, "hostDialog")
     wait_until(lambda: dialog.property("opened"))
