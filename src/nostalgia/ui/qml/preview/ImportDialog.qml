@@ -18,11 +18,25 @@ WorkspaceDialog {
         function onImportError(message) { root.failure = message; }
         function onFailed(message) { root.failure = message; }
     }
-    InertialScroll {
+    InertialList {
+        id: importList
         objectName: "importBodyScroll"
         anchors.fill: parent
-        contentHeight: importContent.implicitHeight + 8
-        Column {
+        spacing: 12
+        model: root.section === 1 ? importBridge.scanResults : []
+        delegate: Glass {
+            required property var modelData
+            required property int index
+            width: importList.width - 10; height: details.implicitHeight + 32; padding: 16; frosted: false
+            Column {
+                id: details
+                width: parent.width; spacing: 10
+                PaymentText { width: parent.width; text: modelData.instanceName; font.weight: Font.DemiBold }
+                PaymentText { width: parent.width; text: modelData.launcher + " · " + (modelData.gameVersion || Legacy.Tr.phrase("Chưa rõ phiên bản")) + " · " + modelData.loaderKind; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+                Button { objectName: "importExternal-" + index; label: Legacy.Tr.phrase("Nhập bản chơi"); clickable: !root.busy; onClicked: importBridge.importFromLauncher(index, "") }
+            }
+        }
+        header: Column {
             id: importContent
             width: parent.width - 10; spacing: 18
             MotionTabs { width: parent.width; labels: ["File modpack", Legacy.Tr.phrase("Launcher khác")]; currentIndex: root.section; namePrefix: "importSection-"; onSelected: function(index) { if (!root.busy) root.section = index; } }
@@ -44,19 +58,7 @@ WorkspaceDialog {
                     PaymentText { text: importBridge.scanResults.length + Legacy.Tr.plural(" bản chơi tìm thấy", importBridge.scanResults.length); color: GlassTheme.muted }
                 }
                 PaymentText { visible: !root.busy && !importBridge.scanResults.length; width: parent.width; text: Legacy.Tr.phrase("Chưa tìm thấy bản chơi từ launcher khác trên máy này. Bạn vẫn có thể nhập bằng file modpack."); color: GlassTheme.muted }
-                Repeater {
-                    model: importBridge.scanResults
-                    Glass {
-                        width: importContent.width; height: details.implicitHeight + 32; padding: 16; frosted: false
-                        Column {
-                            id: details
-                            width: parent.width; spacing: 10
-                            PaymentText { width: parent.width; text: modelData.instanceName; font.weight: Font.DemiBold }
-                            PaymentText { width: parent.width; text: modelData.launcher + " · " + (modelData.gameVersion || Legacy.Tr.phrase("Chưa rõ phiên bản")) + " · " + modelData.loaderKind; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
-                            Button { objectName: "importExternal-" + index; label: Legacy.Tr.phrase("Nhập bản chơi"); clickable: !root.busy; onClicked: importBridge.importFromLauncher(index, "") }
-                        }
-                    }
-                }
+
             }
         }
     }

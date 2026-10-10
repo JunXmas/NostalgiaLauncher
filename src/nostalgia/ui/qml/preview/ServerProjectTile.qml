@@ -16,7 +16,7 @@ Item {
         Row {
             width: parent.width; spacing: 12
             Rectangle { width: 44 * GlassTheme.scale; height: width; radius: 12; color: GlassTheme.alpha(GlassTheme.raised, 0.50)
-                Image { objectName: "serverProjectIcon-" + root.project.project_id; anchors.fill: parent; anchors.margins: 3; source: root.visible ? root.project.icon_url || "" : ""; asynchronous: true; cache: true; sourceSize.width: 96; sourceSize.height: 96; fillMode: Image.PreserveAspectFit }
+                Image { objectName: "serverProjectIcon-" + root.project.project_id; anchors.fill: parent; anchors.margins: 3; source: root.renderEnabled && root.visible ? root.project.icon_url || "" : ""; asynchronous: true; cache: true; sourceSize.width: 96; sourceSize.height: 96; fillMode: Image.PreserveAspectFit }
                 PaymentText { visible: !root.project.icon_url; anchors.centerIn: parent; text: (root.project.title || "?").slice(0, 1); font.pixelSize: GlassTheme.fontTitle }
             }
             Column { width: parent.width - 44 * GlassTheme.scale - 12; spacing: 4

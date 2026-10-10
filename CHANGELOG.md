@@ -5,6 +5,18 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Cuộn thư viện và danh sách dài nhẹ hơn: chỉ dựng ô gần màn hình, tái sử dụng ô khi
+  cuộn; áp dụng cho mod/modpack/shader/resource pack, bản chơi, nội dung đã cài, server,
+  sửa mod, nhập bản chơi, bạn bè, chat, cosmetic và danh sách đồng bộ.
+- Giảm chi phí nền mica bằng ảnh blur nhỏ và capture tĩnh; cập nhật ảnh đúng khi ô được
+  tái sử dụng, giữ blur cho popup. Bật/tắt mod giữ vị trí cuộn và trạng thái xác nhận gỡ
+  được đặt lại khi chuyển sang file khác.
+- Chat dùng được ngay sau khi kết bạn, kể cả bạn ngoại tuyến; đồng bộ tài khoản không
+  khóa nút Gửi. Giữ bản nháp khi gửi thất bại và xử lý phiên bị thu hồi.
+- Trang quản trị riêng có mục **Số liệu launcher**: hoạt động tài khoản Google theo
+  ngày/tuần/tháng, số phiên trực tuyến và lượt tải GitHub theo nền tảng/bản phát hành.
+  Thống kê ngày tính theo giờ Việt Nam, bắt đầu từ khi triển khai bộ thu thập.
+
 - Hoàn thiện giao diện **Tiếng Việt / English**: trang chính, tài khoản và skin/cape,
   thư viện, quản lý bản chơi, bạn bè/đồng bộ, server, cosmetic, Premium và cập nhật.
 - Chọn ngôn ngữ ngay trên màn hình đăng nhập hoặc trong Cài đặt; áp dụng ngay cho

@@ -40,6 +40,7 @@ class SocialSession(SocialState):
         self._multiplayer = multiplayer
         self._sync_bridge = sync_bridge
         self._snapshot: SocialSnapshot | None = None
+        self._last_update: SocialUpdate | None = None
         self._messages = []
         self._peer_id = ""
         self._login: GoogleLogin | None = None
@@ -189,6 +190,9 @@ class SocialSession(SocialState):
             self.sessionChanged.emit()
             QTimer.singleShot(30, self.refresh)
         elif isinstance(payload, SocialUpdate):
+            if payload == self._last_update and payload.peer_id == self._peer_id and not self._note:
+                return
+            self._last_update = payload
             self._snapshot = payload.snapshot
             self.update_messages(payload)
             if not any(friend.account_id == self._peer_id for friend in payload.snapshot.friends):
@@ -196,10 +200,6 @@ class SocialSession(SocialState):
             self._note = ""
             if payload.peer_id != self._peer_id and self._peer_id:
                 QTimer.singleShot(30, self.refresh)
-        elif operation == "message" and isinstance(payload, str):
-            self.messageSent.emit(payload)
-            self._note = "Đã gửi."
-            QTimer.singleShot(30, self.refresh)
         elif operation == "join" and isinstance(payload, str):
             self._sync_bridge.join(payload)
             self._note = "Đang vào phòng của bạn…"
@@ -217,7 +217,7 @@ class SocialSession(SocialState):
         self._refresh_pending = False
         self._timer.stop()
         self._login_timer.stop()
-        self._login = self._snapshot = None
+        self._login = self._snapshot = self._last_update = None
         self._messages, self._peer_id, self._note = [], "", note
         if self._gateway:
             self._gateway.access_token = ""

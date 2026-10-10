@@ -82,12 +82,12 @@ Controls.Popup {
                     Button { label: Legacy.Tr.phrase("Bỏ chọn"); quiet: true; onClicked: roomSyncBridge.selectGuestAll(false, root.kind) }
                     PaymentText { height: 36 * GlassTheme.scale; verticalAlignment: Text.AlignVCenter; text: root.rows.filter(function(choice) { return choice.selected; }).length + "/" + root.rows.length + Legacy.Tr.phrase(" đã chọn"); color: GlassTheme.muted }
                 }
-                ListView {
+                InertialList {
                     id: choices
                     objectName: "guestSyncChoices"
                     width: parent.width; height: Math.min(count * (72 * GlassTheme.scale + spacing), 260 * GlassTheme.scale)
                     model: root.rows; clip: true; spacing: 8; boundsBehavior: Flickable.StopAtBounds
-                    Controls.ScrollBar.vertical: Controls.ScrollBar { }
+
                     delegate: SyncContentRow {
                         required property var modelData
                         width: choices.width; content: modelData; selected: modelData.selected

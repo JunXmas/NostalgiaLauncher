@@ -13,9 +13,11 @@ Item {
         objectName: "cardArtwork"
         anchors.fill: parent
         source: root.renderEnabled ? root.source : ""
-        sourceSize: Qt.size(320, 320)
+        sourceSize: Qt.size(160, 160)
         visible: false; asynchronous: true; cache: true
         fillMode: Image.PreserveAspectCrop
+        onSourceChanged: Qt.callLater(function() { surface.refreshBackdrop(); })
+        onStatusChanged: if (status === Image.Ready) Qt.callLater(function() { surface.refreshBackdrop(); })
     }
     Image {
         anchors.fill: parent; anchors.margins: root.radius
@@ -31,6 +33,7 @@ Item {
         backdrop: root.renderEnabled && root.ready ? artwork : null
         backdropRect: Qt.rect(0, 0, root.width, root.height)
         frosted: root.renderEnabled && root.ready
+        liveBackdrop: false
         blurRadius: 32; blurOpacity: 0.28
         color: GlassTheme.alpha(GlassTheme.surface, 0.50)
         opacity: root.renderEnabled ? 1 : 0

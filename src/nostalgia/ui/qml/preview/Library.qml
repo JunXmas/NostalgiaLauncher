@@ -159,140 +159,33 @@ Item {
             onClicked: advanced.open()
         }
     }
-    InertialScroll {
+    InertialGrid {
         id: libraryViewport
         objectName: "libraryScroll"
         visible: !root.installedMode
-        anchors.top: status.bottom
-        anchors.topMargin: 12
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        contentHeight: catalog.height + 20
-        Column {
-            id: catalog
-            width: parent.width - 8
-            spacing: 24
-            Grid {
-                id: grid
-                width: parent.width
-                columns: root.compactScope ? 1 : Math.max(1, Math.floor((width + 16) / (300 * GlassTheme.scale)))
-                spacing: 16
-                Repeater {
-                    model: contentBridge.resultsModel
-                    Rectangle {
-                        id: tile
-                        objectName: "projectCard-" + model.projectId
-                        activeFocusOnTab: true
-                        Accessible.role: Accessible.Button
-                        Accessible.name: model.title + Legacy.Tr.phrase(", xem giới thiệu và phiên bản")
-                        Accessible.onPressAction: projectBridge.openProject(model.projectId)
-                        Keys.onReturnPressed: projectBridge.openProject(model.projectId)
-                        Keys.onEnterPressed: projectBridge.openProject(model.projectId)
-                        width: (grid.width - (grid.columns - 1) * 16) / grid.columns
-                        height: (root.compactScope ? 126 : 218) * GlassTheme.scale
-                        radius: 18
-                        color: hover.hovered ? GlassTheme.raised : GlassTheme.cardSurface
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: GlassTheme.quick
-                            }
-                        }
-                        CardMica {
-                            objectName: "projectArtwork-" + model.projectId
-                            source: model.iconUrl
-                            radius: tile.radius
-                            renderEnabled: tile.visible && root.visible && tile.y + tile.height >= libraryViewport.contentY && tile.y <= libraryViewport.contentY + libraryViewport.height
-                        }
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: tile.radius
-                            color: "transparent"
-                            border.color: hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.50) : GlassTheme.stroke
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: function (mouse) {
-                                if (mouse.x >= downloadButton.x && mouse.x <= downloadButton.x + downloadButton.width && mouse.y >= downloadButton.y && mouse.y <= downloadButton.y + downloadButton.height)
-                                    return;
-                                tile.forceActiveFocus();
-                                projectBridge.openProject(model.projectId);
-                            }
-                        }
-                        Legacy.ProjectIcon {
-                            id: projectIcon
-                            x: 20 * GlassTheme.scale
-                            y: 20 * GlassTheme.scale
-                            width: 52 * GlassTheme.scale
-                            height: width
-                            source: model.iconUrl
-                            fallbackText: model.title
-                        }
-                        Column {
-                            x: (root.compactScope ? 90 : 20) * GlassTheme.scale
-                            y: (root.compactScope ? 16 : 90) * GlassTheme.scale
-                            width: parent.width - x - 20 * GlassTheme.scale
-                            spacing: 8 * GlassTheme.scale
-                            Text {
-                                width: parent.width
-                                text: model.title
-                                color: GlassTheme.text
-                                font.family: GlassTheme.font
-                                font.pixelSize: GlassTheme.fontSubheading
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                width: parent.width
-                                text: model.description
-                                objectName: "projectDescription-" + model.projectId
-                                color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
-                                font.family: GlassTheme.font
-                                font.pixelSize: GlassTheme.fontLabel
-                                wrapMode: Text.WordWrap
-                                maximumLineCount: 2
-                                elide: Text.ElideRight
-                                lineHeight: 1.3
-                            }
-                        }
-                        Text {
-                            objectName: "projectMeta-" + model.projectId
-                            width: Math.max(0, downloadButton.x - (root.compactScope ? 100 : 30) * GlassTheme.scale)
-                            elide: Text.ElideRight
-                            anchors.left: parent.left
-                            anchors.leftMargin: (root.compactScope ? 90 : 20) * GlassTheme.scale
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 25 * GlassTheme.scale
-                            text: Legacy.Theme.compact(model.downloads) + Legacy.Tr.phrase(" tải  ·  ") + (model.loaders.length ? model.loaders[0] : "Minecraft")
-                            color: Legacy.Theme.mix(GlassTheme.muted, GlassTheme.text, 0.15)
-                            font.family: GlassTheme.font
-                            font.pixelSize: GlassTheme.fontNote
-                        }
-                        Button {
-                            id: downloadButton
-                            objectName: "projectDownload-" + model.projectId
-                            anchors.right: parent.right
-                            anchors.rightMargin: 14 * GlassTheme.scale
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 16 * GlassTheme.scale
-                            label: model.installing ? Legacy.Tr.phrase("Đang cài…") : model.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : model.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài đặt")
-                            height: 34 * GlassTheme.scale
-                            clickable: !model.installing && !model.installed && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && (model.contentKind === "modpack" || (!!contentBridge.instanceId && !(root.kind === "mod" && contentBridge.loaderKind === "vanilla")))
-                            onClicked: model.contentKind === "modpack" ? pack.openFor(model.projectId, model.title) : contentBridge.install(model.projectId)
-                        }
-                        HoverHandler {
-                            id: hover
-                            cursorShape: Qt.PointingHandCursor
-                        }
-                    }
-                }
+        anchors.top: status.bottom; anchors.topMargin: 12
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        readonly property int columns: root.compactScope ? 1 : Math.max(1, Math.floor((width + 8) / (300 * GlassTheme.scale)))
+        cellWidth: Math.max(1, (width - 8 + 16) / columns)
+        cellHeight: (root.compactScope ? 126 : 218) * GlassTheme.scale + 16
+        model: contentBridge.resultsModel
+        delegate: Item {
+            required property var model
+            width: libraryViewport.cellWidth; height: libraryViewport.cellHeight
+            ProjectTile {
+                width: parent.width - 16; height: parent.height - 16
+                project: parent.model; compactScope: root.compactScope; contentKind: root.kind
+                artworkEnabled: libraryViewport.visible && parent.y + parent.height >= libraryViewport.contentY && parent.y <= libraryViewport.contentY + libraryViewport.height
+                onModpackRequested: function(projectId, title) { pack.openFor(projectId, title); }
             }
-            Text {
-                visible: !contentBridge.searching && !contentBridge.results.length
+        }
+        footer: Column {
+            width: libraryViewport.width - 8; spacing: 16; bottomPadding: 20
+            PaymentText {
+                width: parent.width
+                visible: !contentBridge.searching && !libraryViewport.count
                 text: Legacy.Tr.phrase("Chưa có kết quả. Thử đổi từ khóa hoặc nguồn nội dung.")
                 color: GlassTheme.muted
-                font.family: GlassTheme.font
-                font.pixelSize: GlassTheme.fontControl
             }
             Button {
                 visible: contentBridge.hasMore

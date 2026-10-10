@@ -17,15 +17,24 @@ Column {
         PaymentText { width: parent.width - reset.width - parent.spacing; text: Legacy.Tr.phrase("Diện mạo hồ sơ"); font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
         Button { id: reset; objectName: "profileDecor-none"; label: Legacy.Tr.phrase("Nguyên bản"); selected: root.selectedDecor === "none"; quiet: true; onClicked: root.chosen("none") }
     }
-    Flow { width: parent.width; spacing: 10
-        Repeater { model: Cosmetics.available(cosmeticBridge.sets)
+    InertialGrid {
+        id: options
+        objectName: "cosmeticOptionsGrid"
+        width: parent.width
+        cellWidth: (width + 10) / root.columns
+        cellHeight: 180 * GlassTheme.scale + 10
+        height: Math.min(Math.ceil(count / root.columns) * cellHeight, 440 * GlassTheme.scale)
+        model: Cosmetics.available(cosmeticBridge.sets)
+        delegate: Item {
+            required property var modelData
+            width: options.cellWidth; height: options.cellHeight
             CosmeticOption {
-                objectName: "profileDecor-" + modelData.key
-                width: (root.width - 10 * (root.columns - 1)) / root.columns
-                cosmetic: modelData; selected: root.selectedDecor === modelData.key
-                previewed: root.previewDecor === modelData.key; canEquip: root.canEquip || root.ownedCosmetics.indexOf(modelData.key) >= 0
+                objectName: "profileDecor-" + parent.modelData.key
+                width: parent.width - 10; height: parent.height - 10
+                cosmetic: parent.modelData; selected: root.selectedDecor === cosmetic.key
+                previewed: root.previewDecor === cosmetic.key; canEquip: root.canEquip || root.ownedCosmetics.indexOf(cosmetic.key) >= 0
                 avatarSource: root.avatarSource; playerName: root.playerName
-                onClicked: root.chosen(modelData.key)
+                onClicked: root.chosen(cosmetic.key)
             }
         }
     }

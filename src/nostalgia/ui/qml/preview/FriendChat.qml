@@ -14,7 +14,7 @@ Glass {
     readonly property var peer: socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || ({})
     padding: 20
     function send() {
-        if (composer.text.trim() && !socialBridge.busy) socialBridge.sendMessage(composer.text);
+        if (composer.text.trim() && !socialBridge.chatBusy) socialBridge.sendMessage(composer.text);
     }
     Connections {
         target: socialBridge
@@ -29,9 +29,9 @@ Glass {
             var latest = messages.length ? messages[messages.length - 1] : null;
             if (!latest) { root.lastMessageId = ""; return; }
             if (latest.id === root.lastMessageId) return;
-            var follow = !root.lastMessageId || latest.mine || chatScroll.contentY + chatScroll.height >= chatScroll.contentHeight - 80;
+            var follow = !root.lastMessageId || latest.mine || chatScroll.contentY + chatScroll.height >= chatScroll.originY + chatScroll.contentHeight - 80;
             root.lastMessageId = latest.id;
-            if (follow) Qt.callLater(function() { chatScroll.contentY = Math.max(0, chatScroll.contentHeight - chatScroll.height); });
+            if (follow) Qt.callLater(function() { chatScroll.positionViewAtEnd(); });
         }
     }
     NumberAnimation { id: chatEntrance; target: contents; property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal; easing.type: Easing.OutCubic }
@@ -66,41 +66,40 @@ Glass {
                 onClicked: socialBridge.inviteFriend(socialBridge.peerId)
             }
         }
-        InertialScroll {
+        InertialList {
             id: chatScroll
             objectName: "chatScroll"
             width: parent.width; height: root.compact ? Math.max(96 * GlassTheme.scale, root.availableHeight - backRow.height - chatHeading.height - composerRow.height - chatFooter.height - 40 - 60) : 250 * GlassTheme.scale
-            contentHeight: messages.implicitHeight + 6
+            spacing: 10
+            model: socialBridge.messages
+            header: Column {
+                width: chatScroll.width; spacing: 10
+            PaymentText {
+                width: parent.width
+                visible: !!socialBridge.peerId && !socialBridge.messages.length
+                text: socialBridge.peerId ? Legacy.Tr.phrase("Gửi lời chào để bắt đầu câu chuyện.") : Legacy.Tr.phrase("Chọn một người bạn để trò chuyện.")
+                color: GlassTheme.muted
+            }
             Column {
-                id: messages
-                width: parent.width; spacing: 10
-                PaymentText {
-                    width: parent.width
-                    visible: !!socialBridge.peerId && !socialBridge.messages.length
-                    text: socialBridge.peerId ? Legacy.Tr.phrase("Bắt đầu câu chuyện. Chỉ bạn bè đã chấp nhận mới gửi tin được.") : Legacy.Tr.phrase("Chọn một người bạn để trò chuyện.")
-                    color: GlassTheme.muted
+                width: parent.width; visible: !socialBridge.peerId; spacing: 14
+                Item { width: parent.width; height: 104
+                    Legacy.BlockIcon { anchors.centerIn: parent; width: 82; height: 82; block: "command"; spinning: emptyHover.hovered; glyph: "·" }
+                    HoverHandler { id: emptyHover }
                 }
-                Column {
-                    width: parent.width; visible: !socialBridge.peerId; spacing: 14
-                    Item { width: parent.width; height: 104
-                        Legacy.BlockIcon { anchors.centerIn: parent; width: 82; height: 82; block: "command"; spinning: emptyHover.hovered; glyph: "·" }
-                        HoverHandler { id: emptyHover }
-                    }
-                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Một lời chào, một chuyến phiêu lưu."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle; horizontalAlignment: Text.AlignHCenter }
-                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."); color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
-                }
-                Repeater {
-                    model: socialBridge.messages
-                    Rectangle {
-                        objectName: "chatMessage-" + index
-                        x: modelData.mine ? messages.width * 0.12 : 0
-                        width: messages.width * 0.88
-                        height: messageText.implicitHeight + 22
-                        radius: 12
-                        color: GlassTheme.alpha(modelData.mine ? GlassTheme.accent : GlassTheme.raised, modelData.mine ? 0.16 : 0.7)
-                        PaymentText { id: messageText; x: 12; y: 11; width: parent.width - 24; text: modelData.text }
-                    }
-                }
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Một lời chào, một chuyến phiêu lưu."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontTitle; horizontalAlignment: Text.AlignHCenter }
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."); color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
+            }
+            }
+            delegate: Rectangle {
+                required property var modelData
+                required property int index
+                objectName: "chatMessage-" + index
+                x: modelData.mine ? chatScroll.width * 0.12 : 0
+                width: chatScroll.width * 0.88
+                height: messageText.implicitHeight + 22
+                radius: 12
+                color: GlassTheme.alpha(modelData.mine ? GlassTheme.accent : GlassTheme.raised, modelData.mine ? 0.16 : 0.7)
+                PaymentText { id: messageText; x: 12; y: 11; width: parent.width - 24; text: modelData.text }
             }
         }
         Row {
@@ -108,7 +107,7 @@ Glass {
             visible: !!socialBridge.peerId
             width: parent.width; spacing: 8
             Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: Legacy.Tr.phrase("Nhắn tin…"); onAccepted: root.send() }
-            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.busy; onClicked: root.send() }
+            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: socialBridge.chatBusy ? Legacy.Tr.phrase("Đang gửi…") : Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.chatBusy; onClicked: root.send() }
         }
         Item {
             id: chatFooter

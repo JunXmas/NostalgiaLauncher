@@ -6,6 +6,7 @@ Rectangle {
     default property alias content: holder.data
     property int padding: 24
     property bool frosted: true
+    property bool liveBackdrop: true
     property Item backdrop: GlassTheme.backdrop
     property rect backdropRect: Qt.rect(0, 0, -1, -1)
     property real blurOpacity: 0.60
@@ -17,12 +18,21 @@ Rectangle {
     color: GlassTheme.glassSurface
     border.width: 1
     border.color: GlassTheme.stroke
+    function refreshBackdrop() {
+        if (root.visible && root.frosted && root.shaderAvailable) {
+            capture.scheduleUpdate();
+            maskCapture.scheduleUpdate();
+        }
+    }
+    onWidthChanged: Qt.callLater(refreshBackdrop)
+    onHeightChanged: Qt.callLater(refreshBackdrop)
+    onRadiusChanged: Qt.callLater(refreshBackdrop)
     // Nguồn phải nằm ngoài panel để không thu lại chính hiệu ứng kính.
     ShaderEffectSource {
         id: capture
         anchors.fill: parent
         visible: false
-        sourceItem: root.backdrop
+        sourceItem: root.visible && root.frosted && root.shaderAvailable ? root.backdrop : null
         sourceRect: {
             if (root.backdropRect.width >= 0)
                 return root.backdropRect;
@@ -39,7 +49,7 @@ Rectangle {
             return Qt.rect(p.x, p.y, root.width, root.height);
         }
         textureSize: Qt.size(Math.max(1, root.width / 2), Math.max(1, root.height / 2))
-        live: root.visible && root.frosted && root.shaderAvailable
+        live: root.visible && root.frosted && root.shaderAvailable && root.liveBackdrop
         hideSource: false
     }
     MultiEffect {
@@ -65,11 +75,11 @@ Rectangle {
     }
     ShaderEffectSource {
         id: maskCapture
-        sourceItem: mask
+        sourceItem: root.visible && root.frosted && root.shaderAvailable ? mask : null
         hideSource: true
         visible: false
         anchors.fill: parent
-        live: root.visible && root.frosted && root.shaderAvailable
+        live: false
     }
     Rectangle {
         anchors.fill: parent

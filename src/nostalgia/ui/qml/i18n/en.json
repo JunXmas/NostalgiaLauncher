@@ -4031,5 +4031,10 @@
   "s: kết nối": " connection",
   "s: tháng": " month",
   "s: tháng sử dụng ": " month of ",
-  "s: file · bật, tắt và cập nhật tại đây": " file · enable, disable and update here"
+  "s: file · bật, tắt và cập nhật tại đây": " file · enable, disable and update here",
+  "p:Gửi lời chào để bắt đầu câu chuyện.": "Say hello to start a conversation.",
+  "p:Say hello to start a conversation.": "Say hello to start a conversation.",
+  "p:Không gửi được tin nhắn. Hãy thử lại.": "Could not send the message. Please try again.",
+  "p:Đang gửi tin nhắn…": "Sending your message…",
+  "p:Đang gửi…": "Sending…"
 }

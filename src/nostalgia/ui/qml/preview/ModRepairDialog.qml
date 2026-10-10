@@ -30,22 +30,46 @@ Controls.Popup {
             PaymentText { width: parent.width; text: root.instanceLabel; color: GlassTheme.muted }
         }
         Button { anchors.right: parent.right; label: "×"; quiet: true; width: 40; Accessible.name: Legacy.Tr.phrase("Đóng kiểm tra mod"); onClicked: root.close() }
-        InertialScroll {
+        InertialList {
+            id: results
             objectName: "modRepairScroll"
             anchors.top: header.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: actions.top; anchors.bottomMargin: 18
-            contentHeight: contents.implicitHeight+8
-            Column {
-                id: contents
-                width: parent.width-8; spacing: 14
+            spacing: 14
+            model: {
+                var rows = (root.details.findings || []).map(function(f, i) { return {finding: f, position: i}; });
+                if ((root.details.changes || []).length) rows.push({heading: true});
+                (root.details.recommendations || []).forEach(function(r) { rows.push({recommendation: r}); });
+                (root.details.unresolved || []).forEach(function(u) { rows.push({unresolved: u}); });
+                return rows;
+            }
+            header: Column {
+                width: results.width - 8; spacing: 14; bottomPadding: 14
                 PaymentText { objectName: "modRepairNote"; width: parent.width; text: modRepairBridge.busy ? Legacy.Tr.phrase("Đang xử lý…") : Legacy.Tr.message(root.details.note); color: GlassTheme.accent }
                 PaymentText { width: parent.width; text: Legacy.Tr.phrase("Đọc lỗi crash và không tương thích từ log game. Chỉ đề xuất sửa khi xác định được yêu cầu phiên bản."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
                 PaymentText { width: parent.width; visible: root.details.scanned && root.details.logSources.length > 0; text: Legacy.Tr.phrase("Nguồn: ") + root.details.logSources.join(", ") + " · " + root.details.gameVersion + " / " + root.details.loader; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
-                Repeater { model: root.details.findings; Glass { objectName: "modLogFinding-" + index; width: contents.width; padding: 14; height: finding.implicitHeight+28; Column { id: finding; width: parent.width; spacing: 5; PaymentText { width: parent.width; text: modelData.file; font.weight: Font.DemiBold } PaymentText { width: parent.width; text: Legacy.Tr.message(modelData.reason); color: modelData.severity === "error" ? GlassTheme.danger : GlassTheme.muted } } } }
-                PaymentText { width: parent.width; visible: root.details.changes.length>0; text: Legacy.Tr.phrase("PHƯƠNG ÁN PLUS"); font.weight: Font.DemiBold }
-                Repeater { model: root.details.recommendations; ModRepairCard { width: contents.width; onReplaceRequested: function(groupId) { modRepairBridge.replaceMod(groupId); } } }
-                Repeater { model: root.details.unresolved; PaymentText { width: contents.width; text: Legacy.Tr.phrase("Chưa giải được: ") + Legacy.Tr.message(modelData); color: GlassTheme.danger } }
-                PaymentText { width: parent.width; visible: root.details.canApply; text: Legacy.Tr.phrase("Sao lưu bộ mod, tải và kiểm hash, quét lại trước khi áp dụng. Thế giới chơi được giữ nguyên."); color: GlassTheme.muted }
             }
+            delegate: Loader {
+                id: repairRow
+                required property var modelData
+                width: results.width - 8
+                height: item ? item.height : 0
+                sourceComponent: modelData.finding ? findingCard : modelData.recommendation ? recommendationCard : modelData.heading ? sectionHeading : unresolvedText
+                Component {
+                    id: findingCard
+                    Glass {
+                        objectName: "modLogFinding-" + repairRow.modelData.position
+                        width: repairRow.width; padding: 14; height: finding.implicitHeight + 28
+                        Column { id: finding; width: parent.width; spacing: 5
+                            PaymentText { width: parent.width; text: repairRow.modelData.finding.file; font.weight: Font.DemiBold }
+                            PaymentText { width: parent.width; text: Legacy.Tr.message(repairRow.modelData.finding.reason); color: repairRow.modelData.finding.severity === "error" ? GlassTheme.danger : GlassTheme.muted }
+                        }
+                    }
+                }
+                Component { id: recommendationCard; ModRepairCard { width: repairRow.width; modelData: repairRow.modelData.recommendation; onReplaceRequested: function(groupId) { modRepairBridge.replaceMod(groupId); } } }
+                Component { id: sectionHeading; PaymentText { width: repairRow.width; text: Legacy.Tr.phrase("PHƯƠNG ÁN PLUS"); font.weight: Font.DemiBold } }
+                Component { id: unresolvedText; PaymentText { width: repairRow.width; text: Legacy.Tr.phrase("Chưa giải được: ") + Legacy.Tr.message(repairRow.modelData.unresolved); color: GlassTheme.danger } }
+            }
+            footer: PaymentText { width: results.width - 8; visible: root.details.canApply; text: Legacy.Tr.phrase("Sao lưu bộ mod, tải và kiểm hash, quét lại trước khi áp dụng. Thế giới chơi được giữ nguyên."); color: GlassTheme.muted }
         }
         Flow {
             id: actions

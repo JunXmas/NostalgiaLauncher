@@ -20,12 +20,7 @@ Item {
         target: contentBridge
         function onTargetChanged() { root.refresh(); }
     }
-    InertialScroll {
-        id: installedViewport
-        objectName: "installedScroll"
-        anchors.fill: parent
-        contentHeight: contents.implicitHeight + 16
-        Column {
+    Column {
             id: contents
             width: parent.width - 8; spacing: 14
             Flow {
@@ -65,29 +60,33 @@ Item {
                 text: !contentBridge.instanceId ? Legacy.Tr.phrase("Chọn bản chơi để quản lý nội dung đã cài.") : bridge.gameRunning ? Legacy.Tr.phrase("Đóng game trước khi thay đổi nội dung.") : contentBridge.installedShownCount + " / " + contentBridge.installed.length + Legacy.Tr.phrase(" file · bật, tắt và cập nhật tại đây")
                 color: GlassTheme.muted
             }
-            Column {
+            InertialList {
                 id: rows
-                width: parent.width; spacing: 12
-                Repeater {
-                    model: contentBridge.installedModel
-                    Legacy.InstalledCard {
-                        artworkEnabled: root.visible && y + parent.y + height >= installedViewport.contentY && y + parent.y <= installedViewport.contentY + installedViewport.height
-                        objectName: "installedCard-" + model.fileName
-                        width: rows.width
-                        installedContent: model
-                        toggleable: root.kind === "mod"
-                        enabled: root.writable
-                        onToggled: function(filename, checked) { contentBridge.setEnabled(root.kind, filename, checked); }
-                        onUpdateRequested: function(filename) { contentBridge.updateInstalled(root.kind, filename); }
-                        onRemoveRequested: function(filename) { contentBridge.remove(root.kind, filename); }
+                objectName: "installedScroll"
+                width: parent.width
+                height: Math.max(1, root.height - toolbar.height - kinds.height - summary.height - 42)
+                spacing: 12
+                model: contentBridge.installedModel
+                delegate: Legacy.InstalledCard {
+                    required property var model
+                    artworkEnabled: rows.visible && y + height >= rows.contentY && y <= rows.contentY + rows.height
+                    objectName: "installedCard-" + model.fileName
+                    width: rows.width
+                    installedContent: model
+                    toggleable: root.kind === "mod"
+                    enabled: root.writable
+                    ListView.onReused: confirmingRemove = false
+                    onToggled: function(filename, checked) { contentBridge.setEnabled(root.kind, filename, checked); }
+                    onUpdateRequested: function(filename) { contentBridge.updateInstalled(root.kind, filename); }
+                    onRemoveRequested: function(filename) { contentBridge.remove(root.kind, filename); }
+                }
+                footer: Item {
+                    width: rows.width; height: rows.count ? 16 : empty.implicitHeight + 48
+                    Glass {
+                        width: parent.width; height: parent.height; visible: !rows.count
+                        PaymentText { id: empty; width: parent.width; text: contentBridge.installed.length ? Legacy.Tr.phrase("Không tìm thấy file phù hợp.") : Legacy.Tr.phrase("Nội dung của bản chơi sẽ xuất hiện ở đây. Bạn có thể thêm mod, shader và resource pack từ thư viện."); color: GlassTheme.muted }
                     }
                 }
-                Glass {
-                    width: parent.width; height: empty.implicitHeight + 48
-                    visible: !contentBridge.installedShownCount
-                    PaymentText { id: empty; width: parent.width; text: contentBridge.installed.length ? Legacy.Tr.phrase("Không tìm thấy file phù hợp.") : Legacy.Tr.phrase("Nội dung của bản chơi sẽ xuất hiện ở đây. Bạn có thể thêm mod, shader và resource pack từ thư viện."); color: GlassTheme.muted }
-                }
             }
-        }
     }
 }

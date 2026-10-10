@@ -25,34 +25,30 @@ Glass {
             Button { label: Legacy.Tr.phrase("Chép mã của tôi"); quiet: true; onClicked: socialBridge.copyFriendCode() }
         }
         PaymentText { width: parent.width; visible: !socialBridge.friends.length; text: Legacy.Tr.phrase("Bấm + để thêm người bạn đầu tiên."); color: GlassTheme.muted }
-        InertialScroll {
-            width: parent.width
-            height: Math.min(friends.implicitHeight, 340 * GlassTheme.scale)
-            contentHeight: friends.implicitHeight
-            Column {
-                id: friends
-                width: parent.width; spacing: 6
-                Repeater {
-                    model: socialBridge.friends
-                    Button {
-                        objectName: "friend-" + modelData.accountId
-                        width: friends.width
-                        height: Math.max(labels.implicitHeight + 20, 62 * GlassTheme.scale)
-                        label: ""
-                        selected: socialBridge.peerId === modelData.accountId
-                        quiet: true
-                        Accessible.name: modelData.name + (modelData.online ? Legacy.Tr.phrase(", trực tuyến") : Legacy.Tr.phrase(", ngoại tuyến"))
-                        onClicked: socialBridge.selectFriend(modelData.accountId)
-                        SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; decor: modelData.decor || "none"; clickable: true; onClicked: socialProfileDialog.showFor(modelData.accountId) }
-                        Column {
-                            id: labels
-                            x: 64 * GlassTheme.scale; y: 10; width: parent.width - x - 12; spacing: 4
-                            PaymentText { width: parent.width; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
-                            PaymentText { width: parent.width; text: modelData.online ? Legacy.Tr.phrase("●  Trực tuyến") : Legacy.Tr.phrase("○  Ngoại tuyến"); color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-                        }
-                    }
-                }
-            }
+        InertialList {
+            id: friends
+            objectName: "friendsList"
+            width: parent.width; height: Math.min(count * (62 * GlassTheme.scale + 6), 340 * GlassTheme.scale)
+            spacing: 6
+            model: socialBridge.friends
+    delegate: Button {
+    required property var modelData
+        objectName: "friend-" + modelData.accountId
+        width: friends.width
+        height: Math.max(labels.implicitHeight + 20, 62 * GlassTheme.scale)
+        label: ""
+        selected: socialBridge.peerId === modelData.accountId
+        quiet: true
+        Accessible.name: modelData.name + (modelData.online ? Legacy.Tr.phrase(", trực tuyến") : Legacy.Tr.phrase(", ngoại tuyến"))
+        onClicked: socialBridge.selectFriend(modelData.accountId)
+        SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; decor: modelData.decor || "none"; clickable: true; onClicked: socialProfileDialog.showFor(modelData.accountId) }
+        Column {
+            id: labels
+            x: 64 * GlassTheme.scale; y: 10; width: parent.width - x - 12; spacing: 4
+            PaymentText { width: parent.width; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
+            PaymentText { width: parent.width; text: modelData.online ? Legacy.Tr.phrase("●  Trực tuyến") : Legacy.Tr.phrase("○  Ngoại tuyến"); color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        }
+    }
         }
         Button { objectName: "showFriendRequests"; visible: socialBridge.requests.length > 0; width: parent.width; quiet: true; label: Legacy.Tr.phrase("Yêu cầu · ") + socialBridge.requests.length + (root.requestsExpanded ? "  ↑" : "  ↓"); onClicked: root.requestsExpanded = !root.requestsExpanded }
         Column {

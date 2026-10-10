@@ -96,38 +96,33 @@ Item {
             onClicked: manager.openDialog()
         }
     }
-    InertialScroll {
+    InertialGrid {
+        id: instanceGrid
         visible: !root.serverMode
         objectName: "instancesScroll"
-        anchors.top: filters.bottom
-        anchors.topMargin: 24
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        contentHeight: grid.height + 32
-        Grid {
-            id: grid
-            width: parent.width - 8
-            columns: GlassTheme.preferences && GlassTheme.preferences.compactUi ? 1 : Math.max(1, Math.floor((width + 16) / (270 * GlassTheme.scale)))
-            spacing: 16
-            Repeater {
-                model: root.filtered
-                InstanceTile {
-                    width: (grid.width - (grid.columns - 1) * 16) / grid.columns
-                    compact: GlassTheme.preferences && GlassTheme.preferences.compactUi
-                    entry: modelData
-                    onEditRequested: function (entry) {
-                        editor.openFor(entry);
-                    }
-                }
+        anchors.top: filters.bottom; anchors.topMargin: 24
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        readonly property bool compact: GlassTheme.preferences && GlassTheme.preferences.compactUi
+        readonly property int columns: compact ? 1 : Math.max(1, Math.floor((width + 8) / (270 * GlassTheme.scale)))
+        cellWidth: Math.max(1, (width - 8 + 16) / columns)
+        cellHeight: (compact ? 92 : 204) * GlassTheme.scale + 16
+        model: root.filtered
+        delegate: Item {
+            required property var modelData
+            width: instanceGrid.cellWidth; height: instanceGrid.cellHeight
+            InstanceTile {
+                width: parent.width - 16; height: parent.height - 16
+                compact: instanceGrid.compact; entry: parent.modelData
+                onEditRequested: function(entry) { editor.openFor(entry); }
             }
-            Text {
-                visible: !root.filtered.length
-                width: grid.width
+        }
+        footer: Item {
+            width: instanceGrid.width - 8; height: root.filtered.length ? 16 : empty.implicitHeight + 32
+            PaymentText {
+                id: empty
+                visible: !root.filtered.length; width: parent.width
                 text: bridge.instances.length ? Legacy.Tr.phrase("Không có bản chơi phù hợp.") : Legacy.Tr.phrase("Tạo bản chơi đầu tiên của bạn để bắt đầu.")
                 color: GlassTheme.muted
-                font.family: GlassTheme.font
-                font.pixelSize: GlassTheme.fontSubheading
             }
         }
     }

@@ -48,35 +48,67 @@ Item {
         }
         PaymentText { width: parent.width; text: serverBridge.busy ? Legacy.Tr.message(serverBridge.activity) : root.supportsPlugins || root.supportsMods ? Legacy.Tr.phrase("Lọc theo Minecraft ") + (serverBridge.selected.game_version || "") + Legacy.Tr.phrase(" và ") + (serverBridge.selected.engine_title || "") + Legacy.Tr.phrase(". Hangar chỉ hiển thị bản Release tải trực tiếp, không cần dependency ngoài.") : Legacy.Tr.phrase("Vanilla không hỗ trợ plugin hoặc mod."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     }
-    InertialScroll {
+    readonly property int resultColumns: width - 8 > 640 * GlassTheme.scale ? 2 : 1
+    readonly property var resultRows: {
+        var rows = [];
+        for (var i = 0; i < serverBridge.projects.length; i += resultColumns)
+            rows.push({projects: serverBridge.projects.slice(i, i + resultColumns)});
+        rows.push({summary: true});
+        serverBridge.installed.forEach(function(content) { rows.push({installed: content}); });
+        return rows;
+    }
+    InertialList {
         id: libraryViewport
         objectName: "serverContentScroll"
-        anchors.top: header.bottom; anchors.topMargin: 16; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
-        contentHeight: libraryRows.implicitHeight + 12
-        Column { id: libraryRows; width: parent.width - 8; spacing: 14
-            PaymentText { text: query.text ? Legacy.Tr.phrase("Kết quả tìm kiếm") : Legacy.Tr.phrase("Khám phá ") + (root.kind === "plugin" ? "plugin" : "mod"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontSubheading; font.weight: Font.DemiBold }
-            Flow {
-                width: parent.width; spacing: 12
-                Repeater {
-                    model: serverBridge.projects
-                    ServerProjectTile {
-                        renderEnabled: root.visible && y + parent.y + height >= libraryViewport.contentY && y + parent.y <= libraryViewport.contentY + libraryViewport.height
-                        width: libraryRows.width > 640 * GlassTheme.scale ? (libraryRows.width - 12) / 2 : libraryRows.width
-                        project: modelData; clickable: !serverBridge.busy
-                        onChosen: { root.projectId = project.project_id; root.source = project.source; root.versionId = ""; serverBridge.loadContentVersions(root.source, root.kind, root.projectId); versionPopup.open(); }
+        anchors.top: header.bottom; anchors.topMargin: 14
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        spacing: 12
+        model: root.resultRows
+        header: Item {
+            width: libraryViewport.width - 8; height: explore.implicitHeight + 14
+            PaymentText { id: explore; text: query.text ? Legacy.Tr.phrase("Kết quả tìm kiếm") : Legacy.Tr.phrase("Khám phá ") + (root.kind === "plugin" ? "plugin" : "mod"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontSubheading; font.weight: Font.DemiBold }
+        }
+        delegate: Loader {
+            id: resultRow
+            required property var modelData
+            width: libraryViewport.width - 8
+            height: item ? item.implicitHeight : 0
+            sourceComponent: modelData.projects ? projectGroup : modelData.installed ? installedRow : summaryRow
+            Component {
+                id: projectGroup
+                Row {
+                    width: resultRow.width; spacing: 12
+                    Repeater {
+                        model: resultRow.modelData.projects
+                        ServerProjectTile {
+                            required property var modelData
+                            width: (resultRow.width - (root.resultColumns - 1) * 12) / root.resultColumns
+                            project: modelData; clickable: !serverBridge.busy
+                            renderEnabled: libraryViewport.visible && resultRow.y + resultRow.height >= libraryViewport.contentY && resultRow.y <= libraryViewport.contentY + libraryViewport.height
+                            onChosen: { root.projectId = modelData.project_id; root.source = modelData.source; root.versionId = ""; serverBridge.loadContentVersions(root.source, root.kind, root.projectId); versionPopup.open(); }
+                        }
                     }
                 }
             }
-            PaymentText { width: parent.width; visible: !serverBridge.projects.length; text: serverBridge.busy || root.autoPending ? Legacy.Tr.phrase("Đang tìm nội dung tương thích…") : Legacy.Tr.phrase("Không tìm thấy nội dung tương thích. Thử từ khoá khác hoặc đổi nguồn."); color: GlassTheme.muted }
-            PaymentText { width: parent.width; visible: !!Legacy.Tr.message(serverBridge.note); text: Legacy.Tr.message(serverBridge.note); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-            PaymentText { text: Legacy.Tr.phrase("ĐÃ CÀI · ") + serverBridge.installed.length; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1; color: GlassTheme.muted }
-            Repeater {
-                model: serverBridge.installed
-                Glass { width: libraryRows.width; padding: 14; height: installedBody.implicitHeight + 28
-                    Column { id: installedBody; width: parent.width; spacing: 10
-                        PaymentText { width: parent.width; text: modelData.file_name; wrapMode: Text.WrapAnywhere; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: modelData.content_kind + " · " + (modelData.source === "manual" ? Legacy.Tr.phrase("File chép tay") : modelData.source + " · " + modelData.version_id); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-                        Button { objectName: "serverContentRemove-" + modelData.file_name; label: Legacy.Tr.phrase("Gỡ"); quiet: true; clickable: root.writable; onClicked: { var kind = modelData.content_kind; var fileName = modelData.file_name; confirmDialog.ask(Legacy.Tr.phrase("Gỡ ") + fileName + "?", Legacy.Tr.phrase("File được chuyển vào .nostalgia/removed trong thư mục server để bạn có thể lấy lại."), function() { serverBridge.removeContent(kind, fileName); }); } }
+            Component {
+                id: summaryRow
+                Column {
+                    width: resultRow.width; spacing: 12
+                    PaymentText { width: parent.width; visible: !serverBridge.projects.length; text: serverBridge.busy || root.autoPending ? Legacy.Tr.phrase("Đang tìm nội dung tương thích…") : Legacy.Tr.phrase("Không tìm thấy nội dung tương thích. Thử từ khoá khác hoặc đổi nguồn."); color: GlassTheme.muted }
+                    PaymentText { width: parent.width; visible: !!serverBridge.note; text: Legacy.Tr.message(serverBridge.note); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                    PaymentText { text: Legacy.Tr.phrase("ĐÃ CÀI · ") + serverBridge.installed.length; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1; color: GlassTheme.muted }
+                }
+            }
+            Component {
+                id: installedRow
+                Glass {
+                    property var installedData: resultRow.modelData.installed
+                    width: resultRow.width; padding: 14; implicitHeight: installedBody.implicitHeight + 28
+                    Column {
+                        id: installedBody; width: parent.width; spacing: 10
+                        PaymentText { width: parent.width; text: installedData.file_name; wrapMode: Text.WrapAnywhere; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: installedData.content_kind + " · " + (installedData.source === "manual" ? Legacy.Tr.phrase("File chép tay") : installedData.source + " · " + installedData.version_id); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                        Button { objectName: "serverContentRemove-" + installedData.file_name; label: Legacy.Tr.phrase("Gỡ"); quiet: true; clickable: root.writable; onClicked: { var kind = installedData.content_kind; var fileName = installedData.file_name; confirmDialog.ask(Legacy.Tr.phrase("Gỡ ") + fileName + "?", Legacy.Tr.phrase("File được chuyển vào .nostalgia/removed trong thư mục server để bạn có thể lấy lại."), function() { serverBridge.removeContent(kind, fileName); }); } }
                     }
                 }
             }

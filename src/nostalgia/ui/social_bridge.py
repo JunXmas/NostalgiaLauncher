@@ -4,15 +4,62 @@ from __future__ import annotations
 
 import platform
 import sys
-import uuid
 
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
 
+from nostalgia.api import ServiceSessionStore, SocialGateway
+from nostalgia.ui.chat_sender import ChatSender
+from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
+from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.social_session import SocialSession
 
 
 class SocialBridge(SocialSession):
+    chatBusyChanged = Signal()
+
+    def __init__(
+        self,
+        gateway: SocialGateway | None,
+        multiplayer: MultiplayerBridge,
+        sync_bridge: RoomSyncBridge,
+        parent: QObject | None = None,
+        session_store: ServiceSessionStore | None = None,
+        plus_enabled: bool = True,
+    ) -> None:
+        super().__init__(gateway, multiplayer, sync_bridge, parent, session_store, plus_enabled)
+        self._chat = ChatSender(self)
+        self._chat.busyChanged.connect(self.chatBusyChanged)
+        self._chat.completed.connect(self._apply_delivery)
+
+    @Property(bool, notify=chatBusyChanged)
+    def chatBusy(self) -> bool:
+        return bool(self._chat.busy)
+
+    @Slot(str, str, str, bool)
+    def _apply_delivery(self, peer_id: str, text: str, error: str, revoked: bool) -> None:
+        if revoked:
+            if self._session_store:
+                self._session_store.remove_access_token()
+            self._reset_session(error)
+        elif error:
+            self._note = error
+        else:
+            if peer_id == self._peer_id:
+                self.messageSent.emit(text)
+            self._note = "Đã gửi."
+            self.refresh()
+        self.changed.emit()
+
+    @Slot()
+    def shutdown(self) -> None:
+        self._chat.cancel()
+        super().shutdown()
+
+    def _reset_session(self, note: str) -> None:
+        self._chat.cancel()
+        super()._reset_session(note)
+
     @Slot(bool)
     def setWatching(self, watching: bool) -> None:
         self._timer.setInterval(3000 if watching else 15000)
@@ -60,15 +107,11 @@ class SocialBridge(SocialSession):
             and account_id
             and text.strip()
             and len(text) <= 1000
-            and not self.busy
+            and not self.chatBusy
+            and self._snapshot
+            and any(friend.account_id == account_id for friend in self._snapshot.friends)
         ):
-            message_id = uuid.uuid4().hex
-
-            def send() -> str:
-                gateway.send_message(account_id, text.strip(), message_id)
-                return text.strip()
-
-            self._request("message", send)
+            self._chat.submit(gateway, account_id, text.strip())
 
     @Slot(str)
     def inviteFriend(self, account_id: str) -> None:

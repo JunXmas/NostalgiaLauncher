@@ -4031,5 +4031,10 @@
   "s: kết nối": " kết nối",
   "s: tháng": " tháng",
   "s: tháng sử dụng ": " tháng sử dụng ",
-  "s: file · bật, tắt và cập nhật tại đây": " file · bật, tắt và cập nhật tại đây"
+  "s: file · bật, tắt và cập nhật tại đây": " file · bật, tắt và cập nhật tại đây",
+  "p:Gửi lời chào để bắt đầu câu chuyện.": "Gửi lời chào để bắt đầu câu chuyện.",
+  "p:Say hello to start a conversation.": "Gửi lời chào để bắt đầu câu chuyện.",
+  "p:Không gửi được tin nhắn. Hãy thử lại.": "Không gửi được tin nhắn. Hãy thử lại.",
+  "p:Đang gửi tin nhắn…": "Đang gửi tin nhắn…",
+  "p:Đang gửi…": "Đang gửi…"
 }

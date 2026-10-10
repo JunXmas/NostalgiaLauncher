@@ -14,11 +14,11 @@ Column {
         Button { label: Legacy.Tr.phrase("Bỏ chọn"); quiet: true; clickable: root.selection.ready; onClicked: root.selection.selectAll(false) }
     }
     PaymentText { width: parent.width; text: !root.selection.ready ? Legacy.Tr.phrase("Đang đọc danh sách mod… Nếu có lỗi, chọn lại bản chơi.") : Legacy.Tr.phrase("Chỉ thay đổi bộ mod của bạn bè. Mod trên máy host giữ nguyên; cấu hình và gói tài nguyên vẫn đồng bộ. Giữ các mod bắt buộc để mọi người vào được thế giới."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-    ListView {
+    InertialList {
         objectName: "hostSharedModList"
         width: parent.width; height: Math.min(count * (72 * GlassTheme.scale + spacing), 240 * GlassTheme.scale)
         clip: true; spacing: 6; boundsBehavior: Flickable.StopAtBounds
-        Controls.ScrollBar.vertical: Controls.ScrollBar { }
+
         model: root.selection.mods
         delegate: SyncContentRow {
             required property var modelData

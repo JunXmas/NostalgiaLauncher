@@ -41,7 +41,13 @@ def test_mica_captures_page_instead_of_only_ambient(preview: Preview, surface_na
         assert ancestor != scene, "A modal must not capture itself in its backdrop"
         ancestor = ancestor.parentItem()
     capture = effect.property("source")
-    assert capture.property("sourceItem") == scene
+    active = bool(
+        surface.property("visible")
+        and surface.property("frosted")
+        and surface.property("shaderAvailable")
+    )
+    assert capture.property("sourceItem") == (scene if active else None)
+    assert bool(capture.property("live")) == active
     origin = surface.mapToItem(scene, 0, 0)
     rectangle = capture.property("sourceRect")
     assert rectangle.x() == pytest.approx(origin.x())
