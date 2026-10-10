@@ -16,6 +16,7 @@ Item {
         function onStatusChanged() { root.roomError = ""; }
     }
     Connections { target: roomSyncBridge; function onFailed(message) { root.roomError = message; } }
+    Connections { target: hostBridge; function onSetupRequested() { root.section = 1; } }
     InertialScroll {
         objectName: "friendsScroll"
         anchors.fill: parent
@@ -27,14 +28,14 @@ Item {
             spacing: 14
             Item {
                 width: parent.width
-                visible: !root.compact || !socialBridge.peerId
+                visible: root.section === 1 || !root.compact || !socialBridge.peerId
                 height: Math.max(title.implicitHeight, openRoom.height)
-                PaymentText { id: title; width: parent.width - (openRoom.visible ? openRoom.width + 14 : 0); text: Legacy.Tr.phrase("Bạn bè"); font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+                PaymentText { id: title; width: parent.width - (openRoom.visible ? openRoom.width + 14 : 0); text: root.section === 1 ? Legacy.Tr.phrase("Chơi chung") : Legacy.Tr.phrase("Bạn bè"); font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
                 Button { id: openRoom; objectName: "friendsOpenRoom"; anchors.right: parent.right; visible: socialBridge.signedIn && !multiplayerBridge.active && !hostBridge.details.active; label: Legacy.Tr.phrase("Mở phòng"); primary: true; onClicked: hostBridge.openSetup() }
             }
-            PaymentText { width: parent.width; visible: !root.compact || !socialBridge.peerId; text: socialBridge.signedIn ? socialBridge.friends.filter(function(friend) { return friend.online; }).length + Legacy.Tr.phrase(" bạn trực tuyến · Gặp nhau trong thế giới của bạn.") : Legacy.Tr.phrase("Kết nối tài khoản để lưu bạn bè và nhận lời mời."); color: GlassTheme.muted }
+            PaymentText { width: parent.width; visible: root.section === 1 || !root.compact || !socialBridge.peerId; text: socialBridge.signedIn ? socialBridge.friends.filter(function(friend) { return friend.online; }).length + Legacy.Tr.phrase(" bạn trực tuyến · Gặp nhau trong thế giới của bạn.") : Legacy.Tr.phrase("Kết nối tài khoản để lưu bạn bè và nhận lời mời."); color: GlassTheme.muted }
             MotionTabs { width: parent.width; labels: [Legacy.Tr.phrase("Bạn bè"), Legacy.Tr.phrase("Chơi chung")]; currentIndex: root.section; namePrefix: "friendsSection-"; onSelected: function(index) { root.section = index; } }
-            GuideCard { width: parent.width; topicId: root.section === 0 ? "friends" : "host"; visible: !root.compact || !socialBridge.peerId }
+            GuideCard { width: parent.width; topicId: "friends"; visible: root.section === 0 && (!root.compact || !socialBridge.peerId) }
             ServiceAccountCard { width: parent.width; visible: !socialBridge.signedIn }
             PaymentText {
                 objectName: "socialNote"
@@ -53,13 +54,16 @@ Item {
                     Button { objectName: "showInvitations"; width: parent.width; visible: root.compact; quiet: true; label: Legacy.Tr.phrase("Lời mời · ") + socialBridge.invitations.length + (root.invitesExpanded ? "  ↑" : "  ↓"); onClicked: root.invitesExpanded = !root.invitesExpanded }
                     InvitationList { width: parent.width; visible: !root.compact || root.invitesExpanded }
                 }
-                RoomPanel { id: roomPanel; width: parent.width; visible: multiplayerBridge.active || hostBridge.details.active }
+                Button { objectName: "showActiveRoom"; width: parent.width; visible: root.section === 0 && (multiplayerBridge.active || hostBridge.details.active); label: roomSyncBridge.hostReady ? Legacy.Tr.phrase("Phòng sẵn sàng · Mở phòng để mời bạn") : Legacy.Tr.phrase("Đang mở phòng · Xem bước tiếp theo"); onClicked: root.section = 1 }
+                RoomPanel { id: roomPanel; width: parent.width; visible: root.section === 1 && (multiplayerBridge.active || hostBridge.details.active) }
                 Glass {
                     width: parent.width; visible: root.section === 1 && !multiplayerBridge.active && !hostBridge.details.active; padding: 24; height: playInfo.implicitHeight + 48
                     Column { id: playInfo; width: parent.width; spacing: 14
                         PaymentText { width: parent.width; text: Legacy.Tr.phrase("Thế giới vui hơn khi có bạn."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontDialog }
-                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn bản chơi khi mở phòng, khởi chạy Minecraft rồi mời bạn bè từ danh sách. Modpack được kiểm tra trước khi đồng bộ."); color: GlassTheme.muted }
+                        HostSteps { width: parent.width; currentStep: 0 }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mở phòng để khởi chạy bản chơi. Vào world và bật LAN trong Minecraft, rồi quay lại đây mời bạn bè."); color: GlassTheme.muted }
                         Button { label: Legacy.Tr.phrase("Mở phòng cùng bạn bè"); primary: true; onClicked: hostBridge.openSetup() }
+                        GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Xem hướng dẫn có GIF") }
                         InvitationList { width: parent.width; visible: socialBridge.invitations.length > 0 }
                     }
                 }

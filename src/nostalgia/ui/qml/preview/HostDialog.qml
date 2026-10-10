@@ -51,8 +51,8 @@ Controls.Popup {
         id: dialogContent
         Item {
             id: heading
-            width: parent.width; height: 54 * GlassTheme.scale
-            PaymentText { width: parent.width - closeButton.width - 12; text: Legacy.Tr.phrase("Chơi cùng bạn bè"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
+            width: parent.width; height: Math.max(hostTitle.implicitHeight, closeButton.height) + 12
+            PaymentText { id: hostTitle; width: parent.width - closeButton.width - 12; text: Legacy.Tr.phrase("Mở phòng chơi chung"); font.pixelSize: GlassTheme.fontDialog; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
             Button { id: closeButton; anchors.right: parent.right; width: 36; height: 36; label: "×"; quiet: true; Accessible.name: Legacy.Tr.phrase("Đóng chọn bản chơi"); onClicked: root.close() }
         }
         InertialScroll {
@@ -63,7 +63,8 @@ Controls.Popup {
             Column {
                 id: body
                 width: parent.width - 10; spacing: 14
-                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng."); color: GlassTheme.muted }
+                HostSteps { width: parent.width; currentStep: 0 }
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn bản chơi, rồi khởi chạy Minecraft. Khi vào world, bật LAN; launcher tự nhận phòng để bạn mời bạn bè tại đây."); color: GlassTheme.muted }
                 PaymentText { text: Legacy.Tr.phrase("Bản chơi / modpack đã cài"); font.weight: Font.DemiBold }
                 Select {
                     id: pack
@@ -117,7 +118,7 @@ Controls.Popup {
                 id: launch
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
-                label: Legacy.Tr.phrase("Host & khởi chạy"); primary: true
+                label: Legacy.Tr.phrase("Khởi chạy Minecraft"); primary: true
                 clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
                 onClicked: {
                     if (hostBridge.start(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();

@@ -79,6 +79,7 @@ def test_open_room_selects_installed_pack_before_any_launch(
     press(view, find_control(root_item, "friendsOpenRoom"))
     popup = find_control(root_item, "hostDialog")
     wait_until(lambda: popup.property("opened"))
+    assert find_control(root_item, "friendsPage").property("section") == 1
     assert not host.property("details")["active"] and not launched
     sharing = find_control(root_item, "hostSharePack")
     assert not sharing.property("enabled") and not sharing.property("checked")

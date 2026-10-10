@@ -1,54 +1,31 @@
-# Nostalgia 1.2.0rc25 — Mời bạn dễ hơn, click đúng chỗ
+# Nostalgia 1.2.0rc26 — Mở world, mời bạn, cùng chơi
 
-rc25 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+Chơi chung có luồng rõ ràng hơn: bạn luôn thấy mình đang ở bước nào, cần làm gì tiếp theo và mời ai vào world. Bản này cũng giảm các lần gọi nền để tiết kiệm tài nguyên của dịch vụ tài khoản.
 
-## Cùng vào world, dễ hiểu hơn
+## Mời bạn ngay trong phòng
 
-**Gửi, nhận và từ chối lời mời** không còn bị khóa khi launcher cập nhật trạng thái bạn bè. Nếu chưa có phòng, nút trong chat đưa bạn đến chọn bản chơi để host. Launcher vẫn chờ LAN và nội dung chia sẻ sẵn sàng trước khi cho gửi lời mời.
+1. Vào **Bạn bè → Chơi chung → Mở phòng**, chọn bản chơi và bấm **Khởi chạy Minecraft**.
+2. Trong world Minecraft, chọn **Esc → Open to LAN → Start LAN World**. Launcher tự nhận cổng LAN.
+3. Quay lại launcher, chờ world và modpack sẵn sàng rồi bấm **Mời chơi** cạnh tên bạn trực tuyến.
 
-Hướng dẫn **Mời bạn vào world** hiện ngay trong chat và bảng phòng, có GIF cùng nội dung Tiếng Việt / English:
+Mở cửa sổ host tự chuyển sang tab Chơi chung. Bảng phòng hiển thị ba bước, hướng dẫn LAN ở đúng thời điểm và danh sách bạn có thể mời ngay tại đó. Bạn không cần chọn một cuộc chat để gửi lời mời. Phòng đang khóa hoặc nội dung chia sẻ chưa sẵn sàng vẫn được kiểm tra trước khi mời.
 
-1. Host chọn bản chơi và bấm **Host & khởi chạy**.
-2. Trong world Minecraft: **Esc → Open to LAN → Start LAN World**.
-3. Quay lại launcher, chờ phòng sẵn sàng, chọn bạn trực tuyến rồi **Mời chơi**.
-4. Người nhận bấm **Vào phòng**, xem/đồng bộ modpack nếu có, rồi kết nối thế giới LAN trong Minecraft.
+Người nhận bấm **Vào phòng**, xem nội dung cần đồng bộ nếu có, rồi kết nối trong Minecraft. Nút **Chép địa chỉ vào Minecraft** nằm ngay trong bảng phòng khi kết nối đã sẵn sàng. Giữ Minecraft và launcher mở trong lúc chơi. Hướng dẫn có GIF bằng **Tiếng Việt / English** đã cập nhật theo luồng mới.
 
-**Launcher luôn giữ mở khi game khởi chạy.** Tùy chọn tự ẩn vào khay đã được bỏ, kể cả khi cấu hình cũ từng bật. Bạn có thể tiếp tục chat và gửi lời mời; khi tự thu nhỏ cửa sổ, launcher không giành lại tiêu điểm lúc game dừng.
+## Ít gọi nền hơn, giữ các thao tác trực tiếp
 
-## Cài nội dung vào đúng bản chơi
+- Khi không mở chat, danh sách bạn bè làm mới **4 lần/phút thay vì 20 lần/phút** — giảm 80% số lần polling định kỳ ở trạng thái này.
+- Khi rời trang bạn bè, launcher giữ tin nhắn đã tải và ngừng yêu cầu tin nhắn ở nền. Mở lại trang sẽ làm mới ngay.
+- Chat đang mở cập nhật mỗi **5 giây**; gửi tin, gửi yêu cầu kết bạn và mời chơi vẫn xử lý ngay khi bấm.
+- Backend đã giảm ghi trạng thái online trùng lặp. Kiểm tra phiên một máy, chữ ký chống phát lại và quyền Premium vẫn do máy chủ thực hiện.
 
-Nút tải ở thư viện tổng hiển thị **Cài / Install**. Bấm vào sẽ mở popup để bạn chọn bản chơi đích và bản phát hành tương thích trước khi tải mod, shader hoặc resourcepack. Launcher không tự cài vào bản chơi đã được chọn từ trước. Nếu mở thư viện từ quản lý một bản chơi, đích cài vẫn cố định ở bản chơi đó.
+Đây là giảm số lần gọi nền; mức giảm tổng lượt ghi database phụ thuộc hoạt động thực tế của người dùng.
 
-## Chấp nhận lời mời kết bạn ngay
+## Mica và bố cục ổn định hơn
 
-Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm mới ở nền. Yêu cầu đến hiện sẵn để dễ tìm; thao tác kết bạn chỉ khóa trong lúc chính thao tác đó đang xử lý. Chặn gửi trùng và bỏ kết quả từ phiên tài khoản đã đổi hoặc bị thu hồi.
-
-## Popup nhận đúng một lần bấm
-
-- Sửa nút trong popup/menu kích hoạt cả nút ở trang phía sau.
-- Menu tài khoản và danh sách chọn phiên bản chặn thao tác ở nền trong lúc mở.
-- Nút nhận click riêng biệt; kéo từ nút để cuộn danh sách vẫn hoạt động, không kích hoạt nút khi kéo.
-- Khung thêm tài khoản và cài modpack chặn cả nút chuột phải, chuột giữa và cuộn xuyên nền.
-
-## Tạm biệt vệt trắng
-
-- Sửa lớp mask của blur hiện thành mảng trắng khi ảnh chưa tải, tải thất bại hoặc hiệu ứng blur tắt.
-- Sửa vệt trắng trong ô ghi chú của hướng dẫn và trên các ô thư viện.
-- Giữ mica trên ảnh đã tải và các cửa sổ, cùng quán tính cuộn hiện có.
-
-## Cửa sổ mở ổn định hơn
-
-Sửa lỗi bộ lọc kéo thả mod nhận sự kiện trong lúc cửa sổ đang được thu hồi, có thể làm các màn hình skin, tạo bản chơi, xác nhận xóa hoặc trang chủ lỗi khi mở. Kéo thả mod vẫn hỏi bản chơi đích trước khi cài. Dịch vụ phòng đóng an toàn kể cả khi có nhiều yêu cầu đóng liên tiếp.
-
-## Các ô nằm đúng chỗ
-
-- Sửa lưới thư viện, bản chơi và cosmetic tự xuống dòng sớm, bỏ trống cả một cột.
-- Mô tả trong ô thư viện gọn hơn ở cửa sổ quản lý bản chơi, tránh chồng nút cài đặt.
-- Bộ lọc và nội dung hướng dẫn chuyển bố cục theo chiều rộng cửa sổ và cỡ chữ, dễ đọc trên màn hình nhỏ hoặc khi tăng tỉ lệ giao diện.
-
-## Kiểm tra trước khi phát hành
-
-Đã kiểm tra giao diện Tiếng Việt / English ở nhiều kích thước và tỉ lệ 100%, 125%, 150%; kiểm tra ảnh đang chờ, tải thành công và tải thất bại. Các bài kiểm tra hồi quy chạy cả Qt offscreen và OpenGL thực. Quy trình phát hành chạy bộ kiểm tra mã nguồn và chạy thử gói đóng sẵn trên cả bốn nền tảng.
+- Sửa callback của ảnh mica gọi vào ô thư viện đã đóng khi chuyển giữa mod, modpack, shader và resourcepack.
+- Các bước mở phòng xuống dòng theo chiều rộng; tiêu đề cửa sổ host tự dành đủ chỗ khi tăng cỡ chữ.
+- Danh sách bạn trong phòng chỉ dựng các ô gần màn hình, giữ cuộn nhẹ khi có nhiều bạn.
 
 ## Tải và cập nhật
 
@@ -56,4 +33,4 @@ Sửa lỗi bộ lọc kéo thả mod nhận sự kiện trong lúc cửa sổ �
 - **Linux x64:** `.deb` cho Linux Mint/Ubuntu/Debian, `.rpm`, AppImage, `.tar.gz` và ZIP cập nhật.
 - **macOS:** DMG và ZIP riêng cho Apple Silicon và Intel.
 
-Launcher tiếp tục thông báo bản mới; Windows và Linux tải/cài khi bạn chọn cập nhật, macOS mở trang tải. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật; bản phát hành không mở Ultimate TEST. File đính kèm gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
+Launcher giữ cơ chế cập nhật hiện có: thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật, không mở Ultimate TEST. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.

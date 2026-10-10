@@ -16,8 +16,8 @@ Item {
         sourceSize: Qt.size(160, 160)
         visible: false; asynchronous: true; cache: true
         fillMode: Image.PreserveAspectCrop
-        onSourceChanged: Qt.callLater(function() { surface.refreshBackdrop(); })
-        onStatusChanged: if (status === Image.Ready) Qt.callLater(function() { surface.refreshBackdrop(); })
+        onSourceChanged: Qt.callLater(function() { if (surface && typeof surface.refreshBackdrop === "function") surface.refreshBackdrop(); })
+        onStatusChanged: if (status === Image.Ready) Qt.callLater(function() { if (surface && typeof surface.refreshBackdrop === "function") surface.refreshBackdrop(); })
     }
     Image {
         anchors.fill: parent; anchors.margins: root.radius

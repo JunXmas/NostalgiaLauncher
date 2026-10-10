@@ -5,6 +5,24 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+## 1.2.0rc26 — 2026-10-10
+
+- Mở phòng theo ba bước rõ ràng: chọn bản chơi, mở world và bật LAN, rồi mời bạn.
+  Launcher tự chuyển sang tab Chơi chung khi mở cửa sổ host; hướng dẫn LAN hiện
+  ngay ở bước cần làm, không bắt nhập mã hoặc cổng khi tự nhận diện được.
+- Hiện bạn trực tuyến và nút Mời chơi ngay trong bảng phòng, không cần chọn chat.
+  Chỉ cho mời khi world và modpack đã sẵn sàng, phòng không khóa và lời mời trước
+  đã gửi xong. Danh sách dài chỉ dựng các ô gần màn hình.
+- Khách có nút Chép địa chỉ vào Minecraft ngay trong bảng phòng. Hướng dẫn có GIF,
+  Tiếng Việt và English được cập nhật theo đúng các nút mới.
+- Giảm làm mới danh sách bạn bè khi không mở chat từ 20 xuống 4 lần mỗi phút;
+  không tải tin nhắn ở nền khi rời trang. Mở lại trang làm mới ngay, chat cập nhật
+  mỗi 5 giây và thao tác gửi tin/gửi lời mời vẫn xử lý ngay.
+- Backend đã giảm ghi trạng thái online lặp lại, giữ kiểm tra phiên đăng nhập,
+  chữ ký chống phát lại và quyền Premium trên máy chủ.
+- Sửa callback nền mica gọi vào ô thư viện đã đóng khi chuyển loại nội dung;
+  giữ nền blur cho mod, modpack, shader và resourcepack.
+
 ## 1.2.0rc25 — 2026-10-10
 
 - Đóng dịch vụ phòng nhiều lần an toàn, không tạo coroutine sau khi vòng lặp đã đóng;
