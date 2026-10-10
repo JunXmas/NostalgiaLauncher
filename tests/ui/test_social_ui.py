@@ -12,7 +12,7 @@ import pytest
 pytest.importorskip("PySide6")
 from PySide6.QtCore import QPointF, QUrl, qInstallMessageHandler
 from PySide6.QtGui import QDesktopServices, QGuiApplication
-from PySide6.QtTest import QTest
+from PySide6.QtTest import QSignalSpy, QTest
 from test_bridges import wait_until
 from test_minimal_preview import press
 
@@ -73,10 +73,14 @@ def find_control(root_item: Any, name: str) -> Any:
 
 
 def login_preview(preview: tuple[Any, ...]) -> None:
-    _, gateway, _, _, social, *_ = preview
+    _, gateway, view, _, social, *_ = preview
     gateway.access_token = "a" * 64
     social.refresh()
     wait_until(lambda: social.signedIn and not social.busy)
+    # Dữ liệu đã về chưa có nghĩa các vị trí sau đăng nhập đã được polish/render.
+    frame = QSignalSpy(view.frameSwapped)
+    view.update()
+    assert frame.count() or frame.wait(2000), "khung đăng nhập chưa vẽ xong"
 
 
 def test_google_opens_browser_and_account_is_separate_from_minecraft(

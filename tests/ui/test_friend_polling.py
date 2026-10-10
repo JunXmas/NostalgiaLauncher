@@ -69,14 +69,17 @@ def test_friend_error_keeps_request_or_clears_revoked_session(
     login_preview(social_preview)
     social._timer.stop()
 
+    attempted: list[bool] = []
+
     def fail(*_args: Any) -> None:
+        attempted.append(True)
         raise SessionRevoked("Phiên đã bị thu hồi.") if revoked else SocialError("Thử lại.")
 
     monkeypatch.setattr(gateway, "friend_action", fail)
     button = find_control(root_item, "acceptFriend-minh")
     center = button.mapToScene(QPointF(button.width() / 2, button.height() / 2)).toPoint()
     QTest.mouseClick(view, Qt.MouseButton.LeftButton, pos=center)
-    wait_until(lambda: not social.friendBusy)
+    wait_until(lambda: bool(attempted) and not social.friendBusy)
     assert not gateway.accepted
     if revoked:
         assert not social.signedIn and not gateway.access_token
