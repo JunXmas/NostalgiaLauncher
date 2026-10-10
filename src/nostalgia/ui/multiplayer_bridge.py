@@ -4,12 +4,14 @@ dịch vụ phòng; nhảy về luồng giao diện qua tín hiệu xếp hàng 
 
 from __future__ import annotations
 
+from concurrent.futures import TimeoutError as FutureTimeout
 from typing import cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
 
-from nostalgia.api import Launcher, RoomService, RoomStatus, SyncSnapshot
+from nostalgia.api import Launcher, RoomService, RoomStatus, SyncFile, SyncSnapshot
+from nostalgia.operations.cancellation import CancelToken
 
 
 class MultiplayerBridge(QObject):
@@ -63,11 +65,30 @@ class MultiplayerBridge(QObject):
     def active(self) -> bool:
         return self._status.role != "idle"
 
+    @Property(bool, notify=statusChanged)
+    def worldReady(self) -> bool:
+        return self._status.world_ready
+
+    @Property(str, notify=statusChanged)
+    def connectionKind(self) -> str:
+        return self._status.connection_kind
+
+    @Slot(bool)
+    def setDirectAllowed(self, allowed: bool) -> None:
+        self._service.set_direct_allowed(allowed)
+
     # ----- lệnh -----
 
     @Slot()
     def startHosting(self) -> None:
         self._service.start_hosting()
+
+    def prepare_room(self, room_name: str, sharing: bool) -> None:
+        self._service.prepare_room(room_name, sharing)
+
+    @Property(str, notify=statusChanged)
+    def shareState(self) -> str:
+        return self._status.share_state
 
     def start_managed_hosting(self) -> None:
         """The host workflow supplies the port from its own game; never pick another beacon."""
@@ -114,6 +135,21 @@ class MultiplayerBridge(QObject):
     def prepare_sync_source(self, snapshot: SyncSnapshot) -> None:
         """Gọi từ worker; vòng nhận game tiếp tục phục vụ snapshot trong đời phòng."""
         self._service.set_sync_snapshot(snapshot).result(timeout=5)
+
+    def download_peer_file(
+        self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
+    ) -> bytes | None:
+        future = self._service.download_file(room_code, sync_file, cancel_token)
+        try:
+            while True:
+                cancel_token.raise_if_cancelled()
+                try:
+                    return future.result(timeout=0.2)
+                except FutureTimeout:
+                    continue
+        except BaseException:
+            future.cancel()
+            raise
 
     @Slot(result=str)
     def clipboardText(self) -> str:

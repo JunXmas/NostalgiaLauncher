@@ -17,11 +17,16 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from typing import TYPE_CHECKING
 
 from nostalgia.multiplayer.gate import JoinerGate
 from nostalgia.multiplayer.handshake import HANDSHAKE_TIMEOUT_SECONDS
 from nostalgia.multiplayer.lan import is_local_peer, local_ipv4_addresses
+from nostalgia.net.binary_socket import BinarySocket
 from nostalgia.net.websocket import TlsContext, WebSocketClient
+
+if TYPE_CHECKING:
+    from nostalgia.multiplayer.peer_mux import PeerMux
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ class JoinerBridge:
         self._tls_context = tls_context
         self._server: asyncio.AbstractServer | None = None
         self._handlers: set[asyncio.Task[None]] = set()
+        self.peer: PeerMux | None = None
 
     @property
     def local_port(self) -> int:
@@ -67,6 +73,9 @@ class JoinerBridge:
             await socket.close()
 
     async def stop(self) -> None:
+        if self.peer is not None:
+            await self.peer.close()
+            self.peer = None
         handlers = list(self._handlers)
         for handler in handlers:
             handler.cancel()
@@ -89,7 +98,11 @@ class JoinerBridge:
             self._handlers.add(task)
             task.add_done_callback(self._handlers.discard)
         try:
-            socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
+            socket: BinarySocket
+            if self.peer is not None and not self.peer.closed:
+                socket = self.peer.open()
+            else:
+                socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
         except Exception:
             writer.close()
             return
@@ -109,7 +122,7 @@ class JoinerBridge:
             await socket.close()
             writer.close()
 
-    async def _handshake(self, socket: WebSocketClient) -> bytes:
+    async def _handshake(self, socket: BinarySocket) -> bytes:
         gate = JoinerGate(self._room_secret)
         await socket.send(gate.hello())
         deadline = asyncio.get_running_loop().time() + HANDSHAKE_TIMEOUT_SECONDS
@@ -129,14 +142,14 @@ class JoinerBridge:
                 return step.forward
 
 
-async def _pump_game_to_relay(reader: asyncio.StreamReader, socket: WebSocketClient) -> None:
+async def _pump_game_to_relay(reader: asyncio.StreamReader, socket: BinarySocket) -> None:
     with contextlib.suppress(ConnectionError, asyncio.IncompleteReadError):
         while chunk := await reader.read(READ_CHUNK):
             await socket.send(chunk)
     await socket.close()
 
 
-async def _pump_relay_to_game(socket: WebSocketClient, writer: asyncio.StreamWriter) -> None:
+async def _pump_relay_to_game(socket: BinarySocket, writer: asyncio.StreamWriter) -> None:
     with contextlib.suppress(ConnectionError, OSError):
         while chunk := await socket.receive():
             writer.write(chunk)

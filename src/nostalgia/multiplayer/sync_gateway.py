@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.room_code import split_room_code
 from nostalgia.multiplayer.sync_chunk import SYNC_CHUNK_BYTES
+from nostalgia.multiplayer.sync_direct import fetch_peer_file
 from nostalgia.multiplayer.sync_manifest import manifest_document, parse_sync_manifest
 from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.net.http import HttpClient
@@ -35,6 +36,7 @@ class HttpRoomSyncGateway:
         session_token: str = "",
         *,
         attach_source: Callable[[SyncSnapshot], None] | None = None,
+        download_peer: Callable[[str, SyncFile, CancelToken], bytes | None] | None = None,
     ) -> None:
         parts = urlsplit(base_url)
         if (
@@ -51,6 +53,7 @@ class HttpRoomSyncGateway:
         self._http_client = http_client
         self._session_token = session_token
         self._attach_source = attach_source
+        self._download_peer = download_peer
 
     @property
     def requires_live_source(self) -> bool:
@@ -130,6 +133,9 @@ class HttpRoomSyncGateway:
     def download(
         self, room_code: str, sync_file: SyncFile, *, cancel_token: CancelToken | None = None
     ) -> bytes:
+        payload = fetch_peer_file(self._download_peer, room_code, sync_file, cancel_token)
+        if payload is not None:
+            return payload
         room_id, proof = invite_proof(room_code)
         path = f"/v1/rooms/{room_id}/sync/files/{sync_file.sha256}"
         headers = {"X-Room-Invite-Proof": proof}

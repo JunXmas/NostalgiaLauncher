@@ -8,9 +8,11 @@ import QtQuick
 Rectangle {
     id: toast
     // Game đang chạy thì cầu nối vẫn bận (chờ tiến trình) nhưng không phải "đang tải": ẩn.
-    readonly property bool active: storageBridge.busy || (bridge.busy && !bridge.gameRunning) || contentBridge.busy || catalogBridge.busy
+    property bool suppressLauncherBusy: false
+    readonly property bool launcherBusy: bridge.busy && !bridge.gameRunning && !suppressLauncherBusy
+    readonly property bool active: storageBridge.busy || launcherBusy || contentBridge.busy || catalogBridge.busy
     // Việc nào đang chạy thì nói việc đó; nhiều việc cùng lúc thì ưu tiên cái nặng nhất.
-    readonly property string activity: storageBridge.busy ? Tr.message(storageBridge.activity) : bridge.busy && !bridge.gameRunning ? Tr.message(bridge.activity)
+    readonly property string activity: storageBridge.busy ? Tr.message(storageBridge.activity) : launcherBusy ? Tr.message(bridge.activity)
                                      : catalogBridge.busy ? Tr.message(catalogBridge.activity)
                                      : contentBridge.busy ? Tr.message(contentBridge.activity) : ""
     readonly property bool hasFraction: bridge.progressFraction > 0 && bridge.progressFraction < 1

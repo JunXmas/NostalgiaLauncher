@@ -219,6 +219,7 @@ Item {
         anchors.fill: parent
     }
     Legacy.LoadingToast {
+        suppressLauncherBusy: hostBridge.details.active && hostBridge.details.deferred && ["lobby", "publishing", "error"].indexOf(hostBridge.details.stage) >= 0
         z: 120
     }
 }

@@ -8,7 +8,7 @@ Glass {
     property bool sharingExpanded: false
     property bool manualExpanded: false
     readonly property bool isHost: hostBridge.details.active || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
-    readonly property bool readyToInvite: multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady
+    readonly property bool readyToInvite: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !!multiplayerBridge.roomCode
     readonly property string stage: hostBridge.details.active ? hostBridge.details.stage : multiplayerBridge.role
     padding: 16
     implicitHeight: contents.implicitHeight + 32
@@ -20,12 +20,12 @@ Glass {
             width: parent.width
             text: hostBridge.details.active ? hostBridge.details.label
                 : multiplayerBridge.role === "hosting" ? Legacy.Tr.phrase("●  Phòng đang mở · ") + multiplayerBridge.joinerCount + Legacy.Tr.plural(" kết nối", multiplayerBridge.joinerCount)
-                : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Mở LAN trong Minecraft để bắt đầu")
+                : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Phòng chờ đã mở")
                 : multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("●  Đã vào phòng của bạn") : Legacy.Tr.phrase("Chơi chung")
             color: multiplayerBridge.role === "hosting" || multiplayerBridge.role === "joined" ? GlassTheme.brand : GlassTheme.text
             font.weight: Font.DemiBold
         }
-        HostSteps { objectName: "hostRoomSteps"; width: parent.width; visible: root.isHost; currentStep: root.readyToInvite || root.stage === "publishing" || root.stage === "error" ? 2 : root.stage === "preparing" || root.stage === "launching" ? 0 : 1 }
+        HostSteps { objectName: "hostRoomSteps"; width: parent.width; visible: root.isHost; currentStep: root.stage === "preparing" ? 0 : root.stage === "lobby" || root.stage === "publishing" ? 1 : 2 }
         PaymentText {
             objectName: "hostProgressNote"
             width: parent.width
@@ -36,7 +36,8 @@ Glass {
         PaymentText {
             width: parent.width
             visible: multiplayerBridge.role === "joined" || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
-            text: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Trong game → Multiplayer → Kết nối trực tiếp. Dùng địa chỉ bên dưới nếu không thấy LAN.")
+            text: multiplayerBridge.role === "joined" ? (multiplayerBridge.worldReady ? Legacy.Tr.phrase("World đã mở. Khởi chạy đúng bản chơi bên dưới để vào cùng bạn.") : Legacy.Tr.phrase("Bạn đã vào room. Đồng bộ modpack trong lúc chờ host mở world."))
+                : root.stage === "lobby" ? Legacy.Tr.phrase("Mời bạn vào room và đồng bộ trước. Bấm Khởi chạy Minecraft khi bạn muốn mở world.")
                 : root.readyToInvite ? Legacy.Tr.phrase("Phòng sẵn sàng. Mời bạn bên dưới và giữ Minecraft cùng launcher mở khi chơi.")
                 : root.stage === "waiting_world" ? Legacy.Tr.phrase("Bước tiếp theo nằm trong Minecraft: mở world của bạn, rồi bật LAN.")
                 : Legacy.Tr.phrase("Launcher đang chuẩn bị phòng. Nút mời sẽ xuất hiện khi world và modpack sẵn sàng.")
@@ -56,24 +57,25 @@ Glass {
             }
         }
         RoomInviteList { width: parent.width; visible: root.readyToInvite }
+        Button { objectName: "launchLobbyGame"; visible: root.stage === "lobby" && roomSyncBridge.hostReady; label: Legacy.Tr.phrase("Khởi chạy Minecraft"); primary: true; onClicked: hostBridge.launchRoom() }
+        GuestRoomActions { width: parent.width; visible: multiplayerBridge.role === "joined" }
         Flow {
             width: parent.width; spacing: 8
             GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Xem hướng dẫn có GIF") }
             Button { objectName: "socialStopRoom"; label: hostBridge.details.active && hostBridge.details.stage !== "ready" || multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Huỷ") : Legacy.Tr.phrase("Rời phòng"); quiet: true; onClicked: { if (hostBridge.details.active) hostBridge.stop(); else multiplayerBridge.stop(); } }
             Button { objectName: "hostRetryShare"; visible: hostBridge.details.active && hostBridge.details.stage === "error"; label: Legacy.Tr.phrase("Thử đồng bộ lại"); clickable: !roomSyncBridge.busy; onClicked: hostBridge.retryShare() }
-            Button { visible: multiplayerBridge.role === "waiting_world"; objectName: "showManualLan"; label: root.manualExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Không tìm thấy LAN?"); quiet: true; onClicked: root.manualExpanded = !root.manualExpanded }
+            Button { visible: root.stage === "waiting_world"; objectName: "showManualLan"; label: root.manualExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Không tìm thấy LAN?"); quiet: true; onClicked: root.manualExpanded = !root.manualExpanded }
             Button { visible: roomSyncBridge.hostReady && multiplayerBridge.role !== "waiting_world" && multiplayerBridge.active; objectName: "showRoomOptions"; label: root.detailsExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Tùy chọn phòng  ↓"); quiet: true; onClicked: root.detailsExpanded = !root.detailsExpanded }
             Button { visible: !hostBridge.details.active && plusFeaturesEnabled && multiplayerBridge.role === "hosting"; label: root.sharingExpanded ? Legacy.Tr.phrase("Thu gọn modpack") : Legacy.Tr.phrase("Đồng bộ modpack · Plus"); onClicked: root.sharingExpanded = !root.sharingExpanded }
         }
-        Button { visible: multiplayerBridge.role === "joined"; objectName: "copyGuestRoomAddress"; label: Legacy.Tr.phrase("Chép địa chỉ vào Minecraft"); primary: true; clickable: multiplayerBridge.localPort > 0; onClicked: multiplayerBridge.copyLocalAddress() }
+        Button { visible: multiplayerBridge.role === "joined" && root.detailsExpanded; objectName: "copyGuestRoomAddress"; label: Legacy.Tr.phrase("Chép địa chỉ vào Minecraft"); quiet: true; clickable: multiplayerBridge.localPort > 0; onClicked: multiplayerBridge.copyLocalAddress() }
         Flow {
             width: parent.width; spacing: 8
             visible: root.detailsExpanded && roomSyncBridge.hostReady
-            Button { visible: multiplayerBridge.role === "joined"; label: Legacy.Tr.phrase("Chép 127.0.0.1:") + multiplayerBridge.localPort; onClicked: multiplayerBridge.copyLocalAddress() }
             Button { visible: multiplayerBridge.role === "hosting"; label: multiplayerBridge.locked ? Legacy.Tr.phrase("Mở khoá phòng") : Legacy.Tr.phrase("Khoá nhận khách mới"); quiet: true; onClicked: multiplayerBridge.setLocked(!multiplayerBridge.locked) }
         }
         Column {
-            visible: multiplayerBridge.role === "waiting_world" && root.manualExpanded
+            visible: root.stage === "waiting_world" && root.manualExpanded
             width: parent.width; spacing: 8
             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Nhập cổng vừa được Minecraft báo (ví dụ 51234)."); color: GlassTheme.muted }
             Input { id: lanPort; objectName: "manualLanPort"; width: parent.width; placeholder: Legacy.Tr.phrase("Cổng LAN"); onAccepted: multiplayerBridge.supplyLanPort(text) }

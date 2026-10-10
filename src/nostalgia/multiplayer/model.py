@@ -24,3 +24,6 @@ class RoomStatus:
     world_name: str = ""
     # Vé do relay cấp qua HTTPS upgrade; không xuất thành thuộc tính QML/clipboard.
     host_ticket: str = ""
+    world_ready: bool = True
+    connection_kind: str = "relay"
+    share_state: str = "unknown"

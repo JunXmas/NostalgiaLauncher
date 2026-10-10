@@ -20,5 +20,9 @@ class MultiplayerOperations(LauncherContext):
     ) -> RoomService:
         """Một dịch vụ cho cả đời launcher; gọi `shutdown()` khi đóng cửa sổ."""
         return RoomService(
-            self.endpoints.multiplayer_relay, on_status=on_status, on_failure=on_failure
+            self.endpoints.multiplayer_relay,
+            on_status=on_status,
+            on_failure=on_failure,
+            http_client=self.make_http_client(),
+            owns_http=True,
         )

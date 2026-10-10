@@ -20,6 +20,7 @@ def test_idle_friend_page_does_not_enable_fast_snapshot_polling(
     login_preview(social_preview)
     social.setWatching(True)
     assert social._timer.interval() == 15000
+    find_control(social_preview[3], "friendChat").setProperty("chatExpanded", True)
     social.selectFriend("misa")
     wait_until(lambda: social.peerId == "misa" and not social.busy)
     assert social._timer.interval() == 5000
@@ -40,6 +41,7 @@ def test_background_refresh_preserves_chat_without_fetch_and_reopening_is_immedi
         return original(account_id)
 
     monkeypatch.setattr(gateway, "fetch_messages", fetch)
+    find_control(social_preview[3], "friendChat").setProperty("chatExpanded", True)
     social.selectFriend("misa")
     wait_until(lambda: social.messages and not social.busy)
     before = social.messages
@@ -56,3 +58,28 @@ def test_background_refresh_preserves_chat_without_fetch_and_reopening_is_immedi
     wait_until(lambda: calls == ["misa"] and not social.busy)
     assert social.messages[-1]["text"] == "Tin mới"
     assert social._timer.interval() == 5000
+
+
+def test_selecting_friend_does_not_fetch_chat_until_expanded(
+    social_preview: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, gateway, _view, root_item, social, *_ = social_preview
+    login_preview(social_preview)
+    calls: list[str] = []
+    original = gateway.fetch_messages
+
+    def fetch(account_id: str) -> Any:
+        calls.append(account_id)
+        return original(account_id)
+
+    monkeypatch.setattr(gateway, "fetch_messages", fetch)
+    social.selectFriend("misa")
+    social.refresh()
+    wait_until(lambda: not social.busy)
+    assert not calls and social._timer.interval() == 15000
+    find_control(root_item, "friendChat").setProperty("chatExpanded", True)
+    wait_until(lambda: calls == ["misa"] and not social.busy)
+    find_control(root_item, "friendChat").setProperty("chatExpanded", False)
+    social.refresh()
+    wait_until(lambda: not social.busy)
+    assert calls == ["misa"] and social._timer.interval() == 15000

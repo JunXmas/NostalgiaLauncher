@@ -123,8 +123,10 @@ Item {
         MouseArea { anchors.fill: parent }  // nuốt bấm vào khe/viền khay, không lọt xuống dưới
 
         ListView {
+            objectName: "dropdownRows"
             anchors { fill: parent; margins: 4 }
-            model: root.model
+            // Không tạo hàng ngầm khi khay đóng, tránh tác vụ dựng còn sống lúc đổi trang.
+            model: popup.visible ? root.model : []
             clip: true
             delegate: Rectangle {
                 width: ListView.view.width

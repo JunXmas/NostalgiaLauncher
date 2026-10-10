@@ -8,18 +8,22 @@ Mã relay nằm ở kho riêng (xem [`cloudflare/README.md`](../cloudflare/READM
 không làm yếu file này: luật L8 nói thẳng **relay không phải nơi tin cậy**, nên mọi bảo đảm
 quan trọng đều nằm ở phía client và kiểm được bằng test trong chính kho này.
 
-## 1. Kiến trúc (giữ từ bản cũ)
+## 1. Kiến trúc relay và đường trực tiếp theo room
 
 ```
 Host:   Minecraft "Open to LAN" ──127.0.0.1:world_port──> launcher-host ──WSS──> relay (Durable Object)
 Joiner: Minecraft ──127.0.0.1:local_port──> launcher-joiner ──WSS──> relay
 ```
 
-- Cả hai máy chỉ nối RA NGOÀI (443) → qua NAT, và **không bên nào thấy IP bên kia**.
+- Ở chế độ relay, cả hai máy chỉ nối ra ngoài (443); bạn cùng phòng không thấy IP của nhau.
+- Khi hai bên cho phép P2P, launcher thương lượng ICE/STUN và dùng WebRTC DataChannel
+  (DTLS/SCTP) cho game và các file custom đã chọn. Người cùng phòng có thể biết IP của nhau.
+  Có tùy chọn chỉ dùng relay; mạng chặn UDP hoặc không xuyên NAT được thì dùng relay.
+  Relay WSS dùng TLS tới máy chủ, không phải mã hóa đầu cuối dữ liệu game.
 - Host mux nhiều joiner trên MỘT WebSocket: khung `[stream_id:4][flag:1][payload]`,
   flag 0 DATA / 1 OPEN / 2 CLOSE. Mỗi joiner một WebSocket riêng, payload thô.
 - Mã phòng = `room_id` (6 ký tự, relay thấy, nằm trong URL) + `room_secret` (12 ký tự,
-  khoá HMAC, KHÔNG BAO GIỜ lên dây, không lên bất kỳ API nào). Bảng 31 ký tự bỏ 0/O/1/I/L.
+  khoá HMAC, không gửi plaintext tới API hoặc log). Bảng 31 ký tự bỏ 0/O/1/I/L.
 - Bắt tay `NLh2` hai chiều: joiner HELLO(nonce) → host CHALLENGE(nonce, HMAC(secret,"host"+nonce_joiner))
   → joiner kiểm rồi RESPONSE(HMAC(secret,"join"+nonce_host)) → host mới mở kết nối tới world.
 
@@ -36,8 +40,10 @@ Joiner: Minecraft ──127.0.0.1:local_port──> launcher-joiner ──WSS─
 
 **Kết luận về "virus/RAT lây qua LAN":** gói vanilla Minecraft không có cơ chế thực thi file
 hay mã trên máy bên kia; kênh lây thật là mod/jar/resource pack người dùng tự cài (Fractureiser
-2023 đi qua CurseForge, không qua kết nối game). Launcher chống được: (i) không bao giờ tự tải
-hay tự cài gì từ host sang joiner qua phòng, (ii) cảnh báo khi server yêu cầu resource pack,
+2023 đi qua CurseForge, không qua kết nối game). Launcher yêu cầu người nhận xem file và xác nhận trước khi đồng bộ modpack custom.
+SHA-256 kiểm tính toàn vẹn, không chứng minh JAR an toàn. Kênh chỉ nối cổng Minecraft
+cục bộ đã xác minh và đọc các file trong snapshot, không mở cả mạng LAN hay thư mục ổ đĩa.
+Ngoài ra launcher (ii) cảnh báo khi server yêu cầu resource pack,
 (iii) tiêm `-Dlog4j2.formatMsgNoLookups=true` cho mọi bản (đã có ở `launch/command.py`).
 
 ## 3. Luật thiết kế — mỗi luật một lỗ hổng đã thấy
@@ -84,3 +90,31 @@ Dịch vụ danh tính vẫn là nơi tin để liên kết tài khoản Google 
 envelope không chống được dịch vụ danh tính chủ động thay khóa hay máy bạn bị chiếm.
 Chat thường lưu trên backend, không phải chat mã hóa đầu cuối. Xem
 [đặc tả Google/bạn bè](GOOGLE_FRIENDS_PREVIEW.md).
+
+
+## 5. Phòng chờ và WebRTC
+
+- Room mở trước khi JVM chạy; người nhận chỉ khởi chạy khi host mở world/LAN và đã
+  nhận được thông tin bộ mod. Nếu host sửa bộ mod trên đĩa trong lúc chờ, cần tạo lại room.
+- SDP offer/answer dùng AES-GCM, HKDF-SHA256 từ secret của phòng. AAD gắn ID yêu cầu
+  ngẫu nhiên và mục đích game/sync; chỉ SDP có một application media và fingerprint
+  SHA-256 hợp lệ được nhận. Secret vẫn có entropy theo mã phòng hiện hữu, không phải 256 bit.
+- Backend chuyển offer chỉ tới socket host còn sống. Proof, host ticket, giới hạn 60
+  thương lượng/phút/phòng và tối đa 8 yêu cầu đang chờ được kiểm ở máy chủ. SDP không lưu D1.
+- Kênh sync trực tiếp chỉ được cấp sau khi manifest đã hoàn tất và host có Plus hợp lệ.
+  Phiên cấp quyền tối đa 45 giây tính từ lúc cấp, có kiểm lại ở lần thương lượng tiếp theo.
+  Thu hồi Plus không ngắt ngay byte đang truyền trong phiên đã cấp.
+- Một RTCPeerConnection nhận tối đa một DataChannel đúng tên. Tối đa 16 kết nối RTC;
+  bộ đệm và khung có trần. Kênh game dùng lại cho ping/login, không POST cho từng gói game.
+- Mất P2P không di chuyển kết nối Minecraft đang chơi sang relay. Kết nối TCP mới có thể
+  dùng relay; người chơi cần kết nối lại nếu đường đang chơi đã mất.
+- Mỗi luồng RTC cấp tối đa 16 khung chưa được ứng dụng nhận. ACK chỉ cấp thêm sau
+  khi đọc; luồng ghép kênh đợi hàng đợi thay vì bỏ gói khi Minecraft nhận chậm.
+- Hủy room hủy các task, socket, snapshot và kênh RTC. Đóng RTC được shield khỏi
+  cancellation để không bỏ dở future teardown nội bộ của aiortc.
+
+Kiểm thử: `test_peer_transport.py` dùng hai đầu aiortc thật (ICE loopback, DTLS/SCTP),
+`test_peer_failures.py` kiểm fallback/SDP bị sửa/EOF giữ gói cuối;
+`test_peer_backpressure.py` truyền hơn 11 MiB khi khách ngừng đọc một giây; các test snapshot và
+room lobby kiểm hủy/mất relay/thay mod sau khi mời. Hai ISP hoặc CGNAT thật vẫn cần
+kiểm tra riêng trước khi khẳng định chất lượng kết nối ngoài môi trường test.

@@ -7,12 +7,29 @@ from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.model.json_value import as_list, as_mapping
 from nostalgia.model.pack import SharedMod
+from nostalgia.multiplayer.snapshot_integrity import verify_snapshot_source
 from nostalgia.multiplayer.sync_manifest import sync_path
+from nostalgia.multiplayer.sync_model import SyncSnapshot
+from nostalgia.operations.cancellation import CancelToken
 from nostalgia.storage.files import atomic_write_json, read_json
 
 
 class RoomSharingOperations(LauncherContext):
     __slots__ = ()
+
+    def verify_room_snapshot(
+        self,
+        instance_id: str,
+        snapshot: SyncSnapshot,
+        excluded_mods: frozenset[str],
+        cancel_token: CancelToken,
+    ) -> None:
+        verify_snapshot_source(
+            game_dir_of(self.paths, load_instance(self.paths, instance_id)),
+            snapshot,
+            excluded_mods,
+            cancel_token,
+        )
 
     def load_room_share_options(self, instance_id: str) -> frozenset[str]:
         game_dir = game_dir_of(self.paths, load_instance(self.paths, instance_id))

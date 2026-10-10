@@ -1,8 +1,9 @@
-"""Host selection and the lifetime of its frozen pack, shared with the launch worker."""
+"""Chọn bản chơi và giữ bộ mod cố định trong suốt phiên chia sẻ của host."""
 
 from __future__ import annotations
 
 import tempfile
+import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -44,6 +45,10 @@ class HostSetup(QObject):
         self._cancel = CancelToken()
         self._mod_selection = HostModSelection(launcher, self)
         self._excluded_mods: frozenset[str] | None = None
+        self._deferred_launch = False
+        self._launch_event = threading.Event()
+        self._game_seen = False
+        self._pack_published = False
         social.changed.connect(self.changed)
         sync_bridge.stateChanged.connect(self.changed)
 
@@ -56,6 +61,7 @@ class HostSetup(QObject):
             "stage": self._stage,
             "share": self._share,
             "note": self._note,
+            "deferred": self._deferred_launch,
         }
 
     @Property(QObject, constant=True)
@@ -123,11 +129,23 @@ class HostSetup(QObject):
                     cancel_token.raise_if_cancelled()
                     self._prepared.emit(snapshot, cancel_token)
                     try:
+                        self._wait_for_launch(cancel_token)
+                        if self._deferred_launch:
+                            self._launcher.verify_room_snapshot(
+                                instance_id, snapshot, excluded, cancel_token
+                            )
                         yield
                     finally:
                         cancel_token.cancel()
             else:
                 self._prepared.emit(None, cancel_token)
+                self._wait_for_launch(cancel_token)
                 yield
         finally:
             cancel_token.cancel()
+
+    def _wait_for_launch(self, cancel_token: CancelToken) -> None:
+        if self._deferred_launch:
+            while not self._launch_event.wait(0.1):
+                cancel_token.raise_if_cancelled()
+        cancel_token.raise_if_cancelled()

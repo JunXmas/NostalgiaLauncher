@@ -8,3 +8,6 @@ Khung 720×500 · 8 fps · palette 96 màu · loop 0. Caption và khung đánh d
 thao tác; chi tiết và lưu ý nằm trong `preview/GuideCatalog.js`.
 
 Xem `docs/CONTEXTUAL_GUIDES.md` để cập nhật, quay lại và kiểm tra hiệu năng.
+
+Clip `host.gif` cập nhật theo luồng room mới: chọn bản chơi → mời và đồng bộ → mở world/LAN.
+Clip này gồm các bước giữ hình ở nhịp xuất 8 fps, khoảng 6 giây.

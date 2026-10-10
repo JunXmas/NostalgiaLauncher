@@ -46,6 +46,9 @@ class ControlledRoom:
         self.ports: list[int] = []
         self.stops = 0
 
+    def prepare_room(self, room_name: str, sharing: bool) -> None:
+        self.room_name, self.sharing = room_name, sharing
+
     def start_hosting(self, *, auto_detect: bool = True) -> None:
         self.detect_modes.append(auto_detect)
         self.apply(RoomStatus(role="waiting_world", room_code="ABCDEFABCDEFGHJKMN"))

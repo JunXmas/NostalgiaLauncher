@@ -45,7 +45,7 @@ def test_host_steps_and_invite_fit_and_follow_lan_and_pack_readiness(
     multiplayer._apply_status(RoomStatus(role="waiting_world"))
     QTest.qWait(80)
     steps = find_control(root_item, "hostRoomSteps")
-    assert steps.property("currentStep") == 1
+    assert steps.property("currentStep") == 2
     assert find_control(root_item, "hostLanInstruction").isVisible()
     assert not find_control(root_item, "manualLanPort").isVisible()
     assert not find_control(root_item, "roomInviteArea").isVisible()
@@ -116,7 +116,7 @@ def test_room_friend_list_is_virtualized_and_omits_offline_friends(
     assert 0 < len(delegates) < 20
 
 
-def test_guest_can_copy_connection_address_without_opening_options(
+def test_guest_can_copy_connection_address_from_room_options(
     social_preview: tuple[Any, ...],
 ) -> None:
     _, _, view, root_item, _, multiplayer, _, _ = social_preview
@@ -124,6 +124,7 @@ def test_guest_can_copy_connection_address_without_opening_options(
     find_control(root_item, "friendsPage").setProperty("section", 1)
     multiplayer._apply_status(RoomStatus(role="joined", local_port=51234))
     QTest.qWait(80)
+    press(view, find_control(root_item, "showRoomOptions"))
     button = find_control(root_item, "copyGuestRoomAddress")
     assert button.isVisible() and button.property("clickable")
     press(view, button)

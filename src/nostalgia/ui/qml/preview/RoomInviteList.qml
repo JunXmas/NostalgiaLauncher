@@ -13,9 +13,9 @@ Column {
     }
     PaymentText {
         width: parent.width
-        text: root.onlineFriends.length ? Legacy.Tr.phrase("Chọn Mời chơi. Bạn của bạn nhận lời mời ngay trong launcher, không cần nhập mã phòng.")
+        text: root.onlineFriends.length ? Legacy.Tr.phrase("Bấm Mời vào room cạnh tên bạn. Người nhận chỉ cần mở launcher và chấp nhận lời mời.")
             : socialBridge.friends.length ? Legacy.Tr.phrase("Chưa có bạn trực tuyến. Nhờ bạn mở launcher và đăng nhập Google để nhận lời mời.")
-            : Legacy.Tr.phrase("Thêm bạn ở tab Bạn bè trước, rồi quay lại đây để mời vào world.")
+            : Legacy.Tr.phrase("Thêm bạn ở tab Bạn bè trước, rồi quay lại đây để mời vào room.")
         color: GlassTheme.muted
     }
     InertialList {
@@ -34,8 +34,8 @@ Column {
                 id: invite
                 objectName: "roomInvite-" + modelData.accountId
                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                label: Legacy.Tr.phrase("Mời chơi"); primary: true
-                clickable: multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && !multiplayerBridge.locked && !socialBridge.inviteBusy
+                label: Legacy.Tr.phrase("Mời vào room"); primary: true
+                clickable: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !multiplayerBridge.locked && !socialBridge.inviteBusy
                 onClicked: socialBridge.inviteFriend(modelData.accountId)
             }
         }

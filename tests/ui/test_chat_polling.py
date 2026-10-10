@@ -24,6 +24,7 @@ def test_send_during_polling_to_offline_accepted_friend(
         gateway.snapshot, friends=(replace(gateway.snapshot.friends[0], online=False),)
     )
     login_preview(social_preview)
+    find_control(root_item, "friendChat").setProperty("chatExpanded", True)
     social.selectFriend("misa")
     wait_until(lambda: not social.busy and bool(social.messages))
     social._timer.stop()
@@ -68,6 +69,7 @@ def test_send_failure_keeps_draft_or_revokes_session(
 ) -> None:
     _launcher, gateway, view, root_item, social, *_rest = social_preview
     login_preview(social_preview)
+    find_control(root_item, "friendChat").setProperty("chatExpanded", True)
     social.selectFriend("misa")
     wait_until(lambda: not social.busy and bool(social.messages))
     social._timer.stop()

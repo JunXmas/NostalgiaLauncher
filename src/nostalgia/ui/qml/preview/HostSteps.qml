@@ -7,7 +7,7 @@ Grid {
     columns: width < 460 * GlassTheme.scale ? 1 : 3
     columnSpacing: 8; rowSpacing: 8
     Repeater {
-        model: [Legacy.Tr.phrase("Chọn bản chơi"), Legacy.Tr.phrase("Mở world & LAN"), Legacy.Tr.phrase("Mời bạn bè")]
+        model: [Legacy.Tr.phrase("Chọn bản chơi"), Legacy.Tr.phrase("Mời & đồng bộ"), Legacy.Tr.phrase("Mở world & LAN")]
         Rectangle {
             required property int index
             required property string modelData

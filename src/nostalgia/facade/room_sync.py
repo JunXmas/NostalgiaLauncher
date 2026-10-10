@@ -38,7 +38,7 @@ class RoomSyncOperations(SyncUpdateOperations):
         *,
         cancel_token: CancelToken,
     ) -> None:
-        if status.role != "hosting" or not status.host_ticket:
+        if status.role not in ("hosting", "waiting_world") or not status.host_ticket:
             raise MultiplayerError("Relay chưa cấp vé xác thực chủ phòng; chưa thể chia sẻ Plus.")
         self.paths.data_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(
@@ -92,7 +92,7 @@ class RoomSyncOperations(SyncUpdateOperations):
         *,
         cancel_token: CancelToken,
     ) -> None:
-        if status.role != "hosting" or not status.host_ticket:
+        if status.role not in ("hosting", "waiting_world") or not status.host_ticket:
             raise MultiplayerError("Relay chưa cấp vé xác thực chủ phòng; chưa thể chia sẻ Plus.")
         cancel_token.raise_if_cancelled()
         gateway.publish(status.room_code, status.host_ticket, snapshot, cancel_token=cancel_token)

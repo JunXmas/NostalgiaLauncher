@@ -102,7 +102,9 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
     _, gateway, view, root_item, social, multiplayer, _, _ = social_preview
     login_preview(social_preview)
     press(view, find_control(root_item, "friend-misa"))
-    wait_until(lambda: social.peerId == "misa" and social.messages and not social.busy)
+    wait_until(lambda: social.peerId == "misa" and not social.busy)
+    press(view, find_control(root_item, "showOptionalChat"))
+    wait_until(lambda: social.messages and not social.busy)
     find_control(root_item, "chatComposer").setProperty("text", "Chơi thôi")
     press(view, find_control(root_item, "sendChat"))
     wait_until(lambda: gateway.sent and not social.busy)

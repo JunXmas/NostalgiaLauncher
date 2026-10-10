@@ -9,7 +9,7 @@ Item {
     property string roomError: ""
     property int section: 0
     property bool invitesExpanded: true
-    readonly property bool chatWatching: visible && section === 0
+    readonly property bool chatWatching: visible && section === 0 && friendPanel.chatExpanded
     onChatWatchingChanged: socialBridge.setWatching(root.chatWatching)
     readonly property bool compact: width < 860 * GlassTheme.scale
     Connections {
@@ -63,7 +63,7 @@ Item {
                     Column { id: playInfo; width: parent.width; spacing: 14
                         PaymentText { width: parent.width; text: Legacy.Tr.phrase("Thế giới vui hơn khi có bạn."); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontDialog }
                         HostSteps { width: parent.width; currentStep: 0 }
-                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mở phòng để khởi chạy bản chơi. Vào world và bật LAN trong Minecraft, rồi quay lại đây mời bạn bè."); color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Tạo room, mời bạn và đồng bộ trước. Khi sẵn sàng, host khởi chạy Minecraft rồi bật LAN trong world."); color: GlassTheme.muted }
                         Button { label: Legacy.Tr.phrase("Mở phòng cùng bạn bè"); primary: true; onClicked: hostBridge.openSetup() }
                         GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Xem hướng dẫn có GIF") }
                         InvitationList { width: parent.width; visible: socialBridge.invitations.length > 0 }
@@ -76,7 +76,7 @@ Item {
                     columns: root.compact ? 1 : 2
                     columnSpacing: 14; rowSpacing: 14
                     FriendsRail { width: root.compact ? panels.width : Math.min(300 * GlassTheme.scale, panels.width * 0.32); visible: !root.compact || !socialBridge.peerId }
-                    FriendChat { width: root.compact ? panels.width : panels.width - Math.min(300 * GlassTheme.scale, panels.width * 0.32) - 14; compact: root.compact; availableHeight: Math.max(180 * GlassTheme.scale, root.height - panels.y - panels.parent.y - 12); visible: !root.compact || !!socialBridge.peerId }
+                    FriendChat { id: friendPanel; width: root.compact ? panels.width : panels.width - Math.min(300 * GlassTheme.scale, panels.width * 0.32) - 14; compact: root.compact; availableHeight: Math.max(180 * GlassTheme.scale, root.height - panels.y - panels.parent.y - 12); visible: !root.compact || !!socialBridge.peerId }
                 }
             }
         }

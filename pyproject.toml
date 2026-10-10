@@ -27,7 +27,14 @@ dependencies = []
 # `truststore` (MIT, thuần Python, chính pip cũng dùng) đi cùng gói giao diện: nó cho
 # `net/http.py` xác minh chứng chỉ bằng bộ xác minh CỦA HỆ ĐIỀU HÀNH. Thiếu nó, lõi vẫn chạy
 # bằng `ssl` chuẩn — chỉ là trên Windows cũ có thể hỏng TLS (xem `default_tls_context`).
-ui = ["PySide6-Essentials>=6.7", "truststore>=0.10", "keyring>=25.6,<26", "cryptography>=44,<51", "segno>=1.6,<2"]
+ui = [
+    "PySide6-Essentials>=6.7",
+    "truststore>=0.10",
+    "keyring>=25.6,<26",
+    "cryptography>=44,<51",
+    "segno>=1.6,<2",
+    "aiortc>=1.14,<2",
+]
 
 [project.scripts]
 nostalgia = "nostalgia.cli.main:main"

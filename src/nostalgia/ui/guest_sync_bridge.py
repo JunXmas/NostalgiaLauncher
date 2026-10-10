@@ -27,6 +27,38 @@ class GuestSyncBridge(WorkerBridge):
     _offer: SyncManifest | None
     _joined_code: str
     _cancel: CancelToken
+    _guest_instance_id: str
+
+    @Property(str, notify=reviewChanged)
+    def guestInstanceId(self) -> str:
+        return self._guest_instance_id
+
+    @Slot(str)
+    def launchGuest(self, instance_id: str) -> None:
+        status = self._multiplayer.room_snapshot()
+        if (
+            status.role != "joined"
+            or not status.world_ready
+            or status.local_port <= 0
+            or status.connection_kind == "connecting"
+        ):
+            return
+        if (
+            self.busy
+            or self._launcher_bridge.busy
+            or self._launcher_bridge.gameRunning
+            or self._launcher_bridge.storageBusy
+        ):
+            return
+        if status.share_state == "pending" and self._offer is None:
+            return
+        selected = self._guest_instance_id if self._offer is not None else instance_id
+        if not selected or not any(
+            instance["instanceId"] == selected
+            for instance in self._launcher_bridge.property("instances")
+        ):
+            return
+        self._launcher_bridge.playServer(selected, f"127.0.0.1:{status.local_port}")
 
     def initialize_guest_review(self) -> None:
         self._review = SyncReview(())

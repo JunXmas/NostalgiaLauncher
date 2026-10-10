@@ -32,7 +32,11 @@ def test_chat_opens_world_invitation_guide_with_lan_and_guest_steps(
     topic = dialog.property("topic").toVariant()
     steps = " ".join(topic["steps"])
     assert "Open to LAN" in steps and "Start LAN World" in steps
-    assert "127.0.0.1" in steps and "Multiplayer" in steps
+    assert (
+        ("Tạo room" in steps and "Khởi chạy & vào world" in steps)
+        if language == "vi"
+        else ("Create room" in steps and "Launch & join world" in steps)
+    )
     wait_until(lambda: find_popup(root_item, "guideMedia").property("ready"))
     assert (
         find_popup(root_item, "guideAnimation").property("source").toString().endswith("host.gif")

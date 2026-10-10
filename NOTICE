@@ -69,6 +69,12 @@ Các thành phần dưới đây giữ giấy phép riêng của chúng, không 
     phải font của Mojang; chọn nó vì nó là font kiểu pixel duy nhất tìm được phủ đủ 74 ký
     tự có dấu tiếng Việt.
 
+- **WebRTC** dùng aiortc / aioice / PyAV / pylibsrtp (BSD-3-Clause), pyee / ifaddr
+  (MIT), pyOpenSSL / google-crc32c (Apache-2.0), dnspython (ISC). Giấy phép và
+  ghi công kèm ở `packaging/licenses/`, được đóng gói cùng ứng dụng.
+  PyAV liên kết động các thư viện FFmpeg (LGPL-3.0-or-later); nguồn FFmpeg và công thức
+  dựng wheel: https://github.com/FFmpeg/FFmpeg và https://github.com/PyAV/pyav-ffmpeg.
+
 ## Phần máy chủ
 
 Relay chơi chung và proxy CurseForge chạy trên Cloudflare Worker của dự án; mã của chúng

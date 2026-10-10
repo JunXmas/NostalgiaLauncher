@@ -60,7 +60,7 @@ from nostalgia.multiplayer.lan_output import lan_port_from_output
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
-from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncManifest, SyncSnapshot
+from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.payment.gateway import HttpPaymentGateway
@@ -198,6 +198,7 @@ __all__ = [
     "SocialSnapshot",
     "SocialUpdate",
     "StagedUpdate",
+    "SyncFile",
     "SyncManifest",
     "SyncSnapshot",
     "can_equip_cosmetic",

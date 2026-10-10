@@ -106,6 +106,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
                 http_client,
                 access_token,
                 attach_source=multiplayer.prepare_sync_source,
+                download_peer=multiplayer.download_peer_file,
             )
             if access_token and configuration.room_sync_url
             else None

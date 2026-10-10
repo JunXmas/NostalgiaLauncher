@@ -11,6 +11,7 @@ Glass {
     property bool compact: false
     property real availableHeight: 480
     property bool optionsExpanded: false
+    property bool chatExpanded: false
     readonly property var peer: socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || ({})
     padding: 20
     function send() {
@@ -61,33 +62,34 @@ Glass {
                 id: invite
                 objectName: "inviteSelectedFriend"
                 anchors.right: parent.right; visible: !!socialBridge.peerId
-                label: multiplayerBridge.active || hostBridge.details.active ? Legacy.Tr.phrase("Mời chơi") : Legacy.Tr.phrase("Mở phòng"); primary: true
-                clickable: !socialBridge.inviteBusy && ((!multiplayerBridge.active && !hostBridge.details.active) || (multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && socialBridge.peerOnline))
-                onClicked: { if (multiplayerBridge.role === "hosting") socialBridge.inviteFriend(socialBridge.peerId); else hostBridge.openSetup(); }
+                label: multiplayerBridge.active || hostBridge.details.active ? Legacy.Tr.phrase("Mời vào room") : Legacy.Tr.phrase("Mở phòng"); primary: true
+                clickable: !socialBridge.inviteBusy && ((!multiplayerBridge.active && !hostBridge.details.active) || ((multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && socialBridge.peerOnline && !multiplayerBridge.locked))
+                onClicked: { if (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") socialBridge.inviteFriend(socialBridge.peerId); else hostBridge.openSetup(); }
             }
         }
         Column {
             id: inviteHelp
             visible: !!socialBridge.peerId
             width: parent.width; spacing: 6
-            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Mời bạn vào world") }
+            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Mời bạn vào room") }
             PaymentText {
                 width: parent.width
                 visible: multiplayerBridge.role !== "hosting" || !roomSyncBridge.hostReady || !socialBridge.peerOnline
                 color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
                 text: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Rời phòng hiện tại để mở phòng của bạn.")
-                    : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Vào world → Esc → Open to LAN → Start LAN World, rồi quay lại mời bạn.")
+                    : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Mời bạn vào room trước, rồi khởi chạy Minecraft và mở LAN khi sẵn sàng.")
                     : hostBridge.details.active && !roomSyncBridge.hostReady ? Legacy.Tr.phrase("Chờ phòng và modpack sẵn sàng trước khi gửi lời mời.")
                     : multiplayerBridge.role === "hosting" && !socialBridge.peerOnline ? Legacy.Tr.phrase("Bạn đang ngoại tuyến. Người nhận cần mở launcher để nhận lời mời.")
-                    : Legacy.Tr.phrase("Bấm Mở phòng, chọn bản chơi rồi mở LAN trong world Minecraft.")
+                    : Legacy.Tr.phrase("Bấm Mở phòng, chọn bản chơi và tạo room để mời bạn trước khi khởi chạy Minecraft.")
             }
         }
         InertialList {
             id: chatScroll
             objectName: "chatScroll"
+            visible: root.chatExpanded
             width: parent.width; height: root.compact ? Math.max(40 * GlassTheme.scale, root.availableHeight - backRow.height - chatHeading.height - inviteHelp.height - 12 - composerRow.height - chatFooter.height - 40 - 60) : 250 * GlassTheme.scale
             spacing: 10
-            model: socialBridge.messages
+            model: root.chatExpanded ? socialBridge.messages : []
             header: Column {
                 width: chatScroll.width; spacing: 10
             PaymentText {
@@ -120,14 +122,14 @@ Glass {
         }
         Row {
             id: composerRow
-            visible: !!socialBridge.peerId
+            visible: !!socialBridge.peerId && root.chatExpanded
             width: parent.width; spacing: 8
             Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: Legacy.Tr.phrase("Nhắn tin…"); onAccepted: root.send() }
             Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: socialBridge.chatBusy ? Legacy.Tr.phrase("Đang gửi…") : Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.chatBusy; onClicked: root.send() }
         }
         Item {
             id: chatFooter
-            visible: !!socialBridge.peerId
+            visible: !!socialBridge.peerId && root.chatExpanded
             width: parent.width; height: more.height
             PaymentText { width: parent.width - more.width - 8; anchors.verticalCenter: parent.verticalCenter; text: Legacy.Tr.phrase("Tin nhắn lưu 30 ngày"); font.pixelSize: GlassTheme.fontCaption; color: GlassTheme.muted }
             Button { id: more; objectName: "chatOptions"; anchors.right: parent.right; width: 40; height: 30; label: "···"; quiet: true; Accessible.name: Legacy.Tr.phrase("Tùy chọn trò chuyện"); onClicked: root.optionsExpanded = !root.optionsExpanded }
@@ -142,5 +144,7 @@ Glass {
                 onClicked: { var selected = socialBridge.peerId; confirmDialog.ask(Legacy.Tr.phrase("Chặn người chơi?"), Legacy.Tr.phrase("Người này sẽ không gửi chat hay lời mời cho bạn được nữa."), function() { socialBridge.blockFriend(selected); }); }
             }
         }
+        PaymentText { width: parent.width; visible: !socialBridge.peerId; text: Legacy.Tr.phrase("Chọn bạn trong danh sách để mời vào room. Lời mời nhận được sẽ hiện ngay phía trên."); color: GlassTheme.muted }
+        Button { objectName: "showOptionalChat"; visible: !!socialBridge.peerId; label: root.chatExpanded ? Legacy.Tr.phrase("Thu gọn nhắn tin") : Legacy.Tr.phrase("Nhắn tin · tuỳ chọn"); quiet: true; onClicked: root.chatExpanded = !root.chatExpanded }
     }
 }

@@ -16,6 +16,7 @@ Controls.Popup {
     property Item backdrop: null
     readonly property var selectedInstance: bridge.instances[pack.currentIndex] || ({})
     property bool sharePack: false
+    property bool directAllowed: true
     onSelectedInstanceChanged: hostBridge.modSelection.selectInstance(selectedInstance.instanceId || "")
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
@@ -64,7 +65,7 @@ Controls.Popup {
                 id: body
                 width: parent.width - 10; spacing: 14
                 HostSteps { width: parent.width; currentStep: 0 }
-                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn bản chơi, rồi khởi chạy Minecraft. Khi vào world, bật LAN; launcher tự nhận phòng để bạn mời bạn bè tại đây."); color: GlassTheme.muted }
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Tạo phòng chờ, mời bạn và đồng bộ modpack trước. Khi mọi người đã sẵn sàng, khởi chạy Minecraft và mở LAN."); color: GlassTheme.muted }
                 PaymentText { text: Legacy.Tr.phrase("Bản chơi / modpack đã cài"); font.weight: Font.DemiBold }
                 Select {
                     id: pack
@@ -90,6 +91,13 @@ Controls.Popup {
                     onToggled: function (checked) { root.sharePack = checked; }
                 }
                 HostModList { visible: root.sharePack && hostBridge.syncAvailable; width: parent.width }
+                Legacy.CheckRow {
+                    objectName: "hostDirectAllowed"; width: parent.width
+                    label: Legacy.Tr.phrase("Ưu tiên kết nối trực tiếp có mã hoá")
+                    checked: root.directAllowed
+                    onToggled: function(checked) { root.directAllowed = checked; }
+                }
+                PaymentText { width: parent.width; text: root.directAllowed ? Legacy.Tr.phrase("Kết nối trực tiếp có thể tiết lộ IP cho người cùng phòng. Nếu mạng chặn P2P, launcher dùng relay dự phòng.") : Legacy.Tr.phrase("Chỉ dùng relay để tránh chia sẻ IP trực tiếp với người cùng phòng."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                 PaymentText {
                     width: parent.width
                     text: !plusFeaturesEnabled ? Legacy.Tr.phrase("Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.")
@@ -118,10 +126,11 @@ Controls.Popup {
                 id: launch
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
-                label: Legacy.Tr.phrase("Khởi chạy Minecraft"); primary: true
+                label: Legacy.Tr.phrase("Tạo room"); primary: true
                 clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
                 onClicked: {
-                    if (hostBridge.start(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();
+                    multiplayerBridge.setDirectAllowed(root.directAllowed);
+                    if (hostBridge.createRoom(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();
                 }
             }
         }

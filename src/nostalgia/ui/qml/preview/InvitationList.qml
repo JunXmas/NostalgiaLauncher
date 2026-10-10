@@ -4,6 +4,7 @@ import "../" as Legacy
 Column {
     id: root
     spacing: 12
+    property bool directAllowed: true
     Repeater {
         model: socialBridge.invitations
         Glass {
@@ -22,18 +23,19 @@ Column {
                     Column {
                         width: grid.columns === 2 ? grid.width - actions.width - 18 : grid.width
                         spacing: 8
-                        PaymentText { width: parent.width; text: modelData.name + Legacy.Tr.phrase(" mời bạn chơi"); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: modelData.name + Legacy.Tr.phrase(" mời bạn vào room"); font.weight: Font.DemiBold }
                         PaymentText { width: parent.width; text: modelData.world + Legacy.Tr.phrase(" · Hiệu lực 5 phút"); color: GlassTheme.muted }
                     }
                     Flow {
                         id: actions
                         width: grid.columns === 2 ? 230 * GlassTheme.scale : grid.width
                         spacing: 10
-                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Vào phòng"); primary: true; clickable: !socialBridge.inviteBusy && !multiplayerBridge.active; onClicked: socialBridge.acceptInvite(modelData.inviteId) }
+                        Button { objectName: "acceptInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Vào room"); primary: true; clickable: !socialBridge.inviteBusy && !multiplayerBridge.active; onClicked: { multiplayerBridge.setDirectAllowed(root.directAllowed); socialBridge.acceptInvite(modelData.inviteId); } }
                         Button { objectName: "declineInvite-" + modelData.inviteId; label: Legacy.Tr.phrase("Từ chối"); quiet: true; clickable: !socialBridge.inviteBusy; onClicked: socialBridge.declineInvite(modelData.inviteId) }
                     }
                 }
                 PaymentText { visible: multiplayerBridge.active; width: parent.width; text: Legacy.Tr.phrase("Rời phòng hiện tại để nhận lời mời này."); color: GlassTheme.muted }
+                Legacy.CheckRow { width: parent.width; label: Legacy.Tr.phrase("Cho phép P2P · người cùng phòng có thể biết IP của bạn"); checked: root.directAllowed; onToggled: function(checked) { root.directAllowed = checked; } }
             }
         }
     }

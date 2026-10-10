@@ -236,10 +236,12 @@ def test_the_dropdown_tray_overshoots_then_settles_into_place() -> None:
     )
     drop = find(scene, "probe")
     settled = 3 * 32 + 8
+    assert find(scene, "dropdownRows").property("count") == 0
 
     drop.setProperty("open", True)
     run_animation(500)
     peak = float(scene.property("peak"))
+    assert find(scene, "dropdownRows").property("count") == 3
 
     assert peak > settled + 4, f"khay KHÔNG vọt quá đà (đỉnh {peak}, đích {settled})"
     wait_until(lambda: abs(float(drop.property("trayHeight")) - settled) < 0.01, seconds=2)
@@ -265,3 +267,4 @@ def test_closing_the_dropdown_does_not_bounce_below_zero() -> None:
     assert float(scene.property("dip")) >= -0.01, "khay nảy ngược xuống dưới 0 khi đóng"
     wait_until(lambda: abs(float(drop.property("trayHeight"))) < 0.01, seconds=2)
     assert drop.property("trayHeight") == pytest.approx(0.0, abs=0.01)
+    assert find(scene, "dropdownRows").property("count") == 0

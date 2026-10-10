@@ -29,6 +29,7 @@ datas = [
     (str(PACKAGE / "skin" / "defaults"), "nostalgia/skin/defaults"),
     (str(PACKAGE / "social" / "service-defaults.json"), "nostalgia/social"),
     (str(PACKAGE / "social" / "cosmetics.json"), "nostalgia/social"),
+    (str(ROOT / "packaging" / "licenses"), "licenses"),
 ]
 datas += collect_data_files("PySide6", subdir="Qt/qml", includes=["QtQuick/**", "QtQml/**", "QtQuick.2/**"])
 
@@ -56,7 +57,7 @@ analysis = Analysis(
     pathex=[str(ROOT / "src")] + ([str(ROOT / "packaging")] if REVIEW else []),
     binaries=[],
     datas=datas,
-    hiddenimports=["PySide6.QtQuick", "PySide6.QtQml", "PySide6.QtQuickControls2", "truststore", "segno"] + collect_submodules("keyring") + collect_submodules("cryptography"),
+    hiddenimports=["PySide6.QtQuick", "PySide6.QtQml", "PySide6.QtQuickControls2", "truststore", "segno"] + collect_submodules("keyring") + collect_submodules("cryptography") + collect_submodules("aiortc") + collect_submodules("aioice"),
     hookspath=[],
     runtime_hooks=[],
     excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.Qt3DCore"] + ([] if REVIEW else ["nostalgia_draft"]),

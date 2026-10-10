@@ -57,7 +57,8 @@ class SocialInvitations(SocialSession):
             self.signedIn
             and gateway
             and not self.inviteBusy
-            and status.role == "hosting"
+            and status.role in ("hosting", "waiting_world")
+            and not status.locked
             and status.room_code
             and status.host_ticket
             and self._sync_bridge.hostReady

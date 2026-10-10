@@ -37,6 +37,7 @@ class RoomSyncBridge(GuestSyncBridge):
         self._observed_role = "idle"
         self._note = ""
         self._host_ready = True
+        self._guest_instance_id = ""
         self._cancel = CancelToken()
         self._poll = QTimer(self)
         self._poll.setInterval(8000)
@@ -61,7 +62,11 @@ class RoomSyncBridge(GuestSyncBridge):
     @Property(bool, notify=stateChanged)
     def canShare(self) -> bool:
         status = self._multiplayer.room_snapshot()
-        return self._gateway is not None and status.role == "hosting" and bool(status.host_ticket)
+        return (
+            self._gateway is not None
+            and status.role in ("hosting", "waiting_world")
+            and bool(status.host_ticket)
+        )
 
     @Property(bool, notify=stateChanged)
     def hostReady(self) -> bool:
@@ -148,13 +153,16 @@ class RoomSyncBridge(GuestSyncBridge):
 
     @Slot()
     def _room_changed(self) -> None:
-        role = self._multiplayer.room_snapshot().role
+        status = self._multiplayer.room_snapshot()
+        role = status.role
         previous, self._observed_role = self._observed_role, role
         if role == "idle":
             self._poll.stop()
             self._cancel.cancel()
             self.next_generation()
             self._offer, self._note = None, ""
+            self._guest_instance_id = ""
+            self.reviewChanged.emit()
             self.clear_guest_review()
             self._host_ready = True
         elif (
@@ -165,6 +173,8 @@ class RoomSyncBridge(GuestSyncBridge):
         ):
             self._poll.start()
             self.checkRoomPack()
+        if role == "joined" and status.share_state == "none":
+            self._poll.stop()
         self.stateChanged.emit()
 
     @Slot(object, int)
@@ -182,6 +192,7 @@ class RoomSyncBridge(GuestSyncBridge):
             or self._gateway is None
             or not self._joined_code
             or self._multiplayer.room_snapshot().role != "joined"
+            or self._multiplayer.room_snapshot().share_state == "none"
         ):
             return
         gateway, room_code = self._gateway, self._joined_code
@@ -197,7 +208,13 @@ class RoomSyncBridge(GuestSyncBridge):
         if instance_id:
             self._launcher_bridge.announce_instances_changed()
         if self.is_current(generation) and not self._cancel.is_cancelled():
+            if instance_id:
+                self._guest_instance_id = instance_id
+                self.reviewChanged.emit()
             self._note = note
             self.stateChanged.emit()
-            if not instance_id and self._multiplayer.room_snapshot().role == "hosting":
+            if not instance_id and self._multiplayer.room_snapshot().role in (
+                "hosting",
+                "waiting_world",
+            ):
                 self.published.emit()

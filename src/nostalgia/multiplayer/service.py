@@ -21,15 +21,16 @@ from nostalgia.multiplayer.lan import LanWorld, announce_forever, detect_open_to
 from nostalgia.multiplayer.lan_probe import probe_lan_port
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
-from nostalgia.multiplayer.sync_model import SyncSnapshot
+from nostalgia.multiplayer.room_network import RoomNetwork
+from nostalgia.net.http import HttpClient
 from nostalgia.net.websocket import TlsContext
 
 DetectWorld = Callable[[float], LanWorld | None]
 WORLD_POLL_SECONDS = 2.0
-WORLD_WAIT_SECONDS = 600.0
+WORLD_WAIT_SECONDS = 3600.0
 
 
-class RoomService:
+class RoomService(RoomNetwork):
     def __init__(
         self,
         relay_url: str,
@@ -38,6 +39,8 @@ class RoomService:
         on_failure: Callable[[str], None],
         detect_world: DetectWorld = detect_open_to_lan,
         tls_context: TlsContext | None = None,
+        http_client: HttpClient | None = None,
+        owns_http: bool = False,
     ) -> None:
         self._relay_url = relay_url
         self._on_status = on_status
@@ -55,6 +58,8 @@ class RoomService:
         self._joiner: JoinerBridge | None = None
         self._beacon: asyncio.Task[None] | None = None
         self._manual_port = 0
+        self.initialize_network(http_client)
+        self._owns_http = owns_http
 
     # ----- lệnh từ luồng giao diện -----
 
@@ -71,24 +76,8 @@ class RoomService:
 
         return self._submit(apply())
 
-    def set_locked(self, locked: bool) -> Future[None]:
-        async def apply() -> None:
-            if self._host is not None:
-                self._host.locked = locked
-                self._publish(locked=locked)
-
-        return self._submit(apply())
-
     def stop(self) -> Future[None]:
         return self._submit(self._teardown())
-
-    def set_sync_snapshot(self, snapshot: SyncSnapshot) -> Future[None]:
-        async def apply() -> None:
-            if self._host is None or self._status.role != "hosting":
-                raise MultiplayerError("Phòng host không còn hoạt động.")
-            self._host.sync_snapshot = snapshot
-
-        return self._submit(apply())
 
     def shutdown(self, timeout_seconds: float = 3.0) -> None:
         """Đóng launcher: dừng phòng rồi dừng vòng lặp. Không để luồng mồ côi."""
@@ -100,6 +89,7 @@ class RoomService:
         self._thread.join(timeout_seconds)
         if not self._loop.is_running():
             self._loop.close()
+        self.close_room_http()
 
     # ----- luồng của vòng lặp -----
 
@@ -110,38 +100,50 @@ class RoomService:
         await self._teardown()
         room_code = make_room_code()
         room_id, room_secret = split_room_code(room_code)
-        self._publish(role="waiting_world", room_code=room_code)
         self._flow = asyncio.current_task()
         try:
-            world = await self._wait_for_world(auto_detect=auto_detect)
             host = HostRelay(
                 self._relay_url,
                 room_id,
                 room_secret,
-                world.world_port,
+                0,
                 tls_context=self._tls_context,
                 on_joiners_changed=lambda count: self._publish(joiner_count=count),
             )
             await host.connect()
             host.start()
             self._host = host
-            self._publish(role="hosting", world_name=world.world_name, host_ticket=host.sync_ticket)
+            self._publish(
+                role="waiting_world",
+                room_code=room_code,
+                world_ready=False,
+                world_name=self._room_label,
+                host_ticket=host.sync_ticket,
+            )
+            self.enable_direct_host()
+            await self.publish_room_metadata()
+            waiting = asyncio.create_task(self._wait_for_world(auto_detect=auto_detect))
+            try:
+                assert host._runner is not None
+                await asyncio.wait((waiting, host._runner), return_when=asyncio.FIRST_COMPLETED)
+                if not waiting.done():
+                    raise MultiplayerError("Phòng đã đóng trong lúc chờ world.")
+                world = waiting.result()
+            finally:
+                waiting.cancel()
+                with contextlib.suppress(Exception, asyncio.CancelledError):
+                    await waiting
+            if self._host is not host or host._runner is None or host._runner.done():
+                raise MultiplayerError("Phòng đã đóng trong lúc chờ world.")
+            host.set_world_port(world.world_port)
+            await self.publish_room_metadata()
+            self._publish(role="hosting", world_name=world.world_name, world_ready=True)
             self._flow = self._loop.create_task(self._watch_host(host))
         except asyncio.CancelledError:
             pass
         except Exception as exc:
             await self._teardown()
             self._on_failure(str(exc))
-
-    async def _watch_host(self, host: HostRelay) -> None:
-        try:
-            await host.wait_closed()
-        except asyncio.CancelledError:
-            return
-        except Exception:
-            pass
-        await self._teardown()
-        self._on_failure("Mất kết nối relay. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.")
 
     async def _wait_for_world(self, *, auto_detect: bool = True) -> LanWorld:
         deadline = self._loop.time() + WORLD_WAIT_SECONDS
@@ -184,7 +186,14 @@ class RoomService:
             self._beacon = self._loop.create_task(
                 announce_forever(local_port, "§bNostalgia §7— phòng của bạn")
             )
-            self._publish(role="joined", local_port=local_port)
+            self._publish(
+                role="joined",
+                local_port=local_port,
+                world_ready=not (
+                    self._room_http is not None and self._relay_url.startswith("wss://")
+                ),
+            )
+            self.watch_guest_room(room_code)
         except asyncio.CancelledError:
             pass
         except Exception as exc:
@@ -192,6 +201,7 @@ class RoomService:
             self._on_failure(str(exc))
 
     async def _teardown(self) -> None:
+        await self.close_room_network()
         flow, self._flow = self._flow, None
         if flow is not None and flow is not asyncio.current_task():
             flow.cancel()

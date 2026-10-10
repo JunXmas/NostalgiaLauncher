@@ -16,10 +16,12 @@ from nostalgia.multiplayer.handshake import HANDSHAKE_TIMEOUT_SECONDS
 from nostalgia.multiplayer.host_transport import HostTransport
 from nostalgia.multiplayer.mux import (
     CLOSE,
+    PEER_REQUEST,
     SYNC_REQUEST,
     unpack_mux_frame,
 )
 from nostalgia.multiplayer.sync_model import SyncSnapshot
+from nostalgia.net.binary_socket import BinarySocket, DirectHost
 from nostalgia.net.websocket import TlsContext, WebSocketClient
 
 MAX_PENDING = 32
@@ -39,6 +41,7 @@ class HostRelay(HostTransport):
         tls_context: TlsContext | None = None,
         max_joiners: int = MAX_JOINERS,
         on_joiners_changed: Callable[[int], None] | None = None,
+        admission: Callable[[], bool] | None = None,
     ) -> None:
         self._url = f"{relay_url.rstrip('/')}/s/{room_id}?role=host"
         self._room_secret = room_secret
@@ -46,7 +49,9 @@ class HostRelay(HostTransport):
         self._tls_context = tls_context
         self._max_joiners = max_joiners
         self._on_joiners_changed = on_joiners_changed
-        self._socket: WebSocketClient | None = None
+        self._admission = admission
+        self.peer: DirectHost | None = None
+        self._socket: BinarySocket | None = None
         self._gates: dict[int, HostGate] = {}
         self._deadlines: dict[int, asyncio.TimerHandle] = {}
         self._worlds: dict[int, asyncio.StreamWriter] = {}
@@ -56,14 +61,6 @@ class HostRelay(HostTransport):
         self._runner: asyncio.Task[None] | None = None
         self.locked = False
         self.sync_snapshot: SyncSnapshot | None = None
-
-    @property
-    def joiner_count(self) -> int:
-        return len(self._worlds)
-
-    @property
-    def sync_ticket(self) -> str:
-        return self._socket.host_ticket if self._socket is not None else ""
 
     async def connect(self) -> None:
         """Nối relay trước khi báo "đang host" để lỗi ném ra chỗ gọi, không chết lặng."""
@@ -77,7 +74,9 @@ class HostRelay(HostTransport):
                 if unpacked is None:
                     continue
                 stream_id, flag, payload = unpacked
-                if stream_id == 0 and flag == SYNC_REQUEST:
+                if stream_id == 0 and flag == PEER_REQUEST and self.peer is not None:
+                    self.peer.request(payload)
+                elif stream_id == 0 and flag == SYNC_REQUEST:
                     pump = asyncio.create_task(self._sync_chunk(payload))
                     self._pumps.add(pump)
                     pump.add_done_callback(self._pumps.discard)
@@ -108,6 +107,8 @@ class HostRelay(HostTransport):
 
     async def close(self) -> None:
         self.sync_snapshot = None
+        if self.peer is not None:
+            await self.peer.close()
         for stream_id in list(self._gates) + list(self._worlds):
             self._drop(stream_id)
         for pump in list(self._pumps):
@@ -142,9 +143,6 @@ class HostRelay(HostTransport):
             else:
                 await self._send_close(stream_id)
 
-    def _full(self) -> bool:
-        return len(self._worlds) >= self._max_joiners
-
     def _expire(self, stream_id: int) -> None:
         if stream_id in self._gates:
             self._drop(stream_id)
@@ -152,18 +150,21 @@ class HostRelay(HostTransport):
             self._pumps.add(closing)
             closing.add_done_callback(self._pumps.discard)
 
-    def _forget_gate(self, stream_id: int) -> None:
-        self._gates.pop(stream_id, None)
-        deadline = self._deadlines.pop(stream_id, None)
-        if deadline is not None:
-            deadline.cancel()
-
     # ----- world -----
 
     async def _open_world(self, stream_id: int) -> bool:
+        if (
+            self.locked
+            or not self._world_port
+            or (self._admission is not None and not self._admission())
+        ):
+            return False
         try:
             reader, writer = await asyncio.open_connection("127.0.0.1", self._world_port)
         except OSError:
+            return False
+        if self.locked or self._full() or (self._admission is not None and not self._admission()):
+            writer.close()
             return False
         self._worlds[stream_id] = writer
         queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=SEND_QUEUE_SIZE)
@@ -231,7 +232,3 @@ class HostRelay(HostTransport):
         if writer is not None:
             writer.close()
             self._notify()
-
-    def _notify(self) -> None:
-        if self._on_joiners_changed is not None:
-            self._on_joiners_changed(len(self._worlds))

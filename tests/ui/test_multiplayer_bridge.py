@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from pathlib import Path
 
@@ -30,8 +31,33 @@ def wait_until(
     assert predicate(), f"hết giờ chờ trạng thái tới luồng giao diện: {describe()}"
 
 
-def test_status_crosses_threads_and_secret_stays_grouped(tmp_path: Path) -> None:
+def test_status_crosses_threads_and_secret_stays_grouped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+
+    class Socket:
+        host_ticket = "local-host-ticket"
+        closed = False
+
+        def __init__(self) -> None:
+            self.ended = asyncio.Event()
+
+        async def send(self, payload: bytes) -> None:
+            pass
+
+        async def receive(self) -> bytes:
+            await self.ended.wait()
+            return b""
+
+        async def close(self) -> None:
+            self.closed = True
+            self.ended.set()
+
+    async def connect(_url: str, **_kwargs: object) -> Socket:
+        return Socket()
+
+    monkeypatch.setattr("nostalgia.multiplayer.host.WebSocketClient.connect", connect)
     multiplayer_bridge = MultiplayerBridge(launcher)
     changes: list[int] = []
     multiplayer_bridge.statusChanged.connect(lambda: changes.append(1))
