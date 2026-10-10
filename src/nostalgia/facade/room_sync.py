@@ -68,7 +68,10 @@ class RoomSyncOperations(SyncUpdateOperations):
             game_version=version_meta.jar_owner_id,
             loader_kind=loader_kind,
             loader_version=resolve_sync_loader(
-                loader_kind, version_meta.libraries, version_meta.jar_owner_id
+                loader_kind,
+                version_meta.libraries,
+                version_meta.jar_owner_id,
+                game_arguments=version_meta.game_arguments,
             ),
             cancel_token=cancel_token,
             excluded_mods=excluded_mods,

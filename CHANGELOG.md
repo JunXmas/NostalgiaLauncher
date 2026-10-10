@@ -5,6 +5,10 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Sửa mở phòng/chia sẻ NeoForge bị báo không tìm thấy phiên bản loader dù đã cài:
+  đọc phiên bản NeoForge từ metadata khởi động chính thức, không nhầm số hiệu FML.
+  Áp dụng cho đồng bộ phòng, xuất modpack và kiểm tra mod; không cần cài lại loader.
+  Nhận đúng nhánh NeoForge của Minecraft 26.x khi cài cho máy khách.
 - Cuộn thư viện và danh sách dài nhẹ hơn: chỉ dựng ô gần màn hình, tái sử dụng ô khi
   cuộn; áp dụng cho mod/modpack/shader/resource pack, bản chơi, nội dung đã cài, server,
   sửa mod, nhập bản chơi, bạn bè, chat, cosmetic và danh sách đồng bộ.

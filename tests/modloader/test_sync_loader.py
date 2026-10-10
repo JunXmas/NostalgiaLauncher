@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from export_fixture import prepared_export
+from nostalgia.api import Instance
 from nostalgia.content import mrpack
 from nostalgia.errors import MultiplayerError
 from nostalgia.facade.sync_loader import resolve_sync_loader
@@ -12,7 +13,8 @@ from nostalgia.modloader.model import LoaderKind
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.storage.files import atomic_write_json, read_json
 from nostalgia.version.maven import MavenCoordinate
-from nostalgia.version.meta import Library
+from nostalgia.version.meta import ArgumentSpec, Library
+from nostalgia.version.rules import Rule
 
 
 @pytest.mark.parametrize(
@@ -95,3 +97,69 @@ def test_official_forge_profile_shares_exports_and_scans_without_reinstall(tmp_p
         "47.4.23",
     )
     assert len(launcher.list_instances()) == 1
+
+
+@pytest.mark.parametrize(
+    "game_version,loader_version",
+    [("1.21.1", "21.1.200"), ("1.21.11", "21.11.0-beta"), ("26.2", "26.2.0.89")],
+)
+def test_official_neoforge_profile_shares_exports_and_scans_without_reinstall(
+    tmp_path: Path, game_version: str, loader_version: str
+) -> None:
+    # version.json nguyên bản từ neoforge-{loader_version}-installer.jar tại
+    # https://maven.neoforged.net/releases/net/neoforged/neoforge/{loader_version}/
+    launcher = prepared_export(tmp_path, "neoforge")
+    version_id = "neoforge-" + loader_version
+    atomic_write_json(launcher.paths.version_json(game_version), {"id": game_version})
+    atomic_write_json(
+        launcher.paths.version_json(version_id),
+        read_json(Path(__file__).parent / f"fixtures/neoforge-{loader_version}-version.json"),
+    )
+    launcher.save_instance(Instance("custom", version_id, "NeoForge"))
+    snapshot = launcher.capture_room_modpack(
+        "custom", tmp_path / "snapshot", cancel_token=CancelToken()
+    )
+    assert (
+        snapshot.manifest.game_version,
+        snapshot.manifest.loader_kind,
+        snapshot.manifest.loader_version,
+    ) == (game_version, "neoforge", loader_version)
+    assert (snapshot.folder / "mods/local.jar").read_bytes() == b"custom mod"
+    exported = launcher.export_instance_modpack("custom", tmp_path / "pack.mrpack", "mrpack")
+    assert mrpack.read_index(exported.path).loader_version == loader_version
+    scan = launcher.scan_instance_mods("custom")
+    assert (scan.game_version, scan.loader_kind, scan.loader_version) == (
+        game_version,
+        "neoforge",
+        loader_version,
+    )
+    assert len(launcher.list_instances()) == 1
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ("--fml.fmlVersion", "4.0.42"),
+        ("--fml.neoForgeVersion",),
+        ("--fml.neoForgeVersion", "--fml.mcVersion", "1.21.1"),
+        ("--fml.neoForgeVersion", "${neoForgeVersion}"),
+        ("--fml.neoForgeVersion", "../../21.1.200"),
+        ("--fml.neoForgeVersion", "21.1.200", "--fml.neoForgeVersion", "21.1.201"),
+    ],
+)
+def test_neoforge_arguments_do_not_guess_fml_or_invalid_versions(values: tuple[str, ...]) -> None:
+    with pytest.raises(MultiplayerError, match="phiên bản loader"):
+        resolve_sync_loader("neoforge", (), "1.21.1", game_arguments=(ArgumentSpec(values),))
+
+
+def test_neoforge_arguments_are_not_used_for_other_loaders_or_conditional_profiles() -> None:
+    arguments = (ArgumentSpec(("--fml.neoForgeVersion", "21.1.200")),)
+    with pytest.raises(MultiplayerError, match="phiên bản loader"):
+        resolve_sync_loader("forge", (), "1.21.1", game_arguments=arguments)
+    with pytest.raises(MultiplayerError, match="phiên bản loader"):
+        resolve_sync_loader(
+            "neoforge",
+            (),
+            "1.21.1",
+            game_arguments=(ArgumentSpec(arguments[0].values, (Rule("allow", os_name="osx"),)),),
+        )

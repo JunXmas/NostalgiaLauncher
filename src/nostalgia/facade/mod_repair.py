@@ -25,7 +25,10 @@ class ModRepairOperations(LoaderOperations):
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         loader_kind = detect_loader_kind(instance.version_id)
         loader_version = resolve_sync_loader(
-            loader_kind, version_meta.libraries, version_meta.jar_owner_id
+            loader_kind,
+            version_meta.libraries,
+            version_meta.jar_owner_id,
+            game_arguments=version_meta.game_arguments,
         )
         java_major = (
             version_meta.java_runtime.major_version if version_meta.java_runtime else None

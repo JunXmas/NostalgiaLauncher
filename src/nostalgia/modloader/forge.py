@@ -128,6 +128,9 @@ def forge_build_number(name: str, prefix: str) -> tuple[int, ...]:
 
 def neoforge_prefix(game_version: str) -> str:
     parts = game_version.split(".")
+    # Từ Minecraft 26.x, NeoForge giữ năm và thêm .0 khi game không có số patch.
+    if parts[0].isdigit() and int(parts[0]) >= 26:
+        return game_version + (".0." if len(parts) == 2 else ".")
     minor = parts[1] if len(parts) > 1 else game_version
     patch = parts[2] if len(parts) > 2 else "0"
     return f"{minor}.{patch}."

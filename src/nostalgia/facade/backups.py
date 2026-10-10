@@ -45,7 +45,12 @@ class BackupOperations(LauncherContext):
         environment = ExportEnvironment(
             version_meta.jar_owner_id,
             loader_kind,
-            resolve_sync_loader(loader_kind, version_meta.libraries, version_meta.jar_owner_id),
+            resolve_sync_loader(
+                loader_kind,
+                version_meta.libraries,
+                version_meta.jar_owner_id,
+                game_arguments=version_meta.game_arguments,
+            ),
         )
         return export_modpack(
             instance,
