@@ -37,9 +37,6 @@ Column {
                 PaymentText { visible: multiplayerBridge.active; width: parent.width; text: Legacy.Tr.phrase("Rời phòng hiện tại để nhận lời mời này."); color: GlassTheme.muted }
                 ConnectionOptions {
                     width: parent.width
-                    toggleName: "guestDirectAllowed-" + modelData.inviteId
-                    directAllowed: root.directAllowed
-                    onPreferenceChanged: function(allowed) { root.directAllowed = allowed; }
                 }
             }
         }

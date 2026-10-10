@@ -12,11 +12,11 @@ from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.room_code import split_room_code
 from nostalgia.multiplayer.sync_chunk import SYNC_CHUNK_BYTES
 from nostalgia.multiplayer.sync_direct import fetch_peer_file
+from nostalgia.multiplayer.sync_http import SyncHttp
 from nostalgia.multiplayer.sync_manifest import manifest_document, parse_sync_manifest
 from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.net.http import HttpClient
 from nostalgia.net.payload import decode_json
-from nostalgia.net.session_proof import proof_headers
 from nostalgia.operations.cancellation import CancelToken
 
 
@@ -28,7 +28,7 @@ def invite_proof(room_code: str) -> tuple[str, str]:
     return room_id, proof
 
 
-class HttpRoomSyncGateway:
+class HttpRoomSyncGateway(SyncHttp):
     def __init__(
         self,
         base_url: str,
@@ -37,6 +37,7 @@ class HttpRoomSyncGateway:
         *,
         attach_source: Callable[[SyncSnapshot], None] | None = None,
         download_peer: Callable[[str, SyncFile, CancelToken], bytes | None] | None = None,
+        relay_enabled: bool = False,
     ) -> None:
         parts = urlsplit(base_url)
         if (
@@ -54,6 +55,7 @@ class HttpRoomSyncGateway:
         self._session_token = session_token
         self._attach_source = attach_source
         self._download_peer = download_peer
+        self._relay_enabled = relay_enabled
 
     @property
     def requires_live_source(self) -> bool:
@@ -91,6 +93,12 @@ class HttpRoomSyncGateway:
         ).encode()
         if cancel_token is not None:
             cancel_token.raise_if_cancelled()
+        if not self._relay_enabled and self._attach_source is None:
+            raise MultiplayerError("Chỉ hỗ trợ chia sẻ modpack qua P2P; relay dữ liệu đã tắt.")
+        if not self._relay_enabled:
+            document = json.loads(body)
+            document["transport"] = "peer"
+            body = json.dumps(document).encode()
         if self._attach_source:
             self._attach_source(snapshot)
         self._request("POST", path, {**headers, "Content-Type": "application/json"}, body=body)
@@ -136,6 +144,11 @@ class HttpRoomSyncGateway:
         payload = fetch_peer_file(self._download_peer, room_code, sync_file, cancel_token)
         if payload is not None:
             return payload
+        if not self._relay_enabled:
+            raise MultiplayerError(
+                "Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; "
+                "hãy kiểm tra mạng và thử lại."
+            )
         room_id, proof = invite_proof(room_code)
         path = f"/v1/rooms/{room_id}/sync/files/{sync_file.sha256}"
         headers = {"X-Room-Invite-Proof": proof}
@@ -177,37 +190,3 @@ class HttpRoomSyncGateway:
         ):
             raise MultiplayerError("File đồng bộ không khớp SHA-256; bản chơi chưa được đăng ký.")
         return payload
-
-    def _request(
-        self,
-        method: str,
-        path: str,
-        headers: dict[str, str],
-        *,
-        body: bytes | None = None,
-        max_bytes: int = 256_000,
-        absent_ok: bool = False,
-        cancel_token: CancelToken | None = None,
-    ) -> bytes | None:
-        if "Authorization" in headers:
-            headers = {
-                **headers,
-                **proof_headers(self._session_token, method, self._base_url + path, body),
-            }
-        response = self._http_client.send(
-            method,
-            self._base_url + path,
-            headers=headers,
-            body=body,
-            max_bytes=max_bytes,
-            cancel_token=cancel_token,
-        )
-        if absent_ok and response.status == 404:
-            return None
-        if response.status in (401, 403):
-            raise MultiplayerError(
-                "Máy chủ từ chối: phiên Plus hoặc quyền chủ phòng không còn hợp lệ."
-            )
-        if not response.is_ok:
-            raise MultiplayerError("Dịch vụ đồng bộ chưa sẵn sàng hoặc phòng đã đóng. Hãy thử lại.")
-        return response.body

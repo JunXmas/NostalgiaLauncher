@@ -58,7 +58,7 @@ async def _setup(
     host = HostRelay(relay.url, room_id, room_secret, world.port)
     await host.connect()
     host.start()
-    joiner = JoinerBridge(relay.url, room_id, room_secret)
+    joiner = JoinerBridge(relay.url, room_id, room_secret, relay_enabled=True)
     await joiner.start()
     return host, joiner
 
@@ -96,7 +96,7 @@ def test_stuck_client_does_not_block_other_players() -> None:
         await asyncio.sleep(0.15)
 
         # Joiner 2: kết nối bình thường, PHẢI vẫn hoạt động
-        joiner2 = JoinerBridge(relay.url, room_id, room_secret)
+        joiner2 = JoinerBridge(relay.url, room_id, room_secret, relay_enabled=True)
         await joiner2.start()
 
         # Joiner 2 gửi và nhận dữ liệu — không bị ảnh hưởng bởi joiner 1

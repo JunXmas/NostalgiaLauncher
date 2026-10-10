@@ -1,4 +1,4 @@
-"""Siêu dữ liệu phòng và đường trực tiếp; relay cũ vẫn dùng được khi thiếu API mới."""
+"""Siêu dữ liệu phòng và P2P; nền relay giữ lại nhưng mặc định khóa dữ liệu."""
 
 from __future__ import annotations
 
@@ -11,14 +11,17 @@ from importlib.util import find_spec
 from typing import TYPE_CHECKING
 
 from nostalgia.errors import MultiplayerError
+from nostalgia.multiplayer.bridge import JoinerBridge
+from nostalgia.multiplayer.lan import announce_forever
 from nostalgia.multiplayer.mux import ROOM_META, pack_mux_frame
+from nostalgia.multiplayer.room_code import split_room_code
 from nostalgia.multiplayer.room_watch import RoomWatch
 from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.http import HttpClient
+from nostalgia.net.websocket import TlsContext
 
 if TYPE_CHECKING:
-    from nostalgia.multiplayer.bridge import JoinerBridge
     from nostalgia.multiplayer.host import HostRelay
     from nostalgia.multiplayer.model import RoomStatus
     from nostalgia.multiplayer.peer_download import PeerDownload
@@ -34,6 +37,9 @@ class RoomNetwork(RoomWatch):
     _loop: asyncio.AbstractEventLoop
     _relay_url: str
     _on_failure: Callable[[str], None]
+    _tls_context: TlsContext | None
+    _flow: asyncio.Task[None] | None
+    _beacon: asyncio.Task[None] | None
 
     def _publish(self, **changes: object) -> None: ...
     def _submit(self, coroutine: object) -> Future[None]:
@@ -79,10 +85,23 @@ class RoomNetwork(RoomWatch):
     def initialize_network(self, http_client: HttpClient | None) -> None:
         self._room_http = http_client
         self._direct_allowed = True
+        self._relay_enabled = False
         self._network_task: asyncio.Task[None] | None = None
         self._room_label = "Minecraft"
         self._sharing = False
         self._peer_download: PeerDownload | None = None
+
+    def require_room_transport(self) -> None:
+        if not self._relay_enabled and (
+            not self._direct_allowed
+            or find_spec("aiortc") is None
+            or self._room_http is None
+            or not self._relay_url.startswith("wss://")
+        ):
+            raise MultiplayerError(
+                "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng; "
+                "relay dữ liệu đã tắt."
+            )
 
     def set_direct_allowed(self, allowed: bool) -> None:
         if self._status.role == "idle":
@@ -138,18 +157,63 @@ class RoomNetwork(RoomWatch):
         self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
     ) -> bytes | None:
         if not self._direct_allowed or self._joiner is None or self._room_http is None:
-            return None
+            return self.unavailable_peer_file()
         if not self._relay_url.startswith("wss://"):
-            return None
+            return self.unavailable_peer_file()
         try:
             from nostalgia.multiplayer.peer_download import PeerDownload
         except ImportError:
-            return None
+            return self.unavailable_peer_file()
         if self._peer_download is None:
             base_url = "https://" + self._relay_url.removeprefix("wss://").rstrip("/")
-            self._peer_download = PeerDownload(base_url, self._room_http)
-        return await self._peer_download.download(room_code, sync_file, cancel_token)
+            self._peer_download = PeerDownload(
+                base_url, self._room_http, disable_on_failure=self._relay_enabled
+            )
+        payload = await self._peer_download.download(room_code, sync_file, cancel_token)
+        return payload if payload is not None else self.unavailable_peer_file()
+
+    def unavailable_peer_file(self) -> bytes | None:
+        if not self._relay_enabled:
+            raise MultiplayerError(
+                "Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; "
+                "hãy kiểm tra mạng và thử lại."
+            )
+        return None
 
     def close_room_http(self) -> None:
         if self._owns_http and self._room_http is not None:
             self._room_http.close()
+
+    async def _join_flow(self, room_code: str) -> None:
+        await self._teardown()
+        self._flow = asyncio.current_task()
+        try:
+            self.require_room_transport()
+            room_id, room_secret = split_room_code(room_code)
+            joiner = JoinerBridge(
+                self._relay_url,
+                room_id,
+                room_secret,
+                tls_context=self._tls_context,
+                relay_enabled=self._relay_enabled,
+            )
+            await joiner.probe()
+            local_port = await joiner.start()
+            self._joiner = joiner
+            self._beacon = self._loop.create_task(
+                announce_forever(local_port, "§bNostalgia §7— phòng của bạn")
+            )
+            self._publish(
+                role="joined",
+                local_port=local_port,
+                connection_kind="pending" if not self._relay_enabled else "relay",
+                world_ready=not (
+                    self._room_http is not None and self._relay_url.startswith("wss://")
+                ),
+            )
+            self.watch_guest_room(room_code)
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            await self._teardown()
+            self._on_failure(str(exc))

@@ -17,7 +17,7 @@ from dataclasses import replace
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.host import HostRelay
-from nostalgia.multiplayer.lan import LanWorld, announce_forever, detect_open_to_lan
+from nostalgia.multiplayer.lan import LanWorld, detect_open_to_lan
 from nostalgia.multiplayer.lan_probe import probe_lan_port
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
@@ -41,6 +41,7 @@ class RoomService(RoomNetwork):
         tls_context: TlsContext | None = None,
         http_client: HttpClient | None = None,
         owns_http: bool = False,
+        relay_enabled: bool = False,
     ) -> None:
         self._relay_url = relay_url
         self._on_status = on_status
@@ -59,6 +60,7 @@ class RoomService(RoomNetwork):
         self._beacon: asyncio.Task[None] | None = None
         self._manual_port = 0
         self.initialize_network(http_client)
+        self._relay_enabled = relay_enabled
         self._owns_http = owns_http
 
     # ----- lệnh từ luồng giao diện -----
@@ -102,6 +104,7 @@ class RoomService(RoomNetwork):
         room_id, room_secret = split_room_code(room_code)
         self._flow = asyncio.current_task()
         try:
+            self.require_room_transport()
             host = HostRelay(
                 self._relay_url,
                 room_id,
@@ -171,34 +174,6 @@ class RoomService(RoomNetwork):
             if world is not None:
                 return world
         raise MultiplayerError("không thấy world nào mở LAN: vào game, bấm Esc → Open to LAN")
-
-    async def _join_flow(self, room_code: str) -> None:
-        await self._teardown()
-        self._flow = asyncio.current_task()
-        try:
-            room_id, room_secret = split_room_code(room_code)
-            joiner = JoinerBridge(
-                self._relay_url, room_id, room_secret, tls_context=self._tls_context
-            )
-            await joiner.probe()
-            local_port = await joiner.start()
-            self._joiner = joiner
-            self._beacon = self._loop.create_task(
-                announce_forever(local_port, "§bNostalgia §7— phòng của bạn")
-            )
-            self._publish(
-                role="joined",
-                local_port=local_port,
-                world_ready=not (
-                    self._room_http is not None and self._relay_url.startswith("wss://")
-                ),
-            )
-            self.watch_guest_room(room_code)
-        except asyncio.CancelledError:
-            pass
-        except Exception as exc:
-            await self._teardown()
-            self._on_failure(str(exc))
 
     async def _teardown(self) -> None:
         await self.close_room_network()

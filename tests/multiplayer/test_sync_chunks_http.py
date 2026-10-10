@@ -31,7 +31,7 @@ def test_relay_download_uses_offsets_and_rejects_partial_chunks(
     server_state.add(
         path, chunk[:-1] if truncated else chunk, response_headers=(("X-Sync-Transport", "relay"),)
     )
-    guest = HttpRoomSyncGateway(server.url(""), http_client)
+    guest = HttpRoomSyncGateway(server.url(""), http_client, relay_enabled=True)
     if truncated:
         with pytest.raises(MultiplayerError, match="đầu tiên"):
             guest.download(code, sync_file)
@@ -55,7 +55,7 @@ def test_relay_publish_attaches_snapshot_without_uploading_jar(
     attached: list[SyncSnapshot] = []
     snapshot = SyncSnapshot(SyncManifest("A", "1.20.1", "vanilla", "", ()), tmp_path)
     host = HttpRoomSyncGateway(
-        server.url(""), http_client, "session", attach_source=attached.append
+        server.url(""), http_client, "session", attach_source=attached.append, relay_enabled=True
     )
     host.publish(code, "ticket", snapshot, cancel_token=CancelToken())
     assert attached == [snapshot]

@@ -19,9 +19,10 @@ from nostalgia.multiplayer.room_watch import RoomWatch
 from nostalgia.net.http import HttpClient, HttpResponse
 
 
+@pytest.mark.parametrize("relay_enabled", [False, True])
 @pytest.mark.parametrize("status", [404, 429, 503])
-def test_unavailable_signalling_keeps_relay_without_faking_direct(
-    status: int, monkeypatch: pytest.MonkeyPatch
+def test_unavailable_signalling_only_falls_back_when_relay_is_explicitly_enabled(
+    status: int, monkeypatch: pytest.MonkeyPatch, relay_enabled: bool
 ) -> None:
     local_ice(monkeypatch)
 
@@ -31,6 +32,7 @@ def test_unavailable_signalling_keeps_relay_without_faking_direct(
 
     class Room(RoomWatch):
         def __init__(self) -> None:
+            self._relay_enabled = relay_enabled
             self.status = RoomStatus(role="joined")
             self.failures: list[str] = []
             self._on_failure = self.failures.append
@@ -42,10 +44,12 @@ def test_unavailable_signalling_keeps_relay_without_faking_direct(
 
     async def scenario() -> None:
         room = Room()
-        assert await room._connect_game_peer(
+        connected = await room._connect_game_peer(
             "https://signal.test", "ABCDEFABCDEFGHJKMN", cast(HttpClient, Http())
         )
-        assert room.status.connection_kind == "relay" and not room.failures
+        assert connected is relay_enabled
+        assert room.status.connection_kind == ("relay" if relay_enabled else "failed")
+        assert not room.failures if relay_enabled else room.failures and not room.status.world_ready
 
     asyncio.run(scenario())
 

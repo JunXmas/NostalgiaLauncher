@@ -44,6 +44,7 @@ def test_managed_host_probes_supplied_port_and_ignores_beacons() -> None:
         on_status=statuses.append,
         on_failure=failures.append,
         detect_world=unexpected_detector,
+        relay_enabled=True,
     )
     try:
         service.start_hosting(auto_detect=False)

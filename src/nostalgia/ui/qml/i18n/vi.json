@@ -4154,5 +4154,17 @@
   "p:Kết nối qua relay": "Kết nối qua relay",
   "p:P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.": "P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.",
   "p:Thu gọn tùy chọn kết nối": "Thu gọn tùy chọn kết nối",
-  "p:Tùy chọn kết nối": "Tùy chọn kết nối"
+  "p:Tùy chọn kết nối": "Tùy chọn kết nối",
+  "p:P2P có mã hoá · Relay dữ liệu đã tắt": "P2P có mã hoá · Relay dữ liệu đã tắt",
+  "p:Dữ liệu game và modpack đi trực tiếp giữa hai máy. Người cùng phòng có thể biết IP của bạn. Nếu mạng chặn P2P, hãy thử mạng khác.": "Dữ liệu game và modpack đi trực tiếp giữa hai máy. Người cùng phòng có thể biết IP của bạn. Nếu mạng chặn P2P, hãy thử mạng khác.",
+  "p:Không thể kết nối P2P · Relay dữ liệu đã tắt": "Không thể kết nối P2P · Relay dữ liệu đã tắt",
+  "p:Không thể kết nối P2P": "Không thể kết nối P2P",
+  "p:Đang chờ kết nối P2P": "Đang chờ kết nối P2P",
+  "p:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng; relay dữ liệu đã tắt.": "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng; relay dữ liệu đã tắt.",
+  "p:Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; hãy kiểm tra mạng và thử lại.": "Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; hãy kiểm tra mạng và thử lại.",
+  "p:Phòng không hỗ trợ P2P hoặc đã đóng. Nhờ host cập nhật launcher và mở lại phòng.": "Phòng không hỗ trợ P2P hoặc đã đóng. Nhờ host cập nhật launcher và mở lại phòng.",
+  "p:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher; relay dữ liệu đã tắt.": "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher; relay dữ liệu đã tắt.",
+  "p:Kết nối P2P đã mất. Hãy rời phòng và vào lại; relay dữ liệu đã tắt.": "Kết nối P2P đã mất. Hãy rời phòng và vào lại; relay dữ liệu đã tắt.",
+  "p:Không thể kết nối P2P. Mạng có thể chặn UDP; relay dữ liệu đã tắt. Hãy thử mạng khác hoặc mở lại phòng.": "Không thể kết nối P2P. Mạng có thể chặn UDP; relay dữ liệu đã tắt. Hãy thử mạng khác hoặc mở lại phòng.",
+  "p:Chỉ hỗ trợ chia sẻ modpack qua P2P; relay dữ liệu đã tắt.": "Chỉ hỗ trợ chia sẻ modpack qua P2P; relay dữ liệu đã tắt."
 }

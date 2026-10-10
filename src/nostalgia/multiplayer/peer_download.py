@@ -18,12 +18,15 @@ from nostalgia.operations.cancellation import CancelToken
 
 
 class PeerDownload:
-    def __init__(self, base_url: str, http_client: HttpClient) -> None:
+    def __init__(
+        self, base_url: str, http_client: HttpClient, *, disable_on_failure: bool = True
+    ) -> None:
         self._base_url, self._http = base_url, http_client
         self._stream: PeerStream | None = None
         self._expires = 0.0
         self._lock = asyncio.Lock()
         self._disabled = False
+        self._disable_on_failure = disable_on_failure
 
     async def download(
         self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
@@ -70,7 +73,7 @@ class PeerDownload:
                     return payload
             except (ConnectionError, TimeoutError, NetworkError):
                 await self.close()
-                self._disabled = True
+                self._disabled = self._disable_on_failure
                 return None
             except BaseException:
                 await self.close()

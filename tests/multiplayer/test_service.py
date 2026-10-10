@@ -66,6 +66,7 @@ def make_service(
         on_status=statuses.append,
         on_failure=failures.append,
         detect_world=lambda _timeout: LanWorld(remote.world.port, "Thế giới test"),
+        relay_enabled=True,
     )
 
 
@@ -135,6 +136,7 @@ def test_unexpected_error_in_the_flow_surfaces_and_stop_still_resets(remote: Loo
         on_status=statuses.append,
         on_failure=failures.append,
         detect_world=broken_detect,
+        relay_enabled=True,
     )
     try:
         service.start_hosting().result(5)

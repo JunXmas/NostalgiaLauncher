@@ -46,7 +46,7 @@ async def setup(
     host = HostRelay(relay.url, room_id, room_secret, world.port)
     await host.connect()
     host.start()
-    joiner = JoinerBridge(relay.url, room_id, room_secret)
+    joiner = JoinerBridge(relay.url, room_id, room_secret, relay_enabled=True)
     await joiner.start()
     return host, joiner
 
@@ -91,7 +91,7 @@ def test_wrong_secret_and_non_minecraft_bytes_never_touch_the_world() -> None:
         room_code = make_room_code()
         host, joiner = await setup(relay, world, room_code)
         room_id, _ = split_room_code(room_code)
-        impostor = JoinerBridge(relay.url, room_id, "WRONGSECRET1")
+        impostor = JoinerBridge(relay.url, room_id, "WRONGSECRET1", relay_enabled=True)
         await impostor.start()
         assert await game_client(impostor.local_port) == b""
         with pytest.raises(ConnectionError, match="mã phòng"):

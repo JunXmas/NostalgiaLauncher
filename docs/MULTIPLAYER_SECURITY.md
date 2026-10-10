@@ -15,11 +15,13 @@ Host:   Minecraft "Open to LAN" ──127.0.0.1:world_port──> launcher-host 
 Joiner: Minecraft ──127.0.0.1:local_port──> launcher-joiner ──WSS──> relay
 ```
 
-- Ở chế độ relay, cả hai máy chỉ nối ra ngoài (443); bạn cùng phòng không thấy IP của nhau.
-- Khi hai bên cho phép P2P, launcher thương lượng ICE/STUN và dùng WebRTC DataChannel
+- Sơ đồ trên mô tả nền relay được giữ để bảo trì. Đường dữ liệu relay hiện khóa mặc định
+  ở launcher và backend; socket bản cũ và HTTP file cũng bị chặn.
+- Với P2P, launcher thương lượng ICE/STUN và dùng WebRTC DataChannel
   (DTLS/SCTP) cho game và các file custom đã chọn. Người cùng phòng có thể biết IP của nhau.
-  Có tùy chọn chỉ dùng relay; mạng chặn UDP hoặc không xuyên NAT được thì dùng relay.
-  Relay WSS dùng TLS tới máy chủ, không phải mã hóa đầu cuối dữ liệu game.
+  Mạng chặn UDP hoặc không xuyên NAT được thì báo lỗi, không tự chuyển sang relay.
+  WSS chỉ giữ điều khiển phòng và signaling. Nền relay khi bật lại chỉ dùng TLS tới
+  máy chủ, không phải mã hóa đầu cuối dữ liệu game.
 - Host mux nhiều joiner trên MỘT WebSocket: khung `[stream_id:4][flag:1][payload]`,
   flag 0 DATA / 1 OPEN / 2 CLOSE. Mỗi joiner một WebSocket riêng, payload thô.
 - Mã phòng = `room_id` (6 ký tự, relay thấy, nằm trong URL) + `room_secret` (12 ký tự,
@@ -106,8 +108,8 @@ Chat thường lưu trên backend, không phải chat mã hóa đầu cuối. Xe
   Thu hồi Plus không ngắt ngay byte đang truyền trong phiên đã cấp.
 - Một RTCPeerConnection nhận tối đa một DataChannel đúng tên. Tối đa 16 kết nối RTC;
   bộ đệm và khung có trần. Kênh game dùng lại cho ping/login, không POST cho từng gói game.
-- Mất P2P không di chuyển kết nối Minecraft đang chơi sang relay. Kết nối TCP mới có thể
-  dùng relay; người chơi cần kết nối lại nếu đường đang chơi đã mất.
+- Mất P2P không di chuyển kết nối Minecraft sang relay. Proxy đóng kết nối mới nếu
+  không có peer sống; người chơi cần vào lại phòng để thương lượng P2P mới.
 - Mỗi luồng RTC cấp tối đa 16 khung chưa được ứng dụng nhận. ACK chỉ cấp thêm sau
   khi đọc; luồng ghép kênh đợi hàng đợi thay vì bỏ gói khi Minecraft nhận chậm.
 - Hủy room hủy các task, socket, snapshot và kênh RTC. Đóng RTC được shield khỏi

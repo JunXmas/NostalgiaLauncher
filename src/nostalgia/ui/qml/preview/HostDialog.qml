@@ -93,9 +93,6 @@ Controls.Popup {
                 HostModList { visible: root.sharePack && hostBridge.syncAvailable; width: parent.width }
                 ConnectionOptions {
                     width: parent.width
-                    toggleName: "hostDirectAllowed"
-                    directAllowed: root.directAllowed
-                    onPreferenceChanged: function(allowed) { root.directAllowed = allowed; }
                 }
                 PaymentText {
                     width: parent.width

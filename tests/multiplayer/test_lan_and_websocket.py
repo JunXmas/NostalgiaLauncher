@@ -195,7 +195,7 @@ def test_bridge_serve_slams_the_door_on_foreign_peers(
     async def scenario() -> None:
         relay = FakeRelay()
         await relay.start()
-        joiner = JoinerBridge(relay.url, "ROOM02", "S" * 12)
+        joiner = JoinerBridge(relay.url, "ROOM02", "S" * 12, relay_enabled=True)
         await joiner.start()
         monkeypatch.setattr("nostalgia.multiplayer.bridge.is_local_peer", lambda *_: False)
         reader, writer = await asyncio.open_connection("127.0.0.1", joiner.local_port)

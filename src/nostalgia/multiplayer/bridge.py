@@ -41,10 +41,12 @@ class JoinerBridge:
         room_secret: str,
         *,
         tls_context: TlsContext | None = None,
+        relay_enabled: bool = False,
     ) -> None:
         self._url = f"{relay_url.rstrip('/')}/s/{room_id}?role=join"
         self._room_secret = room_secret
         self._tls_context = tls_context
+        self._relay_enabled = relay_enabled
         self._server: asyncio.AbstractServer | None = None
         self._handlers: set[asyncio.Task[None]] = set()
         self.peer: PeerMux | None = None
@@ -66,6 +68,8 @@ class JoinerBridge:
 
     async def probe(self) -> None:
         """Nối thử relay + bắt tay một lần để báo lỗi (sai mã, host tắt) ngay khi bấm VÀO."""
+        if not self._relay_enabled:
+            return
         socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
         try:
             await self._handshake(socket)
@@ -101,6 +105,9 @@ class JoinerBridge:
             socket: BinarySocket
             if self.peer is not None and not self.peer.closed:
                 socket = self.peer.open()
+            elif not self._relay_enabled:
+                writer.close()
+                return
             else:
                 socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
         except Exception:

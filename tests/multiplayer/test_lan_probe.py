@@ -69,6 +69,7 @@ def test_manual_port_recovers_when_multicast_bind_fails() -> None:
         on_status=statuses.append,
         on_failure=failures.append,
         detect_world=missing_multicast,
+        relay_enabled=True,
     )
     try:
         service.start_hosting()
@@ -95,6 +96,7 @@ def test_stopping_waiting_world_cancels_probe_loop() -> None:
         on_status=statuses.append,
         on_failure=lambda _message: None,
         detect_world=absent_world,
+        relay_enabled=True,
     )
     try:
         service.start_hosting()

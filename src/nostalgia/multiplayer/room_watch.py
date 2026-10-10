@@ -20,6 +20,7 @@ class RoomWatch:
     _room_http: HttpClient | None
     _relay_url: str
     _direct_allowed: bool
+    _relay_enabled: bool = False
     _on_failure: Callable[[str], None]
     _network_task: asyncio.Task[None] | None
 
@@ -46,7 +47,12 @@ class RoomWatch:
                     max_bytes=8192,
                 )
                 if response.status == 404:
-                    if known:
+                    if not self._relay_enabled:
+                        self.peer_unavailable(
+                            "Phòng không hỗ trợ P2P hoặc đã đóng. "
+                            "Nhờ host cập nhật launcher và mở lại phòng."
+                        )
+                    elif known:
                         self._publish(world_ready=False)
                         self._on_failure("Phòng đã đóng. Hãy rời phòng và nhận lời mời mới.")
                     else:
@@ -62,10 +68,23 @@ class RoomWatch:
                     return
                 known = True
                 self._publish(
-                    world_ready=document["world_ready"],
+                    world_ready=document["world_ready"]
+                    and (
+                        self._relay_enabled
+                        or (self._joiner.peer is not None and not self._joiner.peer.closed)
+                    ),
                     world_name=str(document.get("name", ""))[:120],
                     share_state="pending" if document.get("sharing") is True else "none",
                 )
+                if (
+                    document["world_ready"]
+                    and document.get("direct") is not True
+                    and not self._relay_enabled
+                ):
+                    self.peer_unavailable(
+                        "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher; relay dữ liệu đã tắt."
+                    )
+                    return
                 if (
                     document["world_ready"]
                     and document.get("direct") is True
@@ -76,6 +95,11 @@ class RoomWatch:
                     if not await self._connect_game_peer(base_url, room_code, http):
                         return
                 if self._joiner.peer is not None and self._joiner.peer.closed:
+                    if not self._relay_enabled:
+                        self.peer_unavailable(
+                            "Kết nối P2P đã mất. Hãy rời phòng và vào lại; relay dữ liệu đã tắt."
+                        )
+                        return
                     self._publish(connection_kind="relay")
                 await asyncio.sleep(60 if document["world_ready"] else 15)
             except asyncio.CancelledError:
@@ -94,11 +118,21 @@ class RoomWatch:
                 await stream.close()
                 return True
             self._joiner.peer = PeerMux(stream)
-            self._publish(connection_kind="direct")
+            self._publish(connection_kind="direct", world_ready=True)
         except (ImportError, ConnectionError, TimeoutError, NetworkError):
+            if not self._relay_enabled:
+                self.peer_unavailable(
+                    "Không thể kết nối P2P. Mạng có thể chặn UDP; relay dữ liệu đã tắt. "
+                    "Hãy thử mạng khác hoặc mở lại phòng."
+                )
+                return False
             self._publish(connection_kind="relay")
         except MultiplayerError as exc:
-            self._publish(connection_kind="relay", world_ready=False)
+            self._publish(connection_kind="failed", world_ready=False)
             self._on_failure(str(exc))
             return False
         return True
+
+    def peer_unavailable(self, message: str) -> None:
+        self._publish(connection_kind="failed", world_ready=False)
+        self._on_failure(message)

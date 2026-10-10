@@ -4154,5 +4154,17 @@
   "p:Kết nối qua relay": "Relay connection",
   "p:P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.": "P2P may expose your IP to room members. The launcher uses a relay automatically when a direct connection is unavailable.",
   "p:Thu gọn tùy chọn kết nối": "Hide connection options",
-  "p:Tùy chọn kết nối": "Connection options"
+  "p:Tùy chọn kết nối": "Connection options",
+  "p:P2P có mã hoá · Relay dữ liệu đã tắt": "Encrypted P2P · Data relay disabled",
+  "p:Dữ liệu game và modpack đi trực tiếp giữa hai máy. Người cùng phòng có thể biết IP của bạn. Nếu mạng chặn P2P, hãy thử mạng khác.": "Game and modpack data travels directly between the two devices. Room members may see your IP. If your network blocks P2P, try another network.",
+  "p:Không thể kết nối P2P · Relay dữ liệu đã tắt": "P2P connection unavailable · Data relay disabled",
+  "p:Không thể kết nối P2P": "P2P connection unavailable",
+  "p:Đang chờ kết nối P2P": "Waiting for a P2P connection",
+  "p:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng; relay dữ liệu đã tắt.": "P2P is unavailable. Update the launcher and check the room configuration; data relay is disabled.",
+  "p:Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; hãy kiểm tra mạng và thử lại.": "Cannot sync files over P2P. Data relay is disabled; check your network and try again.",
+  "p:Phòng không hỗ trợ P2P hoặc đã đóng. Nhờ host cập nhật launcher và mở lại phòng.": "The room does not support P2P or has closed. Ask the host to update the launcher and reopen the room.",
+  "p:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher; relay dữ liệu đã tắt.": "The host does not support P2P. Ask them to update the launcher; data relay is disabled.",
+  "p:Kết nối P2P đã mất. Hãy rời phòng và vào lại; relay dữ liệu đã tắt.": "The P2P connection was lost. Leave and rejoin the room; data relay is disabled.",
+  "p:Không thể kết nối P2P. Mạng có thể chặn UDP; relay dữ liệu đã tắt. Hãy thử mạng khác hoặc mở lại phòng.": "Cannot connect over P2P. Your network may block UDP; data relay is disabled. Try another network or reopen the room.",
+  "p:Chỉ hỗ trợ chia sẻ modpack qua P2P; relay dữ liệu đã tắt.": "Modpack sharing requires P2P; data relay is disabled."
 }

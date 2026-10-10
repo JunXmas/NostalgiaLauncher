@@ -19,8 +19,18 @@ def test_guest_enters_lobby_before_game_and_same_room_becomes_playable(
     host_updates: list[RoomStatus] = []
     guest_updates: list[RoomStatus] = []
     errors: list[str] = []
-    host = RoomService(remote.relay.url, on_status=host_updates.append, on_failure=errors.append)
-    guest = RoomService(remote.relay.url, on_status=guest_updates.append, on_failure=errors.append)
+    host = RoomService(
+        remote.relay.url,
+        on_status=host_updates.append,
+        on_failure=errors.append,
+        relay_enabled=True,
+    )
+    guest = RoomService(
+        remote.relay.url,
+        on_status=guest_updates.append,
+        on_failure=errors.append,
+        relay_enabled=True,
+    )
     host.prepare_room("Chosen pack", False)
     try:
         hosting = host.start_hosting(auto_detect=False)
@@ -43,7 +53,9 @@ def test_guest_enters_lobby_before_game_and_same_room_becomes_playable(
 def test_relay_disconnect_while_waiting_lan_releases_room_immediately(remote: LoopThread) -> None:
     updates: list[RoomStatus] = []
     errors: list[str] = []
-    host = RoomService(remote.relay.url, on_status=updates.append, on_failure=errors.append)
+    host = RoomService(
+        remote.relay.url, on_status=updates.append, on_failure=errors.append, relay_enabled=True
+    )
     try:
         hosting = host.start_hosting(auto_detect=False)
         wait_for(lambda: bool(updates) and updates[-1].role == "waiting_world")

@@ -10,7 +10,8 @@ Column {
         width: parent.width
         text: multiplayerBridge.connectionKind === "direct" ? Legacy.Tr.phrase("● Kết nối trực tiếp · DTLS")
             : multiplayerBridge.connectionKind === "connecting" ? Legacy.Tr.phrase("Đang tìm đường kết nối trực tiếp…")
-            : Legacy.Tr.phrase("Kết nối qua relay · TLS")
+            : multiplayerBridge.connectionKind === "failed" ? Legacy.Tr.phrase("Không thể kết nối P2P · Relay dữ liệu đã tắt")
+            : Legacy.Tr.phrase("Đang chờ kết nối P2P")
         color: multiplayerBridge.connectionKind === "direct" ? GlassTheme.brand : GlassTheme.muted
         font.pixelSize: GlassTheme.fontCaption
     }
@@ -26,9 +27,9 @@ Column {
     }
     Button {
         objectName: "launchGuestRoom"
-        label: root.waitingPack ? Legacy.Tr.phrase("Đang kiểm tra modpack của phòng...") : !multiplayerBridge.worldReady ? Legacy.Tr.phrase("Đang chờ host mở world") : Legacy.Tr.phrase("Khởi chạy & vào world")
+        label: multiplayerBridge.connectionKind === "failed" ? Legacy.Tr.phrase("Không thể kết nối P2P") : root.waitingPack ? Legacy.Tr.phrase("Đang kiểm tra modpack của phòng...") : multiplayerBridge.connectionKind === "connecting" ? Legacy.Tr.phrase("Đang chờ kết nối P2P") : !multiplayerBridge.worldReady ? Legacy.Tr.phrase("Đang chờ host mở world") : Legacy.Tr.phrase("Khởi chạy & vào world")
         primary: true
-        clickable: multiplayerBridge.connectionKind !== "connecting" && !root.waitingPack && multiplayerBridge.worldReady && !root.needsSync && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !roomSyncBridge.busy && (!!roomSyncBridge.guestInstanceId || !!bridge.instances[pack.currentIndex])
+        clickable: multiplayerBridge.connectionKind === "direct" && !root.waitingPack && multiplayerBridge.worldReady && !root.needsSync && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !roomSyncBridge.busy && (!!roomSyncBridge.guestInstanceId || !!bridge.instances[pack.currentIndex])
         onClicked: roomSyncBridge.launchGuest((bridge.instances[pack.currentIndex] || {}).instanceId || "")
     }
 }
