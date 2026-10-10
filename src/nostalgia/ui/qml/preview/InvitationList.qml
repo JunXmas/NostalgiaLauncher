@@ -35,7 +35,12 @@ Column {
                     }
                 }
                 PaymentText { visible: multiplayerBridge.active; width: parent.width; text: Legacy.Tr.phrase("Rời phòng hiện tại để nhận lời mời này."); color: GlassTheme.muted }
-                Legacy.CheckRow { width: parent.width; label: Legacy.Tr.phrase("Cho phép P2P · người cùng phòng có thể biết IP của bạn"); checked: root.directAllowed; onToggled: function(checked) { root.directAllowed = checked; } }
+                ConnectionOptions {
+                    width: parent.width
+                    toggleName: "guestDirectAllowed-" + modelData.inviteId
+                    directAllowed: root.directAllowed
+                    onPreferenceChanged: function(allowed) { root.directAllowed = allowed; }
+                }
             }
         }
     }

@@ -4149,5 +4149,10 @@
   "p:Xem phòng chơi · Mời bạn bè": "Xem phòng chơi · Mời bạn bè",
   "p:Đang tạo phòng · Xem bước tiếp theo": "Đang tạo phòng · Xem bước tiếp theo",
   "p:Xem phòng chơi": "Xem phòng chơi",
-  "p:Cách mời bạn vào phòng": "Cách mời bạn vào phòng"
+  "p:Cách mời bạn vào phòng": "Cách mời bạn vào phòng",
+  "p:Tự động · P2P có mã hoá, relay dự phòng": "Tự động · P2P có mã hoá, relay dự phòng",
+  "p:Kết nối qua relay": "Kết nối qua relay",
+  "p:P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.": "P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.",
+  "p:Thu gọn tùy chọn kết nối": "Thu gọn tùy chọn kết nối",
+  "p:Tùy chọn kết nối": "Tùy chọn kết nối"
 }

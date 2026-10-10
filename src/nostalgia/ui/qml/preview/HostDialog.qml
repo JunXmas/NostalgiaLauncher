@@ -91,13 +91,12 @@ Controls.Popup {
                     onToggled: function (checked) { root.sharePack = checked; }
                 }
                 HostModList { visible: root.sharePack && hostBridge.syncAvailable; width: parent.width }
-                Legacy.CheckRow {
-                    objectName: "hostDirectAllowed"; width: parent.width
-                    label: Legacy.Tr.phrase("Ưu tiên kết nối trực tiếp có mã hoá")
-                    checked: root.directAllowed
-                    onToggled: function(checked) { root.directAllowed = checked; }
+                ConnectionOptions {
+                    width: parent.width
+                    toggleName: "hostDirectAllowed"
+                    directAllowed: root.directAllowed
+                    onPreferenceChanged: function(allowed) { root.directAllowed = allowed; }
                 }
-                PaymentText { width: parent.width; text: root.directAllowed ? Legacy.Tr.phrase("Kết nối trực tiếp có thể tiết lộ IP cho người cùng phòng. Nếu mạng chặn P2P, launcher dùng relay dự phòng.") : Legacy.Tr.phrase("Chỉ dùng relay để tránh chia sẻ IP trực tiếp với người cùng phòng."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                 PaymentText {
                     width: parent.width
                     text: !plusFeaturesEnabled ? Legacy.Tr.phrase("Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.")

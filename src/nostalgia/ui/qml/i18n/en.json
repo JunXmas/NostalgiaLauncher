@@ -4149,5 +4149,10 @@
   "p:Xem phòng chơi · Mời bạn bè": "View room · Invite friends",
   "p:Đang tạo phòng · Xem bước tiếp theo": "Creating room · View next step",
   "p:Xem phòng chơi": "View room",
-  "p:Cách mời bạn vào phòng": "How to invite friends"
+  "p:Cách mời bạn vào phòng": "How to invite friends",
+  "p:Tự động · P2P có mã hoá, relay dự phòng": "Automatic · encrypted P2P with relay fallback",
+  "p:Kết nối qua relay": "Relay connection",
+  "p:P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.": "P2P may expose your IP to room members. The launcher uses a relay automatically when a direct connection is unavailable.",
+  "p:Thu gọn tùy chọn kết nối": "Hide connection options",
+  "p:Tùy chọn kết nối": "Connection options"
 }

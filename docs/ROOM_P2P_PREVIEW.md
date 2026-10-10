@@ -12,6 +12,8 @@ nhắn tin mới bật polling chat. Khi đổi trang hoặc thu gọn, polling 
 
 ## Chi phí và tương thích
 
+- P2P bật mặc định cho host và khách; tạo hoặc vào phòng không cần chọn chế độ.
+  Mục Tùy chọn kết nối cho phép chỉ dùng relay nếu không muốn chia sẻ IP trực tiếp.
 - WebRTC ưu tiên dữ liệu game và file custom đi trực tiếp; không phải VPN cả máy.
 - Public mods vẫn lấy từ nguồn chính thức. File custom dùng kênh sync trực tiếp có
   hạn quyền do backend cấp, kiểm size/hash; không nối được thì dùng relay HTTPS cũ.
