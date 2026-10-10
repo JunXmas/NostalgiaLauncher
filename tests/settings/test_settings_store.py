@@ -71,12 +71,12 @@ def test_discord_application_id_comes_from_the_repo_not_from_the_user(tmp_path: 
     assert "discord_application_id" not in settings_path(tmp_path).read_text(encoding="utf-8")
 
 
-def test_hide_when_game_running_round_trips_and_defaults_on(tmp_path: Path) -> None:
-    assert load_settings(tmp_path, environment={}).hide_when_game_running is True
-    save_settings(tmp_path, Settings(hide_when_game_running=False))
+def test_legacy_hide_setting_round_trips_and_defaults_off(tmp_path: Path) -> None:
     assert load_settings(tmp_path, environment={}).hide_when_game_running is False
+    save_settings(tmp_path, Settings(hide_when_game_running=True))
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is True
     settings_path(tmp_path).write_text('{"hide_when_game_running": "invalid"}')
-    assert load_settings(tmp_path, environment={}).hide_when_game_running is True, (
+    assert load_settings(tmp_path, environment={}).hide_when_game_running is False, (
         "giá trị lạ → mặc định"
     )
 

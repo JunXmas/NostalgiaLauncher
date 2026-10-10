@@ -13,10 +13,10 @@ from nostalgia.ui.chat_sender import ChatSender
 from nostalgia.ui.friend_sender import FriendSender
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
-from nostalgia.ui.social_session import SocialSession
+from nostalgia.ui.social_invitations import SocialInvitations
 
 
-class SocialBridge(SocialSession):
+class SocialBridge(SocialInvitations):
     chatBusyChanged = Signal()
     friendBusyChanged = Signal()
 
@@ -136,41 +136,6 @@ class SocialBridge(SocialSession):
             and any(friend.account_id == account_id for friend in self._snapshot.friends)
         ):
             self._chat.submit(gateway, account_id, text.strip())
-
-    @Slot(str)
-    def inviteFriend(self, account_id: str) -> None:
-        gateway, status = self._gateway, self._multiplayer.room_snapshot()
-        if (
-            self.signedIn
-            and gateway
-            and not self.busy
-            and status.role == "hosting"
-            and self._sync_bridge.hostReady
-        ):
-            self._request(
-                "changed",
-                lambda: gateway.send_invite(
-                    account_id, status.room_code, status.host_ticket, status.world_name
-                ),
-            )
-
-    @Slot(str)
-    def acceptInvite(self, invite_id: str) -> None:
-        gateway = self._gateway
-        if (
-            self.signedIn
-            and gateway
-            and not self.busy
-            and not self._multiplayer.active
-            and self._sync_bridge.hostReady
-        ):
-            self._request("join", lambda: gateway.accept_invite(invite_id))
-
-    @Slot(str)
-    def declineInvite(self, invite_id: str) -> None:
-        gateway = self._gateway
-        if self.signedIn and gateway and not self.busy:
-            self._request("changed", lambda: gateway.decline_invite(invite_id))
 
     @Slot(str, bool)
     def setProfile(self, accent: str, show_badge: bool) -> None:

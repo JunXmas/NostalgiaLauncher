@@ -4036,5 +4036,18 @@
   "p:Say hello to start a conversation.": "Gửi lời chào để bắt đầu câu chuyện.",
   "p:Không gửi được tin nhắn. Hãy thử lại.": "Không gửi được tin nhắn. Hãy thử lại.",
   "p:Đang gửi tin nhắn…": "Đang gửi tin nhắn…",
-  "p:Đang gửi…": "Đang gửi…"
+  "p:Đang gửi…": "Đang gửi…",
+  "p:Mời bạn vào world": "Mời bạn vào world",
+  "p:Rời phòng hiện tại để mở phòng của bạn.": "Rời phòng hiện tại để mở phòng của bạn.",
+  "p:Vào world → Esc → Open to LAN → Start LAN World, rồi quay lại mời bạn.": "Vào world → Esc → Open to LAN → Start LAN World, rồi quay lại mời bạn.",
+  "p:Chờ phòng và modpack sẵn sàng trước khi gửi lời mời.": "Chờ phòng và modpack sẵn sàng trước khi gửi lời mời.",
+  "p:Bạn đang ngoại tuyến. Người nhận cần mở launcher để nhận lời mời.": "Bạn đang ngoại tuyến. Người nhận cần mở launcher để nhận lời mời.",
+  "p:Bấm Mở phòng, chọn bản chơi rồi mở LAN trong world Minecraft.": "Bấm Mở phòng, chọn bản chơi rồi mở LAN trong world Minecraft.",
+  "p:Host mở LAN trước; bạn bè nhận lời mời ngay trong launcher.": "Host mở LAN trước; bạn bè nhận lời mời ngay trong launcher.",
+  "p:Host: mở Bạn bè → Mở phòng, chọn bản chơi rồi bấm Host & khởi chạy.": "Host: mở Bạn bè → Mở phòng, chọn bản chơi rồi bấm Host & khởi chạy.",
+  "p:Trong Minecraft, tạo hoặc mở world → Esc → Open to LAN → Start LAN World. Để nguyên game đang chạy.": "Trong Minecraft, tạo hoặc mở world → Esc → Open to LAN → Start LAN World. Để nguyên game đang chạy.",
+  "p:Quay lại launcher, chờ Phòng sẵn sàng và đồng bộ pack hoàn tất nếu có. Chọn bạn đang trực tuyến rồi bấm Mời chơi.": "Quay lại launcher, chờ Phòng sẵn sàng và đồng bộ pack hoàn tất nếu có. Chọn bạn đang trực tuyến rồi bấm Mời chơi.",
+  "p:Người nhận: mở Bạn bè, bấm Vào phòng trên lời mời. Nếu có modpack, xem và đồng bộ nội dung trước khi chạy game.": "Người nhận: mở Bạn bè, bấm Vào phòng trên lời mời. Nếu có modpack, xem và đồng bộ nội dung trước khi chạy game.",
+  "p:Trong game của người nhận: Multiplayer → chọn thế giới LAN. Nếu không thấy, dùng Kết nối trực tiếp với địa chỉ 127.0.0.1:cổng trong Tùy chọn phòng.": "Trong game của người nhận: Multiplayer → chọn thế giới LAN. Nếu không thấy, dùng Kết nối trực tiếp với địa chỉ 127.0.0.1:cổng trong Tùy chọn phòng.",
+  "p:Hai người phải kết bạn và mở launcher, dùng Minecraft/mods tương thích. Lời mời có hiệu lực 5 phút. Host giữ world và launcher chạy; nhận pack từ host có Plus không yêu cầu người nhận mua Plus.": "Hai người phải kết bạn và mở launcher, dùng Minecraft/mods tương thích. Lời mời có hiệu lực 5 phút. Host giữ world và launcher chạy; nhận pack từ host có Plus không yêu cầu người nhận mua Plus."
 }

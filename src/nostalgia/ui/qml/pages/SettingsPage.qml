@@ -167,23 +167,6 @@ Item {
             Flow {
                 width: parent.width
                 spacing: 10
-                Text { text: Tr.phrase("Thu gọn vào khay khi chơi"); color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
-                        }
-                Toggle {
-                    objectName: "hideWhenGameRunningToggle"; accessibleLabel: Tr.phrase("Thu gọn vào khay khi chơi")
-
-                    checked: settingsBridge.hideWhenGameRunning
-                    onToggled: function (checked) { settingsBridge.setHideWhenGameRunning(checked); }
-                }
-                Text {
-
-                    text: Tr.phrase("Ẩn cửa sổ launcher vào khay hệ thống khi game đang chạy, giải phóng RAM.")
-                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
-                }
-            }
-            Flow {
-                width: parent.width
-                spacing: 10
                 Text { text: "Discord Rich Presence"; color: Theme.textMuted; font.pixelSize: Theme.fontBody; width: 210 * Theme.textScale
                         }
                 Toggle {

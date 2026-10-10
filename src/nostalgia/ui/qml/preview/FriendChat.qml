@@ -61,15 +61,31 @@ Glass {
                 id: invite
                 objectName: "inviteSelectedFriend"
                 anchors.right: parent.right; visible: !!socialBridge.peerId
-                label: Legacy.Tr.phrase("Mời chơi"); primary: true
-                clickable: multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && socialBridge.peerOnline && !socialBridge.busy
-                onClicked: socialBridge.inviteFriend(socialBridge.peerId)
+                label: multiplayerBridge.active || hostBridge.details.active ? Legacy.Tr.phrase("Mời chơi") : Legacy.Tr.phrase("Mở phòng"); primary: true
+                clickable: !socialBridge.inviteBusy && ((!multiplayerBridge.active && !hostBridge.details.active) || (multiplayerBridge.role === "hosting" && roomSyncBridge.hostReady && socialBridge.peerOnline))
+                onClicked: { if (multiplayerBridge.role === "hosting") socialBridge.inviteFriend(socialBridge.peerId); else hostBridge.openSetup(); }
+            }
+        }
+        Column {
+            id: inviteHelp
+            visible: !!socialBridge.peerId
+            width: parent.width; spacing: 6
+            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Mời bạn vào world") }
+            PaymentText {
+                width: parent.width
+                visible: multiplayerBridge.role !== "hosting" || !roomSyncBridge.hostReady || !socialBridge.peerOnline
+                color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
+                text: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Rời phòng hiện tại để mở phòng của bạn.")
+                    : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Vào world → Esc → Open to LAN → Start LAN World, rồi quay lại mời bạn.")
+                    : hostBridge.details.active && !roomSyncBridge.hostReady ? Legacy.Tr.phrase("Chờ phòng và modpack sẵn sàng trước khi gửi lời mời.")
+                    : multiplayerBridge.role === "hosting" && !socialBridge.peerOnline ? Legacy.Tr.phrase("Bạn đang ngoại tuyến. Người nhận cần mở launcher để nhận lời mời.")
+                    : Legacy.Tr.phrase("Bấm Mở phòng, chọn bản chơi rồi mở LAN trong world Minecraft.")
             }
         }
         InertialList {
             id: chatScroll
             objectName: "chatScroll"
-            width: parent.width; height: root.compact ? Math.max(96 * GlassTheme.scale, root.availableHeight - backRow.height - chatHeading.height - composerRow.height - chatFooter.height - 40 - 60) : 250 * GlassTheme.scale
+            width: parent.width; height: root.compact ? Math.max(40 * GlassTheme.scale, root.availableHeight - backRow.height - chatHeading.height - inviteHelp.height - 12 - composerRow.height - chatFooter.height - 40 - 60) : 250 * GlassTheme.scale
             spacing: 10
             model: socialBridge.messages
             header: Column {

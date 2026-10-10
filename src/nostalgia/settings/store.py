@@ -34,8 +34,8 @@ class Settings:
     auto_update_check: bool = True
     # Thư mục lưu bản chơi mới (vd ổ còn chỗ). Rỗng = `instances/` trong thư mục dữ liệu.
     default_game_dir_root: str = ""
-    # Thu gọn launcher vào khay hệ thống khi game chạy để giải phóng RAM.
-    hide_when_game_running: bool = True
+    # Chỉ giữ để đọc cấu hình cũ; launcher không còn tự ẩn khi game chạy.
+    hide_when_game_running: bool = False
     ui_scale: int = 100
     compact_ui: bool = False
     reduced_motion: bool = False
@@ -71,7 +71,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 default_game_dir_root=(
                     as_string(fields.get("default_game_dir_root")) or ""
                 ).strip(),
-                hide_when_game_running=hide_game if isinstance(hide_game, bool) else True,
+                hide_when_game_running=hide_game if isinstance(hide_game, bool) else False,
                 ui_scale=(as_integer(fields.get("ui_scale")) or 100)
                 if fields.get("ui_scale") in (100, 125, 150)
                 else 100,

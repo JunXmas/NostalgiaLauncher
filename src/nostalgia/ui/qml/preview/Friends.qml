@@ -8,7 +8,7 @@ Item {
     Component.onDestruction: socialBridge.setWatching(false)
     property string roomError: ""
     property int section: 0
-    property bool invitesExpanded: false
+    property bool invitesExpanded: true
     readonly property bool compact: width < 860 * GlassTheme.scale
     Connections {
         target: multiplayerBridge
@@ -49,7 +49,7 @@ Item {
                 Column {
                     id: invitesArea
                     width: parent.width; spacing: 10
-                    visible: root.section === 0 && !multiplayerBridge.active && !hostBridge.details.active && socialBridge.invitations.length > 0
+                    visible: root.section === 0 && (!root.compact || !socialBridge.peerId) && !multiplayerBridge.active && !hostBridge.details.active && socialBridge.invitations.length > 0
                     Button { objectName: "showInvitations"; width: parent.width; visible: root.compact; quiet: true; label: Legacy.Tr.phrase("Lời mời · ") + socialBridge.invitations.length + (root.invitesExpanded ? "  ↑" : "  ↓"); onClicked: root.invitesExpanded = !root.invitesExpanded }
                     InvitationList { width: parent.width; visible: !root.compact || root.invitesExpanded }
                 }

@@ -31,7 +31,7 @@ Glass {
         }
         PaymentText {
             width: parent.width
-            visible: !hostBridge.details.active && (multiplayerBridge.role === "waiting_world" || root.detailsExpanded)
+            visible: multiplayerBridge.role === "joined" || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
             text: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Trong game → Multiplayer → Kết nối trực tiếp. Dùng địa chỉ bên dưới nếu không thấy LAN.")
                 : multiplayerBridge.role === "hosting" ? Legacy.Tr.phrase("Chọn bạn rồi bấm Mời chơi. Giữ Minecraft và launcher mở khi chơi.")
                 : Legacy.Tr.phrase("Trong thế giới → Esc → Open to LAN → Start LAN World.")
@@ -39,6 +39,7 @@ Glass {
         }
         Flow {
             width: parent.width; spacing: 8
+            GuideButton { topicId: "invite"; label: Legacy.Tr.phrase("Mời bạn vào world") }
             Button { objectName: "socialStopRoom"; label: hostBridge.details.active && hostBridge.details.stage !== "ready" || multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Huỷ") : Legacy.Tr.phrase("Rời phòng"); quiet: true; onClicked: { if (hostBridge.details.active) hostBridge.stop(); else multiplayerBridge.stop(); } }
             Button { objectName: "hostRetryShare"; visible: hostBridge.details.active && hostBridge.details.stage === "error"; label: Legacy.Tr.phrase("Thử đồng bộ lại"); clickable: !roomSyncBridge.busy; onClicked: hostBridge.retryShare() }
             Button { visible: multiplayerBridge.role === "waiting_world"; objectName: "showManualLan"; label: root.manualExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Không tìm thấy LAN?"); quiet: true; onClicked: root.manualExpanded = !root.manualExpanded }

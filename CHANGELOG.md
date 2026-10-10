@@ -5,8 +5,14 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
-## 1.2.0rc21 — 2026-10-10
+## 1.2.0rc22 — 2026-10-10
 
+- Sửa gửi/nhận/từ chối lời mời world bị khóa bởi polling bạn bè. Chặn thao tác
+  trùng, giữ điều kiện LAN/modpack sẵn sàng và không vào phòng từ phiên tài khoản cũ.
+- Thêm hướng dẫn Mời bạn vào world bằng Tiếng Việt/English với GIF: host mở LAN,
+  gửi lời mời, khách nhận/đồng bộ pack và kết nối trong Minecraft. Hiện sẵn lời mời đến.
+- Bỏ tự ẩn launcher khi Minecraft khởi chạy, kể cả cấu hình cũ đã bật; giữ chat,
+  lời mời và phòng kết nối. Không giành tiêu điểm khi người chơi tự thu nhỏ cửa sổ.
 - Thư viện tổng mở chọn bản chơi và phiên bản trước khi cài mod, shader hoặc
   resourcepack; không tự cài vào đích đã chọn trước đó. Sửa nhãn Install bị dịch
   thành Settings. Thư viện trong bản chơi giữ đích cài cố định.

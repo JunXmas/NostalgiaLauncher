@@ -1,4 +1,4 @@
-"""Khay hệ thống (tray mode): thu gọn vào khay khi game chạy để giải phóng RAM."""
+"""Không tự ẩn hoặc giành tiêu điểm launcher khi game chạy/dừng."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
+from PySide6.QtCore import Qt
 from PySide6.QtQuick import QQuickView
 
 from nostalgia.api import Launcher
@@ -34,7 +35,7 @@ def test_tray_initialization_and_menu(tmp_path: Path) -> None:
     assert action_texts == ["Hiện lại Launcher", "Dừng game", "Thoát"]
 
 
-def test_tray_hides_window_when_game_starts_and_restores_on_stop(tmp_path: Path) -> None:
+def test_tray_keeps_launcher_visible_when_game_starts_and_stops(tmp_path: Path) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     view = QQuickView()
     view.show()
@@ -42,17 +43,17 @@ def test_tray_hides_window_when_game_starts_and_restores_on_stop(tmp_path: Path)
 
     bridge = LauncherBridge(launcher, parent=view)
     settings_bridge = SettingsBridge(launcher, parent=view)
-    assert settings_bridge.hideWhenGameRunning is True
+    assert settings_bridge.hideWhenGameRunning is False
 
     tray = build_tray(view, bridge, settings_bridge)
     assert tray.isVisible() is False
 
-    # Khi game khởi động, launcher ẩn và khay hiện
+    # Khi game khởi động, launcher vẫn hiện cùng khay
     bridge.gameStarted.emit("instance-1")
-    assert view.isVisible() is False
+    assert view.isVisible() is True
     assert tray.isVisible() is True
 
-    # Khi game dừng, khay ẩn và launcher hiện lại
+    # Khi game dừng, khay ẩn; launcher vẫn hiện
     bridge.gameStopped.emit(0)
     assert tray.isVisible() is False
     assert view.isVisible() is True
@@ -70,7 +71,7 @@ def test_tray_does_not_hide_window_when_setting_is_disabled(tmp_path: Path) -> N
     tray = build_tray(view, bridge, settings_bridge)
     bridge.gameStarted.emit("instance-1")
     assert view.isVisible() is True
-    assert tray.isVisible() is False
+    assert tray.isVisible() is True
 
 
 class ShowCountingView(QQuickView):
@@ -105,23 +106,20 @@ def test_stopping_the_game_leaves_a_window_we_never_hid_alone(tmp_path: Path) ->
     assert view.show_calls == before, "không được gọi show() lên cửa sổ ta chưa hề ẩn"
 
 
-def test_the_window_we_hid_does_come_back(tmp_path: Path) -> None:
-    """Mặt kia của cùng một luật: đã tự ẩn thì phải tự hiện lại, không thì launcher mất tăm."""
+def test_legacy_enabled_setting_cannot_hide_or_remap_launcher(tmp_path: Path) -> None:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     view = ShowCountingView()
     view.show()
     bridge = LauncherBridge(launcher, parent=view)
     settings_bridge = SettingsBridge(launcher, parent=view)
-    assert settings_bridge.hideWhenGameRunning is True
+    settings_bridge.setHideWhenGameRunning(True)
     build_tray(view, bridge, settings_bridge)
-
-    bridge.gameStarted.emit("instance-1")
-    assert view.isVisible() is False
     before = view.show_calls
+    bridge.gameStarted.emit("instance-1")
+    assert view.isVisible()
+    view.showMinimized()
     bridge.gameStopped.emit(0)
-
-    assert view.show_calls == before + 1
-    assert view.isVisible() is True
+    assert view.show_calls == before and view.windowState() == Qt.WindowState.WindowMinimized
 
 
 def test_tray_menu_actions(tmp_path: Path) -> None:

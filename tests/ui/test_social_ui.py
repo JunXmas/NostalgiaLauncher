@@ -104,7 +104,8 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
     wait_until(lambda: gateway.sent and not social.busy)
     assert gateway.sent == ["Chơi thôi"]
     wait_until(lambda: len(social.messages) == 2 and not social.busy)
-    assert not find_control(root_item, "inviteSelectedFriend").property("clickable")
+    assert find_control(root_item, "inviteSelectedFriend").property("clickable")
+    assert find_control(root_item, "inviteSelectedFriend").property("label") == "Mở phòng"
     multiplayer._apply_status(
         RoomStatus(
             role="hosting",

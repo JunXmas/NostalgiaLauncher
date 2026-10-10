@@ -1,6 +1,19 @@
-# Nostalgia 1.2.0rc21 — Click đúng chỗ, mica sạch hơn
+# Nostalgia 1.2.0rc22 — Mời bạn dễ hơn, click đúng chỗ
 
-rc21 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+rc22 sửa vệt trắng và những khoảng trống bất thường bạn gặp trong thư viện, bản chơi và hướng dẫn. Ảnh chưa tải vẫn có nền tối đồng nhất; ảnh tải xong giữ hiệu ứng mica quen thuộc.
+
+## Cùng vào world, dễ hiểu hơn
+
+**Gửi, nhận và từ chối lời mời** không còn bị khóa khi launcher cập nhật trạng thái bạn bè. Nếu chưa có phòng, nút trong chat đưa bạn đến chọn bản chơi để host. Launcher vẫn chờ LAN và nội dung chia sẻ sẵn sàng trước khi cho gửi lời mời.
+
+Hướng dẫn **Mời bạn vào world** hiện ngay trong chat và bảng phòng, có GIF cùng nội dung Tiếng Việt / English:
+
+1. Host chọn bản chơi và bấm **Host & khởi chạy**.
+2. Trong world Minecraft: **Esc → Open to LAN → Start LAN World**.
+3. Quay lại launcher, chờ phòng sẵn sàng, chọn bạn trực tuyến rồi **Mời chơi**.
+4. Người nhận bấm **Vào phòng**, xem/đồng bộ modpack nếu có, rồi kết nối thế giới LAN trong Minecraft.
+
+**Launcher luôn giữ mở khi game khởi chạy.** Tùy chọn tự ẩn vào khay đã được bỏ, kể cả khi cấu hình cũ từng bật. Bạn có thể tiếp tục chat và gửi lời mời; khi tự thu nhỏ cửa sổ, launcher không giành lại tiêu điểm lúc game dừng.
 
 ## Cài nội dung vào đúng bản chơi
 
@@ -8,7 +21,7 @@ Nút tải ở thư viện tổng hiển thị **Cài / Install**. Bấm vào s�
 
 ## Chấp nhận lời mời kết bạn ngay
 
-Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm mới ở nền. Yêu cầu đến hiện sẵn để dễ tìm; thao tác gửi/chấp nhận/từ chối chỉ khóa trong lúc chính thao tác đó đang xử lý. Chặn gửi trùng và bỏ kết quả từ phiên tài khoản đã đổi hoặc bị thu hồi.
+Nút **Chấp nhận** vẫn hoạt động khi danh sách bạn bè đang làm mới ở nền. Yêu cầu đến hiện sẵn để dễ tìm; thao tác kết bạn chỉ khóa trong lúc chính thao tác đó đang xử lý. Chặn gửi trùng và bỏ kết quả từ phiên tài khoản đã đổi hoặc bị thu hồi.
 
 ## Popup nhận đúng một lần bấm
 
