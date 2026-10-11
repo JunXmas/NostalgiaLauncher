@@ -3,7 +3,37 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.0rc33 — 2026-10-11
+
+- Sửa bắt tay P2P bị từ chối khi đồng hồ host lệch: thời hạn dùng đồng hồ đơn điệu,
+  giữ giới hạn cấp quyền, chống phát lại và xác thực SDP mã hóa.
+- Đồng bộ file custom tiếp tục từ khối còn thiếu khi kênh P2P ngắt; gia hạn kênh
+  giữa các khối và kiểm tra lại quyền Premium ở backend. Đường truyền chậm không
+  bị cắt chỉ vì toàn file mất hơn 30 giây; vẫn kiểm kích thước và SHA-256 trước khi cài.
+- Phân biệt phòng đóng, khóa phòng, host chưa trả lời, dịch vụ bận và mạng không
+  nối được P2P. Lỗi có thể thử lại giữ nguyên phòng/bản chơi; relay vẫn vô hiệu hóa.
+- Cài mod từ thư viện chung gọn hơn: chọn bản chơi, launcher tự chọn bản ổn định
+  mới nhất phù hợp với Minecraft và loader. Muốn dùng bản khác, mở Đổi phiên bản;
+  giữ lựa chọn thủ công khi làm mới thông tin và khóa cài nếu không tương thích.
+  Shader và gói tài nguyên cũng tự lọc theo Minecraft của bản chơi đã chọn.
+- Lỗi chứng chỉ HTTPS hiện thông báo dễ hiểu bằng tiếng Việt và English,
+  phân biệt lỗi thời hạn với chứng chỉ không hợp lệ khác; giữ mã chẩn đoán trong log.
+  Không thử lại đăng nhập khi chứng chỉ bị từ chối, không gửi mật khẩu qua kết nối lỗi.
+- Thêm cosmetic Halloween Đèn bí ngô: khung avatar pixel art trong suốt và nền
+  hồ sơ rừng đêm. Xem thử trước khi sử dụng, lưu đồng bộ như các bộ hiện có;
+  hỗ trợ tặng bộ qua quản trị và kiểm tra quyền trên máy chủ.
+- Giới hạn log trong RAM ngay cả khi giao diện chưa kịp đọc; giữ phần đầu/cuối
+  của dòng quá dài và giữ nguyên log trên đĩa để chẩn đoán lỗi game.
+- Giảm tải GPU khi Minecraft chạy và launcher ở nền: tạm dừng mica, ảnh nền thẻ,
+  atlas xoay skin và quán tính cuộn. Thu hồi tài nguyên khi thu nhỏ cửa sổ;
+  giới hạn kích thước giải mã icon và key art đăng nhập.
+- Phòng chơi hiện riêng ba trạng thái: vào phòng, kết nối hai máy và world mở LAN.
+  Lỗi P2P có nút Thử kết nối lại, giữ cổng kết nối và bản chơi đã đồng bộ;
+  phòng đã đóng hướng dẫn nhận lời mời mới. Relay dữ liệu vẫn vô hiệu hóa.
+- Nút cài, chơi, tạo phòng và server hiển thị lý do đang khóa cùng hướng xử lý,
+  bằng cả tiếng Việt và English. Danh sách yêu cầu kết bạn dài chỉ dựng ô gần màn hình.
+- Sửa kết quả tìm kiếm đến muộn khi chuyển tab thư viện: kết quả cũ không thay thế
+  tìm kiếm mới, cờ rảnh chỉ đổi sau khi danh sách đã cập nhật trên luồng giao diện.
 
 ## 1.2.0rc31 — 2026-10-11
 

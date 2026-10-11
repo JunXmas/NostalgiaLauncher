@@ -15,6 +15,7 @@ Controls.Popup {
     property string buildId: ""
     property bool initialVersionsRequested: false
     readonly property var engine: serverBridge.engines.filter(function(e) { return e.engine_id === root.engineId; })[0] || ({})
+    readonly property string blockedReason: !serverBridge.enabled ? Legacy.Tr.phrase("Tính năng server đang tạm vô hiệu hóa.") : !socialBridge.signedIn ? Legacy.Tr.phrase("Đăng nhập Google ở mục Bạn bè để kiểm tra quyền server.") : serverBridge.busy ? Legacy.Tr.phrase("Đang xử lý server. Hãy chờ hoàn tất hoặc hủy tác vụ.") : !serverBridge.hasAccess ? (serverBridge.canRetry ? Legacy.Tr.phrase("Chưa xác minh được quyền server. Đóng cửa sổ và bấm Thử lại ở mục Server.") : Legacy.Tr.phrase("Cần gói Pro, Max hoặc Ultimate để tạo server. Xem trạng thái quyền ở mục Server.")) : !root.gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft cho server.") : !root.buildId ? Legacy.Tr.phrase("Chọn bản phát hành server.") : !labelField.text.trim() ? Legacy.Tr.phrase("Nhập tên server để tiếp tục.") : ""
     function chooseEngine(engineId) {
         root.initialVersionsRequested = true;
         root.engineId = engineId; root.gameVersion = ""; root.buildId = "";
@@ -65,10 +66,13 @@ Controls.Popup {
                 PaymentText { width: parent.width; visible: serverBridge.busy; text: Legacy.Tr.message(serverBridge.activity); color: GlassTheme.accent }
             }
         }
-        Row { id: footer; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 10
-            GuideButton { topicId: "server" }
-            Button { visible: serverBridge.busy; label: Legacy.Tr.phrase("Huỷ tác vụ"); onClicked: serverBridge.cancel() }
-            Button { objectName: "serverCreateSubmit"; label: Legacy.Tr.phrase("Tạo server"); primary: true; clickable: serverBridge.hasAccess && !serverBridge.busy && !!root.gameVersion && !!root.buildId && !!labelField.text.trim(); onClicked: serverBridge.create(labelField.text, root.engineId, root.gameVersion, root.buildId) }
+        Column { id: footer; width: parent.width; anchors.bottom: parent.bottom; spacing: 10
+            ActionHint { objectName: "serverCreateHint"; width: parent.width; reason: root.blockedReason }
+            Row { anchors.right: parent.right; spacing: 10
+                GuideButton { topicId: "server" }
+                Button { visible: serverBridge.busy; label: Legacy.Tr.phrase("Huỷ tác vụ"); onClicked: serverBridge.cancel() }
+                Button { objectName: "serverCreateSubmit"; label: Legacy.Tr.phrase("Tạo server"); primary: true; disabledReason: root.blockedReason; clickable: !disabledReason; onClicked: serverBridge.create(labelField.text, root.engineId, root.gameVersion, root.buildId) }
+            }
         }
     }
 }

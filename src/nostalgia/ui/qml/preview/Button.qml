@@ -14,6 +14,7 @@ Item {
     property bool selected: false
     property bool emphasized: false
     property bool clickable: true
+    property string disabledReason: ""
     readonly property bool hovered: hover.hovered
     readonly property real captionPadding: Math.max(4, Math.min(16, (root.width - caption.implicitWidth - (root.provider ? providerLogo.width + labelRow.spacing : 0)) / 2))
     signal clicked
@@ -27,6 +28,7 @@ Item {
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
     Accessible.name: label
+    Accessible.description: !clickable ? disabledReason : ""
     Accessible.onPressAction: root.trigger()
     Keys.onReturnPressed: root.trigger()
     Keys.onEnterPressed: root.trigger()

@@ -1,5 +1,6 @@
 """Live switching in production dialogs, status text, welcome and native menus."""
 
+import ssl
 from typing import Any
 
 import pytest
@@ -11,6 +12,7 @@ from test_bridges import wait_until
 from test_minimal_preview import Preview, find_control
 from test_minimal_preview import preview as preview
 
+from nostalgia.net.tls_failure import certificate_failure
 from nostalgia.ui.app import QML_DIR
 from nostalgia.ui.preview import open_preview
 
@@ -136,7 +138,15 @@ Item {
         assert probe.format("Tháng sử dụng: %1 · %2", [6, "Pro %1"]) == "6 months of Pro %1"
         assert probe.plural(" kết quả", 1) == " result"
         assert probe.plural(" kết quả", 2) == " results"
+        failure = ssl.SSLCertVerificationError("raw Windows certificate error")
+        failure.verify_code = 0x800B0101
+        source = str(certificate_failure("authserver.ely.by", failure))
+        translated = probe.message(source)
+        assert translated.startswith("Cannot securely connect to authserver.ely.by:")
+        assert "expired or is not valid yet" in translated
+        assert "raw Windows certificate error" not in translated
         probe.language("vi")
+        assert probe.message(translated) == source
         assert probe.message("Sign out of Google") == "Đăng xuất Google"
         assert probe.message("File not found: C:\\Games\\Thế giới\\mod{7}.jar") == (
             "Không thấy file C:\\Games\\Thế giới\\mod{7}.jar"

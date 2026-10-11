@@ -12,7 +12,7 @@ Item {
         id: artwork
         objectName: "cardArtwork"
         anchors.fill: parent
-        source: root.renderEnabled ? root.source : ""
+        source: root.renderEnabled && surface.graphicsEnabled ? root.source : ""
         sourceSize: Qt.size(160, 160)
         visible: false; asynchronous: true; cache: true
         fillMode: Image.PreserveAspectCrop
@@ -22,7 +22,7 @@ Item {
     Image {
         anchors.fill: parent; anchors.margins: root.radius
         visible: !root.shaderAvailable
-        source: root.renderEnabled && !root.shaderAvailable ? root.source : ""
+        source: root.renderEnabled && surface.graphicsEnabled && !root.shaderAvailable ? root.source : ""
         sourceSize: Qt.size(4, 4); smooth: true; asynchronous: true; cache: true
         fillMode: Image.PreserveAspectCrop; opacity: 0.18
     }

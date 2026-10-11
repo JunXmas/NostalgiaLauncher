@@ -3,7 +3,7 @@
 Luồng đọc output của game gọi `receive(line)` hàng trăm lần mỗi giây khi mod nạp; đẩy từng
 dòng qua tín hiệu Qt là hàng trăm sự kiện/giây lên luồng giao diện. Thay vào đó: dòng vào
 bộ đệm có khoá, một `QTimer` 100 ms ở luồng giao diện gom cả lô rồi nối vào model một lần.
-Model giữ tối đa `MAX_LINES` dòng — game chạy cả buổi không được làm launcher phình RAM.
+Giới hạn cả bộ đệm chờ lẫn model theo số dòng và số ký tự, kể cả khi giao diện bị nghẽn.
 """
 
 from __future__ import annotations
@@ -25,9 +25,10 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QGuiApplication
 
+from nostalgia.ui.game_log_buffer import MAX_LINES, MAX_LOG_CHARACTERS, LogBuffer
+
 GAME_LOG_TAIL_LINES = 60
 CRASH_MARKER = "Crash report saved to:"
-MAX_LINES = 5000
 DRAIN_INTERVAL_MS = 100
 
 TEXT_ROLE = Qt.ItemDataRole.UserRole + 1
@@ -67,6 +68,7 @@ class GameLogModel(QAbstractListModel):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._lines: list[tuple[str, str]] = []
+        self._characters = 0
 
     def rowCount(self, _parent: QModelIndex | QPersistentModelIndex | None = None) -> int:
         return len(self._lines)
@@ -85,23 +87,34 @@ class GameLogModel(QAbstractListModel):
         return [text for text, _level in self._lines]
 
     def append_lines(self, lines: list[str]) -> None:
+        incoming = LogBuffer()
+        for line in lines:
+            incoming.append(line)
+        lines = incoming.take()
         if not lines:
             return
-        first = len(self._lines)
-        self.beginInsertRows(QModelIndex(), first, first + len(lines) - 1)
-        self._lines.extend((line, classify_level(line)) for line in lines)
-        self.endInsertRows()
-        overflow = len(self._lines) - MAX_LINES
-        if overflow > 0:
+        characters = self._characters + sum(map(len, lines))
+        overflow = max(0, len(self._lines) + len(lines) - MAX_LINES)
+        characters -= sum(len(text) for text, _level in self._lines[:overflow])
+        while characters > MAX_LOG_CHARACTERS:
+            characters -= len(self._lines[overflow][0])
+            overflow += 1
+        if overflow:
             self.beginRemoveRows(QModelIndex(), 0, overflow - 1)
             del self._lines[:overflow]
             self.endRemoveRows()
+        first = len(self._lines)
+        self.beginInsertRows(QModelIndex(), first, first + len(lines) - 1)
+        self._lines.extend((line, classify_level(line)) for line in lines)
+        self._characters = characters
+        self.endInsertRows()
 
     def clear(self) -> None:
         if not self._lines:
             return
         self.beginResetModel()
         self._lines.clear()
+        self._characters = 0
         self.endResetModel()
 
 
@@ -113,7 +126,7 @@ class GameLogFeed(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._model = GameLogModel(self)
-        self._pending: list[str] = []
+        self._pending = LogBuffer()
         self._tail: deque[str] = deque(maxlen=GAME_LOG_TAIL_LINES)
         self._lock = threading.Lock()
         self._drain_timer = QTimer(self)
@@ -162,13 +175,13 @@ class GameLogFeed(QObject):
     def receive(self, line: str) -> None:
         """Nhận một dòng từ LUỒNG BẤT KỲ. Rẻ: chỉ nối vào bộ đệm."""
         with self._lock:
-            self._pending.append(line)
+            line = self._pending.append(line)
             self._tail.append(line)
 
     @Slot()
     def drain(self) -> None:
         with self._lock:
-            batch, self._pending = self._pending, []
+            batch = self._pending.take()
         if batch:
             self._model.append_lines(batch)
             self.lineCountChanged.emit()

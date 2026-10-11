@@ -18,8 +18,9 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 @pytest.mark.parametrize("paid", [False, True])
+@pytest.mark.parametrize("decor", ["amethyst", "pumpkin-lantern"])
 def test_library_preview_and_equip_preserve_latest_profile(
-    social_preview: tuple[Any, ...], paid: bool
+    social_preview: tuple[Any, ...], paid: bool, decor: str
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     if paid:
@@ -34,19 +35,17 @@ def test_library_preview_and_equip_preserve_latest_profile(
     cosmetics = view.rootContext().contextProperty("cosmeticBridge")
     wait_until(lambda: cosmetics.property("details")["loaded"] and not cosmetics.busy)
     page = find_control(root_item, "cosmeticLibrary")
-    press(view, find_item(page, "profileDecor-amethyst"))
-    assert page.property("previewDecor") == "amethyst"
+    press(view, find_item(page, "profileDecor-" + decor))
+    assert page.property("previewDecor") == decor
     assert not hasattr(gateway, "profile_draft")
     equip = find_control(root_item, "cosmeticEquip")
     assert equip.property("clickable") == paid
     # A profile edit after loading the library must survive equipping cosmetic.
     gateway.profile_draft = ProfileDraft(bio="Vừa sửa giới thiệu", avatar_mode="initials")
-    cosmetics.equip("amethyst")
+    cosmetics.equip(decor)
     if paid:
-        wait_until(
-            lambda: cosmetics.property("details")["decor"] == "amethyst" and not cosmetics.busy
-        )
-        assert cosmetics.property("details")["decor"] == "amethyst"
+        wait_until(lambda: cosmetics.property("details")["decor"] == decor and not cosmetics.busy)
+        assert cosmetics.property("details")["decor"] == decor
     else:
         QTest.qWait(80)
         assert gateway.profile_draft.decor == "none"

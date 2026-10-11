@@ -19,6 +19,7 @@ Item {
     readonly property int frame: ((Math.round(yaw / 5) % 72) + 72) % 72
     readonly property bool renderActive: renderEnabled && visible && source !== "" &&
         Window.window && Window.window.visible && Window.window.visibility !== Window.Minimized
+    readonly property bool detailedPreviewActive: renderActive && (typeof Window.window.effectsEnabled === "undefined" || Window.window.effectsEnabled)
     readonly property string previewKey: source + (slim ? "|1|" : "|0|") + revision + "|cape|" + capeSource + "|view|" + previewFrame
     readonly property string thumbnail: skinPreviews ? (skinPreviews.previews[previewKey] || "") : ""
     readonly property string atlas: skinPreviews ? (skinPreviews.atlases[previewKey] || "") : ""
@@ -60,7 +61,7 @@ Item {
     Image {
         id: atlasImage
         objectName: "skin3DAtlas"
-        source: root.renderActive && root.interactive ? root.atlas : ""
+        source: root.detailedPreviewActive && root.interactive ? root.atlas : ""
         width: root.width * 12
         height: root.height * 6
         x: -(root.frame % 12) * root.width

@@ -117,6 +117,7 @@ def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
     # "bridge is null" ở những ràng buộc còn sống trong lúc đóng cửa sổ.
     bridge = LauncherBridge(launcher, parent=view)
     view.bind_context_property("bridge", bridge)
+    view.watch_game(bridge)
     view.bind_context_property("storageBridge", StorageBridge(launcher, bridge, parent=view))
     content = ContentBridge(launcher, bridge, parent=view)
     view.bind_context_property("contentBridge", content)

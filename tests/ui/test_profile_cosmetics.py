@@ -55,7 +55,7 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
     assert gateway.profile_draft.decor == "none"
 
 
-@pytest.mark.parametrize("decor", ["amethyst", "emerald", "amber"])
+@pytest.mark.parametrize("decor", ["amethyst", "emerald", "amber", "pumpkin-lantern"])
 @pytest.mark.parametrize(
     "plan_id",
     ["plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1"],

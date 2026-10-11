@@ -87,7 +87,7 @@ def test_stale_search_results_are_dropped(
     content_bridge.search("mod", "a", "relevance")
     content_bridge.search("mod", "b", "relevance")
     assert not content_bridge.is_current(first)
-    # Worker clears searching before its queued page signal reaches the Qt model.
+    # Cờ tìm kiếm kết thúc sau khi kết quả đã được giao tới mô hình Qt.
     wait_until(lambda: not content_bridge.searching and len(content_bridge.results) == 1)
     # Cả hai đều trả cùng một Sodium: không được nhân đôi.
     assert len(content_bridge.results) == 1

@@ -26,7 +26,29 @@ nhắn tin mới bật polling chat. Khi đổi trang hoặc thu gọn, polling 
   sẽ thất bại. Không tự chạy ngrok, không cấp tunnel hoặc TURN miễn phí.
 - Xem giới hạn bảo mật và kiểm thử ở `MULTIPLAYER_SECURITY.md`.
 
-Các thay đổi này đang trong workspace để kiểm thử, chưa thuộc bản rc26 đã phát hành.
+## Thời hạn và phục hồi kết nối
+
+- Backend cấp mỗi yêu cầu P2P tối đa 45 giây, chuyển qua WSS của đúng host.
+  Host tính thời gian từ lúc nhận bằng đồng hồ đơn điệu; không so giờ Windows
+  với giờ backend. Request ID được giữ 120 giây để chặn phát lại. Backend mới
+  gửi `ttl_seconds=45`; backend cũ có `expires_at` dùng thời lượng mặc định 45 giây.
+  Khách không được tự tăng thời lượng qua JSON: backend ghi đè các trường này.
+- Kênh file gia hạn trước khối tiếp theo khi cửa sổ cũ đã hết. Backend kiểm tra
+  lại manifest, lời mời và Premium của host. Không biến quyền 45 giây thành quyền
+  không giới hạn. Ngắt giữa file thử lại khối đang thiếu một lần, giữ các khối đã
+  nhận và chỉ trả file sau khi kiểm SHA-256. Hủy thao tác đóng kênh.
+- Mỗi khối có tối đa 30 giây chờ; cả file có thể lâu hơn nếu vẫn tiến triển.
+  Dữ liệu nhận từ phòng khác không được dùng lại kênh sync đã lưu.
+- Thương lượng ICE, dịch vụ signaling và mở kênh có thời hạn riêng. Lỗi HTTP
+  không bị gán nhầm thành lỗi UDP. Log ghi bước, mã HTTP, thời gian và loại lỗi,
+  không ghi SDP, IP, mã phòng, invite proof hoặc token.
+- Nút Thử kết nối lại áp dụng cho lỗi mạng, host chưa sẵn sàng hoặc dịch vụ bận.
+  Phòng đã đóng cần lời mời mới. Không tự lặp thương lượng liên tục.
+
+Kiểm thử hồi quy có hai đầu ICE/DTLS trên loopback: đồng hồ host lệch,
+ngắt giữa file, file chậm hơn 30 giây, gia hạn quyền và từ chối khi Premium bị
+thu hồi. Đây không phải kiểm chứng NAT giữa hai nhà mạng; P2P vẫn có thể bị
+chặn trên mạng không hỗ trợ đường trực tiếp khi relay tắt.
 
 ## Nền relay giữ lại
 

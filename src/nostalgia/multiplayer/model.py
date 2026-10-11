@@ -27,3 +27,8 @@ class RoomStatus:
     world_ready: bool = True
     connection_kind: str = "relay"
     share_state: str = "unknown"
+    # LAN của host độc lập với việc khách đã nối được P2P hay chưa.
+    world_available: bool = False
+    connection_note: str = ""
+    connection_retryable: bool = False
+    lobby_verified: bool = False

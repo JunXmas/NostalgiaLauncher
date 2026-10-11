@@ -59,4 +59,9 @@ trong cùng đợt; máy khách đã có cơ chế fallback vẫn đọc đượ
 bản cập nhật và khởi động lại, backend cần triển khai bản đã duyệt. Rollback bằng commit
 cũ của danh mục và backend; các bản ghi người chơi vẫn giữ mã của mình.
 
-Đợt này giữ nguyên ba bộ hiện có, không thay giá/gói và không tạo bộ cài hoặc release.
+Revision 2 thêm `pumpkin-lantern` (Pumpkin Lantern / Đèn bí ngô) với frame PNG RGBA
+và banner Halloween 3:1. Bộ dùng quy trình xem thử/lưu hiện tại, không có timer hay
+animation liên tục. Các gói Premium vẫn chỉ trang bị một bộ hồ sơ tại một thời điểm;
+người dùng miễn phí dùng bộ được backend tặng. Chưa có vật phẩm hiển thị trong game.
+Danh mục mới cần deploy backend và phát hành launcher có ảnh mới trước khi người
+chơi dùng được bộ này trên dịch vụ thật. Không thay giá/gói, không tự cấp quyền.

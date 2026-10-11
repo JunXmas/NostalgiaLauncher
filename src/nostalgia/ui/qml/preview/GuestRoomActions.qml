@@ -1,20 +1,12 @@
 import QtQuick
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Column {
     id: root
     spacing: 10
     readonly property bool needsSync: !!roomSyncBridge.offer.name && !roomSyncBridge.guestInstanceId
     readonly property bool waitingPack: multiplayerBridge.shareState === "pending" && !roomSyncBridge.offer.name
-    PaymentText {
-        width: parent.width
-        text: multiplayerBridge.connectionKind === "direct" ? Legacy.Tr.phrase("● Kết nối trực tiếp · DTLS")
-            : multiplayerBridge.connectionKind === "connecting" ? Legacy.Tr.phrase("Đang tìm đường kết nối trực tiếp…")
-            : multiplayerBridge.connectionKind === "failed" ? Legacy.Tr.phrase("Không thể kết nối P2P · Relay dữ liệu đã tắt")
-            : Legacy.Tr.phrase("Đang chờ kết nối P2P")
-        color: multiplayerBridge.connectionKind === "direct" ? GlassTheme.brand : GlassTheme.muted
-        font.pixelSize: GlassTheme.fontCaption
-    }
     Select {
         id: pack; objectName: "guestRoomPack"; width: parent.width
         visible: !roomSyncBridge.offer.name
@@ -26,10 +18,13 @@ Column {
         color: GlassTheme.muted
     }
     Button {
+        id: launch
         objectName: "launchGuestRoom"
-        label: multiplayerBridge.connectionKind === "failed" ? Legacy.Tr.phrase("Không thể kết nối P2P") : root.waitingPack ? Legacy.Tr.phrase("Đang kiểm tra modpack của phòng...") : multiplayerBridge.connectionKind === "connecting" ? Legacy.Tr.phrase("Đang chờ kết nối P2P") : !multiplayerBridge.worldReady ? Legacy.Tr.phrase("Đang chờ host mở world") : Legacy.Tr.phrase("Khởi chạy & vào world")
+        label: Legacy.Tr.phrase("Khởi chạy & vào world")
         primary: true
-        clickable: multiplayerBridge.connectionKind === "direct" && !root.waitingPack && multiplayerBridge.worldReady && !root.needsSync && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !roomSyncBridge.busy && (!!roomSyncBridge.guestInstanceId || !!bridge.instances[pack.currentIndex])
+        disabledReason: Legacy.Tr.phrase(Reasons.joining(bridge, multiplayerBridge, roomSyncBridge, roomSyncBridge.guestInstanceId || (bridge.instances[pack.currentIndex] || {}).instanceId || "", root.waitingPack, root.needsSync))
+        clickable: !disabledReason
         onClicked: roomSyncBridge.launchGuest((bridge.instances[pack.currentIndex] || {}).instanceId || "")
     }
+    ActionHint { objectName: "guestLaunchHint"; width: parent.width; reason: launch.disabledReason }
 }

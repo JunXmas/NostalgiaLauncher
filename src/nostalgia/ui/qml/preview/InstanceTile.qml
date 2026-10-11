@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Rectangle {
     id: root
@@ -74,7 +75,8 @@ Rectangle {
             height: 36
             label: root.pickOnly ? (root.selected ? Legacy.Tr.phrase("Đã chọn") : Legacy.Tr.phrase("Chọn")) : Legacy.Tr.phrase("Chơi")
             selected: root.selected
-            clickable: root.pickOnly || (!!bridge.activePlayerName && !bridge.busy && !bridge.storageBusy && !bridge.gameRunning)
+            disabledReason: root.pickOnly ? "" : Legacy.Tr.phrase(Reasons.playing(bridge))
+            clickable: !disabledReason
             onClicked: root.pickOnly ? root.picked() : bridge.play(root.entry.instanceId)
         }
         Button {

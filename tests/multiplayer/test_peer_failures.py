@@ -20,7 +20,7 @@ from nostalgia.net.http import HttpClient, HttpResponse
 
 
 @pytest.mark.parametrize("relay_enabled", [False, True])
-@pytest.mark.parametrize("status", [404, 429, 503])
+@pytest.mark.parametrize("status", [403, 404, 409, 429, 503, 504])
 def test_unavailable_signalling_only_falls_back_when_relay_is_explicitly_enabled(
     status: int, monkeypatch: pytest.MonkeyPatch, relay_enabled: bool
 ) -> None:
@@ -50,6 +50,9 @@ def test_unavailable_signalling_only_falls_back_when_relay_is_explicitly_enabled
         assert connected is relay_enabled
         assert room.status.connection_kind == ("relay" if relay_enabled else "failed")
         assert not room.failures if relay_enabled else room.failures and not room.status.world_ready
+        if not relay_enabled:
+            assert room.status.connection_retryable is (status != 404)
+            assert "UDP" not in room.status.connection_note
 
     asyncio.run(scenario())
 

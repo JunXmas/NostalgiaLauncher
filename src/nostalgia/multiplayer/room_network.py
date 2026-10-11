@@ -14,7 +14,7 @@ from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.mux import ROOM_META, pack_mux_frame
 from nostalgia.multiplayer.room_code import split_room_code
-from nostalgia.multiplayer.room_watch import RoomWatch
+from nostalgia.multiplayer.room_recovery import RoomRecovery
 from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.http import HttpClient
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from nostalgia.operations.cancellation import CancelToken
 
 
-class RoomNetwork(RoomWatch):
+class RoomNetwork(RoomRecovery):
     _owns_http: bool
     _host: HostRelay | None
     _joiner: JoinerBridge | None
@@ -89,6 +89,7 @@ class RoomNetwork(RoomWatch):
         self._room_label = "Minecraft"
         self._sharing = False
         self._peer_download: PeerDownload | None = None
+        self._guest_room_code = ""
 
     def require_room_transport(self) -> None:
         if not self._relay_enabled and (
@@ -143,6 +144,7 @@ class RoomNetwork(RoomWatch):
             pass
 
     async def close_room_network(self) -> None:
+        self._guest_room_code = ""
         task, self._network_task = self._network_task, None
         if task is not None:
             task.cancel()

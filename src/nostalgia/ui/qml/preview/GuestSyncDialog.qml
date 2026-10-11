@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Controls.Popup {
     id: root
@@ -105,12 +106,15 @@ Controls.Popup {
             spacing: 12
             Legacy.CheckRow { objectName: "guestSyncConsent"; width: parent.width; label: Legacy.Tr.phrase("Tôi tin tưởng host và hiểu rủi ro"); checked: root.acknowledged; onToggled: function(checked) { root.acknowledged = checked; } }
             Button {
+                id: confirmSync
                 objectName: "guestSyncConfirm"
                 width: parent.width; primary: true
                 label: roomSyncBridge.updateLabel ? Legacy.Tr.phrase("Cập nhật bản chơi đã đồng bộ") : Legacy.Tr.phrase("Tạo bản chơi & đồng bộ")
-                clickable: root.acknowledged && roomSyncBridge.reviewReady && !roomSyncBridge.busy && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy
+                disabledReason: Legacy.Tr.phrase(Reasons.writing(bridge, roomSyncBridge.busy, false)) || (!roomSyncBridge.reviewReady ? Legacy.Tr.phrase("Nội dung đồng bộ đã thay đổi. Mở lại lựa chọn modpack.") : !root.acknowledged ? Legacy.Tr.phrase("Đọc cảnh báo và đánh dấu xác nhận tin tưởng host để tiếp tục.") : "")
+                clickable: !disabledReason
                 onClicked: { if (roomSyncBridge.confirmSync(root.acknowledged)) root.close(); }
             }
+            ActionHint { objectName: "guestSyncHint"; width: parent.width; reason: confirmSync.disabledReason }
         }
     }
 }

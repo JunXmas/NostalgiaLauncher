@@ -1,12 +1,14 @@
 import QtQuick
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Item {
     id: root
     objectName: "modernInstalledContent"
     property string kind: "mod"
     property bool chooseInstance: true
-    readonly property bool writable: !!contentBridge.instanceId && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy
+    readonly property string blockedReason: !contentBridge.instanceId ? Legacy.Tr.phrase("Chọn bản chơi để quản lý nội dung đã cài.") : Legacy.Tr.phrase(Reasons.writing(bridge, contentBridge.busy, false))
+    readonly property bool writable: !blockedReason
     function refresh() {
         contentBridge.setKind(kind);
         if (contentBridge.instanceId) contentBridge.refreshInstalled(kind);
@@ -57,7 +59,7 @@ Item {
             PaymentText {
                 id: summary
                 width: parent.width
-                text: !contentBridge.instanceId ? Legacy.Tr.phrase("Chọn bản chơi để quản lý nội dung đã cài.") : bridge.gameRunning ? Legacy.Tr.phrase("Đóng game trước khi thay đổi nội dung.") : contentBridge.installedShownCount + " / " + contentBridge.installed.length + Legacy.Tr.phrase(" file · bật, tắt và cập nhật tại đây")
+                text: root.blockedReason || contentBridge.installedShownCount + " / " + contentBridge.installed.length + Legacy.Tr.phrase(" file · bật, tắt và cập nhật tại đây")
                 color: GlassTheme.muted
             }
             InertialList {

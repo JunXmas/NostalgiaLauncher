@@ -12,7 +12,7 @@ var topics = [
      tip: "Forge, NeoForge, Fabric và Quilt không thay thế cho nhau. Với modpack có sẵn, nên cài từ Thư viện để lấy đúng phiên bản và loader của pack."},
     {id: "library", title: "Cài mod & modpack", clip: "library",
      summary: "Xem nội dung trước khi cài; chọn đúng bản chơi để tránh cài nhầm.",
-     steps: ["Chọn loại nội dung: Modpack, Mod, Shader hoặc Gói tài nguyên.", "Từ Quản lý bản chơi → Nội dung đã cài → Thêm nội dung, thư viện lọc sẵn theo bản chơi đang mở.", "Tìm nội dung rồi bấm vào ô để xem thông tin và bản phát hành. Modpack ở thư viện chính tạo bản chơi riêng.", "Cài xong, quay lại quản lý để kiểm tra, bật/tắt hoặc gỡ nội dung. Thư viện mở từ quản lý giữ cố định bản chơi đích."],
+     steps: ["Chọn loại nội dung: Modpack, Mod, Shader hoặc Gói tài nguyên.", "Từ Quản lý bản chơi → Nội dung đã cài → Thêm nội dung, thư viện lọc sẵn theo bản chơi đang mở.", "Bấm vào ô nội dung, chọn bản chơi để tự chọn phiên bản phù hợp. Bấm Đổi phiên bản nếu muốn chọn bản khác; modpack tạo bản chơi mới.", "Cài xong, quay lại quản lý để kiểm tra, bật/tắt hoặc gỡ nội dung. Thư viện mở từ quản lý giữ cố định bản chơi đích."],
      tip: "Shader cần nền tảng hỗ trợ shader phù hợp. Gói tài nguyên và shader đã tải vẫn cần được bật trong Minecraft. Chỉ cài nội dung từ nguồn bạn tin tưởng."},
     {id: "drop", title: "Kéo thả mod từ máy", clip: "drop",
      summary: "Thả file JAR vào bất kỳ trang hoặc popup nào rồi chọn bản chơi sẽ nhận mod.",

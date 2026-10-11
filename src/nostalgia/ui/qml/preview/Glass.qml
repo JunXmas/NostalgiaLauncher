@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Window
 
 Rectangle {
     id: root
@@ -13,8 +14,9 @@ Rectangle {
     property int blurRadius: 48
     property bool autoPaddingEnabled: false
     property real finishOpacity: 1
+    readonly property bool graphicsEnabled: !Window.window || typeof Window.window.effectsEnabled === "undefined" || Window.window.effectsEnabled
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
-    readonly property bool backdropActive: visible && frosted && shaderAvailable && backdrop !== null && width > 0 && height > 0
+    readonly property bool backdropActive: graphicsEnabled && visible && frosted && shaderAvailable && backdrop !== null && width > 0 && height > 0
     radius: 24
     color: GlassTheme.glassSurface
     border.width: 1

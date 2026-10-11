@@ -22,6 +22,7 @@ from urllib.parse import urljoin, urlsplit
 from nostalgia import __version__
 from nostalgia.errors import Cancelled, NetworkError
 from nostalgia.net.tls import default_tls_context
+from nostalgia.net.tls_failure import certificate_failure
 from nostalgia.operations.cancellation import CancelToken
 
 # Header mặc định của MỌI request. User-Agent là bắt buộc về thực tế: GitHub API trả 403 cho
@@ -253,6 +254,9 @@ class HttpClient:
             try:
                 connection.request(method, path, body=body, headers=dict(headers))
                 return connection.getresponse()
+            except ssl.SSLCertVerificationError as exc:
+                self._discard(host)
+                raise certificate_failure(host, exc) from exc
             except (http.client.HTTPException, OSError) as exc:
                 self._discard(host)
                 # Kết nối dùng lại mà hỏng ngay lúc gửi / đọc đầu phản hồi thì gần như chắc

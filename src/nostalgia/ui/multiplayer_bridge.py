@@ -73,6 +73,30 @@ class MultiplayerBridge(QObject):
     def connectionKind(self) -> str:
         return self._status.connection_kind
 
+    @Property(bool, notify=statusChanged)
+    def worldAvailable(self) -> bool:
+        return self._status.world_available or self._status.world_ready
+
+    @Property(str, notify=statusChanged)
+    def connectionNote(self) -> str:
+        return self._status.connection_note
+
+    @Property(bool, notify=statusChanged)
+    def canRetryConnection(self) -> bool:
+        return (
+            self._status.role == "joined"
+            and self._status.connection_kind == "failed"
+            and self._status.connection_retryable
+        )
+
+    @Property(bool, notify=statusChanged)
+    def roomVerified(self) -> bool:
+        return self._status.lobby_verified or self._status.connection_kind == "direct"
+
+    @Slot()
+    def retryConnection(self) -> None:
+        self._service.retry_connection()
+
     @Slot(bool)
     def setDirectAllowed(self, allowed: bool) -> None:
         self._service.set_direct_allowed(allowed)

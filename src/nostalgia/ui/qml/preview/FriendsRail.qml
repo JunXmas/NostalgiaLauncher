@@ -24,6 +24,7 @@ Glass {
             width: parent.width; spacing: 8
             Input { id: friendCode; objectName: "friendCodeInput"; width: parent.width; placeholder: Legacy.Tr.phrase("Mã kết bạn"); onAccepted: socialBridge.requestFriend(text) }
             Button { objectName: "requestFriend"; width: parent.width; label: Legacy.Tr.phrase("Gửi yêu cầu"); clickable: !!friendCode.text.trim() && !socialBridge.friendBusy; onClicked: socialBridge.requestFriend(friendCode.text) }
+            ActionHint { width: parent.width; reason: socialBridge.friendBusy ? Legacy.Tr.phrase("Đang xử lý yêu cầu kết bạn. Hãy chờ hoàn tất.") : !friendCode.text.trim() ? Legacy.Tr.phrase("Nhập mã kết bạn để gửi yêu cầu.") : "" }
             Button { label: Legacy.Tr.phrase("Chép mã của tôi"); quiet: true; onClicked: socialBridge.copyFriendCode() }
         }
         FriendSearch {
@@ -60,13 +61,16 @@ Glass {
     }
         }
         Button { objectName: "showFriendRequests"; visible: socialBridge.requests.length > 0; width: parent.width; quiet: true; label: Legacy.Tr.phrase("Yêu cầu · ") + socialBridge.requests.length + (root.requestsExpanded ? "  ↑" : "  ↓"); onClicked: root.requestsExpanded = !root.requestsExpanded }
-        Column {
+        InertialList {
+            id: requests
+            objectName: "friendRequestsList"
             visible: root.requestsExpanded
             width: parent.width; spacing: 10
-            Repeater {
-                model: socialBridge.requests
-                Column {
-                    width: contents.width; spacing: 8
+            height: count ? Math.min(Math.max(100 * GlassTheme.scale, contentHeight), 320 * GlassTheme.scale) : 0
+            model: socialBridge.requests
+            delegate: Column {
+                    required property var modelData
+                    width: requests.width; height: implicitHeight; spacing: 8
                     Row { width: parent.width; spacing: 10
                         SocialAvatar { playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; showPresence: false; size: 32 }
                         PaymentText { width: parent.width - 42; anchors.verticalCenter: parent.verticalCenter; text: modelData.name + (modelData.incoming ? Legacy.Tr.phrase(" muốn kết bạn") : Legacy.Tr.phrase(" · Đã gửi")) }
@@ -76,8 +80,8 @@ Glass {
                         Button { objectName: "acceptFriend-" + modelData.accountId; visible: modelData.incoming; label: Legacy.Tr.phrase("Chấp nhận"); clickable: !socialBridge.friendBusy; onClicked: socialBridge.acceptFriend(modelData.accountId) }
                         Button { objectName: "removeFriend-" + modelData.accountId; label: modelData.incoming ? Legacy.Tr.phrase("Từ chối") : Legacy.Tr.phrase("Huỷ"); quiet: true; clickable: !socialBridge.friendBusy; onClicked: socialBridge.removeFriend(modelData.accountId) }
                     }
-                }
             }
         }
+        ActionHint { width: parent.width; reason: root.requestsExpanded && socialBridge.requests.length && socialBridge.friendBusy ? Legacy.Tr.phrase("Đang xử lý yêu cầu kết bạn. Hãy chờ hoàn tất.") : "" }
     }
 }

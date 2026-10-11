@@ -42,7 +42,7 @@ Column {
         width: parent.width
         text: root.canEquip ? Legacy.Tr.phrase("Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào.")
             : root.ownedCosmetics.indexOf(root.previewDecor) >= 0 ? Legacy.Tr.phrase("Bộ cosmetic này đã được tặng cho bạn. Có thể sử dụng mà không cần Premium.")
-            : root.previewDecor !== root.selectedDecor ? Legacy.Tr.phrase("Đang xem thử ") + Cosmetics.name(root.previewDecor, cosmeticBridge.sets) + Legacy.Tr.phrase(". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng.")
+            : root.previewDecor !== root.selectedDecor ? Legacy.Tr.phrase("Đang xem thử ") + Legacy.Tr.phrase(Cosmetics.name(root.previewDecor, cosmeticBridge.sets)) + Legacy.Tr.phrase(". Hồ sơ đã lưu vẫn giữ nguyên; cần Plus trở lên để áp dụng.")
             : Legacy.Tr.phrase("Có thể xem thử mọi bộ. Dùng cosmetic được tặng hoặc mở Plus để chọn các bộ còn lại.")
         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
     }

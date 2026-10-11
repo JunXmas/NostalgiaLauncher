@@ -7,7 +7,7 @@ import QtQuick.Window
 Item {
     id: root
     property Flickable target: null
-    readonly property bool renderActive: target && target.visible && target.Window.window && target.Window.window.visible && target.Window.window.visibility !== Window.Minimized
+    readonly property bool renderActive: target && target.visible && target.Window.window && target.Window.window.visible && target.Window.window.visibility !== Window.Minimized && (typeof target.Window.window.effectsEnabled === "undefined" || target.Window.window.effectsEnabled)
     onRenderActiveChanged: if (!renderActive) stopMotion()
     readonly property real minY: target ? target.originY : 0
     readonly property real maxY: target ? minY + Math.max(0, target.contentHeight - target.height) : 0

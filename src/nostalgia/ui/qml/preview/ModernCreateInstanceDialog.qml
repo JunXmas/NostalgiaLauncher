@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Dialogs
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Controls.Popup {
     id: dialog
@@ -33,7 +34,8 @@ Controls.Popup {
     readonly property string defaultName: loaderLabel + " " + gameVersion
     readonly property bool versionUnsupported: isPreset && !!gameVersion && presetVersions.length > 0 && presetVersions.indexOf(gameVersion) < 0
     readonly property string missingStep: !gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft để tiếp tục.") : versionUnsupported ? Legacy.Tr.phrase("Bản tối ưu chưa hỗ trợ ") + gameVersion + Legacy.Tr.phrase(". Bạn có thể chọn Fabric hoặc phiên bản khác.") : needsLoaderStep && !loaderVersion ? Legacy.Tr.phrase("Chọn phiên bản ") + loaderLabel + "." : ""
-    readonly property bool canCreate: !missingStep && !bridge.busy && !catalogBridge.busy
+    readonly property string blockedReason: Legacy.Tr.phrase(Reasons.writing(bridge, false, false)) || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải danh mục phiên bản. Hãy chờ hoàn tất.") : missingStep)
+    readonly property bool canCreate: !blockedReason
     function openDialog() {
         loaderKind = "optimized"; gameVersion = ""; loaderVersion = ""; gameDirUrl = "";
         advancedOpen = false; nameField.text = ""; heapField.text = "";
@@ -175,16 +177,17 @@ Controls.Popup {
         }
         Item {
             id: footer; objectName: "createDialogFooter"; anchors.bottom: parent.bottom; width: parent.width
-            height: Math.max(footerActions.height, summary.implicitHeight)
+            height: Math.max(footerActions.height, summary.implicitHeight) + (createHint.visible ? createHint.implicitHeight + 10 : 0)
+            ActionHint { id: createHint; objectName: "createInstanceHint"; width: parent.width; reason: dialog.blockedReason }
             Rectangle { anchors.left: parent.left; anchors.right: parent.right; y: -12 * GlassTheme.scale; height: 1; color: GlassTheme.stroke }
-            Column { id: summary; width: Math.max(0, parent.width - footerActions.width - 20); visible: width > 180 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; spacing: 4
+            Column { id: summary; width: Math.max(0, parent.width - footerActions.width - 20); visible: width > 180 * GlassTheme.scale; anchors.bottom: parent.bottom; spacing: 4
                 PaymentText { text: Legacy.Tr.phrase("Bản chơi của bạn"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                 PaymentText { objectName: "createSelectionSummary"; width: parent.width; text: dialog.gameVersion ? dialog.loaderLabel + " · Minecraft " + dialog.gameVersion : Legacy.Tr.phrase("Chưa chọn phiên bản"); wrapMode: Text.NoWrap; elide: Text.ElideRight; font.weight: Font.DemiBold }
             }
-            Row { id: footerActions; anchors.right: parent.right; spacing: 10
+            Row { id: footerActions; anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 10
                 GuideButton { topicId: "create" }
                 Button { label: Legacy.Tr.phrase("Huỷ"); quiet: true; clickable: !bridge.busy; onClicked: dialog.close() }
-                Button { objectName: "createInstanceConfirm"; label: bridge.busy ? Legacy.Tr.phrase("Đang cài…") : Legacy.Tr.phrase("Tạo bản chơi"); primary: true; clickable: dialog.canCreate; onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName, dialog.gameVersion, dialog.loaderKind, dialog.loaderVersion, parseInt(heapField.text) || 0, dialog.gameDirUrl) }
+                Button { objectName: "createInstanceConfirm"; label: bridge.busy ? Legacy.Tr.phrase("Đang cài…") : Legacy.Tr.phrase("Tạo bản chơi"); primary: true; disabledReason: dialog.blockedReason; clickable: dialog.canCreate; onClicked: catalogBridge.createInstance(nameField.text.trim() || dialog.defaultName, dialog.gameVersion, dialog.loaderKind, dialog.loaderVersion, parseInt(heapField.text) || 0, dialog.gameDirUrl) }
             }
         }
     }

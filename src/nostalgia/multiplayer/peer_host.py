@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
+import re
 import time
 from typing import TYPE_CHECKING
 
@@ -32,37 +34,44 @@ class PeerHost:
         return sum(game.joiner_count for game in self.games)
 
     def request(self, payload: bytes) -> None:
-        if len(self.connections) >= 16 or len(payload) > 96000:
+        if len(self.connections) >= 16 or len(self.tasks) >= 32 or len(payload) > 96000:
             return
-        task = asyncio.create_task(self._answer(payload))
+        task = asyncio.create_task(self._answer(payload, time.monotonic()))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
 
-    async def _answer(self, payload: bytes) -> None:
+    async def _answer(self, payload: bytes, received_at: float) -> None:
         connection = None
         try:
             from aiortc import RTCPeerConnection
 
             document = json.loads(payload)
             request_id, purpose = document["id"], document["purpose"]
-            deadline = document["expires_at"]
+            # WSS chỉ chuyển yêu cầu vừa được backend cấp quyền. Dùng thời lượng
+            # tính từ lúc nhận, tránh đồng hồ Windows lệch khiến mọi SDP bị từ chối.
+            duration = document.get("ttl_seconds", 45)
+            expiry = document["expires_at"]
             self._seen = {
-                key: expires for key, expires in self._seen.items() if expires > time.time()
+                key: expires for key, expires in self._seen.items() if expires > time.monotonic()
             }
             if (
                 purpose not in ("game", "sync")
                 or not isinstance(request_id, str)
-                or len(request_id) != 32
+                or re.fullmatch(r"[0-9a-f]{32}", request_id) is None
                 or request_id in self._seen
-                or not isinstance(deadline, int)
-                or not time.time() < deadline <= time.time() + 46
+                or type(expiry) is not int
+                or expiry <= 0
+                or type(duration) is not int
+                or not 1 <= duration <= 45
+                or received_at + duration <= time.monotonic()
                 or self.host.locked
                 or (purpose == "game" and self.host.world_port == 0)
                 or (purpose == "sync" and self.host.sync_snapshot is None)
                 or len(self.connections) >= 16
             ):
                 return
-            self._seen[request_id] = time.time() + 120
+            deadline = received_at + duration
+            self._seen[request_id] = time.monotonic() + 120
             connection = RTCPeerConnection(build_peer_configuration())
             self.connections.add(connection)
 
@@ -96,21 +105,25 @@ class PeerHost:
                     )
                 )
             # Đầu kết nối chưa mở kênh không được giữ chỗ vô hạn.
-            await asyncio.sleep(15)
+            await asyncio.sleep(35)
             if connection.connectionState != "connected" or not channel_received:
                 await asyncio.shield(connection.close())
                 self.connections.discard(connection)
-        except (Exception, asyncio.CancelledError):
+        except (Exception, asyncio.CancelledError) as exc:
+            if not isinstance(exc, asyncio.CancelledError):
+                logging.getLogger(__name__).warning(
+                    "P2P host answer failed: %s", type(exc).__name__
+                )
             if connection is not None:
                 await asyncio.shield(connection.close())
                 self.connections.discard(connection)
 
-    async def _serve(self, stream: PeerStream, purpose: str, deadline: int) -> None:
+    async def _serve(self, stream: PeerStream, purpose: str, deadline: float) -> None:
         from nostalgia.multiplayer.host import HostRelay
 
         game = None
         try:
-            await stream.wait_open()
+            await stream.wait_open(timeout=30)
             if purpose == "game":
                 game = HostRelay(
                     "",
@@ -126,7 +139,7 @@ class PeerHost:
                 self.games.add(game)
                 await game.run()
             else:
-                async with asyncio.timeout(max(0, deadline - time.time())):
+                async with asyncio.timeout(max(0, deadline - time.monotonic())):
                     while payload := await stream.receive():
                         if len(payload) > 1024:
                             break

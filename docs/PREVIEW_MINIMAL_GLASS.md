@@ -55,9 +55,9 @@ Complementary Reimagined và Fabulously Optimized, nạp từ fixture cục bộ
   theo kỹ thuật cũ: chồng hai ảnh thu nhỏ 4×4 và 7×7 rồi phóng mượt. Lớp phủ dùng màu
   nền gốc và tối hơn ở vùng chữ. OpenGL cắt nền theo góc bo; renderer phần mềm dùng nền
   thu vào trong góc, có chuyển sắc ở mép. Không có ảnh thì chỉ hiện icon dự phòng.
-- Popup chung cho cả bốn loại nội dung: giới thiệu đầy đủ, chọn Minecraft, chọn bản phát
-  hành (kèm release/beta/alpha và loader), rồi chọn bản chơi tương thích. Chọn Minecraft
-  là lọc nội dung để cài; không đổi phiên bản game của bản chơi đã có. Nếu thiếu bản chơi,
+- Popup chung cho cả bốn loại nội dung: giới thiệu đầy đủ; mod, shader và gói tài nguyên
+  chọn bản chơi trước, tự đề xuất bản ổn định mới nhất tương thích. Nút Đổi phiên bản mở
+  lựa chọn thủ công đã lọc theo Minecraft/loader; không đổi game của bản chơi. Nếu thiếu bản chơi,
   mở hộp tạo bản chơi hiện có và điền sẵn game/loader; đóng hộp đó trở lại popup.
   Modpack tạo bản chơi mới theo archive của đúng bản phát hành đã chọn, có ô đặt tên.
 - Nền popup là mica xuyên thấu: lấy đúng vùng giao diện thư viện phía sau, blur và phủ

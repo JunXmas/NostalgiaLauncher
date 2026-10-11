@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Item {
     id: root
@@ -143,7 +144,13 @@ Item {
         anchors.top: filters.bottom
         anchors.topMargin: root.compactScope ? 10 : 18
         width: parent.width
-        height: 26
+        height: 26 + (libraryHint.visible ? libraryHint.implicitHeight + 10 : 0)
+        ActionHint {
+            id: libraryHint
+            objectName: "libraryInstallHint"
+            y: 32; width: parent.width
+            reason: Legacy.Tr.phrase(Reasons.writing(bridge, contentBridge.busy, projectBridge.installing))
+        }
         Text {
             text: contentBridge.searching ? Legacy.Tr.phrase("Đang tìm kiếm…") : contentBridge.totalHits.toLocaleString(Qt.locale(Legacy.Tr.localeName), 'f', 0) + Legacy.Tr.plural(" kết quả", contentBridge.totalHits)
             color: GlassTheme.muted

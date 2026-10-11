@@ -21,8 +21,8 @@ Glass {
             text: hostBridge.details.active ? hostBridge.details.label
                 : multiplayerBridge.role === "hosting" ? Legacy.Tr.phrase("●  Phòng đang mở · ") + multiplayerBridge.joinerCount + Legacy.Tr.plural(" kết nối", multiplayerBridge.joinerCount)
                 : multiplayerBridge.role === "waiting_world" ? Legacy.Tr.phrase("Phòng chờ đã mở")
-                : multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("●  Đã vào phòng của bạn") : Legacy.Tr.phrase("Phòng chơi")
-            color: multiplayerBridge.role === "hosting" || multiplayerBridge.role === "joined" ? GlassTheme.brand : GlassTheme.text
+                : multiplayerBridge.role === "joined" ? (multiplayerBridge.roomVerified ? Legacy.Tr.phrase("●  Đã vào phòng của bạn") : Legacy.Tr.phrase("Đang kiểm tra phòng…")) : Legacy.Tr.phrase("Phòng chơi")
+            color: multiplayerBridge.role === "hosting" || (multiplayerBridge.role === "joined" && multiplayerBridge.worldReady && multiplayerBridge.connectionKind === "direct") ? GlassTheme.brand : GlassTheme.text
             font.weight: Font.DemiBold
         }
         HostSteps { objectName: "hostRoomSteps"; width: parent.width; visible: root.isHost; currentStep: root.stage === "preparing" ? 0 : root.stage === "lobby" || root.stage === "publishing" ? 1 : 2 }
@@ -36,7 +36,7 @@ Glass {
         PaymentText {
             width: parent.width
             visible: multiplayerBridge.role === "joined" || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
-            text: multiplayerBridge.role === "joined" ? (multiplayerBridge.worldReady ? Legacy.Tr.phrase("World đã mở. Khởi chạy đúng bản chơi bên dưới để vào cùng bạn.") : Legacy.Tr.phrase("Bạn đã vào phòng. Đồng bộ modpack trong lúc chờ host mở world."))
+            text: multiplayerBridge.role === "joined" ? (!multiplayerBridge.roomVerified ? Legacy.Tr.phrase("Đang kiểm tra phòng và quyền tham gia. Giữ launcher mở.") : multiplayerBridge.worldReady ? Legacy.Tr.phrase("World đã mở. Khởi chạy đúng bản chơi bên dưới để vào cùng bạn.") : multiplayerBridge.worldAvailable ? Legacy.Tr.phrase("World đã mở. Chờ kết nối hai máy sẵn sàng trước khi vào game.") : Legacy.Tr.phrase("Bạn đã vào phòng. Chờ host mở world; đồng bộ modpack nếu phòng có chia sẻ."))
                 : root.stage === "lobby" ? Legacy.Tr.phrase("Mời bạn vào phòng và đồng bộ trước. Bấm Khởi chạy Minecraft khi bạn muốn mở world.")
                 : root.readyToInvite ? Legacy.Tr.phrase("Phòng sẵn sàng. Mời bạn bên dưới và giữ Minecraft cùng launcher mở khi chơi.")
                 : root.stage === "waiting_world" ? Legacy.Tr.phrase("Bước tiếp theo nằm trong Minecraft: mở world của bạn, rồi bật LAN.")
@@ -57,6 +57,7 @@ Glass {
             }
         }
         RoomInviteList { width: parent.width; visible: root.readyToInvite }
+        RoomConnectionStatus { width: parent.width; visible: multiplayerBridge.role === "joined" }
         Button { objectName: "launchLobbyGame"; visible: root.stage === "lobby" && roomSyncBridge.hostReady; label: Legacy.Tr.phrase("Khởi chạy Minecraft"); primary: true; onClicked: hostBridge.launchRoom() }
         GuestRoomActions { width: parent.width; visible: multiplayerBridge.role === "joined" }
         Flow {

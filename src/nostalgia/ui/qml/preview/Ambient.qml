@@ -1,15 +1,20 @@
 import QtQuick
+import QtQuick.Window
 
 Item {
     id: root
     property bool cinematic: false
+    readonly property bool graphicsEnabled: !Window.window || typeof Window.window.effectsEnabled === "undefined" || Window.window.effectsEnabled
     Rectangle {
         anchors.fill: parent
         color: GlassTheme.canvas
     }
     Image {
+        objectName: "ambientHero"
+        cache: false
         anchors.fill: parent
-        source: "../assets/hero.jpg"
+        source: root.cinematic && root.graphicsEnabled ? "../assets/hero.jpg" : ""
+        sourceSize: Qt.size(Math.min(2048, Math.ceil(root.width * (Window.window ? Window.window.devicePixelRatio : 1))), 0)
         visible: root.cinematic
         fillMode: Image.PreserveAspectCrop
         mipmap: true

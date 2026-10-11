@@ -78,6 +78,15 @@ class ProjectBridge(ProjectInstallBridge):
                     "instanceId": target.instance_id,
                     "gameVersion": target.game_version,
                     "loaderKind": target.loader_kind,
+                    "versionIds": [
+                        release.version_id
+                        for release in project_catalog.versions
+                        if release.supports(
+                            target.game_version, target.loader_kind, project.content_kind
+                        )
+                    ]
+                    if project
+                    else [],
                 }
                 for target in project_catalog.targets
             ]

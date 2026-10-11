@@ -26,7 +26,8 @@ class ContentBridge(FilterContentBridge):
     sourceChanged = Signal()
     # Hai tín hiệu nội bộ: luồng tải phát, luồng giao diện nhận (Qt tự xếp hàng qua luồng),
     # vì mô hình danh sách chỉ được đổi ở luồng giao diện.
-    _pageArrived = Signal(bool, object)
+    _pageArrived = Signal(int, bool, object, int)
+    _searchFinished = Signal(int)
     _flagsDirty = Signal()
 
     def __init__(
@@ -38,6 +39,7 @@ class ContentBridge(FilterContentBridge):
         self._results_model = ProjectListModel(self)
         self.installedChanged.connect(self._refresh_flags)
         self._pageArrived.connect(self._apply_page)
+        self._searchFinished.connect(self._finish_search)
         self._flagsDirty.connect(self._refresh_flags)
         self._total_hits = 0
         self._searching = False
@@ -160,17 +162,19 @@ class ContentBridge(FilterContentBridge):
                 if not self.is_current(generation):
                     return
                 hits = list(page.hits)
-                self._total_hits = page.total_hits
-                self._pageArrived.emit(offset > 0, hits)
+                self._pageArrived.emit(generation, offset > 0, hits, page.total_hits)
             finally:
-                if self.is_current(generation):
-                    self._set_searching(False)
+                self._searchFinished.emit(generation)
 
         source_label = "CurseForge" if source == "curseforge" else "Modrinth"
         self.run_in_background(work, f"Tìm trên {source_label}")
 
-    @Slot(bool, object)
-    def _apply_page(self, append: bool, hits: object) -> None:
+    @Slot(int, bool, object, int)
+    def _apply_page(self, generation: int, append: bool, hits: object, total_hits: int) -> None:
+        # Kết quả có thể đã xếp hàng trước khi người chơi đổi tab/từ khóa.
+        if not self.is_current(generation):
+            return
+        self._total_hits = total_hits
         projects = cast(list[Project], hits)
         if append:
             self._results_model.append(projects)
@@ -178,6 +182,11 @@ class ContentBridge(FilterContentBridge):
             self._results_model.reset(projects)
         self._refresh_flags()
         self.resultsChanged.emit()
+
+    @Slot(int)
+    def _finish_search(self, generation: int) -> None:
+        if self.is_current(generation):
+            self._set_searching(False)
 
     @Slot()
     def _refresh_flags(self) -> None:

@@ -1,4 +1,4 @@
-"""Bấm thẻ mở popup; chọn game/bản phát hành phải cài đúng vào bản chơi tương thích."""
+"""Chọn bản chơi tự đề xuất phiên bản; đổi thủ công vẫn cài đúng bản và đúng đích."""
 
 from __future__ import annotations
 
@@ -133,27 +133,32 @@ def test_card_popup_selects_version_and_installs(
             view.width() / 2
         )
         picker = find_control(root_item, "projectVersionPicker")
-        wait_until(lambda: bool(picker.property("gameVersion")))
-        assert picker.property("gameVersion") == "1.20.1"
         assert picker.property("instanceId") == ""
-        game_select = find_control(root_item, "projectGameVersion")
-        game_select.forceActiveFocus()
-        QTest.keyClick(view, Qt.Key.Key_Down)
-        wait_until(lambda: picker.property("versionId") == "forge-new")
-        assert picker.property("gameVersion") == "1.21.1"
-        assert picker.property("instanceId") == ""
-        QTest.keyClick(view, Qt.Key.Key_Up)
-        wait_until(lambda: picker.property("versionId") == "new")
-        select = find_control(root_item, "projectRelease")
-        select.forceActiveFocus()
-        QTest.keyClick(view, Qt.Key.Key_Down)
-        assert picker.property("versionId") == "old"
-        if content_kind != "modpack":
+        if content_kind == "modpack":
+            wait_until(lambda: bool(picker.property("gameVersion")))
+            assert picker.property("gameVersion") == "1.20.1"
+            game_select = find_control(root_item, "projectGameVersion")
+            game_select.forceActiveFocus()
+            QTest.keyClick(view, Qt.Key.Key_Down)
+            wait_until(lambda: picker.property("versionId") == "forge-new")
+            assert picker.property("gameVersion") == "1.21.1"
+            QTest.keyClick(view, Qt.Key.Key_Up)
+            wait_until(lambda: picker.property("versionId") == "new")
+        else:
+            assert not picker.property("gameVersion") and not picker.property("versionId")
             assert not find_control(root_item, "projectInstall").property("clickable")
             target_select = find_control(root_item, "projectTarget")
             target_select.forceActiveFocus()
             QTest.keyClick(view, Qt.Key.Key_Down)
+            wait_until(lambda: picker.property("versionId") == "new")
             assert picker.property("instanceId") == "fabric"
+            assert not find_control(root_item, "projectRelease").isVisible()
+            press(view, find_control(root_item, "projectChangeVersion"))
+            assert find_control(root_item, "projectRelease").isVisible()
+        select = find_control(root_item, "projectRelease")
+        select.forceActiveFocus()
+        QTest.keyClick(view, Qt.Key.Key_Down)
+        assert picker.property("versionId") == "old"
         press(view, find_control(root_item, "projectInstall"))
         wait_until(lambda: bool(choices) and not project_bridge.installing)
         assert choices[0].version_id == "old"

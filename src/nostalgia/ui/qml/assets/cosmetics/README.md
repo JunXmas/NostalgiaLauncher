@@ -8,6 +8,7 @@ are avatar overlays and profile backgrounds, not Minecraft block or skin models.
 | Amethyst | `amethyst` | `amethyst` |
 | Grove | `emerald` | `grove` |
 | Eclipse | `amber` | `eclipse` |
+| Pumpkin Lantern | `pumpkin-lantern` | `pumpkin-lantern` |
 
 Frames have genuine alpha transparency in the center and around the ornament.
 QML bounds their decoded size to 384 px and banners to 1536 px, loads them
@@ -24,3 +25,8 @@ Review screenshots are kept outside the repository and release assets.
 Definitions and lifecycle now come from `social/cosmetics.json`. See
 [`docs/COSMETIC_MAINTENANCE.md`](../../../../../../docs/COSMETIC_MAINTENANCE.md)
 for adding artwork, retiring sets, disabling sets and synchronizing backend validation.
+
+Pumpkin Lantern is the first Halloween set: original pixel artwork created with
+image generation, a transparent pumpkin/lantern avatar frame and a 3:1 woodland
+banner. It uses the same bounded renderer and profile entitlement checks as the
+existing sets. It adds no client mod or in-game item.

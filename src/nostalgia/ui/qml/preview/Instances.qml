@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Item {
     id: root
@@ -96,11 +97,18 @@ Item {
             onClicked: manager.openDialog()
         }
     }
+    ActionHint {
+        id: playHint
+        objectName: "instancePlayHint"
+        width: parent.width; anchors.top: filters.bottom; anchors.topMargin: 12
+        visible: !root.serverMode && !!reason && bridge.instances.length > 0
+        reason: Legacy.Tr.phrase(Reasons.playing(bridge))
+    }
     InertialGrid {
         id: instanceGrid
         visible: !root.serverMode
         objectName: "instancesScroll"
-        anchors.top: filters.bottom; anchors.topMargin: 24
+        anchors.top: playHint.bottom; anchors.topMargin: playHint.visible ? 12 : 0
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         readonly property bool compact: GlassTheme.preferences && GlassTheme.preferences.compactUi
         readonly property int columns: compact ? 1 : Math.max(1, Math.floor((width + 8) / (270 * GlassTheme.scale)))

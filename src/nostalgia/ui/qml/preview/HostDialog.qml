@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Controls.Popup {
     id: root
@@ -116,14 +117,17 @@ Controls.Popup {
         Item {
             id: footer
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
-            height: launch.height
-            GuideButton { topicId: "host"; anchors.left: parent.left }
+            height: launch.height + (hostHint.visible ? hostHint.implicitHeight + 10 : 0)
+            ActionHint { id: hostHint; objectName: "hostLaunchHint"; width: parent.width; reason: launch.disabledReason }
+            GuideButton { topicId: "host"; anchors.left: parent.left; anchors.bottom: parent.bottom }
             Button {
                 id: launch
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
+                anchors.bottom: parent.bottom
                 label: Legacy.Tr.phrase("Tạo phòng"); primary: true
-                clickable: !!root.selectedInstance.instanceId && !!bridge.activeAccountId && socialBridge.signedIn && !bridge.busy && !bridge.gameRunning && !bridge.storageBusy && !hostBridge.details.active && !multiplayerBridge.active && !roomSyncBridge.busy && !(root.sharePack && !hostBridge.modSelection.ready)
+                disabledReason: Legacy.Tr.phrase(Reasons.hosting(bridge, socialBridge, hostBridge, multiplayerBridge, roomSyncBridge, root.selectedInstance.instanceId || "", root.sharePack && hostBridge.syncAvailable))
+                clickable: !disabledReason
                 onClicked: {
                     multiplayerBridge.setDirectAllowed(root.directAllowed);
                     if (hostBridge.createRoom(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();

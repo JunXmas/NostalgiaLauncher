@@ -15,7 +15,7 @@ Item {
     height: implicitHeight
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
-    Accessible.name: cosmetic.name + (selected ? Legacy.Tr.phrase(", đã chọn") : canEquip ? Legacy.Tr.phrase(", chọn trang trí hồ sơ") : Legacy.Tr.phrase(", xem thử, cần Plus để sử dụng"))
+    Accessible.name: Legacy.Tr.phrase(cosmetic.name) + (selected ? Legacy.Tr.phrase(", đã chọn") : canEquip ? Legacy.Tr.phrase(", chọn trang trí hồ sơ") : Legacy.Tr.phrase(", xem thử, cần Plus để sử dụng"))
     Accessible.onPressAction: root.clicked()
     Keys.onReturnPressed: root.clicked()
     Keys.onEnterPressed: root.clicked()

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import secrets
+import time
 from typing import TYPE_CHECKING
 
 from cryptography.exceptions import InvalidTag
@@ -14,6 +16,11 @@ from nostalgia.multiplayer.peer_codec import (
     PeerDescription,
     build_peer_envelope,
     parse_peer_envelope,
+)
+from nostalgia.multiplayer.peer_failure import (
+    PeerConnectionError,
+    connection_failure,
+    negotiation_refusal,
 )
 from nostalgia.multiplayer.peer_stream import PeerStream
 from nostalgia.multiplayer.room_code import split_room_code
@@ -42,14 +49,17 @@ async def connect_peer(
     request_id = secrets.token_hex(16)
     connection = RTCPeerConnection(build_peer_configuration())
     stream = PeerStream(connection, connection.createDataChannel("nostalgia-" + purpose))
+    stage, started_at = "gathering", time.monotonic()
     try:
-        async with asyncio.timeout(30):
+        async with asyncio.timeout(15):
             await connection.setLocalDescription(await connection.createOffer())
-            description = connection.localDescription
-            assert description is not None
-            envelope = build_peer_envelope(
-                room_secret, request_id, purpose, PeerDescription(description.sdp, description.type)
-            )
+        description = connection.localDescription
+        assert description is not None
+        envelope = build_peer_envelope(
+            room_secret, request_id, purpose, PeerDescription(description.sdp, description.type)
+        )
+        stage = "signalling"
+        async with asyncio.timeout(25):
             response = await asyncio.to_thread(
                 http_client.send,
                 "POST",
@@ -59,24 +69,42 @@ async def connect_peer(
                 max_bytes=96000,
             )
             if not response.is_ok:
-                raise ConnectionError("peer negotiation unavailable")
+                logging.getLogger(__name__).warning(
+                    "P2P %s signalling refused: HTTP %s", purpose, response.status
+                )
+                raise negotiation_refusal(response.status, purpose)
             document = json.loads(response.body)
             if document["id"] != request_id:
                 raise ValueError("peer answer scope mismatch")
             answer = parse_peer_envelope(room_secret, request_id, purpose, document["body"])
             if answer.description_kind != "answer":
                 raise ValueError("invalid peer answer")
+        stage = "channel"
+        async with asyncio.timeout(35):
             await connection.setRemoteDescription(RTCSessionDescription(answer.sdp, "answer"))
-            await stream.wait_open()
+            await stream.wait_open(timeout=30)
+            logging.getLogger(__name__).info(
+                "P2P %s connected in %.1fs", purpose, time.monotonic() - started_at
+            )
             return stream
+    except PeerConnectionError:
+        await stream.close()
+        raise
     except (InvalidTag, ValueError, KeyError, TypeError) as exc:
         await stream.close()
         raise MultiplayerError(
             "Không xác thực được kết nối trực tiếp; hãy nhận lại lời mời."
         ) from exc
-    except (ConnectionError, TimeoutError, NetworkError):
+    except (ConnectionError, TimeoutError, NetworkError) as exc:
+        logging.getLogger(__name__).warning(
+            "P2P %s failed at %s after %.1fs: %s",
+            purpose,
+            stage,
+            time.monotonic() - started_at,
+            type(exc).__name__,
+        )
         await stream.close()
-        raise
+        raise connection_failure(stage) from exc
     except Exception as exc:
         await stream.close()
         raise MultiplayerError(

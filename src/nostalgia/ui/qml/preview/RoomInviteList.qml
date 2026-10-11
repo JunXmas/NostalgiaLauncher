@@ -51,5 +51,6 @@ Column {
             }
         }
     }
+    ActionHint { width: parent.width; reason: socialBridge.inviteBusy ? Legacy.Tr.phrase("Đang gửi lời mời. Hãy chờ hoàn tất.") : "" }
     PaymentText { width: parent.width; visible: multiplayerBridge.locked; text: Legacy.Tr.phrase("Phòng đang khóa nhận khách mới. Mở khóa trong Tùy chọn phòng để mời bạn."); color: Legacy.Theme.warning }
 }

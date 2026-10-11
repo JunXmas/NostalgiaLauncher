@@ -299,3 +299,22 @@ uv run python bench/download_bench.py --count 60 --runs 5   # mẫu nhỏ hơn, 
 Các script không phải test: chúng in số đo để người đọc so, không tự khẳng định đậu/rớt.
 Ngân sách ở mục 4 sẽ thành test thật khi các bước tương ứng có code — bước 3 cho tải, bước
 13 cho xác minh, bước 14 cho khởi động.
+
+## 7. Ngân sách giao diện khi Minecraft chạy
+
+Bộ đệm log chờ và mô hình hiển thị đều giữ tối đa 5.000 dòng và 1.048.576 ký tự;
+mỗi dòng dài hơn 8.192 ký tự giữ phần đầu/cuối. Các giới hạn này chỉ áp dụng cho
+nhật ký trong giao diện, không thay đổi log trên đĩa hay đầu vào nhận diện cổng LAN.
+Lô mới loại các dòng cũ trước khi chèn, tránh dựng tạm hàng chục nghìn delegate.
+
+Khi launcher bị ẩn hoặc thu nhỏ, Qt được phép thu hồi scene graph và tài nguyên GPU.
+Khi Minecraft chạy và launcher mất focus, mica, ảnh nền thẻ, atlas xoay skin và quán tính
+cuộn tạm dừng; trở lại launcher khôi phục chúng. Cây QML, kết nối phòng và bản chơi
+đã chọn vẫn được giữ. Icon dự án giải mã theo kích thước hiển thị, tối đa 256×256;
+key art đăng nhập có chiều rộng tối đa 2.048 pixel và được bỏ khi vào giao diện chính.
+
+Kiểm thử hồi quy: `tests/ui/test_game_log_budget.py`, `test_gpu_budget.py` và
+`test_action_feedback.py`. Đo bộ đệm bằng `tracemalloc` với 20.000 dòng 1 KiB khi UI
+chưa gom log cho thấy khoảng 20,60 MiB ở rc32 và 1,05 MiB sau sửa. Đây là cấp phát
+Python cho bộ đệm log, không phải tổng RAM hay VRAM của launcher/Minecraft. Cần log
+và số liệu trên máy thật để xác định riêng lỗi treo khi dùng Voxy.

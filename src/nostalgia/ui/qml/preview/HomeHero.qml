@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Glass {
     id: root
@@ -65,11 +66,13 @@ Glass {
             width: parent.width
             spacing: 10
             Button {
+                id: playButton
                 objectName: "minimalPlay"
                 height: 46
                 primary: true
                 label: bridge.gameRunning ? Legacy.Tr.phrase("Dừng game") : root.chosen ? Legacy.Tr.phrase("Chơi ngay  →") : Legacy.Tr.phrase("Tạo bản chơi  +")
-                clickable: bridge.gameRunning || (!bridge.busy && !bridge.storageBusy && (!root.chosen || !!bridge.activePlayerName))
+                disabledReason: bridge.gameRunning ? "" : Legacy.Tr.phrase(root.chosen ? Reasons.playing(bridge) : Reasons.writing(bridge, false, false))
+                clickable: !disabledReason
                 onClicked: root.playRequested()
             }
             Button {
@@ -79,5 +82,6 @@ Glass {
                 onClicked: root.libraryRequested()
             }
         }
+        ActionHint { objectName: "homePlayHint"; width: parent.width; reason: playButton.disabledReason }
     }
 }

@@ -33,6 +33,12 @@ class PeerStream:
         channel.on("close", self._ended)
         channel.on("message", self._message)
         channel.on("bufferedamountlow", self._writable.set)
+
+        @connection.on("connectionstatechange")
+        def connection_changed() -> None:
+            if connection.connectionState in ("failed", "closed"):
+                self._ended()
+
         if channel.readyState == "open":
             self._open.set()
 

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Controls.Popup {
     id: root
@@ -132,7 +133,14 @@ Controls.Popup {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: 46 * GlassTheme.scale + (projectBridge.installing ? 36 : 0)
+            height: 46 * GlassTheme.scale + (projectBridge.installing ? 36 : installHint.visible ? installHint.implicitHeight + 10 : 0)
+            ActionHint {
+                id: installHint
+                objectName: "projectInstallHint"
+                width: parent.width
+                visible: !!reason && !projectBridge.installing && !root.success
+                reason: installButton.disabledReason
+            }
             Column {
                 width: parent.width
                 spacing: 8
@@ -162,12 +170,14 @@ Controls.Popup {
                 onClicked: Qt.openUrlExternally(root.details.websiteUrl)
             }
             Button {
+                id: installButton
                 objectName: "projectInstall"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                label: projectBridge.installing ? Legacy.Tr.phrase("Đang cài…") : picker.isPack ? Legacy.Tr.phrase("Tạo bản chơi") : Legacy.Tr.phrase("Cài phiên bản đã chọn")
+                label: projectBridge.installing ? Legacy.Tr.phrase("Đang cài…") : picker.isPack ? Legacy.Tr.phrase("Tạo bản chơi") : Legacy.Tr.phrase("Cài vào bản chơi")
                 primary: true
-                clickable: !root.details.loading && !projectBridge.installing && !contentBridge.busy && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && picker.canInstall && !root.success
+                disabledReason: Legacy.Tr.phrase(Reasons.installing(bridge, contentBridge.busy, projectBridge, picker, root.success))
+                clickable: !disabledReason
                 onClicked: projectBridge.installVersion(picker.versionId, picker.gameVersion, picker.instanceId, nameField.text)
             }
         }

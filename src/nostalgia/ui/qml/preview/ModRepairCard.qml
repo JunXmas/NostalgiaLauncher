@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Item {
     id: root
@@ -39,13 +40,15 @@ Item {
             PaymentText { width: parent.width; text: Legacy.Tr.message(root.proposal.reason); textFormat: Text.PlainText }
             PaymentText { width: parent.width; text: root.proposal.downloads > 1 ? Legacy.Tr.phrase("Bao gồm ") + root.proposal.downloads + Legacy.Tr.phrase(" mod và phụ thuộc. Tải, kiểm hash, sao lưu trước khi thay.") : Legacy.Tr.phrase("Kiểm hash và lưu bản trước để hoàn tác. Giữ nguyên worlds."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             Button {
+                id: replaceButton
                 objectName: "replaceMod-" + root.proposal.groupId
                 label: root.proposal.isReplacement ? Legacy.Tr.phrase("Replace  ↓") : Legacy.Tr.phrase("Tắt bản trùng/xung đột")
                 primary: true
-                clickable: root.proposal.canReplace && !modRepairBridge.busy && !bridge.gameRunning && !bridge.busy && !bridge.storageBusy
+                disabledReason: Legacy.Tr.phrase(Reasons.writing(bridge, modRepairBridge.busy, false)) || (!root.proposal.canReplace ? Legacy.Tr.phrase("Còn phụ thuộc chưa xác minh; xem lý do bên dưới trước khi sửa.") : "")
+                clickable: !disabledReason
                 onClicked: root.replaceRequested(root.proposal.groupId)
             }
-            PaymentText { width: parent.width; visible: !root.proposal.canReplace; text: Legacy.Tr.phrase("Còn phụ thuộc chưa xác minh; xem lý do bên dưới trước khi sửa."); color: GlassTheme.danger; font.pixelSize: GlassTheme.fontNote }
+            ActionHint { width: parent.width; reason: replaceButton.disabledReason }
         }
     }
 }

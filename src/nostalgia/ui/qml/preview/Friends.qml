@@ -42,7 +42,7 @@ Item {
                 objectName: "socialNote"
                 width: parent.width
                 visible: !!Legacy.Tr.message(socialBridge.note) || !!Legacy.Tr.message(root.roomError)
-                text: [Legacy.Tr.message(socialBridge.note), Legacy.Tr.message(root.roomError)].filter(function(text) { return !!text; }).join("\n")
+                text: [Legacy.Tr.message(socialBridge.note), root.roomError === multiplayerBridge.connectionNote ? "" : Legacy.Tr.message(root.roomError)].filter(function(text) { return !!text; }).join("\n")
                 color: GlassTheme.accent
             }
             Column {

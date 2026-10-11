@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 Controls.Popup {
     id: root
@@ -13,7 +14,8 @@ Controls.Popup {
     padding: 24; modal: true; dim: true; focus: true
     property var instance: ({})
     property int section: 0
-    readonly property bool writable: !bridge.gameRunning && !bridge.storageBusy && !bridge.busy
+    readonly property string blockedReason: Legacy.Tr.phrase(Reasons.writing(bridge, false, false))
+    readonly property bool writable: !blockedReason
     signal repairRequested(var instance)
     signal exportRequested(var instance)
     property bool exportingAfterClose: false
@@ -65,14 +67,15 @@ Controls.Popup {
             GuideButton { topicId: root.section === 3 ? "backup" : "library" }
             Button { id: addContentButton; objectName: "instanceAddContent"; visible: root.section === 1; label: Legacy.Tr.phrase("Thêm nội dung  +"); primary: true; clickable: root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: addContent.openFor(root.instance, installedPanel.item ? installedPanel.item.kind : "mod") }
             Button { label: Legacy.Tr.phrase("Mở thư mục"); quiet: true; onClicked: bridge.openInstanceFolder(root.instance.instanceId) }
-            Button { objectName: "instanceSave"; visible: root.section === 0 || root.section === 2; label: Legacy.Tr.phrase("Lưu thay đổi"); primary: true; clickable: root.writable; onClicked: root.save() }
+            Button { objectName: "instanceSave"; visible: root.section === 0 || root.section === 2; label: Legacy.Tr.phrase("Lưu thay đổi"); primary: true; disabledReason: root.blockedReason; clickable: root.writable; onClicked: root.save() }
         }
+        ActionHint { id: mutationHint; objectName: "instanceWriteHint"; width: parent.width; anchors.bottom: footer.top; anchors.bottomMargin: 12; reason: root.blockedReason }
         InertialScroll {
             id: formScroll
             objectName: "instanceManagerScroll"
             visible: root.section !== 1
             anchors.top: tabs.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right
-            anchors.bottom: footer.top; anchors.bottomMargin: 20
+            anchors.bottom: mutationHint.top; anchors.bottomMargin: 8
             contentHeight: form.implicitHeight + 8
             Column {
                 id: form
@@ -122,7 +125,7 @@ Controls.Popup {
         Loader {
             id: installedPanel
             anchors.top: tabs.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right
-            anchors.bottom: footer.top; anchors.bottomMargin: 20
+            anchors.bottom: mutationHint.top; anchors.bottomMargin: 8
             active: root.opened && root.section === 1
             visible: active
             sourceComponent: Component { InstalledContent { chooseInstance: false } }

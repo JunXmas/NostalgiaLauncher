@@ -12,6 +12,7 @@ import pytest
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.peer_download import PeerDownload
+from nostalgia.multiplayer.peer_failure import PeerConnectionError
 from nostalgia.multiplayer.room_watch import RoomWatch
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
@@ -45,7 +46,13 @@ def test_retry_p2p_after_network_failure_is_not_permanently_disabled(
         )
         sync_file = SyncFile("mods/custom.jar", "a" * 64, 1)
         for _ in range(2):
-            assert await receiver.download("ABCDEFABCDEFGHJKMN", sync_file, CancelToken()) is None
+            if disable_on_failure:
+                assert (
+                    await receiver.download("ABCDEFABCDEFGHJKMN", sync_file, CancelToken()) is None
+                )
+            else:
+                with pytest.raises(PeerConnectionError, match="đồng bộ P2P đã ngắt"):
+                    await receiver.download("ABCDEFABCDEFGHJKMN", sync_file, CancelToken())
         assert len(attempts) == (1 if disable_on_failure else 2)
         await receiver.close()
 
@@ -160,6 +167,8 @@ def test_old_or_missing_room_reports_failure_and_never_marks_world_ready(missing
         assert room.failures and room.states[-1] == {
             "connection_kind": "failed",
             "world_ready": False,
+            "connection_note": room.failures[-1],
+            "connection_retryable": False,
         }
         assert all(state.get("world_ready") is not True for state in room.states)
 
