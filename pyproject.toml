@@ -1,7 +1,7 @@
 [project]
 name = "nostalgia"
-version = "1.2.0rc26"
-description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua relay, tự cập nhật."
+version = "1.2.0rc27"
+description = "Nostalgia Launcher — trình khởi động Minecraft: tài khoản Microsoft / Ely.by / ngoại tuyến, bản chơi theo loader, thư viện mod, chơi chung qua P2P mã hóa, tự cập nhật."
 readme = "README.md"
 requires-python = ">=3.12"
 # PolyForm Strict 1.0.0: mã nguồn CÔNG KHAI để đọc và kiểm an toàn, dùng phi thương mại —

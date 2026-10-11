@@ -91,8 +91,13 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         forget_session(ACCESS_TOKEN)
 
 
+@pytest.mark.parametrize("relay_enabled", [False, True])
 def test_modpack_manifest_file_and_commit_are_signed_but_free_guest_sends_no_token(
-    tmp_path: Path, server: LocalHttpsServer, server_state: ServerState, http_client: HttpClient
+    tmp_path: Path,
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    http_client: HttpClient,
+    relay_enabled: bool,
 ) -> None:
     payload = b"raw modpack bytes"
     (tmp_path / "mods").mkdir()
@@ -105,10 +110,22 @@ def test_modpack_manifest_file_and_commit_are_signed_but_free_guest_sends_no_tok
         server_state.add(route, b"{}")
     register_session(ACCESS_TOKEN, SEED)
     try:
-        HttpRoomSyncGateway(server.url(""), http_client, ACCESS_TOKEN).publish(
-            "ABCDEFABCDEFGHJKMN", "host-ticket", SyncSnapshot(manifest, tmp_path)
-        )
-        for route in [path, path + "/files/" + digest, path + "/commit"]:
+        attached: list[SyncSnapshot] = []
+        HttpRoomSyncGateway(
+            server.url(""),
+            http_client,
+            ACCESS_TOKEN,
+            relay_enabled=relay_enabled,
+            attach_source=None if relay_enabled else attached.append,
+        ).publish("ABCDEFABCDEFGHJKMN", "host-ticket", SyncSnapshot(manifest, tmp_path))
+        if not relay_enabled:
+            assert attached == [SyncSnapshot(manifest, tmp_path)]
+            assert json.loads(server_state.received_body(path))["transport"] == "peer"
+            assert not server_state.received_header(path + "/files/" + digest, "Authorization")
+        routes = [path, path + "/commit"]
+        if relay_enabled:
+            routes.append(path + "/files/" + digest)
+        for route in routes:
             verify(
                 server_state.received_header(route, "Nostalgia-Proof"),
                 "PUT" if "/files/" in route else "POST",

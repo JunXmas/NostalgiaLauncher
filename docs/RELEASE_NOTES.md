@@ -1,36 +1,33 @@
-# Nostalgia 1.2.0rc26 — Mở world, mời bạn, cùng chơi
+# Nostalgia 1.2.0rc27 — Một phòng chơi, những người bạn
 
-Chơi chung có luồng rõ ràng hơn: bạn luôn thấy mình đang ở bước nào, cần làm gì tiếp theo và mời ai vào world. Bản này cũng giảm các lần gọi nền để tiết kiệm tài nguyên của dịch vụ tài khoản.
+Mời bạn vào phòng trước, chuẩn bị modpack cùng nhau, rồi mở world. Bản này chuyển dữ liệu chơi chung sang **P2P mã hóa**, giúp hai máy trao đổi trực tiếp và giảm tải cho dịch vụ của launcher.
 
-## Mời bạn ngay trong phòng
+## Tạo phòng, mời bạn, cùng chơi
 
-1. Vào **Bạn bè → Chơi chung → Mở phòng**, chọn bản chơi và bấm **Khởi chạy Minecraft**.
-2. Trong world Minecraft, chọn **Esc → Open to LAN → Start LAN World**. Launcher tự nhận cổng LAN.
-3. Quay lại launcher, chờ world và modpack sẵn sàng rồi bấm **Mời chơi** cạnh tên bạn trực tuyến.
+1. Vào **Bạn bè → Chơi chung**, chọn bản chơi và bấm **Tạo phòng**.
+2. Mời bạn ngay trong bảng phòng. Nếu chia sẻ modpack, người nhận xem và chọn nội dung cần đồng bộ trước khi chơi.
+3. Host khởi chạy Minecraft, vào world rồi chọn **Esc → Open to LAN → Start LAN World**. Launcher tự nhận cổng LAN.
+4. Khách chờ kết nối và nội dung sẵn sàng, rồi bấm **Khởi chạy & vào world**. Giữ launcher mở trong lúc chơi.
 
-Mở cửa sổ host tự chuyển sang tab Chơi chung. Bảng phòng hiển thị ba bước, hướng dẫn LAN ở đúng thời điểm và danh sách bạn có thể mời ngay tại đó. Bạn không cần chọn một cuộc chat để gửi lời mời. Phòng đang khóa hoặc nội dung chia sẻ chưa sẵn sàng vẫn được kiểm tra trước khi mời.
+Tìm bạn theo tên ngay trong danh sách, kể cả khi gõ không dấu. Danh sách dài chỉ dựng các ô gần màn hình. Chat thu gọn mặc định; mời chơi không cần mở cuộc trò chuyện.
 
-Người nhận bấm **Vào phòng**, xem nội dung cần đồng bộ nếu có, rồi kết nối trong Minecraft. Nút **Chép địa chỉ vào Minecraft** nằm ngay trong bảng phòng khi kết nối đã sẵn sàng. Giữ Minecraft và launcher mở trong lúc chơi. Hướng dẫn có GIF bằng **Tiếng Việt / English** đã cập nhật theo luồng mới.
+## Kết nối trực tiếp, truyền nội dung có kiểm tra
 
-## Ít gọi nền hơn, giữ các thao tác trực tiếp
+- Dữ liệu game và file mod/resourcepack custom được chuyển qua WebRTC DataChannel với mã hóa DTLS. Thông tin thương lượng P2P được mã hóa AES-GCM và gửi qua HTTPS/WSS.
+- Dịch vụ launcher giữ phòng chờ, lời mời, manifest và kiểm tra quyền. Relay truyền dữ liệu đã tắt; khi P2P không kết nối được, launcher báo lỗi rõ ràng.
+- Host có Plus có thể chia sẻ modpack cho bạn được mời, kể cả khách miễn phí. Quyền chia sẻ được kiểm tra ở máy chủ.
+- Người nhận chọn nội dung trước khi cài. File được kiểm SHA-256 và kích thước; mod từ nguồn công khai tiếp tục tải qua nhà cung cấp. Chỉ nhận mod custom từ người bạn tin tưởng vì chúng có thể chạy mã trên máy.
 
-- Khi không mở chat, danh sách bạn bè làm mới **4 lần/phút thay vì 20 lần/phút** — giảm 80% số lần polling định kỳ ở trạng thái này.
-- Khi rời trang bạn bè, launcher giữ tin nhắn đã tải và ngừng yêu cầu tin nhắn ở nền. Mở lại trang sẽ làm mới ngay.
-- Chat đang mở cập nhật mỗi **5 giây**; gửi tin, gửi yêu cầu kết bạn và mời chơi vẫn xử lý ngay khi bấm.
-- Backend đã giảm ghi trạng thái online trùng lặp. Kiểm tra phiên một máy, chữ ký chống phát lại và quyền Premium vẫn do máy chủ thực hiện.
+**Cả host và khách cần cập nhật lên bản này.** Bản cũ dùng relay sẽ không chơi chung được. P2P có thể không hoạt động trên mạng chặn UDP hoặc một số kiểu NAT/CGNAT; hiện không có relay dự phòng. Người trong phòng có thể biết địa chỉ IP của nhau.
 
-Đây là giảm số lần gọi nền; mức giảm tổng lượt ghi database phụ thuộc hoạt động thực tế của người dùng.
+## Cùng kiểm thử trên mạng thực tế
 
-## Mica và bố cục ổn định hơn
-
-- Sửa callback của ảnh mica gọi vào ô thư viện đã đóng khi chuyển giữa mod, modpack, shader và resourcepack.
-- Các bước mở phòng xuống dòng theo chiều rộng; tiêu đề cửa sổ host tự dành đủ chỗ khi tăng cỡ chữ.
-- Danh sách bạn trong phòng chỉ dựng các ô gần màn hình, giữ cuộn nhẹ khi có nhiều bạn.
+Đường truyền mã hóa và đồng bộ file đã được kiểm thử tự động trên máy cục bộ. Kết nối giữa nhiều nhà mạng và CGNAT vẫn cần người dùng thử thực tế. Nếu gặp lỗi, gửi phiên bản launcher, Minecraft/loader, hệ điều hành hai máy, trạng thái P2P và thông báo lỗi. Không gửi mã phòng, khóa phiên hoặc thông tin đăng nhập.
 
 ## Tải và cập nhật
 
-- **Windows x64:** bộ cài `setup.exe` và ZIP portable/cập nhật.
+- **Windows x64:** `setup.exe` và ZIP portable/cập nhật.
 - **Linux x64:** `.deb` cho Linux Mint/Ubuntu/Debian, `.rpm`, AppImage, `.tar.gz` và ZIP cập nhật.
 - **macOS:** DMG và ZIP riêng cho Apple Silicon và Intel.
 
-Launcher giữ cơ chế cập nhật hiện có: thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật, không mở Ultimate TEST. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
+Launcher giữ cơ chế cập nhật hiện có: thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật; bản này không mở Ultimate TEST. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.

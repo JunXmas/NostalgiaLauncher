@@ -5,6 +5,24 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+## 1.2.0rc27 — 2026-10-11
+
+- Tạo phòng chờ trước khi mở Minecraft: chọn bản chơi, mời bạn và đồng bộ nội dung,
+  rồi khởi chạy world và bật LAN. Khách có nút Khởi chạy & vào world khi sẵn sàng.
+- Chơi chung và chuyển file mod/resourcepack custom qua P2P WebRTC, mã hóa DTLS.
+  Trao đổi thông tin kết nối qua HTTPS/WSS và AES-GCM; kiểm SHA-256 và kích thước
+  trước khi cài nội dung được chia sẻ.
+- Tắt relay dữ liệu ở launcher và backend, kể cả đường truyền của bản cũ.
+  Không âm thầm chuyển sang relay khi P2P thất bại. Giữ nền relay để phát triển sau.
+  Cả host và khách cần cập nhật; mạng chặn UDP hoặc NAT khó có thể không kết nối được.
+- Đồng bộ modpack dùng manifest trên máy chủ và chuyển file custom trực tiếp giữa
+  hai máy. Host cần quyền Plus hợp lệ; khách được mời có thể nhận pack miễn phí.
+- Thêm tìm bạn không phân biệt dấu, lọc ngay trên máy và chỉ dựng các ô gần màn hình.
+  Hiện trạng thái kết nối, hướng dẫn LAN và cảnh báo chia sẻ IP trong phòng.
+- Chat thu gọn mặc định, chỉ lấy tin nhắn khi mở; luồng mời bạn không cần mở chat.
+- Gói phát hành giữ Windows x64, Linux x64, macOS Apple Silicon và Intel;
+  không chứa mã mở khóa Ultimate TEST.
+
 ## 1.2.0rc26 — 2026-10-10
 
 - Mở phòng theo ba bước rõ ràng: chọn bản chơi, mở world và bật LAN, rồi mời bạn.
