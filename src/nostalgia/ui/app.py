@@ -37,6 +37,7 @@ from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.storage_bridge import StorageBridge
 from nostalgia.ui.translations import phrase
 from nostalgia.ui.update_bridge import UpdateBridge
+from nostalgia.ui.view import LauncherView
 from nostalgia.ui.worker import wait_for_background
 
 # TranslationProvider.qml đọc từ điển i18n/*.json bằng XMLHttpRequest; Qt6 chặn mặc định.
@@ -101,41 +102,40 @@ def load_fonts() -> None:
         application.setFont(QFont(SANS_FAMILY))
 
 
-def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
+def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
     """Dựng khung nhìn và cầu nối.
 
     Tách khỏi `main` để test dựng được mà không phải chạy vòng lặp sự kiện — và để bộ chụp
     ảnh dùng lại đúng đường mà người dùng đi, chứ không dựng một bản riêng cho ảnh đẹp.
     """
     load_fonts()
-    view = QQuickView()
+    view = LauncherView()
     view.engine().addImportPath(str(QML_DIR))
     # Icon cửa sổ / thanh tác vụ: cùng chiếc lá với logo ở thanh bên và icon bộ cài.
     view.setIcon(QIcon(str(QML_DIR / "assets" / "logo.png")))
     # Gắn cầu nối vào khung nhìn: Qt sẽ huỷ chúng **sau** cây QML, nên không còn cảnh báo
     # "bridge is null" ở những ràng buộc còn sống trong lúc đóng cửa sổ.
     bridge = LauncherBridge(launcher, parent=view)
-    context = view.rootContext()
-    context.setContextProperty("bridge", bridge)
-    context.setContextProperty("storageBridge", StorageBridge(launcher, bridge, parent=view))
+    view.bind_context_property("bridge", bridge)
+    view.bind_context_property("storageBridge", StorageBridge(launcher, bridge, parent=view))
     content = ContentBridge(launcher, bridge, parent=view)
-    context.setContextProperty("contentBridge", content)
-    context.setContextProperty("localModBridge", LocalModBridge(launcher, bridge, content, view))
+    view.bind_context_property("contentBridge", content)
+    view.bind_context_property("localModBridge", LocalModBridge(launcher, bridge, content, view))
     accounts = AccountBridge(launcher, bridge, parent=view)
     capes = CapeBridge(launcher, bridge, parent=view)
     editor = SkinEditBridge(launcher, bridge, accounts, capes)
     editor.skinSaved.connect(accounts._skinsRefreshed)
     editor.capeSaved.connect(accounts._skinsRefreshed)
-    context.setContextProperty("accountBridge", accounts)
-    context.setContextProperty("capeBridge", capes)
-    context.setContextProperty("skinEditor", editor)
-    context.setContextProperty("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
-    context.setContextProperty("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
-    context.setContextProperty("skinPreviews", SkinPreviewBridge(launcher.paths.data_dir, view))
+    view.bind_context_property("accountBridge", accounts)
+    view.bind_context_property("capeBridge", capes)
+    view.bind_context_property("skinEditor", editor)
+    view.bind_context_property("catalogBridge", CatalogBridge(launcher, bridge, parent=view))
+    view.bind_context_property("blockIcons", BlockIconBridge(launcher.paths.data_dir, parent=view))
+    view.bind_context_property("skinPreviews", SkinPreviewBridge(launcher.paths.data_dir, view))
     settings_bridge = SettingsBridge(launcher, parent=view)
-    context.setContextProperty("settingsBridge", settings_bridge)
+    view.bind_context_property("settingsBridge", settings_bridge)
     notifier = build_notifier(launcher, bridge, settings_bridge, view)
-    context.setContextProperty("notifier", notifier)
+    view.bind_context_property("notifier", notifier)
     update_bridge = UpdateBridge(
         launcher, check_enabled=lambda: bool(settings_bridge.autoUpdateCheck), parent=view
     )
@@ -144,23 +144,23 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
             "update", f"Có bản mới {launcher_version}", "Bấm Tải về ở dải xanh trên đầu cửa sổ"
         )
     )
-    context.setContextProperty("updateBridge", update_bridge)
+    view.bind_context_property("updateBridge", update_bridge)
     presence_bridge = PresenceBridge(
         bridge,
         is_enabled=lambda: bool(settings_bridge.discordPresence),
         instance_label=lambda instance_id: instance_label(launcher, instance_id),
         parent=view,
     )
-    context.setContextProperty("presenceBridge", presence_bridge)
+    view.bind_context_property("presenceBridge", presence_bridge)
     multiplayer_bridge = MultiplayerBridge(launcher, parent=view)
     multiplayer_bridge.statusChanged.connect(
         lambda: presence_bridge.setRoomState(
             str(multiplayer_bridge.role), cast(int, multiplayer_bridge.joinerCount)
         )
     )
-    context.setContextProperty("multiplayerBridge", multiplayer_bridge)
+    view.bind_context_property("multiplayerBridge", multiplayer_bridge)
     import_bridge = ImportBridge(launcher, bridge, parent=view)
-    context.setContextProperty("importBridge", import_bridge)
+    view.bind_context_property("importBridge", import_bridge)
     # Đóng cửa sổ là đóng phòng: không để luồng relay sống sau launcher (luật L10).
     running_application = QGuiApplication.instance()
     if running_application is not None:
@@ -177,8 +177,8 @@ def build_view(launcher: Launcher) -> tuple[QQuickView, LauncherBridge]:
     # gọi nó bằng context property thay vì phải với lên cây cha.
     root_item = view.rootObject()
     if root_item is not None:
-        context.setContextProperty("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
-        context.setContextProperty("donateDialog", root_item.findChild(QObject, "donateDialog"))
+        view.bind_context_property("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
+        view.bind_context_property("donateDialog", root_item.findChild(QObject, "donateDialog"))
     build_tray(view, bridge, settings_bridge)
     return view, bridge
 

@@ -45,7 +45,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         else None,
         plus_enabled=bool(configuration.account_url),
     )
-    view.rootContext().setContextProperty(
+    view.bind_context_property(
         "serviceConfiguration", ServiceConfigurationBridge(launcher, parent=view)
     )
     payments = view.rootContext().contextProperty("paymentBridge")

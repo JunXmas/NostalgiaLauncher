@@ -83,4 +83,4 @@ def test_paid_host_selects_mods_in_bounded_glass_popup(
     scroll.setProperty("contentY", scroll.property("maxY"))
     QTest.qWait(60)
     assert view.grabWindow().save(str(tmp_path / "host-mod-selection-small.png"))
-    assert not warnings
+    assert not warnings, "\n".join(warnings)

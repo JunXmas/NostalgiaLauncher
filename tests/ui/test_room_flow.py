@@ -68,7 +68,7 @@ def test_host_steps_and_invite_fit_and_follow_lan_and_pack_readiness(
     assert 0 <= origin.x() <= view.width() - button.width()
     assert 0 <= origin.y() <= view.height() - button.height()
     assert view.grabWindow().save(str(tmp_path / f"room-ready-{language}-{scale}.png"))
-    assert not warnings
+    assert not warnings, "\n".join(warnings)
 
 
 def test_invite_from_room_without_selecting_chat_and_lock_gates_it(

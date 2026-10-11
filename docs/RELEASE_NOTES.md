@@ -1,4 +1,4 @@
-# Nostalgia 1.2.0rc28 — Một phòng chơi, những người bạn
+# Nostalgia 1.2.0rc29 — Một phòng chơi, những người bạn
 
 Mời bạn vào phòng trước, chuẩn bị modpack cùng nhau, rồi mở world. Bản này chuyển dữ liệu chơi chung sang **P2P mã hóa**, giúp hai máy trao đổi trực tiếp và giảm tải cho dịch vụ của launcher.
 
