@@ -5,7 +5,7 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
-## 1.2.0rc27 — 2026-10-11
+## 1.2.0rc28 — 2026-10-11
 
 - Tạo phòng chờ trước khi mở Minecraft: chọn bản chơi, mời bạn và đồng bộ nội dung,
   rồi khởi chạy world và bật LAN. Khách có nút Khởi chạy & vào world khi sẵn sàng.

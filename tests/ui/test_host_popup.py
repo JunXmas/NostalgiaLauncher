@@ -94,7 +94,7 @@ def test_open_room_selects_installed_pack_before_any_launch(
     wait_until(lambda: not popup.property("visible"))
     assert launched == ["b"] and host.property("details")["instanceId"] == "b"
     assert not host.property("details")["share"]
-    assert not warnings
+    assert not warnings, "\n".join(warnings)
 
 
 @pytest.mark.parametrize("scale", [100, 150])
@@ -121,4 +121,4 @@ def test_host_popup_mica_and_footer_fit_small_windows(
     assert 0 <= button_origin.x() <= view.width() - launch.width()
     assert 0 <= button_origin.y() <= view.height() - launch.height()
     assert launch.property("clickable")
-    assert not warnings
+    assert not warnings, "\n".join(warnings)

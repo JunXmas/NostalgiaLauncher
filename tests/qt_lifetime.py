@@ -4,7 +4,7 @@ import gc
 from typing import Any
 
 import pytest
-from PySide6.QtCore import QCoreApplication, QEvent, QTimer
+from PySide6.QtCore import QCoreApplication, QEvent, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickView
 from shiboken6 import isValid
@@ -29,6 +29,9 @@ def finish_windows(application: QGuiApplication, windows: list[QQuickView]) -> N
         if not isValid(window):
             continue
         window.close()
+        # Gỡ cây QML khi cầu nối còn sống; DeferredDelete không bảo đảm thứ tự huỷ
+        # các QObject con và có thể để Connections cũ báo lỗi trong test kế tiếp.
+        window.setSource(QUrl())
         for timer in window.findChildren(QTimer):
             timer.stop()
         if isinstance(window, QQuickView):
