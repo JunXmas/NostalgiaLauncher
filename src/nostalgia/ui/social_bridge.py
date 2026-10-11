@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import platform
 import sys
+import time
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
@@ -30,6 +31,7 @@ class SocialBridge(SocialInvitations):
         plus_enabled: bool = True,
     ) -> None:
         super().__init__(gateway, multiplayer, sync_bridge, parent, session_store, plus_enabled)
+        self._pending = []
         self._chat = ChatSender(self)
         self._chat.busyChanged.connect(self.chatBusyChanged)
         self._chat.completed.connect(self._apply_delivery)
@@ -59,19 +61,33 @@ class SocialBridge(SocialInvitations):
     def chatBusy(self) -> bool:
         return bool(self._chat.busy)
 
-    @Slot(str, str, str, bool)
-    def _apply_delivery(self, peer_id: str, text: str, error: str, revoked: bool) -> None:
+    @Slot(str, str, bool)
+    def _apply_delivery(self, message_id: str, error: str, revoked: bool) -> None:
         if revoked:
             if self._session_store:
                 self._session_store.remove_access_token()
             self._reset_session(error)
-        elif error:
-            self._note = error
         else:
-            if peer_id == self._peer_id:
-                self.messageSent.emit(text)
-            self._note = "Đã gửi."
-            self.refresh()
+            for message in self._pending:
+                if message["id"] == message_id:
+                    message["state"] = "failed" if error else "sent"
+            if error:
+                self._note = error
+            else:
+                self.refresh()
+        self.changed.emit()
+
+    @Slot(str)
+    def retryMessage(self, message_id: str) -> None:
+        message = next((p for p in self._pending if p["id"] == message_id), None)
+        if self._gateway and message and message["state"] == "failed":
+            message["state"] = "sending"
+            self._chat.submit(self._gateway, message["peer"], message["text"], message_id)
+            self.changed.emit()
+
+    @Slot(str)
+    def discardMessage(self, message_id: str) -> None:
+        self._pending = [p for p in self._pending if p["id"] != message_id]
         self.changed.emit()
 
     @Slot()
@@ -82,6 +98,7 @@ class SocialBridge(SocialInvitations):
 
     def _reset_session(self, note: str) -> None:
         self._chat.cancel()
+        self._pending = []
         self._friend_sender.cancel()
         super()._reset_session(note)
 
@@ -143,11 +160,24 @@ class SocialBridge(SocialInvitations):
             and account_id
             and text.strip()
             and len(text) <= 1000
-            and not self.chatBusy
             and self._snapshot
             and any(friend.account_id == account_id for friend in self._snapshot.friends)
         ):
-            self._chat.submit(gateway, account_id, text.strip())
+            sender = self._snapshot.account.account_id
+            message_id = self._chat.submit(gateway, account_id, text.strip())
+            self._pending.append(
+                {
+                    "id": message_id,
+                    "peer": account_id,
+                    "sender": sender,
+                    "text": text.strip(),
+                    "mine": True,
+                    "time": int(time.time()),
+                    "state": "sending",
+                }
+            )
+            self.messageSent.emit(text.strip())
+            self.changed.emit()
 
     @Slot(str, bool)
     def setProfile(self, accent: str, show_badge: bool) -> None:
