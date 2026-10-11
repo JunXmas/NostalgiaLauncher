@@ -1,27 +1,26 @@
-# Nostalgia 1.2.0rc31 — Chuẩn bị xong, cùng vào world
+# Nostalgia 1.2.0rc32 — World sẵn sàng, kết nối rõ ràng
 
-Bản vá này tập trung vào phòng chơi chung: giữ modpack đã chuẩn bị ổn định, nhận cổng LAN chắc chắn hơn và đợi host mở khóa trước khi kết nối.
+Vào được room là bước đầu. Bản vá này giúp danh sách LAN và nút vào world phản ánh đúng đường kết nối game, đồng thời báo rõ hơn khi không thể bắt tay với host.
 
 ## Những lỗi đã sửa
 
-- **Không chuẩn bị modpack lặp lại:** cập nhật trạng thái khóa phòng đến muộn từng khiến modpack đã sẵn sàng được chia sẻ lại. Phòng giờ giữ snapshot hoàn tất để bạn mời bạn bè và khởi chạy game.
-- **Nhận LAN từ đúng bản chơi:** launcher đọc thông báo từ stdout và `latest.log`, hỗ trợ log có màu, bỏ cổng của phiên chơi trước và theo dõi log xoay vòng. Cổng vẫn phải trả lời kiểm tra Minecraft trước khi phòng báo world sẵn sàng.
-- **Đợi host chuẩn bị xong:** khách không thương lượng P2P lúc phòng đang khóa để chia sẻ nội dung, tránh bị từ chối ngay trước khi host mở phòng. World đang khóa cũng không được hiện là sẵn sàng.
-- **Theo dõi log nhẹ:** đọc trên luồng nền, giới hạn 64 KiB/lần, bỏ thông báo trùng và dừng khi game đóng.
+- **World chỉ xuất hiện khi có thể kết nối:** máy khách từng quảng bá world trong LAN ngay khi vào room, dù host chưa mở world hoặc P2P chưa sẵn sàng. Launcher giờ đợi world sẵn sàng, phòng mở khóa và đường game đang hoạt động rồi mới quảng bá.
+- **Cập nhật ngay khi P2P mất kết nối:** trạng thái world và nút vào game được cập nhật khi kênh đóng, thay vì giữ trạng thái sẵn sàng cho tới lần đọc lobby tiếp theo. Beacon LAN cũng kiểm lại đường kết nối ở mỗi lượt phát.
+- **Lỗi bắt tay được báo trên launcher:** phân biệt chưa có đường P2P, không mở được kết nối và không hoàn tất bắt tay với host. Thông báo có cả tiếng Việt và tiếng Anh; log chẩn đoán không ghi mã phòng.
+- **Giảm thao tác chờ khi nối game:** kết nối Minecraft qua loopback không phải tra DNS tên máy hoặc liệt kê card mạng trước khi bắt tay.
 
 ## Cách cùng chơi
 
-1. Host vào **Bạn bè → Chơi chung**, chọn bản chơi và bấm **Tạo phòng**. Nếu bật đồng bộ, đợi modpack sẵn sàng rồi mời bạn.
-2. Host bấm **Khởi chạy**, vào world và chọn **Esc → Open to LAN → Start LAN World**. Giữ launcher mở trong lúc chơi.
-3. Khách nhận lời mời, chọn nội dung cần đồng bộ nếu có, đợi P2P và world sẵn sàng rồi bấm **Khởi chạy & vào world**.
+1. **Cả host và khách cập nhật rc32.** Host vào **Bạn bè → Chơi chung**, chọn bản chơi, tạo phòng rồi mời bạn.
+2. Host khởi chạy Minecraft, vào world và chọn **Esc → Open to LAN → Start LAN World**. Launcher tự nhận cổng LAN.
+3. Khách hoàn tất đồng bộ nếu có, đợi trạng thái **Kết nối trực tiếp · DTLS** và world sẵn sàng rồi bấm **Khởi chạy & vào world**. Giữ launcher mở trong lúc chơi.
+4. Nếu launcher báo mất P2P, rời room và nhận lại lời mời. Khi tắt đồng bộ, hai bên vẫn cần phiên bản Minecraft, loader và bộ mod tương thích.
 
-**Host và khách nên cùng cập nhật rc31.** Khi tắt đồng bộ, hai bên vẫn cần Minecraft, loader và bộ mod tương thích.
+## Kiểm tra kết nối
 
-## Kiểm thử và giới hạn kết nối
+Đã tái hiện trên mã rc31 hai lỗi quảng bá LAN quá sớm và giữ trạng thái sẵn sàng sau khi peer đóng; kiểm thử hồi quy đạt sau bản sửa. Các bài kiểm tra dùng ICE/DTLS thật trên loopback, truyền byte game qua TCP proxy và xác nhận mất peer cập nhật trạng thái ngay.
 
-Đã thử backend thật chạy cục bộ qua HTTPS/WSS với hai dịch vụ phòng độc lập: bật và tắt đồng bộ, nhận file resourcepack qua P2P, rồi gửi dữ liệu Minecraft qua nhiều kết nối trên cùng kênh. Có kiểm thử hồi quy cho cập nhật trạng thái đến muộn, phòng khóa, log cũ, log bị cắt/xoay và luồng Qt nhận cổng LAN.
-
-Kiểm thử này xác minh giao thức trên máy cục bộ; chưa xác minh kết nối giữa hai nhà mạng thực tế. Mạng chặn UDP và một số kiểu NAT/CGNAT vẫn có thể ngăn P2P. **Relay dữ liệu tiếp tục tắt**, không có chuyển sang relay âm thầm. Thông tin thương lượng được bảo vệ bằng AES-GCM qua HTTPS/WSS; dữ liệu P2P dùng DTLS, file đồng bộ được kiểm SHA-256. Quyền Plus được kiểm tra trên máy chủ, không mở Ultimate TEST.
+Kết quả này chưa xác minh Minecraft đầy đủ giữa hai nhà mạng. Một số mạng chặn UDP hoặc NAT/CGNAT vẫn có thể ngăn P2P. Nếu Minecraft chỉ hiện **Disconnected**, hãy gửi phần cuối Nhật ký của cả host và khách để phân biệt lỗi truyền tải, tài khoản và modpack. Dữ liệu game và file custom tiếp tục đi qua P2P mã hóa; relay dữ liệu giữ trạng thái tắt.
 
 ## Gói phát hành
 
@@ -29,4 +28,4 @@ Kiểm thử này xác minh giao thức trên máy cục bộ; chưa xác minh k
 - **Linux x64:** `.deb` cho Linux Mint/Ubuntu/Debian, `.rpm`, AppImage, `.tar.gz` và ZIP cập nhật.
 - **macOS:** DMG và ZIP riêng cho Apple Silicon và Intel.
 
-Cơ chế cập nhật giữ nguyên: launcher thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
+File đính kèm gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
