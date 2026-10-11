@@ -5,7 +5,7 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
-## 1.2.0rc30 — 2026-10-11
+## 1.2.0rc31 — 2026-10-11
 
 - Sửa vòng lặp chuẩn bị modpack: cập nhật trạng thái phòng đến muộn không chia sẻ
   lại snapshot đã hoàn tất, không khóa lại phòng và không chặn nút khởi chạy.

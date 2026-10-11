@@ -20,7 +20,7 @@ from nostalgia.account.model import Account
 from nostalgia.api import GameProcess, Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.game_lan import GameLanFeed
-from nostalgia.ui.game_launch import prepare_game
+from nostalgia.ui.game_launch import load_game_log_path, prepare_game
 from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
 from nostalgia.ui.instance_bridge import InstanceBridge
 
@@ -221,10 +221,7 @@ class LauncherBridge(InstanceBridge):
             with host_scope() if host_scope else nullcontext():
                 # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
                 self._game_log.reset()
-                selected = next(
-                    i for i in self._launcher.list_instances() if i.instance_id == instance_id
-                )
-                log_path = self._launcher.instance_game_dir(selected) / "logs" / "latest.log"
+                log_path = load_game_log_path(self._launcher, instance_id)
                 game = self._launcher.launch_instance(
                     instance_id,
                     account_id,

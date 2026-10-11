@@ -1,4 +1,4 @@
-# Nostalgia 1.2.0rc30 — Chuẩn bị xong, cùng vào world
+# Nostalgia 1.2.0rc31 — Chuẩn bị xong, cùng vào world
 
 Bản vá này tập trung vào phòng chơi chung: giữ modpack đã chuẩn bị ổn định, nhận cổng LAN chắc chắn hơn và đợi host mở khóa trước khi kết nối.
 
@@ -15,7 +15,7 @@ Bản vá này tập trung vào phòng chơi chung: giữ modpack đã chuẩn b
 2. Host bấm **Khởi chạy**, vào world và chọn **Esc → Open to LAN → Start LAN World**. Giữ launcher mở trong lúc chơi.
 3. Khách nhận lời mời, chọn nội dung cần đồng bộ nếu có, đợi P2P và world sẵn sàng rồi bấm **Khởi chạy & vào world**.
 
-**Host và khách nên cùng cập nhật rc30.** Khi tắt đồng bộ, hai bên vẫn cần Minecraft, loader và bộ mod tương thích.
+**Host và khách nên cùng cập nhật rc31.** Khi tắt đồng bộ, hai bên vẫn cần Minecraft, loader và bộ mod tương thích.
 
 ## Kiểm thử và giới hạn kết nối
 
