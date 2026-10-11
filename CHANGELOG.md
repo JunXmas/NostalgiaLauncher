@@ -5,6 +5,10 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+- Chat kiểu Discord: tin hiện ngay khi bấm Gửi (mờ khi đang gửi), gửi nhanh nhiều tin
+  liên tiếp theo hàng đợi, gộp tin cùng người trong 5 phút, kèm avatar, tên và giờ.
+  Gửi lỗi thì tin giữ lại màu đỏ với nút Thử lại/Xoá; thử lại không nhân đôi tin.
+
 ## 1.2.0rc29 — 2026-10-11
 
 - Giữ cầu nối QML sống cùng cửa sổ, tránh mất tín hiệu popup khi thu hồi bộ nhớ.

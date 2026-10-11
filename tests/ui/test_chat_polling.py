@@ -86,4 +86,40 @@ def test_send_failure_keeps_draft_or_revokes_session(
         assert not social.signedIn and not gateway.access_token
     else:
         assert social.signedIn and social.note == "Gửi thất bại."
-        assert find_control(root_item, "chatComposer").property("text") == "Giữ bản nháp"
+        failed = social.messages[-1]
+        assert failed["text"] == "Giữ bản nháp" and failed["state"] == "failed"
+        monkeypatch.undo()
+        social.retryMessage(failed["id"])
+        wait_until(lambda: gateway.sent == ["Giữ bản nháp"] and not social.chatBusy)
+        wait_until(lambda: not social.busy)
+        assert [m["state"] for m in social.messages] == ["sent", "sent"]
+
+
+def test_message_shows_immediately_and_queues_while_sending(
+    social_preview: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _launcher, gateway, _view, root_item, social, *_rest = social_preview
+    login_preview(social_preview)
+    find_control(root_item, "friendChat").setProperty("chatExpanded", True)
+    social.selectFriend("misa")
+    wait_until(lambda: not social.busy and bool(social.messages))
+    social._timer.stop()
+    release = Event()
+    original = gateway.send_message
+
+    def slow_send(*args: Any) -> None:
+        assert release.wait(4)
+        original(*args)
+
+    monkeypatch.setattr(gateway, "send_message", slow_send)
+    social.sendMessage("Một")
+    social.sendMessage("Hai")
+    assert [(m["text"], m["state"]) for m in social.messages[1:]] == [
+        ("Một", "sending"),
+        ("Hai", "sending"),
+    ]
+    assert social.messages[2]["grouped"]
+    release.set()
+    wait_until(lambda: gateway.sent == ["Một", "Hai"] and not social.chatBusy)
+    wait_until(lambda: not social.busy and len(social.messages) == 3)
+    assert [m["text"] for m in social.messages] == ["Xin chào", "Một", "Hai"]

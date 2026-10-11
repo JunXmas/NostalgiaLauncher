@@ -16,11 +16,10 @@ Glass {
     readonly property var peer: socialBridge.friends.filter(function(f) { return f.accountId === socialBridge.peerId; })[0] || ({})
     padding: 20
     function send() {
-        if (composer.text.trim() && !socialBridge.chatBusy) socialBridge.sendMessage(composer.text);
+        if (composer.text.trim() && composer.text.length <= 1000) { socialBridge.sendMessage(composer.text); composer.text = ""; }
     }
     Connections {
         target: socialBridge
-        function onMessageSent(text) { if (composer.text.trim() === text) composer.text = ""; }
         function onChanged() {
             if (root.displayedPeer !== socialBridge.peerId) {
                 root.displayedPeer = socialBridge.peerId;
@@ -88,7 +87,7 @@ Glass {
             objectName: "chatScroll"
             visible: root.chatExpanded
             width: parent.width; height: root.compact ? Math.max(40 * GlassTheme.scale, root.availableHeight - backRow.height - chatHeading.height - inviteHelp.height - 12 - composerRow.height - chatFooter.height - 40 - 60) : 250 * GlassTheme.scale
-            spacing: 10
+            spacing: 2
             model: root.chatExpanded ? socialBridge.messages : []
             header: Column {
                 width: chatScroll.width; spacing: 10
@@ -108,24 +107,49 @@ Glass {
                 PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chọn avatar để xem hồ sơ, hoặc chọn tên một người bạn để bắt đầu trò chuyện."); color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
             }
             }
-            delegate: Rectangle {
+            delegate: Item {
+                id: line
                 required property var modelData
                 required property int index
                 objectName: "chatMessage-" + index
-                x: modelData.mine ? chatScroll.width * 0.12 : 0
-                width: chatScroll.width * 0.88
-                height: messageText.implicitHeight + 22
-                radius: 12
-                color: GlassTheme.alpha(modelData.mine ? GlassTheme.accent : GlassTheme.raised, modelData.mine ? 0.16 : 0.7)
-                PaymentText { id: messageText; x: 12; y: 11; width: parent.width - 24; text: modelData.text }
+                width: chatScroll.width
+                height: body.y + body.height + (failedRow.visible ? failedRow.height + 4 : 0) + 2
+                opacity: modelData.state === "sending" ? 0.55 : 1
+                readonly property real gap: modelData.grouped ? 0 : 10
+                readonly property var author: modelData.mine ? socialBridge.account : root.peer
+                Rectangle { anchors.fill: parent; anchors.margins: -2; radius: 6; color: GlassTheme.alpha(GlassTheme.raised, lineHover.hovered ? 0.5 : 0) }
+                HoverHandler { id: lineHover }
+                SocialAvatar { y: line.gap; visible: !modelData.grouped; size: 34; showPresence: false; playerName: line.author.name || ""; source: line.author.avatarUrl || ""; decor: line.author.decor || "none" }
+                Row {
+                    id: header
+                    visible: !modelData.grouped
+                    x: 46; y: line.gap; spacing: 8
+                    PaymentText { id: authorName; text: line.author.name || ""; font.weight: Font.DemiBold; color: modelData.mine ? GlassTheme.accent : GlassTheme.brand; wrapMode: Text.NoWrap }
+                    PaymentText { y: authorName.baselineOffset - baselineOffset; text: Qt.formatDateTime(new Date(modelData.time * 1000), "dd/MM hh:mm"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; wrapMode: Text.NoWrap }
+                }
+                PaymentText {
+                    id: body
+                    x: 46; y: modelData.grouped ? 0 : line.gap + header.height + 2
+                    width: parent.width - x
+                    text: modelData.text
+                    color: modelData.state === "failed" ? GlassTheme.danger : GlassTheme.text
+                }
+                Row {
+                    id: failedRow
+                    visible: modelData.state === "failed"
+                    x: 46; y: body.y + body.height + 4; spacing: 8
+                    PaymentText { anchors.verticalCenter: parent.verticalCenter; text: Legacy.Tr.phrase("Chưa gửi được."); color: GlassTheme.danger; font.pixelSize: GlassTheme.fontCaption; wrapMode: Text.NoWrap }
+                    Button { objectName: "retryChat-" + line.index; quiet: true; height: 24; label: Legacy.Tr.phrase("Thử lại"); onClicked: socialBridge.retryMessage(modelData.id) }
+                    Button { quiet: true; height: 24; label: Legacy.Tr.phrase("Xoá"); onClicked: socialBridge.discardMessage(modelData.id) }
+                }
             }
         }
         Row {
             id: composerRow
             visible: !!socialBridge.peerId && root.chatExpanded
             width: parent.width; spacing: 8
-            Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: Legacy.Tr.phrase("Nhắn tin…"); onAccepted: root.send() }
-            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: socialBridge.chatBusy ? Legacy.Tr.phrase("Đang gửi…") : Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000 && !socialBridge.chatBusy; onClicked: root.send() }
+            Input { id: composer; objectName: "chatComposer"; width: parent.width - sendButton.width - 8; placeholder: socialBridge.peerName ? Legacy.Tr.phrase("Nhắn %1").arg(socialBridge.peerName) : Legacy.Tr.phrase("Nhắn tin…"); onAccepted: root.send() }
+            Button { id: sendButton; objectName: "sendChat"; height: composer.height; label: Legacy.Tr.phrase("Gửi"); primary: true; clickable: !!composer.text.trim() && composer.text.length <= 1000; onClicked: root.send() }
         }
         Item {
             id: chatFooter

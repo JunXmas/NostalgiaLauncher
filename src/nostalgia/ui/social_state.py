@@ -19,6 +19,7 @@ class SocialState(WorkerBridge):
     _snapshot: SocialSnapshot | None
     _last_update: SocialUpdate | None
     _messages: list[dict[str, Any]]
+    _pending: list[dict[str, Any]]
     _peer_id: str
     _login: GoogleLogin | None
     _note: str
@@ -34,15 +35,32 @@ class SocialState(WorkerBridge):
 
     def update_messages(self, update: SocialUpdate) -> None:
         if self._peer_id == update.peer_id:
+            delivered = {message.message_id for message in update.messages}
+            self._pending = [message for message in self._pending if message["id"] not in delivered]
             self._messages = [
                 {
                     "id": message.message_id,
                     "sender": message.sender,
                     "text": message.body,
                     "mine": message.sender == update.snapshot.account.account_id,
+                    "time": message.created_at,
+                    "state": "sent",
                 }
                 for message in update.messages
             ]
+
+    @Property(list, notify=changed)
+    def messages(self) -> list[dict[str, Any]]:
+        """Tin máy chủ + tin đang gửi/lỗi của người đang chat — hiện ngay khi bấm Gửi."""
+        rows = self._messages + [p for p in self._pending if p["peer"] == self._peer_id]
+        for index, row in enumerate(rows):
+            previous = rows[index - 1] if index else None
+            row["grouped"] = bool(
+                previous
+                and previous["sender"] == row["sender"]
+                and 0 <= row["time"] - previous["time"] < 300
+            )
+        return rows
 
     @Property(bool, constant=True)
     def configured(self) -> bool:
@@ -152,10 +170,6 @@ class SocialState(WorkerBridge):
             if self._snapshot
             else []
         )
-
-    @Property(list, notify=changed)
-    def messages(self) -> list[dict[str, Any]]:
-        return self._messages
 
     @Property(str, notify=changed)
     def peerId(self) -> str:
