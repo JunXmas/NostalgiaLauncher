@@ -56,6 +56,7 @@ from nostalgia.modcheck.model import ModScan
 from nostalgia.model.local_mod import LocalModImport
 from nostalgia.modrepair.gateway import HttpRepairGateway
 from nostalgia.modrepair.model import RepairChange, RepairGateway, RepairPlan, RepairScan
+from nostalgia.multiplayer.lan_log import LanLogReader
 from nostalgia.multiplayer.lan_output import lan_port_from_output
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
@@ -156,6 +157,7 @@ __all__ = [
     "InstallReport",
     "InstalledServerContent",
     "Instance",
+    "LanLogReader",
     "Launcher",
     "LauncherRelease",
     "LocalModImport",

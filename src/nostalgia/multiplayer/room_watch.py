@@ -67,13 +67,16 @@ class RoomWatch:
                 if document.get("format") != 1 or type(document.get("world_ready")) is not bool:
                     return
                 known = True
+                locked = document.get("locked") is True
                 self._publish(
                     world_ready=document["world_ready"]
+                    and not locked
                     and (
                         self._relay_enabled
                         or (self._joiner.peer is not None and not self._joiner.peer.closed)
                     ),
                     world_name=str(document.get("name", ""))[:120],
+                    locked=locked,
                     share_state="pending" if document.get("sharing") is True else "none",
                 )
                 if (
@@ -89,6 +92,7 @@ class RoomWatch:
                     document["world_ready"]
                     and document.get("direct") is True
                     and self._direct_allowed
+                    and not locked
                     and not attempted
                 ):
                     attempted = True
@@ -101,7 +105,7 @@ class RoomWatch:
                         )
                         return
                     self._publish(connection_kind="relay")
-                await asyncio.sleep(60 if document["world_ready"] else 15)
+                await asyncio.sleep(60 if document["world_ready"] and not locked else 15)
             except asyncio.CancelledError:
                 raise
             except (NetworkError, ValueError, KeyError):

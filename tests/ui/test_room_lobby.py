@@ -37,6 +37,21 @@ def test_invite_and_share_before_launch_then_reuse_frozen_pack(host_rig: HostRig
     assert rig.sync.hostReady
 
 
+def test_late_room_updates_do_not_republish_ready_modpack(host_rig: HostRig) -> None:
+    rig = host_rig
+    rig.upload.release.set()
+    assert rig.host.createRoom("chosen", True)
+    wait_until(lambda: rig.host.details["stage"] == "lobby")
+    ready_lobby(rig)
+    wait_until(lambda: rig.sync.hostReady and not rig.sync.busy)
+    assert len(rig.upload.received) == 1
+    # Dịch vụ thật gửi cập nhật khóa/phòng từ asyncio sau khi worker đã rảnh.
+    rig.room.apply(replace(rig.room.status, locked=False, joiner_count=1))
+    assert rig.host.details["stage"] == "lobby"
+    assert rig.sync.hostReady and not rig.sync.busy
+    assert len(rig.upload.received) == 1
+
+
 def test_cancel_lobby_releases_worker_and_snapshot_without_launch(host_rig: HostRig) -> None:
     rig = host_rig
     assert rig.host.createRoom("chosen", False)

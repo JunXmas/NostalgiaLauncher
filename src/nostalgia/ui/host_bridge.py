@@ -123,7 +123,7 @@ class HostBridge(HostSetup):
                 and self._stage == "lobby"
                 and self._multiplayer.room_snapshot().host_ticket
             ):
-                if self._share:
+                if self._share and not self._pack_published:
                     self.retryShare()
                 else:
                     self._ready()

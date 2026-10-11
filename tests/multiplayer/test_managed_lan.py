@@ -17,6 +17,8 @@ from nostalgia.multiplayer.service import RoomService
         ("[Server thread/INFO]: Started serving on 51234", 51234),
         ("Started serving on port 65535", 65535),
         ("[Render thread/INFO]: [System] [CHAT] Local game hosted on port 1024", 1024),
+        ("\x1b[32m[Server thread/INFO]: Started serving on 51234\x1b[0m", 51234),
+        ("[Server thread/INFO] [minecraft/IntegratedServer]: Started serving on 54321", 54321),
         ("[CHAT] <guest> Started serving on 54321", 0),
         ("[Render thread/INFO]: [CHAT] <guest> Local game hosted on port 54321", 0),
         ("Started serving on 22", 0),

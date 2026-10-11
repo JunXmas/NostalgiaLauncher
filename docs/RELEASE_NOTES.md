@@ -1,33 +1,32 @@
-# Nostalgia 1.2.0rc29 — Một phòng chơi, những người bạn
+# Nostalgia 1.2.0rc30 — Chuẩn bị xong, cùng vào world
 
-Mời bạn vào phòng trước, chuẩn bị modpack cùng nhau, rồi mở world. Bản này chuyển dữ liệu chơi chung sang **P2P mã hóa**, giúp hai máy trao đổi trực tiếp và giảm tải cho dịch vụ của launcher.
+Bản vá này tập trung vào phòng chơi chung: giữ modpack đã chuẩn bị ổn định, nhận cổng LAN chắc chắn hơn và đợi host mở khóa trước khi kết nối.
 
-## Tạo phòng, mời bạn, cùng chơi
+## Những lỗi đã sửa
 
-1. Vào **Bạn bè → Chơi chung**, chọn bản chơi và bấm **Tạo phòng**.
-2. Mời bạn ngay trong bảng phòng. Nếu chia sẻ modpack, người nhận xem và chọn nội dung cần đồng bộ trước khi chơi.
-3. Host khởi chạy Minecraft, vào world rồi chọn **Esc → Open to LAN → Start LAN World**. Launcher tự nhận cổng LAN.
-4. Khách chờ kết nối và nội dung sẵn sàng, rồi bấm **Khởi chạy & vào world**. Giữ launcher mở trong lúc chơi.
+- **Không chuẩn bị modpack lặp lại:** cập nhật trạng thái khóa phòng đến muộn từng khiến modpack đã sẵn sàng được chia sẻ lại. Phòng giờ giữ snapshot hoàn tất để bạn mời bạn bè và khởi chạy game.
+- **Nhận LAN từ đúng bản chơi:** launcher đọc thông báo từ stdout và `latest.log`, hỗ trợ log có màu, bỏ cổng của phiên chơi trước và theo dõi log xoay vòng. Cổng vẫn phải trả lời kiểm tra Minecraft trước khi phòng báo world sẵn sàng.
+- **Đợi host chuẩn bị xong:** khách không thương lượng P2P lúc phòng đang khóa để chia sẻ nội dung, tránh bị từ chối ngay trước khi host mở phòng. World đang khóa cũng không được hiện là sẵn sàng.
+- **Theo dõi log nhẹ:** đọc trên luồng nền, giới hạn 64 KiB/lần, bỏ thông báo trùng và dừng khi game đóng.
 
-Tìm bạn theo tên ngay trong danh sách, kể cả khi gõ không dấu. Danh sách dài chỉ dựng các ô gần màn hình. Chat thu gọn mặc định; mời chơi không cần mở cuộc trò chuyện.
+## Cách cùng chơi
 
-## Kết nối trực tiếp, truyền nội dung có kiểm tra
+1. Host vào **Bạn bè → Chơi chung**, chọn bản chơi và bấm **Tạo phòng**. Nếu bật đồng bộ, đợi modpack sẵn sàng rồi mời bạn.
+2. Host bấm **Khởi chạy**, vào world và chọn **Esc → Open to LAN → Start LAN World**. Giữ launcher mở trong lúc chơi.
+3. Khách nhận lời mời, chọn nội dung cần đồng bộ nếu có, đợi P2P và world sẵn sàng rồi bấm **Khởi chạy & vào world**.
 
-- Dữ liệu game và file mod/resourcepack custom được chuyển qua WebRTC DataChannel với mã hóa DTLS. Thông tin thương lượng P2P được mã hóa AES-GCM và gửi qua HTTPS/WSS.
-- Dịch vụ launcher giữ phòng chờ, lời mời, manifest và kiểm tra quyền. Relay truyền dữ liệu đã tắt; khi P2P không kết nối được, launcher báo lỗi rõ ràng.
-- Host có Plus có thể chia sẻ modpack cho bạn được mời, kể cả khách miễn phí. Quyền chia sẻ được kiểm tra ở máy chủ.
-- Người nhận chọn nội dung trước khi cài. File được kiểm SHA-256 và kích thước; mod từ nguồn công khai tiếp tục tải qua nhà cung cấp. Chỉ nhận mod custom từ người bạn tin tưởng vì chúng có thể chạy mã trên máy.
+**Host và khách nên cùng cập nhật rc30.** Khi tắt đồng bộ, hai bên vẫn cần Minecraft, loader và bộ mod tương thích.
 
-**Cả host và khách cần cập nhật lên bản này.** Bản cũ dùng relay sẽ không chơi chung được. P2P có thể không hoạt động trên mạng chặn UDP hoặc một số kiểu NAT/CGNAT; hiện không có relay dự phòng. Người trong phòng có thể biết địa chỉ IP của nhau.
+## Kiểm thử và giới hạn kết nối
 
-## Cùng kiểm thử trên mạng thực tế
+Đã thử backend thật chạy cục bộ qua HTTPS/WSS với hai dịch vụ phòng độc lập: bật và tắt đồng bộ, nhận file resourcepack qua P2P, rồi gửi dữ liệu Minecraft qua nhiều kết nối trên cùng kênh. Có kiểm thử hồi quy cho cập nhật trạng thái đến muộn, phòng khóa, log cũ, log bị cắt/xoay và luồng Qt nhận cổng LAN.
 
-Đường truyền mã hóa và đồng bộ file đã được kiểm thử tự động trên máy cục bộ. Kết nối giữa nhiều nhà mạng và CGNAT vẫn cần người dùng thử thực tế. Nếu gặp lỗi, gửi phiên bản launcher, Minecraft/loader, hệ điều hành hai máy, trạng thái P2P và thông báo lỗi. Không gửi mã phòng, khóa phiên hoặc thông tin đăng nhập.
+Kiểm thử này xác minh giao thức trên máy cục bộ; chưa xác minh kết nối giữa hai nhà mạng thực tế. Mạng chặn UDP và một số kiểu NAT/CGNAT vẫn có thể ngăn P2P. **Relay dữ liệu tiếp tục tắt**, không có chuyển sang relay âm thầm. Thông tin thương lượng được bảo vệ bằng AES-GCM qua HTTPS/WSS; dữ liệu P2P dùng DTLS, file đồng bộ được kiểm SHA-256. Quyền Plus được kiểm tra trên máy chủ, không mở Ultimate TEST.
 
-## Tải và cập nhật
+## Gói phát hành
 
-- **Windows x64:** `setup.exe` và ZIP portable/cập nhật.
+- **Windows x64:** bộ cài và ZIP portable/cập nhật.
 - **Linux x64:** `.deb` cho Linux Mint/Ubuntu/Debian, `.rpm`, AppImage, `.tar.gz` và ZIP cập nhật.
 - **macOS:** DMG và ZIP riêng cho Apple Silicon và Intel.
 
-Launcher giữ cơ chế cập nhật hiện có: thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. Gói được kiểm SHA-256 trước khi áp dụng. Google và Premium dùng dịch vụ thật; bản này không mở Ultimate TEST. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.
+Cơ chế cập nhật giữ nguyên: launcher thông báo bản mới, tải và cài khi bạn chọn cập nhật; macOS mở trang tải. File đính kèm chỉ gồm bộ cài, gói portable/cập nhật và `SHA256SUMS`.

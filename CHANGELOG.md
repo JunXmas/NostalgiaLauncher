@@ -5,6 +5,21 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 
 ## Chưa phát hành
 
+## 1.2.0rc30 — 2026-10-11
+
+- Sửa vòng lặp chuẩn bị modpack: cập nhật trạng thái phòng đến muộn không chia sẻ
+  lại snapshot đã hoàn tất, không khóa lại phòng và không chặn nút khởi chạy.
+- Nhận cổng LAN từ cả stdout và `latest.log` của đúng bản chơi đang chạy, kể cả
+  thông báo có màu ANSI. Bỏ cổng trong log cũ, theo dõi log bị cắt/xoay vòng và
+  kiểm tra phản hồi Minecraft trên loopback trước khi mở world cho khách.
+- Khách đợi host mở khóa sau khi chuẩn bị nội dung rồi mới thương lượng P2P;
+  không báo world sẵn sàng khi phòng vẫn khóa. Giữ nhịp kiểm tra phòng chờ nhẹ.
+- Theo dõi log trên luồng nền, đọc tối đa 64 KiB mỗi lần, gộp thông báo trùng
+  giữa stdout và file, dừng theo dõi khi phiên chơi kết thúc.
+- Giữ P2P mã hóa, xác thực Plus trên máy chủ và relay dữ liệu vô hiệu hóa.
+  Kiểm thử backend thật cục bộ với cả hai chế độ bật/tắt đồng bộ, truyền file
+  qua P2P và mở nhiều kết nối Minecraft trên cùng kênh mã hóa.
+
 ## 1.2.0rc29 — 2026-10-11
 
 - Giữ cầu nối QML sống cùng cửa sổ, tránh mất tín hiệu popup khi thu hồi bộ nhớ.

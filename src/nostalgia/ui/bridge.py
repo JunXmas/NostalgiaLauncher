@@ -221,12 +221,20 @@ class LauncherBridge(InstanceBridge):
             with host_scope() if host_scope else nullcontext():
                 # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
                 self._game_log.reset()
+                selected = next(
+                    i for i in self._launcher.list_instances() if i.instance_id == instance_id
+                )
+                log_path = self._launcher.instance_game_dir(selected) / "logs" / "latest.log"
                 game = self._launcher.launch_instance(
                     instance_id,
                     account_id,
                     world_folder=world_folder,
                     server_address=server_address,
-                    on_output=self.game_lan.receiver(instance_id, self._game_log.receive),
+                    on_output=self.game_lan.receiver(
+                        instance_id,
+                        self._game_log.receive,
+                        log_path,
+                    ),
                     cancel_token=cancel_token,
                 )
                 started_at = time.time()
@@ -264,6 +272,7 @@ class LauncherBridge(InstanceBridge):
     def _sync_game_log_session(self) -> None:
         if self._game_running:
             self._game_log.begin_session()
+            self.game_lan.begin_session()
         else:
             self._game_log.end_session()
             self.game_lan.clear()
