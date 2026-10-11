@@ -17,7 +17,7 @@ from dataclasses import replace
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.host import HostRelay
-from nostalgia.multiplayer.lan import LanWorld, detect_open_to_lan
+from nostalgia.multiplayer.lan import LanWorld, announce_forever, detect_open_to_lan
 from nostalgia.multiplayer.lan_probe import probe_lan_port
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.room_code import make_room_code, split_room_code
@@ -200,4 +200,26 @@ class RoomService(RoomNetwork):
 
     def _publish(self, **changes: object) -> None:
         self._status = replace(self._status, **changes)  # type: ignore[arg-type]
+        if self._can_join_world():
+            if self._beacon is None or self._beacon.done():
+                self._beacon = self._loop.create_task(
+                    announce_forever(
+                        self._status.local_port,
+                        "§bNostalgia §7— phòng của bạn",
+                        is_ready=self._can_join_world,
+                    )
+                )
+        elif self._beacon is not None:
+            self._beacon.cancel()
+            self._beacon = None
         self._on_status(self._status)
+
+    def _can_join_world(self) -> bool:
+        joiner = self._joiner
+        return (
+            self._status.role == "joined"
+            and self._status.world_ready
+            and not self._status.locked
+            and joiner is not None
+            and (self._relay_enabled or (joiner.peer is not None and not joiner.peer.closed))
+        )

@@ -18,6 +18,7 @@ import socket
 import struct
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from nostalgia.errors import MultiplayerError
@@ -181,7 +182,9 @@ def build_beacon(local_port: int, world_name: str) -> bytes:
     return f"[MOTD]{world_name}[/MOTD][AD]{local_port}[/AD]".encode()
 
 
-async def announce_forever(local_port: int, world_name: str) -> None:
+async def announce_forever(
+    local_port: int, world_name: str, *, is_ready: Callable[[], bool] | None = None
+) -> None:
     """Phát beacon giả để Minecraft trên CÙNG máy thấy world trong tab LAN.
 
     Không tin loopback luôn nhận làm interface multicast (Windows thường không nhận):
@@ -195,6 +198,9 @@ async def announce_forever(local_port: int, world_name: str) -> None:
     interfaces = sorted(local_ipv4_addresses())
     try:
         while True:
+            if is_ready is not None and not is_ready():
+                await asyncio.sleep(ANNOUNCE_INTERVAL_SECONDS)
+                continue
             sent = False
             for host in interfaces:
                 try:

@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from nostalgia.multiplayer.gate import JoinerGate
@@ -42,11 +43,13 @@ class JoinerBridge:
         *,
         tls_context: TlsContext | None = None,
         relay_enabled: bool = False,
+        on_failure: Callable[[str], None] | None = None,
     ) -> None:
         self._url = f"{relay_url.rstrip('/')}/s/{room_id}?role=join"
         self._room_secret = room_secret
         self._tls_context = tls_context
         self._relay_enabled = relay_enabled
+        self._on_failure = on_failure
         self._server: asyncio.AbstractServer | None = None
         self._handlers: set[asyncio.Task[None]] = set()
         self.peer: PeerMux | None = None
@@ -93,7 +96,9 @@ class JoinerBridge:
         # Chốt cửa L7: chỉ chính máy này. Không phải thì đóng TRƯỚC khi mở gì tới relay.
         peer = writer.get_extra_info("peername")
         peer_host = str(peer[0]) if peer else ""
-        if not is_local_peer(peer_host, local_ipv4_addresses()):
+        if not is_local_peer(peer_host, frozenset()) and not is_local_peer(
+            peer_host, local_ipv4_addresses()
+        ):
             logger.warning("proxy CHƠI CHUNG từ chối kết nối không phải máy này: %s", peer_host)
             writer.close()
             return
@@ -106,11 +111,15 @@ class JoinerBridge:
             if self.peer is not None and not self.peer.closed:
                 socket = self.peer.open()
             elif not self._relay_enabled:
+                self._connection_failed(
+                    "Kết nối P2P tới world chưa sẵn sàng. Đợi launcher báo sẵn sàng rồi thử lại."
+                )
                 writer.close()
                 return
             else:
                 socket = await WebSocketClient.connect(self._url, tls_context=self._tls_context)
-        except Exception:
+        except Exception as exc:
+            self._connection_failed("Không mở được đường truyền tới host. Hãy vào lại phòng.", exc)
             writer.close()
             return
         try:
@@ -123,11 +132,19 @@ class JoinerBridge:
                 _pump_relay_to_game(socket, writer),
                 return_exceptions=True,
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            self._connection_failed(
+                "Không hoàn tất bắt tay với host. Hãy vào lại phòng và kiểm tra host còn mở LAN.",
+                exc,
+            )
         finally:
             await socket.close()
             writer.close()
+
+    def _connection_failed(self, message: str, error: Exception | None = None) -> None:
+        logger.warning("%s (%s)", message, type(error).__name__ if error else "unavailable")
+        if self._on_failure is not None:
+            self._on_failure(message)
 
     async def _handshake(self, socket: BinarySocket) -> bytes:
         gate = JoinerGate(self._room_secret)

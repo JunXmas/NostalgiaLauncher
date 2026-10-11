@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from collections.abc import Callable
 
 from nostalgia.multiplayer.mux import CLOSE, DATA, pack_mux_frame, unpack_mux_frame
 from nostalgia.multiplayer.peer_stream import PeerStream
@@ -45,8 +46,11 @@ class PeerSocket:
 
 
 class PeerMux:
-    def __init__(self, stream: PeerStream) -> None:
+    def __init__(
+        self, stream: PeerStream, *, on_closed: Callable[[PeerMux], None] | None = None
+    ) -> None:
         self.stream = stream
+        self._on_closed = on_closed
         self.sockets: dict[int, PeerSocket] = {}
         self._next_id = 1
         self.closed = False
@@ -79,6 +83,8 @@ class PeerMux:
             self.closed = True
             for socket in tuple(self.sockets.values()):
                 socket.end()
+            if self._on_closed is not None:
+                self._on_closed(self)
 
     async def close(self) -> None:
         self._runner.cancel()

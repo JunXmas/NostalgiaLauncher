@@ -13,6 +13,7 @@ from nostalgia.net.http import HttpClient
 
 if TYPE_CHECKING:
     from nostalgia.multiplayer.bridge import JoinerBridge
+    from nostalgia.multiplayer.peer_mux import PeerMux
 
 
 class RoomWatch:
@@ -121,7 +122,10 @@ class RoomWatch:
             if self._joiner is None:
                 await stream.close()
                 return True
-            self._joiner.peer = PeerMux(stream)
+            joiner = self._joiner
+            joiner.peer = PeerMux(
+                stream, on_closed=lambda peer: self._game_peer_closed(joiner, peer)
+            )
             self._publish(connection_kind="direct", world_ready=True)
         except (ImportError, ConnectionError, TimeoutError, NetworkError):
             if not self._relay_enabled:
@@ -136,6 +140,18 @@ class RoomWatch:
             self._on_failure(str(exc))
             return False
         return True
+
+    def _game_peer_closed(self, joiner: JoinerBridge, peer: PeerMux) -> None:
+        if self._joiner is not joiner or joiner.peer is not peer:
+            return
+        if self._relay_enabled:
+            self._publish(connection_kind="relay")
+        else:
+            self.peer_unavailable(
+                "Kết nối P2P đã mất. Hãy rời phòng và vào lại; relay dữ liệu đã tắt."
+            )
+            if self._network_task is not None:
+                self._network_task.cancel()
 
     def peer_unavailable(self, message: str) -> None:
         self._publish(connection_kind="failed", world_ready=False)

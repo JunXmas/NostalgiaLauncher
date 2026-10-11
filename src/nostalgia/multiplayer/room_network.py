@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
-from nostalgia.multiplayer.lan import announce_forever
 from nostalgia.multiplayer.mux import ROOM_META, pack_mux_frame
 from nostalgia.multiplayer.room_code import split_room_code
 from nostalgia.multiplayer.room_watch import RoomWatch
@@ -196,20 +195,17 @@ class RoomNetwork(RoomWatch):
                 room_secret,
                 tls_context=self._tls_context,
                 relay_enabled=self._relay_enabled,
+                on_failure=self._on_failure,
             )
             await joiner.probe()
             local_port = await joiner.start()
             self._joiner = joiner
-            self._beacon = self._loop.create_task(
-                announce_forever(local_port, "§bNostalgia §7— phòng của bạn")
-            )
             self._publish(
                 role="joined",
                 local_port=local_port,
                 connection_kind="pending" if not self._relay_enabled else "relay",
-                world_ready=not (
-                    self._room_http is not None and self._relay_url.startswith("wss://")
-                ),
+                world_ready=self._relay_enabled
+                and not (self._room_http is not None and self._relay_url.startswith("wss://")),
             )
             self.watch_guest_room(room_code)
         except asyncio.CancelledError:
