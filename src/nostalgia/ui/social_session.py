@@ -44,7 +44,7 @@ class SocialSession(SocialState):
         self._messages = []
         self._peer_id = ""
         self._login: GoogleLogin | None = None
-        self._note = ""
+        self._note, self._note_pinned = "", False
         self._refresh_pending = False
         self._watching = False
         self._arrived.connect(self._apply)
@@ -172,7 +172,7 @@ class SocialSession(SocialState):
         if operation in ("logout", "revoked"):
             self._reset_session(error or "Đã đăng xuất.")
         elif error:
-            self._note = error
+            self._note, self._note_pinned = error, False
             if self._login:
                 self.cancelSignIn()
                 self._note = error
@@ -184,7 +184,7 @@ class SocialSession(SocialState):
         elif operation == "signed" and isinstance(payload, str) and payload and self._gateway:
             self._gateway.access_token = payload
             self._login_timer.stop()
-            self._login = None
+            self._login, self._note_pinned = None, False
             self._timer.start()
             self.sessionChanged.emit()
             QTimer.singleShot(30, self.refresh)
@@ -196,24 +196,25 @@ class SocialSession(SocialState):
             self.update_messages(payload)
             if not any(friend.account_id == self._peer_id for friend in payload.snapshot.friends):
                 self._peer_id, self._messages = "", []
-            self._note = ""
+            # Polling không xoá lỗi thao tác khi người dùng chưa thử lại hoặc đổi bạn.
+            self._note = self._note if self._note_pinned else ""
             if payload.peer_id != self._peer_id and self._peer_id:
                 QTimer.singleShot(30, self.refresh)
         elif operation == "join" and isinstance(payload, str):
             self._sync_bridge.join(payload)
-            self._note = "Đang vào phòng của bạn…"
+            self._note, self._note_pinned = "Đang vào phòng của bạn…", False
             QTimer.singleShot(30, self.refresh)
         elif operation == "preview" and isinstance(payload, str):
             QDesktopServices.openUrl(QUrl(payload))
-            self._note = "Đã mở bản thử nghiệm riêng cho gói của bạn."
+            self._note, self._note_pinned = "Đã mở bản thử nghiệm riêng cho gói của bạn.", False
         elif operation == "changed":
-            self._note = "Đã gửi."
+            self._note, self._note_pinned = "Đã gửi.", False
             QTimer.singleShot(30, self.refresh)
         self.changed.emit()
 
     def _reset_session(self, note: str) -> None:
         self.next_generation()
-        self._refresh_pending = False
+        self._refresh_pending, self._note_pinned = False, False
         self._timer.stop()
         self._login_timer.stop()
         self._login = self._snapshot = self._last_update = None
