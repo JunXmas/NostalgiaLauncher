@@ -71,6 +71,10 @@ Pick a loader — Vanilla, Fabric, Quilt, Forge, NeoForge, or *Optimized* (a rea
 Fabulously Optimized pack for the best FPS) — choose RAM, and if your main drive is full,
 point that one instance at **any folder on any disk**.
 
+**Forgotten Worlds** adds the client mods for Junbob Mine to Fabulously Optimized on
+Minecraft 1.21.11, with its server address ready to play. See
+[the pack documentation](docs/FORGOTTEN_WORLDS.md) for included mods and version pins.
+
 ### 👤 Accounts and a skin library that lives in the launcher
 
 ![Accounts](docs/showcase/accounts-skins.jpg)
