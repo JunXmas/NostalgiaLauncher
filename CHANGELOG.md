@@ -3,8 +3,15 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.0rc36 — 2026-10-12
 
+- Sửa đăng nhập phiên web Ely.by khi địa chỉ OAuth đặt client ID trong đường dẫn:
+  launcher gửi đúng tham số để giữ phiên đổi skin. Tài khoản từ bản cũ có thể
+  đăng nhập lại ngay tại mục skin, giữ bản đang xem trước và hỗ trợ mã 2FA.
+- Kiểm tra đúng UUID khi khôi phục phiên Ely.by, chỉ báo thành công khi phiên web
+  đã sẵn sàng. Lỗi web tạm thời không làm mất phiên đổi skin đã lưu trước đó.
+- Giữ thông báo lỗi gửi chat và thao tác bạn bè qua các lượt làm mới nền;
+  thông báo được xoá khi thử lại, chuyển bạn hoặc đổi phiên đăng nhập.
 - Sửa cập nhật trên Windows khi launcher nằm trong thư mục cần quyền quản trị:
   chọn bộ cài Windows đúng phiên bản và kiến trúc, kiểm SHA-256, mở hộp thoại UAC
   rồi cài đè đúng thư mục. Không còn tải gói Linux và báo thiếu `pkexec` trên Windows.
