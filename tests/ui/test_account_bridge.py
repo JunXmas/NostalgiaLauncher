@@ -11,9 +11,13 @@ import pytest
 pytest.importorskip("PySide6")
 
 from test_bridges import wait_until
+from test_ely_upload import make_ely_web_launcher
 
 import fake_ely
 from local_https_server import LocalHttpsServer, ServerState
+from nostalgia.account.model import ELY, Account
+from nostalgia.account.store import save_accounts
+from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.bridge import LauncherBridge
 from test_api import make_launcher
@@ -59,6 +63,8 @@ def test_accounts_carry_a_drawable_skin_and_ely_sign_in_activates(
     )
     assert account_bridge.accountWithId(ely_row["accountId"])["kindLabel"] == "ELY.BY"
     assert "mat-khau" not in launcher.paths.accounts_json.read_text()
+    assert ely_row["elyWebReady"] is True
+    assert not {"access_token", "refresh_token", "site_cookies", "jwt"} & ely_row.keys()
 
 
 def test_two_factor_is_a_signal_not_a_failure(
@@ -121,3 +127,30 @@ def test_ely_sign_in_fetches_skin_support_right_away(
 
     wait_until(lambda: account_bridge.skinSupportReady)
     assert account_bridge.skinSupportReady is True
+
+
+def test_targeted_web_sign_in_updates_session_without_switching_the_active_account(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    launcher = make_ely_web_launcher(server, server_state, tmp_path, certificate_pair)
+    account = Account(fake_ely.ELY_NAME, fake_ely.ELY_UUID, ELY)
+    save_accounts(launcher.paths.accounts_json, (account,))
+    other = launcher.add_offline_account("StillSelected")
+    monkeypatch.setattr(
+        Launcher, "refresh_skin", lambda self, selected: self.describe_skin(selected)
+    )
+    main_bridge = LauncherBridge(launcher)
+    main_bridge.setActiveAccount(other.account_id)
+    account_bridge = AccountBridge(launcher, main_bridge)
+    assert not account_bridge.accountWithId(account.account_id)["elyWebReady"]
+    signed: list[str] = []
+    account_bridge.elySignedIn.connect(signed.append)
+    account_bridge.signInEly("jun@example.com", "secret", "", account.account_id)
+    wait_until(lambda: bool(signed) and not account_bridge.busy)
+    assert main_bridge.activeAccountId == other.account_id
+    assert account_bridge.accountWithId(account.account_id)["elyWebReady"]
+    assert len(launcher.list_accounts()) == 2

@@ -87,3 +87,43 @@ def test_send_failure_keeps_draft_or_revokes_session(
     else:
         assert social.signedIn and social.note == "Gửi thất bại."
         assert find_control(root_item, "chatComposer").property("text") == "Giữ bản nháp"
+
+
+def test_late_successful_poll_keeps_send_failure_visible_until_retry(
+    social_preview: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _launcher, gateway, _view, root_item, social, *_rest = social_preview
+    login_preview(social_preview)
+    find_control(root_item, "friendChat").setProperty("chatExpanded", True)
+    social.selectFriend("misa")
+    wait_until(lambda: not social.busy and bool(social.messages))
+    social._timer.stop()
+    started, release = Event(), Event()
+    original = gateway.fetch_snapshot
+
+    def slow_snapshot() -> Any:
+        started.set()
+        assert release.wait(4)
+        return original()
+
+    def fail(*_args: Any) -> None:
+        raise SocialError("Gửi thất bại.")
+
+    monkeypatch.setattr(gateway, "fetch_snapshot", slow_snapshot)
+    monkeypatch.setattr(gateway, "send_message", fail)
+    try:
+        social.refresh()
+        wait_until(started.is_set)
+        social.sendMessage("Giữ bản nháp")
+        wait_until(lambda: not social.chatBusy and social.note == "Gửi thất bại.")
+    finally:
+        release.set()
+        wait_until(lambda: not social.busy)
+    assert social.note == "Gửi thất bại."
+    social.refresh()
+    wait_until(lambda: not social.busy)
+    assert social.note == "Gửi thất bại."
+    monkeypatch.setattr(gateway, "send_message", lambda *_args: None)
+    social.sendMessage("Thử lại")
+    wait_until(lambda: not social.chatBusy)
+    assert social.note != "Gửi thất bại."

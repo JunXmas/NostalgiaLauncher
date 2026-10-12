@@ -106,7 +106,9 @@ def publish_web(server: LocalHttpsServer, state: ServerState) -> ElyWebEndpoints
         "/elysite/authorization/login",
         b"",
         status=302,
-        location=server.url("/elyweb/api/oauth2/v1/ely") + "?client_id=ely&state=st-1",
+        location=server.url("/elyweb/oauth2/v1/ely")
+        + "?state=st-1&response_type=code&redirect_uri="
+        + server.url("/elysite/authorization/oauth"),
         response_headers=(("Set-Cookie", "PHPSESSID=sess-1; path=/; httponly"),),
     )
     state.add(

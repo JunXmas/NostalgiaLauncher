@@ -11,8 +11,15 @@ Item {
     property string mode: "pick"   // pick | ely | offline
     property bool needsTotp: false
     property string failure: ""
+    property string renewAccountId: ""
+    readonly property bool renewing: renewAccountId !== ""
 
-    function openDialog() { mode = "pick"; needsTotp = false; failure = ""; emailField.text = ""; passwordField.text = ""; totpField.text = ""; nameField.text = ""; visible = true; box.forceActiveFocus(); }
+    function openDialog() { renewAccountId = ""; mode = "pick"; needsTotp = false; failure = ""; emailField.text = ""; passwordField.text = ""; totpField.text = ""; nameField.text = ""; visible = true; box.forceActiveFocus(); }
+    function openElySession(accountId, playerName) {
+        openDialog(); renewAccountId = accountId; mode = "ely";
+        emailField.text = playerName; passwordField.forceActiveFocus();
+    }
+    onVisibleChanged: if (!visible) { passwordField.text = ""; totpField.text = ""; }
 
     Connections {
         target: accountBridge
@@ -55,7 +62,8 @@ Item {
             id: contentColumn
             width: accountFormScroll.width
             spacing: 14
-            Text { text: Tr.phrase("Thêm tài khoản"); color: Theme.text; font.family: Theme.modern ? "Manrope" : Theme.sans; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { text: dialog.renewing ? Tr.phrase("Đăng nhập lại Ely.by") : Tr.phrase("Thêm tài khoản"); color: Theme.text; font.family: Theme.modern ? "Manrope" : Theme.sans; font.pixelSize: Theme.fontTitle; font.bold: true }
+            Text { visible: dialog.renewing; width: parent.width; wrapMode: Text.WordWrap; text: Tr.phrase("Skin đang xem trước được giữ lại. Đăng nhập xong, bấm Lưu thay đổi để áp dụng."); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
 
             // ----- chọn loại -----
             Column {
@@ -100,7 +108,7 @@ Item {
                 Text { text: Tr.phrase("MẬT KHẨU"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
                 TextField { id: passwordField; objectName: "elyPasswordField"; width: parent.width; placeholder: "••••••••"; echoMode: TextInput.Password; onAccepted: dialog.submitEly() }
                 Text { visible: dialog.needsTotp; text: Tr.phrase("MÃ 2FA"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
-                TextField { id: totpField; visible: dialog.needsTotp; width: 160; placeholder: "123456"; onAccepted: dialog.submitEly() }
+                TextField { id: totpField; objectName: "elyTotpField"; visible: dialog.needsTotp; width: 160; placeholder: "123456"; onAccepted: dialog.submitEly() }
                 Text { visible: Tr.message(dialog.failure) !== ""; width: parent.width; wrapMode: Text.WordWrap; text: Tr.message(dialog.failure); color: Theme.danger; font.pixelSize: Theme.fontBody }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
@@ -122,7 +130,7 @@ Item {
                         readonly property url target: "https://account.ely.by/register"
                         onClicked: Qt.openUrlExternally(target)
                     }
-                    ActionButton { primary: false; label: Tr.phrase("Quay lại"); onClicked: dialog.mode = "pick" }
+                    ActionButton { objectName: "elySignInBackButton"; primary: false; label: dialog.renewing ? Tr.phrase("Hủy") : Tr.phrase("Quay lại"); clickable: !accountBridge.busy; onClicked: { if (dialog.renewing) dialog.visible = false; else dialog.mode = "pick"; } }
                 }
             }
 
@@ -142,9 +150,10 @@ Item {
     }
 
     function submitEly() {
-        if (emailField.text.trim() === "" || passwordField.text === "") return;
+        if (accountBridge.busy || emailField.text.trim() === "" || passwordField.text === "") return;
         dialog.failure = "";
-        accountBridge.signInEly(emailField.text, passwordField.text, totpField.text);
+        if (dialog.renewing) accountBridge.signInEly(emailField.text, passwordField.text, totpField.text, dialog.renewAccountId);
+        else accountBridge.signInEly(emailField.text, passwordField.text, totpField.text);
     }
     function submitOffline() {
         if (nameField.text.trim() === "") return;

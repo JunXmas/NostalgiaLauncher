@@ -44,6 +44,7 @@ class SocialBridge(SocialInvitations):
 
     @Slot(str, bool)
     def _apply_friend_action(self, error: str, revoked: bool) -> None:
+        self._note_pinned = bool(error) and not revoked
         if revoked:
             if self._session_store:
                 self._session_store.remove_access_token()
@@ -61,6 +62,7 @@ class SocialBridge(SocialInvitations):
 
     @Slot(str, str, str, bool)
     def _apply_delivery(self, peer_id: str, text: str, error: str, revoked: bool) -> None:
+        self._note_pinned = bool(error) and not revoked
         if revoked:
             if self._session_store:
                 self._session_store.remove_access_token()
@@ -101,6 +103,7 @@ class SocialBridge(SocialInvitations):
     @Slot(str)
     def selectFriend(self, account_id: str) -> None:
         if not account_id:
+            self._note, self._note_pinned = "", False
             self._peer_id, self._messages = "", []
             self._configure_poll_interval()
             self.changed.emit()
@@ -108,6 +111,7 @@ class SocialBridge(SocialInvitations):
         if self._snapshot and any(
             friend.account_id == account_id for friend in self._snapshot.friends
         ):
+            self._note, self._note_pinned = "", False
             self._peer_id, self._messages = account_id, []
             self._configure_poll_interval()
             self.changed.emit()
@@ -147,7 +151,9 @@ class SocialBridge(SocialInvitations):
             and self._snapshot
             and any(friend.account_id == account_id for friend in self._snapshot.friends)
         ):
+            self._note, self._note_pinned = "", False
             self._chat.submit(gateway, account_id, text.strip())
+            self.changed.emit()
 
     @Slot(str, bool)
     def setProfile(self, accent: str, show_badge: bool) -> None:

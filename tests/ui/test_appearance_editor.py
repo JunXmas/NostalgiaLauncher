@@ -30,7 +30,12 @@ def png(path: Path, color: str, cape: bool = False) -> Path:
 
 def account_page(preview: Preview, monkeypatch: pytest.MonkeyPatch, account_kind: str) -> Account:
     launcher, _view, bridge, root_item = preview
-    account = Account("SameName", "069a79f4-44e9-4726-a5be-fca90e38aaf5", account_kind)
+    account = Account(
+        "SameName",
+        "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+        account_kind,
+        refresh_token="web-session" if account_kind == "ely" else "",
+    )
     monkeypatch.setattr(Launcher, "refresh_skin", lambda self, account: self.describe_skin(account))
     save_accounts(launcher.paths.accounts_json, (account,))
     bridge.announce_accounts_changed()

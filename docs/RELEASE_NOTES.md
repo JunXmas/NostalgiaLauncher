@@ -1,45 +1,50 @@
-# Nostalgia 1.2.0rc35 — Forgotten Worlds 1.0.1
+# Nostalgia 1.2.0rc36 — Skin Ely.by và cập nhật Windows
 
-Forgotten Worlds 1.0.1 được tích hợp trong launcher và có file `.mrpack` tải riêng
-trên trang release, kèm SHA-256 trong `SHA256SUMS`.
+Bản vá khôi phục việc đổi skin Ely.by ngay trong launcher và sửa bộ cập nhật
+Windows cho các thư mục cài đặt cần quyền quản trị.
 
-## Cài Forgotten Worlds
+## Đổi skin Ely.by
 
-1. Vào **Bản chơi → Tạo bản chơi**.
-2. Chọn **Forgotten Worlds**, Minecraft **1.21.11**, rồi bấm **Tạo bản chơi**.
-3. Launcher cài Fabric Loader 0.19.5, Fabulously Optimized 12.3.0 và các mod client cần thiết.
-4. Mở Minecraft → Multiplayer, chọn server **Junbob Mine — Forgotten Worlds** (`snow.pikamc.vn:25079`).
+- Sửa bước tạo phiên web Ely.by: gửi đúng client ID của OAuth thay vì để bước này
+  thất bại dù tài khoản vẫn đăng nhập game được.
+- Với tài khoản từ bản cũ hiện **No Ely.by web session**, chọn skin rồi bấm
+  **Lưu thay đổi**. Launcher mở đăng nhập lại ngay tại mục skin; bản xem trước
+  được giữ nguyên. Đăng nhập xong, bấm **Lưu thay đổi** để áp dụng.
+- Hỗ trợ mã 2FA, kiểm tra đúng tài khoản đang chọn và báo lỗi nếu phiên web chưa
+  được tạo thành công. Không cần xoá tài khoản khỏi launcher để phục hồi phiên.
+- Một lần đăng nhập gặp lỗi web tạm thời không làm mất phiên đổi skin đã lưu.
 
-Để nhập riêng modpack, tải **Forgotten-Worlds-Optimized-1.21.11.mrpack** rồi kéo file
-vào cửa sổ launcher hoặc chọn Nhập bản chơi. Bản chơi Forgotten Worlds đã tạo
-có thể tiếp tục sử dụng.
+## Cập nhật trên Windows
 
-Gói gồm Create Fly bản client đầy đủ, Friends&Foes, Serene Seasons, Streams Reflowing,
-The Sift bản port 1.21.11 và các thư viện tương ứng. Phiên bản mod được ghim theo server;
-Kotlin được thay thế bằng một bản duy nhất. The Sift là bản port không chính thức của mod MIT
-của Mielon; metadata và tác giả của bản port được giữ nguyên.
+- Khi cần quyền quản trị, launcher chọn bộ cài Windows đúng phiên bản và kiến trúc,
+  kiểm SHA-256 rồi mở bộ cài qua UAC để cập nhật đúng thư mục.
+- Sửa lỗi tải gói Linux và báo thiếu **pkexec** trên Windows.
+- Huỷ yêu cầu quyền sẽ giữ launcher đang mở. Nếu đang mắc lỗi cập nhật ở bản cũ,
+  tải **setup.exe** bên dưới và chạy một lần để lên rc36.
 
-Preset chỉ hỗ trợ Minecraft 1.21.11. RAM và thư mục chơi dùng lựa chọn trong phần
-**Thiết lập nâng cao**. Java 21 được launcher chuẩn bị theo phiên bản game.
+## Thông báo chat rõ ràng hơn
 
-Mod quản trị và sinh địa hình ở phía server; client nhận địa hình khi kết nối.
-Gói này dành để chơi server, không tái tạo toàn bộ bộ mod sinh thế giới trong chế độ một người chơi.
-Luồng **Tối ưu / Optimized** vẫn cài Fabulously Optimized chuẩn cho các phiên bản được hỗ trợ.
+Lượt làm mới nền không xoá thông báo gửi chat hoặc thao tác bạn bè thất bại.
+Thông báo được xoá khi thử lại, chọn bạn khác hoặc đổi phiên đăng nhập.
 
-## Lỗi đăng nhập đã xử lý trên server
+## Bộ cài và kiểm tra
 
-Đã tái hiện lỗi `Mixin transformation of net.minecraft.class_3248 failed` do
-SkinRestorer 2.11.0 xung đột với Cardboard 18. Server Junbob Mine đã tắt SkinRestorer
-và khởi động lại; Simple_RTP, DonutSMP-Homes và SparkLogin hoạt động, TPS 20.0.
-Chức năng phục hồi skin của SkinRestorer tạm ngừng.
+Có Windows x64 setup/portable; Linux x64 AppImage, deb, rpm, tar.gz và zip;
+macOS Apple Silicon/Intel dmg và zip. Gói Forgotten Worlds 1.0.1 vẫn được đính kèm.
+Các file có SHA-256 trong **SHA256SUMS**; ảnh preview và tài liệu nội bộ không nằm
+trong file phát hành. Bản này dùng cấu hình release tiêu chuẩn.
 
-Pack client giữ bộ mod đã ghim và được kiểm tra để loại các mod đăng nhập phía server.
-Đã chạy Minecraft thực tế và kiểm tra lớp đăng nhập trước/sau khi khởi tạo mod.
-Thử lớp đăng nhập phía server tái hiện lỗi khi có cả hai mod và thành công khi chạy riêng.
-Việc kết nối từ máy người chơi cần được xác nhận bằng lần đăng nhập tiếp theo.
+Luồng skin được kiểm tra với máy chủ HTTPS mô phỏng, gồm đăng nhập, upload,
+áp dụng skin, phiên cũ, tài khoản nhập nhầm và 2FA; chưa kiểm tra upload bằng
+tài khoản Ely.by thật. Các bộ cài được chạy thử tự động trước khi phát hành.
 
-## Bộ cài
+## English
 
-Có Windows setup.exe/portable, Linux AppImage/deb/rpm/tar.gz và macOS dmg/zip cho Apple Silicon
-và Intel. Bộ cài và modpack có SHA-256 trong `SHA256SUMS`. Bản cập nhật không thay đổi tài khoản,
-bản chơi hay world hiện có.
+- Fix Ely.by's internal OAuth client ID so skin sessions can be created correctly.
+  Old accounts can sign in again directly from the skin panel without losing their preview;
+  click **Save changes** after signing in to apply it. Includes 2FA and account identity checks.
+- Fix protected Windows installations downloading Linux packages. Updates use the verified
+  Windows installer and native UAC; cancelling UAC leaves the launcher open.
+- Keep chat and friend-action errors visible across background refreshes until retrying
+  or switching friends/sessions.
+- All existing Windows, Linux and macOS packages remain available, along with Forgotten Worlds.
