@@ -1,6 +1,7 @@
-# Nostalgia 1.2.0rc34 — Forgotten Worlds
+# Nostalgia 1.2.0rc35 — Forgotten Worlds 1.0.1
 
-Thêm bộ mod chơi server Junbob Mine trực tiếp trong launcher, dựa trên Fabulously Optimized.
+Forgotten Worlds 1.0.1 được tích hợp trong launcher và có file `.mrpack` tải riêng
+trên trang release, kèm SHA-256 trong `SHA256SUMS`.
 
 ## Cài Forgotten Worlds
 
@@ -8,6 +9,10 @@ Thêm bộ mod chơi server Junbob Mine trực tiếp trong launcher, dựa trê
 2. Chọn **Forgotten Worlds**, Minecraft **1.21.11**, rồi bấm **Tạo bản chơi**.
 3. Launcher cài Fabric Loader 0.19.5, Fabulously Optimized 12.3.0 và các mod client cần thiết.
 4. Mở Minecraft → Multiplayer, chọn server **Junbob Mine — Forgotten Worlds** (`snow.pikamc.vn:25079`).
+
+Để nhập riêng modpack, tải **Forgotten-Worlds-Optimized-1.21.11.mrpack** rồi kéo file
+vào cửa sổ launcher hoặc chọn Nhập bản chơi. Bản chơi Forgotten Worlds đã tạo
+có thể tiếp tục sử dụng.
 
 Gói gồm Create Fly bản client đầy đủ, Friends&Foes, Serene Seasons, Streams Reflowing,
 The Sift bản port 1.21.11 và các thư viện tương ứng. Phiên bản mod được ghim theo server;
@@ -21,8 +26,20 @@ Mod quản trị và sinh địa hình ở phía server; client nhận địa h�
 Gói này dành để chơi server, không tái tạo toàn bộ bộ mod sinh thế giới trong chế độ một người chơi.
 Luồng **Tối ưu / Optimized** vẫn cài Fabulously Optimized chuẩn cho các phiên bản được hỗ trợ.
 
+## Lỗi đăng nhập đã xử lý trên server
+
+Đã tái hiện lỗi `Mixin transformation of net.minecraft.class_3248 failed` do
+SkinRestorer 2.11.0 xung đột với Cardboard 18. Server Junbob Mine đã tắt SkinRestorer
+và khởi động lại; Simple_RTP, DonutSMP-Homes và SparkLogin hoạt động, TPS 20.0.
+Chức năng phục hồi skin của SkinRestorer tạm ngừng.
+
+Pack client giữ bộ mod đã ghim và được kiểm tra để loại các mod đăng nhập phía server.
+Đã chạy Minecraft thực tế và kiểm tra lớp đăng nhập trước/sau khi khởi tạo mod.
+Thử lớp đăng nhập phía server tái hiện lỗi khi có cả hai mod và thành công khi chạy riêng.
+Việc kết nối từ máy người chơi cần được xác nhận bằng lần đăng nhập tiếp theo.
+
 ## Bộ cài
 
 Có Windows setup.exe/portable, Linux AppImage/deb/rpm/tar.gz và macOS dmg/zip cho Apple Silicon
-và Intel. Các file có SHA-256 trong `SHA256SUMS`. Bản cập nhật không thay đổi tài khoản,
+và Intel. Bộ cài và modpack có SHA-256 trong `SHA256SUMS`. Bản cập nhật không thay đổi tài khoản,
 bản chơi hay world hiện có.

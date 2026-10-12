@@ -5,7 +5,7 @@ name: Release
 #   Linux x64   : .zip (bộ tự cập nhật), .tar.gz, .AppImage, .deb, .rpm
 #   macOS       : .zip (bộ tự cập nhật) + .dmg, riêng cho Apple Silicon (arm64) và Intel (x64)
 #   Windows x64 : .zip (bộ tự cập nhật) + bộ cài setup.exe (Inno Setup)
-# Kết quả là GitHub Release DRAFT kèm bộ cài, gói portable/cập nhật và SHA256SUMS.
+# Kết quả là GitHub Release DRAFT kèm bộ cài, gói portable/cập nhật, modpack và SHA256SUMS.
 # Không đính kèm ảnh preview, hướng dẫn hay tài liệu nội bộ.
 # (bộ tự cập nhật chỉ nhìn thấy bản đã publish).
 
@@ -181,7 +181,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
-          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg bundles/*.zip bundles/*.tar.gz)
+          cp src/nostalgia/content/packs/forgotten-worlds-1.21.11.mrpack \
+            bundles/Forgotten-Worlds-Optimized-1.21.11.mrpack
+          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg bundles/*.zip bundles/*.tar.gz bundles/*.mrpack)
           test "${#assets[@]}" -gt 0
           : > bundles/SHA256SUMS
           for asset in "${assets[@]}"; do

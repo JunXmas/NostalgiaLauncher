@@ -30,7 +30,13 @@ def test_shipped_pack_has_client_create_and_matching_server_mods(tmp_path: Path)
     paths = [modpack_file.relative_path for modpack_file in index.files]
     assert len(paths) == len(set(paths))
     assert "mods/create-fly-1.21.11-6.0.9-5.jar" in paths
-    assert not any(path.endswith("-server.jar") or "Cardboard" in path for path in paths)
+    with zipfile.ZipFile(pack_path) as archive:
+        shipped_paths = [*paths, *archive.namelist()]
+    assert not any(
+        path.endswith("-server.jar")
+        or any(marker in path.lower() for marker in ("cardboard", "skinrestorer"))
+        for path in shipped_paths
+    )
     assert sum("fabric-language-kotlin" in path for path in paths) == 1
     assert any("sodium-fabric" in path for path in paths)
     assert any("friendsandfoes" in path for path in paths)

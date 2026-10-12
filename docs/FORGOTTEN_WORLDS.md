@@ -5,6 +5,9 @@ Launcher cài Fabric Loader 0.19.5, Fabulously Optimized 12.3.0 và bộ mod cli
 phù hợp với server Junbob Mine. Địa chỉ `snow.pikamc.vn:25079` có sẵn trong danh sách server.
 RAM và thư mục chơi vẫn dùng lựa chọn trong hộp tạo bản chơi.
 
+Gói 1.0.1 đi cùng launcher rc35 và có file `.mrpack` đính kèm trang release,
+kèm SHA-256 trong `SHA256SUMS`. Có thể tiếp tục dùng bản chơi đã tạo bằng rc34.
+
 Gói nằm tại `src/nostalgia/content/packs/forgotten-worlds-1.21.11.mrpack`.
 Có thể nhập riêng file này bằng kéo thả; không cần API key của PikaMC.
 PyInstaller đóng gói resource này cùng launcher.
@@ -30,6 +33,24 @@ toàn bộ bộ mod sinh thế giới trong chế độ một người chơi.
 The Sift port khuyến nghị LambDynamicLights 4.12.2, nhưng bản phát hành cho Minecraft
 1.21.11 hiện là 4.9.1, vốn có trong FO. Giữ nguyên 4.9.1; không cài mod cho phiên bản
 Minecraft khác để đáp ứng một khuyến nghị. Cần kiểm tra thực tế phần ánh sáng của bản port.
+
+## Tương thích đăng nhập
+
+Lỗi `Mixin transformation of net.minecraft.class_3248 failed` ngày 2026-10-12
+được tái hiện với SkinRestorer 2.11.0 và Cardboard 18 trên Minecraft 1.21.11.
+Cardboard ghi đè phương thức đăng nhập mà SkinRestorer cần tiêm `waitForSkin`;
+kết quả là `Critical injection failure`, `(0/1) succeeded`.
+
+Server Junbob Mine đã tắt SkinRestorer và giữ file `.jar.disabled` để hoàn tác.
+Chức năng phục hồi skin của mod này tạm ngừng. Cardboard, Simple_RTP,
+DonutSMP-Homes và SparkLogin hoạt động sau restart, TPS 20.0.
+SkinRestorer và Cardboard không nằm trong pack client.
+
+Đã cài pack và chạy Minecraft thực tế bằng Java 21/Fabric 0.19.5; lớp đăng nhập
+nạp thành công trước và sau khi các mod client khởi tạo. Kiểm tra lớp đăng nhập
+phía server thất bại khi có cả SkinRestorer và Cardboard, thành công khi chạy
+mỗi mod riêng. Cần xác nhận lần kết nối thực tế tiếp theo của người chơi;
+môi trường kiểm tra không có kết nối TCP đến cổng Minecraft của PikaMC.
 
 ## Cập nhật bộ mod
 
