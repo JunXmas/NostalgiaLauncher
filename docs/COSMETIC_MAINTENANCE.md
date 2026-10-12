@@ -39,7 +39,7 @@ cố định ba mã cosmetic. Đây là quy trình cập nhật theo phiên bả
 
 | `state` | Trong thư viện chọn | Hồ sơ đang dùng | Lưu hồ sơ |
 | --- | --- | --- | --- |
-| `active` | Có, cho xem thử | Hiển thị | Cần Plus để áp dụng |
+| `active` | Có, cho xem thử | Hiển thị | Cần Plus hoặc quyền được tặng để áp dụng |
 | `retired` | Ẩn | Giữ nguyên hình và mã | Chỉ giữ bộ đang dùng; không chọn lại sau khi đổi |
 | `disabled` | Ẩn | Hiển thị mặc định | Không cho áp dụng; người chơi có thể bỏ trang trí |
 
@@ -65,3 +65,16 @@ animation liên tục. Các gói Premium vẫn chỉ trang bị một bộ hồ 
 người dùng miễn phí dùng bộ được backend tặng. Chưa có vật phẩm hiển thị trong game.
 Danh mục mới cần deploy backend và phát hành launcher có ảnh mới trước khi người
 chơi dùng được bộ này trên dịch vụ thật. Không thay giá/gói, không tự cấp quyền.
+
+## Quà đăng nhập Halloween 2026
+
+Chỉ ngày **31/10/2026 theo giờ Việt Nam**, tài khoản Google hợp lệ mở launcher tự
+nhận `pumpkin-lantern` vĩnh viễn, kể cả bản miễn phí và phiên đã lưu. Lịch tương ứng
+`2026-10-30T17:00:00Z` đến trước `2026-10-31T17:00:00Z`; không tự lặp năm sau.
+Máy chủ quyết định theo thời gian của mình và kiểm tra lại phiên khi ghi.
+
+Sở hữu được lưu một lần trong `cosmetic_grants`; không tự đổi bộ đang mặc hay
+cấp Premium. Người quản trị thấy quà với người cấp `event:halloween-2026` và có
+thể thu hồi. Bản ghi thu hồi không được tự tặng lại khi người chơi đăng nhập.
+rc33 đã có ảnh và hỗ trợ dùng cosmetic được tặng nên không cần build binary mới.
+Người chơi mở **Cosmetic → Đèn bí ngô → Sử dụng diện mạo**.

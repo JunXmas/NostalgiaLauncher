@@ -122,15 +122,16 @@ def test_own_avatar_opens_profile_and_logout_confirms_without_removing_minecraft
     assert launcher.list_accounts() == accounts_before
 
 
+@pytest.mark.parametrize("decor", ["amethyst", "pumpkin-lantern"])
 def test_free_player_can_use_only_the_cosmetic_gifted_by_backend(
-    social_preview: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch
+    social_preview: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch, decor: str
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     fetch_profile = gateway.fetch_profile
     monkeypatch.setattr(
         gateway,
         "fetch_profile",
-        lambda account_id: replace(fetch_profile(account_id), owned_cosmetics=("amethyst",)),
+        lambda account_id: replace(fetch_profile(account_id), owned_cosmetics=(decor,)),
     )
     login_preview(social_preview)
     root_item.setProperty("currentIndex", 7)
@@ -138,15 +139,15 @@ def test_free_player_can_use_only_the_cosmetic_gifted_by_backend(
     wait_until(lambda: cosmetics.property("details")["loaded"] and not cosmetics.busy)
     assert not social.property("account")["cosmeticPlus"]
     page = find_control(root_item, "cosmeticLibrary")
-    press(view, find_item(page, "profileDecor-amethyst"))
+    press(view, find_item(page, "profileDecor-" + decor))
     assert find_control(root_item, "cosmeticEquip").property("clickable")
-    cosmetics.equip("amethyst")
-    wait_until(lambda: cosmetics.property("details")["decor"] == "amethyst" and not cosmetics.busy)
+    cosmetics.equip(decor)
+    wait_until(lambda: cosmetics.property("details")["decor"] == decor and not cosmetics.busy)
     press(view, find_item(page, "profileDecor-emerald"))
     assert not find_control(root_item, "cosmeticEquip").property("clickable")
     cosmetics.equip("emerald")
     QTest.qWait(80)
-    assert gateway.profile_draft.decor == "amethyst"
+    assert gateway.profile_draft.decor == decor
     social.signOut()
     wait_until(lambda: not social.signedIn)
     assert cosmetics.property("details")["ownedCosmetics"] == []
