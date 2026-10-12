@@ -1,7 +1,7 @@
 """Bản chơi "đóng gói sẵn": chọn phiên bản, launcher tự cài một modpack nổi tiếng cho đúng bản đó.
 
-Hiện có một gói: **Optimized** = Fabulously Optimized (Modrinth `1KVo5zza`) — Fabric + Sodium
-+ các mod tối ưu, chơi vanilla mượt hơn hẳn mà không cấu hình gì.
+Optimized lấy Fabulously Optimized từ Modrinth. Forgotten Worlds ghim gói client 1.21.11
+dựa trên FO, kèm các mod nội dung phù hợp với server Junbob Mine.
 """
 
 from __future__ import annotations
@@ -9,6 +9,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from nostalgia.content import modrinth
+from nostalgia.content.builtin_pack import (
+    FORGOTTEN_GAME_VERSIONS,
+    FORGOTTEN_WORLDS,
+    load_forgotten_worlds_pack,
+)
 from nostalgia.errors import ContentError
 from nostalgia.facade.modpacks import ModpackOperations
 from nostalgia.instance.model import Instance
@@ -16,13 +21,18 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 
 PRESET_PROJECT_IDS: dict[str, str] = {"optimized": "1KVo5zza"}
-PRESET_TITLES: dict[str, str] = {"optimized": "Fabulously Optimized"}
+PRESET_TITLES: dict[str, str] = {
+    "optimized": "Fabulously Optimized",
+    "forgotten-worlds": "Forgotten Worlds",
+}
 
 
 @dataclass(frozen=True, slots=True)
 class PresetOperations(ModpackOperations):
     def list_preset_game_versions(self, preset: str) -> tuple[str, ...]:
         """Các phiên bản Minecraft mà gói có bản phát hành. CHẠM MẠNG."""
+        if preset == FORGOTTEN_WORLDS:
+            return FORGOTTEN_GAME_VERSIONS
         project_id = _project_id(preset)
         with self.make_http_client() as http_client:
             versions = self.fetch_versions(http_client, "modrinth", project_id)
@@ -45,6 +55,18 @@ class PresetOperations(ModpackOperations):
         cancel_token: CancelToken | None = None,
     ) -> Instance:
         """Cài gói cho ĐÚNG `game_version`; chưa có bản đó thì báo, không lặng lẽ cài bản khác."""
+        if preset == FORGOTTEN_WORLDS:
+            if game_version not in FORGOTTEN_GAME_VERSIONS:
+                raise ContentError(f"Forgotten Worlds chưa có bản cho Minecraft {game_version}")
+            return self.install_modpack_file(
+                load_forgotten_worlds_pack(),
+                instance_id,
+                display_name,
+                game_dir_override=game_dir_override,
+                allowed_hosts=allowed_hosts,
+                on_progress=on_progress,
+                cancel_token=cancel_token,
+            )
         project_id = _project_id(preset)
         with self.make_http_client() as http_client:
             projects = modrinth.fetch_projects(

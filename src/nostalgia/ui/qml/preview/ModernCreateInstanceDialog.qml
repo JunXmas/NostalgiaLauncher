@@ -22,14 +22,16 @@ Controls.Popup {
     property bool advancedOpen: false
     readonly property bool wideLayout: body.width >= 900 * GlassTheme.scale
     readonly property var released: catalogBridge.releasedVersions
-    readonly property var presetVersions: catalogBridge.presetGameVersions
+    readonly property var presetVersions: loaderKind === "forgotten-worlds"
+                                         ? catalogBridge.forgottenWorldsGameVersions : catalogBridge.presetGameVersions
     readonly property var loaders: catalogBridge.loaderVersions
     readonly property var loaderChoices: [
         {key: "optimized", label: Legacy.Tr.phrase("Optimized")}, {key: "vanilla", label: "Vanilla"},
+        {key: "forgotten-worlds", label: "Forgotten Worlds"},
         {key: "fabric", label: "Fabric"}, {key: "quilt", label: "Quilt"},
         {key: "forge", label: "Forge"}, {key: "neoforge", label: "NeoForge"}]
     readonly property string loaderLabel: (loaderChoices.find(function(c) { return c.key === dialog.loaderKind; }) || {}).label || loaderKind
-    readonly property bool isPreset: loaderKind === "optimized"
+    readonly property bool isPreset: loaderKind === "optimized" || loaderKind === "forgotten-worlds"
     readonly property bool needsLoaderStep: !isPreset && loaderKind !== "vanilla"
     readonly property string defaultName: loaderLabel + " " + gameVersion
     readonly property bool versionUnsupported: isPreset && !!gameVersion && presetVersions.length > 0 && presetVersions.indexOf(gameVersion) < 0
@@ -49,6 +51,7 @@ Controls.Popup {
     }
     function pickLoader(kind) {
         loaderKind = kind; loaderVersion = "";
+        if (kind === "forgotten-worlds" && !gameVersion) gameVersion = "1.21.11";
         if (needsLoaderStep && gameVersion) catalogBridge.loadLoaderVersions(kind, gameVersion);
     }
     background: Item {
@@ -145,7 +148,7 @@ Controls.Popup {
                             Button { objectName: "createLoader-" + modelData.key; width: Math.max(100 * GlassTheme.scale, (setupSection.width - 16) / 3); height: 44 * GlassTheme.scale; label: modelData.label; selected: dialog.loaderKind === modelData.key; onClicked: dialog.pickLoader(modelData.key) }
                         }
                     }
-                    PaymentText { width: parent.width; text: dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                    PaymentText { width: parent.width; text: dialog.loaderKind === "forgotten-worlds" ? Legacy.Tr.phrase("Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.") : dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                     Column { width: parent.width; spacing: 8; visible: dialog.needsLoaderStep
                         PaymentText { text: Legacy.Tr.phrase("Phiên bản ") + dialog.loaderLabel; font.weight: Font.DemiBold }
                         Select { objectName: "createLoaderVersion"; width: parent.width; model: dialog.loaders.map(function(v) { return v.loaderVersion; }); currentIndex: model.indexOf(dialog.loaderVersion); displayText: dialog.loaderVersion || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải loader…") : Legacy.Tr.phrase("Chọn phiên bản loader…")); enabled: !!dialog.gameVersion && !bridge.busy && !catalogBridge.busy; onActivated: function(i) { if (i >= 0 && i < dialog.loaders.length) dialog.loaderVersion = dialog.loaders[i].loaderVersion; } }

@@ -4269,5 +4269,8 @@
   "m:Hai máy chưa nối được P2P. Mạng có thể chặn UDP hoặc NAT không hỗ trợ đường trực tiếp. Thử mạng khác rồi bấm Thử kết nối lại; relay dữ liệu đã tắt.": "Hai máy chưa nối được P2P. Mạng có thể chặn UDP hoặc NAT không hỗ trợ đường trực tiếp. Thử mạng khác rồi bấm Thử kết nối lại; relay dữ liệu đã tắt.",
   "m:The two devices could not connect over P2P. The network may block UDP or its NAT may not support a direct connection. Try another network, then select Retry connection; data relay is disabled.": "Hai máy chưa nối được P2P. Mạng có thể chặn UDP hoặc NAT không hỗ trợ đường trực tiếp. Thử mạng khác rồi bấm Thử kết nối lại; relay dữ liệu đã tắt.",
   "m:Đường truyền đồng bộ P2P đã ngắt. Hãy thử đồng bộ lại; bản chơi chưa bị thay đổi.": "Đường truyền đồng bộ P2P đã ngắt. Hãy thử đồng bộ lại; bản chơi chưa bị thay đổi.",
-  "m:The P2P sync transfer was interrupted. Try syncing again; your instance has not been changed.": "Đường truyền đồng bộ P2P đã ngắt. Hãy thử đồng bộ lại; bản chơi chưa bị thay đổi."
+  "m:The P2P sync transfer was interrupted. Try syncing again; your instance has not been changed.": "Đường truyền đồng bộ P2P đã ngắt. Hãy thử đồng bộ lại; bản chơi chưa bị thay đổi.",
+  "p:Cài Forgotten Worlds": "Cài Forgotten Worlds",
+  "p:Fabulously Optimized + bộ mod cho server Junbob Mine": "Fabulously Optimized + bộ mod cho server Junbob Mine",
+  "p:Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.": "Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11."
 }

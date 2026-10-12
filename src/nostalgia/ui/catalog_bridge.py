@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import replace
 from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
@@ -16,6 +17,8 @@ from nostalgia.api import Instance, Launcher
 from nostalgia.modloader.model import LoaderKind
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge, local_path
+
+PRESET_LABELS = {"optimized": "Fabulously Optimized", "forgotten-worlds": "Forgotten Worlds"}
 
 
 def slugify(display_name: str, taken: set[str]) -> str:
@@ -57,6 +60,10 @@ class CatalogBridge(WorkerBridge):
     def presetGameVersions(self) -> list[str]:
         """Phiên bản mà gói Optimized có bản; rỗng = chưa tải (hộp thoại không làm mờ gì)."""
         return list(self._preset_versions)
+
+    @Property(list, constant=True)
+    def forgottenWorldsGameVersions(self) -> list[str]:
+        return list(self._launcher.list_preset_game_versions("forgotten-worlds"))
 
     @Slot()
     def loadPresetVersions(self) -> None:
@@ -125,8 +132,10 @@ class CatalogBridge(WorkerBridge):
         game_dir_override = local_path(game_dir_url)
 
         def work() -> None:
-            if loader_kind == "optimized":
-                self._create_preset(display_name, game_version, game_dir_override)
+            if loader_kind in PRESET_LABELS:
+                self._create_preset(
+                    loader_kind, display_name, game_version, game_dir_override, max_heap_megabytes
+                )
                 return
             report = self._launcher.install_loader(
                 cast(LoaderKind, loader_kind),
@@ -147,22 +156,33 @@ class CatalogBridge(WorkerBridge):
             self._main_bridge.announce_instances_changed()
             self.created.emit(instance.instance_id)
 
-        loader_label = {"vanilla": "Minecraft", "optimized": "Fabulously Optimized"}.get(
+        loader_label = {"vanilla": "Minecraft", **PRESET_LABELS}.get(
             loader_kind, loader_kind.capitalize()
         )
         self.run_in_background(work, f"Cài {loader_label} {game_version} và tạo bản chơi")
 
-    def _create_preset(self, display_name: str, game_version: str, game_dir_override: str) -> None:
+    def _create_preset(
+        self,
+        preset: str,
+        display_name: str,
+        game_version: str,
+        game_dir_override: str,
+        max_heap_megabytes: int,
+    ) -> None:
         taken = {instance.instance_id for instance in self._launcher.list_instances()}
-        display_label = display_name.strip() or f"Optimized {game_version}"
+        preset_label = "Optimized" if preset == "optimized" else PRESET_LABELS[preset]
+        display_label = display_name.strip() or f"{preset_label} {game_version}"
         instance = self._launcher.install_preset(
-            "optimized",
+            preset,
             slugify(display_label, taken),
             display_label,
             game_version=game_version,
             game_dir_override=game_dir_override,
             on_progress=self._main_bridge.report_progress,
         )
+        if max_heap_megabytes:
+            instance = replace(instance, max_heap_megabytes=max_heap_megabytes)
+            self._launcher.save_instance(instance)
         self._main_bridge.announce_instances_changed()
         self.created.emit(instance.instance_id)
 

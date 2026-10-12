@@ -30,6 +30,7 @@ Item {
        định, vì mặc định cũ khiến người mới chơi bản chậm rồi tưởng máy yếu. */
     readonly property var loaderChoices: [
         { key: "optimized", label: Tr.phrase("Optimized"), icon: "assets/loaders/optimized.png" },
+        { key: "forgotten-worlds", label: "Forgotten Worlds", icon: "assets/loaders/fabric.png" },
         { key: "vanilla",  label: "Vanilla",  icon: "assets/loaders/vanilla.png" },
         { key: "fabric",   label: "Fabric",   icon: "assets/loaders/fabric.png" },
         { key: "quilt",    label: "Quilt",    icon: "assets/loaders/quilt.png" },
@@ -37,15 +38,16 @@ Item {
         { key: "neoforge", label: "NeoForge", icon: "assets/loaders/neoforge.png" }
     ]
     // Lưới bên dưới thẻ nổi bật: mọi loader ĐỀU hiện, không giấu cái nào trong "nâng cao".
-    readonly property var gridChoices: loaderChoices.slice(1)
+    readonly property var gridChoices: loaderChoices.filter(function(c) { return c.key !== "optimized" && c.key !== "forgotten-worlds"; })
     // Optimized = modpack Fabulously Optimized: không có bước chọn bản loader, pack tự lo Fabric.
-    readonly property bool isPreset: loaderKind === "optimized"
+    readonly property bool isPreset: loaderKind === "optimized" || loaderKind === "forgotten-worlds"
     readonly property bool needsLoaderStep: loaderKind !== "vanilla" && !isPreset
     // Danh mục lấy từ cầu nối MỘT lần mỗi khi nó đổi: mỗi lần đọc `catalogBridge.releasedVersions`
     // là Python chuyển cả trăm dict sang JS, nên vòng lặp `[i]` trên đó (16 thẻ cùng gọi) từng
     // làm mỗi cú bấm đứng ~200 ms. Tra dòng lớn của một bản qua bảng, không quét lại danh sách.
     readonly property var released: catalogBridge.releasedVersions
-    readonly property var presetVersions: catalogBridge.presetGameVersions
+    readonly property var presetVersions: loaderKind === "forgotten-worlds"
+                                         ? catalogBridge.forgottenWorldsGameVersions : catalogBridge.presetGameVersions
     readonly property var majorIndex: {
         var byVersion = {};
         for (var i = 0; i < released.length; i++) byVersion[released[i].versionId] = released[i].major;
@@ -60,7 +62,8 @@ Item {
     readonly property string defaultName: loaderLabel + " " + gameVersion
     /* Nhãn nút nói rõ SẼ tạo ra cái gì — "Tạo bản chơi" không thôi thì người dùng không biết
        mình sắp nhận Vanilla hay Fabric hay bản tối ưu. */
-    readonly property string createLabel: dialog.isPreset ? Tr.phrase("Tạo bản chơi tối ưu")
+    readonly property string createLabel: loaderKind === "forgotten-worlds" ? Tr.phrase("Cài Forgotten Worlds")
+                                                        : dialog.isPreset ? Tr.phrase("Tạo bản chơi tối ưu")
                                                           : Tr.phrase("Tạo bản chơi ") + dialog.loaderLabel
     /* Phiên bản đang chọn nhưng Optimized không có gói cho nó.
 
@@ -181,7 +184,7 @@ Item {
                         spacing: 2
                         Text { text: Tr.phrase("Tạo bản chơi"); color: Theme.text; font.pixelSize: Theme.fontTitle; font.bold: true }
                         Text {
-                            text: (dialog.isPreset ? Tr.phrase("Tối ưu hiệu năng") : dialog.loaderLabel)
+                            text: (dialog.loaderKind === "optimized" ? Tr.phrase("Tối ưu hiệu năng") : dialog.loaderLabel)
                                   + (dialog.gameVersion ? "  ·  " + dialog.gameVersion : "")
                                   + (dialog.loaderVersion ? "  ·  " + dialog.loaderVersion : "")
                             color: Theme.accent; font.pixelSize: Theme.fontBody
@@ -211,7 +214,7 @@ Item {
 
                         Rectangle {
                             objectName: "optimizedCard"
-                            readonly property bool selected: dialog.isPreset
+                            readonly property bool selected: dialog.loaderKind === "optimized"
                             width: parent.width; height: Math.max(74, optText.implicitHeight + 24); radius: Theme.radiusSmall
                             color: selected ? Theme.accentSoft : Theme.surfaceHigh
                             border.color: selected ? Theme.accent : Theme.border
@@ -256,6 +259,36 @@ Item {
                                     dialog.loaderKind = "optimized";
                                     dialog.loaderVersion = "";
                                     catalogBridge.loadPresetVersions();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            objectName: "forgottenWorldsCard"
+                            readonly property bool selected: dialog.loaderKind === "forgotten-worlds"
+                            width: parent.width; height: forgottenText.implicitHeight + 24
+                            radius: Theme.radiusSmall
+                            color: selected ? Theme.accentSoft : Theme.surfaceHigh
+                            border.color: selected ? Theme.accent : Theme.border
+                            border.width: Theme.modern ? 1 : 2
+                            Column {
+                                id: forgottenText
+                                anchors { left: parent.left; right: parent.right; margins: 12; verticalCenter: parent.verticalCenter }
+                                spacing: 4
+                                Text { text: "Forgotten Worlds · 1.21.11"; color: Theme.text; font.bold: true; font.pixelSize: Theme.fontHeading }
+                                Text {
+                                    width: parent.width; wrapMode: Text.WordWrap
+                                    text: Tr.phrase("Fabulously Optimized + bộ mod cho server Junbob Mine")
+                                    color: Theme.textMuted; font.pixelSize: Theme.fontBody
+                                }
+                            }
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    notifier.playUi("nav");
+                                    dialog.loaderKind = "forgotten-worlds";
+                                    dialog.loaderVersion = "";
+                                    if (!dialog.gameVersion) dialog.pickGameVersion("1.21.11");
                                 }
                             }
                         }
