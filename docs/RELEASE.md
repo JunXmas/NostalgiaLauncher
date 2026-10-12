@@ -18,6 +18,7 @@
    - macOS arm64 (macos-14) và x64 (macos-15-intel): `.app` (BUNDLE trong spec) → `.zip` + `.dmg`.
    - Windows x64: `.zip` + `setup.exe` bằng Inno Setup (`packaging/windows/installer.iss`,
      cài vào thư mục người dùng, không cần admin, để bộ tự cập nhật tráo được).
+   Đính kèm Forgotten Worlds `.mrpack` từ cùng resource được nhúng trong launcher.
    Cuối cùng ghi `SHA256SUMS` cho mọi file và tạo **GitHub Release dạng DRAFT** với ghi chú
    từ `docs/RELEASE_NOTES.md` (cập nhật file này trước khi tag).
 4. Tải gói draft về chạy thử. Ổn thì bấm **Publish release**. Bộ tự cập nhật chỉ nhìn thấy

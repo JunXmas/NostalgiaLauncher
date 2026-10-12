@@ -3,6 +3,16 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc35 — 2026-10-12
+
+- Phát hành Forgotten Worlds 1.0.1 sau khi xác minh lỗi đăng nhập class_3248
+  do SkinRestorer xung đột với Cardboard và tắt SkinRestorer trên server Junbob Mine.
+  Ghi lại tình trạng phục hồi skin tạm ngừng và các kiểm tra Minecraft thực tế.
+- Đính kèm file Forgotten Worlds `.mrpack` trên mỗi release, lấy từ cùng resource
+  nhúng trong launcher và đưa vào SHA256SUMS để nhập riêng bằng kéo thả.
+- Kiểm tra cả file tải và overrides của pack để chặn SkinRestorer/Cardboard
+  đi vào gói client. Bản chơi Forgotten Worlds đã tạo tiếp tục dùng được.
+
 ## 1.2.0rc34 — 2026-10-12
 
 - Thêm preset Forgotten Worlds trong cả hai giao diện tạo bản chơi: Fabulously
