@@ -3,6 +3,17 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc34 — 2026-10-12
+
+- Thêm preset Forgotten Worlds trong cả hai giao diện tạo bản chơi: Fabulously
+  Optimized 12.3.0 cùng bộ mod client cho server Junbob Mine, Minecraft 1.21.11
+  và Fabric Loader 0.19.5. Địa chỉ snow.pikamc.vn:25079 có sẵn trong danh sách server.
+- Dùng Create Fly client đầy đủ, cùng phiên bản với server; kèm Friends&Foes,
+  Serene Seasons, Streams Reflowing, The Sift port và các thư viện cần thiết.
+  Các file tải công khai có URL/hash ghim; không cài trùng Fabric Language Kotlin.
+- Chặn tạo preset khi chọn Minecraft không tương thích; giữ lựa chọn RAM và
+  thư mục chơi. Resource modpack được đóng gói cùng wheel và các bộ cài PyInstaller.
+
 ## 1.2.0rc33 — 2026-10-11
 
 - Sửa bắt tay P2P bị từ chối khi đồng hồ host lệch: thời hạn dùng đồng hồ đơn điệu,
