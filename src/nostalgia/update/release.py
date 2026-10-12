@@ -125,14 +125,20 @@ _ARCH_ALIASES: dict[str, tuple[str, ...]] = {
 
 
 def choose_package(
-    release: LauncherRelease, install_kind: str, os_arch: str
+    release: LauncherRelease, install_kind: str, os_name: str, os_arch: str
 ) -> ReleaseAsset | None:
-    """Gói CÀI cho kiểu cài này (AppImage / .deb / .rpm), hay None nếu kiểu này không có.
+    """Gói CÀI đúng hệ điều hành, kiểu cài và kiến trúc; không có thì None.
 
     Khác `choose_bundle`: gói `.zip` onedir để tráo tại chỗ, còn đây là gói mà hệ thống cài
     hộ (`pkexec apt install`, hoặc thay thẳng file .AppImage). Không có gói đúng kiến trúc thì
     KHÔNG lùi về gói bất kỳ — cài nhầm kiến trúc còn tệ hơn bảo người dùng tải tay.
     """
+    if os_name == "windows" and install_kind == "windows-installer":
+        return release.asset_named(
+            f"nostalgia-{release.launcher_version}-windows-{os_arch}-setup.exe"
+        )
+    if os_name != "linux":
+        return None
     suffixes = _PACKAGE_SUFFIXES.get(install_kind)
     if suffixes is None:
         return None

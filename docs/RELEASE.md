@@ -37,10 +37,16 @@ Gom nhiều thay đổi vào một bản — đừng ra bản dồn dập để 
   chối, xoá file dở.** Gói bung vào `<data_dir>/updates/<ver>/`, mỗi entry zip đi qua
   `resolve_within` (chặn `../`).
 - Áp bản mới chỉ khi launcher là **gói đóng sẵn** (`sys.frozen`): launcher viết script tráo
-  thư mục (`apply-update.sh` / `.cmd`), chạy tách rời, rồi thoát; script chờ tiến trình cũ
+  thư mục (`apply-update.sh` / `.ps1`), chạy tách rời, rồi thoát; script chờ tiến trình cũ
   tắt, đổi thư mục cài thành `.old`, chép bản mới vào, xoá bản cũ, mở launcher mới. Chép hỏng
   thì trả lại bản cũ. Chạy từ mã nguồn (`uv run nostalgia-ui`) thì launcher chỉ báo và mở
   trang release — cập nhật bằng `git pull` + `uv sync`.
+- Windows cài vào thư mục không có quyền ghi (ví dụ Program Files) dùng bộ cài
+  `nostalgia-<ver>-windows-<arch>-setup.exe` của chính release, vẫn kiểm SHA-256.
+  Launcher xin quyền qua UAC trước khi thoát, giữ thư mục cài bằng `/DIR`, rồi người
+  chơi hoàn tất wizard và mở bản mới. Huỷ UAC thì launcher hiện tại vẫn chạy.
+  Gói `.deb`/`.rpm` và `pkexec` chỉ dùng trên Linux; không lùi sang zip khi thiếu bộ cài
+  cho bản Windows cần quyền quản trị. Bản Windows cài vào thư mục ghi được vẫn dùng zip.
 
 ## Đóng gói thử trên máy
 

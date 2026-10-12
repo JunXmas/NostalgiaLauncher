@@ -4272,5 +4272,13 @@
   "m:The P2P sync transfer was interrupted. Try syncing again; your instance has not been changed.": "Đường truyền đồng bộ P2P đã ngắt. Hãy thử đồng bộ lại; bản chơi chưa bị thay đổi.",
   "p:Cài Forgotten Worlds": "Cài Forgotten Worlds",
   "p:Fabulously Optimized + bộ mod cho server Junbob Mine": "Fabulously Optimized + bộ mod cho server Junbob Mine",
-  "p:Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.": "Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11."
+  "p:Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.": "Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.",
+  "p:The Windows installer can only run on Windows.": "Bộ cài Windows chỉ chạy được trên Windows.",
+  "p:The downloaded update is not a Windows installer.": "Gói cập nhật đã tải không phải bộ cài Windows.",
+  "p:Windows could not open the update installer.": "Windows không thể mở bộ cài cập nhật.",
+  "p:Windows update cancelled. The current launcher is still running.": "Bạn đã huỷ yêu cầu quyền của Windows. Launcher hiện tại vẫn đang chạy.",
+  "p:Linux system packages can only be installed on Linux.": "Gói cài Linux chỉ được cài trên Linux.",
+  "p:Linux system packages cannot be installed on this platform.": "Không thể cài gói Linux trên hệ điều hành này.",
+  "m:Could not open the Windows installer: {1}": "Không thể mở bộ cài Windows: {1}",
+  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới."
 }

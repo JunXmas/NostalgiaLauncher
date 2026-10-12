@@ -138,7 +138,8 @@ class UpdateBridge(WorkerBridge):
         """MỘT nút cho cả việc: tải xong thì tự áp và mở lại, người dùng không bấm gì thêm.
 
         Gói `.zip` tráo thư mục, AppImage thay chính file đang chạy, `.deb`/`.rpm` nhờ trình
-        quản lý gói cài đè. Kiểu không tự lên được (mã nguồn, macOS .app) thì mở thẳng trang
+        quản lý gói cài đè; Windows thiếu quyền ghi mở bộ cài gốc qua UAC.
+        Kiểu không tự lên được (mã nguồn, macOS .app) thì mở thẳng trang
         tải, thay vì tải cả gói rồi mới báo không cài được.
         """
         if self._launcher.launcher_install_kind() not in SELF_UPDATING_KINDS:

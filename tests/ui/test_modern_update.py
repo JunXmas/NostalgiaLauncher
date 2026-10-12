@@ -70,3 +70,35 @@ def test_modern_update_notice_changelog_and_small_window_actions(preview: Previe
     QTest.qWait(30)
     press(view, find_control(root_item, "modernUpdateDismiss"))
     assert not notice.property("active")
+
+
+class WindowsUpdateFixture(ModernUpdateFixture):
+    @Property(str, constant=True)
+    def installKind(self) -> str:
+        return "windows-installer"
+
+
+@pytest.mark.parametrize("locale", ["vi", "en"])
+def test_protected_windows_install_explains_the_native_installer_in_a_small_window(
+    preview: Preview, locale: str
+) -> None:
+    _launcher, view, _bridge, root_item = preview
+    fake = WindowsUpdateFixture()
+    view.rootContext().setContextProperty("updateBridge", fake)
+    root_item.setProperty("sessionSkipped", True)
+    view.resize(1024, 600)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        150, False, True, True, locale
+    )
+    fake.set_state("available")
+    press(view, find_control(root_item, "modernUpdateDetails"))
+    dialog = find_control(root_item, "modernUpdateDialog")
+    wait_until(lambda: bool(dialog.property("opened")))
+    help_text = str(find_control(dialog, "modernUpdateInstallHelp").property("text"))
+    assert "Windows" in help_text and "SHA-256" in help_text
+    assert ("quyền quản trị" if locale == "vi" else "administrator permission") in help_text
+    action: Any = find_control(dialog, "modernUpdateNow")
+    p = action.mapToScene(QPointF())
+    assert p.y() > 0 and p.y() + action.height() <= view.height()
+    press(view, action)
+    assert fake.calls == ["update"]
