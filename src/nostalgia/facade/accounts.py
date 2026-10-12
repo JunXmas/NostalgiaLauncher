@@ -115,9 +115,44 @@ class AccountOperations(LauncherContext):
                     "không mở được phiên web Ely.by (đổi skin sẽ cần đăng nhập lại): %s", exc
                 )
         account = build_ely_account(login)
-        if web_refresh_token:
-            account = replace(account, refresh_token=web_refresh_token)
+        previous = find_account(self.list_accounts(), account.account_id)
+        account = replace(
+            account, refresh_token=web_refresh_token or (previous.refresh_token if previous else "")
+        )
         return self._store(account)
+
+    def renew_ely_web_session(
+        self, account_id: str, email_or_name: str, password: str, *, totp_code: str = ""
+    ) -> Account:
+        """Khôi phục đổi skin cho đúng UUID; lỗi web không được coi là đăng nhập thành công."""
+        previous = find_account(self.list_accounts(), account_id)
+        if previous is None or previous.account_kind != ELY:
+            raise AccountError("Select an existing Ely.by account before signing in again.")
+        with self.make_http_client() as http_client:
+            login = sign_in_ely(
+                http_client,
+                email_or_name,
+                password,
+                totp_code=totp_code,
+                endpoints=self.auth_endpoints,
+            )
+            account = build_ely_account(login)
+            if account.account_id != previous.account_id:
+                raise AccountError("Sign in to the Ely.by account selected for this skin.")
+            web_session = sign_in_ely_web(
+                http_client,
+                email_or_name,
+                password,
+                totp_code=totp_code,
+                endpoints=self.ely_web_endpoints(),
+            )
+        if not web_session.refresh_token:
+            raise AccountError(
+                "Ely.by did not provide a renewable skin session. Try signing in again."
+            )
+        if find_account(self.list_accounts(), account_id) is None:
+            raise AccountError("Select an existing Ely.by account before signing in again.")
+        return self._store(replace(account, refresh_token=web_session.refresh_token))
 
     def ely_web_endpoints(self) -> ElyWebEndpoints:
         return ElyWebEndpoints(

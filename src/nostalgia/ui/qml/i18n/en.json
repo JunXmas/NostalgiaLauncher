@@ -4272,5 +4272,12 @@
   "m:The P2P sync transfer was interrupted. Try syncing again; your instance has not been changed.": "The P2P sync transfer was interrupted. Try syncing again; your instance has not been changed.",
   "p:Cài Forgotten Worlds": "Install Forgotten Worlds",
   "p:Fabulously Optimized + bộ mod cho server Junbob Mine": "Fabulously Optimized + the mods for Junbob Mine",
-  "p:Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.": "Fabulously Optimized + Create, Friends&Foes, The Sift and the mods for Junbob Mine. Minecraft 1.21.11."
+  "p:Fabulously Optimized + Create, Friends&Foes, The Sift và bộ mod cho Junbob Mine. Minecraft 1.21.11.": "Fabulously Optimized + Create, Friends&Foes, The Sift and the mods for Junbob Mine. Minecraft 1.21.11.",
+  "p:Đăng nhập lại Ely.by": "Sign in to Ely.by again",
+  "p:Skin đang xem trước được giữ lại. Đăng nhập xong, bấm Lưu thay đổi để áp dụng.": "Your skin preview is kept. After signing in, click Save changes to apply it.",
+  "p:Ely.by returned an unexpected authorization redirect.": "Ely.by returned an unexpected authorization redirect.",
+  "p:Ely.by returned an unexpected authorization client.": "Ely.by returned an unexpected authorization client.",
+  "p:Select an existing Ely.by account before signing in again.": "Select an existing Ely.by account before signing in again.",
+  "p:Sign in to the Ely.by account selected for this skin.": "Sign in to the Ely.by account selected for this skin.",
+  "p:Ely.by did not provide a renewable skin session. Try signing in again.": "Ely.by did not provide a renewable skin session. Try signing in again."
 }

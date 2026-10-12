@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlencode
 
+from nostalgia.auth.ely_redirect import resolve_ely_authorization_query
 from nostalgia.errors import AccountError, DataFileError, NetworkError, TwoFactorRequired
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
 from nostalgia.net.http import HttpClient, HttpResponse
@@ -214,7 +215,7 @@ def _complete_oauth(
     endpoints: ElyWebEndpoints,
     cancel_token: CancelToken | None,
 ) -> str:
-    query = urlsplit(authorize_url).query
+    query = resolve_ely_authorization_query(authorize_url, endpoints.account_root)
     response = request_ely_web(
         http_client,
         "POST",
