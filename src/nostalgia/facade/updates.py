@@ -15,6 +15,7 @@ from nostalgia.update.apply import (
     INSTALL_KIND_APPIMAGE,
     INSTALL_KIND_FROZEN,
     INSTALL_KIND_READONLY,
+    INSTALL_KIND_WINDOWS_INSTALLER,
     SwapPlan,
     blocked_install_reason,
     current_install_dir,
@@ -42,10 +43,16 @@ from nostalgia.update.release import (
     fetch_latest_release,
     is_newer,
 )
+from nostalgia.update.windows_package import start_windows_installer
 
 # Kiểu cài tự lên bản mới được, mỗi kiểu một đường: tráo thư mục, thay file .AppImage, hoặc
 # nhờ trình quản lý gói cài đè. Kiểu không có tên ở đây thì chỉ mở trang tải.
-SELF_UPDATING_KINDS = (INSTALL_KIND_FROZEN, INSTALL_KIND_APPIMAGE, INSTALL_KIND_READONLY)
+SELF_UPDATING_KINDS = (
+    INSTALL_KIND_FROZEN,
+    INSTALL_KIND_APPIMAGE,
+    INSTALL_KIND_READONLY,
+    INSTALL_KIND_WINDOWS_INSTALLER,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,7 +60,7 @@ class StagedUpdate:
     """Bản mới đã tải và kiểm băm, chờ áp.
 
     `bundle_dir` là thư mục đã bung của gói `.zip` onedir; `package_path` là file gói hệ thống
-    (`.AppImage`/`.deb`/`.rpm`) chưa bung. Đúng một trong hai có giá trị, tuỳ kiểu cài.
+    (`.AppImage`/`.deb`/`.rpm`/Windows `setup.exe`) chưa bung. Đúng một trong hai có giá trị.
     """
 
     launcher_version: str
@@ -74,10 +81,12 @@ class UpdateOperations(LauncherContext):
 
     def launcher_update_asset(self, release: LauncherRelease) -> ReleaseAsset | None:
         """Gói phải tải cho kiểu cài của máy này: `.zip` onedir để tráo, hay `.AppImage`/
-        `.deb`/`.rpm` để hệ thống cài hộ. Không có gói đúng thì None."""
+        `.deb`/`.rpm` hay bộ cài Windows để hệ thống cài hộ. Không có gói đúng thì None."""
         install_kind = self.launcher_install_kind()
-        package = choose_package(release, install_kind, self.platform.os_arch)
-        if package is not None:
+        package = choose_package(
+            release, install_kind, self.platform.os_name, self.platform.os_arch
+        )
+        if package is not None or install_kind == INSTALL_KIND_WINDOWS_INSTALLER:
             return package
         return choose_bundle(release, self.platform.os_name, self.platform.os_arch)
 
@@ -105,7 +114,7 @@ class UpdateOperations(LauncherContext):
         """CHẠM MẠNG. Tải gói đúng KIỂU CÀI của máy này, đối chiếu SHA256SUMS.
 
         Gói `.zip` onedir thì bung vào `updates/<phiên bản>/` để tráo; gói hệ thống
-        (`.AppImage`/`.deb`/`.rpm`) giữ nguyên file, để `apply_launcher_update` giao lại cho
+        (`.AppImage`/`.deb`/`.rpm`/`setup.exe`) giữ nguyên file, để giao lại cho
         hệ thống. Cả hai đường đều PHẢI qua SHA256SUMS — đây là mã sắp chạy trên máy người dùng.
         """
         release_asset = self.launcher_update_asset(release)
@@ -136,7 +145,8 @@ class UpdateOperations(LauncherContext):
 
         Ba đường: gói onedir ghi được thì chạy script tráo thư mục (trả về đường dẫn script);
         AppImage thì ghi đè chính file `.AppImage` rồi mở lại; `.deb`/`.rpm` thì nhờ trình
-        quản lý gói cài đè qua `pkexec` rồi mở lại. Kiểu khác (mã nguồn, macOS `.app`) ném
+        quản lý gói cài đè qua `pkexec` rồi mở lại. Windows không ghi được mở bộ cài qua UAC.
+        Kiểu khác (mã nguồn, macOS `.app`) ném
         `UpdateError` với câu giải thích — người gọi lùi về mở trang tải."""
         install_kind = self.launcher_install_kind()
         if install_kind == INSTALL_KIND_FROZEN:
@@ -146,6 +156,11 @@ class UpdateOperations(LauncherContext):
             return None
         if install_kind == INSTALL_KIND_READONLY:
             self._install_package(staged)
+            return None
+        if install_kind == INSTALL_KIND_WINDOWS_INSTALLER:
+            if staged.package_path is None:
+                raise UpdateError("The downloaded update is not a Windows installer.")
+            start_windows_installer(staged.package_path, current_install_dir())
             return None
         raise UpdateError(blocked_install_reason(install_kind))
 
@@ -167,6 +182,8 @@ class UpdateOperations(LauncherContext):
         relaunch(target)
 
     def _install_package(self, staged: StagedUpdate) -> None:
+        if self.platform.os_name != "linux":
+            raise UpdateError("Linux system packages cannot be installed on this platform.")
         if staged.package_path is None:
             raise UpdateError("bản đã tải không phải gói .deb/.rpm để cài đè")
         install_system_package(staged.package_path)

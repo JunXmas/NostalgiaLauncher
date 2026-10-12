@@ -38,9 +38,10 @@ INSTALL_KIND_APP = "app"
 # AppImage: mount squashfs chỉ-đọc (`/tmp/.mount_*`) — biến môi trường `APPIMAGE`
 # do runtime AppImage tự đặt, không cần đụng tới install_dir để biết.
 INSTALL_KIND_APPIMAGE = "appimage"
-# Không có quyền ghi vào install_dir: gói .deb/.rpm cài ở /opt (chủ là root), hoặc Windows
-# cài toàn máy vào Program Files (cần admin). Cùng một nguyên nhân gốc nên gộp một kiểu.
+# Không ghi được trên Linux: nhờ trình quản lý gói hệ thống cài đè.
 INSTALL_KIND_READONLY = "readonly"
+# Windows cài toàn máy cần bộ cài .exe và UAC; không được dùng đường .deb/.rpm.
+INSTALL_KIND_WINDOWS_INSTALLER = "windows-installer"
 EXECUTABLE_NAME = "nostalgia-ui"
 
 # Câu tiếng Việt cho từng kiểu không tráo được — dùng khi báo lỗi thay cho exception thô.
@@ -98,14 +99,16 @@ def detect_install_kind() -> str:
     Contents/, tráo kiểu onedir sẽ làm hỏng bundle nên chỉ mở trang tải. `source`: mã nguồn.
     `appimage`: biến môi trường `APPIMAGE` báo runtime đang chạy từ mount squashfs chỉ-đọc —
     tráo vào đó vô nghĩa. `readonly`: `install_dir` tồn tại nhưng không ghi được (`.deb`/`.rpm`
-    ở `/opt` chủ root, hoặc cài toàn máy trên Windows cần admin)."""
+    ở `/opt` chủ root). `windows-installer`: Windows cần bộ cài và quyền quản trị."""
     if not getattr(sys, "frozen", False):
         return INSTALL_KIND_SOURCE
     if sys.platform == "darwin":
         return INSTALL_KIND_APP
-    if os.environ.get("APPIMAGE"):
+    if sys.platform == "linux" and os.environ.get("APPIMAGE"):
         return INSTALL_KIND_APPIMAGE
     if not _dir_is_writable(current_install_dir()):
+        if sys.platform == "win32":
+            return INSTALL_KIND_WINDOWS_INSTALLER
         return INSTALL_KIND_READONLY
     return INSTALL_KIND_FROZEN
 

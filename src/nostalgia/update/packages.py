@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from nostalgia.errors import UpdateError
@@ -63,6 +64,8 @@ def install_system_package(package_path: Path) -> None:
     người gọi lùi về mở trang tải. Không nuốt lỗi: cài hỏng mà im lặng thì người dùng tưởng
     đã lên bản mới trong khi vẫn đang chạy bản cũ.
     """
+    if sys.platform != "linux":
+        raise UpdateError("Linux system packages can only be installed on Linux.")
     command = _INSTALL_COMMANDS.get(package_path.suffix.lower())
     if command is None:
         raise UpdateError(f"không biết cách cài {package_path.name}")
