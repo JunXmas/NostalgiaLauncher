@@ -3,6 +3,13 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+- Sửa cập nhật trên Windows khi launcher nằm trong thư mục cần quyền quản trị:
+  chọn bộ cài Windows đúng phiên bản và kiến trúc, kiểm SHA-256, mở hộp thoại UAC
+  rồi cài đè đúng thư mục. Không còn tải gói Linux và báo thiếu `pkexec` trên Windows.
+  Huỷ yêu cầu quyền thì launcher vẫn mở; gói sai băm bị chặn trước khi chạy.
+
 ## 1.2.0rc35 — 2026-10-12
 
 - Phát hành Forgotten Worlds 1.0.1 sau khi xác minh lỗi đăng nhập class_3248

@@ -4279,5 +4279,13 @@
   "p:Ely.by returned an unexpected authorization client.": "Ely.by trả về mã ứng dụng xác thực không hợp lệ. Hãy thử đăng nhập lại.",
   "p:Select an existing Ely.by account before signing in again.": "Chọn tài khoản Ely.by đã thêm trước khi đăng nhập lại.",
   "p:Sign in to the Ely.by account selected for this skin.": "Hãy đăng nhập đúng tài khoản Ely.by đang chọn để đổi skin.",
-  "p:Ely.by did not provide a renewable skin session. Try signing in again.": "Ely.by chưa cấp phiên đổi skin có thể làm mới. Hãy thử đăng nhập lại."
+  "p:Ely.by did not provide a renewable skin session. Try signing in again.": "Ely.by chưa cấp phiên đổi skin có thể làm mới. Hãy thử đăng nhập lại.",
+  "p:The Windows installer can only run on Windows.": "Bộ cài Windows chỉ chạy được trên Windows.",
+  "p:The downloaded update is not a Windows installer.": "Gói cập nhật đã tải không phải bộ cài Windows.",
+  "p:Windows could not open the update installer.": "Windows không thể mở bộ cài cập nhật.",
+  "p:Windows update cancelled. The current launcher is still running.": "Bạn đã huỷ yêu cầu quyền của Windows. Launcher hiện tại vẫn đang chạy.",
+  "p:Linux system packages can only be installed on Linux.": "Gói cài Linux chỉ được cài trên Linux.",
+  "p:Linux system packages cannot be installed on this platform.": "Không thể cài gói Linux trên hệ điều hành này.",
+  "m:Could not open the Windows installer: {1}": "Không thể mở bộ cài Windows: {1}",
+  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới."
 }

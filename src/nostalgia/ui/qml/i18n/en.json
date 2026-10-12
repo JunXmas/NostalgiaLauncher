@@ -4279,5 +4279,13 @@
   "p:Ely.by returned an unexpected authorization client.": "Ely.by returned an unexpected authorization client.",
   "p:Select an existing Ely.by account before signing in again.": "Select an existing Ely.by account before signing in again.",
   "p:Sign in to the Ely.by account selected for this skin.": "Sign in to the Ely.by account selected for this skin.",
-  "p:Ely.by did not provide a renewable skin session. Try signing in again.": "Ely.by did not provide a renewable skin session. Try signing in again."
+  "p:Ely.by did not provide a renewable skin session. Try signing in again.": "Ely.by did not provide a renewable skin session. Try signing in again.",
+  "p:The Windows installer can only run on Windows.": "The Windows installer can only run on Windows.",
+  "p:The downloaded update is not a Windows installer.": "The downloaded update is not a Windows installer.",
+  "p:Windows could not open the update installer.": "Windows could not open the update installer.",
+  "p:Windows update cancelled. The current launcher is still running.": "Windows update cancelled. The current launcher is still running.",
+  "p:Linux system packages can only be installed on Linux.": "Linux system packages can only be installed on Linux.",
+  "p:Linux system packages cannot be installed on this platform.": "Linux system packages cannot be installed on this platform.",
+  "m:Could not open the Windows installer: {1}": "Could not open the Windows installer: {1}",
+  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "The package is verified with SHA-256. Windows will request administrator permission; finish the installer to open the new version."
 }

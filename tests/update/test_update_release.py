@@ -107,15 +107,33 @@ def test_each_install_kind_gets_the_package_its_system_can_install() -> None:
             "nostalgia-1.0.15-linux-x64.zip",
         ]
     )
-    assert choose_package(release, "appimage", "x64") is not None
-    assert choose_package(release, "appimage", "x64").name.endswith(".AppImage")  # type: ignore[union-attr]
+    assert choose_package(release, "appimage", "linux", "x64") is not None
+    assert choose_package(release, "appimage", "linux", "x64").name.endswith(".AppImage")  # type: ignore[union-attr]
     # `.deb` viết kiến trúc là `amd64`, `.rpm` viết `x86_64`, launcher gọi là `x64` — một chỗ dịch.
-    assert choose_package(release, "readonly", "x64").name == "nostalgia_1.0.15_amd64.deb"  # type: ignore[union-attr]
-    assert choose_package(release, "frozen", "x64") is None, "gói onedir đi đường choose_bundle"
-    assert choose_package(release, "app", "arm64") is None, "macOS .app không tự cài được"
+    assert choose_package(release, "readonly", "linux", "x64").name == "nostalgia_1.0.15_amd64.deb"  # type: ignore[union-attr]
+    assert choose_package(release, "frozen", "linux", "x64") is None, (
+        "gói onedir đi đường choose_bundle"
+    )
+    assert choose_package(release, "app", "macos", "arm64") is None, "macOS .app không tự cài được"
 
 
 def test_a_package_for_the_wrong_architecture_is_never_offered() -> None:
     """Cài nhầm kiến trúc còn tệ hơn bảo người dùng tải tay: máy không mở lại được nữa."""
     release = _release_with(["nostalgia_1.0.15_amd64.deb"])
-    assert choose_package(release, "readonly", "arm64") is None
+    assert choose_package(release, "readonly", "linux", "arm64") is None
+
+
+def test_system_packages_are_never_selected_across_operating_systems() -> None:
+    release = _release_with(
+        [
+            "nostalgia_1.0.15_amd64.deb",
+            "nostalgia-1.0.15-linux-x64.AppImage",
+            "nostalgia-1.0.15-windows-x64-setup.exe",
+        ]
+    )
+    assert choose_package(release, "readonly", "windows", "x64") is None
+    assert choose_package(release, "appimage", "windows", "x64") is None
+    assert choose_package(release, "windows-installer", "linux", "x64") is None
+    assert choose_package(release, "windows-installer", "windows", "arm64") is None
+    installer = choose_package(release, "windows-installer", "windows", "x64")
+    assert installer is not None and installer.name.endswith("-windows-x64-setup.exe")

@@ -12,6 +12,7 @@ Controls.Popup {
     readonly property string statusMessage: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.message : ""
     readonly property real fraction: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.progressFraction : 0
     readonly property bool selfUpdate: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.canSelfUpdate : false
+    readonly property bool windowsInstaller: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.installKind === "windows-installer" : false
     readonly property bool working: ["checking", "downloading", "applying"].indexOf(phase) >= 0
     parent: Controls.Overlay.overlay
     width: Math.min(720 * Math.min(GlassTheme.scale, 1.15), parent ? parent.width - 40 : 720)
@@ -84,7 +85,7 @@ Controls.Popup {
                 width: parent.width; height: 5; radius: 3; color: GlassTheme.stroke
                 Rectangle { width: parent.width * Math.max(0,Math.min(1,root.fraction)); height: parent.height; radius: 3; color: GlassTheme.accent; Behavior on width { NumberAnimation { duration: GlassTheme.quick } } }
             }
-            PaymentText { width: parent.width; text: root.selfUpdate ? Legacy.Tr.phrase("Gói được kiểm SHA-256 trước khi cài. Launcher sẽ mở lại sau khi cập nhật.") : Legacy.Tr.phrase("Tải bộ cài phù hợp trên trang phát hành để cập nhật phiên bản này."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
+            PaymentText { objectName: "modernUpdateInstallHelp"; width: parent.width; text: root.windowsInstaller ? Legacy.Tr.phrase("Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.") : root.selfUpdate ? Legacy.Tr.phrase("Gói được kiểm SHA-256 trước khi cài. Launcher sẽ mở lại sau khi cập nhật.") : Legacy.Tr.phrase("Tải bộ cài phù hợp trên trang phát hành để cập nhật phiên bản này."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
             Flow {
                 width: parent.width; spacing: 10
                 Button { objectName: "modernUpdateNow"; primary: true; label: root.phase === "downloading" ? Legacy.Tr.phrase("Đang tải · ") + Math.round(root.fraction * 100) + "%" : root.phase === "applying" ? Legacy.Tr.phrase("Đang cài…") : root.phase === "ready" ? Legacy.Tr.phrase("Cài & mở lại") : root.phase === "available" ? (root.selfUpdate ? Legacy.Tr.phrase("Cập nhật ngay →") : Legacy.Tr.phrase("Tải bản mới ↗")) : Legacy.Tr.phrase("Kiểm tra bản mới"); clickable: !root.working; onClicked: { if (root.phase === "available") updateBridge.updateNow(); else if (root.phase === "ready") updateBridge.applyAndRestart(); else updateBridge.checkNow(); } }
