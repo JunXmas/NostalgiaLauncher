@@ -19,12 +19,12 @@ from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from nostalgia.account.model import ELY, MICROSOFT, Account
 from nostalgia.api import Launcher
 from nostalgia.errors import NostalgiaError, TwoFactorRequired
+from nostalgia.ui.account_rows import describe_account, file_url
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge
 
 logger = logging.getLogger(__name__)
 
-KIND_LABELS = {MICROSOFT: "MICROSOFT", ELY: "ELY.BY", "offline": "NGOẠI TUYẾN"}
 ONLINE_KINDS = (MICROSOFT, ELY)
 
 
@@ -66,7 +66,9 @@ class AccountBridge(WorkerBridge):
     def _ensure_rows(self) -> None:
         if not self._stale:
             return
-        self._rows = [_describe(self._launcher, a) for a in self._main_bridge.accounts_snapshot()]
+        self._rows = [
+            describe_account(self._launcher, a) for a in self._main_bridge.accounts_snapshot()
+        ]
         self._row_by_id = {row.get("accountId", ""): row for row in self._rows}
         self._stale = False
 
@@ -94,7 +96,7 @@ class AccountBridge(WorkerBridge):
                 "source": skin_entry.source,
                 "sourceLabel": skin_entry.source_label,
                 "addedAt": skin_entry.added_at,
-                "skinFile": _file_url(skin_entry.skin_path),
+                "skinFile": file_url(skin_entry.skin_path),
             }
             for skin_entry in self._launcher.list_skin_library()
         ]
@@ -211,18 +213,27 @@ class AccountBridge(WorkerBridge):
     # ----- Ely.by -----
 
     @Slot(str, str, str)
-    def signInEly(self, email_or_name: str, password: str, totp_code: str) -> None:
+    @Slot(str, str, str, str)
+    def signInEly(
+        self, email_or_name: str, password: str, totp_code: str, account_id: str = ""
+    ) -> None:
         """Mật khẩu chỉ đi thẳng vào lõi rồi lên Ely.by, không giữ lại ở đâu."""
 
         def work() -> None:
             try:
-                account = self._launcher.add_ely_account(
-                    email_or_name.strip(), password, totp_code=totp_code
-                )
+                if account_id:
+                    account = self._launcher.renew_ely_web_session(
+                        account_id, email_or_name.strip(), password, totp_code=totp_code
+                    )
+                else:
+                    account = self._launcher.add_ely_account(
+                        email_or_name.strip(), password, totp_code=totp_code
+                    )
             except TwoFactorRequired:
                 self.twoFactorRequired.emit()
                 return
-            self._main_bridge.setActiveAccount(account.account_id)
+            if not account_id:
+                self._main_bridge.setActiveAccount(account.account_id)
             self._main_bridge.announce_accounts_changed()
             self.elySignedIn.emit(account.player_name)
             self._prefetch_skin_support()
@@ -245,32 +256,3 @@ class AccountBridge(WorkerBridge):
         except NostalgiaError:
             logger.warning("chưa tải sẵn được authlib-injector cho skin Ely.by", exc_info=True)
         self.skinSupportChanged.emit()
-
-
-def _describe(launcher: Launcher, account: Account) -> dict[str, Any]:
-    try:
-        skin = launcher.describe_skin(account)
-    except NostalgiaError:
-        return {
-            "accountId": account.account_id,
-            "playerName": account.player_name,
-            "skinFile": "",
-            "capeFile": "",
-        }
-    return {
-        "accountId": account.account_id,
-        "playerName": account.player_name,
-        "playerUuid": account.player_uuid,
-        "accountKind": account.account_kind,
-        "kindLabel": KIND_LABELS.get(account.account_kind, account.account_kind.upper()),
-        "skinFile": _file_url(skin.skin_path),
-        "skinDigest": launcher.skin_digest(skin),
-        "capeFile": _file_url(skin.cape_path),
-        "capeDigest": launcher.cape_digest(skin),
-        "slim": skin.slim,
-        "isDefaultSkin": skin.is_default,
-    }
-
-
-def _file_url(path: Path | None) -> str:
-    return QUrl.fromLocalFile(str(path)).toString() if path is not None else ""

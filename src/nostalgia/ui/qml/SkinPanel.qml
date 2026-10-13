@@ -7,6 +7,7 @@ Preview.Glass {
     property bool hasShown: false
     property string tab: "skin"
     readonly property var draft: skinEditor.details
+    signal elyReauthenticationRequested(string accountId, string playerName)
     padding: 20
     onShownChanged: if (hasShown) skinEditor.showAccount(shown.accountId)
     onHasShownChanged: skinEditor.showAccount(hasShown ? shown.accountId : "")
@@ -74,7 +75,16 @@ Preview.Glass {
         }
         Flow {
             width: parent.width; spacing: 8
-            Preview.Button { objectName: "skinSaveButton"; label: Tr.phrase("Lưu thay đổi"); primary: true; clickable: skinPanel.hasShown && skinPanel.draft.dirty && !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinEditor.save() }
+            Preview.Button {
+                objectName: "skinSaveButton"; label: Tr.phrase("Lưu thay đổi"); primary: true
+                clickable: skinPanel.hasShown && skinPanel.draft.dirty && !skinEditor.busy && !accountBridge.busy && !capeBridge.busy
+                onClicked: {
+                    if (skinPanel.shown.accountKind === "ely" && !skinPanel.shown.elyWebReady)
+                        skinPanel.elyReauthenticationRequested(skinPanel.shown.accountId, skinPanel.shown.playerName);
+                    else skinEditor.save();
+                }
+            }
+            Preview.Button { objectName: "elySkinSignInButton"; label: Tr.phrase("Đăng nhập lại Ely.by"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind === "ely"; clickable: !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinPanel.elyReauthenticationRequested(skinPanel.shown.accountId, skinPanel.shown.playerName) }
             Preview.Button { objectName: "skinDiscardButton"; label: Tr.phrase("Hủy thay đổi"); visible: skinPanel.draft.dirty; clickable: !skinEditor.busy; onClicked: skinEditor.discard() }
             Preview.Button { objectName: "skinRefreshButton"; label: Tr.phrase("Làm mới"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind !== "offline"; clickable: !skinEditor.busy && !accountBridge.busy && !skinPanel.draft.dirty; onClicked: { accountBridge.refreshSkins(); if (skinPanel.tab === "cape") capeBridge.loadCapes(skinPanel.shown.accountId); } }
         }

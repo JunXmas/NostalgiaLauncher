@@ -167,6 +167,7 @@ Item {
         objectName: "skinPanel"
         anchors { top: listPanel.bottom; left: parent.left; right: rightColumn.left; bottom: parent.bottom; margins: Theme.gap; topMargin: 10 }
         shown: page.shown; hasShown: page.hasShown
+        onElyReauthenticationRequested: function(accountId, playerName) { addDialog.openElySession(accountId, playerName); }
     }
 
     Rectangle {

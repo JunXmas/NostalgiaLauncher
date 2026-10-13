@@ -52,7 +52,7 @@ Item {
                     }
                     PaymentText { anchors.bottom: parent.bottom; width: parent.width; text: page.hasShown ? Legacy.Tr.phrase("Kéo để xoay · ← →\n") + (page.draft.slim ? Legacy.Tr.phrase("Alex · Slim") : Legacy.Tr.phrase("Steve · Classic")) : Legacy.Tr.phrase("Thêm tài khoản để xem nhân vật và sử dụng skin."); color: GlassTheme.muted; horizontalAlignment: Text.AlignHCenter }
                 }
-                Legacy.SkinPanel { id: skinPanel; objectName: "skinPanel"; width: parent.columns === 2 ? parent.width - 300 * GlassTheme.scale - 20 : parent.width; height: 560 * GlassTheme.scale; shown: page.shown; hasShown: page.hasShown; onTabChanged: figure.yaw = tab === "cape" ? 205 : 25 }
+                Legacy.SkinPanel { id: skinPanel; objectName: "skinPanel"; width: parent.columns === 2 ? parent.width - 300 * GlassTheme.scale - 20 : parent.width; height: 560 * GlassTheme.scale; shown: page.shown; hasShown: page.hasShown; onTabChanged: figure.yaw = tab === "cape" ? 205 : 25; onElyReauthenticationRequested: function(accountId, playerName) { addDialog.openElySession(accountId, playerName); } }
             }
         }
     }
