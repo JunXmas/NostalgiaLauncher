@@ -73,6 +73,8 @@ Item {
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
             Text { visible: dialog.instance.modpackPreset === "forgotten-worlds"; width: parent.width; wrapMode: Text.WordWrap; text: Tr.phrase("Giữ thế giới, thiết lập và mod tự thêm khi cập nhật."); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
+            ActionButton { objectName: "instanceModpackCheck"; visible: dialog.instance.modpackPreset === "forgotten-worlds"; label: Tr.phrase("Kiểm tra cập nhật modpack"); clickable: !bridge.busy && !bridge.storageBusy; onClicked: bridge.checkModpackUpdates() }
+            Text { visible: dialog.instance.modpackPreset === "forgotten-worlds" && !!bridge.modpackCheckMessage; width: parent.width; wrapMode: Text.WordWrap; text: Tr.phrase(bridge.modpackCheckMessage); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
             ActionButton { objectName: "instanceModpackUpdate"; visible: dialog.instance.modpackPreset === "forgotten-worlds"; label: dialog.instance.modpackUpdateAvailable ? Tr.phrase("Cập nhật modpack") : Tr.phrase("Modpack đã mới nhất"); clickable: dialog.instance.modpackUpdateAvailable === true && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && !contentBridge.busy && !projectBridge.installing; onClicked: bridge.updateModpack(dialog.instance.instanceId) }
             Text { text: Tr.phrase("TÊN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
             TextField { id: nameField; width: parent.width; placeholder: Tr.phrase("Tên hiển thị"); onAccepted: dialog.save() }

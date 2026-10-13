@@ -15,6 +15,7 @@ from nostalgia.content.builtin_receipt import (
 )
 from nostalgia.content.builtin_update import existing_variant, matches, plan_builtin_update
 from nostalgia.content.mrpack import ALLOWED_HOSTS, read_index
+from nostalgia.content.pack_channel import channel_pack, newer_channel, refresh_channel
 from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.modpacks import ModpackOperations
 from nostalgia.instance.model import Instance
@@ -31,6 +32,7 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.storage.files import sync_directory
 from nostalgia.storage.sync_lock import sync_lock
+from nostalgia.update.release import is_newer
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,7 +42,7 @@ class BuiltinPackStatus:
 
     @property
     def update_available(self) -> bool:
-        return self.installed_version != self.available_version
+        return is_newer(self.available_version, self.installed_version)
 
 
 class PresetUpdateOperations(ModpackOperations):
@@ -53,8 +55,32 @@ class PresetUpdateOperations(ModpackOperations):
         if not version_id:
             return None
         pack_path = load_forgotten_worlds_pack()
-        latest = bundle_version(pack_path)
+        channel = newer_channel(self.paths, pack_path)
+        latest = channel.version_id if channel else bundle_version(pack_path)
         return BuiltinPackStatus(version_id, latest)
+
+    def refresh_builtin_modpack(self) -> None:
+        """Check the server pack channel independently from launcher releases. CHẠM MẠNG."""
+        with self.make_http_client() as http_client:
+            refresh_channel(self.paths, http_client, self.endpoints.builtin_modpack_feed)
+
+    def latest_builtin_pack(
+        self,
+        bundled_pack: Path,
+        allowed_hosts: tuple[str, ...] | None = None,
+        cancel_token: CancelToken | None = None,
+    ) -> Path:
+        channel = newer_channel(self.paths, bundled_pack)
+        if channel is None:
+            return bundled_pack
+        with self.make_http_client() as http_client:
+            return channel_pack(
+                self.paths,
+                channel,
+                http_client,
+                allowed_hosts=allowed_hosts or ALLOWED_HOSTS,
+                cancel_token=cancel_token,
+            )
 
     def update_builtin_modpack(
         self,
@@ -72,7 +98,9 @@ class PresetUpdateOperations(ModpackOperations):
             instance = load_instance(self.paths, instance_id)
             game_dir = self.instance_game_dir(instance)
             recover_sync_update(registry, game_dir)
-            pack_path = load_forgotten_worlds_pack()
+            pack_path = self.latest_builtin_pack(
+                load_forgotten_worlds_pack(), allowed_hosts, cancel_request
+            )
             plan = self._plan_modrinth_pack(pack_path, allowed_hosts)
             target = self.describe_content_target(instance_id)
             expected_version = (

@@ -1,0 +1,21 @@
+HOÀI NIỆM — KHU NHÀ Ở VÀ NHÀ MÁY
+
+Server dùng Get Off My Lawn ReServed (GOML). Bạn không cần cài GOML trên client.
+Chế tạo Claim Anchor rồi đặt tại khu đất muốn bảo vệ. Nhấp phải lõi để quản lý
+và cấp quyền cho bạn bè. Dùng /goml help để xem các lệnh; /goml list để xem đất.
+
+Các cấp lõi có bán kính 10 / 25 / 50 / 75 / 125 / 200 block.
+Mỗi người tối đa 8 khu đất trong mỗi chiều không gian. Bảo vệ áp dụng suốt chiều cao thế giới.
+Người ngoài không được phá lõi. Chủ đất tháo lõi thì khu đất mất bảo vệ.
+Đây là bảo vệ đất thông thường, chưa có hệ thống công thành hay raid lõi.
+
+CẬP NHẬT MODPACK
+
+Trong quản lý bản chơi Hoài Niệm/Forgotten Worlds, bấm “Kiểm tra cập nhật modpack”.
+Nếu có bản mới, đóng Minecraft rồi bấm “Cập nhật modpack”. Các bản pack mới
+được phát hành độc lập với launcher; không cần tải lại launcher mỗi lần.
+Giữ nguyên save, phím điều khiển, danh sách server, cấu hình cá nhân, mod tự thêm,
+shader, resource pack và ảnh chụp. Mod đã tắt/xóa được giữ theo lựa chọn của bạn.
+Nếu mod tự thêm xung đột, cập nhật dừng để bạn xử lý; không ghi đè mod của bạn.
+
+Launcher rc36 trở về trước cần nâng cấp một lần để có nguồn cập nhật trực tuyến.

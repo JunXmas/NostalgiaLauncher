@@ -97,3 +97,43 @@ def test_update_button_is_only_visible_for_the_server_pack(
     manager.openFor(instance_row)
     wait_until(lambda: manager.property("opened"))
     assert not find_control(manager, "instanceModpackUpdate").property("visible")
+
+
+def test_manual_check_refreshes_server_pack_status(
+    preview: Preview, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    launcher, view, bridge, root_item = preview
+    atomic_write_json(launcher.paths.version_json("1.21.11"), {"id": "1.21.11"})
+    instance = launcher.create_instance(Instance("industry", "1.21.11", "Nha may"))
+    save_builtin_receipt(launcher.paths.instance_dir("industry"), BuiltinReceipt("1.0.2", {}))
+    calls: list[bool] = []
+
+    def refresh(_self: Launcher) -> None:
+        calls.append(True)
+        atomic_write_json(
+            launcher.paths.updates_dir / "modpacks" / "forgotten-worlds.json",
+            {
+                "format": 1,
+                "preset": "forgotten-worlds",
+                "version": "1.0.3",
+                "minecraft": "1.21.11",
+                "fabric-loader": "0.19.5",
+                "url": "https://github.com/pack.mrpack",
+                "sha256": "a" * 64,
+                "size": 1,
+            },
+        )
+
+    monkeypatch.setattr(Launcher, "refresh_builtin_modpack", refresh)
+    bridge.announce_instances_changed()
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    manager = find_control(root_item, "modernInstanceManager")
+    manager.openFor(cast(Any, bridge).instances[0])
+    wait_until(lambda: manager.property("opened"))
+    update = find_control(manager, "instanceModpackUpdate")
+    assert not update.property("clickable")
+    press(view, find_control(manager, "instanceModpackCheck"))
+    wait_until(lambda: bool(calls) and not bridge.busy)
+    assert update.property("clickable")
+    assert launcher.list_instances() == (instance,)

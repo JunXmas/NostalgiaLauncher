@@ -100,6 +100,8 @@ Controls.Popup {
                         visible: root.instance.modpackPreset === "forgotten-worlds"
                         PaymentText { text: "Forgotten Worlds · " + (root.instance.modpackVersion || ""); font.weight: Font.DemiBold }
                         PaymentText { width: parent.width; text: Legacy.Tr.phrase("Giữ thế giới, thiết lập và mod tự thêm khi cập nhật."); color: GlassTheme.muted }
+                        Button { objectName: "instanceModpackCheck"; label: Legacy.Tr.phrase("Kiểm tra cập nhật modpack"); quiet: true; clickable: !bridge.busy && !bridge.storageBusy; onClicked: bridge.checkModpackUpdates() }
+                        PaymentText { width: parent.width; visible: !!bridge.modpackCheckMessage; text: Legacy.Tr.phrase(bridge.modpackCheckMessage); color: GlassTheme.muted; wrapMode: Text.WordWrap }
                         Button { objectName: "instanceModpackUpdate"; label: root.instance.modpackUpdateAvailable ? Legacy.Tr.phrase("Cập nhật modpack") : Legacy.Tr.phrase("Modpack đã mới nhất"); primary: true; clickable: root.instance.modpackUpdateAvailable === true && root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: bridge.updateModpack(root.instance.instanceId) }
                     }
                     PaymentText { text: Legacy.Tr.phrase("Tên bản chơi"); font.weight: Font.DemiBold }
