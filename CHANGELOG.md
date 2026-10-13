@@ -3,7 +3,15 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.2.0rc36 — 2026-10-12
+## 1.2.0rc36 — 2026-10-13
+
+- Forgotten Worlds 1.0.2 thêm JEI 27.48.0.106 và MezzConfig 0.6.8 đúng Fabric
+  1.21.11; mô tả lối chơi hướng sinh tồn công nghiệp với Create.
+- Thêm nút Cập nhật modpack vào bản chơi hiện tại ở cả hai giao diện. Giữ thế giới,
+  dữ liệu, thiết lập và mod tự thêm; hỗ trợ bản rc35 và thư mục game riêng.
+- Tải và kiểm hash trước khi cập nhật, chỉ thay file quản lý còn nguyên bản;
+  giữ trạng thái mod đã tắt/xóa, phát hiện mod trùng ID, sao lưu và khôi phục
+  khi tải/ghi lỗi, hủy hoặc gián đoạn.
 
 - Sửa đăng nhập phiên web Ely.by khi địa chỉ OAuth đặt client ID trong đường dẫn:
   launcher gửi đúng tham số để giữ phiên đổi skin. Tài khoản từ bản cũ có thể

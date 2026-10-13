@@ -6,12 +6,12 @@ Controls.Popup {
     id: root
     objectName: "modernUpdateDialog"
     property Item backdrop: null
-    readonly property string phase: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.state : "idle"
-    readonly property string latestVersion: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.latestVersion : ""
-    readonly property string notesText: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.releaseNotes : ""
-    readonly property string statusMessage: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.message : ""
-    readonly property real fraction: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.progressFraction : 0
-    readonly property bool selfUpdate: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.canSelfUpdate : false
+    readonly property string phase: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.state || "idle") : "idle"
+    readonly property string latestVersion: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.latestVersion || "") : ""
+    readonly property string notesText: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.releaseNotes || "") : ""
+    readonly property string statusMessage: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.message || "") : ""
+    readonly property real fraction: typeof updateBridge !== "undefined" && updateBridge ? Number(updateBridge.progressFraction || 0) : 0
+    readonly property bool selfUpdate: typeof updateBridge !== "undefined" && updateBridge ? !!updateBridge.canSelfUpdate : false
     readonly property bool windowsInstaller: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.installKind === "windows-installer" : false
     readonly property bool working: ["checking", "downloading", "applying"].indexOf(phase) >= 0
     parent: Controls.Overlay.overlay

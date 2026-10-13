@@ -14,8 +14,10 @@ from nostalgia.content.builtin_pack import (
     FORGOTTEN_WORLDS,
     load_forgotten_worlds_pack,
 )
+from nostalgia.content.builtin_receipt import bundle_receipt, save_builtin_receipt
+from nostalgia.content.mrpack import ALLOWED_HOSTS, read_index
 from nostalgia.errors import ContentError
-from nostalgia.facade.modpacks import ModpackOperations
+from nostalgia.facade.preset_updates import PresetUpdateOperations
 from nostalgia.instance.model import Instance
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
@@ -28,7 +30,7 @@ PRESET_TITLES: dict[str, str] = {
 
 
 @dataclass(frozen=True, slots=True)
-class PresetOperations(ModpackOperations):
+class PresetOperations(PresetUpdateOperations):
     def list_preset_game_versions(self, preset: str) -> tuple[str, ...]:
         """Các phiên bản Minecraft mà gói có bản phát hành. CHẠM MẠNG."""
         if preset == FORGOTTEN_WORLDS:
@@ -58,8 +60,9 @@ class PresetOperations(ModpackOperations):
         if preset == FORGOTTEN_WORLDS:
             if game_version not in FORGOTTEN_GAME_VERSIONS:
                 raise ContentError(f"Forgotten Worlds chưa có bản cho Minecraft {game_version}")
-            return self.install_modpack_file(
-                load_forgotten_worlds_pack(),
+            pack_path = load_forgotten_worlds_pack()
+            instance = self.install_modpack_file(
+                pack_path,
                 instance_id,
                 display_name,
                 game_dir_override=game_dir_override,
@@ -67,6 +70,11 @@ class PresetOperations(ModpackOperations):
                 on_progress=on_progress,
                 cancel_token=cancel_token,
             )
+            index = read_index(pack_path, allowed_hosts=allowed_hosts or ALLOWED_HOSTS)
+            save_builtin_receipt(
+                self.paths.instance_dir(instance_id), bundle_receipt(pack_path, index)
+            )
+            return instance
         project_id = _project_id(preset)
         with self.make_http_client() as http_client:
             projects = modrinth.fetch_projects(

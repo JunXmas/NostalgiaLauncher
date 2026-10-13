@@ -1,7 +1,53 @@
-# Nostalgia 1.2.0rc36 — Skin Ely.by và cập nhật Windows
+# Nostalgia 1.2.0rc36 — Forgotten Worlds 1.0.2
 
-Bản vá khôi phục việc đổi skin Ely.by ngay trong launcher và sửa bộ cập nhật
-Windows cho các thư mục cài đặt cần quyền quản trị.
+Forgotten Worlds hướng tới sinh tồn công nghiệp: xây dây chuyền, tự động hóa với
+Create và tra công thức bằng JEI. “Hoài niệm” là tên và phong cách hình ảnh của server.
+
+## Cập nhật bản chơi đang dùng
+
+1. Cập nhật launcher lên **1.2.0rc36**.
+2. Đóng Minecraft, mở **Bản chơi → Quản lý bản chơi → Tổng quan**.
+3. Bấm **Cập nhật modpack** trên bản chơi Forgotten Worlds cũ.
+
+Nút này chỉ dành cho gói server Forgotten Worlds/Hoài Niệm; bản chơi Vanilla
+và Fabulously Optimized thông thường không hiển thị nút.
+
+Launcher thêm JEI **27.48.0.106** và MezzConfig **0.6.8** vào bản chơi hiện tại.
+Giữ thế giới, dữ liệu người chơi, thiết lập, phím tắt, danh sách server, shader,
+resource pack, ảnh chụp, mod tự thêm, tên bản chơi và RAM đã chọn. Không cần tạo lại
+bản chơi. Mod đã tắt hoặc xóa vẫn giữ trạng thái đó. Cấu hình mặc định chỉ được thêm
+khi file chưa có; cấu hình đã dùng được giữ nguyên.
+
+Các file do modpack quản lý chỉ được thay khi khớp bản đã cài. Mod tự sửa hoặc mod
+trùng ID được báo rõ để người chơi chọn, không ghi đè. Tải và kiểm hash trước khi
+áp dụng; lỗi hoặc hủy giữa chừng phục hồi bộ file và dấu vết phiên bản cũ. Các file
+thay đổi được sao lưu tại `.nostalgia-sync-backups` trong thư mục đăng ký bản chơi.
+Hỗ trợ cả bản chơi cài bằng rc35 và thư mục game riêng.
+
+## Cài mới và sử dụng JEI
+
+Chọn **Forgotten Worlds**, Minecraft **1.21.11** trong hộp tạo bản chơi.
+Gói dùng Fabric **0.19.5**, Fabulously Optimized **12.3.0**, Create Fly **6.0.9-5**
+và các mod nội dung phù hợp với server. Java 21 được launcher chuẩn bị.
+
+Trong game, đưa chuột lên vật phẩm, bấm **R** để xem công thức hoặc **U** để xem
+cách dùng. JEI và MezzConfig được cài ở client. File
+**Forgotten-Worlds-Optimized-1.21.11.mrpack** tải riêng có cùng nội dung với gói
+nhúng trong launcher và được ghi hash trong **SHA256SUMS**.
+
+## Kiểm tra tương thích
+
+Đã nâng cấp từ file rc35 thật: giữ nguyên toàn bộ file cũ, chỉ thêm hai mod mới.
+Minecraft thực tế kết nối, đăng ký và đăng nhập trên server thử nghiệm; JEI hiển thị
+22 nhóm với 2.039 công thức Create. Cardboard cần bản sửa cache đồng bộ công thức
+Fabric ở phía server để tiếp nhận client JEI; bản sửa được kiểm tra riêng và không
+đưa vào gói client.
+
+## Sửa cập nhật launcher trên Windows
+
+Khi launcher nằm trong thư mục cần quyền quản trị, bộ cập nhật dùng bộ cài Windows
+đúng phiên bản, kiểm SHA-256 rồi mở UAC. Hủy UAC thì launcher vẫn chạy. Bản cài vào
+thư mục ghi được tiếp tục dùng cập nhật zip.
 
 ## Đổi skin Ely.by
 
@@ -27,24 +73,5 @@ Windows cho các thư mục cài đặt cần quyền quản trị.
 Lượt làm mới nền không xoá thông báo gửi chat hoặc thao tác bạn bè thất bại.
 Thông báo được xoá khi thử lại, chọn bạn khác hoặc đổi phiên đăng nhập.
 
-## Bộ cài và kiểm tra
 
-Có Windows x64 setup/portable; Linux x64 AppImage, deb, rpm, tar.gz và zip;
-macOS Apple Silicon/Intel dmg và zip. Gói Forgotten Worlds 1.0.1 vẫn được đính kèm.
-Các file có SHA-256 trong **SHA256SUMS**; ảnh preview và tài liệu nội bộ không nằm
-trong file phát hành. Bản này dùng cấu hình release tiêu chuẩn.
-
-Luồng skin được kiểm tra với máy chủ HTTPS mô phỏng, gồm đăng nhập, upload,
-áp dụng skin, phiên cũ, tài khoản nhập nhầm và 2FA; chưa kiểm tra upload bằng
-tài khoản Ely.by thật. Các bộ cài được chạy thử tự động trước khi phát hành.
-
-## English
-
-- Fix Ely.by's internal OAuth client ID so skin sessions can be created correctly.
-  Old accounts can sign in again directly from the skin panel without losing their preview;
-  click **Save changes** after signing in to apply it. Includes 2FA and account identity checks.
-- Fix protected Windows installations downloading Linux packages. Updates use the verified
-  Windows installer and native UAC; cancelling UAC leaves the launcher open.
-- Keep chat and friend-action errors visible across background refreshes until retrying
-  or switching friends/sessions.
-- All existing Windows, Linux and macOS packages remain available, along with Forgotten Worlds.
+Phiên Ely.by được kiểm tra bằng máy chủ HTTPS mô phỏng; chưa upload bằng tài khoản Ely.by thật.

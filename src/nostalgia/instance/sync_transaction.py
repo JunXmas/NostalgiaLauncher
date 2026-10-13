@@ -15,7 +15,7 @@ from nostalgia.multiplayer.sync_manifest import sync_path
 from nostalgia.storage.files import atomic_write_json, read_json, sync_directory
 
 JOURNAL_FILE = ".nostalgia-sync-pending.json"
-METADATA_FILES = ("instance.json", ".nostalgia-sync-receipt.json")
+METADATA_FILES = ("instance.json", ".nostalgia-sync-receipt.json", ".nostalgia-builtin-pack.json")
 
 
 def safe_sync_target(game_dir: Path, relative_path: str) -> Path:

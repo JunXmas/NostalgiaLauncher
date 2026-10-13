@@ -278,7 +278,7 @@ Item {
                                 Text { text: "Forgotten Worlds · 1.21.11"; color: Theme.text; font.bold: true; font.pixelSize: Theme.fontHeading }
                                 Text {
                                     width: parent.width; wrapMode: Text.WordWrap
-                                    text: Tr.phrase("Fabulously Optimized + bộ mod cho server Junbob Mine")
+                                    text: Tr.phrase("Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized")
                                     color: Theme.textMuted; font.pixelSize: Theme.fontBody
                                 }
                             }

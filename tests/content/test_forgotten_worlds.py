@@ -38,6 +38,8 @@ def test_shipped_pack_has_client_create_and_matching_server_mods(tmp_path: Path)
         for path in shipped_paths
     )
     assert sum("fabric-language-kotlin" in path for path in paths) == 1
+    assert "mods/jei-1.21.11-fabric-27.48.0.106.jar" in paths
+    assert "mods/mezz_config-1.21.11-fabric-0.6.8.jar" in paths
     assert any("sodium-fabric" in path for path in paths)
     assert any("friendsandfoes" in path for path in paths)
     assert any("SereneSeasons" in path for path in paths)

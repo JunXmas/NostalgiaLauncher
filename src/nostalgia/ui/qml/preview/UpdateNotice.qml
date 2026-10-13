@@ -5,9 +5,9 @@ Glass {
     id: root
     objectName: "modernUpdateNotice"
     property string dismissedVersion: ""
-    readonly property string phase: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.state : "idle"
-    readonly property string latestVersion: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.latestVersion : ""
-    readonly property real fraction: typeof updateBridge !== "undefined" && updateBridge ? updateBridge.progressFraction : 0
+    readonly property string phase: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.state || "idle") : "idle"
+    readonly property string latestVersion: typeof updateBridge !== "undefined" && updateBridge ? (updateBridge.latestVersion || "") : ""
+    readonly property real fraction: typeof updateBridge !== "undefined" && updateBridge ? Number(updateBridge.progressFraction || 0) : 0
     readonly property bool active: typeof updateBridge !== "undefined" && !!updateBridge && root.latestVersion !== dismissedVersion && ["available", "downloading", "ready", "applying"].indexOf(root.phase) >= 0
     signal detailsRequested
     visible: active
