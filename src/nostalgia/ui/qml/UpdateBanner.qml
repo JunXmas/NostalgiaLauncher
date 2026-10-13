@@ -15,7 +15,7 @@ Rectangle {
                                    || updateBridge.state === "downloading"
                                    || updateBridge.state === "ready")
     property bool dismissed: false
-    readonly property bool canSelfUpdate: !!updateBridge && updateBridge.canSelfUpdate
+    readonly property bool canSelfUpdate: !!updateBridge && !!updateBridge.canSelfUpdate
     // Cờ này là điều kiện hiện của nút, tách ra để test đọc được: `visible` của QML là
     // hiện-thật-sự (luôn false khi cây chưa vào cửa sổ), nên không kiểm được ràng buộc.
     // Lúc đang tải thì ẩn nút: việc đã chạy, bấm thêm không thêm được gì.

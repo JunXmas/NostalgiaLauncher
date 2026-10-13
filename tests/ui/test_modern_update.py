@@ -1,15 +1,17 @@
 """Thông báo mới đóng theo phiên bản; changelog cuộn riêng, nút cập nhật luôn trong cửa sổ."""
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
-from PySide6.QtCore import Property, QPointF, Slot
+from PySide6.QtCore import Property, QObject, QPointF, Slot, qInstallMessageHandler
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_minimal_preview import Preview
 from test_minimal_preview import preview as preview
 from test_update_banner import FakeUpdateBridge
 
+from nostalgia.ui.view import LauncherView
 from qt_controls import find_control, press, wheel
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -102,3 +104,24 @@ def test_protected_windows_install_explains_the_native_installer_in_a_small_wind
     assert p.y() > 0 and p.y() + action.height() <= view.height()
     press(view, action)
     assert fake.calls == ["update"]
+
+
+def test_update_surfaces_wait_quietly_for_bridge_properties(preview: Preview) -> None:
+    _launcher, view, _bridge, root_item = preview
+    original = view.rootContext().contextProperty("updateBridge")
+    warnings: list[str] = []
+    previous = qInstallMessageHandler(lambda _level, _context, message: warnings.append(message))
+    try:
+        cast(LauncherView, view).bind_context_property("updateBridge", QObject(view))
+        QGuiApplication.processEvents()
+        notice = find_control(root_item, "modernUpdateNotice")
+        dialog = find_control(root_item, "modernUpdateDialog")
+        assert not notice.property("active")
+        assert dialog.property("phase") == "idle"
+        assert dialog.property("latestVersion") == ""
+        assert dialog.property("fraction") == 0
+        assert not dialog.property("selfUpdate")
+        assert not warnings, "\n".join(warnings)
+    finally:
+        cast(LauncherView, view).bind_context_property("updateBridge", original)
+        qInstallMessageHandler(previous)
