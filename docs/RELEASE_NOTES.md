@@ -34,7 +34,7 @@ nhúng trong launcher và được ghi hash trong **SHA256SUMS**.
 
 ## Kiểm tra tương thích
 
-Đã nâng cấp từ file rc35 thật: giữ nguyên 138 file cũ, chỉ thêm hai mod mới.
+Đã nâng cấp từ file rc35 thật: giữ nguyên toàn bộ file cũ, chỉ thêm hai mod mới.
 Minecraft thực tế kết nối, đăng ký và đăng nhập trên server thử nghiệm; JEI hiển thị
 22 nhóm với 2.039 công thức Create. Cardboard cần bản sửa cache đồng bộ công thức
 Fabric ở phía server để tiếp nhận client JEI; bản sửa được kiểm tra riêng và không

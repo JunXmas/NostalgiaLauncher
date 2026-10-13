@@ -23,7 +23,7 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 def test_manager_updates_existing_pack_and_refreshes_version(
     preview: Preview, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    launcher, view, bridge, root = preview
+    launcher, view, bridge, root_item = preview
     atomic_write_json(launcher.paths.version_json("1.21.11"), {"id": "1.21.11"})
     instance = launcher.create_instance(Instance("industry", "1.21.11", "Ma nha may"))
     registry = launcher.paths.instance_dir(instance.instance_id)
@@ -37,9 +37,9 @@ def test_manager_updates_existing_pack_and_refreshes_version(
 
     monkeypatch.setattr(Launcher, "update_builtin_modpack", update)
     bridge.announce_instances_changed()
-    root.setProperty("sessionSkipped", True)
-    root.setProperty("currentIndex", 1)
-    manager = find_control(root, "modernInstanceManager")
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    manager = find_control(root_item, "modernInstanceManager")
     manager.openFor(cast(Any, bridge).instances[0])
     wait_until(lambda: manager.property("opened"))
     action = find_control(manager, "instanceModpackUpdate")

@@ -49,12 +49,12 @@ class PresetUpdateOperations(ModpackOperations):
     def builtin_pack_status(self, instance: Instance) -> BuiltinPackStatus | None:
         game_dir = self.instance_game_dir(instance)
         receipt = load_builtin_receipt(self.paths.instance_dir(instance.instance_id))
-        version = receipt.version if receipt is not None else legacy_pack_version(game_dir)
-        if not version:
+        version_id = receipt.version_id if receipt is not None else legacy_pack_version(game_dir)
+        if not version_id:
             return None
-        pack = load_forgotten_worlds_pack()
-        latest = bundle_version(pack)
-        return BuiltinPackStatus(version, latest)
+        pack_path = load_forgotten_worlds_pack()
+        latest = bundle_version(pack_path)
+        return BuiltinPackStatus(version_id, latest)
 
     def update_builtin_modpack(
         self,
@@ -64,7 +64,7 @@ class PresetUpdateOperations(ModpackOperations):
         on_progress: ProgressFn = ignore_progress,
         cancel_token: CancelToken | None = None,
     ) -> Instance:
-        token = cancel_token or CancelToken()
+        cancel_request = cancel_token or CancelToken()
         registry = self.paths.instance_dir(instance_id)
         # Loading first lets an interrupted transaction recover before acquiring its lock.
         load_instance(self.paths, instance_id)
@@ -72,8 +72,8 @@ class PresetUpdateOperations(ModpackOperations):
             instance = load_instance(self.paths, instance_id)
             game_dir = self.instance_game_dir(instance)
             recover_sync_update(registry, game_dir)
-            pack = load_forgotten_worlds_pack()
-            plan = self._plan_modrinth_pack(pack, allowed_hosts)
+            pack_path = load_forgotten_worlds_pack()
+            plan = self._plan_modrinth_pack(pack_path, allowed_hosts)
             target = self.describe_content_target(instance_id)
             expected_version = (
                 f"{plan.loader_kind}-loader-{plan.loader_version}-{plan.game_version}"
@@ -84,14 +84,14 @@ class PresetUpdateOperations(ModpackOperations):
             ) or instance.version_id != expected_version:
                 raise ContentError("Modpack mới không khớp Minecraft và loader của bản chơi này.")
             desired = bundle_receipt(
-                pack, read_index(pack, allowed_hosts=allowed_hosts or ALLOWED_HOSTS)
+                pack_path, read_index(pack_path, allowed_hosts=allowed_hosts or ALLOWED_HOSTS)
             )
             original = load_builtin_receipt(registry)
             if original is None:
                 installed = legacy_pack_version(game_dir)
                 if not installed:
                     raise ContentError("Bản chơi này không phải modpack Forgotten Worlds.")
-                original = desired if installed == desired.version else legacy_receipt()
+                original = desired if installed == desired.version_id else legacy_receipt()
             tasks: list[DownloadTask] = []
             with (
                 tempfile.TemporaryDirectory(
@@ -101,33 +101,40 @@ class PresetUpdateOperations(ModpackOperations):
             ):
                 stage = Path(temporary)
                 plan.apply_overrides(stage)
-                previous = {entry.identity: path for path, entry in original.files.items()}
+                previous = {
+                    bundled_file.file_identity: path
+                    for path, bundled_file in original.files.items()
+                }
                 for task in plan.tasks(stage):
                     relative = task.destination.relative_to(stage).as_posix()
-                    entry = desired.files[relative]
+                    bundled_file = desired.files[relative]
                     variant = existing_variant(game_dir, relative)
-                    old_path = previous.get(entry.identity)
-                    if variant and matches(safe_sync_target(game_dir, variant), entry):
+                    old_path = previous.get(bundled_file.file_identity)
+                    if variant and matches(safe_sync_target(game_dir, variant), bundled_file):
                         continue
                     if old_path and not existing_variant(game_dir, old_path):
                         continue
                     tasks.append(task)
                 report = download_all(
-                    http_client, tasks, workers=8, on_progress=on_progress, cancel_token=token
+                    http_client,
+                    tasks,
+                    workers=8,
+                    on_progress=on_progress,
+                    cancel_token=cancel_request,
                 )
                 if not report.ok:
                     raise NetworkError("Chưa tải đủ bản cập nhật; dữ liệu cũ được giữ nguyên.")
-                token.raise_if_cancelled()
+                cancel_request.raise_if_cancelled()
                 changes = plan_builtin_update(game_dir, stage, original, desired)
                 touched = frozenset(changes.copies) | changes.removals
                 with sync_transaction(registry, game_dir, touched):
                     for relative in sorted(changes.removals):
-                        token.raise_if_cancelled()
+                        cancel_request.raise_if_cancelled()
                         safe_sync_target(game_dir, relative).unlink()
                     for relative, source in changes.copies.items():
-                        token.raise_if_cancelled()
+                        cancel_request.raise_if_cancelled()
                         replace_sync_bytes(stage / source, safe_sync_target(game_dir, relative))
-                    token.raise_if_cancelled()
+                    cancel_request.raise_if_cancelled()
                     save_builtin_receipt(registry, changes.receipt)
                     sync_directory(game_dir)
             return instance

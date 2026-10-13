@@ -28,26 +28,26 @@ def bundle_version(pack_path: Path) -> str:
 @dataclass(frozen=True, slots=True)
 class BundledFile:
     sha1: str
-    identity: str
+    file_identity: str
 
 
 @dataclass(frozen=True, slots=True)
 class BuiltinReceipt:
-    version: str
+    version_id: str
     files: dict[str, BundledFile]
 
 
 def bundle_receipt(pack_path: Path, index: ModpackIndex) -> BuiltinReceipt:
     owned: dict[str, BundledFile] = {}
-    for entry in index.files:
-        relative = sync_path(entry.relative_path)
-        parts = urlsplit(entry.url).path.split("/")
-        identity = (
+    for bundled_file in index.files:
+        relative = sync_path(bundled_file.relative_path)
+        parts = urlsplit(bundled_file.url).path.split("/")
+        file_identity = (
             "project:" + parts[2]
-            if urlsplit(entry.url).hostname == "cdn.modrinth.com" and len(parts) > 3
+            if urlsplit(bundled_file.url).hostname == "cdn.modrinth.com" and len(parts) > 3
             else "path:" + relative
         )
-        owned[relative] = BundledFile(entry.sha1, identity)
+        owned[relative] = BundledFile(bundled_file.sha1, file_identity)
     with zipfile.ZipFile(pack_path) as archive:
         document = as_mapping(json.loads(archive.read("modrinth.index.json")))
         for prefix in ("overrides/", "client-overrides/"):
@@ -77,27 +77,30 @@ def load_builtin_receipt(registry_dir: Path) -> BuiltinReceipt | None:
 
 
 def parse_receipt(document: dict[str, JsonValue]) -> BuiltinReceipt:
-    version = as_string(document.get("version"))
-    if not version or len(version) > 96:
+    version_id = as_string(document.get("version"))
+    if not version_id or len(version_id) > 96:
         raise ContentError("Dấu vết modpack thiếu phiên bản.")
     owned: dict[str, BundledFile] = {}
     for relative, raw in as_mapping(document.get("files")).items():
-        entry = as_mapping(raw)
-        digest, identity = as_string(entry.get("sha1")), as_string(entry.get("identity"))
-        if not digest or not re.fullmatch(r"[0-9a-f]{40}", digest) or not identity:
+        bundled_file = as_mapping(raw)
+        digest, file_identity = (
+            as_string(bundled_file.get("sha1")),
+            as_string(bundled_file.get("identity")),
+        )
+        if not digest or not re.fullmatch(r"[0-9a-f]{40}", digest) or not file_identity:
             raise ContentError("Dấu vết file modpack không hợp lệ.")
-        owned[sync_path(relative)] = BundledFile(digest, identity)
-    return BuiltinReceipt(version, owned)
+        owned[sync_path(relative)] = BundledFile(digest, file_identity)
+    return BuiltinReceipt(version_id, owned)
 
 
 def save_builtin_receipt(registry_dir: Path, receipt: BuiltinReceipt) -> None:
     owned: dict[str, JsonValue] = {
-        relative: {"sha1": entry.sha1, "identity": entry.identity}
-        for relative, entry in receipt.files.items()
+        relative: {"sha1": bundled_file.sha1, "identity": bundled_file.file_identity}
+        for relative, bundled_file in receipt.files.items()
     }
     atomic_write_json(
         registry_dir / RECEIPT_FILE,
-        {"format": 1, "preset": "forgotten-worlds", "version": receipt.version, "files": owned},
+        {"format": 1, "preset": "forgotten-worlds", "version": receipt.version_id, "files": owned},
         private=True,
     )
 

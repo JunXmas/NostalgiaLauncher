@@ -1,19 +1,13 @@
-"""Existing player data survives a real pack upgrade, failed writes and cancellation."""
+"""Player data, custom mods and prior files survive updates and failed writes."""
 
 import hashlib
-import io
-import json
-import zipfile
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from test_modpack_install import make_modpack_launcher
 
-from fabric_fixture import LOADER_VERSION
-from fake_mojang import VERSION_ID
-from local_https_server import LocalHttpsServer, ServerState
-from nostalgia.api import Instance, Launcher
+from builtin_update_fixture import Upgrade, jar
+from builtin_update_fixture import upgrade as upgrade
 from nostalgia.content.builtin_receipt import (
     RECEIPT_FILE,
     BuiltinReceipt,
@@ -28,80 +22,10 @@ from nostalgia.instance.sync_transaction import replace_sync_bytes
 from nostalgia.operations.cancellation import CancelToken
 
 
-def jar(mod_id: str, version: str = "1") -> bytes:
-    stream = io.BytesIO()
-    with zipfile.ZipFile(stream, "w") as archive:
-        archive.writestr(
-            zipfile.ZipInfo("fabric.mod.json"),
-            json.dumps({"schemaVersion": 1, "id": mod_id, "version": version}),
-        )
-    return stream.getvalue()
-
-
-def write_pack(path: Path, server: LocalHttpsServer, state: ServerState, version: str) -> None:
-    contents = {"base": jar("base")}
-    if version != "1.0.1":
-        contents.update(jei=jar("jei"), mezz_config=jar("mezz_config"))
-    entries = []
-    for name, payload in contents.items():
-        route = "/update/" + name + ".jar"
-        state.add(route, payload)
-        entries.append(
-            {
-                "path": "mods/" + name + ".jar",
-                "downloads": [server.url(route)],
-                "hashes": {"sha1": hashlib.sha1(payload).hexdigest()},
-                "fileSize": len(payload),
-            }
-        )
-    with zipfile.ZipFile(path, "w") as archive:
-        archive.writestr(
-            "modrinth.index.json",
-            json.dumps(
-                {
-                    "formatVersion": 1,
-                    "versionId": version,
-                    "name": "Forgotten Worlds",
-                    "dependencies": {"minecraft": VERSION_ID, "fabric-loader": LOADER_VERSION},
-                    "files": entries,
-                }
-            ),
-        )
-        archive.writestr("overrides/config/player.toml", "pack default")
-        archive.writestr("overrides/config/new.toml", "new default")
-        archive.writestr("overrides/options.txt", "pack controls")
-        archive.writestr("overrides/servers.dat", "pack servers")
-        archive.writestr(
-            "overrides/README-Forgotten-Worlds.txt",
-            "Forgotten Worlds — Optimized " + version + "\n",
-        )
-
-
-Upgrade = tuple[Launcher, Instance, str, ServerState]
-
-
-@pytest.fixture
-def upgrade(
-    server: LocalHttpsServer,
-    server_state: ServerState,
-    tmp_path: Path,
-    certificate_pair: tuple[Path, Path],
-    monkeypatch: pytest.MonkeyPatch,
-) -> Upgrade:
-    launcher, host = make_modpack_launcher(server, server_state, tmp_path, certificate_pair)
-    old = tmp_path / "old.mrpack"
-    new = tmp_path / "new.mrpack"
-    write_pack(old, server, server_state, "1.0.1")
-    instance = launcher.install_modpack_file(old, "industry", allowed_hosts=(host,))
-    write_pack(new, server, server_state, "1.0.2")
-    monkeypatch.setattr(preset_updates, "load_forgotten_worlds_pack", lambda: new)
-    return launcher, instance, host, server_state
-
-
-def snapshot(root: Path) -> dict[str, bytes]:
+def snapshot(game_dir: Path) -> dict[str, bytes]:
     return {
-        p.relative_to(root).as_posix(): p.read_bytes()
-        for p in root.rglob("*")
+        p.relative_to(game_dir).as_posix(): p.read_bytes()
+        for p in game_dir.rglob("*")
         if p.is_file()
         and ".nostalgia-sync-backups" not in p.parts
         and p.name != ".nostalgia-sync.lock"
@@ -157,14 +81,14 @@ def test_upgrade_preserves_player_data_and_instance(
     status = launcher.builtin_pack_status(result)
     assert status is not None and not status.update_available
     receipt = load_builtin_receipt(launcher.paths.instance_dir(instance.instance_id))
-    assert receipt is not None and receipt.version == "1.0.2"
+    assert receipt is not None and receipt.version_id == "1.0.2"
 
 
 @pytest.mark.parametrize("disabled", [False, True])
 def test_deleted_or_disabled_mod_is_not_reinstalled(upgrade: Upgrade, disabled: bool) -> None:
     launcher, instance, host, state = upgrade
-    root = launcher.instance_game_dir(instance)
-    mod = root / "mods/base.jar"
+    game_dir = launcher.instance_game_dir(instance)
+    mod = game_dir / "mods/base.jar"
     if disabled:
         mod.rename(mod.with_suffix(".jar.disabled"))
     else:
@@ -172,7 +96,7 @@ def test_deleted_or_disabled_mod_is_not_reinstalled(upgrade: Upgrade, disabled: 
     before = state.request_count("/update/base.jar")
     launcher.update_builtin_modpack(instance.instance_id, allowed_hosts=(host,))
     assert not mod.exists()
-    assert (root / "mods/base.jar.disabled").exists() == disabled
+    assert (game_dir / "mods/base.jar.disabled").exists() == disabled
     assert state.request_count("/update/base.jar") == before
 
 
@@ -181,54 +105,54 @@ def test_user_mod_conflicts_leave_all_existing_files_intact(
     upgrade: Upgrade, conflict: str
 ) -> None:
     launcher, instance, host, _ = upgrade
-    root = launcher.instance_game_dir(instance)
+    game_dir = launcher.instance_game_dir(instance)
     name, payload = {
         "changed-managed": ("base.jar", jar("base", "custom")),
         "user-filename": ("jei.jar", jar("jei", "custom")),
         "user-mod-id": ("my-jei.jar", jar("jei", "custom")),
     }[conflict]
-    (root / "mods" / name).write_bytes(payload)
-    before = snapshot(root)
+    (game_dir / "mods" / name).write_bytes(payload)
+    before = snapshot(game_dir)
     with pytest.raises(ContentError):
         launcher.update_builtin_modpack(instance.instance_id, allowed_hosts=(host,))
-    assert snapshot(root) == before
+    assert snapshot(game_dir) == before
 
 
 def test_missing_download_leaves_old_pack_intact(upgrade: Upgrade) -> None:
     launcher, instance, host, state = upgrade
-    root = launcher.instance_game_dir(instance)
+    game_dir = launcher.instance_game_dir(instance)
     state.add("/update/jei.jar", b"bad digest")
-    before = snapshot(root)
+    before = snapshot(game_dir)
     with pytest.raises(NetworkError):
         launcher.update_builtin_modpack(instance.instance_id, allowed_hosts=(host,))
-    assert snapshot(root) == before
+    assert snapshot(game_dir) == before
 
 
-@pytest.mark.parametrize("cancel", [False, True])
+@pytest.mark.parametrize("request_cancellation", [False, True])
 def test_interrupted_commit_rolls_back_mods_and_receipt(
-    upgrade: Upgrade, monkeypatch: pytest.MonkeyPatch, cancel: bool
+    upgrade: Upgrade, monkeypatch: pytest.MonkeyPatch, request_cancellation: bool
 ) -> None:
     launcher, instance, host, _ = upgrade
-    root = launcher.instance_game_dir(instance)
-    before = snapshot(root)
+    game_dir = launcher.instance_game_dir(instance)
+    before = snapshot(game_dir)
     actual = replace_sync_bytes
-    token = CancelToken()
+    cancel_request = CancelToken()
 
     def interrupt(source: Path, destination: Path) -> None:
         actual(source, destination)
-        if cancel:
-            token.cancel()
+        if request_cancellation:
+            cancel_request.cancel()
         else:
             raise OSError("simulated disk failure after first write")
 
     monkeypatch.setattr(preset_updates, "replace_sync_bytes", interrupt)
-    with pytest.raises(Cancelled if cancel else OSError):
+    with pytest.raises(Cancelled if request_cancellation else OSError):
         launcher.update_builtin_modpack(
-            instance.instance_id, allowed_hosts=(host,), cancel_token=token
+            instance.instance_id, allowed_hosts=(host,), cancel_token=cancel_request
         )
-    assert snapshot(root) == before
-    assert not (root / ".nostalgia-sync-pending.json").exists()
-    assert (root / ".nostalgia-sync-backups").is_dir()
+    assert snapshot(game_dir) == before
+    assert not (game_dir / ".nostalgia-sync-pending.json").exists()
+    assert (game_dir / ".nostalgia-sync-backups").is_dir()
 
 
 def test_rc35_marker_is_migrated_without_recreating_instance(
@@ -244,25 +168,25 @@ def test_rc35_marker_is_migrated_without_recreating_instance(
     assert status is not None and status.update_available
     assert launcher.update_builtin_modpack(instance.instance_id, allowed_hosts=(host,)) == instance
     receipt = load_builtin_receipt(registry)
-    assert receipt is not None and receipt.version == "1.0.2"
+    assert receipt is not None and receipt.version_id == "1.0.2"
 
 
 def test_only_verified_managed_artifact_is_replaced(tmp_path: Path) -> None:
-    root, stage = tmp_path / "game", tmp_path / "stage"
-    for p in (root / "mods", stage / "mods"):
+    game_dir, stage = tmp_path / "game", tmp_path / "stage"
+    for p in (game_dir / "mods", stage / "mods"):
         p.mkdir(parents=True)
     old, new = jar("base", "1"), jar("base", "2")
-    (root / "mods/base-1.jar.disabled").write_bytes(old)
+    (game_dir / "mods/base-1.jar.disabled").write_bytes(old)
     (stage / "mods/base-2.jar").write_bytes(new)
 
-    def entry(payload: bytes) -> BundledFile:
+    def bundled_file(payload: bytes) -> BundledFile:
         return BundledFile(hashlib.sha1(payload).hexdigest(), "project:base")
 
     changes = plan_builtin_update(
-        root,
+        game_dir,
         stage,
-        BuiltinReceipt("1", {"mods/base-1.jar": entry(old)}),
-        BuiltinReceipt("2", {"mods/base-2.jar": entry(new)}),
+        BuiltinReceipt("1", {"mods/base-1.jar": bundled_file(old)}),
+        BuiltinReceipt("2", {"mods/base-2.jar": bundled_file(new)}),
     )
     assert changes.copies == {"mods/base-2.jar.disabled": "mods/base-2.jar"}
     assert changes.removals == frozenset({"mods/base-1.jar.disabled"})

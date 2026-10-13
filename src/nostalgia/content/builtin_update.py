@@ -32,18 +32,21 @@ def existing_variant(game_dir: Path, relative: str) -> str:
     return ""
 
 
-def matches(path: Path, entry: BundledFile) -> bool:
-    return path.is_file() and sha1_of_file(path) == entry.sha1
+def matches(path: Path, bundled_file: BundledFile) -> bool:
+    return path.is_file() and sha1_of_file(path) == bundled_file.sha1
 
 
 def plan_builtin_update(
     game_dir: Path, stage: Path, original: BuiltinReceipt, desired: BuiltinReceipt
 ) -> PackChanges:
-    previous = {entry.identity: (path, entry) for path, entry in original.files.items()}
+    previous = {
+        bundled_file.file_identity: (path, bundled_file)
+        for path, bundled_file in original.files.items()
+    }
     copies: dict[str, str] = {}
     removals: set[str] = set()
     owned = dict(original.files)
-    for relative, entry in desired.files.items():
+    for relative, bundled_file in desired.files.items():
         target = safe_sync_target(game_dir, relative)
         variant = existing_variant(game_dir, relative)
         # Configuration is a player setting, even when it originally came from the pack.
@@ -51,7 +54,7 @@ def plan_builtin_update(
             if not target.exists():
                 copies[relative] = relative
             continue
-        old = previous.get(entry.identity)
+        old = previous.get(bundled_file.file_identity)
         if old is not None:
             old_path, old_entry = old
             old_variant = existing_variant(game_dir, old_path)
@@ -59,7 +62,7 @@ def plan_builtin_update(
                 # A deleted bundled mod stays deleted; disabling remains disabled as well.
                 continue
             old_target = safe_sync_target(game_dir, old_variant)
-            if old_path == relative and matches(old_target, entry):
+            if old_path == relative and matches(old_target, bundled_file):
                 continue
             if not matches(old_target, old_entry):
                 raise ContentError("Giữ mod bạn đã thay đổi; chưa thể cập nhật: " + old_path)
@@ -70,15 +73,15 @@ def plan_builtin_update(
             if old_variant != destination:
                 removals.add(old_variant)
             owned.pop(old_path, None)
-            owned[relative] = entry
+            owned[relative] = bundled_file
         elif variant:
-            if not matches(safe_sync_target(game_dir, variant), entry):
+            if not matches(safe_sync_target(game_dir, variant), bundled_file):
                 raise ContentError("Giữ file bạn tự cài; chưa thể cập nhật: " + relative)
         else:
             copies[relative] = relative
-            owned[relative] = entry
+            owned[relative] = bundled_file
     check_duplicate_mods(game_dir, stage, copies, frozenset(removals))
-    return PackChanges(copies, frozenset(removals), BuiltinReceipt(desired.version, owned))
+    return PackChanges(copies, frozenset(removals), BuiltinReceipt(desired.version_id, owned))
 
 
 def fabric_ids(path: Path) -> frozenset[str]:
