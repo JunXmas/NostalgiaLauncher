@@ -9,6 +9,9 @@ Create và tra công thức bằng JEI. “Hoài niệm” là tên và phong c�
 2. Đóng Minecraft, mở **Bản chơi → Quản lý bản chơi → Tổng quan**.
 3. Bấm **Cập nhật modpack** trên bản chơi Forgotten Worlds cũ.
 
+Nút này chỉ dành cho gói server Forgotten Worlds/Hoài Niệm; bản chơi Vanilla
+và Fabulously Optimized thông thường không hiển thị nút.
+
 Launcher thêm JEI **27.48.0.106** và MezzConfig **0.6.8** vào bản chơi hiện tại.
 Giữ thế giới, dữ liệu người chơi, thiết lập, phím tắt, danh sách server, shader,
 resource pack, ảnh chụp, mod tự thêm, tên bản chơi và RAM đã chọn. Không cần tạo lại

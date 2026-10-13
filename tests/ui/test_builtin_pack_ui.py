@@ -65,3 +65,35 @@ def test_update_slot_refuses_while_minecraft_is_running(
     QGuiApplication.processEvents()
     assert not calls
     assert len(errors) == 1
+
+
+@pytest.mark.parametrize("instance_name", ["Vanilla", "Fabulously Optimized", "Forgotten Worlds"])
+def test_update_button_is_only_visible_for_the_server_pack(
+    preview: Preview, instance_name: str
+) -> None:
+    launcher, _view, bridge, root_item = preview
+    version_id = (
+        "fabric-loader-0.19.5-1.21.11" if instance_name == "Fabulously Optimized" else "1.21.11"
+    )
+    atomic_write_json(launcher.paths.version_json(version_id), {"id": version_id, "jar": "1.21.11"})
+    launcher.create_instance(Instance("ordinary", version_id, instance_name))
+    if instance_name == "Fabulously Optimized":
+        from nostalgia.content.pack_origin import save_pack_origin
+        from nostalgia.model.pack import PackReference
+
+        save_pack_origin(
+            launcher.paths.instance_dir("ordinary"),
+            PackReference("modrinth", "1KVo5zza", "fo-version", "0" * 40, instance_name),
+            "1.21.11",
+            "fabric",
+            "0.19.5",
+        )
+    bridge.announce_instances_changed()
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    instance_row = cast(Any, bridge).instances[0]
+    assert instance_row["modpackPreset"] == ""
+    manager = find_control(root_item, "modernInstanceManager")
+    manager.openFor(instance_row)
+    wait_until(lambda: manager.property("opened"))
+    assert not find_control(manager, "instanceModpackUpdate").property("visible")
