@@ -14,6 +14,8 @@ from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
 
 from nostalgia.api import Instance, Launcher, NosClientConfig
+from nostalgia.errors import NostalgiaError
+from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import Progress
 from nostalgia.ui.worker import WorkerBridge
 
@@ -110,7 +112,15 @@ class InstanceBridge(WorkerBridge):
     def _describe(self, instance: Instance) -> dict[str, Any]:
         stats = self._launcher.describe_instance_stats(instance.instance_id)
         nos_config = self._launcher.nos_client_config(instance)
+        try:
+            pack = self._launcher.builtin_pack_status(instance)
+        except NostalgiaError:
+            pack = None
         return {
+            "modpackPreset": "forgotten-worlds" if pack else "",
+            "modpackVersion": pack.installed_version if pack else "",
+            "modpackLatestVersion": pack.available_version if pack else "",
+            "modpackUpdateAvailable": pack.update_available if pack else False,
             "instanceId": instance.instance_id,
             "label": instance.label,
             "versionId": instance.version_id,
@@ -135,6 +145,23 @@ class InstanceBridge(WorkerBridge):
             "nosPing": nos_config.ping,
             "nosCps": nos_config.cps,
         }
+
+    @Slot(str)
+    def updateModpack(self, instance_id: str) -> None:
+        if self.busy or self.storageBusy or getattr(self, "_game_running", False):
+            self.failed.emit(
+                "Đóng Minecraft và đợi công việc hiện tại hoàn tất trước khi cập nhật."
+            )
+            return
+        token = CancelToken()
+
+        def work() -> None:
+            self._launcher.update_builtin_modpack(
+                instance_id, on_progress=self.report_progress, cancel_token=token
+            )
+            self.announce_instances_changed()
+
+        self.run_in_background(work, "Cập nhật modpack — giữ dữ liệu và thiết lập")
 
     @Property(str, notify=progressChanged)
     def progressText(self) -> str:

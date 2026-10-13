@@ -71,7 +71,7 @@ Pick a loader — Vanilla, Fabric, Quilt, Forge, NeoForge, or *Optimized* (a rea
 Fabulously Optimized pack for the best FPS) — choose RAM, and if your main drive is full,
 point that one instance at **any folder on any disk**.
 
-**Forgotten Worlds** adds the client mods for Junbob Mine to Fabulously Optimized on
+**Forgotten Worlds** adds industrial survival with Create and JEI to Fabulously Optimized on
 Minecraft 1.21.11, with its server address ready to play. See
 [the pack documentation](docs/FORGOTTEN_WORLDS.md) for included mods and version pins.
 
@@ -274,3 +274,6 @@ Minecraft is a trademark of Mojang Studios / Microsoft. The key art in
 `src/nostalgia/ui/qml/assets/keyart/` belongs to Mojang and is used for non-commercial
 illustration only ([credits](src/nostalgia/ui/qml/assets/keyart/CREDITS.md)). This launcher is
 not affiliated with Mojang or Microsoft.
+
+Forgotten Worlds 1.0.2: update the launcher to rc36, then open your existing instance
+manager and choose **Update modpack**. Worlds, settings and user-added mods are kept.

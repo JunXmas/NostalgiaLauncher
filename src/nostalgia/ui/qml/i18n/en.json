@@ -4280,5 +4280,10 @@
   "p:Linux system packages can only be installed on Linux.": "Linux system packages can only be installed on Linux.",
   "p:Linux system packages cannot be installed on this platform.": "Linux system packages cannot be installed on this platform.",
   "m:Could not open the Windows installer: {1}": "Could not open the Windows installer: {1}",
-  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "The package is verified with SHA-256. Windows will request administrator permission; finish the installer to open the new version."
+  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "The package is verified with SHA-256. Windows will request administrator permission; finish the installer to open the new version.",
+  "p:Cập nhật modpack": "Update modpack",
+  "p:Modpack đã mới nhất": "Modpack is up to date",
+  "p:Giữ thế giới, thiết lập và mod tự thêm khi cập nhật.": "Keep your worlds, settings and added mods when updating.",
+  "p:Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized": "Industrial survival with Create, JEI and Fabulously Optimized",
+  "p:Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized. Minecraft 1.21.11.": "Industrial survival with Create, JEI and Fabulously Optimized. Minecraft 1.21.11."
 }

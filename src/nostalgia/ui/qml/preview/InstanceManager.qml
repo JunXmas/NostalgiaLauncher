@@ -19,6 +19,18 @@ Controls.Popup {
     signal repairRequested(var instance)
     signal exportRequested(var instance)
     property bool exportingAfterClose: false
+    Connections {
+        target: bridge
+        function onInstancesChanged() {
+            var entries = bridge.instances;
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].instanceId === root.instance.instanceId) {
+                    root.instance = entries[i];
+                    break;
+                }
+            }
+        }
+    }
     onClosed: { if (exportingAfterClose) { exportingAfterClose = false; exportRequested(instance); } }
     function openFor(entry) {
         instance = entry; section = 0;
@@ -83,6 +95,13 @@ Controls.Popup {
                 Column {
                     visible: root.section === 0
                     width: parent.width; spacing: 10
+                    Column {
+                        width: parent.width; spacing: 8
+                        visible: root.instance.modpackPreset === "forgotten-worlds"
+                        PaymentText { text: "Forgotten Worlds · " + (root.instance.modpackVersion || ""); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Giữ thế giới, thiết lập và mod tự thêm khi cập nhật."); color: GlassTheme.muted }
+                        Button { objectName: "instanceModpackUpdate"; label: root.instance.modpackUpdateAvailable ? Legacy.Tr.phrase("Cập nhật modpack") : Legacy.Tr.phrase("Modpack đã mới nhất"); primary: true; clickable: root.instance.modpackUpdateAvailable === true && root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: bridge.updateModpack(root.instance.instanceId) }
+                    }
                     PaymentText { text: Legacy.Tr.phrase("Tên bản chơi"); font.weight: Font.DemiBold }
                     Input { id: nameField; objectName: "instanceName"; width: parent.width; placeholder: Legacy.Tr.phrase("Tên hiển thị") }
                     PaymentText { text: Legacy.Tr.phrase("Nhóm"); color: GlassTheme.muted }

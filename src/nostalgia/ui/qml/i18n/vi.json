@@ -4280,5 +4280,10 @@
   "p:Linux system packages can only be installed on Linux.": "Gói cài Linux chỉ được cài trên Linux.",
   "p:Linux system packages cannot be installed on this platform.": "Không thể cài gói Linux trên hệ điều hành này.",
   "m:Could not open the Windows installer: {1}": "Không thể mở bộ cài Windows: {1}",
-  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới."
+  "p:Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.": "Gói được kiểm SHA-256 trước khi cài. Windows sẽ xin quyền quản trị; hoàn tất bộ cài để mở bản mới.",
+  "p:Cập nhật modpack": "Cập nhật modpack",
+  "p:Modpack đã mới nhất": "Modpack đã mới nhất",
+  "p:Giữ thế giới, thiết lập và mod tự thêm khi cập nhật.": "Giữ thế giới, thiết lập và mod tự thêm khi cập nhật.",
+  "p:Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized": "Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized",
+  "p:Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized. Minecraft 1.21.11.": "Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized. Minecraft 1.21.11."
 }

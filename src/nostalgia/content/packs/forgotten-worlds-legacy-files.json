@@ -1,0 +1,242 @@
+{
+  "format": 1,
+  "version": "1.0.1",
+  "files": {
+    "mods/BetterGrassify-1.8.7+fabric.1.21.11.jar": {
+      "sha1": "7169f35f91ddaf3d9989de45f46072247c37e05c",
+      "identity": "project:m5T5xmUy"
+    },
+    "mods/ConfigManager-fabric-1.21.x-1.1.1.jar": {
+      "sha1": "9ea08cbfeca54a94afb92edf8b1b95396fb48129",
+      "identity": "project:jlNms3Jp"
+    },
+    "mods/CrashAssistant-fabric-1.21.5-1.21.11-1.11.12.jar": {
+      "sha1": "73327226f279787a5a872f5709d8902a4dfa8bb2",
+      "identity": "project:ix1qq8Ux"
+    },
+    "mods/ForgeConfigAPIPort-v21.11.1-mc1.21.11-Fabric.jar": {
+      "sha1": "61aa1b5fafd75afc44552d0213cac39bc938bc2d",
+      "identity": "project:ohNO6lps"
+    },
+    "mods/ImmediatelyFast-Fabric-1.14.3+1.21.11.jar": {
+      "sha1": "43e451464f979bdf9ff4ac288b358a2f91b79ed8",
+      "identity": "project:5ZwdcRci"
+    },
+    "mods/Ixeris-4.6.5+1.21.11-fabric.jar": {
+      "sha1": "a979244f3364e7a5734858b8eadeb7cd55b513c1",
+      "identity": "project:p8RJPJIC"
+    },
+    "mods/NoChatReports-FABRIC-1.21.11-v2.18.0.jar": {
+      "sha1": "4e519507bdd81ce2520da33f497a5f12469f5b10",
+      "identity": "project:qQyHxfxd"
+    },
+    "mods/animatica-0.6.1+1.21.5.jar": {
+      "sha1": "48746e8fbf005ffd4b7018cf37339a312865c57b",
+      "identity": "project:PRN43VSY"
+    },
+    "mods/bbe-fabric-1.3.4+mc1.21.11.jar": {
+      "sha1": "e9f247278ef17128fbfcd2b0e248ac02a3de279b",
+      "identity": "project:ONZm0H7Y"
+    },
+    "mods/bettermounthud-1.2.6.jar": {
+      "sha1": "e32f65110c66a0862617dd137531d20a0697f9a9",
+      "identity": "project:kqJFAPU9"
+    },
+    "mods/cape-provider-5.1.0.jar": {
+      "sha1": "cb8058071cabdc717a58fad809b00ac27f88cd7f",
+      "identity": "project:orXAsira"
+    },
+    "mods/cloth-config-21.11.153-fabric.jar": {
+      "sha1": "4c224606a963bce223db5b27edb4959ecf40d4ee",
+      "identity": "project:9s6osm5g"
+    },
+    "mods/continuity-3.0.1-beta.1+1.21.11.jar": {
+      "sha1": "51d34c3f2035db0c7fca321b2d94f01b5167707c",
+      "identity": "project:1IjD5062"
+    },
+    "mods/controlify-3.0.1+lts+1.21.11-fabric.jar": {
+      "sha1": "b33c16521138eca7f8cca2ef7672c7866ddd3433",
+      "identity": "project:DOUdJVEm"
+    },
+    "mods/cwb-fabric-3.0.0-build.14+mc1.21.11.jar": {
+      "sha1": "51d97f5fba7b6a132976765e06f93e8f044d382c",
+      "identity": "project:ETlrkaYF"
+    },
+    "mods/debugify-1.21.11+1.1.jar": {
+      "sha1": "a8852a320c6d1a448cfc0f7cb0369e0a3c858146",
+      "identity": "project:QwxR6Gcd"
+    },
+    "mods/dynamic-fps-3.11.6+minecraft-1.21.11-fabric.jar": {
+      "sha1": "2e5ab45e69b43812491cfa34f8f7a4ce7623c233",
+      "identity": "project:LQ3K71Q1"
+    },
+    "mods/e4mc-fabric-6.2.1.jar": {
+      "sha1": "4564c39293734bcfcb3c478c48b6fdef1a1896e6",
+      "identity": "project:qANg5Jrr"
+    },
+    "mods/entity_model_features-3.2.4-1.21.11-fabric.jar": {
+      "sha1": "fb87711a8252c4b54908c589e3c13b00a767808e",
+      "identity": "project:4I1XuqiY"
+    },
+    "mods/entity_texture_features_1.21.11-fabric-7.1.jar": {
+      "sha1": "1d26dbb21dd4f17adbdb54f077334634f708a3d4",
+      "identity": "project:BVzZfTc1"
+    },
+    "mods/entityculling-fabric-1.10.5-mc1.21.11.jar": {
+      "sha1": "270493a6d3a3214495abed9e74f2181817043963",
+      "identity": "project:NNAgCjsB"
+    },
+    "mods/fabric-api-0.141.6+1.21.11.jar": {
+      "sha1": "c98467cbbaf4d197377266795ae015f4130d65b6",
+      "identity": "project:P7dR8mSH"
+    },
+    "mods/fabrishot-1.16.4.jar": {
+      "sha1": "e1fe184321dd305e7935f146637381bd63a29891",
+      "identity": "project:3qsfQtE9"
+    },
+    "mods/fastquit-3.1.3+mc1.21.11.jar": {
+      "sha1": "9ba127357e1fc9ff800496250fb510f70f394714",
+      "identity": "project:x1hIzbuY"
+    },
+    "mods/ferritecore-8.2.0-fabric.jar": {
+      "sha1": "c2e2f5e008f5bc9f401dfad8ca94909917006b65",
+      "identity": "project:uXXizFIs"
+    },
+    "mods/iris-fabric-1.10.7+mc1.21.11.jar": {
+      "sha1": "aae8567bd9ea397d50aff1d0b680a82ffe67040c",
+      "identity": "project:YL57xq9U"
+    },
+    "mods/lambdynamiclights-4.9.1+1.21.11.jar": {
+      "sha1": "f22487846158f62b3485a5a0723ba048326ac00f",
+      "identity": "project:yBW8D80W"
+    },
+    "mods/language-reload-1.7.7+1.21.11.jar": {
+      "sha1": "eb4bca721845c31d76e5105f3161ccad2d7ec57e",
+      "identity": "project:uLbm7CG6"
+    },
+    "mods/lithium-fabric-0.21.4+mc1.21.11.jar": {
+      "sha1": "203bdcb26e97b3217b045e1182651a7d7b6462ec",
+      "identity": "project:gvQqBUqZ"
+    },
+    "mods/main-menu-credits-1.2.0.jar": {
+      "sha1": "37ad23f76336eedbd940a1f99c5e49d969fdee67",
+      "identity": "project:qJDfP7WN"
+    },
+    "mods/mixintrace-1.1.1+1.17.jar": {
+      "sha1": "7fbb0130db0e427ee7180d304dfa65c46f0e3b69",
+      "identity": "project:sGmHWmeL"
+    },
+    "mods/modernfix-5.26.3-build.1.jar": {
+      "sha1": "4b0758e7c052b20ebb58cde9de083520a3d114ab",
+      "identity": "project:TjSm1wrD"
+    },
+    "mods/modmenu-17.0.0.jar": {
+      "sha1": "544a8b340ac3918d85bcc7d02eaff5372814354b",
+      "identity": "project:mOgUt4GM"
+    },
+    "mods/morechathistory-1.3.1.jar": {
+      "sha1": "b4337ef9dc0a6cdf31d8f3df68a6542f64f3625e",
+      "identity": "project:8qkXwOnk"
+    },
+    "mods/moreculling-fabric-1.21.11-1.6.2.jar": {
+      "sha1": "11a929de62650cc536244d4c2ba889fa84c1c0f2",
+      "identity": "project:51shyZVL"
+    },
+    "mods/optigui-2.3.0-beta.10+1.21.9.jar": {
+      "sha1": "1e209418863e8fda53508e33a3251a59b1db7220",
+      "identity": "project:JuksLGBQ"
+    },
+    "mods/paginatedadvancements-2.8.0+1.21.11.jar": {
+      "sha1": "ac6c5721f567e679f3406b12c96c15a1341cb586",
+      "identity": "project:pJogNFap"
+    },
+    "mods/polytone-1.21.11-6.3.2-fabric.jar": {
+      "sha1": "330de290acbf8122782de896603a83f6fd29ab61",
+      "identity": "project:3qAYkBMB"
+    },
+    "mods/puzzle-fabric-2.3.0+1.21.11.jar": {
+      "sha1": "38ac343fa4d93c405549c355b1d39b536978ed64",
+      "identity": "project:3IuO68q1"
+    },
+    "mods/reeses-sodium-options-fabric-2.2.3+mc1.21.11.jar": {
+      "sha1": "4f6b87af721a08816fbeb15636db1a47e34291d2",
+      "identity": "project:Bh37bMuy"
+    },
+    "mods/rrlsFabric-5.1.15+mc.1.21.11.jar": {
+      "sha1": "7101fc7a030925eb22781320476515f408bbe5f4",
+      "identity": "project:ZP7xHXtw"
+    },
+    "mods/skyboxify-3.3.1+1.21.11-fabric.jar": {
+      "sha1": "dc5cf6af76d139b33fb617d4cbd678c434edbdbc",
+      "identity": "project:DWuwk8aA"
+    },
+    "mods/sodium-extra-fabric-0.8.3+mc1.21.11.jar": {
+      "sha1": "e8fd1eae0d589393189f64062ca1e46fc03f4ced",
+      "identity": "project:PtjYWJkn"
+    },
+    "mods/sodium-fabric-0.8.12+mc1.21.11.jar": {
+      "sha1": "4d80592bef36674e7469ae2737a7704b826289ae",
+      "identity": "project:AANobbMI"
+    },
+    "mods/sodium-shadowy-path-blocks-fabric-6.0.0.jar": {
+      "sha1": "8195c99b870e7d961d61453e0e3192bbaf1d97f5",
+      "identity": "project:EIa1eiMm"
+    },
+    "mods/yet_another_config_lib_v3-3.8.2+1.21.11-fabric.jar": {
+      "sha1": "f99cda70903f16dd6927a276150b2762b4d5ab66",
+      "identity": "project:1eAoo2KR"
+    },
+    "mods/zoomify-2.15.2+1.21.11.jar": {
+      "sha1": "e1f738a9026e9f087d96861935f994b010b8131a",
+      "identity": "project:w7ThoJFB"
+    },
+    "resourcepacks/Chat Reporting Helper.zip": {
+      "sha1": "1e7da55b2edc2413ff2e9c30cde7ccd677c949dc",
+      "identity": "project:tN4E9NfV"
+    },
+    "resourcepacks/SodiumTranslations.zip": {
+      "sha1": "8e927e955ed34d648343971ec14db85899e4d6ec",
+      "identity": "project:yfDziwn1"
+    },
+    "mods/create-fly-1.21.11-6.0.9-5.jar": {
+      "sha1": "f73501555fc5c33d3075831fd4bf5b9e65bfe37b",
+      "identity": "project:dKvj0eNn"
+    },
+    "mods/fabric-language-kotlin-1.14.1+kotlin.2.4.20.jar": {
+      "sha1": "62ae40a31b689b52fde399f2143d547a631e942c",
+      "identity": "project:Ha28R6CL"
+    },
+    "mods/friendsandfoes-fabric-4.0.27+mc1.21.11.jar": {
+      "sha1": "5b74cad988a9811c30926791ef57d470f25c4846",
+      "identity": "project:POQ2i9zu"
+    },
+    "mods/geckolib-fabric-1.21.11-5.4.5.jar": {
+      "sha1": "41cd2e142e48a8b6604d85764a6466fe5edb70c3",
+      "identity": "project:8BmcQJ2H"
+    },
+    "mods/GlitchCore-fabric-1.21.11-21.11.0.4.jar": {
+      "sha1": "5c3d6333ff8c50d4b5c16c9185e020d8afcb4988",
+      "identity": "project:s3dmwKy5"
+    },
+    "mods/ResourcefulLib-fabric-1.21.11-3.11.1.jar": {
+      "sha1": "727d96855865e590d7c6fd4d49d80ab469892d26",
+      "identity": "project:G1hIVOrD"
+    },
+    "mods/SereneSeasons-fabric-1.21.11-21.11.0.4.jar": {
+      "sha1": "0d53e49927105103dbf409e31d3c306123ce04ff",
+      "identity": "project:e0bNACJD"
+    },
+    "mods/StreamsReflowing-1.21.11-fabric-2.14.1.jar": {
+      "sha1": "90d3d1fd02c57bb8b80101bd055c4786df1caf00",
+      "identity": "project:oLS8HdJ1"
+    },
+    "mods/TerraBlender-fabric-1.21.11-21.11.0.0.jar": {
+      "sha1": "e4bd1aee6bc8c56ae77647a06f31a3bd981962a6",
+      "identity": "project:kkmrDlKT"
+    },
+    "mods/the_sift-1.1.2-mc1.21.11-fabric-PORT.jar": {
+      "sha1": "66feeff4b0f940bcaf8e429ad5c6cd74b3376753",
+      "identity": "path:mods/the_sift-1.1.2-mc1.21.11-fabric-PORT.jar"
+    }
+  }
+}

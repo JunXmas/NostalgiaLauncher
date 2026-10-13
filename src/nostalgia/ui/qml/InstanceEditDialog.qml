@@ -11,6 +11,18 @@ Item {
     Keys.onEscapePressed: visible = false
     property var instance: ({})
     signal repairRequested(var instance)
+    Connections {
+        target: bridge
+        function onInstancesChanged() {
+            var entries = bridge.instances;
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].instanceId === dialog.instance.instanceId) {
+                    dialog.instance = entries[i];
+                    break;
+                }
+            }
+        }
+    }
 
     function openFor(entry) {
         instance = entry;
@@ -60,6 +72,8 @@ Item {
                 text: Tr.phrase("Thư mục chơi: ") + (dialog.instance.gameDir || "")
                 color: Theme.textMuted; font.pixelSize: Theme.fontBody
             }
+            Text { visible: dialog.instance.modpackPreset === "forgotten-worlds"; width: parent.width; wrapMode: Text.WordWrap; text: Tr.phrase("Giữ thế giới, thiết lập và mod tự thêm khi cập nhật."); color: Theme.textMuted; font.pixelSize: Theme.fontBody }
+            ActionButton { objectName: "instanceModpackUpdate"; visible: dialog.instance.modpackPreset === "forgotten-worlds"; label: dialog.instance.modpackUpdateAvailable ? Tr.phrase("Cập nhật modpack") : Tr.phrase("Modpack đã mới nhất"); clickable: dialog.instance.modpackUpdateAvailable === true && !bridge.gameRunning && !bridge.storageBusy && !bridge.busy && !contentBridge.busy && !projectBridge.installing; onClicked: bridge.updateModpack(dialog.instance.instanceId) }
             Text { text: Tr.phrase("TÊN"); color: Theme.textMuted; font.pixelSize: Theme.fontLabel; font.letterSpacing: 1.2 }
             TextField { id: nameField; width: parent.width; placeholder: Tr.phrase("Tên hiển thị"); onAccepted: dialog.save() }
             Row {
