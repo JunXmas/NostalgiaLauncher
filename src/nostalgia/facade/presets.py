@@ -60,7 +60,9 @@ class PresetOperations(PresetUpdateOperations):
         if preset == FORGOTTEN_WORLDS:
             if game_version not in FORGOTTEN_GAME_VERSIONS:
                 raise ContentError(f"Forgotten Worlds chưa có bản cho Minecraft {game_version}")
-            pack_path = load_forgotten_worlds_pack()
+            pack_path = self.latest_builtin_pack(
+                load_forgotten_worlds_pack(), allowed_hosts, cancel_token
+            )
             instance = self.install_modpack_file(
                 pack_path,
                 instance_id,
