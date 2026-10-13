@@ -1,0 +1,71 @@
+name: Server modpack
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: New Forgotten Worlds pack version (for example 1.0.3)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: server-modpack-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PACK_VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Build and verify the independently versioned pack
+        run: |
+          uv run python bench/build_server_pack.py --version "$PACK_VERSION" --output-dir pack-release
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+          from nostalgia.update.release import is_newer
+          old = json.loads(Path("modpacks/forgotten-worlds.json").read_text())
+          new = json.loads(Path("pack-release/forgotten-worlds.json").read_text())
+          if old != new and not is_newer(new["version"], old["version"]):
+              raise SystemExit("Refusing to change an already published pack version")
+          if (old["minecraft"], old["fabric-loader"]) != (new["minecraft"], new["fabric-loader"]):
+              raise SystemExit("A Minecraft/Fabric target change requires a launcher migration")
+          PY
+      - name: Publish pack assets before updating the channel
+        run: |
+          tag="forgotten-worlds-$PACK_VERSION"
+          if gh release view "$tag" --json isDraft > pack-release/release.json 2>/dev/null; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          if not json.loads(Path("pack-release/release.json").read_text())["isDraft"]:
+              raise SystemExit("The pack release is already public; use a new version")
+          PY
+          else
+            gh release create "$tag" --draft --prerelease --latest=false \
+              --target "$GITHUB_SHA" --title "Forgotten Worlds modpack $PACK_VERSION" \
+              --notes "Independent server pack. In the server instance manager, check for modpack updates and update the existing instance. Player data and personal settings are preserved."
+          fi
+          gh release upload "$tag" pack-release/*.mrpack pack-release/forgotten-worlds.json --clobber
+          gh release edit "$tag" --draft=false --prerelease --latest=false
+      - name: Advance the channel after the release is available
+        run: |
+          cp pack-release/forgotten-worlds.json modpacks/forgotten-worlds.json
+          git add modpacks/forgotten-worlds.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish Forgotten Worlds modpack $PACK_VERSION"
+          git push origin HEAD:main

@@ -12,6 +12,19 @@ as long as they use the supported Minecraft/Fabric target.
 
 ## Publish a pack
 
+The **Server modpack** GitHub Actions workflow accepts a pack version and performs
+these steps on `main`, using GitHub's release credentials. It publishes the pack
+asset first, then advances the channel. From the CLI:
+
+```sh
+gh workflow run server-pack.yml --ref main -f version=1.0.3
+```
+
+If branch protection prevents the final channel commit, the uploaded release is
+kept and the generated channel JSON can be submitted through a normal PR.
+
+The equivalent manual procedure is:
+
 1. Update the bundled pack's mod files and/or `modpacks/player-guide.txt`.
 2. Build a pack with a new monotonically increasing version:
 
