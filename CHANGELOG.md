@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.0rc38 — 2026-10-14
 
 - P2P chọn máy chủ STUN có phản hồi cho cả host và khách, dùng máy dự phòng khi
   máy chính lỗi hoặc bị chặn. Thăm dò UDP có giới hạn thời gian, kiểm đúng mã
