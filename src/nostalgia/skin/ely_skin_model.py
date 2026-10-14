@@ -13,6 +13,7 @@ from nostalgia.errors import AccountError
 from nostalgia.model.json_value import JsonValue, as_mapping
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.cancellation import CancelToken
+from nostalgia.skin.ely_web_upload import _raise_if_site_error
 
 
 class _ModelForm(HTMLParser):
@@ -28,7 +29,9 @@ class _ModelForm(HTMLParser):
         if tag == "form" and attributes.get("id") == "formEditSkin":
             self.inside = True
             self.action = attributes.get("action") or ""
-            self.method = (attributes.get("method") or "POST").upper()
+            self.method = (
+                attributes.get("data-method") or attributes.get("method") or "POST"
+            ).upper()
         if self.inside and tag in ("input", "select"):
             name = attributes.get("name") or ""
             if name == "is_slim":
@@ -80,12 +83,7 @@ def set_ely_skin_model(
         cancel_token=cancel_token,
         step="đọc dáng tay skin Ely.by",
     )
-    text = response.body.decode("utf-8", errors="replace")
-    match = re.search(r"alight\.service\.skin\s*=\s*", text)
-    document = {}
-    if match:
-        with suppress(ValueError):
-            document = as_mapping(json.JSONDecoder().raw_decode(text[match.end() :])[0])
+    document = _skin_document(response.body)
     if document.get("is_slim") is slim:
         return
     response = request_ely_web(
@@ -121,6 +119,27 @@ def set_ely_skin_model(
         step="đổi dáng tay skin Ely.by",
     )
     updated = web_json_body(response, step="đổi dáng tay skin Ely.by")
-    model = as_mapping(updated.get("skin")) or updated
+    _raise_if_site_error(updated, step="đổi dáng tay skin Ely.by")
+    extra = as_mapping(updated.get("extra"))
+    model = as_mapping(updated.get("skin")) or as_mapping(extra.get("skin")) or extra or updated
+    if "is_slim" not in model:
+        confirmation = request_ely_web(
+            http_client,
+            "GET",
+            f"{web_session.endpoints.site_root}/skins/s{skin_id}",
+            headers=headers,
+            cancel_token=cancel_token,
+            step="xác nhận dáng tay skin Ely.by",
+        )
+        model = _skin_document(confirmation.body)
     if model.get("is_slim") not in ((True, 1, "1") if slim else (False, 0, "0")):
         raise AccountError("Ely.by chưa xác nhận dáng tay đã chọn. Skin đang mặc được giữ nguyên.")
+
+
+def _skin_document(payload: bytes) -> dict[str, JsonValue]:
+    text = payload.decode("utf-8", errors="replace")
+    match = re.search(r"alight\.service\.skin\s*=\s*", text)
+    if match:
+        with suppress(ValueError):
+            return as_mapping(json.JSONDecoder().raw_decode(text[match.end() :])[0])
+    return {}

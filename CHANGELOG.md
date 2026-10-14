@@ -3,6 +3,18 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc38 — 2026-10-14
+
+- P2P chọn máy chủ STUN có phản hồi cho cả host và khách, dùng máy dự phòng khi
+  máy chính lỗi hoặc bị chặn. Thăm dò UDP có giới hạn thời gian, kiểm đúng mã
+  giao dịch và dọn socket khi huỷ; khi mọi STUN lỗi vẫn giữ đường LAN.
+  Game/modpack tiếp tục truyền trực tiếp qua ICE/DTLS; relay dữ liệu vẫn tắt.
+- Kiểm lại thời hạn cấp quyền sau khi thăm dò STUN, không tạo kết nối host bằng
+  yêu cầu đã hết hạn trong lúc chờ mạng.
+- Ely.by đọc ID từ URL trang skin và phản hồi extra khi upload; nhận đúng
+  data-method của form sửa skin. Nếu server chỉ trả URL sau khi đổi dáng tay,
+  đọc lại metadata để xác nhận trước khi mặc; URL ngoài Ely.by bị từ chối.
+
 ## 1.2.0rc36 — 2026-10-13
 
 - Forgotten Worlds 1.0.2 thêm JEI 27.48.0.106 và MezzConfig 0.6.8 đúng Fabric

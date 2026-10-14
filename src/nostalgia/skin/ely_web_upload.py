@@ -9,7 +9,7 @@ nghiệp vụ skin — cùng lý do ``upload.py`` (Mojang) nằm ở đây.
 from __future__ import annotations
 
 import re
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin, urlsplit
 
 from nostalgia.auth.ely_web import (
     FORM_CONTENT_TYPE,
@@ -65,7 +65,7 @@ def upload_skin_to_ely(
     )
     document = web_json_body(response, step="upload skin lên ely.by")
     _raise_if_site_error(document, step="upload skin lên ely.by")
-    skin_id = _find_skin_id(document)
+    skin_id = _find_skin_id(document, web_session.endpoints.site_root)
     if skin_id is None:
         raise AccountError("ely.by nhận skin nhưng không trả id — trang có thể vừa đổi")
     return skin_id
@@ -100,11 +100,25 @@ def _raise_if_site_error(document: dict[str, JsonValue], *, step: str) -> None:
         raise AccountError(f"{step} thất bại: {text}")
 
 
-def _find_skin_id(document: dict[str, JsonValue]) -> int | None:
-    """Id nằm ở ``skin.id`` hoặc ``id`` tuỳ phiên bản trang — chịu được cả hai."""
-    for candidate in (as_mapping(document.get("skin")).get("id"), document.get("id")):
-        if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
-            return int(candidate)
+def _find_skin_id(document: dict[str, JsonValue], site_root: str) -> int | None:
+    """Frontend dùng url chuyển trang; chỉ lấy ID từ trang skin cùng nguồn Ely.by."""
+    extra = as_mapping(document.get("extra"))
+    for candidate in (
+        as_mapping(document.get("skin")).get("id"),
+        document.get("id"),
+        as_mapping(extra.get("skin")).get("id"),
+        extra.get("id"),
+    ):
+        if isinstance(candidate, int) and not isinstance(candidate, bool) and candidate > 0:
+            return candidate
         if isinstance(candidate, str) and candidate.isdigit():
-            return int(candidate)
+            return int(candidate) if int(candidate) > 0 else None
+    location = as_string(document.get("url"))
+    if location:
+        origin = urlsplit(site_root)
+        target = urlsplit(urljoin(site_root.rstrip("/") + "/", location))
+        expected_path = re.escape(origin.path.rstrip("/")) + r"/skins/s([1-9]\d*)(?:/edit)?/?"
+        match = re.fullmatch(expected_path, target.path)
+        if target.scheme == origin.scheme and target.netloc == origin.netloc and match:
+            return int(match[1])
     return None

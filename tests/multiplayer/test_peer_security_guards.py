@@ -3,6 +3,7 @@
 import asyncio
 import json
 import time
+from types import SimpleNamespace
 from typing import cast
 
 import pytest
@@ -97,6 +98,48 @@ def test_queued_expired_request_cannot_gain_a_new_lifetime() -> None:
             time.monotonic() - 46,
         )
         assert not peer.connections and not peer._seen
+        await peer.close()
+
+    asyncio.run(scenario())
+
+
+def test_stun_discovery_cannot_extend_the_host_authorization_window(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from aiortc import RTCConfiguration
+
+    clock = [0.0]
+    created = []
+    monkeypatch.setattr(
+        "nostalgia.multiplayer.peer_host.time", SimpleNamespace(monotonic=lambda: clock[0])
+    )
+
+    async def discovery(_configuration: RTCConfiguration) -> RTCConfiguration:
+        clock[0] = 2.0
+        return RTCConfiguration(iceServers=[])
+
+    def connection(*_args: object) -> None:
+        created.append(True)
+        raise AssertionError("expired authorization must not create a connection")
+
+    monkeypatch.setattr("nostalgia.multiplayer.peer_host.select_peer_configuration", discovery)
+    monkeypatch.setattr("aiortc.RTCPeerConnection", connection)
+
+    async def scenario() -> None:
+        peer = PeerHost(HostRelay("", "ABCDEF", "ABCDEFGHJKMN", 25565))
+        await peer._answer(
+            json.dumps(
+                {
+                    "id": "a" * 32,
+                    "purpose": "game",
+                    "body": "unused",
+                    "expires_at": 123456,
+                    "ttl_seconds": 1,
+                }
+            ).encode(),
+            0.0,
+        )
+        assert not created and not peer.connections
         await peer.close()
 
     asyncio.run(scenario())

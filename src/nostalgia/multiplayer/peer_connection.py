@@ -23,6 +23,7 @@ from nostalgia.multiplayer.peer_failure import (
     negotiation_refusal,
 )
 from nostalgia.multiplayer.peer_stream import PeerStream
+from nostalgia.multiplayer.peer_stun import select_peer_configuration
 from nostalgia.multiplayer.room_code import split_room_code
 from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.net.http import HttpClient
@@ -47,7 +48,8 @@ async def connect_peer(
     room_id, room_secret = split_room_code(room_code)
     _, proof = invite_proof(room_code)
     request_id = secrets.token_hex(16)
-    connection = RTCPeerConnection(build_peer_configuration())
+    configuration = await select_peer_configuration(build_peer_configuration())
+    connection = RTCPeerConnection(configuration)
     stream = PeerStream(connection, connection.createDataChannel("nostalgia-" + purpose))
     stage, started_at = "gathering", time.monotonic()
     try:

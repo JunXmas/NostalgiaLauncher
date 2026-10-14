@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from nostalgia.multiplayer.mux import PEER_RESPONSE, pack_mux_frame
 from nostalgia.multiplayer.peer_connection import answer_peer, build_peer_configuration
 from nostalgia.multiplayer.peer_stream import PeerStream
+from nostalgia.multiplayer.peer_stun import select_peer_configuration
 from nostalgia.multiplayer.sync_chunk import read_sync_chunk
 
 if TYPE_CHECKING:
@@ -72,7 +73,10 @@ class PeerHost:
                 return
             deadline = received_at + duration
             self._seen[request_id] = time.monotonic() + 120
-            connection = RTCPeerConnection(build_peer_configuration())
+            configuration = await select_peer_configuration(build_peer_configuration())
+            if deadline <= time.monotonic():
+                return
+            connection = RTCPeerConnection(configuration)
             self.connections.add(connection)
 
             channel_received = False
