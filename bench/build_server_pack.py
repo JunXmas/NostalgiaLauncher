@@ -24,6 +24,11 @@ def main() -> None:
     filename = f"Forgotten-Worlds-Optimized-{arguments.version}.mrpack"
     destination = arguments.output_dir / filename
     guide = (repository / "modpacks/player-guide.txt").read_bytes()
+    retry_helper = repository / (
+        "modpacks/client-mods/resourcepack-retry/dist/forgottenworlds-rp-retry-1.0.0.jar"
+    )
+    helper_name = "client-overrides/mods/forgottenworlds-rp-retry-1.0.0.jar"
+    helper_bytes = retry_helper.read_bytes()
     with (
         zipfile.ZipFile(source) as archive,
         zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as output,
@@ -38,9 +43,10 @@ def main() -> None:
                 lines = payload.decode().splitlines()
                 lines[0] = "Forgotten Worlds — Optimized " + arguments.version
                 payload = ("\n".join(lines) + "\n").encode()
-            if member.filename != "overrides/config/forgotten-worlds-guide.txt":
+            if member.filename not in {"overrides/config/forgotten-worlds-guide.txt", helper_name}:
                 output.writestr(member, payload)
         output.writestr(zipfile.ZipInfo("overrides/config/forgotten-worlds-guide.txt"), guide)
+        output.writestr(zipfile.ZipInfo(helper_name), helper_bytes)
     payload = destination.read_bytes()
     channel = {
         "format": 1,
