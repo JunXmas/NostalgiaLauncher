@@ -52,7 +52,9 @@ def read_descriptors(
     fabric = read_member(archive, "fabric.mod.json")
     if fabric:
         descriptors = list(parse_fabric(fabric))
-        paths = [reference["file"] for reference in json.loads(fabric).get("jars", [])]
+        paths = [
+            reference["file"] for reference in json.loads(fabric, strict=False).get("jars", [])
+        ]
         descriptors.extend(read_nested(archive, paths, budget, depth, "fabric"))
         return tuple(descriptors)
     for name, loader_kind in (
@@ -82,26 +84,41 @@ def read_nested(
         raise ContentError("Quá nhiều JAR lồng trong một mod.")
     descriptors: list[ModDescriptor] = []
     for name in paths:
-        nested = read_member(archive, name, 8388608)
+        try:
+            information = archive.getinfo(name)
+        except KeyError:
+            raise ContentError("Mod lồng bị thiếu trong JAR.") from None
+        if information.flag_bits & 1 or information.file_size > 536870912:
+            raise ContentError("Mod lồng mã hoá hoặc vượt giới hạn 512 MB.")
+        # Loom lồng cả thư viện Java chục MB (rocksdb, lwjgl…) kèm fabric.mod.json sinh sẵn:
+        # file lớn thì đọc metadata thẳng từ luồng zip, không nạp cả file vào bộ nhớ.
+        if information.file_size > 8388608:
+            with archive.open(information) as stream, zipfile.ZipFile(stream) as embedded:
+                descriptors.extend(_nested_descriptors(embedded, budget, depth, loader_kind))
+            continue
+        nested = archive.read(information)
         budget[0] += len(nested)
-        if not nested or budget[0] > 33554432:
-            raise ContentError("Mod lồng thiếu hoặc vượt giới hạn 32 MB.")
+        if budget[0] > 33554432:
+            raise ContentError("Mod lồng vượt giới hạn 32 MB.")
         with zipfile.ZipFile(io.BytesIO(nested)) as embedded:
-            # Forge JarJar also bundles ordinary Java libraries without mod descriptors.
-            if loader_kind in ("forge", "neoforge") and not any(
-                member_name in embedded.namelist()
-                for member_name in (
-                    "fabric.mod.json",
-                    "META-INF/mods.toml",
-                    "META-INF/neoforge.mods.toml",
-                )
-            ):
-                continue
-            descriptors.extend(
-                replace(mod, embedded=True)
-                for mod in read_descriptors(embedded, budget, depth + 1, loader_kind)
-            )
+            descriptors.extend(_nested_descriptors(embedded, budget, depth, loader_kind))
     return tuple(descriptors)
+
+
+def _nested_descriptors(
+    embedded: zipfile.ZipFile, budget: list[int], depth: int, loader_kind: str
+) -> tuple[ModDescriptor, ...]:
+    # Fabric và Forge JarJar đều lồng cả thư viện Java thường, không có metadata mod.
+    if not set(embedded.namelist()) & {
+        "fabric.mod.json",
+        "META-INF/mods.toml",
+        "META-INF/neoforge.mods.toml",
+    }:
+        return ()
+    return tuple(
+        replace(mod, embedded=True)
+        for mod in read_descriptors(embedded, budget, depth + 1, loader_kind)
+    )
 
 
 def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ...]:

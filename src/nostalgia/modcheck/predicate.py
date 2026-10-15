@@ -4,10 +4,38 @@ from __future__ import annotations
 
 import re
 
+VersionKey = tuple[tuple[int, ...], int, tuple[tuple[int, int, str], ...]]
 
-def resolve_version(value: str) -> tuple[int, int, int] | None:
-    match = re.fullmatch(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\+[\w.-]+)?", value)
-    return tuple(int(number or 0) for number in match.groups()) if match else None  # type: ignore[return-value]
+
+def resolve_version(value: str) -> VersionKey | None:
+    """Khoá so sánh SemVer: số (bỏ 0 cuối), bản phát hành > prerelease, bỏ phần +build."""
+    match = re.fullmatch(r"(\d+(?:\.\d+)*)(?:-([\w.-]*))?(?:\+[\w.+-]+)?", value)
+    if not match:
+        return None
+    numbers = tuple(int(number) for number in match[1].split("."))
+    while len(numbers) > 1 and numbers[-1] == 0:
+        numbers = numbers[:-1]
+    if match[2] is None:
+        return numbers, 1, ()
+    # "1.21.11-" là prerelease nhỏ nhất: Fabric dùng nó làm cận dưới bao cả bản rc/beta.
+    return (
+        numbers,
+        0,
+        tuple(
+            (0, int(part), "") if part.isdigit() else (1, 0, part)
+            for part in match[2].split(".")
+            if part
+        ),
+    )
+
+
+def _padded(version_key: VersionKey) -> tuple[int, int, int]:
+    numbers = (*version_key[0], 0, 0)
+    return numbers[0], numbers[1], numbers[2]
+
+
+def _lowest(*numbers: int) -> VersionKey:
+    return resolve_version(".".join(map(str, numbers)) + "-")  # type: ignore[return-value]
 
 
 def matches(version_number: str, predicate: str) -> bool | None:
@@ -19,10 +47,10 @@ def matches(version_number: str, predicate: str) -> bool | None:
         return None
     if predicate.startswith("maven:"):
         interval = predicate.removeprefix("maven:")
-        exact = re.fullmatch(r"\[([0-9.]+)\]", interval)
+        exact = re.fullmatch(r"\[([^,\]]+)\]", interval)
         if exact:
             return version_parts == resolve_version(exact[1])
-        bounds = re.fullmatch(r"([\[(])([0-9.]*),([0-9.]*)([\])])", interval)
+        bounds = re.fullmatch(r"([\[(])([^,]*),([^,]*)([\])])", interval)
         if not bounds:
             return None
         left, minimum, maximum, right = bounds.groups()
@@ -44,26 +72,28 @@ def matches(version_number: str, predicate: str) -> bool | None:
     for clause in predicate.split():
         wildcard = re.fullmatch(r"(\d+)(?:\.(\d+))?\.(?:x|\*)", clause)
         if wildcard:
+            parts = _padded(version_parts)
             outcomes.append(
-                version_parts[0] == int(wildcard[1])
-                and (wildcard[2] is None or version_parts[1] == int(wildcard[2]))
+                parts[0] == int(wildcard[1])
+                and (wildcard[2] is None or parts[1] == int(wildcard[2]))
             )
             continue
-        match = re.fullmatch(r"(>=|<=|>|<|=|\^|~)?(\d+(?:\.\d+){0,2}(?:\+[\w.-]+)?)", clause)
+        match = re.fullmatch(
+            r"(>=|<=|>|<|=|\^|~)?(\d+(?:\.\d+)*(?:-[\w.-]*)?(?:\+[\w.+-]+)?)", clause
+        )
         if not match or (wanted := resolve_version(match[2])) is None:
             return None
         operator = match[1] or "="
         if operator in ("^", "~"):
-            precision = len(match[2].split("+")[0].split("."))
+            precision = len(re.split(r"[-+]", match[2])[0].split("."))
+            major, minor, patch = _padded(wanted)
             upper = (
-                (wanted[0], wanted[1] + 1, 0)
-                if operator == "~" or wanted[0] == 0
-                else (wanted[0] + 1, 0, 0)
+                _lowest(major, minor + 1) if operator == "~" or major == 0 else _lowest(major + 1)
             )
-            if operator == "^" and wanted[:2] == (0, 0) and precision == 3:
-                upper = (0, 0, wanted[2] + 1)
+            if operator == "^" and (major, minor) == (0, 0) and precision == 3:
+                upper = _lowest(0, 0, patch + 1)
             if precision == 1:
-                upper = (wanted[0] + 1, 0, 0)
+                upper = _lowest(major + 1)
             outcomes.append(wanted <= version_parts < upper)
         else:
             outcomes.append(
