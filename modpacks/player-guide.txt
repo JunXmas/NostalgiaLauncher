@@ -1,13 +1,23 @@
-HOÀI NIỆM — KHU NHÀ Ở VÀ NHÀ MÁY
+FORGOTTEN SMP — KHU NHÀ Ở VÀ NHÀ MÁY
 
 Server dùng Get Off My Lawn ReServed (GOML). Bạn không cần cài GOML trên client.
 Chế tạo Claim Anchor rồi đặt tại khu đất muốn bảo vệ. Nhấp phải lõi để quản lý
 và cấp quyền cho bạn bè. Dùng /goml help để xem các lệnh; /goml list để xem đất.
 
-Các cấp lõi có bán kính 10 / 25 / 50 / 75 / 125 / 200 block.
+Các cấp lõi hiện được cấu hình bán kính 64 / 128 / 192 / 256 / 320 / 400 block.
 Mỗi người tối đa 8 khu đất trong mỗi chiều không gian. Bảo vệ áp dụng suốt chiều cao thế giới.
-Người ngoài không được phá lõi. Chủ đất tháo lõi thì khu đất mất bảo vệ.
-Đây là bảo vệ đất thông thường, chưa có hệ thống công thành hay raid lõi.
+Trong 19:00–23:00 giờ Việt Nam, người ngoài có thể đào đường 3×3 phía trên lõi
+và phá lõi trong 150 giây. Lõi bị phá thì khu đất mất bảo vệ. Ngoài giờ này,
+người ngoài không được phá lõi. Chủ đất vẫn có thể tự tháo lõi.
+
+GÓI TÀI NGUYÊN SERVER
+
+Dùng /rp (hoặc /goi) để hỏi tải gói Việt hoá và logo server. Gói là tuỳ chọn:
+bấm Không vẫn được chơi tiếp. Từ modpack 1.0.4, nếu lỡ từ chối, gõ /rp lần nữa
+để hiện lại hộp thoại Đồng ý/Không, ngay trong cùng phiên chơi.
+Chức năng này cũng áp dụng cho /bangtin pack và /sidebar pack trên server.
+Ở client/modpack cũ, nếu đã bấm Không, vào danh sách server → Sửa server →
+Gói tài nguyên máy chủ → Hỏi lại rồi kết nối lại, hoặc cập nhật modpack.
 
 CẬP NHẬT MODPACK
 
