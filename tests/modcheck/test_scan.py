@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import os
 import zipfile
 from pathlib import Path
 
@@ -85,7 +86,18 @@ def test_broken_metadata_and_symlink_never_become_clean(tmp_path: Path) -> None:
         ("48", "maven:[47,48)", False),
         ("0.92.2+1.20.1", ">=0.90", True),
         ("1.0-beta", "*", True),
-        ("1.0-beta", ">=1", None),
+        ("1.0-beta", ">=1", False),
+        # Cận "-" của Fabric: prerelease nhỏ nhất, bản rc/beta cũng lọt (máy thật: 26.2-rc.1).
+        ("1.21.11", ">=1.21.11- <1.21.12-", True),
+        ("1.21.12-rc.1", ">=1.21.11- <1.21.12-", False),
+        ("26.2", ">=26.2-rc.1", True),
+        ("26.2-rc.1", "~26.2-", True),
+        ("26.3", "~26.2-", False),
+        ("21.11.0.4", ">=21.11.0.1", True),
+        ("1.6.0-beta.1", "<1.6.0-beta.2", True),
+        ("1.6.0-beta.10", "<1.6.0-beta.2", False),
+        ("3.0.1+lts+1.21.11", "<2", False),
+        ("1.20.1-47.4.23", "maven:[1.20.1-47,)", True),
         ("1.2.3", ">=1 <2", True),
         ("0.2.1", "^0.2", True),
         ("1.9", "~1", True),
@@ -159,3 +171,26 @@ def test_neoforge_1201_reads_legacy_forge_metadata_and_loader_id(tmp_path: Path)
     scan = build_scan(scan_archives(tmp_path, "neoforge"), "1.20.1", "neoforge", "47.1.106", 17)
     assert not scan.findings
     assert scan.archives[0].descriptors[0].loader_kind == "neoforge"
+
+
+def test_real_world_fabric_metadata_is_not_reported_as_broken(tmp_path: Path) -> None:
+    mods = tmp_path / "mods"
+    mods.mkdir()
+    # Mô tả có xuống dòng trần (BetterGrassify): Fabric Loader vẫn nạp được.
+    with zipfile.ZipFile(mods / "grass.jar", "w") as archive:
+        archive.writestr("fabric.mod.json", '{"id":"grass","version":"1.0.0","description":"a\nb"}')
+    # Thư viện Java lớn được lồng kèm fabric.mod.json sinh sẵn (voxy + rocksdbjni).
+    library = io.BytesIO()
+    with zipfile.ZipFile(library, "w") as archive:
+        archive.writestr("fabric.mod.json", '{"id":"rocksdb","version":"10.2.1"}')
+        archive.writestr("blob.bin", os.urandom(9 * 1024 * 1024))
+    write_fabric(mods / "voxy.jar", "voxy", jars=[{"file": "META-INF/jars/rocksdb.jar"}])
+    with zipfile.ZipFile(mods / "voxy.jar", "a") as archive:
+        archive.writestr("META-INF/jars/rocksdb.jar", library.getvalue())
+    # Fabric Loader tự kèm MixinExtras (lithium khai phụ thuộc mà không có JAR riêng).
+    write_fabric(mods / "lithium.jar", "lithium", depends={"mixinextras": ">=0.5.5"})
+    archives = scan_archives(tmp_path, "fabric")
+    assert not [archive.problem for archive in archives if archive.problem]
+    assert not build_scan(archives, "1.21.11", "fabric", "0.19.5", 21).findings
+    forge = build_scan(archives, "1.20.1", "forge", "47.4.23", 17)
+    assert any(finding.mod_id == "mixinextras" for finding in forge.findings)

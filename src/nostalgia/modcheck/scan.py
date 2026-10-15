@@ -76,6 +76,9 @@ def build_scan(
             for dependency in descriptor.dependencies:
                 installed = versions.get(dependency.mod_id)
                 if installed is None:
+                    # Fabric/Quilt Loader 0.15+ tự kèm MixinExtras, không cần JAR riêng.
+                    if dependency.mod_id == "mixinextras" and loader_kind in ("fabric", "quilt"):
+                        continue
                     if dependency.relationship == "required":
                         findings.append(
                             ModFinding(
