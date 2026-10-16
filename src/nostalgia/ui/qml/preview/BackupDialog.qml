@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Dialogs
 import "../" as Legacy
+import "ActionReasons.js" as Reasons
 
 WorkspaceDialog {
     id: root
@@ -24,6 +25,7 @@ WorkspaceDialog {
     }
     function saveTo(fileUrl) {
         if (canExport) { statusMessage = ""; failed = false; storageBridge.exportModpack(instanceId, String(fileUrl), archiveFormat, worlds.checked); }
+        else { statusMessage = Reasons.writing(bridge, false, false) || "Launcher đang thực hiện thao tác khác. Hãy chờ hoàn tất."; failed = true; }
     }
     onClosed: { if (legacyRequested) { legacyRequested = false; legacy.openDialog(); } }
     Connections {
@@ -77,8 +79,8 @@ WorkspaceDialog {
     }
     footer: Column {
         width: root.bodyWidth; spacing: 10
-        PaymentText { objectName: "exportStatus"; width: parent.width; text: Legacy.Tr.message(root.statusMessage) || (root.busy ? Legacy.Tr.message(storageBridge.activity) : Legacy.Tr.phrase("Chọn nơi lưu file. Bản chơi gốc được giữ nguyên.")); color: root.failed ? GlassTheme.danger : GlassTheme.muted; maximumLineCount: 3; elide: Text.ElideRight; font.pixelSize: GlassTheme.fontNote }
-        Button { objectName: "exportSaveButton"; label: root.busy ? Legacy.Tr.phrase("Đang đóng gói…") : Legacy.Tr.phrase("Xuất ") + root.archiveFormat.toUpperCase() + "…"; primary: true; clickable: root.canExport; onClicked: { picker.selectedFile = storageBridge.suggestedExportFile(root.instanceId, root.archiveFormat); picker.open(); } }
+        PaymentText { objectName: "exportStatus"; width: parent.width; text: Legacy.Tr.message(root.statusMessage) || (root.busy ? Legacy.Tr.message(storageBridge.activity) : Legacy.Tr.phrase(Reasons.writing(bridge, false, false) || "Chọn nơi lưu file. Bản chơi gốc được giữ nguyên.")); color: root.failed ? GlassTheme.danger : GlassTheme.muted; maximumLineCount: 3; elide: Text.ElideRight; font.pixelSize: GlassTheme.fontNote }
+        Button { objectName: "exportSaveButton"; label: root.busy ? Legacy.Tr.phrase("Đang đóng gói…") : Legacy.Tr.phrase("Xuất ") + root.archiveFormat.toUpperCase() + "…"; primary: true; clickable: root.canExport; disabledReason: Legacy.Tr.phrase(Reasons.writing(bridge, false, false)); onClicked: { picker.selectedFile = storageBridge.suggestedExportFile(root.instanceId, root.archiveFormat); picker.open(); } }
     }
     FileDialog {
         id: picker; objectName: "exportSavePicker"; title: Legacy.Tr.phrase("Lưu modpack")

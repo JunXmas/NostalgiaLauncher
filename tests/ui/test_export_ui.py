@@ -164,3 +164,35 @@ def test_export_and_delete_refuse_to_run_while_main_worker_is_busy(tmp_path: Pat
         view.close()
         view.deleteLater()
         QGuiApplication.processEvents()
+
+
+@pytest.mark.usefixtures("qt_app")
+def test_dialog_explains_why_export_is_blocked_while_game_runs(tmp_path: Path) -> None:
+    launcher = prepared_export(tmp_path)
+    view, bridge = open_preview(launcher)
+    try:
+        view.resize(1200, 800)
+        view.show()
+        root_item = view.rootObject()
+        root_item.setProperty("sessionSkipped", True)
+        root_item.setProperty("currentIndex", 1)
+        QTest.qWait(100)
+        press(view, find_control(root_item, "openBackupDialog"))
+        dialog = find_control(root_item, "modernBackupDialog")
+        wait_until(lambda: bool(dialog.property("opened")))
+        cast(Any, bridge)._set_game_running(True)
+        reason = "Đóng Minecraft trước khi thay đổi nội dung."
+        export_button = find_control(dialog, "exportSaveButton")
+        assert not export_button.property("clickable")
+        assert export_button.property("disabledReason") == reason
+        assert find_control(dialog, "exportStatus").property("text") == reason
+        destination = tmp_path / "blocked.mrpack"
+        dialog.saveTo(destination.as_uri())
+        assert dialog.property("failed") and dialog.property("statusMessage") == reason
+        assert not destination.exists()
+    finally:
+        cast(Any, bridge)._set_game_running(False)
+        wait_for_background()
+        view.close()
+        view.deleteLater()
+        QGuiApplication.processEvents()
