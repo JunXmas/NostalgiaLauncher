@@ -4296,5 +4296,12 @@
   "p:Kiểm tra cập nhật modpack": "Check modpack updates",
   "p:Đang kiểm tra modpack…": "Checking modpack…",
   "p:Đã kiểm tra modpack trực tuyến.": "Checked the online modpack channel.",
-  "p:xác nhận dáng tay skin Ely.by": "confirming the Ely.by skin model"
+  "p:xác nhận dáng tay skin Ely.by": "confirming the Ely.by skin model",
+  "p: (đang dùng ": " (installed ",
+  "p:Có modpack mới ": "New modpack ",
+  "p:Modpack ": "Modpack ",
+  "p:SERVER CỦA CỘNG ĐỒNG": "COMMUNITY SERVER",
+  "p:Sinh tồn công nghiệp với Create, sinh vật Naturalist, chiếm lãnh thổ buổi tối. Minecraft 1.21.11, Việt hoá sẵn.": "Industrial survival with Create, Naturalist wildlife and evening territory raids. Minecraft 1.21.11, Vietnamese ready.",
+  "p:Tạo bản chơi server  +": "Create server instance  +",
+  "p:Vào server  →": "Join server  →"
 }

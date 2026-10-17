@@ -3,6 +3,17 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc39 — 2026-10-17
+
+- Trang chủ (giao diện hiện đại): ô lớn đầu trang thành băng trượt (nút ‹ ›, chấm);
+  slide đầu là server Forgotten Worlds với ảnh cảnh server:
+  tạo bản chơi server, vào thẳng snow.pikamc.vn:25079, hoặc cập nhật modpack
+  khi có bản mới.
+- Khi kiểm kênh modpack thấy bản mới hơn bản chơi đang cài, launcher thông báo
+  (toast + chuông), mỗi phiên bản một lần.
+- Modpack Forgotten Worlds 1.0.5 cài kèm: thêm Naturalist (port 1.21.11) và gói
+  Việt hoá bật sẵn, `lang:vi_vn` cho bản chơi mới.
+
 ## 1.2.0rc38 — 2026-10-14
 
 - P2P chọn máy chủ STUN có phản hồi cho cả host và khách, dùng máy dự phòng khi

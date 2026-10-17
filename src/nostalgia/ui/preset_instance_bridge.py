@@ -10,11 +10,14 @@ from nostalgia.ui.instance_pack import start_builtin_update
 
 class PresetInstanceBridge(InstanceBridge):
     modpackCheckChanged = Signal()
+    # Phiên bản modpack server mới vừa thấy trên kênh (mỗi phiên bản báo một lần).
+    modpackUpdateFound = Signal(str)
     _modpackChecked = Signal(str)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(launcher, parent)
         self._modpack_check_message = ""
+        self._announced_pack_version = ""
         self._modpackChecked.connect(self._finish_modpack_check)
 
     @Property(str, notify=modpackCheckChanged)
@@ -54,6 +57,20 @@ class PresetInstanceBridge(InstanceBridge):
         self._modpack_check_message = message
         self.announce_instances_changed()
         self.modpackCheckChanged.emit()
+        latest = self._newer_pack_version()
+        if latest and latest != self._announced_pack_version:
+            self._announced_pack_version = latest
+            self.modpackUpdateFound.emit(latest)
+
+    def _newer_pack_version(self) -> str:
+        for instance in self._launcher.list_instances():
+            try:
+                status = self._launcher.builtin_pack_status(instance)
+            except NostalgiaError:
+                continue
+            if status is not None and status.update_available:
+                return status.available_version
+        return ""
 
     @Slot(str)
     def updateModpack(self, instance_id: str) -> None:

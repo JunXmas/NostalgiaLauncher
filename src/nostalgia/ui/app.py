@@ -146,6 +146,13 @@ def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
         )
     )
     view.bind_context_property("updateBridge", update_bridge)
+    bridge.modpackUpdateFound.connect(
+        lambda pack_version: notifier.announce(
+            "update",
+            f"Modpack Forgotten Worlds {pack_version} đã có",
+            "Bấm Cập nhật modpack ở thẻ server trên trang chủ",
+        )
+    )
     presence_bridge = PresenceBridge(
         bridge,
         is_enabled=lambda: bool(settings_bridge.discordPresence),

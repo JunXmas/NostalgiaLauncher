@@ -10,6 +10,7 @@ Glass {
     signal libraryRequested
     readonly property bool artworkVisible: settingsBridge.decorativeBackground
     readonly property bool narrow: width < 780
+    readonly property Item contentItem: copy
     width: parent.width
     height: Math.max(narrow ? 340 : 370, copy.implicitHeight + padding * 2)
     radius: 26
