@@ -17,7 +17,7 @@ from nostalgia.content.builtin_receipt import (
 from nostalgia.content.builtin_update import existing_variant, matches, plan_builtin_update
 from nostalgia.content.mrpack import ALLOWED_HOSTS, read_index
 from nostalgia.content.pack_channel import channel_pack, newer_channel, refresh_channel
-from nostalgia.errors import ContentError, NetworkError, NostalgiaError
+from nostalgia.errors import ContentError, NetworkError
 from nostalgia.facade.modpacks import ModpackOperations
 from nostalgia.instance.model import Instance
 from nostalgia.instance.store import load_instance
@@ -73,25 +73,27 @@ class PresetUpdateOperations(ModpackOperations):
         allowed_hosts: tuple[str, ...] | None = None,
         cancel_token: CancelToken | None = None,
     ) -> Path:
+        channel = newer_channel(self.paths, bundled_pack)
+        if channel is None:
+            return bundled_pack
+        hosts = allowed_hosts or ALLOWED_HOSTS
         with self.make_http_client() as http_client:
-            # Hỏi lại kênh ngay lúc tải: bản đệm có thể trỏ vào release đã gỡ (404).
-            # Mất mạng thì dùng bản đệm, lỗi tải sẽ báo ở bước sau.
             try:
+                return channel_pack(
+                    self.paths, channel, http_client, allowed_hosts=hosts, cancel_token=cancel_token
+                )
+            except NetworkError as error:
+                # Bản đệm có thể trỏ vào release đã gỡ (404): hỏi lại kênh rồi thử một lần.
+                logger.warning("Tải modpack theo kênh đệm lỗi, hỏi lại kênh: %s", error)
                 refresh_channel(
                     self.paths, http_client, self.endpoints.builtin_modpack_feed, cancel_token
                 )
-            except NostalgiaError as error:
-                logger.warning("Không hỏi lại được kênh modpack, dùng bản đệm: %s", error)
-            channel = newer_channel(self.paths, bundled_pack)
-            if channel is None:
-                return bundled_pack
-            return channel_pack(
-                self.paths,
-                channel,
-                http_client,
-                allowed_hosts=allowed_hosts or ALLOWED_HOSTS,
-                cancel_token=cancel_token,
-            )
+                fresh = newer_channel(self.paths, bundled_pack)
+                if fresh is None or fresh == channel:
+                    raise
+                return channel_pack(
+                    self.paths, fresh, http_client, allowed_hosts=hosts, cancel_token=cancel_token
+                )
 
     def update_builtin_modpack(
         self,
