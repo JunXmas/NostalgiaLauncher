@@ -1,10 +1,10 @@
 {
   "format": 1,
   "preset": "forgotten-worlds",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "minecraft": "1.21.11",
   "fabric-loader": "0.19.5",
-  "url": "https://github.com/JunXmas/NostalgiaLauncher/releases/download/forgotten-worlds-1.0.4/Forgotten-Worlds-Optimized-1.0.4.mrpack",
-  "sha256": "0ca96c56b6b95ae6105d14befbb74b2c566983d8cb36d5c95b1c203ec907d767",
-  "size": 13964747
+  "url": "https://github.com/JunXmas/NostalgiaLauncher/releases/download/forgotten-worlds-1.0.5/Forgotten-Worlds-Optimized-1.0.5.mrpack",
+  "sha256": "95bc6251d3328a8cac993561356c98533ce7dae8b9e2af1c551f12fbd1faa11c",
+  "size": 24640060
 }
