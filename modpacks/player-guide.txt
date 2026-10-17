@@ -10,9 +10,18 @@ Trong 19:00–23:00 giờ Việt Nam, người ngoài có thể đào đường 
 và phá lõi trong 150 giây. Lõi bị phá thì khu đất mất bảo vệ. Ngoài giờ này,
 người ngoài không được phá lõi. Chủ đất vẫn có thể tự tháo lõi.
 
+SINH VẬT NATURALIST
+
+Từ modpack 1.0.5 có Naturalist (bản port riêng cho 1.21.11): voi, hươu cao cổ,
+ngựa vằn, sư tử, hổ, gấu, hà mã, cá sấu, rắn, ốc sên và nhiều loài khác.
+Mod này phải có ở CẢ client và server; cập nhật modpack rồi mới vào server.
+Hình vẽ/âm thanh của Naturalist thuộc tác giả gốc (All Rights Reserved):
+bản này chỉ dùng cho server Forgotten Worlds, đừng chia sẻ lại file jar.
+
 GÓI TÀI NGUYÊN SERVER
 
-Dùng /rp (hoặc /goi) để hỏi tải gói Việt hoá và logo server. Gói là tuỳ chọn:
+Modpack 1.0.5 đã kèm sẵn gói Việt hoá và đặt ngôn ngữ mặc định Tiếng Việt cho
+bản chơi mới. Dùng /rp (hoặc /goi) để hỏi tải gói Việt hoá và logo server. Gói là tuỳ chọn:
 bấm Không vẫn được chơi tiếp. Từ modpack 1.0.4, nếu lỡ từ chối, gõ /rp lần nữa
 để hiện lại hộp thoại Đồng ý/Không, ngay trong cùng phiên chơi.
 Chức năng này cũng áp dụng cho /bangtin pack và /sidebar pack trên server.
