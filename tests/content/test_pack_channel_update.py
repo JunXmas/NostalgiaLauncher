@@ -12,10 +12,11 @@ from builtin_update_fixture import upgrade as upgrade
 from fabric_fixture import LOADER_VERSION
 from fake_mojang import VERSION_ID
 from local_https_server import LocalHttpsServer
-from nostalgia.content.pack_channel import cached_channel, parse_channel
+from nostalgia.content.pack_channel import cached_channel, channel_path, parse_channel
 from nostalgia.errors import ContentError, IntegrityError
 from nostalgia.facade import preset_updates
 from nostalgia.model.json_value import JsonValue
+from nostalgia.storage.files import atomic_write_json
 
 
 def publish_channel(
@@ -139,3 +140,17 @@ def test_invalid_channel_is_rejected(field: str, value: JsonValue) -> None:
     document[field] = value
     with pytest.raises(ContentError):
         parse_channel(document)
+
+
+def test_update_refreshes_stale_channel_that_points_at_removed_release(
+    upgrade: Upgrade, server: LocalHttpsServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Bản đệm trỏ release đã gỡ (404); kênh trên mạng đã sang bản mới -> cập nhật vẫn chạy."""
+    launcher, instance, host, state = publish_channel(upgrade, server, tmp_path, monkeypatch)
+    stale = json.loads(state.routes["/channel/latest.json"].body)
+    stale["version"] = "1.0.1.1"
+    stale["url"] = server.url("/channel/removed.mrpack")
+    atomic_write_json(channel_path(launcher.paths), stale)
+    assert launcher.update_builtin_modpack(instance.instance_id, allowed_hosts=(host,)) == instance
+    assert (launcher.instance_game_dir(instance) / "mods/jei.jar").read_bytes() == jar("jei")
+    assert state.request_count("/channel/pack.mrpack") == 1
