@@ -18,6 +18,11 @@ Mod này phải có ở CẢ client và server; cập nhật modpack rồi mới
 Hình vẽ/âm thanh của Naturalist thuộc tác giả gốc (All Rights Reserved):
 bản này chỉ dùng cho server Forgotten Worlds, đừng chia sẻ lại file jar.
 
+THE END MỚI (STELLARITY)
+
+Từ modpack 1.0.6, The End được thay bằng Stellarity Lite: 23 biome mới. Mod này
+phải có ở CẢ client và server; cập nhật modpack rồi mới vào server.
+
 GÓI TÀI NGUYÊN SERVER
 
 Modpack 1.0.5 đã kèm sẵn gói Việt hoá và đặt ngôn ngữ mặc định Tiếng Việt cho
