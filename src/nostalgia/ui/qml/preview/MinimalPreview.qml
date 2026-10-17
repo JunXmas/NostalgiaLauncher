@@ -103,6 +103,10 @@ Item {
                     function onNavigate(index) {
                         root.navigate(index);
                     }
+                    function onCreateServerRequested() {
+                        createForProject.openDialog();
+                        createForProject.pickLoader("forgotten-worlds");
+                    }
                     function onAdvancedRequested() {
                         root.advancedLibrary = true;
                     }
