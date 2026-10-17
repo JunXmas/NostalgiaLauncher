@@ -12,13 +12,14 @@ from test_minimal_preview import preview as preview
 
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.builtin_receipt import BuiltinReceipt, save_builtin_receipt
+from nostalgia.model.json_value import JsonValue
 from nostalgia.storage.files import atomic_write_json
 from nostalgia.ui.notifier import Notifier
 from qt_controls import find_control, press
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
-CHANNEL = {
+CHANNEL: dict[str, JsonValue] = {
     "format": 1,
     "preset": "forgotten-worlds",
     "version": "9.9.9",
