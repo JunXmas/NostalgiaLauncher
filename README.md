@@ -11,13 +11,14 @@ skins, friends, updates — is already taken care of.
 
 ![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![Qt](https://img.shields.io/badge/UI-PySide6%20%2B%20QML-41CD52?logo=qt&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-770%20passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-2000%2B%20passing-2ea44f)
 ![Dependencies](https://img.shields.io/badge/core%20runtime%20deps-0-blueviolet)
 ![License](https://img.shields.io/badge/License-PolyForm%20Strict%201.0.0-blue)
 ![Linux](https://img.shields.io/badge/Linux-x64-FCC624?logo=linux&logoColor=black)
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D6?logo=windows&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-arm64%20%7C%20x64-000000?logo=apple&logoColor=white)
 
-![Home — "Hôm nay chơi gì?"](docs/showcase/home.jpg)
+![Home — the Forgotten Worlds slide and your instances](docs/showcase/home.jpg)
 
 **[⬇️ Download page](https://junxmas.github.io/NostalgiaLauncher/)** — it detects your OS and
 hands you one file.
@@ -31,7 +32,7 @@ hands you one file.
 ## Why this exists
 
 I built my first Minecraft launcher in August 2026. It was my very first real project, and I
-loved it — the frosted Aero glass, the little home screen, the feeling that opening a program
+loved it — the frosted glass, the little home screen, the feeling that opening a program
 could be a tiny event again. People were kind about it. It also had rough edges everywhere,
 because I was learning while I typed.
 
@@ -39,9 +40,10 @@ So I did the scary thing: **I started over.** Same name, same heart, none of the
 
 This repository is that second attempt. It was written step by step, one pull request at a
 time, with a rule I did not have the first time: *nothing ships without a test that proves it.*
-The launcher you see in the screenshots is the result — 130 commits, 770 tests, and a lot of
-evenings. It is not finished (a launcher never is), but for the first time I am not afraid of
-what is underneath the paint.
+Since 1.0 the launcher has grown a whole new face — a calm glass sidebar, real Minecraft
+blocks for icons, friends, rooms, servers — and more than two thousand tests underneath. It is
+not finished (a launcher never is), but for the first time I am not afraid of what is
+underneath the paint.
 
 Welcome back. Nostalgia is the point. 💚
 
@@ -53,106 +55,104 @@ Welcome back. Nostalgia is the point. 💚
 
 ![Home](docs/showcase/home.jpg)
 
-The home page is a night sky over a Minecraft world, with little floating cards pinned to the
-landmarks in the picture — a planet for **Accounts**, a redstone block for **Mods**, a cabin
-for **Instances**. Hover one and it lifts; the pin under it breathes for a second and settles.
-The big green **CHƠI ▶** button is a real block: it lifts on hover and sinks with a little
-weight when you press it. On the right, your profile, the version you last played, and the
-friends who are online right now.
+The home page opens on a slideshow. The first slide is our community server,
+**Forgotten Worlds**, with real screenshots from the server rotating behind it: one button
+creates the matching instance, the next time it jumps you straight into
+`snow.pikamc.vn:25079`, and when the server's modpack has a new version the button turns into
+**Update modpack**. Below it: your instances, one click from playing. The sidebar icons are
+rendered from Minecraft's own block models — grass, barrel, bookshelf, amethyst, diamond.
 
-### ⛏ Create an instance — every version has a face
+### ⛏ Instances, and a create dialog with a face
+
+![Instances](docs/showcase/instances.jpg)
+
+Every instance is a card: play, favorite, group, search, import a `.mrpack`/`.zip`, or
+**export** one back out as a Modrinth `.mrpack` or a plain ZIP for a friend.
 
 ![Create instance](docs/showcase/create-instance.jpg)
 
-Every Minecraft generation is a card with its official key art (Trails & Tales, The Wild
-Update, Caves & Cliffs…). Cards you haven't picked sit dimmed in their slots; tap one and it
-**lights up, glows, and lifts out of the slot** while its versions slide down as stone buttons.
-Pick a loader — Vanilla, Fabric, Quilt, Forge, NeoForge, or *Optimized* (a ready-made
-Fabulously Optimized pack for the best FPS) — choose RAM, and if your main drive is full,
-point that one instance at **any folder on any disk**.
-
-**Forgotten Worlds** adds industrial survival with Create and JEI to Fabulously Optimized on
-Minecraft 1.21.11, with its server address ready to play. See
-[the pack documentation](docs/FORGOTTEN_WORLDS.md) for included mods and version pins.
-
-### 👤 Accounts and a skin library that lives in the launcher
-
-![Accounts](docs/showcase/accounts-skins.jpg)
-
-Microsoft, [Ely.by](https://ely.by) and offline accounts side by side, with a proper full-body
-preview you can turn around. Every skin the launcher ever meets — downloaded for an account,
-uploaded, or added by you — lands in the **skin library**. One button, *Thêm skin*, does the
-right thing for whoever is selected: Microsoft accounts upload to Mojang, everyone else gets
-the skin applied instantly. Ely.by accounts go through authlib-injector, and the injector jar is
-verified by SHA-256 before it is ever handed to Java.
+Pick a Minecraft version and the dialog shows that generation's official key art. Choose a
+platform — **Optimized** (Fabric + Fabulously Optimized for the best FPS), Vanilla, **Forgotten
+Worlds**, Fabric, Quilt, Forge or NeoForge — and open *Advanced* for RAM and a game folder on
+**any disk you like**. Forgotten Worlds is industrial survival with Create, JEI and Naturalist
+on Minecraft 1.21.11, Vietnamese translation on by default; see
+[the pack documentation](docs/FORGOTTEN_WORLDS.md) for every pinned mod. Updating a pack keeps
+your worlds, settings and the mods you added yourself, and rolls back if a download fails.
 
 ### 📚 Library — Modrinth and CurseForge, no API key
 
 ![Library](docs/showcase/library.jpg)
 
-Mods, resource packs, shaders and modpacks from **Modrinth** and **CurseForge**, filtered by the
-loader and version of the instance you are installing into. CurseForge requests go through the
-project's own tiny relay so you never have to create or paste an API key. Drop a `.mrpack` or
-`.zip` anywhere on the window and it becomes an instance.
+Modpacks, mods, shaders and resource packs from **Modrinth** and **CurseForge** in one search.
+Pick the instance and the launcher chooses the newest stable file that matches its Minecraft
+and loader — or open *Change version* to pick one yourself. CurseForge requests go through the
+project's own tiny proxy, so you never have to create or paste an API key. Drop a `.mrpack`
+or `.zip` anywhere on the window and it becomes an instance.
 
-![Drag and drop](docs/showcase/drag-drop.jpg)
+### 👤 Accounts and skins
 
-### ⛶ Play together — LAN over the internet
+![Accounts](docs/showcase/accounts-skins.jpg)
 
-![Multiplayer](docs/showcase/multiplayer.jpg)
+Microsoft, [Ely.by](https://ely.by) and offline accounts side by side, with a full-body
+preview you can drag to turn around. Skins and capes have a preview-then-**Save** flow per
+account, Classic/Slim switches the model instantly, and every skin the launcher meets lands in
+your **skin library**. Ely.by accounts go through authlib-injector, and the injector jar is
+verified by SHA-256 before it is ever handed to Java.
 
-Open a LAN world, press **Mở phòng**, and read your friend an 18-character room code. They
-paste it, and their game sees your world as if you were on the same Wi-Fi. The relay only ever
-forwards bytes; it cannot read your world. The ten security rules it lives by — and the tests
-that enforce every one of them — are in [`docs/MULTIPLAYER_SECURITY.md`](docs/MULTIPLAYER_SECURITY.md).
+### 🤝 Friends and rooms — play together, peer to peer
 
-### 🔔 It tells you what is happening
+![Friends](docs/showcase/friends.jpg)
 
-![Toast](docs/showcase/toast.jpg)
+Sign in with Google once and your friends follow you to any computer. See who is online,
+chat, send an invite. **Create a room**, pick the instance, open your world to LAN, and invite
+friends straight from the room panel — they get a **Join room** button and their game sees your
+world as if you shared the same Wi-Fi.
 
-A quiet toast when the game starts, when it exits, when a version finishes downloading, when an
-update is ready — with a short chime you can switch off. Soft dashboard-style interface sounds
-(navigation blip, select, open, back) have their own switch and were tuned to stay well below
-the frequencies that give you a headache.
+Game traffic and custom mod files travel **directly between the two computers** over
+WebRTC, encrypted with DTLS; the server only helps the two sides find each other. Shared files
+are checked by size and SHA-256 before anything is installed. The threat model and the tests
+that enforce it are in [`docs/MULTIPLAYER_SECURITY.md`](docs/MULTIPLAYER_SECURITY.md).
 
-### 📜 Log and statistics
+### 🖥 Your own server
 
-![Log](docs/showcase/log.jpg)
+![Servers](docs/showcase/servers.jpg)
 
-The game's output streams into the **Nhật ký** page live, capped at 5,000 lines, with a
-warning/error filter and one-click copy for bug reports. Every instance keeps its own numbers:
-hours played, launches, worlds, mods.
+The *Server* tab installs and runs a Minecraft server **on your own machine** — Paper,
+Purpur, Folia, Fabric, Vanilla or an Arclight hybrid — from official, pinned builds with
+checksums verified before launch. Settings, plugins/mods, a live console and the raw files
+each have their own page. (Part of the Pro, Max and Ultimate plans; no VPS is included.)
+
+### ✨ Cosmetics
+
+![Cosmetics](docs/showcase/cosmetics.jpg)
+
+Profile frames and banners — Amethyst, Grove, Eclipse, Jack-o'-lantern — that your friends see
+next to your name. Try any of them on before using it.
 
 ### ⚙ Settings, auto-update, Discord
 
 ![Settings](docs/showcase/settings.jpg)
 
-Auto-update checks GitHub once at startup (switchable), downloads over HTTPS, verifies the
-`SHA256SUMS` of the release, and only ever applies itself to a packaged build — never to a
-source checkout. Discord Rich Presence works out of the box — no Application ID to create, no
-field to fill in: it shows "Đang ở launcher", then the instance you are playing and for how
-long, and connects whenever Discord happens to be open (set `NOSTALGIA_DISCORD_APP_ID` if you
-would rather show your own app). A default folder for new instances lets you keep the whole
-library on a second drive.
+**Vietnamese and English**, text size up to 150 %, compact lists, reduced motion, and a switch
+for the home artwork. Auto-update checks GitHub at startup (switchable), downloads over HTTPS,
+verifies the release's `SHA256SUMS`, and only installs after you press *Update now* — on
+Windows it even asks for UAC when the launcher lives in a protected folder. Discord Rich
+Presence works out of the box, the game log streams live with warning/error filters, and a
+default folder for new instances lets you keep the whole library on a second drive.
 
 ---
 
-## What's new in the rework
+## What's new since 1.0
 
-Everything below did not exist in the old `NostalgiaLauncher`, or was rebuilt from the ground up:
-
-- 🔐 **Ely.by accounts** next to Microsoft and offline — with the authlib-injector jar verified by SHA-256 before Java ever sees it.
-- 🧱 **Quilt** and an **Optimized** preset join Vanilla / Fabric / Forge / NeoForge.
-- 💽 **Any instance on any disk** — point a modpack at a second drive when the main one is full.
-- 🖼 **Key-art version cards** that dim, glow, lift and slide open.
-- 🛒 **CurseForge without an API key**, plus Modrinth, plus **drag-and-drop** modpack import.
-- 🌐 **Play together over the internet** with a room code — no port forwarding, no plugins.
-- 🎨 **Skin library** inside the launcher, one button to add / upload / apply.
-- ⏯ **Continue playing** from the home page: recent worlds *and* the servers you added in-game (with their real icons) — one click jumps straight in; the PLAY button turns into STOP while the game runs.
-- 📜 Live **game log** with filters, **play statistics**, toasts, chimes, **dashboard-style UI sounds**, **Discord Rich Presence**.
-- 🔄 **Auto-update** that refuses anything without a matching `SHA256SUMS`.
-- 📦 **Installers for everyone**: AppImage / .deb / .rpm / tar.gz on Linux, .dmg for Apple Silicon and Intel, a proper setup.exe on Windows.
-- 🧪 Under the hood: 770 tests, zero-dependency core, seven fenced layers, 200-line files, a naming glossary — all enforced by CI.
+- 🪟 **A new interface**: glass sidebar, Minecraft block icons, slideshow home, smoother lists that only build what is on screen.
+- 🌍 **Vietnamese and English**, switchable on the login screen or in Settings.
+- 🏔 **Forgotten Worlds** — a built-in modpack for the community server, with in-place updates and a heads-up when a new version ships.
+- 🤝 **Google sign-in, friends, chat and invites**, plus rooms that connect **peer to peer** (encrypted WebRTC) instead of through a relay.
+- 🖥 **Server manager** for Paper / Purpur / Folia / Fabric / Vanilla / Arclight on your own PC.
+- 📦 **Export** any instance as `.mrpack` or ZIP; **permanent delete** with confirmation; old backups still restorable.
+- 🎨 Skin and cape preview with **Save**, and profile **cosmetics**.
+- 💎 **Premium plans** (Plus, Pro, Max, Ultimate) for extras like modpack sync in rooms and the server manager. Everything the launcher did before stays free.
+- 🍎 **macOS builds** for Apple Silicon and Intel.
 
 ---
 
@@ -195,30 +195,30 @@ uv run nostalgia instance create vui-ve --version 1.20.1
 uv run nostalgia play vui-ve --account Jun
 ```
 
-> The interface currently speaks **Vietnamese**. English is on the list.
+> The interface speaks **Vietnamese** and **English** — pick one on the login screen or in Settings.
 
 ---
 
 ## The rework, honestly
 
-| | Old `NostalgiaLauncher` (Aug 2026) | This repository (1.0, Sep 2026) |
+| | Old `NostalgiaLauncher` (Aug 2026) | This repository (1.2, Oct 2026) |
 |---|---|---|
 | Codebase | one big Qt app, learned as I went | rewritten from an empty folder |
-| Runtime dependencies | `PySide6`, `requests` | **none** for the core; `PySide6-Essentials` only if you want the window |
-| Tests | a handful | **770**, run on Python 3.12 and 3.13 in CI |
-| Architecture | everything talks to everything | 7 layers; a test fails if a lower layer imports a higher one |
+| Runtime dependencies | `PySide6`, `requests` | **none** for the core; the window adds PySide6 and a few small libraries |
+| Tests | a handful | **2,000+**, run on Python 3.12 and 3.13 in CI |
+| Architecture | everything talks to everything | layered; a test fails if a lower layer imports a higher one |
 | UI ↔ engine | direct calls | one façade (`nostalgia.api`) — the UI cannot import anything else |
 | File size | some files > 1,000 lines | every `.py` ≤ 200 lines of code, enforced by a test |
 | Naming | whatever came to mind | a glossary of banned/required names, enforced by a test |
-| Accounts | Microsoft, offline | Microsoft, **Ely.by**, offline |
-| Loaders | Vanilla, Fabric, Forge, NeoForge | + Quilt, + Optimized preset |
-| Multiplayer | — | LAN over relay with room codes |
-| Skins | pixel editor, 3D model | library, upload, apply; editor is coming back |
-| Languages | 10 | Vietnamese (for now) |
-| Builds | .exe / .dmg / .deb | Linux and Windows zips with checksums; macOS pending |
+| Accounts | Microsoft, offline | Microsoft, **Ely.by**, offline (+ Google for friends) |
+| Loaders | Vanilla, Fabric, Forge, NeoForge | + Quilt, + Optimized, + Forgotten Worlds |
+| Multiplayer | — | friends, invites, peer-to-peer rooms |
+| Skins | pixel editor, 3D model | library, preview, upload, apply; editor is coming back |
+| Languages | 10 | Vietnamese, English |
+| Builds | .exe / .dmg / .deb | AppImage, .deb, .rpm, setup.exe, .dmg (arm64 + x64), all with checksums |
 
 What I kept: the name, the warm home screen, the idea that a launcher should do the boring parts
-for you. What I gave up, for now: the pixel skin editor, translations, and the macOS build. They
+for you. What I gave up, for now: the pixel skin editor and most of the old translations. They
 will return — but this time on top of something that does not fall over.
 
 ---
@@ -229,12 +229,12 @@ will return — but this time on top of something that does not fall over.
   Java runtimes, modloader installers — all on `http.client` and the standard library. It is
   1.5× faster than `requests` under parallel downloads and starts faster, too
   ([`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)).
-- **Seven layers with a fence.** `tests/test_api_boundary.py` and friends fail the build if the
+- **Layers with a fence.** `tests/test_api_boundary.py` and friends fail the build if the
   UI imports anything but the façade, if a file grows past 200 lines, or if a banned name
   ([`GLOSSARY.md`](GLOSSARY.md)) sneaks in.
 - **Security first.** Path traversal checks on every archive entry, SHA-256 on every downloaded
   jar and on every update, a network guard in the test suite so no test can touch the internet
-  by accident, and a relay that cannot see inside your world.
+  by accident, and multiplayer traffic that goes peer to peer, encrypted end to end.
 - **Measured, not guessed.** `bench/` holds real probes — how many disk reads a click costs, how
   long the UI thread stalls when you expand a card (it used to be 200 ms; it is now under 1 ms).
 
@@ -246,11 +246,14 @@ Contributing notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md); releases in
 ## Tiếng Việt
 
 Nostalgia Launcher là trình khởi động Minecraft viết lại từ đầu sau dự án đầu tay cùng tên
-(08/2026). Đăng nhập Microsoft / Ely.by / ngoại tuyến, tạo bản chơi theo dòng phiên bản với key
-art chính thức, loader Vanilla / Fabric / Quilt / Forge / NeoForge / Optimized, thư viện mod và
-modpack từ Modrinth và CurseForge (không cần khoá API), chơi chung qua relay bằng mã phòng, thư
-viện skin, nhật ký game, thống kê, thông báo, tự cập nhật có kiểm sha256. Lõi không phụ thuộc
-thư viện ngoài; 770 test; mỗi file ≤ 200 dòng. Chi tiết từng bản ở [`CHANGELOG.md`](CHANGELOG.md).
+(08/2026). Giao diện kính mới với icon khối Minecraft thật, trang chủ dạng băng trượt có server
+cộng đồng **Forgotten Worlds** (tạo bản chơi, vào thẳng server, cập nhật modpack giữ nguyên thế
+giới). Đăng nhập Microsoft / Ely.by / ngoại tuyến; loader Tối ưu / Vanilla / Fabric / Quilt /
+Forge / NeoForge; thư viện modpack, mod, shader, gói tài nguyên từ Modrinth và CurseForge (không
+cần khoá API); xuất bản chơi ra `.mrpack`/ZIP. Đăng nhập Google để kết bạn, chat, mời chơi;
+phòng chơi kết nối **P2P mã hoá** giữa hai máy. Quản lý server ngay trên máy, cosmetic hồ sơ,
+giao diện Tiếng Việt / English, tự cập nhật có kiểm SHA-256. Lõi không phụ thuộc thư viện ngoài;
+hơn 2.000 test; mỗi file ≤ 200 dòng. Chi tiết từng bản ở [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -274,6 +277,3 @@ Minecraft is a trademark of Mojang Studios / Microsoft. The key art in
 `src/nostalgia/ui/qml/assets/keyart/` belongs to Mojang and is used for non-commercial
 illustration only ([credits](src/nostalgia/ui/qml/assets/keyart/CREDITS.md)). This launcher is
 not affiliated with Mojang or Microsoft.
-
-Forgotten Worlds 1.0.2: update the launcher to rc36, then open your existing instance
-manager and choose **Update modpack**. Worlds, settings and user-added mods are kept.
