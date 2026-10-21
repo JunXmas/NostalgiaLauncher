@@ -32,6 +32,10 @@ MOJANG_LIBRARIES_URL = "https://libraries.minecraft.net/"
 FABRIC_META_URL = "https://meta.fabricmc.net/v2"
 # Quilt: cùng hình dạng API với Fabric (danh sách loader + profile JSON kế thừa bản Mojang).
 QUILT_META_URL = "https://meta.quiltmc.org/v3"
+# Legacy Fabric: bản Fabric Loader cho Minecraft ≤ 1.13.2 (khi Fabric chính thức chưa ra đời).
+# Cùng hình dạng API với Fabric (đã xác minh: /versions/loader/<mc> trả mảng
+# {loader,intermediary,launcherMeta}, id profile vẫn "fabric-loader-<loader>-<mc>").
+LEGACY_FABRIC_META_URL = "https://meta.legacyfabric.net/v2"
 
 # Modrinth: nguồn mod / gói tài nguyên / shader. Không cần khoá API; chỉ cần User-Agent tử tế.
 MODRINTH_API_URL = "https://api.modrinth.com/v2"
@@ -123,6 +127,7 @@ class Endpoints:
     asset_objects: str = ASSET_OBJECT_BASE_URL
     fabric_meta: str = FABRIC_META_URL
     quilt_meta: str = QUILT_META_URL
+    legacy_fabric_meta: str = LEGACY_FABRIC_META_URL
     modrinth_api: str = MODRINTH_API_URL
     curseforge_proxy: str = CURSEFORGE_PROXY_URL
     curseforge_direct: str = CURSEFORGE_DIRECT_URL

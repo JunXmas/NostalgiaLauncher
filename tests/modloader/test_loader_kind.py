@@ -15,6 +15,15 @@ from nostalgia.modloader.model import detect_loader_kind
         ("26.2", "vanilla"),
         ("fabric-loader-0.19.5-1.20.1", "fabric"),
         ("quilt-loader-0.29.1-1.20.1", "quilt"),
+        # Legacy Fabric dùng ĐÚNG tiền tố "fabric-loader-" như Fabric hiện đại — chỉ phân
+        # biệt được qua bản Minecraft đi kèm (≤ 1.13.2 là Legacy Fabric).
+        ("fabric-loader-0.20.1-1.12.2", "legacy_fabric"),
+        ("fabric-loader-0.20.1-1.13.2", "legacy_fabric"),
+        ("fabric-loader-0.20.1-1.14", "fabric"),
+        ("fabric-loader-0.20.1-1.21.11", "fabric"),
+        ("fabric-loader-0.14.2-15w14a", "legacy_fabric"),  # snapshot 2015, trước 1.14
+        ("fabric-loader-0.15.0-24w05a", "fabric"),  # snapshot 2024
+        ("fabric-loader-0.20.1-b1.7.3", "legacy_fabric"),  # nhãn beta cổ, chỉ Legacy Fabric có
         ("1.20.1-forge-47.4.10", "forge"),
         ("1.12.2-forge-14.23.5.2860", "forge"),
         ("neoforge-21.1.249", "neoforge"),

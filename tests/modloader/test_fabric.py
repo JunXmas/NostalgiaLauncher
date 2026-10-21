@@ -132,3 +132,40 @@ def test_quilt_goes_through_the_same_code_with_its_own_meta(
     report = launcher.install_loader("quilt", VERSION_ID)
     assert report.version_meta.version_id == f"quilt-loader-0.29.1-{VERSION_ID}"
     assert f"/fabric/versions/loader/{VERSION_ID}" not in server_state.routes, "không đụng Fabric"
+
+
+def test_legacy_fabric_goes_through_the_same_code_with_its_own_meta(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Legacy Fabric: cùng mã Fabric, chỉ đổi địa chỉ meta — và id profile vẫn mang tiền tố
+    "fabric-loader-" y hệt Fabric hiện đại (xác minh với meta.legacyfabric.net thật), nên
+    `install_loader`/`list_loader_versions` phải hoạt động được mà không cần phân biệt gì."""
+    server_state.add(
+        f"/legacy-fabric/versions/loader/{VERSION_ID}",
+        json.dumps([{"loader": {"version": "0.16.9", "stable": True}}]).encode(),
+    )
+    server_state.add(
+        f"/legacy-fabric/versions/loader/{VERSION_ID}/0.16.9/profile/json",
+        json.dumps(
+            {
+                "id": f"fabric-loader-0.16.9-{VERSION_ID}",
+                "inheritsFrom": VERSION_ID,
+                "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+                "libraries": [],
+            }
+        ).encode(),
+    )
+    launcher = make_launcher(server, server_state, tmp_path, certificate_pair)
+    launcher = replace(
+        launcher,
+        endpoints=replace(launcher.endpoints, legacy_fabric_meta=server.url("/legacy-fabric")),
+    )
+
+    versions = launcher.list_loader_versions("legacy_fabric", VERSION_ID)
+    assert [(v.loader_version, v.stable) for v in versions] == [("0.16.9", True)]
+    report = launcher.install_loader("legacy_fabric", VERSION_ID)
+    assert report.version_meta.version_id == f"fabric-loader-0.16.9-{VERSION_ID}"
+    assert f"/fabric/versions/loader/{VERSION_ID}" not in server_state.routes, "không đụng Fabric"
