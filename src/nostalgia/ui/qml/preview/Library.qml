@@ -149,7 +149,8 @@ Item {
             id: libraryHint
             objectName: "libraryInstallHint"
             y: 32; width: parent.width
-            reason: Legacy.Tr.phrase(Reasons.writing(bridge, contentBridge.busy, projectBridge.installing))
+            // Không chặn khi đang cài: bấm thêm thẻ khác là xếp hàng. Chỉ báo hàng đợi + lưu ý game đang chạy.
+            reason: Legacy.Tr.phrase(Reasons.adding(bridge)) || (contentBridge.pendingInstalls > 0 ? Legacy.Tr.format("Đang cài %1 mục — bấm Cài ở thẻ khác để thêm vào hàng đợi.", [contentBridge.pendingInstalls]) : contentBridge.inRunningGame ? Legacy.Tr.phrase("Minecraft đang chạy: nội dung cài thêm có hiệu lực ở lần mở game sau.") : "")
         }
         Text {
             text: contentBridge.searching ? Legacy.Tr.phrase("Đang tìm kiếm…") : contentBridge.totalHits.toLocaleString(Qt.locale(Legacy.Tr.localeName), 'f', 0) + Legacy.Tr.plural(" kết quả", contentBridge.totalHits)

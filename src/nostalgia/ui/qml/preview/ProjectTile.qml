@@ -103,9 +103,9 @@ Rectangle {
         anchors.rightMargin: 14 * GlassTheme.scale
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 16 * GlassTheme.scale
-        label: tile.project.installing ? Legacy.Tr.phrase("Đang cài…") : tile.project.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : tile.instanceScoped && tile.project.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài")
+        label: tile.project.installing ? Legacy.Tr.phrase("Trong hàng đợi…") : tile.project.contentKind === "modpack" ? Legacy.Tr.phrase("Tạo bản chơi") : tile.instanceScoped && tile.project.installed ? Legacy.Tr.phrase("Đã cài") : Legacy.Tr.phrase("Cài")
         height: 34 * GlassTheme.scale
-        disabledReason: Legacy.Tr.phrase(Reasons.writing(bridge, contentBridge.busy, tile.project.installing)) || (tile.instanceScoped && tile.project.installed ? Legacy.Tr.phrase("Nội dung này đã được cài vào bản chơi.") : tile.instanceScoped && (!contentBridge.instanceId || (tile.contentKind === "mod" && contentBridge.loaderKind === "vanilla")) ? Legacy.Tr.phrase("Chọn bản chơi có mod loader tương thích để cài mod.") : "")
+        disabledReason: (tile.project.installing ? Legacy.Tr.phrase("Đang cài hoặc đang chờ tới lượt trong hàng đợi.") : Legacy.Tr.phrase(Reasons.adding(bridge))) || (tile.instanceScoped && tile.project.installed ? Legacy.Tr.phrase("Nội dung này đã được cài vào bản chơi.") : tile.instanceScoped && (!contentBridge.instanceId || (tile.contentKind === "mod" && contentBridge.loaderKind === "vanilla")) ? Legacy.Tr.phrase("Chọn bản chơi có mod loader tương thích để cài mod.") : "")
         clickable: !disabledReason
         onClicked: tile.project.contentKind === "modpack" ? tile.modpackRequested(tile.project.projectId, tile.project.title) : tile.instanceScoped ? contentBridge.install(tile.project.projectId) : projectBridge.openProject(tile.project.projectId)
     }

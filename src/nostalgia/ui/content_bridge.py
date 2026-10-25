@@ -29,6 +29,7 @@ class ContentBridge(FilterContentBridge):
     _pageArrived = Signal(int, bool, object, int)
     _searchFinished = Signal(int)
     _flagsDirty = Signal()
+    _doneInstalling = Signal(str)
 
     def __init__(
         self, launcher: Launcher, main_bridge: LauncherBridge, parent: QObject | None = None
@@ -41,6 +42,9 @@ class ContentBridge(FilterContentBridge):
         self._pageArrived.connect(self._apply_page)
         self._searchFinished.connect(self._finish_search)
         self._flagsDirty.connect(self._refresh_flags)
+        # Bỏ khỏi tập "đang cài" trên luồng giao diện: tập này cũng được đọc ở đó.
+        self._doneInstalling.connect(self._finish_one)
+        main_bridge.gameRunningChanged.connect(self.targetChanged)
         self._total_hits = 0
         self._searching = False
         self._installing: set[str] = set()
@@ -197,6 +201,12 @@ class ContentBridge(FilterContentBridge):
         }
         self._results_model.set_flags(installed_ids, set(self._installing))
 
+    @Slot(str)
+    def _finish_one(self, project_id: str) -> None:
+        self._installing.discard(project_id)
+        self._refresh_flags()
+        self.resultsChanged.emit()
+
     def _set_searching(self, searching: bool) -> None:
         if self._searching != searching:
             self._searching = searching
@@ -204,9 +214,24 @@ class ContentBridge(FilterContentBridge):
 
     # ----- cài và quản lý -----
 
+    @Property(int, notify=resultsChanged)
+    def pendingInstalls(self) -> int:
+        """Số dự án đang cài hoặc đang chờ tới lượt (hàng đợi)."""
+        return len(self._installing)
+
+    @Property(bool, notify=targetChanged)
+    def inRunningGame(self) -> bool:
+        """Bản chơi đang chọn là bản game đang chạy: cài thêm được, gỡ/tắt phải đợi game tắt."""
+        # So thư mục chứ không so mã bản chơi: hai bản chơi có thể chung một thư mục game.
+        running = self._main_bridge.running_game_dir
+        return self._target is not None and str(self._target.game_dir.resolve()) == running
+
     @Slot(str)
     def install(self, project_id: str) -> None:
-        if self._main_bridge.gameRunning or self._main_bridge.storageBusy or self._main_bridge.busy:
+        """Bấm nhiều thẻ liền nhau là xếp hàng: mỗi lượt chạy ở luồng riêng nhưng chờ khoá thư mục
+        trong `install_project`, nên tải lần lượt và phụ thuộc chung chỉ tải một lần.
+        Game đang chạy vẫn cài được — file mới có hiệu lực ở lần mở game sau."""
+        if self._main_bridge.storageBusy:
             return
         target = self._target
         project = next(
@@ -218,6 +243,7 @@ class ContentBridge(FilterContentBridge):
             return  # modpack đi đường installModpack: nó thành bản chơi mới, không cài vào đâu
         self._installing.add(project_id)
         self._refresh_flags()
+        self.resultsChanged.emit()
 
         def work() -> None:
             try:
@@ -227,8 +253,7 @@ class ContentBridge(FilterContentBridge):
                 self._installedFor.emit(target.instance_id, project.content_kind)
                 self.installFinished.emit(project.title)
             finally:
-                self._installing.discard(project_id)
-                self._flagsDirty.emit()
+                self._doneInstalling.emit(project_id)
 
         kind_label = {"mod": "mod", "resourcepack": "gói tài nguyên", "shader": "shader"}
         self.run_in_background(work, f"Cài {kind_label[project.content_kind]} {project.title}")

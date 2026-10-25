@@ -91,3 +91,49 @@ def test_mod_on_vanilla_instance_is_refused_before_any_request(
     with pytest.raises(ContentError, match="không có mod loader"):
         launcher.install_content(target, sodium)
     assert server_state.request_count(f"/modrinth/project/{SODIUM}/version") == 0
+
+
+def test_concurrent_installs_into_one_folder_keep_every_ledger_entry(
+    server: LocalHttpsServer,
+    server_state: ServerState,
+    tmp_path: Path,
+    certificate_pair: tuple[Path, Path],
+) -> None:
+    """Hàng đợi cài nhiều mod, hoặc cài từ thẻ và từ hộp thoại cùng lúc: hai lượt đọc sổ cũ rồi
+    ghi đè nhau thì mục của lượt trước mất (mod có trên đĩa nhưng launcher không biết nguồn)."""
+    import threading
+
+    launcher = make_content_launcher(server, server_state, tmp_path, certificate_pair)
+    target = fabric_target(launcher)
+    sodium = launcher.search_content(target, "mod").hits[0]
+    looper = Project(
+        project_id=LOOPER,
+        project_slug="a",
+        title="A",
+        description="",
+        author="",
+        content_kind="mod",
+        icon_url="",
+        downloads=0,
+        follows=0,
+        loaders=("fabric",),
+    )
+    start = threading.Barrier(2)
+    errors: list[BaseException] = []
+
+    def install(project: Project) -> None:
+        start.wait()
+        try:
+            launcher.install_content(target, project)
+        except BaseException as error:
+            errors.append(error)
+
+    workers = [threading.Thread(target=install, args=(p,)) for p in (sodium, looper)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join()
+
+    assert not errors
+    installed = {m.project_id for m in launcher.list_installed_content(target, "mod")}
+    assert {SODIUM, FABRIC_API, LOOPER, LOOPEE} <= installed

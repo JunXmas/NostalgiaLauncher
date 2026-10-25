@@ -50,6 +50,9 @@ class WorkerBridge(QObject):
         self._retry_work: Callable[[], None] | None = None
         self._retry_activity = ""
         self._work_serial = 0
+        # Số job đang chạy. Bận = còn job nào chưa xong — bản cũ chỉ nhìn job MỚI NHẤT, nên một
+        # lượt tìm kiếm xong trước đã tắt cờ bận giữa lúc lượt cài trước đó còn đang tải.
+        self._running = 0
         self._workFinished.connect(self._finish_work)
 
     @Property(bool, notify=retryChanged)
@@ -115,6 +118,7 @@ class WorkerBridge(QObject):
                 with _live_lock:
                     _live_threads.remove(thread)
 
+        self._running += 1
         self._set_busy(True)
         thread = threading.Thread(target=tracked, daemon=True)
         with _live_lock:
@@ -127,8 +131,9 @@ class WorkerBridge(QObject):
             self.busyChanged.emit()
 
     @Slot(int)
-    def _finish_work(self, work_serial: int) -> None:
-        if work_serial != self._work_serial:
+    def _finish_work(self, _work_serial: int) -> None:
+        self._running = max(0, self._running - 1)
+        if self._running:
             return
         self._set_busy(False)
         self.retryChanged.emit()

@@ -7,6 +7,8 @@ không bao giờ dừng.
 
 from __future__ import annotations
 
+import logging
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -38,6 +40,9 @@ CONTENT_WORKERS = 4
 FetchVersionsFn = Callable[[str], tuple[ProjectVersion, ...]]
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass(frozen=True, slots=True)
 class ContentInstallReport:
     """Những gì đã vào thư mục bản chơi, dự án chính đứng đầu."""
@@ -65,6 +70,44 @@ def install_project(
         message = f"bản chơi không có mod loader, không cài được mod {project.title!r}"
         raise ContentError(message)
     directory = content_dir(game_dir, project.content_kind)
+    # Một thư mục chỉ một lượt cài tại một thời điểm: đọc sổ → tải → ghi sổ mà hai lượt chen
+    # nhau thì lượt ghi sau xoá mục của lượt trước, và phụ thuộc chung (Fabric API) bị tải hai lần
+    # vì cả hai cùng đọc sổ cũ. Khoá theo thư mục nên cài vào hai bản chơi khác nhau vẫn song song.
+    with _directory_lock(directory):
+        return _install_locked(
+            http_client,
+            project,
+            directory,
+            fetch_versions,
+            game_version=game_version,
+            loader_kind=loader_kind,
+            version_id=version_id,
+            on_progress=on_progress,
+            cancel_token=cancel_token,
+        )
+
+
+_LOCKS: dict[Path, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
+
+
+def _directory_lock(directory: Path) -> threading.Lock:
+    with _LOCKS_GUARD:
+        return _LOCKS.setdefault(directory.resolve(), threading.Lock())
+
+
+def _install_locked(
+    http_client: HttpClient,
+    project: Project,
+    directory: Path,
+    fetch_versions: FetchVersionsFn,
+    *,
+    game_version: str,
+    loader_kind: LoaderKind,
+    version_id: str,
+    on_progress: ProgressFn,
+    cancel_token: CancelToken | None,
+) -> ContentInstallReport:
     ledger = load_ledger(directory)
     chosen = _resolve_with_dependencies(
         project, ledger, fetch_versions, game_version, loader_kind, version_id
@@ -109,7 +152,12 @@ def install_project(
     retained = {record.file_name for record in ledger.values()}
     for file_name in replaced - retained:
         for candidate in (file_name, file_name + DISABLED_SUFFIX):
-            resolve_child(directory, candidate).unlink(missing_ok=True)
+            try:
+                resolve_child(directory, candidate).unlink(missing_ok=True)
+            except PermissionError:
+                # Windows: game đang chạy giữ jar cũ. Bản mới đã vào sổ; jar cũ để lại, lần
+                # sau mở launcher (game đã tắt) quét "file lạ" sẽ thấy và người chơi tự xoá.
+                logger.warning("jar cũ đang bị khoá, giữ lại tới khi game tắt: %s", candidate)
     return ContentInstallReport(installed=tuple(chosen))
 
 

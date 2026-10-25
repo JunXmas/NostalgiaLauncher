@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
 from nostalgia.api import Launcher
@@ -64,15 +62,12 @@ class ProjectInstallBridge(WorkerBridge):
         project, project_catalog = self._project, self._catalog
         if self._installing or project is None or project_catalog is None:
             return
-        if self._main_bridge.gameRunning or self._main_bridge.storageBusy or self._main_bridge.busy:
-            self.failed.emit("Đóng game hoặc đợi tác vụ bản chơi hoàn tất trước khi cài.")
+        if self._main_bridge.storageBusy:
+            self.failed.emit("Đợi sao lưu/khôi phục bản chơi hoàn tất rồi cài.")
             return
         pinned = self._content_bridge._browse_instance_id
         if pinned and (instance_id != pinned or project.content_kind == "modpack"):
             self.failed.emit("Chỉ cài nội dung vào bản chơi đang quản lý.")
-            return
-        if cast(bool, self._content_bridge.busy):
-            self.failed.emit("Đợi tác vụ thư viện hiện tại hoàn tất rồi thử lại.")
             return
         chosen = next((v for v in project_catalog.versions if v.version_id == version_id), None)
         if chosen is None or game_version not in chosen.game_versions:

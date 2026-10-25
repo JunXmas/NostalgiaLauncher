@@ -20,7 +20,7 @@ from nostalgia.account.model import Account
 from nostalgia.api import GameProcess, Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.game_lan import GameLanFeed
-from nostalgia.ui.game_launch import load_game_log_path, prepare_game
+from nostalgia.ui.game_launch import load_game_dir, prepare_game
 from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
 from nostalgia.ui.preset_instance_bridge import PresetInstanceBridge
 
@@ -42,6 +42,7 @@ class LauncherBridge(PresetInstanceBridge):
         self._active_account_id = ""
         self._sign_in_cancel: CancelToken | None = None
         self._game_running = False
+        self.running_game_dir = ""  # "" khi tắt; cài THÊM vào đó an toàn, gỡ/thay jar thì không
         # Tiến trình game đang chạy (để nút DỪNG gửi tín hiệu) và cờ "người dùng tự dừng" —
         # dừng chủ động không phải sự cố, không toast "gặp sự cố".
         self._game: GameProcess | None = None
@@ -221,7 +222,7 @@ class LauncherBridge(PresetInstanceBridge):
             with host_scope() if host_scope else nullcontext():
                 # Output của game đổ vào nhật ký; đuôi của nó là bằng chứng khi game chết.
                 self._game_log.reset()
-                log_path = load_game_log_path(self._launcher, instance_id)
+                game_dir = load_game_dir(self._launcher, instance_id)
                 game = self._launcher.launch_instance(
                     instance_id,
                     account_id,
@@ -230,14 +231,14 @@ class LauncherBridge(PresetInstanceBridge):
                     on_output=self.game_lan.receiver(
                         instance_id,
                         self._game_log.receive,
-                        log_path,
+                        game_dir / "logs" / "latest.log",
                     ),
                     cancel_token=cancel_token,
                 )
                 started_at = time.time()
                 self._game = game
                 self._stop_requested = False
-                self._set_game_running(True)
+                self._set_game_running(True, str(game_dir))
                 self.gameStarted.emit(instance_id)
                 try:
                     exit_code = game.wait()
@@ -274,6 +275,6 @@ class LauncherBridge(PresetInstanceBridge):
             self._game_log.end_session()
             self.game_lan.clear()
 
-    def _set_game_running(self, running: bool) -> None:
-        self._game_running = running
+    def _set_game_running(self, running: bool, game_dir: str = "") -> None:
+        self._game_running, self.running_game_dir = running, game_dir
         self.gameRunningChanged.emit()
