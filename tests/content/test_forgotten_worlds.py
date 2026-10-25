@@ -95,3 +95,6 @@ def test_builtin_preset_installs_downloads_and_overrides(
     assert (game_dir / "mods" / "custom-content.jar").read_bytes() == b"custom mod"
     assert (game_dir / "config" / "goi.toml").read_bytes() == b"cau hinh"
     assert launcher.describe_content_target("server").game_version == VERSION_ID
+    # Forgotten Worlds KHÔNG tự bật Nos Client (chỉ Optimized có, xem test_presets.py) —
+    # giữ nguyên hành vi cũ.
+    assert instance.nos_client_enabled is False

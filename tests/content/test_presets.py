@@ -71,6 +71,11 @@ def test_optimized_preset_installs_the_pack_for_the_chosen_version(
     assert instance.version_id.startswith("fabric-loader-")
     assert (launcher.paths.instance_dir("toi-uu") / "mods" / "sodium.jar").is_file()
     assert server_state.received_path("/modrinth/projects").startswith("/modrinth/projects?ids=")
+    # Nos Client đi cùng Fabulously Optimized mặc định, và việc này phải GHI xuống đĩa —
+    # không chỉ trả về đối tượng trong bộ nhớ.
+    assert instance.nos_client_enabled is True
+    reloaded = launcher.list_instances()
+    assert next(i for i in reloaded if i.instance_id == "toi-uu").nos_client_enabled is True
 
 
 def test_optimized_preset_refuses_a_version_the_pack_does_not_have(

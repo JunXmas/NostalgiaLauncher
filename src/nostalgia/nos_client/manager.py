@@ -21,9 +21,11 @@ from nostalgia.storage.paths import DataPaths
 
 logger = logging.getLogger(__name__)
 
-# Tổ chức mod mà launcher quản lý: GitHub owner/repo cho API Releases.
+# Tổ chức mod mà launcher quản lý: GitHub owner/repo cho API Releases. Launcher luôn hỏi
+# "latest" lúc chơi (không đóng cứng phiên bản vào launcher) — bản chơi cũ cũng lấy được mod
+# mới nhất mà không phải tự cập nhật cả launcher.
 GITHUB_REPO_OWNER = "JunXmas"
-GITHUB_REPO_NAME = "NostalgiaLauncher-legacy"
+GITHUB_REPO_NAME = "nos-client"
 GITHUB_API_BASE = "https://api.github.com"
 MOD_JAR_PREFIX = "nos-client-"
 MOD_CACHE_DIR_NAME = "nos-client"
