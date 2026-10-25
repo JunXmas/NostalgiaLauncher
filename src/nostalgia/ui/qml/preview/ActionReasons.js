@@ -8,6 +8,23 @@ function writing(launcher, contentBusy, installing) {
     return "";
 }
 
+// Cài THÊM nội dung: không cần đóng game (file mới có hiệu lực ở lần mở sau) và không cần đợi
+// lượt cài khác — bấm tiếp là xếp hàng. Chỉ sao lưu/khôi phục mới phải chờ.
+function adding(launcher) {
+    if (launcher.storageBusy) return "Đang xử lý dữ liệu bản chơi. Hãy chờ hoàn tất.";
+    if (launcher.busy && !launcher.gameRunning) return "Launcher đang chuẩn bị bản chơi. Hãy chờ hoàn tất.";
+    return "";
+}
+
+// Gỡ, tắt, cập nhật nội dung đã cài: chỉ chặn khi đó là bản chơi đang chạy (jar đang được nạp).
+function managing(launcher, contentBusy, inRunningGame) {
+    if (inRunningGame) return "Đóng Minecraft trước khi gỡ hoặc đổi nội dung của bản chơi đang chạy.";
+    if (launcher.storageBusy) return "Đang xử lý dữ liệu bản chơi. Hãy chờ hoàn tất.";
+    if (launcher.busy && !launcher.gameRunning) return "Launcher đang thực hiện thao tác khác. Hãy chờ hoàn tất.";
+    if (contentBusy) return "Đang tải hoặc cài nội dung. Hãy chờ hoàn tất.";
+    return "";
+}
+
 function playing(launcher) {
     if (!launcher.activeAccountId) return "Thêm tài khoản Minecraft ở mục Tài khoản để chơi.";
     if (launcher.gameRunning) return "Minecraft đang chạy. Đóng game trước khi mở bản chơi khác.";
@@ -44,7 +61,8 @@ function joining(launcher, room, sync, instanceId, waitingPack, needsSync) {
 function installing(launcher, contentBusy, project, picker, success) {
     if (success) return "Phiên bản đã được cài thành công.";
     if (project.details.loading) return "Đang tải thông tin và các phiên bản…";
-    var reason = writing(launcher, contentBusy, project.installing);
+    if (project.installing) return "Đang cài phiên bản đã chọn. Hãy chờ hoàn tất.";
+    var reason = adding(launcher);
     if (reason) return reason;
     if (!picker.isPack && !picker.targets.length) return "Chưa có bản chơi. Tạo bản chơi phù hợp ở phía trên.";
     if (!picker.isPack && !picker.selectedTarget) return "Chọn bản chơi muốn cài vào ở ô Cài vào bản chơi.";

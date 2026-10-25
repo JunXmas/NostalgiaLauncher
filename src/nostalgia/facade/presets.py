@@ -6,7 +6,7 @@ dựa trên FO, kèm các mod nội dung phù hợp với server Junbob Mine.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from nostalgia.content import modrinth
 from nostalgia.content.builtin_pack import (
@@ -19,6 +19,7 @@ from nostalgia.content.mrpack import ALLOWED_HOSTS, read_index
 from nostalgia.errors import ContentError
 from nostalgia.facade.preset_updates import PresetUpdateOperations
 from nostalgia.instance.model import Instance
+from nostalgia.instance.store import save_instance
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 
@@ -27,6 +28,9 @@ PRESET_TITLES: dict[str, str] = {
     "optimized": "Fabulously Optimized",
     "forgotten-worlds": "Forgotten Worlds",
 }
+# Preset nào mặc định bật Nos Client khi tạo bản chơi. Chỉ Optimized theo yêu cầu hiện tại —
+# Forgotten Worlds giữ nguyên hành vi cũ, không tự bật kèm.
+PRESETS_WITH_NOS_CLIENT: frozenset[str] = frozenset({"optimized"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +80,7 @@ class PresetOperations(PresetUpdateOperations):
             save_builtin_receipt(
                 self.paths.instance_dir(instance_id), bundle_receipt(pack_path, index)
             )
-            return instance
+            return self._apply_nos_client_default(preset, instance)
         project_id = _project_id(preset)
         with self.make_http_client() as http_client:
             projects = modrinth.fetch_projects(
@@ -90,7 +94,7 @@ class PresetOperations(PresetUpdateOperations):
         if not any(game_version in v.game_versions for v in versions):
             message = f"{PRESET_TITLES[preset]} chưa có bản cho Minecraft {game_version}"
             raise ContentError(message)
-        return self.install_modpack(
+        instance = self.install_modpack(
             project,
             instance_id,
             display_name,
@@ -100,6 +104,15 @@ class PresetOperations(PresetUpdateOperations):
             on_progress=on_progress,
             cancel_token=cancel_token,
         )
+        return self._apply_nos_client_default(preset, instance)
+
+    def _apply_nos_client_default(self, preset: str, instance: Instance) -> Instance:
+        """Bật sẵn Nos Client cho preset nào cần (xem PRESETS_WITH_NOS_CLIENT)."""
+        if preset not in PRESETS_WITH_NOS_CLIENT:
+            return instance
+        updated = replace(instance, nos_client_enabled=True)
+        save_instance(self.paths, updated)
+        return updated
 
 
 def _project_id(preset: str) -> str:

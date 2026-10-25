@@ -22,6 +22,8 @@ from nostalgia.version.rules import Rule
     [
         ("fabric", "1.20.1", "net.fabricmc:fabric-loader:0.16.9", "0.16.9"),
         ("quilt", "1.20.1", "org.quiltmc:quilt-loader:0.26.0", "0.26.0"),
+        # Profile thật của meta.legacyfabric.net: loader vẫn là net.fabricmc:fabric-loader.
+        ("legacy_fabric", "1.12.2", "net.fabricmc:fabric-loader:0.20.1", "0.20.1"),
         ("forge", "1.20.1", "net.minecraftforge:fmlloader:1.20.1-47.4.23", "47.4.23"),
         ("forge", "1.21.1", "net.minecraftforge:fmlloader:1.21.1-52.1.1", "52.1.1"),
         ("forge", "1.20.1", "net.minecraftforge:forge:1.20.1-47.4.23:universal", "47.4.23"),

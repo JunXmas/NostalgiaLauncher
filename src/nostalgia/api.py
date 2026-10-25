@@ -52,6 +52,7 @@ from nostalgia.instance.server_list import RecentServer
 from nostalgia.instance.world import RecentWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
+from nostalgia.modcheck.local_fix import LocalFix, suggest_local_fixes
 from nostalgia.modcheck.model import ModScan
 from nostalgia.model.local_mod import LocalModImport
 from nostalgia.modrepair.gateway import HttpRepairGateway
@@ -160,6 +161,7 @@ __all__ = [
     "LanLogReader",
     "Launcher",
     "LauncherRelease",
+    "LocalFix",
     "LocalModImport",
     "ManualPaymentGateway",
     "ModScan",
@@ -206,4 +208,5 @@ __all__ = [
     "can_equip_cosmetic",
     "lan_port_from_output",
     "load_cosmetic_collection",
+    "suggest_local_fixes",
 ]

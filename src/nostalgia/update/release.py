@@ -71,7 +71,17 @@ def is_newer(candidate: str, current: str) -> bool:
         return padded_a > padded_b
     if bool(suffix_a) != bool(suffix_b):
         return not suffix_a  # bản chính mới hơn bản beta cùng số
-    return suffix_a > suffix_b
+    return _suffix_key(suffix_a) > _suffix_key(suffix_b)
+
+
+def _suffix_key(suffix: tuple[str, ...]) -> tuple[tuple[str, int], ...]:
+    """Hậu tố so theo từng mẩu (chữ, số): "rc39" → ("rc", 39). So chuỗi thì "rc4" > "rc39" và
+    "rc9" > "rc10" — người đang ở rc4 cứ được báo "đã mới nhất" mãi."""
+    keys = []
+    for part in suffix:
+        match = re.fullmatch(r"([A-Za-z]*)(\d*)", part)
+        keys.append((match.group(1), int(match.group(2) or 0)) if match else (part, 0))
+    return tuple(keys)
 
 
 def parse_release(document: JsonValue) -> LauncherRelease | None:

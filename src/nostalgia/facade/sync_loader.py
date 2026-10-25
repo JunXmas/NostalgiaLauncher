@@ -19,6 +19,8 @@ def resolve_sync_loader(
         return ""
     coordinate_names = {
         "fabric": (("net.fabricmc", "fabric-loader"),),
+        # Legacy Fabric dùng nguyên loader của FabricMC; chỉ intermediary/LWJGL là của họ.
+        "legacy_fabric": (("net.fabricmc", "fabric-loader"),),
         "quilt": (("org.quiltmc", "quilt-loader"),),
         # Forge mới chỉ khai fmlloader trong version.json; forge universal nằm ngoài
         # danh sách thư viện client. Cả hai tọa độ mang cùng phiên bản Forge.

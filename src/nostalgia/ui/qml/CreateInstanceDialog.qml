@@ -34,6 +34,7 @@ Item {
         { key: "vanilla",  label: "Vanilla",  icon: "assets/loaders/vanilla.png" },
         { key: "fabric",   label: "Fabric",   icon: "assets/loaders/fabric.png" },
         { key: "quilt",    label: "Quilt",    icon: "assets/loaders/quilt.png" },
+        { key: "legacy_fabric", label: "Legacy Fabric", icon: "assets/loaders/legacy_fabric.png" },
         { key: "forge",    label: "Forge",    icon: "assets/loaders/forge.png" },
         { key: "neoforge", label: "NeoForge", icon: "assets/loaders/neoforge.png" }
     ]

@@ -9,9 +9,9 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn
 
 
-def load_game_log_path(launcher: Launcher, instance_id: str) -> Path:
+def load_game_dir(launcher: Launcher, instance_id: str) -> Path:
     selected = next(i for i in launcher.list_instances() if i.instance_id == instance_id)
-    return launcher.instance_game_dir(selected) / "logs" / "latest.log"
+    return launcher.instance_game_dir(selected).resolve()
 
 
 def prepare_game(

@@ -7,7 +7,7 @@ Item {
     objectName: "modernInstalledContent"
     property string kind: "mod"
     property bool chooseInstance: true
-    readonly property string blockedReason: !contentBridge.instanceId ? Legacy.Tr.phrase("Chọn bản chơi để quản lý nội dung đã cài.") : Legacy.Tr.phrase(Reasons.writing(bridge, contentBridge.busy, false))
+    readonly property string blockedReason: !contentBridge.instanceId ? Legacy.Tr.phrase("Chọn bản chơi để quản lý nội dung đã cài.") : Legacy.Tr.phrase(Reasons.managing(bridge, contentBridge.busy, contentBridge.inRunningGame))
     readonly property bool writable: !blockedReason
     function refresh() {
         contentBridge.setKind(kind);

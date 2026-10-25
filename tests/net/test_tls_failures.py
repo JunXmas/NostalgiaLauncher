@@ -98,7 +98,7 @@ def test_invalid_tls_blocks_ely_credentials_before_any_http_request(
         assert "password-must-not-be-sent" not in str(caught.value)
         assert state.request_count(path) == 0
         assert state.received_body(path) == b""
-        assert http_client._connections == []
+        assert len(http_client._connections) == 0
         assert http_client._tls_context is context
         assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
         if fault in ("expired", "future"):

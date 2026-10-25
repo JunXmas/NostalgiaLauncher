@@ -36,7 +36,8 @@ Controls.Popup {
             anchors.top: header.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: actions.top; anchors.bottomMargin: 18
             spacing: 14
             model: {
-                var rows = (root.details.findings || []).map(function(f, i) { return {finding: f, position: i}; });
+                var rows = (root.details.localFixes || []).map(function(f, i) { return {fix: f, position: i}; });
+                (root.details.findings || []).forEach(function(f, i) { rows.push({finding: f, position: i}); });
                 if ((root.details.changes || []).length) rows.push({heading: true});
                 (root.details.recommendations || []).forEach(function(r) { rows.push({recommendation: r}); });
                 (root.details.unresolved || []).forEach(function(u) { rows.push({unresolved: u}); });
@@ -53,15 +54,39 @@ Controls.Popup {
                 required property var modelData
                 width: results.width - 8
                 height: item ? item.height : 0
-                sourceComponent: modelData.finding ? findingCard : modelData.recommendation ? recommendationCard : modelData.heading ? sectionHeading : unresolvedText
+                sourceComponent: modelData.fix ? fixCard : modelData.finding ? findingCard : modelData.recommendation ? recommendationCard : modelData.heading ? sectionHeading : unresolvedText
+                // Sửa tại chỗ, miễn phí: launcher tự làm được, không cần dịch vụ Plus.
+                Component {
+                    id: fixCard
+                    Glass {
+                        objectName: "modLocalFix-" + repairRow.modelData.position
+                        width: repairRow.width; padding: 14; height: Math.max(fixTitle.implicitHeight + fixReason.implicitHeight + 5, 40) + 28
+                        border.color: GlassTheme.accent
+                        Column { id: fixText; width: parent.width - fixButton.width - 12; spacing: 5
+                            PaymentText { id: fixTitle; width: parent.width; font.weight: Font.DemiBold
+                                text: repairRow.modelData.fix.kind === "loader" ? Legacy.Tr.format("Nâng loader (%1)", [repairRow.modelData.fix.target])
+                                    : repairRow.modelData.fix.kind === "disable" ? Legacy.Tr.format("Tắt %1", [repairRow.modelData.fix.target])
+                                    : Legacy.Tr.format("Cài %1", [repairRow.modelData.fix.target]) }
+                            PaymentText { id: fixReason; width: parent.width; text: Legacy.Tr.message(repairRow.modelData.fix.reason); color: GlassTheme.muted }
+                        }
+                        Button { id: fixButton; objectName: "modLocalFixApply-" + repairRow.modelData.position
+                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                            label: Legacy.Tr.phrase("Sửa ngay"); primary: true
+                            disabledReason: bridge.gameRunning ? Legacy.Tr.phrase("Đóng Minecraft trước khi sửa bộ mod.") : ""
+                            clickable: !modRepairBridge.busy && !disabledReason
+                            onClicked: modRepairBridge.applyLocalFix(repairRow.modelData.position) }
+                    }
+                }
                 Component {
                     id: findingCard
                     Glass {
                         objectName: "modLogFinding-" + repairRow.modelData.position
-                        width: repairRow.width; padding: 14; height: finding.implicitHeight + 28
+                        // Cộng thẳng hai dòng: chiều cao Column chưa cập nhật lúc ListView xếp hàng nên
+                        // thẻ từng bị cắt nửa, dòng lý do tràn ra ngoài khung.
+                        width: repairRow.width; padding: 14; height: findingFile.implicitHeight + findingReason.implicitHeight + 5 + 28
                         Column { id: finding; width: parent.width; spacing: 5
-                            PaymentText { width: parent.width; text: repairRow.modelData.finding.file; font.weight: Font.DemiBold }
-                            PaymentText { width: parent.width; text: Legacy.Tr.message(repairRow.modelData.finding.reason); color: repairRow.modelData.finding.severity === "error" ? GlassTheme.danger : GlassTheme.muted }
+                            PaymentText { id: findingFile; width: parent.width; text: repairRow.modelData.finding.file; font.weight: Font.DemiBold }
+                            PaymentText { id: findingReason; width: parent.width; text: Legacy.Tr.message(repairRow.modelData.finding.reason); color: repairRow.modelData.finding.severity === "error" ? GlassTheme.danger : GlassTheme.muted }
                         }
                     }
                 }
@@ -78,6 +103,10 @@ Controls.Popup {
             spacing: 8
             Button { objectName: "modRescan"; label: Legacy.Tr.phrase("Đọc lại log"); clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }
             Button { objectName: "modPlan"; label: Legacy.Tr.phrase("Tìm bản phù hợp · Plus"); visible: plusFeaturesEnabled && root.details.canPlan; clickable: !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
+            // Bản cũ ẩn nút im lặng khi không có Plus: người dùng tưởng tính năng hỏng. Nói rõ.
+            PaymentText { objectName: "modPlanUnavailable"; visible: !root.details.canPlan && root.details.scanned && !(root.details.localFixes || []).length && (root.details.findings || []).length > 0
+                width: parent.width; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote
+                text: Legacy.Tr.phrase("Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.") }
             Button { objectName: "modApply"; label: Legacy.Tr.phrase("Áp dụng tất cả & sao lưu"); primary: true; visible: root.details.canApply; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: confirmDialog.ask(Legacy.Tr.phrase("Áp phương án sửa mod?"),Legacy.Tr.phrase("Các mod trong phương án sẽ được thêm/tắt. Giữ bản trước sửa để hoàn tác."),function(){modRepairBridge.apply();}) }
             Button { objectName: "modUndo"; label: Legacy.Tr.phrase("Hoàn tác"); visible: root.details.canUndo; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.undo() }
         }

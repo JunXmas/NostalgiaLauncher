@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from nostalgia.api import ModScan, RepairChange, RepairPlan
+from nostalgia.api import ModScan, RepairChange, RepairPlan, suggest_local_fixes
 from nostalgia.errors import ContentError
 
 
@@ -67,3 +67,40 @@ def check_chosen_group(shown: RepairPlan, fresh: RepairPlan, selection: str) -> 
         raise ContentError(
             "Phương án đã thay đổi hoặc còn lỗi chưa xác minh. Hãy lập lại phương án."
         )
+
+
+def scan_details(scan: ModScan | None) -> dict[str, Any]:
+    """Phần của `ModRepairBridge.details` suy ra từ lần quét: lỗi log, nguồn, sửa tại chỗ."""
+    if scan is None:
+        return {
+            "findings": [],
+            "scanned": False,
+            "fileCount": 0,
+            "gameVersion": "",
+            "loader": "",
+            "logSources": [],
+            "localFixes": [],
+        }
+    return {
+        "findings": [
+            {
+                "code": f.code,
+                "file": f.file_name,
+                "reason": f.reason,
+                "source": f.source,
+                "severity": f.severity,
+            }
+            for f in scan.findings
+            if f.source == "log"
+        ],
+        "scanned": True,
+        "fileCount": len(scan.archives),
+        "gameVersion": scan.game_version,
+        "loader": scan.loader_kind,
+        "logSources": sorted({diagnostic.source for diagnostic in scan.diagnostics}),
+        # Sửa tại chỗ, miễn phí: nâng loader / tắt jar hỏng / cài phụ thuộc thiếu.
+        "localFixes": [
+            {"kind": fix.fix_kind, "target": fix.target, "reason": fix.reason}
+            for fix in suggest_local_fixes(scan)
+        ],
+    }

@@ -21,9 +21,11 @@ INSTALLER_STAGE = "chạy installer"
 
 
 def _fabric_like(endpoints: Endpoints, loader_kind: LoaderKind) -> dict[str, str]:
-    """Quilt đi qua đúng mã của Fabric, chỉ đổi địa chỉ meta và nhãn."""
+    """Quilt và Legacy Fabric đi qua đúng mã của Fabric, chỉ đổi địa chỉ meta và nhãn."""
     if loader_kind == "quilt":
         return {"meta_url": endpoints.quilt_meta, "loader_label": "Quilt"}
+    if loader_kind == "legacy_fabric":
+        return {"meta_url": endpoints.legacy_fabric_meta, "loader_label": "Legacy Fabric"}
     return {}
 
 
@@ -58,7 +60,7 @@ class LoaderOperations(VersionOperations):
                 http_client, loader_kind, game_version, cancel_token
             )
             chosen = self._pick(candidates, loader_version, loader_kind, game_version)
-            if loader_kind in ("fabric", "quilt"):
+            if loader_kind in ("fabric", "quilt", "legacy_fabric"):
                 version_id = install_fabric_profile(
                     http_client,
                     self.paths,
@@ -98,7 +100,7 @@ class LoaderOperations(VersionOperations):
         game_version: str,
         cancel_token: CancelToken | None,
     ) -> tuple[LoaderVersion, ...]:
-        if loader_kind in ("fabric", "quilt"):
+        if loader_kind in ("fabric", "quilt", "legacy_fabric"):
             return fetch_fabric_loader_versions(
                 http_client,
                 game_version,

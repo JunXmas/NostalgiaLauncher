@@ -4303,5 +4303,18 @@
   "p:SERVER CỦA CỘNG ĐỒNG": "COMMUNITY SERVER",
   "p:Sinh tồn công nghiệp với Create, sinh vật Naturalist, chiếm lãnh thổ buổi tối. Minecraft 1.21.11, Việt hoá sẵn.": "Industrial survival with Create, Naturalist wildlife and evening territory raids. Minecraft 1.21.11, Vietnamese ready.",
   "p:Tạo bản chơi server  +": "Create server instance  +",
-  "p:Vào server  →": "Join server  →"
+  "p:Vào server  →": "Join server  →",
+  "p:Đang cài %1 mục — bấm Cài ở thẻ khác để thêm vào hàng đợi.": "Installing %1 item(s) — press Install on another card to add it to the queue.",
+  "p:Minecraft đang chạy: nội dung cài thêm có hiệu lực ở lần mở game sau.": "Minecraft is running: new content takes effect next time you start the game.",
+  "p:Trong hàng đợi…": "Queued…",
+  "p:Đang cài hoặc đang chờ tới lượt trong hàng đợi.": "Installing, or waiting for its turn in the queue.",
+  "p:Launcher đang chuẩn bị bản chơi. Hãy chờ hoàn tất.": "The launcher is preparing an instance. Please wait until it finishes.",
+  "p:Đóng Minecraft trước khi gỡ hoặc đổi nội dung của bản chơi đang chạy.": "Close Minecraft before removing or changing content of the running instance.",
+  "p:Đang cài phiên bản đã chọn. Hãy chờ hoàn tất.": "Installing the selected version. Please wait until it finishes.",
+  "p:Nâng loader (%1)": "Upgrade loader (%1)",
+  "p:Tắt %1": "Disable %1",
+  "p:Cài %1": "Install %1",
+  "p:Sửa ngay": "Fix now",
+  "p:Đóng Minecraft trước khi sửa bộ mod.": "Close Minecraft before fixing mods.",
+  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "No automatic fix for this error yet. Finding replacements needs Nostalgia+."
 }

@@ -3,6 +3,21 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc40 — 2026-10-25
+
+- Legacy Fabric: tạo bản chơi Minecraft ≤ 1.13.2 bằng Legacy Fabric; quét mod, đồng bộ
+  phòng và xuất mrpack nhận đúng loader.
+- Cài mod/gói tài nguyên/shader khi Minecraft đang chạy (có hiệu lực ở lần mở sau); bấm
+  Cài ở nhiều thẻ là xếp hàng, phụ thuộc chung chỉ tải một lần. Chỉ gỡ/tắt nội dung của
+  đúng bản chơi đang chạy mới phải đợi.
+- Sửa lỗi mod tại chỗ, miễn phí: nâng loader khi mod cần bản mới hơn, tắt jar hỏng hoặc
+  jar làm crash, cài phụ thuộc còn thiếu.
+- Sửa: Thư viện CurseForge/Modrinth ngừng hoạt động sau khi để launcher mở lâu (rò kết
+  nối mạng).
+- Sửa: kiểm tra cập nhật bỏ sót bản mới (so `rc4` lớn hơn `rc39`).
+- Sửa: mod có ký tự tab trong metadata (BetterGrassify) bị báo nhầm là hỏng.
+- Optimized tự bật Nos Client 0.2.0; launcher tải bản mới nhất từ JunXmas/nos-client.
+
 ## 1.2.0rc39 — 2026-10-17
 
 - Trang chủ (giao diện hiện đại): ô lớn đầu trang thành băng trượt (nút ‹ ›, chấm);
