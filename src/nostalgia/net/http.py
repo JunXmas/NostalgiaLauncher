@@ -15,6 +15,7 @@ from __future__ import annotations
 import http.client
 import ssl
 import threading
+import weakref
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit
@@ -82,8 +83,14 @@ class HttpClient:
         self._timeout_seconds = timeout_seconds
         self._tls_context = tls_context or default_tls_context()
         self._local = threading.local()
-        # Giữ danh sách mọi kết nối đã mở để `close()` đóng được cả kết nối của luồng khác.
-        self._connections: list[http.client.HTTPSConnection] = []
+        # Mọi kết nối đã mở, để `close()` đóng được cả kết nối của luồng khác. Tham chiếu YẾU:
+        # mỗi job nền chạy trên một luồng mới, luồng chết thì `threading.local` của nó buông kết
+        # nối. Giữ tham chiếu mạnh ở đây (bản cũ là list) thì socket không bao giờ đóng — các
+        # vòng poll 5-15 giây rò dần tới cạn file descriptor sau vài giờ treo launcher, và từ
+        # đó mọi request (cả Thư viện) đều hỏng với Errno 16/24.
+        # ponytail: dựa vào CPython đóng socket khi kết nối bị thu gom; cần chủ động hơn thì
+        # đóng ở cuối mỗi job nền.
+        self._connections: weakref.WeakSet[http.client.HTTPSConnection] = weakref.WeakSet()
         self._lock = threading.Lock()
 
     def send(
@@ -280,7 +287,7 @@ class HttpClient:
         )
         cached[host] = connection
         with self._lock:
-            self._connections.append(connection)
+            self._connections.add(connection)
         return connection, False
 
     def _discard(self, host: str) -> None:
@@ -289,8 +296,7 @@ class HttpClient:
         if (connection := cached.pop(host, None)) is None:
             return
         with self._lock:
-            if connection in self._connections:
-                self._connections.remove(connection)
+            self._connections.discard(connection)
         connection.close()
 
 

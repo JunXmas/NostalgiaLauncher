@@ -30,6 +30,17 @@ def test_versions_compare_numerically_and_prereleases_rank_below() -> None:
     assert is_newer("lạ", "0.1.0") is False, "không đọc được thì không bao giờ tự cài"
 
 
+def test_release_candidate_numbers_compare_as_numbers() -> None:
+    """Thẻ thật của dự án là `1.2.0rc39`. So chuỗi thì rc4 > rc39 và rc9 > rc10: người ở rc4-rc9
+    bị báo "đã mới nhất" mãi, không bao giờ thấy bản mới."""
+    assert is_newer("1.2.0rc39", "1.2.0rc4") is True
+    assert is_newer("1.2.0rc10", "1.2.0rc9") is True
+    assert is_newer("1.2.0rc100", "1.2.0rc99") is True
+    assert is_newer("1.2.0rc4", "1.2.0rc39") is False
+    assert is_newer("1.2.0", "1.2.0rc39") is True
+    assert is_newer("1.3.0-beta.10", "1.3.0-beta.9") is True
+
+
 def test_github_release_json_becomes_a_release_with_assets() -> None:
     document: JsonValue = {
         "tag_name": "v0.2.0",
