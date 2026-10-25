@@ -12,6 +12,7 @@ from nostalgia.modcheck.inventory import client_descriptors, version_choices
 from nostalgia.modcheck.log_patterns import parse_log
 from nostalgia.modcheck.model import ModFinding, ModScan
 from nostalgia.modcheck.predicate import matches_any
+from nostalgia.modloader.model import loader_mod_id
 
 
 def recent_logs(game_dir: Path) -> tuple[tuple[Path, str], ...]:
@@ -42,13 +43,7 @@ def with_game_logs(scan: ModScan, game_dir: Path) -> ModScan:
     }
     versions = version_choices(scan.archives)
     versions.update(minecraft=(scan.game_version,), java=(str(scan.java_major),))
-    versions[
-        "fabricloader"
-        if scan.loader_kind == "fabric"
-        else "quilt_loader"
-        if scan.loader_kind == "quilt"
-        else scan.loader_kind
-    ] = (scan.loader_version,)
+    versions[loader_mod_id(scan.loader_kind)] = (scan.loader_version,)
     diagnostics = []
     for path, source in recent_logs(game_dir):
         try:

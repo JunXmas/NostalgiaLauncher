@@ -159,3 +159,12 @@ def test_neoforge_1201_reads_legacy_forge_metadata_and_loader_id(tmp_path: Path)
     scan = build_scan(scan_archives(tmp_path, "neoforge"), "1.20.1", "neoforge", "47.1.106", 17)
     assert not scan.findings
     assert scan.archives[0].descriptors[0].loader_kind == "neoforge"
+
+
+def test_legacy_fabric_accepts_fabric_mods_and_satisfies_fabricloader(tmp_path: Path) -> None:
+    # Mod Fabric cho 1.12.2 chỉ khai "fabricloader"; Legacy Fabric chạy đúng loader đó.
+    write_fabric(tmp_path / "mods/old.jar", "old", depends={"fabricloader": ">=0.19"})
+    scan = build_scan(scan_archives(tmp_path), "1.12.2", "legacy_fabric", "0.20.1", 8)
+    assert not scan.findings
+    scan = build_scan(scan_archives(tmp_path), "1.12.2", "legacy_fabric", "0.18.0", 8)
+    assert {finding.code for finding in scan.findings} == {"version"}

@@ -7,7 +7,12 @@ from typing import Literal
 
 LoaderKind = Literal["vanilla", "fabric", "quilt", "legacy_fabric", "forge", "neoforge"]
 LOADER_KINDS: tuple[LoaderKind, ...] = (
-    "vanilla", "fabric", "quilt", "legacy_fabric", "forge", "neoforge",
+    "vanilla",
+    "fabric",
+    "quilt",
+    "legacy_fabric",
+    "forge",
+    "neoforge",
 )
 
 # Quilt chạy được mod Fabric; khi tìm mod cho bản Quilt thì nhận cả hai. Legacy Fabric tương
@@ -21,6 +26,19 @@ COMPATIBLE_LOADERS: dict[LoaderKind, tuple[str, ...]] = {
     "forge": ("forge",),
     "neoforge": ("neoforge",),
 }
+
+# Mã mod mà loader tự khai trong `fabric.mod.json`/`quilt.mod.json` — mod khai phụ thuộc vào
+# đúng mã này. Legacy Fabric chạy chính `net.fabricmc:fabric-loader`, nên cùng mã với Fabric.
+LOADER_MOD_IDS: dict[str, str] = {
+    "fabric": "fabricloader",
+    "legacy_fabric": "fabricloader",
+    "quilt": "quilt_loader",
+}
+
+
+def loader_mod_id(loader_kind: str) -> str:
+    return LOADER_MOD_IDS.get(loader_kind, loader_kind)
+
 
 # Minecraft 1.14.0 là bản Fabric Loader chính thức đầu tiên hỗ trợ; Legacy Fabric chỉ phủ
 # những bản TRƯỚC đó. Hai vùng không chồng nhau nên so sánh đơn giản là đủ, không cần một bộ

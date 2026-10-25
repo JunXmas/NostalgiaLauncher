@@ -88,6 +88,9 @@ def _write_manifest(
         if environment.loader_kind != "vanilla":
             dependency_key = {
                 "fabric": "fabric-loader",
+                # mrpack chưa có khoá riêng cho Legacy Fabric; Modrinth App/Prism đọc
+                # fabric-loader + bản Minecraft cũ là dựng đúng.
+                "legacy_fabric": "fabric-loader",
                 "quilt": "quilt-loader",
                 "forge": "forge",
                 "neoforge": "neoforge",

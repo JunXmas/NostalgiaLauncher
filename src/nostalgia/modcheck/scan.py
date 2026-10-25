@@ -5,6 +5,7 @@ from __future__ import annotations
 from nostalgia.modcheck.inventory import client_descriptors, version_choices
 from nostalgia.modcheck.model import ModArchive, ModFinding, ModScan
 from nostalgia.modcheck.predicate import matches_any
+from nostalgia.modloader.model import COMPATIBLE_LOADERS, loader_mod_id
 
 
 def build_scan(
@@ -20,15 +21,15 @@ def build_scan(
         {
             "minecraft": (game_version,),
             "java": (str(java_major),),
-            "fabricloader"
-            if loader_kind == "fabric"
-            else "quilt_loader"
-            if loader_kind == "quilt"
-            else loader_kind: (loader_version,),
+            loader_mod_id(loader_kind): (loader_version,),
         }
     )
     if loader_kind == "neoforge" and game_version == "1.20.1" and loader_version.startswith("47."):
         versions["forge"] = (loader_version,)
+    compatible = next(
+        (names for candidate, names in COMPATIBLE_LOADERS.items() if candidate == loader_kind),
+        (loader_kind,),
+    )
     reserved = {"minecraft", "java", "fabricloader", "forge", "neoforge", "quilt_loader"}
     owners: dict[str, str] = {}
     for archive in archives:
@@ -58,9 +59,7 @@ def build_scan(
                         )
                     )
                 owners[mod_id] = archive.file_name
-            if descriptor.loader_kind != loader_kind and not (
-                loader_kind == "quilt" and descriptor.loader_kind == "fabric"
-            ):
+            if descriptor.loader_kind not in compatible:
                 findings.append(
                     ModFinding(
                         "loader",

@@ -57,12 +57,12 @@ def test_optimized_is_what_the_dialog_opens_on(tmp_path: Path) -> None:
 
 
 def test_every_modloader_stays_on_screen(tmp_path: Path) -> None:
-    """Fabric/Quilt/Forge/NeoForge/Vanilla phải hiện hết. Giấu một cái vào "nâng cao" là
+    """Fabric/Quilt/Legacy Fabric/Forge/NeoForge/Vanilla phải hiện hết. Giấu một cái vào "nâng cao" là
     người chơi mod tưởng launcher không hỗ trợ nó."""
     dialog = open_create_dialog(tmp_path)
 
     keys = {choice["key"] for choice in dialog.property("gridChoices").toVariant()}
-    assert keys == {"vanilla", "fabric", "quilt", "forge", "neoforge"}
+    assert keys == {"vanilla", "fabric", "quilt", "legacy_fabric", "forge", "neoforge"}
     # Chỉ RAM và thư mục được gập lại, và gập sẵn khi mở.
     assert dialog.property("advancedOpen") is False
 
