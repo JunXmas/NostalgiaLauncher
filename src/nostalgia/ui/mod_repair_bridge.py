@@ -7,10 +7,17 @@ from typing import Any
 
 from PySide6.QtCore import Property, Signal, Slot
 
-from nostalgia.api import Launcher, ModScan, RepairGateway, RepairPlan, RepairScan
+from nostalgia.api import (
+    Launcher,
+    ModScan,
+    RepairGateway,
+    RepairPlan,
+    RepairScan,
+    suggest_local_fixes,
+)
 from nostalgia.errors import NostalgiaError
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.mod_repair_cards import check_chosen_group, repair_cards
+from nostalgia.ui.mod_repair_cards import check_chosen_group, repair_cards, scan_details
 from nostalgia.ui.mod_scan_summary import has_repair_evidence, scan_note
 from nostalgia.ui.worker import WorkerBridge
 
@@ -33,26 +40,7 @@ class ModRepairBridge(WorkerBridge):
         return {
             "instanceId": self._instance_id,
             "note": self._note,
-            "findings": [
-                {
-                    "code": finding.code,
-                    "file": finding.file_name,
-                    "reason": finding.reason,
-                    "source": finding.source,
-                    "severity": finding.severity,
-                }
-                for finding in self._scan.findings
-                if finding.source == "log"
-            ]
-            if self._scan
-            else [],
-            "scanned": self._scan is not None,
-            "fileCount": len(self._scan.archives) if self._scan else 0,
-            "gameVersion": self._scan.game_version if self._scan else "",
-            "loader": self._scan.loader_kind if self._scan else "",
-            "logSources": sorted({diagnostic.source for diagnostic in self._scan.diagnostics})
-            if self._scan
-            else [],
+            **scan_details(self._scan),
             "recommendations": repair_cards(self._plan, self._scan),
             "changes": [
                 {"operation": change.operation, "file": change.file_name, "reason": change.reason}
@@ -128,6 +116,13 @@ class ModRepairBridge(WorkerBridge):
 
         self._request("applied", replace_selected)
 
+    @Slot(int)
+    def applyLocalFix(self, index: int) -> None:
+        fixes = suggest_local_fixes(self._scan) if self._scan else ()
+        if 0 <= index < len(fixes) and not self.busy and not self._bridge.gameRunning:
+            fix, instance_id = fixes[index], self._instance_id
+            self._request("local", lambda: self._launcher.apply_local_fix(instance_id, fix))
+
     @Slot()
     def undo(self) -> None:
         if (
@@ -180,6 +175,13 @@ class ModRepairBridge(WorkerBridge):
                 self._receipt_id, self._plan, self._scan = payload, None, None
                 self._note = "Đã sửa và kiểm lại. Bản mod trước sửa được giữ để hoàn tác."
                 self._bridge.announce_instances_changed()
+            elif operation == "local" and isinstance(payload, str):
+                # Đã đổi bộ mod/loader: quét lại ngay để danh sách lỗi phản ánh trạng thái mới.
+                self._note, self._scan, self._plan = payload, None, None
+                self._bridge.announce_instances_changed()
+                self.changed.emit()
+                self.scan(self._instance_id)
+                return
             elif operation == "undone":
                 self._receipt_id, self._plan, self._scan = "", None, None
                 self._note = "Đã khôi phục bộ mod trước sửa."

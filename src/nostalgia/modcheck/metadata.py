@@ -18,7 +18,8 @@ def identifier(value: str) -> str:
 
 
 def parse_fabric(payload: bytes) -> tuple[ModDescriptor, ...]:
-    fields = as_mapping(json.loads(payload))
+    # strict=False: Fabric Loader chấp nhận tab/xuống dòng thô trong chuỗi (BetterGrassify có).
+    fields = as_mapping(json.loads(payload, strict=False))
     mod_id = identifier(as_string(fields.get("id")) or "")
     version_number = as_string(fields.get("version")) or ""
     dependencies = []

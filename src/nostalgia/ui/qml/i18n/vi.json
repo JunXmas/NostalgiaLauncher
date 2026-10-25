@@ -4310,5 +4310,11 @@
   "p:Đang cài hoặc đang chờ tới lượt trong hàng đợi.": "Đang cài hoặc đang chờ tới lượt trong hàng đợi.",
   "p:Launcher đang chuẩn bị bản chơi. Hãy chờ hoàn tất.": "Launcher đang chuẩn bị bản chơi. Hãy chờ hoàn tất.",
   "p:Đóng Minecraft trước khi gỡ hoặc đổi nội dung của bản chơi đang chạy.": "Đóng Minecraft trước khi gỡ hoặc đổi nội dung của bản chơi đang chạy.",
-  "p:Đang cài phiên bản đã chọn. Hãy chờ hoàn tất.": "Đang cài phiên bản đã chọn. Hãy chờ hoàn tất."
+  "p:Đang cài phiên bản đã chọn. Hãy chờ hoàn tất.": "Đang cài phiên bản đã chọn. Hãy chờ hoàn tất.",
+  "p:Nâng loader (%1)": "Nâng loader (%1)",
+  "p:Tắt %1": "Tắt %1",
+  "p:Cài %1": "Cài %1",
+  "p:Sửa ngay": "Sửa ngay",
+  "p:Đóng Minecraft trước khi sửa bộ mod.": "Đóng Minecraft trước khi sửa bộ mod.",
+  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+."
 }

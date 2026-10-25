@@ -52,7 +52,8 @@ def read_descriptors(
     fabric = read_member(archive, "fabric.mod.json")
     if fabric:
         descriptors = list(parse_fabric(fabric))
-        paths = [reference["file"] for reference in json.loads(fabric).get("jars", [])]
+        nested = json.loads(fabric, strict=False).get("jars", [])
+        paths = [reference["file"] for reference in nested]
         descriptors.extend(read_nested(archive, paths, budget, depth, "fabric"))
         return tuple(descriptors)
     for name, loader_kind in (
@@ -70,7 +71,9 @@ def read_forge_archive(
     descriptors = parse_forge(payload, read_member(archive, "META-INF/MANIFEST.MF"), loader_kind)
     jarjar = read_member(archive, "META-INF/jarjar/metadata.json")
     paths = (
-        [reference["path"] for reference in json.loads(jarjar).get("jars", [])] if jarjar else []
+        [reference["path"] for reference in json.loads(jarjar, strict=False).get("jars", [])]
+        if jarjar
+        else []
     )
     return descriptors + read_nested(archive, paths, budget, depth, loader_kind)
 
@@ -104,6 +107,9 @@ def read_nested(
     return tuple(descriptors)
 
 
+BROKEN_JAR = "JAR hỏng: "
+
+
 def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ...]:
     directory = game_dir / "mods"
     if directory.is_symlink():
@@ -125,11 +131,14 @@ def scan_archives(game_dir: Path, loader_kind: str = "") -> tuple[ModArchive, ..
             ):
                 raise ContentError("Không xác định được phiên bản mod.")
             archives.append(ModArchive(path.name, digest, descriptors, sha512=sha512))
+        except zipfile.BadZipFile as error:
+            # Tách riêng: jar hỏng thật (tải dở, ghi hỏng) thì nên tắt; metadata lạ/vượt giới hạn
+            # quét thì không — mod vẫn chạy bình thường trong game.
+            archives.append(ModArchive(path.name, digest, (), BROKEN_JAR + str(error), sha512))
         except (
             ValueError,
             KeyError,
             TypeError,
-            zipfile.BadZipFile,
             ContentError,
             UnicodeError,
         ) as error:
