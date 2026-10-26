@@ -52,6 +52,9 @@ def test_upload_succeeds_and_server_receives_the_bytes(
         )
 
     assert server_state.request_count(upload_path) == 1
+    # Mojang thật trả 405 METHOD_NOT_ALLOWED cho PUT (ảnh chụp lỗi của chủ dự án, 26/10/2026);
+    # upload skin là POST multipart theo tài liệu API.
+    assert server_state.received_method(upload_path) == "POST"
     assert server_state.received_header(upload_path, "Authorization") == "Bearer ve-hop-le"
     assert b"variant" in server_state.received_body(upload_path)
     assert b"slim" in server_state.received_body(upload_path)

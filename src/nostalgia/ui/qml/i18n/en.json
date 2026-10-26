@@ -4316,5 +4316,8 @@
   "p:Cài %1": "Install %1",
   "p:Sửa ngay": "Fix now",
   "p:Đóng Minecraft trước khi sửa bộ mod.": "Close Minecraft before fixing mods.",
-  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "No automatic fix for this error yet. Finding replacements needs Nostalgia+."
+  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "No automatic fix for this error yet. Finding replacements needs Nostalgia+.",
+  "p:Bật Nos Client": "Enable Nos Client",
+  "p:Đóng Minecraft để bật hoặc tắt Nos Client.": "Close Minecraft to turn Nos Client on or off.",
+  "p:HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.": "HUD, minimap, waypoints, zoom… The launcher fetches the latest version every time you play. In game, press Right Shift for settings."
 }

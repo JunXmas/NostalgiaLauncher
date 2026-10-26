@@ -110,7 +110,6 @@ class InstanceBridge(WorkerBridge):
 
     def _describe(self, instance: Instance) -> dict[str, Any]:
         stats = self._launcher.describe_instance_stats(instance.instance_id)
-        nos_config = self._launcher.nos_client_config(instance)
         return {
             **builtin_pack_row(self._launcher, instance),
             "instanceId": instance.instance_id,
@@ -130,12 +129,9 @@ class InstanceBridge(WorkerBridge):
             "worldCount": stats.world_count,
             "modCount": stats.mod_count,
             "nosClientEnabled": instance.nos_client_enabled,
-            "nosCoords": nos_config.coords,
-            "nosDirection": nos_config.direction,
-            "nosDay": nos_config.day,
-            "nosFps": nos_config.fps,
-            "nosPing": nos_config.ping,
-            "nosCps": nos_config.cps,
+            # Bản Nos hiện tại chỉ dành cho Fabric 1.21.11; nơi khác không hiện công tắc.
+            "nosClientSupported": instance.version_id.startswith("fabric-loader-")
+            and instance.version_id.endswith("-1.21.11"),
         }
 
     @Property(str, notify=progressChanged)

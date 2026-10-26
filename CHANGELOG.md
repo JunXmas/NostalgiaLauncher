@@ -3,6 +3,14 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc41 — 2026-10-26
+
+- Sửa: lưu skin cho tài khoản Microsoft báo "Mojang rejected skin (HTTP 405)". Launcher gửi
+  sai phương thức (PUT); nay dùng POST đúng API Mojang.
+- Bật/tắt Nos Client ngay trong Quản lý bản chơi → Tổng quan (bản chơi Fabric 1.21.11).
+  Trước đây chỉ bản chơi Optimized tạo mới mới có Nos. Bật/tắt cũng dọn jar Nos chép tay
+  cũ để không bị hai bản cùng lúc.
+
 ## 1.2.0rc40 — 2026-10-25
 
 - Legacy Fabric: tạo bản chơi Minecraft ≤ 1.13.2 bằng Legacy Fabric; quét mod, đồng bộ

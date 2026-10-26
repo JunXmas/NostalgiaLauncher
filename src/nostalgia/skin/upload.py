@@ -1,6 +1,7 @@
 """Upload skin lên Mojang API (tài khoản Microsoft premium).
 
-Endpoint: PUT https://api.minecraftservices.com/minecraft/profile/skins
+Endpoint: POST https://api.minecraftservices.com/minecraft/profile/skins
+(PUT bị Mojang trả 405 METHOD_NOT_ALLOWED — đã gặp thật ở 1.2.0rc40)
 Authorization: Bearer <access_token>
 Content-Type: multipart/form-data
 Body: variant=classic|slim, file=<skin.png>
@@ -67,7 +68,7 @@ def upload_skin_to_mojang(
 
     try:
         response = http_client.send(
-            "PUT",
+            "POST",
             endpoints.skin_upload,
             headers={
                 "Authorization": f"Bearer {access_token}",
