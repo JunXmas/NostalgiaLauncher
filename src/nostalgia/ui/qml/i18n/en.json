@@ -4319,5 +4319,7 @@
   "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "No automatic fix for this error yet. Finding replacements needs Nostalgia+.",
   "p:Bật Nos Client": "Enable Nos Client",
   "p:Đóng Minecraft để bật hoặc tắt Nos Client.": "Close Minecraft to turn Nos Client on or off.",
-  "p:HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.": "HUD, minimap, waypoints, zoom… The launcher fetches the latest version every time you play. In game, press Right Shift for settings."
+  "p:HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.": "HUD, minimap, waypoints, zoom… The launcher fetches the latest version every time you play. In game, press Right Shift for settings.",
+  "p:Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).": "Fabric mods for Minecraft 1.13.2 and older (1.8.9, 1.12.2…).",
+  "p:Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric.": "Legacy Fabric is only for Minecraft 1.13.2 and older. For newer versions, pick Fabric."
 }

@@ -10,6 +10,8 @@ Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.
 - Bật/tắt Nos Client ngay trong Quản lý bản chơi → Tổng quan (bản chơi Fabric 1.21.11).
   Trước đây chỉ bản chơi Optimized tạo mới mới có Nos. Bật/tắt cũng dọn jar Nos chép tay
   cũ để không bị hai bản cùng lúc.
+- Sửa: Legacy Fabric chưa hiện trong hộp Tạo bản chơi (giao diện hiện đại). Nay có nút
+  Legacy Fabric; chọn Minecraft 1.14 trở lên thì báo dùng Fabric thay vì tạo bản hỏng.
 
 ## 1.2.0rc40 — 2026-10-25
 
