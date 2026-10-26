@@ -108,6 +108,31 @@ Controls.Popup {
                     Input { id: nameField; objectName: "instanceName"; width: parent.width; placeholder: Legacy.Tr.phrase("Tên hiển thị") }
                     PaymentText { text: Legacy.Tr.phrase("Nhóm"); color: GlassTheme.muted }
                     Input { id: groupField; width: parent.width; placeholder: Legacy.Tr.phrase("Sinh tồn, modpack, chơi cùng bạn…") }
+                    // Nos Client: launcher tự tải bản mới nhất và chép vào mods/ mỗi lần bấm Chơi.
+                    Glass {
+                        objectName: "instanceNosClient"
+                        visible: root.instance.nosClientSupported === true
+                        width: parent.width; height: nosText.implicitHeight + 32; padding: 16
+                        Row {
+                            width: parent.width; spacing: 14
+                            Legacy.Toggle {
+                                id: nosToggle
+                                objectName: "instanceNosClientToggle"
+                                anchors.verticalCenter: parent.verticalCenter
+                                checked: root.instance.nosClientEnabled === true
+                                enabled: !bridge.busy && !bridge.gameRunning
+                                accessibleLabel: Legacy.Tr.phrase("Bật Nos Client")
+                                onToggled: function(value) { checked = value; bridge.toggleNosClient(root.instance.instanceId, value); }
+                            }
+                            Column {
+                                id: nosText
+                                width: parent.width - nosToggle.width - 14; spacing: 4
+                                PaymentText { text: "Nos Client"; font.weight: Font.DemiBold }
+                                PaymentText { width: parent.width; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote; wrapMode: Text.WordWrap
+                                    text: bridge.gameRunning ? Legacy.Tr.phrase("Đóng Minecraft để bật hoặc tắt Nos Client.") : Legacy.Tr.phrase("HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.") }
+                            }
+                        }
+                    }
                     Row { spacing: 12; Legacy.Toggle { id: favorite; accessibleLabel: Legacy.Tr.phrase("Ghim bản chơi"); onToggled: function(value) { checked = value; } } PaymentText { text: Legacy.Tr.phrase("Ghim bản chơi lên đầu danh sách"); anchors.verticalCenter: parent.verticalCenter } }
                     Glass {
                         width: parent.width; height: folderNote.implicitHeight + 32; padding: 16

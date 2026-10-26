@@ -4316,5 +4316,8 @@
   "p:Cài %1": "Cài %1",
   "p:Sửa ngay": "Sửa ngay",
   "p:Đóng Minecraft trước khi sửa bộ mod.": "Đóng Minecraft trước khi sửa bộ mod.",
-  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+."
+  "p:Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.": "Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.",
+  "p:Bật Nos Client": "Bật Nos Client",
+  "p:Đóng Minecraft để bật hoặc tắt Nos Client.": "Đóng Minecraft để bật hoặc tắt Nos Client.",
+  "p:HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.": "HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt."
 }

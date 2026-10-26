@@ -125,6 +125,7 @@ module = [
     "test_content_bridge",
     "test_content_bridge_packs",
     "test_install_queue",
+    "test_nos_toggle_flow",
     "test_settings_bridge",
     "test_account_bridge",
     "test_account_cache",

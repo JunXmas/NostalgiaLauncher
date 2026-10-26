@@ -28,6 +28,9 @@ GITHUB_REPO_OWNER = "JunXmas"
 GITHUB_REPO_NAME = "nos-client"
 GITHUB_API_BASE = "https://api.github.com"
 MOD_JAR_PREFIX = "nos-client-"
+# Tên jar do Gradle đặt (`nosclient-X.Y.Z.jar`) — người chơi từng chép tay vào mods/. Cùng mod
+# id `nosclient`: để sót cạnh bản launcher inject là Fabric từ chối khởi động vì trùng mod.
+INSTANCE_JAR_PREFIXES = (MOD_JAR_PREFIX, "nosclient-")
 MOD_CACHE_DIR_NAME = "nos-client"
 
 
@@ -147,12 +150,7 @@ def inject_mod(cached_jar: Path, game_dir: Path) -> Path:
     """
     mods_dir = ensure_dir(game_dir / "mods")
 
-    # Xóa phiên bản cũ.
-    for old in mods_dir.glob(f"{MOD_JAR_PREFIX}*.jar"):
-        try:
-            old.unlink()
-        except OSError:
-            logger.warning("không xóa được mod cũ: %s", old)
+    _remove_instance_jars(mods_dir, keep=cached_jar.name)
 
     target = mods_dir / cached_jar.name
     shutil.copy2(cached_jar, target)
@@ -164,8 +162,16 @@ def remove_mod(game_dir: Path) -> None:
     mods_dir = game_dir / "mods"
     if not mods_dir.is_dir():
         return
-    for jar in mods_dir.glob(f"{MOD_JAR_PREFIX}*.jar"):
-        try:
-            jar.unlink()
-        except OSError:
-            logger.warning("không xóa được mod: %s", jar)
+    _remove_instance_jars(mods_dir)
+
+
+def _remove_instance_jars(mods_dir: Path, keep: str = "") -> None:
+    """Xoá mọi bản Nos Client trong mods/ (cả tên launcher lẫn tên chép tay), trừ `keep`."""
+    for prefix in INSTANCE_JAR_PREFIXES:
+        for jar in mods_dir.glob(f"{prefix}*.jar"):
+            if jar.name == keep:
+                continue
+            try:
+                jar.unlink()
+            except OSError:
+                logger.warning("không xóa được Nos Client cũ: %s", jar)

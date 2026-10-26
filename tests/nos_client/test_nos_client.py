@@ -102,6 +102,27 @@ class TestModInject:
         assert not old_jar.exists()
         assert (mods_dir / f"{MOD_JAR_PREFIX}1.0.0.jar").is_file()
 
+    def test_inject_removes_a_hand_copied_gradle_jar(self, tmp_path: Path) -> None:
+        """Máy thật của chủ dự án: `mods/nosclient-0.1.0.jar` chép tay. Để sót cạnh bản launcher
+        inject thì hai jar cùng mod id `nosclient` và Fabric từ chối khởi động."""
+        mods_dir = tmp_path / "instance" / "mods"
+        mods_dir.mkdir(parents=True)
+        hand_copied = mods_dir / "nosclient-0.1.0.jar"
+        hand_copied.write_bytes(b"old")
+        unrelated = mods_dir / "sodium.jar"
+        unrelated.write_bytes(b"keep")
+        new_jar = tmp_path / f"{MOD_JAR_PREFIX}0.2.0.jar"
+        new_jar.write_bytes(b"new")
+
+        inject_mod(new_jar, tmp_path / "instance")
+
+        assert not hand_copied.exists()
+        assert unrelated.read_bytes() == b"keep"
+        assert sorted(p.name for p in mods_dir.iterdir()) == [
+            f"{MOD_JAR_PREFIX}0.2.0.jar",
+            "sodium.jar",
+        ]
+
     def test_remove_mod_cleans_up(self, tmp_path: Path) -> None:
         game_dir = tmp_path / "instance"
         mods_dir = game_dir / "mods"

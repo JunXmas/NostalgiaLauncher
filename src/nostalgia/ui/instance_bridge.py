@@ -130,6 +130,9 @@ class InstanceBridge(WorkerBridge):
             "worldCount": stats.world_count,
             "modCount": stats.mod_count,
             "nosClientEnabled": instance.nos_client_enabled,
+            # Bản Nos hiện tại chỉ dành cho Fabric 1.21.11; nơi khác không hiện công tắc.
+            "nosClientSupported": instance.version_id.startswith("fabric-loader-")
+            and instance.version_id.endswith("-1.21.11"),
             "nosCoords": nos_config.coords,
             "nosDirection": nos_config.direction,
             "nosDay": nos_config.day,
