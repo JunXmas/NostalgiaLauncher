@@ -124,3 +124,46 @@ def test_modern_creator_offers_legacy_fabric_only_for_old_versions(preview: Prev
         assert "Legacy Fabric" in dialog.property("blockedReason")
     dialog.setProperty("gameVersion", "1.12.2")
     assert dialog.property("legacyTooNew") is False
+
+
+def test_nos_chip_on_instance_tile_toggles_nos_client(
+    preview: Preview, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Công tắc Nos phải nằm ngay trên thẻ bản chơi: trước chỉ có trong Quản lý → Tổng quan và
+    chủ dự án thấy người chơi không tìm ra (27/10/2026). Bản chơi vanilla thì không hiện."""
+    from nostalgia.instance.model import Instance
+    from nostalgia.model.json_value import JsonValue
+    from nostalgia.storage.files import atomic_write_json
+
+    launcher, view, bridge, root_item = preview
+    fabric_id = "fabric-loader-0.19.3-1.21.11"
+    for version_id, parent in (("1.21.11", {}), (fabric_id, {"inheritsFrom": "1.21.11"})):
+        document: dict[str, JsonValue] = {"id": version_id, "mainClass": "x", "type": "release"}
+        document.update(parent)
+        atomic_write_json(launcher.paths.version_json(version_id), document)
+    launcher.save_instance(Instance("fab", fabric_id, display_name="Fab"))
+    launcher.save_instance(Instance("van", "1.21.11", display_name="Van"))
+    monkeypatch.setattr(Launcher, "prepare_nos_client", lambda *_args: None)  # không chạm mạng
+    bridge.announce_instances_changed()
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+
+    # Cùng tên có thể có nhiều bản (thẻ trang chủ đang ẩn, thẻ Bản chơi đang hiện): lấy bản hiện.
+    def visible_chip(instance_id: str) -> Any:
+        pending = [root_item]  # duyệt cây hình (delegate không nằm trong cây QObject)
+        while pending:
+            node = pending.pop()
+            if node.objectName() == "nosChip-" + instance_id and node.isVisible():
+                return node
+            pending.extend(node.childItems())
+        return None
+
+    wait_until(lambda: visible_chip("fab") is not None)
+    assert visible_chip("van") is None
+    press(view, visible_chip("fab"))
+
+    def enabled() -> bool:
+        fab = next(i for i in launcher.list_instances() if i.instance_id == "fab")
+        return fab.nos_client_enabled
+
+    wait_until(enabled)

@@ -4321,5 +4321,10 @@
   "p:Đóng Minecraft để bật hoặc tắt Nos Client.": "Đóng Minecraft để bật hoặc tắt Nos Client.",
   "p:HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.": "HUD, minimap, waypoint, zoom… Launcher tự tải bản mới nhất mỗi lần chơi. Trong game bấm R-Shift để mở cài đặt.",
   "p:Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).": "Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).",
-  "p:Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric.": "Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric."
+  "p:Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric.": "Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric.",
+  "p:Nos Client": "Nos Client",
+  "p:Nos Client: Bật": "Nos Client: Bật",
+  "p:Nos Client: Tắt": "Nos Client: Tắt",
+  "p:Nos Client bật: HUD, minimap, waypoint, zoom. Trong game bấm R-Shift để mở cài đặt.": "Nos Client bật: HUD, minimap, waypoint, zoom. Trong game bấm R-Shift để mở cài đặt.",
+  "p:Bật Nos Client để có HUD, minimap, waypoint, zoom. Launcher tự tải bản mới nhất.": "Bật Nos Client để có HUD, minimap, waypoint, zoom. Launcher tự tải bản mới nhất."
 }
