@@ -29,13 +29,19 @@ Controls.Popup {
         {key: "optimized", label: Legacy.Tr.phrase("Optimized")}, {key: "vanilla", label: "Vanilla"},
         {key: "forgotten-worlds", label: "Forgotten Worlds"},
         {key: "fabric", label: "Fabric"}, {key: "quilt", label: "Quilt"},
-        {key: "forge", label: "Forge"}, {key: "neoforge", label: "NeoForge"}]
+        {key: "forge", label: "Forge"}, {key: "neoforge", label: "NeoForge"},
+        {key: "legacy_fabric", label: "Legacy Fabric"}]
     readonly property string loaderLabel: (loaderChoices.find(function(c) { return c.key === dialog.loaderKind; }) || {}).label || loaderKind
     readonly property bool isPreset: loaderKind === "optimized" || loaderKind === "forgotten-worlds"
     readonly property bool needsLoaderStep: !isPreset && loaderKind !== "vanilla"
     readonly property string defaultName: loaderLabel + " " + gameVersion
     readonly property bool versionUnsupported: isPreset && !!gameVersion && presetVersions.length > 0 && presetVersions.indexOf(gameVersion) < 0
-    readonly property string missingStep: !gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft để tiếp tục.") : versionUnsupported ? Legacy.Tr.phrase("Bản tối ưu chưa hỗ trợ ") + gameVersion + Legacy.Tr.phrase(". Bạn có thể chọn Fabric hoặc phiên bản khác.") : needsLoaderStep && !loaderVersion ? Legacy.Tr.phrase("Chọn phiên bản ") + loaderLabel + "." : ""
+    // Legacy Fabric chỉ có cho Minecraft ≤ 1.13.2 (meta.legacyfabric.net); bản mới hơn là Fabric thường.
+    readonly property bool legacyTooNew: loaderKind === "legacy_fabric" && !!gameVersion && (function(v) {
+        var m = /^(\d+)\.(\d+)/.exec(v);  // "26.1.2" (đánh số mới) và "1.14+" đều quá mới
+        return !!m && (Number(m[1]) > 1 || Number(m[2]) >= 14);
+    })(gameVersion)
+    readonly property string missingStep: !gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft để tiếp tục.") : legacyTooNew ? Legacy.Tr.phrase("Legacy Fabric chỉ dành cho Minecraft 1.13.2 trở xuống. Với bản mới hơn, chọn Fabric.") : versionUnsupported ? Legacy.Tr.phrase("Bản tối ưu chưa hỗ trợ ") + gameVersion + Legacy.Tr.phrase(". Bạn có thể chọn Fabric hoặc phiên bản khác.") : needsLoaderStep && !loaderVersion ? Legacy.Tr.phrase("Chọn phiên bản ") + loaderLabel + "." : ""
     readonly property string blockedReason: Legacy.Tr.phrase(Reasons.writing(bridge, false, false)) || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải danh mục phiên bản. Hãy chờ hoàn tất.") : missingStep)
     readonly property bool canCreate: !blockedReason
     function openDialog() {
@@ -148,7 +154,7 @@ Controls.Popup {
                             Button { objectName: "createLoader-" + modelData.key; width: Math.max(100 * GlassTheme.scale, (setupSection.width - 16) / 3); height: 44 * GlassTheme.scale; label: modelData.label; selected: dialog.loaderKind === modelData.key; onClicked: dialog.pickLoader(modelData.key) }
                         }
                     }
-                    PaymentText { width: parent.width; text: dialog.loaderKind === "forgotten-worlds" ? Legacy.Tr.phrase("Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized. Minecraft 1.21.11.") : dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                    PaymentText { width: parent.width; text: dialog.loaderKind === "forgotten-worlds" ? Legacy.Tr.phrase("Sinh tồn công nghiệp với Create, JEI và Fabulously Optimized. Minecraft 1.21.11.") : dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : dialog.loaderKind === "legacy_fabric" ? Legacy.Tr.phrase("Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                     Column { width: parent.width; spacing: 8; visible: dialog.needsLoaderStep
                         PaymentText { text: Legacy.Tr.phrase("Phiên bản ") + dialog.loaderLabel; font.weight: Font.DemiBold }
                         Select { objectName: "createLoaderVersion"; width: parent.width; model: dialog.loaders.map(function(v) { return v.loaderVersion; }); currentIndex: model.indexOf(dialog.loaderVersion); displayText: dialog.loaderVersion || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải loader…") : Legacy.Tr.phrase("Chọn phiên bản loader…")); enabled: !!dialog.gameVersion && !bridge.busy && !catalogBridge.busy; onActivated: function(i) { if (i >= 0 && i < dialog.loaders.length) dialog.loaderVersion = dialog.loaders[i].loaderVersion; } }
