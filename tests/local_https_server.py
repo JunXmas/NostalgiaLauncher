@@ -49,6 +49,7 @@ class Route:
     # Đường dẫn đầy đủ kèm chuỗi truy vấn: route khớp theo phần trước dấu `?`, nhưng test
     # tìm kiếm cần đọc được tham số đã gửi.
     received_path: str = ""
+    received_method: str = ""
 
 
 @dataclass
@@ -93,6 +94,10 @@ class ServerState:
         """Đường dẫn kèm chuỗi truy vấn của lần gọi gần nhất."""
         with self.lock:
             return self.routes[path].received_path
+
+    def received_method(self, path: str) -> str:
+        with self.lock:
+            return self.routes[path].received_method
 
     def received_header(self, path: str, name: str) -> str:
         with self.lock:
@@ -192,6 +197,7 @@ def _make_handler(state: ServerState) -> type[http.server.BaseHTTPRequestHandler
                     route.received_body = getattr(self, "_received", b"")
                     route.received_headers = dict(self.headers)
                     route.received_path = self.path
+                    route.received_method = self.command
                 if route is None:
                     self.send_error(404)
                     return
