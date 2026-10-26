@@ -63,6 +63,14 @@ Rectangle {
             elide: Text.ElideRight
         }
     }
+    NosChip {
+        entry: root.entry
+        visible: !root.pickOnly && root.entry.nosClientSupported === true
+        anchors.left: parent.left
+        anchors.leftMargin: root.compact ? 84 : 20
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.compact ? 8 : 19
+    }
     Row {
         anchors.right: parent.right
         anchors.rightMargin: 16
