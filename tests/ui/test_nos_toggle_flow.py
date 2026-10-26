@@ -51,7 +51,7 @@ def test_toggle_on_downloads_and_injects_then_off_removes(
     mods.mkdir(parents=True)
     (mods / "nosclient-0.1.0.jar").write_bytes(b"chep tay")
     bridge = LauncherBridge(launcher)
-    row = next(r for r in bridge.instances if r["instanceId"] == "opt")
+    row = next(i for i in bridge.instances if i["instanceId"] == "opt")
     assert row["nosClientSupported"] is True and row["nosClientEnabled"] is False
 
     bridge.toggleNosClient("opt", True)
