@@ -98,3 +98,29 @@ def test_favourite_persists_and_feedback_settles(preview: Preview) -> None:
     wait_until(lambda: not launcher.list_instances()[0].favorite)
     star = find_item(root_item, "instanceFavorite-survival")
     assert star is not None and star.property("rotation") == 0
+
+
+def test_modern_creator_offers_legacy_fabric_only_for_old_versions(preview: Preview) -> None:
+    """1.2.0rc40 chỉ thêm Legacy Fabric vào hộp tạo CŨ; giao diện người dùng thật đang dùng là
+    hộp hiện đại, nên mục này không hiện ra (chủ dự án báo 26/10/2026)."""
+    _launcher, view, _bridge, root_item = preview
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    catalog_bridge = view.rootContext().contextProperty("catalogBridge")
+    catalog_bridge._released = [
+        {"versionId": v, "major": v.rsplit(".", 1)[0]} for v in ("26.1.2", "1.21.1", "1.12.2")
+    ]
+    catalog_bridge.releasedVersionsChanged.emit()
+    press(view, find_control(root_item, "createModernInstance"))
+    dialog = find_control(root_item, "modernCreateDialog")
+    wait_until(lambda: dialog.property("opened"))
+    labels = [choice["label"] for choice in dialog.property("loaderChoices").toVariant()]
+    assert "Legacy Fabric" in labels
+    find_control(root_item, "createLoader-legacy_fabric")  # nút thật được dựng
+    dialog.pickLoader("legacy_fabric")
+    for too_new in ("1.21.1", "26.1.2"):
+        dialog.setProperty("gameVersion", too_new)
+        assert dialog.property("legacyTooNew") is True
+        assert "Legacy Fabric" in dialog.property("blockedReason")
+    dialog.setProperty("gameVersion", "1.12.2")
+    assert dialog.property("legacyTooNew") is False

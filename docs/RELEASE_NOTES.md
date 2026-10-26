@@ -8,6 +8,9 @@ Bản vá nhỏ cho hai lỗi gặp ngay sau 1.2.0rc40.
   `Mojang rejected skin (HTTP 405) … METHOD_NOT_ALLOWED`. Đã sửa — chọn skin, bấm
   **Lưu thay đổi** là lên tài khoản.
 
+- **Legacy Fabric chưa hiện trong hộp Tạo bản chơi:** rc40 chỉ thêm vào giao diện cũ.
+  Nay có nút **Legacy Fabric** (Minecraft 1.13.2 trở xuống: 1.8.9, 1.12.2…).
+
 ## Nos Client cho bản chơi có sẵn
 
 - Mở **Bản chơi → Quản lý → Tổng quan**, bật **Nos Client** (bản chơi Fabric 1.21.11).
