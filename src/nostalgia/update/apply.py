@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from nostalgia.storage.files import ensure_dir, set_executable
+from nostalgia.system.child_env import clean_child_env
 from nostalgia.system.platform_info import CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW
 from nostalgia.update import swap_scripts
 
@@ -64,24 +65,6 @@ def blocked_install_reason(install_kind: str) -> str:
     Trả về câu mặc định (kiểu chạy từ mã nguồn) cho kiểu chưa có câu riêng — chỉ `frozen`
     mới thực sự tráo được nên không cần câu ở đây."""
     return _BLOCKED_REASONS.get(install_kind, _BLOCKED_REASONS[INSTALL_KIND_SOURCE])
-
-
-def clean_child_env() -> dict[str, str]:
-    """Trả về bản sao ``os.environ`` đã gỡ ``LD_LIBRARY_PATH`` (và
-    ``DYLD_LIBRARY_PATH``) mà PyInstaller ghi đè.
-
-    PyInstaller lưu giá trị gốc vào biến ``*_ORIG``; nếu biến đó tồn tại ta
-    khôi phục, ngược lại xoá hẳn — tránh launcher mới kế thừa đường dẫn trỏ
-    vào thư mục bản cũ (đã bị xoá sau swap).
-    """
-    env = os.environ.copy()
-    for var in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"):
-        original = env.pop(var + "_ORIG", None)
-        if original is not None:
-            env[var] = original
-        else:
-            env.pop(var, None)
-    return env
 
 
 @dataclass(frozen=True, slots=True)
