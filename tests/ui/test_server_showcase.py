@@ -34,6 +34,7 @@ CHANNEL: dict[str, JsonValue] = {
 def _home(root_item: Any) -> Any:
     root_item.setProperty("loginVisible", False)
     root_item.setProperty("currentIndex", 0)
+    find_control(root_item, "homeSlides").setProperty("current", 1)
     return find_control(root_item, "serverShowcase")
 
 
@@ -48,13 +49,15 @@ def test_slides_switch_with_buttons(preview: Preview) -> None:
     _launcher, view, _bridge, root_item = preview
     _home(root_item)
     slides = find_control(root_item, "homeSlides")
-    assert slides.property("current") == 0
+    slides.setProperty("current", 0)
     press(view, find_control(slides, "homeSlidesNext"))
     wait_until(lambda: slides.property("current") == 1)
+    press(view, find_control(slides, "homeSlidesNext"))
+    wait_until(lambda: slides.property("current") == 2)
     press(view, find_control(slides, "homeSlidesNext"))
     wait_until(lambda: slides.property("current") == 0)
     press(view, find_control(slides, "homeSlidesPrev"))
-    wait_until(lambda: slides.property("current") == 1)
+    wait_until(lambda: slides.property("current") == 2)
 
 
 def test_showcase_invites_to_create_without_server_instance(preview: Preview) -> None:
