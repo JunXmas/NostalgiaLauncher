@@ -6,6 +6,6 @@ không import Qt, không in ra màn hình. Xem GLOSSARY.md để biết quy ư�
 
 from __future__ import annotations
 
-__version__ = "1.2.0rc41"
+__version__ = "1.2.0rc42"
 
 __all__ = ["__version__"]

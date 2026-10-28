@@ -26,6 +26,7 @@ from collections.abc import Callable, Mapping
 
 from nostalgia.launch.command import LaunchCommand
 from nostalgia.storage.files import ensure_dir
+from nostalgia.system.child_env import clean_child_env
 from nostalgia.system.platform_info import resolve_creation_flags
 
 type OutputFn = Callable[[str], None]
@@ -181,7 +182,8 @@ def start_game(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
-        env=dict(environment) if environment is not None else None,
+        # Không truyền môi trường thì vẫn dọn đường dẫn thư viện của launcher đóng gói (child_env).
+        env=dict(environment) if environment is not None else clean_child_env(),
         start_new_session=(sys.platform != "win32"),
         creationflags=creation_flags,
     )

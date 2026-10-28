@@ -1,21 +1,22 @@
-# Nostalgia 1.2.0rc41 — Sửa lưu skin Microsoft, bật Nos Client cho mọi bản chơi
+# Nostalgia 1.2.0rc42 — Nos Client 0.3.0 trên trang chủ, sửa lời nhạc trên Linux
 
-Bản vá nhỏ cho hai lỗi gặp ngay sau 1.2.0rc40.
+## Nos Client nổi bật trên trang chủ
+
+- Slide đầu trang chủ giới thiệu **Nos Client**: lời nhạc trên trời, minimap & bản đồ theo
+  từng world, waypoint, HUD kính, zoom & freelook — có ảnh chụp thật trong game.
+- Nút **Bật Nos Client** cho bản chơi đang chọn (Fabric 1.21.11) ngay trên slide, trên thẻ
+  bản chơi và khối Chơi. Chưa có bản Fabric 1.21.11 thì nút mời tạo.
+- Bấm Chơi là launcher tự tải **Nos Client 0.3.0**.
+
+## Nos Client 0.3.0 (tự cập nhật)
+
+- Lời nhạc kiểu **chữ khối** trong suốt, hiện từng cụm rải trên trời; chọn **màu chữ**.
+- **Cực quang** trên trời đêm nhịp theo lời bài hát.
+- Bản đồ + waypoint tách riêng từng world; sửa HUD không còn kẹt gadget.
+- Cosmetic tạm tắt trong bản này.
 
 ## Sửa lỗi
 
-- **Lưu skin tài khoản Microsoft:** trước đây báo
-  `Mojang rejected skin (HTTP 405) … METHOD_NOT_ALLOWED`. Đã sửa — chọn skin, bấm
-  **Lưu thay đổi** là lên tài khoản.
-
-- **Legacy Fabric chưa hiện trong hộp Tạo bản chơi:** rc40 chỉ thêm vào giao diện cũ.
-  Nay có nút **Legacy Fabric** (Minecraft 1.13.2 trở xuống: 1.8.9, 1.12.2…).
-
-## Nos Client cho bản chơi có sẵn
-
-- Mở **Bản chơi → Quản lý → Tổng quan**, bật **Nos Client** (bản chơi Fabric 1.21.11).
-  Bấm Chơi là launcher tự tải bản Nos mới nhất (hiện là 0.2.0) và chép vào `mods/`.
-- Nếu trước đây bạn tự chép `nosclient-*.jar` vào `mods/`, launcher dọn bản cũ đó để
-  không bị trùng mod.
-- Trong game: **R-Shift** mở cài đặt Nos, **H** sửa vị trí HUD, **J** quản lý waypoint,
-  **M** bản đồ thế giới.
+- **Linux (bản cài):** game kế thừa đường dẫn thư viện của launcher nên công cụ hệ thống mà
+  mod gọi chết im lặng — ví dụ lời nhạc Nos Client không đọc được bài đang phát trên
+  Spotify. Đã sửa.

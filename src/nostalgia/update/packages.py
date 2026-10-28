@@ -22,7 +22,7 @@ from pathlib import Path
 
 from nostalgia.errors import UpdateError
 from nostalgia.storage.files import set_executable
-from nostalgia.update.apply import clean_child_env
+from nostalgia.system.child_env import clean_child_env
 
 # Lệnh cài cho từng đuôi gói. `-y` vì hộp thoại pkexec đã là lần hỏi của người dùng rồi;
 # hỏi thêm ở stdin thì không ai thấy để trả lời, tiến trình treo mãi.

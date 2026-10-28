@@ -2,19 +2,20 @@ import QtQuick
 import QtQuick.Effects
 import "../" as Legacy
 
-/* Băng trượt đầu trang chủ: slide 0 = server Forgotten Worlds, slide 1 = bản chơi của bạn.
-   Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang định bấm). */
+/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, slide 1 = server Forgotten Worlds,
+   slide 2 = bản chơi của bạn. Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang
+   định bấm). */
 Glass {
     id: root
     objectName: "homeSlides"
     property var chosen: null
     property int current: 0
-    readonly property int count: 2
+    readonly property int count: 3
     signal playRequested
     signal libraryRequested
     signal createServerRequested
     width: parent.width
-    height: Math.max(380, heroCopy.implicitHeight + 72 * 2, showcase.contentHeight + 64)
+    height: Math.max(400, heroCopy.implicitHeight + 72 * 2, showcase.contentHeight + 64, nos.contentHeight + 72)
     readonly property Item heroCopy: hero.contentItem
     radius: 26
     padding: 0
@@ -37,12 +38,21 @@ Glass {
         Row {
             id: track
             x: -root.current * viewport.width
-            Behavior on x { NumberAnimation { duration: GlassTheme.reducedMotion ? 0 : 420; easing.type: Easing.OutCubic } }
+            Behavior on x { NumberAnimation { duration: GlassTheme.reducedMotion ? 0 : 520; easing.type: Easing.OutQuint } }
+            NosShowcase {
+                id: nos
+                width: viewport.width; height: viewport.height
+                textInset: 72
+                chosen: root.chosen
+                active: root.current === 0
+                onCreateRequested: root.playRequested()
+                onLibraryRequested: root.libraryRequested()
+            }
             ServerShowcase {
                 id: showcase
                 width: viewport.width; height: viewport.height
                 textInset: 72
-                active: root.current === 0
+                active: root.current === 1
                 onCreateRequested: root.createServerRequested()
             }
             HomeHero {

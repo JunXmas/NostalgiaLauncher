@@ -76,6 +76,12 @@ Glass {
                 clickable: !disabledReason
                 onClicked: root.playRequested()
             }
+            NosChip {
+                id: heroNos
+                entry: root.chosen || ({})
+                height: 46
+                visible: !!root.chosen && root.chosen.nosClientSupported === true
+            }
             Button {
                 height: 46
                 label: Legacy.Tr.phrase("Khám phá modpack")
@@ -84,5 +90,6 @@ Glass {
             }
         }
         ActionHint { objectName: "homePlayHint"; width: parent.width; reason: playButton.disabledReason }
+        PaymentText { objectName: "homeNosHint"; width: parent.width; visible: heroNos.visible; text: heroNos.hint; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote; wrapMode: Text.WordWrap }
     }
 }
