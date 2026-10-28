@@ -51,12 +51,11 @@ Controls.Popup {
     property bool advanced: false
     property string javaError: ""
     function save() {
-        if (!bridge.setJavaBinary(instance.instanceId, javaField.text)) {
+        if (!bridge.updateInstance(instance.instanceId, nameField.text, parseInt(heapField.text) || 0, parseInt(widthField.text) || 0, parseInt(heightField.text) || 0, javaField.text)) {
             javaError = Legacy.Tr.phrase("Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.");
             section = 2; advanced = true;
             return;
         }
-        bridge.updateInstance(instance.instanceId, nameField.text, parseInt(heapField.text) || 0, parseInt(widthField.text) || 0, parseInt(heightField.text) || 0);
         storageBridge.setOrganization(instance.instanceId, groupField.text, favorite.checked);
         close();
     }
@@ -72,7 +71,7 @@ Controls.Popup {
         id: javaPicker
         title: Legacy.Tr.phrase("Chọn file java")
         nameFilters: Qt.platform.os === "windows" ? ["Java (java.exe javaw.exe)", Legacy.Tr.phrase("Mọi file (*)")] : [Legacy.Tr.phrase("Mọi file (*)")]
-        onAccepted: javaField.text = bridge.localPath(selectedFile.toString())
+        onAccepted: javaField.text = selectedFile.toString()
     }
     InstanceLibraryDialog {
         id: addContent

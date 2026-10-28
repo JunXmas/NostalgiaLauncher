@@ -38,13 +38,13 @@ def test_advanced_java_is_hidden_validated_and_resettable(preview: Preview, tmp_
     assert dialog.property("visible"), "đường dẫn sai: giữ hộp mở để sửa"
     assert launcher.list_instances()[0].java_binary_override == ""
 
-    java = tmp_path / "jdk" / "java"
-    java.parent.mkdir()
-    java.write_text("")
-    field.setProperty("text", str(java))
+    java_binary = tmp_path / "jdk" / "java"
+    java_binary.parent.mkdir()
+    java_binary.write_text("")
+    field.setProperty("text", str(java_binary))
     press(view, find_control(root_item, "instanceSave"))
     wait_until(lambda: not dialog.property("visible"))
-    assert launcher.list_instances()[0].java_binary_override == str(java)
+    assert launcher.list_instances()[0].java_binary_override == str(java_binary)
 
     dialog.openFor(cast(Any, _bridge).instances[0])
     wait_until(lambda: bool(dialog.property("opened")))

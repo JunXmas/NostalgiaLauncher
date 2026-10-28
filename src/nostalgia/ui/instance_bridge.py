@@ -136,6 +136,11 @@ class InstanceBridge(WorkerBridge):
             and instance.version_id.endswith("-1.21.11"),
         }
 
+    def _find(self, instance_id: str) -> Instance | None:
+        return next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+
     @Property(str, notify=progressChanged)
     def progressText(self) -> str:
         return self._progress_text
@@ -144,59 +149,37 @@ class InstanceBridge(WorkerBridge):
     def progressFraction(self) -> float:
         return self._progress_fraction
 
-    @Slot(str, str, int, int, int)
+    @Slot(str, str, int, int, int, str, result=bool)
     def updateInstance(
-        self, instance_id: str, display_name: str, max_heap: int, width: int, height: int
-    ) -> None:
-        """Sửa tên / RAM / kích thước cửa sổ. Ghi một file nhỏ: làm ngay, không cần luồng nền."""
-        current = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
-        if current is None:
-            return
+        self, instance_id: str, name: str, heap: int, width: int, height: int, java_binary: str = ""
+    ) -> bool:
+        """Sửa tên / RAM / cửa sổ / Java nâng cao (rỗng = tự chọn). Ghi một file nhỏ, làm ngay.
+
+        Trả False, KHÔNG lưu gì, khi Java đã chọn không phải file — báo ngay trong hộp thay vì
+        để tới lúc bấm Chơi mới vỡ. FileDialog trả URL file:///…; ô nhập tay là đường dẫn thường.
+        """
+        current = self._find(instance_id)
+        path = QUrl(java_binary).toLocalFile() if java_binary.startswith("file:") else java_binary
+        path = path.strip()
+        if current is None or (path and not Path(path).is_file()):
+            return False
         self._launcher.save_instance(
             replace(
                 current,
-                display_name=display_name.strip(),
-                max_heap_megabytes=max_heap or None,
+                display_name=name.strip(),
+                max_heap_megabytes=heap or None,
                 window_width=width or None,
                 window_height=height or None,
+                java_binary_override=path,
             )
         )
         self.announce_instances_changed()
-
-    @Slot(str, result=str)
-    def localPath(self, text: str) -> str:
-        """FileDialog trả URL file:///… (Windows: file:///C:/…); ô nhập tay là đường dẫn thường."""
-        text = text.strip()
-        return QUrl(text).toLocalFile() if text.startswith("file:") else text
-
-    @Slot(str, str, result=bool)
-    def setJavaBinary(self, instance_id: str, java_binary: str) -> bool:
-        """Nâng cao: chọn file java riêng cho bản chơi. Chuỗi rỗng = quay về tự chọn.
-
-        Trả False (không lưu) khi đường dẫn không phải file — báo ngay lúc lưu, đừng để tới lúc
-        bấm Chơi mới vỡ.
-        """
-        current = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
-        if current is None:
-            return False
-        path = self.localPath(java_binary)
-        if path and not Path(path).is_file():
-            return False
-        if path != current.java_binary_override:
-            self._launcher.save_instance(replace(current, java_binary_override=path))
-            self.announce_instances_changed()
         return True
 
     @Slot(str)
     def openInstanceFolder(self, instance_id: str) -> None:
         """Mở thư mục bản chơi bằng trình quản lý file của hệ điều hành."""
-        instance = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
+        instance = self._find(instance_id)
         if instance is None:
             return
         folder = self._launcher.instance_game_dir(instance)
@@ -216,9 +199,7 @@ class InstanceBridge(WorkerBridge):
     @Slot(str, bool)
     def toggleNosClient(self, instance_id: str, enabled: bool) -> None:
         """Bật/tắt Nos Client cho một bản chơi. Tải mod ở nền nếu bật."""
-        current = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
+        current = self._find(instance_id)
         if current is None:
             return
 
@@ -244,9 +225,7 @@ class InstanceBridge(WorkerBridge):
         cps: bool,
     ) -> None:
         """Cập nhật cấu hình HUD của Nos Client. Ghi file nhỏ: làm ngay."""
-        current = next(
-            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
-        )
+        current = self._find(instance_id)
         if current is None:
             return
         config = NosClientConfig(
