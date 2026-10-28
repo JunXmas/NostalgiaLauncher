@@ -29,7 +29,7 @@ Item {
         { icon: "sky", title: Legacy.Tr.phrase("Cực quang theo nhạc"), note: Legacy.Tr.phrase("Trời đêm đổi màu theo lời") }
     ]
     readonly property var shots: [
-        { source: "../assets/nos/shot-lyrics.jpg", caption: Legacy.Tr.phrase("Lời nhạc từng cụm trên trời, bị núi che") },
+        { source: "../assets/nos/shot-lyrics.jpg", caption: Legacy.Tr.phrase("Lời nhạc từng cụm hiện trên bầu trời") },
         { source: "../assets/nos/shot-hub.jpg", caption: Legacy.Tr.phrase("Cài đặt R-Shift: vòng danh mục, kính có chiều sâu") },
         { source: "../assets/nos/shot-aurora.jpg", caption: Legacy.Tr.phrase("Cực quang nhịp theo lời bài hát") },
         { source: "../assets/nos/shot-poster.jpg", caption: Legacy.Tr.phrase("Chữ khối trong suốt, tô theo cảnh phía sau") }
