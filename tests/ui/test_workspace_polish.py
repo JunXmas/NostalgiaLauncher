@@ -150,16 +150,24 @@ def test_nos_chip_on_instance_tile_toggles_nos_client(
 
     # Cùng tên có thể có nhiều bản (thẻ trang chủ đang ẩn, thẻ Bản chơi đang hiện): lấy bản hiện.
     def visible_chip(instance_id: str) -> Any:
+        return visible_item("nosChip-" + instance_id)
+
+    def visible_item(name: str) -> Any:
         pending = [root_item]  # duyệt cây hình (delegate không nằm trong cây QObject)
         while pending:
             node = pending.pop()
-            if node.objectName() == "nosChip-" + instance_id and node.isVisible():
+            if node.objectName() == name and node.isVisible():
                 return node
             pending.extend(node.childItems())
         return None
 
     wait_until(lambda: visible_chip("fab") is not None)
     assert visible_chip("van") is None
+    # Thẻ lưới hẹp: chip từng đè lên nút Chơi (28/10/2026) — chip phải nằm trọn bên trái nút.
+    chip = visible_chip("fab")
+    play = visible_item("instanceAction-fab")
+    chip_right = chip.mapToItem(root_item, chip.width(), 0).x()
+    assert chip_right <= play.mapToItem(root_item, 0, 0).x(), (chip_right, chip.width())
     press(view, visible_chip("fab"))
 
     def enabled() -> bool:

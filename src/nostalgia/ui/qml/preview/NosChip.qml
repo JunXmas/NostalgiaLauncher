@@ -7,6 +7,9 @@ import "../" as Legacy
 Rectangle {
     id: root
     property var entry: ({})
+    // Thẻ hẹp (cột lưới) không đủ chỗ cho "Nos Client: Bật" cạnh nút Chơi → rút còn "Nos"; chấm màu vẫn báo bật/tắt.
+    property real maxWidth: Infinity
+    readonly property bool brief: fullLabel.width + 37 > maxWidth
     readonly property bool on: entry.nosClientEnabled === true
     readonly property bool locked: bridge.gameRunning || bridge.busy
     // Câu giải thích cho ActionHint bên cạnh (không có tooltip trong bộ giao diện này).
@@ -45,12 +48,19 @@ Rectangle {
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.on ? Legacy.Tr.phrase("Nos Client: Bật") : Legacy.Tr.phrase("Nos Client: Tắt")
+            text: root.brief ? "Nos" : fullLabel.text
             color: root.on ? GlassTheme.text : GlassTheme.muted
             font.family: GlassTheme.font
             font.pixelSize: GlassTheme.fontLabel
             font.weight: Font.DemiBold
         }
+    }
+    TextMetrics {
+        id: fullLabel
+        text: root.on ? Legacy.Tr.phrase("Nos Client: Bật") : Legacy.Tr.phrase("Nos Client: Tắt")
+        font.family: GlassTheme.font
+        font.pixelSize: GlassTheme.fontLabel
+        font.weight: Font.DemiBold
     }
     HoverHandler { id: hover; cursorShape: root.locked ? Qt.ArrowCursor : Qt.PointingHandCursor }
     TapHandler { onTapped: root.flip() }
