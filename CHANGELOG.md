@@ -3,6 +3,13 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc43 — 2026-10-28
+
+- Quản lý bản chơi → Hiệu năng → **Nâng cao**: chọn file Java riêng cho từng bản chơi. Để
+  trống (mặc định) thì launcher vẫn tự tải và chọn bản Java Mojang đúng phiên bản. Đường
+  dẫn sai thì không lưu; file Java đã chọn bị xoá thì báo rõ lúc bấm Chơi.
+- Nos Client tự cập nhật lên 0.3.1: lời nhạc cho YouTube / YouTube Music trên trình duyệt.
+
 ## 1.2.0rc42 — 2026-10-28
 
 - Trang chủ: slide **Nos Client** đầu băng trượt — 6 tính năng có icon, ảnh chụp thật trong

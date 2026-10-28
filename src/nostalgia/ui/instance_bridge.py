@@ -8,6 +8,7 @@ tượng `bridge` vì `LauncherBridge` kế thừa lớp này.
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
@@ -123,6 +124,7 @@ class InstanceBridge(WorkerBridge):
             "windowHeight": instance.window_height or 0,
             "gameDir": str(self._launcher.instance_game_dir(instance)),
             "customGameDir": bool(instance.game_dir_override),
+            "javaBinary": instance.java_binary_override,
             "playtimeText": stats.playtime_text,
             "launchCount": stats.play.launch_count,
             "lastPlayedAt": stats.play.last_played_at,
@@ -162,6 +164,32 @@ class InstanceBridge(WorkerBridge):
             )
         )
         self.announce_instances_changed()
+
+    @Slot(str, result=str)
+    def localPath(self, text: str) -> str:
+        """FileDialog trả URL file:///… (Windows: file:///C:/…); ô nhập tay là đường dẫn thường."""
+        text = text.strip()
+        return QUrl(text).toLocalFile() if text.startswith("file:") else text
+
+    @Slot(str, str, result=bool)
+    def setJavaBinary(self, instance_id: str, java_binary: str) -> bool:
+        """Nâng cao: chọn file java riêng cho bản chơi. Chuỗi rỗng = quay về tự chọn.
+
+        Trả False (không lưu) khi đường dẫn không phải file — báo ngay lúc lưu, đừng để tới lúc
+        bấm Chơi mới vỡ.
+        """
+        current = next(
+            (i for i in self._launcher.list_instances() if i.instance_id == instance_id), None
+        )
+        if current is None:
+            return False
+        path = self.localPath(java_binary)
+        if path and not Path(path).is_file():
+            return False
+        if path != current.java_binary_override:
+            self._launcher.save_instance(replace(current, java_binary_override=path))
+            self.announce_instances_changed()
+        return True
 
     @Slot(str)
     def openInstanceFolder(self, instance_id: str) -> None:

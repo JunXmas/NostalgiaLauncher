@@ -1,22 +1,18 @@
-# Nostalgia 1.2.0rc42 — Nos Client 0.3.0 trên trang chủ, sửa lời nhạc trên Linux
+# Nostalgia 1.2.0rc43 — chọn Java nâng cao, lời nhạc YouTube
 
-## Nos Client nổi bật trên trang chủ
+## Chọn Java (nâng cao)
 
-- Slide đầu trang chủ giới thiệu **Nos Client**: lời nhạc trên trời, minimap & bản đồ theo
-  từng world, waypoint, HUD kính, zoom & freelook — có ảnh chụp thật trong game.
-- Nút **Bật Nos Client** cho bản chơi đang chọn (Fabric 1.21.11) ngay trên slide, trên thẻ
-  bản chơi và khối Chơi. Chưa có bản Fabric 1.21.11 thì nút mời tạo.
-- Bấm Chơi là launcher tự tải **Nos Client 0.3.0**.
+- **Quản lý bản chơi → Hiệu năng → Nâng cao → Java**: chọn file `java` riêng cho bản chơi
+  (ví dụ thử GraalVM hay Java mới hơn).
+- Mặc định vẫn **tự động**: launcher tự tải và chọn đúng bản Java cho phiên bản Minecraft.
+  Bấm **Tự động** để quay về.
+- Đường dẫn sai thì không lưu; file Java đã chọn bị xoá thì launcher báo rõ khi bấm Chơi.
 
-## Nos Client 0.3.0 (tự cập nhật)
+## Nos Client 0.3.1 (tự cập nhật)
 
-- Lời nhạc kiểu **chữ khối** trong suốt, hiện từng cụm rải trên trời; chọn **màu chữ**.
-- **Cực quang** trên trời đêm nhịp theo lời bài hát.
-- Bản đồ + waypoint tách riêng từng world; sửa HUD không còn kẹt gadget.
-- Cosmetic tạm tắt trong bản này.
-
-## Sửa lỗi
-
-- **Linux (bản cài):** game kế thừa đường dẫn thư viện của launcher nên công cụ hệ thống mà
-  mod gọi chết im lặng — ví dụ lời nhạc Nos Client không đọc được bài đang phát trên
-  Spotify. Đã sửa.
+- Lời nhạc chạy với **YouTube / YouTube Music** phát trên trình duyệt (Chrome, Edge,
+  Firefox…), không chỉ Spotify. Bật **Tự tìm lời** trong R-Shift → Lời nhạc.
+- Hiểu tiêu đề video kiểu "SƠN TÙNG M-TP | … | OFFICIAL MUSIC VIDEO", "Bài - Ca sĩ (Official
+  MV)", "… l Official Video"; chỉ nhận bản khớp tên bài, ca sĩ và thời lượng.
+- Video tổng hợp / EP dài và bản live thường không có lời đồng bộ nên sẽ không hiện lời.
+- F1 (ẩn giao diện) vẫn giữ lời nhạc và cực quang.

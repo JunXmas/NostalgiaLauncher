@@ -4352,5 +4352,12 @@
   "p:Chữ khối trong suốt, tô theo cảnh phía sau": "See-through poster letters tinted by the scene",
   "p:MỚI · NOS CLIENT 0.3": "NEW · NOS CLIENT 0.3",
   "p:Lời nhạc từng cụm hiện trên bầu trời": "Lyrics appear chunk by chunk across the sky",
-  "p:Spotify, chữ khối, chọn màu": "Spotify, poster letters, your colour"
+  "p:Spotify, chữ khối, chọn màu": "Spotify, poster letters, your colour",
+  "p:Java": "Java",
+  "p:Để trống: launcher tự tải và chọn đúng bản Java cho phiên bản này (khuyên dùng). Chỉ chọn Java riêng khi bạn biết mình cần, ví dụ thử GraalVM hay Java mới hơn.": "Leave empty: the launcher downloads and picks the right Java for this version (recommended). Only choose your own Java if you know you need it, for example to try GraalVM or a newer Java.",
+  "p:Tự động (khuyên dùng)": "Automatic (recommended)",
+  "p:Chọn file…": "Choose file…",
+  "p:Tự động": "Automatic",
+  "p:Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.": "Java file not found. Check the path or press Automatic.",
+  "p:Chọn file java": "Choose java file"
 }
