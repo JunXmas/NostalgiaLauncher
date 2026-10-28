@@ -4352,5 +4352,12 @@
   "p:Chữ khối trong suốt, tô theo cảnh phía sau": "Chữ khối trong suốt, tô theo cảnh phía sau",
   "p:MỚI · NOS CLIENT 0.3": "MỚI · NOS CLIENT 0.3",
   "p:Lời nhạc từng cụm hiện trên bầu trời": "Lời nhạc từng cụm hiện trên bầu trời",
-  "p:Spotify, chữ khối, chọn màu": "Spotify, chữ khối, chọn màu"
+  "p:Spotify, chữ khối, chọn màu": "Spotify, chữ khối, chọn màu",
+  "p:Java": "Java",
+  "p:Để trống: launcher tự tải và chọn đúng bản Java cho phiên bản này (khuyên dùng). Chỉ chọn Java riêng khi bạn biết mình cần, ví dụ thử GraalVM hay Java mới hơn.": "Để trống: launcher tự tải và chọn đúng bản Java cho phiên bản này (khuyên dùng). Chỉ chọn Java riêng khi bạn biết mình cần, ví dụ thử GraalVM hay Java mới hơn.",
+  "p:Tự động (khuyên dùng)": "Tự động (khuyên dùng)",
+  "p:Chọn file…": "Chọn file…",
+  "p:Tự động": "Tự động",
+  "p:Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.": "Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.",
+  "p:Chọn file java": "Chọn file java"
 }

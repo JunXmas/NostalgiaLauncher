@@ -37,7 +37,7 @@ Item {
     }
     function save() {
         bridge.updateInstance(instance.instanceId, nameField.text, parseInt(heapField.text) || 0,
-                              parseInt(widthField.text) || 0, parseInt(heightField.text) || 0);
+                              parseInt(widthField.text) || 0, parseInt(heightField.text) || 0, instance.javaBinary || "");
         storageBridge.setOrganization(instance.instanceId, groupField.text, favoriteToggle.checked);
         visible = false;
     }

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQuick.Dialogs
 import "../" as Legacy
 import "ActionReasons.js" as Reasons
 
@@ -39,13 +40,22 @@ Controls.Popup {
         heapField.text = entry.maxHeapMegabytes ? String(entry.maxHeapMegabytes) : "";
         widthField.text = entry.windowWidth ? String(entry.windowWidth) : "";
         heightField.text = entry.windowHeight ? String(entry.windowHeight) : "";
+        javaField.text = entry.javaBinary || "";
+        javaError = "";
+        advanced = !!entry.javaBinary;
         favorite.checked = entry.favorite === true;
         deleteExternal.checked = false;
         contentBridge.selectInstance(entry.instanceId);
         open();
     }
+    property bool advanced: false
+    property string javaError: ""
     function save() {
-        bridge.updateInstance(instance.instanceId, nameField.text, parseInt(heapField.text) || 0, parseInt(widthField.text) || 0, parseInt(heightField.text) || 0);
+        if (!bridge.updateInstance(instance.instanceId, nameField.text, parseInt(heapField.text) || 0, parseInt(widthField.text) || 0, parseInt(heightField.text) || 0, javaField.text)) {
+            javaError = Legacy.Tr.phrase("Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.");
+            section = 2; advanced = true;
+            return;
+        }
         storageBridge.setOrganization(instance.instanceId, groupField.text, favorite.checked);
         close();
     }
@@ -57,6 +67,12 @@ Controls.Popup {
         }
     }
     exit: Transition { NumberAnimation { property: "opacity"; to: 0; duration: GlassTheme.quick } }
+    FileDialog {
+        id: javaPicker
+        title: Legacy.Tr.phrase("Chọn file java")
+        nameFilters: Qt.platform.os === "windows" ? ["Java (java.exe javaw.exe)", Legacy.Tr.phrase("Mọi file (*)")] : [Legacy.Tr.phrase("Mọi file (*)")]
+        onAccepted: javaField.text = selectedFile.toString()
+    }
     InstanceLibraryDialog {
         id: addContent
         onClosed: {
@@ -147,6 +163,23 @@ Controls.Popup {
                     Input { id: heapField; objectName: "instanceHeap"; width: parent.width; placeholder: Legacy.Tr.phrase("Mặc định") }
                     PaymentText { text: Legacy.Tr.phrase("Kích thước cửa sổ game"); font.weight: Font.DemiBold }
                     Flow { width: parent.width; spacing: 12; Input { id: widthField; width: Math.min(240, form.width); placeholder: Legacy.Tr.phrase("Chiều rộng · px") } Input { id: heightField; width: Math.min(240, form.width); placeholder: Legacy.Tr.phrase("Chiều cao · px") } }
+                    // Nâng cao: thường để launcher tự chọn bản Java Mojang khớp phiên bản; chỉ mở khi cần Java riêng.
+                    Button { objectName: "instanceAdvancedToggle"; label: (root.advanced ? "▾  " : "▸  ") + Legacy.Tr.phrase("Nâng cao"); quiet: true; onClicked: root.advanced = !root.advanced }
+                    Column {
+                        objectName: "instanceJavaSection"
+                        visible: root.advanced
+                        width: parent.width; spacing: 8
+                        PaymentText { text: Legacy.Tr.phrase("Java"); font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; wrapMode: Text.WordWrap; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote
+                            text: Legacy.Tr.phrase("Để trống: launcher tự tải và chọn đúng bản Java cho phiên bản này (khuyên dùng). Chỉ chọn Java riêng khi bạn biết mình cần, ví dụ thử GraalVM hay Java mới hơn.") }
+                        Flow {
+                            width: parent.width; spacing: 8
+                            Input { id: javaField; objectName: "instanceJava"; width: Math.max(220, parent.width - 236); placeholder: Legacy.Tr.phrase("Tự động (khuyên dùng)"); onTextChanged: root.javaError = "" }
+                            Button { objectName: "instanceJavaBrowse"; label: Legacy.Tr.phrase("Chọn file…"); quiet: true; onClicked: javaPicker.open() }
+                            Button { objectName: "instanceJavaAuto"; label: Legacy.Tr.phrase("Tự động"); quiet: true; clickable: javaField.text.length > 0; onClicked: javaField.text = "" }
+                        }
+                        PaymentText { objectName: "instanceJavaError"; visible: !!root.javaError; width: parent.width; wrapMode: Text.WordWrap; color: GlassTheme.danger; text: root.javaError }
+                    }
                 }
                 Column {
                     visible: root.section === 3

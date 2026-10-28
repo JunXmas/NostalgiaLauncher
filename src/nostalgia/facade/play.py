@@ -48,7 +48,15 @@ class PlayOperations(AccountOperations):
         instance = load_instance(self.paths, instance_id)
         account = self._require_account(account_id, client_id, cancel_token)
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
-        java_binary = resolve_installed_java_binary(version_meta, self.platform, self.paths)
+        java_binary: Path | None
+        if instance.java_binary_override:
+            # Nâng cao: Java tự chọn. Mất file thì báo rõ, KHÔNG lặng lẽ lùi về bản tự chọn.
+            java_binary = Path(instance.java_binary_override)
+            if not java_binary.is_file():
+                message = f"không tìm thấy Java đã chọn: {instance.java_binary_override}"
+                raise InstanceError(message)
+        else:
+            java_binary = resolve_installed_java_binary(version_meta, self.platform, self.paths)
         if java_binary is None:
             message = f"chưa cài bản Java cho {instance.version_id}"
             raise InstanceError(message)

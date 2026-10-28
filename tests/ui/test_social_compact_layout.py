@@ -33,7 +33,9 @@ def test_small_view_switches_list_and_chat_without_stale_draft(
     wait_until(lambda: social.peerId == "misa" and not social.busy)
     assert chat.isVisible() and not rail.isVisible()
     page = find_control(root_item, "friendsPage")
-    assert 0 <= chat.mapToItem(page, QPointF()).x() <= 5
+    # Grid xếp lại ở lượt polish sau khi đổi visible: đọc ngay còn toạ độ cột cũ
+    # (CI 28/10/2026, x = 319).
+    wait_until(lambda: 0 <= chat.mapToItem(page, QPointF()).x() <= 5)
     composer = find_control(root_item, "chatComposer")
     origin = composer.mapToItem(page, QPointF())
     assert origin.y() >= 0 and origin.y() + composer.height() <= page.height()
