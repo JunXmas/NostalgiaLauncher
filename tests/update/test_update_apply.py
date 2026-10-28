@@ -12,12 +12,12 @@ from pathlib import Path
 
 import pytest
 
+from nostalgia.system.child_env import clean_child_env
 from nostalgia.update.apply import (
     INSTALL_KIND_APPIMAGE,
     INSTALL_KIND_FROZEN,
     INSTALL_KIND_READONLY,
     SwapPlan,
-    clean_child_env,
     detect_install_kind,
     render_swap_script,
     write_swap_script,

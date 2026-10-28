@@ -3,6 +3,16 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0rc42 — 2026-10-28
+
+- Trang chủ: slide **Nos Client** đầu băng trượt — 6 tính năng có icon, ảnh chụp thật trong
+  game (lời nhạc trên trời, cài đặt R-Shift), bật Nos cho bản chơi đang chọn ngay tại chỗ.
+- Nút Nos Client ngay trên thẻ bản chơi và khối Chơi ở trang chủ.
+- Sửa (Linux, bản cài): game kế thừa `LD_LIBRARY_PATH` của launcher nên công cụ hệ thống
+  mà mod gọi (lời nhạc Nos Client đọc Spotify qua `gdbus`) chết im lặng. Game giờ chạy với
+  đường dẫn thư viện gốc của người dùng.
+- Nos Client tự cập nhật lên 0.3.0 khi chơi.
+
 ## 1.2.0rc41 — 2026-10-26
 
 - Sửa: lưu skin cho tài khoản Microsoft báo "Mojang rejected skin (HTTP 405)". Launcher gửi

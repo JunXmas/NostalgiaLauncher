@@ -12,7 +12,6 @@ Glass {
     property int current: 0
     readonly property int count: 3
     signal playRequested
-    signal cosmeticRequested
     signal libraryRequested
     signal createServerRequested
     width: parent.width
@@ -47,7 +46,7 @@ Glass {
                 chosen: root.chosen
                 active: root.current === 0
                 onCreateRequested: root.playRequested()
-                onCosmeticRequested: root.cosmeticRequested()
+                onLibraryRequested: root.libraryRequested()
             }
             ServerShowcase {
                 id: showcase

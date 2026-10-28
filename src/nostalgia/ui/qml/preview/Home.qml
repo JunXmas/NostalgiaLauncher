@@ -68,7 +68,6 @@ Item {
                 chosen: root.chosen
                 onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.play(root.chosen.instanceId) : root.navigate(1)
                 onLibraryRequested: root.navigate(2)
-                onCosmeticRequested: root.navigate(7)
                 onCreateServerRequested: root.createServerRequested()
             }
             GuideCard { width: parent.width; topicId: "start" }

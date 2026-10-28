@@ -18,21 +18,21 @@ Item {
     readonly property bool nosOn: root.supported && root.chosen.nosClientEnabled === true
     readonly property bool locked: bridge.gameRunning || bridge.busy
     signal createRequested
-    signal cosmeticRequested
+    signal libraryRequested
 
     readonly property var features: [
-        { icon: "lyrics", title: Legacy.Tr.phrase("Lời nhạc trên trời"), note: Legacy.Tr.phrase("Spotify, bụi sao, karaoke") },
+        { icon: "lyrics", title: Legacy.Tr.phrase("Lời nhạc trên trời"), note: Legacy.Tr.phrase("Spotify, chữ khối, chọn màu") },
         { icon: "minimap", title: Legacy.Tr.phrase("Minimap & bản đồ"), note: Legacy.Tr.phrase("Riêng cho từng world") },
         { icon: "waypoint", title: Legacy.Tr.phrase("Waypoint"), note: Legacy.Tr.phrase("Đánh dấu, chiếu trên HUD") },
         { icon: "fps", title: Legacy.Tr.phrase("HUD kính"), note: Legacy.Tr.phrase("FPS, toạ độ, keystroke") },
         { icon: "zoom", title: Legacy.Tr.phrase("Zoom & freelook"), note: Legacy.Tr.phrase("Lăn chuột đổi mức") },
-        { icon: "look", title: Legacy.Tr.phrase("Cosmetic 3D"), note: Legacy.Tr.phrase("Cánh, cape, đai đầu") }
+        { icon: "sky", title: Legacy.Tr.phrase("Cực quang theo nhạc"), note: Legacy.Tr.phrase("Trời đêm đổi màu theo lời") }
     ]
     readonly property var shots: [
-        { source: "../assets/nos/shot-lyrics.jpg", caption: Legacy.Tr.phrase("Lời nhạc ngưng tụ từ bụi sao, bị núi che") },
+        { source: "../assets/nos/shot-lyrics.jpg", caption: Legacy.Tr.phrase("Lời nhạc từng cụm trên trời, bị núi che") },
         { source: "../assets/nos/shot-hub.jpg", caption: Legacy.Tr.phrase("Cài đặt R-Shift: vòng danh mục, kính có chiều sâu") },
-        { source: "../assets/nos/shot-angel.jpg", caption: Legacy.Tr.phrase("Seraph Angel — mặc thử ngay trong game") },
-        { source: "../assets/nos/shot-crimson.jpg", caption: Legacy.Tr.phrase("Crimson Oath — cánh quỷ có animation") }
+        { source: "../assets/nos/shot-aurora.jpg", caption: Legacy.Tr.phrase("Cực quang nhịp theo lời bài hát") },
+        { source: "../assets/nos/shot-poster.jpg", caption: Legacy.Tr.phrase("Chữ khối trong suốt, tô theo cảnh phía sau") }
     ]
     property int shot: 0
     property real enter: 0
@@ -102,7 +102,7 @@ Item {
             Image { source: "../assets/nos/icon-sky.png"; width: 18; height: 18; smooth: true; mipmap: true; anchors.verticalCenter: parent.verticalCenter }
             PaymentText {
                 anchors.verticalCenter: parent.verticalCenter
-                text: Legacy.Tr.phrase("MỚI · NOS CLIENT 0.2")
+                text: Legacy.Tr.phrase("MỚI · NOS CLIENT 0.3")
                 color: GlassTheme.accent
                 font.pixelSize: GlassTheme.fontCaption
                 font.letterSpacing: 1.4
@@ -173,8 +173,8 @@ Item {
             Button {
                 height: 46
                 quiet: true
-                label: Legacy.Tr.phrase("Xem cosmetic")
-                onClicked: root.cosmeticRequested()
+                label: Legacy.Tr.phrase("Khám phá modpack")
+                onClicked: root.libraryRequested()
             }
         }
         PaymentText {
