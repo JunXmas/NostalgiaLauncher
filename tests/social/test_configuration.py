@@ -8,20 +8,27 @@ from nostalgia.social import configuration
 from nostalgia.social.configuration import load_configuration, read_configuration
 
 
-def test_bundled_origin_wins_over_old_user_settings(
+def test_user_file_wins_over_bundled_and_env_wins_over_both(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     module = tmp_path / "configuration.py"
     monkeypatch.setattr(configuration, "__file__", str(module))
     (tmp_path / "service-defaults.json").write_text(
-        '{"account_url":"https://accounts.nostalgia.test/","room_sync_url":""}'
+        '{"account_url":"https://bundled.test/","room_sync_url":"https://bundled-room.test"}'
     )
     config_dir = tmp_path / "config"
     config_dir.mkdir()
-    (config_dir / "services.json").write_text('{"account_url":"https://old.test"}')
-    assert read_configuration(config_dir).account_url == "https://accounts.nostalgia.test"
+    assert read_configuration(config_dir).account_url == "https://bundled.test"
+    (config_dir / "services.json").write_text(
+        '{"account_url":"https://user.test","room_sync_url":""}'
+    )
+    loaded = read_configuration(config_dir)
+    assert loaded.account_url == "https://user.test"
+    # Trường trống trong file người dùng thì lấy giá trị cài sẵn.
+    assert loaded.room_sync_url == "https://bundled-room.test"
     (config_dir / "services.json").write_text("{broken")
-    assert read_configuration(config_dir).account_url == "https://accounts.nostalgia.test"
+    assert read_configuration(config_dir).account_url == "https://bundled.test"
+    (config_dir / "services.json").write_text('{"account_url":"https://user.test"}')
     monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", "https://developer.test")
     assert read_configuration(config_dir).account_url == "https://developer.test"
 

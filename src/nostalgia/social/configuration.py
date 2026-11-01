@@ -43,6 +43,10 @@ def verify_service_url(value: str) -> str:
 
 
 def read_configuration(config_dir: Path) -> ServiceConfiguration:
+    """Thứ tự ưu tiên mỗi trường: biến môi trường > `services.json` của người dùng > file cài sẵn.
+
+    Trường để trống trong `services.json` thì lấy giá trị cài sẵn.
+    """
     defaults = as_mapping(read_json(Path(__file__).with_name("service-defaults.json")))
     path = config_dir / "services.json"
     try:
@@ -53,16 +57,16 @@ def read_configuration(config_dir: Path) -> ServiceConfiguration:
         verify_service_url(
             os.environ.get(
                 "NOSTALGIA_ACCOUNT_URL",
-                as_string(defaults.get("account_url"))
-                or as_string(fields.get("account_url"))
+                as_string(fields.get("account_url"))
+                or as_string(defaults.get("account_url"))
                 or "",
             )
         ),
         verify_service_url(
             os.environ.get(
                 "NOSTALGIA_ROOM_SYNC_URL",
-                as_string(defaults.get("room_sync_url"))
-                or as_string(fields.get("room_sync_url"))
+                as_string(fields.get("room_sync_url"))
+                or as_string(defaults.get("room_sync_url"))
                 or "",
             )
         ),
