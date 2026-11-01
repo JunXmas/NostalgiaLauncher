@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
 from collections.abc import Callable
 from concurrent.futures import Future
 from importlib.util import find_spec
@@ -19,6 +20,8 @@ from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.http import HttpClient
 from nostalgia.net.websocket import TlsContext
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from nostalgia.multiplayer.host import HostRelay
@@ -76,8 +79,8 @@ class RoomNetwork(RoomRecovery):
             await host.wait_closed()
         except asyncio.CancelledError:
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("relay host closed with error: %s: %s", type(exc).__name__, exc)
         await self._teardown()
         self._on_failure("Mất kết nối relay. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.")
 
@@ -140,8 +143,8 @@ class RoomNetwork(RoomRecovery):
             from nostalgia.multiplayer.peer_host import PeerHost
 
             self._host.peer = PeerHost(self._host)
-        except ImportError:
-            pass
+        except ImportError as exc:
+            logger.warning("P2P host unavailable, aiortc failed to import: %s", exc)
 
     async def close_room_network(self) -> None:
         self._guest_room_code = ""

@@ -153,8 +153,13 @@ class PeerHost:
                         if not reply:
                             break
                         await stream.send(reply)
-        except (Exception, asyncio.CancelledError):
+        except asyncio.CancelledError:
             pass
+        except Exception as exc:
+            # Cả phiên của một khách chết: phải để lại dấu vết, không nuốt im.
+            logging.getLogger(__name__).warning(
+                "P2P host %s stream failed: %s: %s", purpose, type(exc).__name__, exc
+            )
         finally:
             if game is not None:
                 self.games.discard(game)
