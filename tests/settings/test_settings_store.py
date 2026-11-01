@@ -81,16 +81,15 @@ def test_legacy_hide_setting_round_trips_and_defaults_off(tmp_path: Path) -> Non
     )
 
 
-def test_interface_choice_preserves_old_settings_and_round_trips(tmp_path: Path) -> None:
-    settings_path(tmp_path).write_text('{"ui_scale": 150, "ui_sound": false}')
-    settings = load_settings(tmp_path, environment={})
-    assert settings.interface_style == "", "file cũ chưa có lựa chọn vẫn được đọc"
-    assert settings.ui_scale == 150 and settings.ui_sound is False
-    for style in ("classic", "modern"):
-        save_settings(tmp_path, Settings(interface_style=style, ui_scale=150))
-        loaded = load_settings(tmp_path, environment={})
-        assert loaded.interface_style == style
-        assert loaded.ui_scale == 150
-    for invalid in ('"unknown"', "true", "150", "null"):
-        settings_path(tmp_path).write_text('{"interface_style": ' + invalid + "}")
-        assert load_settings(tmp_path, environment={}).interface_style == ""
+def test_old_classic_interface_choice_is_read_silently(tmp_path: Path) -> None:
+    """Giao diện cũ đã bị gỡ: file còn `"interface_style": "classic"` vẫn đọc trơn, giữ mọi
+    tuỳ chọn khác, và lần lưu sau thì trường cũ biến mất."""
+    for old in ('"classic"', '"modern"', '"unknown"', "true", "null"):
+        settings_path(tmp_path).write_text(
+            '{"interface_style": ' + old + ', "ui_scale": 150, "ui_sound": false}'
+        )
+        settings = load_settings(tmp_path, environment={})
+        assert settings.ui_scale == 150 and settings.ui_sound is False
+        assert not hasattr(settings, "interface_style")
+    save_settings(tmp_path, settings)
+    assert "interface_style" not in settings_path(tmp_path).read_text()

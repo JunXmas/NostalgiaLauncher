@@ -34,7 +34,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from nostalgia.account.model import Account  # noqa: E402
 from nostalgia.api import Launcher  # noqa: E402
 from nostalgia.skin.model import PlayerSkin  # noqa: E402
-from nostalgia.ui.app import build_view  # noqa: E402
+from nostalgia.ui.preview import open_preview  # noqa: E402
 
 PLAYER_NAMES = ("JunSlayest", "Dinnerbone", "Notch")
 
@@ -62,11 +62,11 @@ def main() -> int:
 
     qt_application = QApplication(["ui-account-probe"])
     qt_application.setApplicationVersion("0.0.0")
-    view, bridge = build_view(launcher)
+    view, bridge = open_preview(launcher)
     root_item = view.rootObject()
-    sidebar = root_item.findChild(QObject, "sidebar")
-    page_loader = root_item.findChild(QObject, "pageLoader")
-    assert sidebar is not None and page_loader is not None
+    root_item.setProperty("sessionSkipped", True)
+    page_loader = root_item.findChild(QObject, "minimalPageLoader")
+    assert page_loader is not None
     view.show()
     longest_stall = 0.0
 
@@ -92,17 +92,18 @@ def main() -> int:
     startup = " ".join(f"{key}={count}" for key, count in disk_reads.items())
     print(f"khởi động: {startup}")
     before = dict(disk_reads)
-    sidebar.setProperty("currentIndex", 3)
+    root_item.setProperty("currentIndex", 3)
     report("mở trang TÀI KHOẢN", before, settle(800))
     page = page_loader.property("item")
+    accounts = {
+        row["playerName"]: row["accountId"]
+        for row in view.rootContext().contextProperty("accountBridge").accounts
+    }
     for name in PLAYER_NAMES[1:] + PLAYER_NAMES[:1]:
         before = dict(disk_reads)
-        page.setProperty("shownName", name)
-        bridge.setActiveAccount(name)
+        page.setProperty("shownId", accounts[name])
+        bridge.setActiveAccount(accounts[name])
         report(f"chọn {name}", before, settle(300))
-    before = dict(disk_reads)
-    page.setProperty("facing", 1)
-    report("xoay nhân vật", before, settle(300))
     before = dict(disk_reads)
     bridge.addOfflineAccount("Herobrine")
     report("thêm tài khoản", before, settle(1200))

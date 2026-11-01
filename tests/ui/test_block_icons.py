@@ -9,6 +9,7 @@ Ba thứ đáng gác, vì mỗi thứ đã từng sai ở bản mẫu:
 from __future__ import annotations
 
 import os
+import re
 import zipfile
 from pathlib import Path
 
@@ -195,12 +196,14 @@ def test_every_sidebar_icon_file_is_really_in_the_package() -> None:
 
 
 def test_the_donate_entry_uses_a_block_that_the_texture_table_knows() -> None:
-    """Ô ỦNG HỘ xin khối `beacon`. Tên không có trong `BLOCK_MODELS` thì `ensure_strips`
-    không sinh dải nào và icon lặng lẽ rơi về chữ dự phòng mãi mãi."""
-    assert "beacon" in BLOCK_MODELS
-    sidebar = (QML_DIR / "Sidebar.qml").read_text(encoding="utf-8")
-    donate_block = sidebar.split('objectName: "donateLink"', 1)[1]
-    assert 'block: "beacon"' in donate_block.split("NavItem")[0]
+    """Ô ủng hộ / Premium xin khối `beacon`; mọi mục điều hướng cũng xin khối theo tên. Tên
+    không có trong `BLOCK_MODELS` thì `ensure_strips` không sinh dải nào và icon lặng lẽ rơi
+    về chữ dự phòng mãi mãi."""
+    navigation = (QML_DIR / "preview" / "Navigation.qml").read_text(encoding="utf-8")
+    support = navigation.split('objectName: "supportBlock"', 1)[0].rsplit("{", 1)[1]
+    assert 'block: "beacon"' in support
+    for block in re.findall(r'block:\s*"(\w+)"', navigation):
+        assert block in BLOCK_MODELS, block
 
 
 def test_hovering_spins_the_block_up_to_a_ceiling() -> None:

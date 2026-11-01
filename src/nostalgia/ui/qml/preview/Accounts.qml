@@ -24,13 +24,13 @@ Item {
         Column { id: contents; width: Math.min(parent.width - 10, 1320 * GlassTheme.scale); anchors.horizontalCenter: parent.horizontalCenter; spacing: 20
             Flow { width: parent.width; spacing: 10
                 Repeater { model: accountBridge.accounts
-                    Glass { width: Math.min(300 * GlassTheme.scale, contents.width); height: 104 * GlassTheme.scale; padding: 16
+                    Glass { objectName: "accountRow"; readonly property bool active: page.shownId === modelData.accountId; width: Math.min(300 * GlassTheme.scale, contents.width); height: 104 * GlassTheme.scale; padding: 16
                         Button { anchors.right: parent.right; width: 28; height: 28; label: "×"; danger: true; quiet: true; Accessible.name: Legacy.Tr.phrase("Gỡ tài khoản ") + modelData.playerName; onClicked: { var accountId = modelData.accountId; confirmDialog.ask(Legacy.Tr.phrase("Gỡ tài khoản Minecraft?"), Legacy.Tr.phrase("Skin trong thư viện và các bản chơi được giữ lại."), function() { bridge.removeAccount(accountId); }); } }
                         Legacy.SkinFace { x: 0; anchors.verticalCenter: parent.verticalCenter; size: 44; source: modelData.skinFile || "" }
                         Column { x: 58; width: parent.width - x - 24; spacing: 8
                             PaymentText { width: parent.width; text: modelData.playerName; font.weight: Font.DemiBold; elide: Text.ElideRight; maximumLineCount: 1 }
-                            Row { spacing: 6; ProviderLogo { width: 16; height: 16; provider: modelData.accountKind; visible: modelData.accountKind === "microsoft" } PaymentText { text: Legacy.Tr.message(modelData.kindLabel); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption } }
-                            Button { height: 28; label: page.shownId === modelData.accountId ? Legacy.Tr.phrase("Đang chọn ✓") : Legacy.Tr.phrase("Chọn tài khoản"); selected: page.shownId === modelData.accountId; quiet: true; onClicked: { page.shownId = modelData.accountId; bridge.setActiveAccount(modelData.accountId); } }
+                            Row { spacing: 6; ProviderLogo { width: 16; height: 16; provider: modelData.accountKind; visible: modelData.accountKind === "microsoft" } PaymentText { objectName: "accountDetail"; readonly property bool waitingForSkinSupport: modelData.accountKind === "ely" && !accountBridge.skinSupportReady; text: waitingForSkinSupport ? Legacy.Tr.phrase("Skin trong game: đang tải hỗ trợ…") : Legacy.Tr.message(modelData.kindLabel); color: waitingForSkinSupport ? Legacy.Theme.warning : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption } }
+                            Button { objectName: "useAccountButton"; height: 28; label: page.shownId === modelData.accountId ? Legacy.Tr.phrase("Đang chọn ✓") : Legacy.Tr.phrase("Chọn tài khoản"); selected: page.shownId === modelData.accountId; quiet: true; onClicked: { page.shownId = modelData.accountId; bridge.setActiveAccount(modelData.accountId); } }
                         }
                     }
                 }

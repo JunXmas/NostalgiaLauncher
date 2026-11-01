@@ -8,6 +8,8 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from modern_window import go, open_modern
+
 from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.ui.settings_bridge import SettingsBridge
@@ -58,20 +60,12 @@ def test_the_bridge_no_longer_offers_any_web_donate_page(tmp_path: Path) -> None
 
 def test_settings_page_shows_the_donate_button(tmp_path: Path) -> None:
     """Nút phải có thật trên trang CÀI ĐẶT (index 6), không chỉ có ở cầu nối."""
-    from PySide6.QtCore import QObject
-    from PySide6.QtGui import QGuiApplication
     from qml_tree import find_item
 
-    from nostalgia.ui.app import build_view
-
-    view, _bridge = build_view(Launcher.for_data_dir(tmp_path / "data", tmp_path / "config"))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 6)
-    QGuiApplication.processEvents()
+    _view, _bridge, root_item = open_modern(
+        Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    )
+    go(root_item, 6)
 
     assert find_item(root_item, "donateButton") is not None, "trang CÀI ĐẶT thiếu nút ủng hộ"
 
@@ -80,20 +74,12 @@ def test_discord_section_has_a_switch_and_nothing_to_fill_in(tmp_path: Path) -> 
     """Chỉ còn một công tắc. Ô nhập Application ID đã bỏ: launcher tự mang id của nó, bắt
     người chơi mở Developer Portal là giao việc của launcher cho người dùng — và ai cũng bỏ
     qua, nên presence coi như không tồn tại."""
-    from PySide6.QtCore import QObject
-    from PySide6.QtGui import QGuiApplication
     from qml_tree import find_item
 
-    from nostalgia.ui.app import build_view
-
-    view, _bridge = build_view(Launcher.for_data_dir(tmp_path / "data", tmp_path / "config"))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 6)
-    QGuiApplication.processEvents()
+    _view, _bridge, root_item = open_modern(
+        Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    )
+    go(root_item, 6)
 
     assert find_item(root_item, "discordToggle") is not None
     assert find_item(root_item, "discordIdField") is None

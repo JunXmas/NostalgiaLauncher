@@ -32,9 +32,15 @@ Controls.Popup {
             }
         }
     }
+    property string storageNote: ""
+    Connections {
+        target: storageBridge
+        function onCompleted(message) { root.storageNote = message; }
+        function onFailed(message) { root.storageNote = message; }
+    }
     onClosed: { if (exportingAfterClose) { exportingAfterClose = false; exportRequested(instance); } }
     function openFor(entry) {
-        instance = entry; section = 0;
+        instance = entry; section = 0; storageNote = "";
         nameField.text = entry.label || "";
         groupField.text = entry.groupName || "";
         heapField.text = entry.maxHeapMegabytes ? String(entry.maxHeapMegabytes) : "";
@@ -187,6 +193,12 @@ Controls.Popup {
                     PaymentText { text: Legacy.Tr.phrase("Đóng gói & dữ liệu"); font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
                     PaymentText { width: parent.width; text: Legacy.Tr.phrase("Xuất MRPACK hoặc ZIP để chia sẻ và nhập lại. Bạn có thể chọn đóng gói cả thế giới đã chơi."); color: GlassTheme.muted }
                     Flow { width: parent.width; spacing: 8; Button { objectName: "instanceExport"; label: Legacy.Tr.phrase("Xuất modpack…"); clickable: root.writable; onClicked: { root.exportingAfterClose = true; root.close(); } } Button { label: Legacy.Tr.phrase("Kiểm tra xung đột mod"); clickable: root.writable; onClicked: { root.close(); root.repairRequested(root.instance); } } }
+                    // Sao lưu (saves, mods, config) và thùng rác: khôi phục được ở Xuất modpack → Khôi phục dữ liệu cũ.
+                    Flow { width: parent.width; spacing: 8
+                        Button { objectName: "instanceBackup"; label: Legacy.Tr.phrase("Sao lưu"); clickable: root.writable && !storageBridge.busy; onClicked: storageBridge.backup(root.instance.instanceId) }
+                        Button { objectName: "instanceMoveToTrash"; label: Legacy.Tr.phrase("Chuyển vào thùng rác"); quiet: true; clickable: root.writable && !storageBridge.busy; onClicked: { var instanceId = root.instance.instanceId; confirmDialog.ask(Legacy.Tr.phrase("Chuyển bản chơi vào thùng rác?"), Legacy.Tr.phrase("Có thể khôi phục ở Xuất modpack → Khôi phục dữ liệu cũ. Dữ liệu ở thư mục riêng vẫn được giữ nguyên."), function() { storageBridge.moveToTrash(instanceId); root.close(); }); } }
+                    }
+                    PaymentText { objectName: "instanceStorageNote"; width: parent.width; visible: !!root.storageNote; text: Legacy.Tr.message(root.storageNote); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote }
                     Glass {
                         width: parent.width; height: deleteColumn.implicitHeight + 32; padding: 16
                         Column { id: deleteColumn; width: parent.width; spacing: 12

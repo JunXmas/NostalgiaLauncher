@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import QtQuick.Controls as Controls
 import "../" as Legacy
 import "ActionReasons.js" as Reasons
 
@@ -140,6 +141,48 @@ Item {
         anchors.top: workspaceTabs.bottom; anchors.topMargin: 18
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         active: root.serverMode; visible: active; source: "Servers.qml"
+    }
+    function isPackUrl(url) {
+        var lower = String(url).toLowerCase();
+        return lower.endsWith(".mrpack") || lower.endsWith(".zip");
+    }
+    // Chỉ nhập MỘT modpack mỗi lần thả: hai việc nhập song song giẫm nhau. Trả số file modpack thấy.
+    function importDropped(urls) {
+        var packs = [];
+        for (var index = 0; index < urls.length; index++)
+            if (root.isPackUrl(urls[index])) packs.push(String(urls[index]));
+        if (packs.length > 0) contentBridge.importModpackFile(packs[0], "", "");
+        return packs.length;
+    }
+    DropArea {
+        id: dropZone
+        objectName: "packDropArea"
+        anchors.fill: parent
+        // Popup đang mở thì overlay của nó nhận cú kéo; DropArea nằm dưới sẽ nuốt cú thả .jar của LocalModBridge.
+        enabled: !root.serverMode && !(Controls.Overlay.overlay && Controls.Overlay.overlay.visibleChildren.length > 0)
+        z: 50
+        // `urls` chỉ có trên sự kiện kéo, không có trên `DropArea.drag`, nên tự giữ trạng thái.
+        property bool holdingPack: false
+        onEntered: function (drag) {
+            dropZone.holdingPack = !!drag.urls && drag.urls.some(root.isPackUrl);
+            if (!dropZone.holdingPack) drag.accepted = false;
+        }
+        onExited: dropZone.holdingPack = false
+        onDropped: function (drop) {
+            dropZone.holdingPack = false;
+            if (root.importDropped(drop.urls) > 0) drop.accept();
+        }
+        Glass {
+            objectName: "packDropOverlay"
+            anchors.fill: parent
+            visible: dropZone.holdingPack
+            padding: 24
+            Column {
+                anchors.centerIn: parent; spacing: 10
+                PaymentText { anchors.horizontalCenter: parent.horizontalCenter; text: Legacy.Tr.phrase("Thả để nhập modpack"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold }
+                PaymentText { anchors.horizontalCenter: parent.horizontalCenter; text: Legacy.Tr.phrase(".mrpack (Modrinth) hoặc .zip (CurseForge) — tạo thành một bản chơi mới"); color: GlassTheme.muted }
+            }
+        }
     }
     ModRepairDialog { id: repair }
     ModernCreateInstanceDialog {

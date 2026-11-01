@@ -1,4 +1,4 @@
-"""Ô CỘNG ĐỒNG ở thanh bên: mở Discord ra trình duyệt, và KHÔNG chuyển trang.
+"""Nút CỘNG ĐỒNG ở thanh điều hướng: mở Discord ra trình duyệt, và KHÔNG chuyển trang.
 
 Vì sao đáng có một file riêng: ô này nằm giữa bảy mục điều hướng nhưng thuộc loại khác hẳn —
 bấm xong người dùng phải vẫn đứng ở trang cũ. Kiểu lỗi mà nó gác là kiểu im lặng: nhét ô vào
@@ -17,31 +17,25 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QObject
+from modern_window import go, open_modern
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickItem
 from qml_tree import find_item
 
 from nostalgia.api import Launcher
-from nostalgia.ui.app import build_view
 from nostalgia.ui.settings_bridge import SettingsBridge
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-def build_sidebar(tmp_path: Path) -> tuple[QQuickItem, QObject]:
+def build_sidebar(tmp_path: Path) -> QQuickItem:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    return root_item, sidebar
+    _view, _bridge, root_item = open_modern(launcher)
+    return root_item
 
 
 def test_the_sidebar_has_a_community_link(tmp_path: Path) -> None:
-    root_item, _sidebar = build_sidebar(tmp_path)
+    root_item = build_sidebar(tmp_path)
     assert find_item(root_item, "communityLink") is not None, "thanh bên thiếu ô CỘNG ĐỒNG"
 
 
@@ -80,7 +74,7 @@ def test_clicking_the_community_link_opens_the_discord_invite(
 ) -> None:
     """Bấm ô phải gọi đúng cầu nối, và cầu nối phải giao đúng URL cho trình duyệt."""
     opened = record_opened_urls(monkeypatch)
-    root_item, _sidebar = build_sidebar(tmp_path)
+    root_item = build_sidebar(tmp_path)
     link = find_item(root_item, "communityLink")
     assert link is not None
 
@@ -101,11 +95,10 @@ def test_clicking_the_community_link_does_not_navigate(
     ai đó nhét ô vào mảng `entries`.
     """
     record_opened_urls(monkeypatch)
-    root_item, sidebar = build_sidebar(tmp_path)
+    root_item = build_sidebar(tmp_path)
     # Đứng ở một trang KHÔNG phải trang 0: trang 0 là mặc định nên nếu ô có lỡ đặt lại
     # currentIndex về 0 thì test đứng ở 0 sẽ không thấy gì.
-    sidebar.setProperty("currentIndex", 3)
-    QGuiApplication.processEvents()
+    go(root_item, 3)
     page_before = theme_page(root_item)
     assert page_before == 3, "thanh bên phải đã kịp nói cho Theme biết đang ở trang 3"
 
@@ -114,7 +107,7 @@ def test_clicking_the_community_link_does_not_navigate(
     link.metaObject().invokeMethod(link, "clicked")
     QGuiApplication.processEvents()
 
-    assert sidebar.property("currentIndex") == 3, (
+    assert root_item.property("currentIndex") == 3, (
         "ô CỘNG ĐỒNG đã đổi trang — nó không phải điểm đến"
     )
     assert theme_page(root_item) == page_before, "ô CỘNG ĐỒNG đã đổi Theme.page"
@@ -131,7 +124,7 @@ def theme_page(root_item: QQuickItem) -> int:
 
     context = qmlContext(root_item)
     assert context is not None
-    expression = QQmlExpression(context, root_item, "Theme.page")
+    expression = QQmlExpression(context, root_item, "Legacy.Theme.page")
     value, _valid = expression.evaluate()
     assert not expression.hasError(), expression.error().toString()
     return int(value)

@@ -18,11 +18,12 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from modern_window import open_modern
 from PySide6.QtCore import QObject
 from qml_tree import find_item
+from test_bridges import wait_until
 
 from nostalgia.api import BankAccount, Launcher
-from nostalgia.ui.app import build_view
 from nostalgia.ui.settings_bridge import QR_SCALE, SettingsBridge
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -31,16 +32,13 @@ ACCOUNT = BankAccount("970436", "1234567890123", "NGUYEN VAN A")
 
 
 def test_the_dialog_exists_and_the_donate_button_opens_it(tmp_path: Path) -> None:
-    """Hộp phải nằm ở `Main.qml` chứ không trong trang: trang CÀI ĐẶT nạp qua Loader, hộp
-    dựng trong đó sẽ không phủ được thanh bên."""
+    """Hộp phải nằm ở gốc cửa sổ chứ không trong trang: trang CÀI ĐẶT nạp qua Loader, hộp
+    dựng trong đó sẽ không phủ được thanh điều hướng."""
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
+    _view, _bridge, root_item = open_modern(launcher)
 
     dialog = root_item.findChild(QObject, "donateDialog")
-    assert dialog is not None, "Main.qml thiếu DonateDialog"
+    assert dialog is not None, "cửa sổ thiếu DonateDialog"
     assert dialog.property("visible") is False, "hộp ủng hộ không được tự bật lúc mở launcher"
 
     dialog.metaObject().invokeMethod(dialog, "open")
@@ -51,29 +49,27 @@ def test_the_dialog_exists_and_the_donate_button_opens_it(tmp_path: Path) -> Non
     ), "có mã QR nhưng không có ô Image nào vẽ nó"
 
 
-def test_the_sidebar_offers_donate_from_any_page(tmp_path: Path) -> None:
-    """Ô ỦNG HỘ phải ở THANH BÊN, mở được khi đang đứng ở trang chủ (index 0).
-
-    Nút nằm cuối trang CÀI ĐẶT thì phải bấm hai lớp mới tới, và một lời mời không ai thấy
-    bằng không có. Test đứng ở trang chủ chứ không trang CÀI ĐẶT đúng là để gác chuyện đó:
-    ai đó dọn ô này về lại trong trang thì nó đỏ.
-    """
+def test_the_navigation_offers_donate_from_any_page(tmp_path: Path) -> None:
+    """Ủng hộ phải mở được từ THANH ĐIỀU HƯỚNG khi đang đứng ở trang chủ (index 0): nút Premium
+    → nút ủng hộ trong hộp. Nút chỉ nằm cuối trang CÀI ĐẶT thì một lời mời không ai thấy bằng
+    không có."""
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None and sidebar.property("currentIndex") == 0, "phải ở trang chủ"
+    _view, _bridge, root_item = open_modern(launcher)
+    assert root_item.property("currentIndex") == 0, "phải ở trang chủ"
 
-    link = find_item(root_item, "donateLink")
-    assert link is not None, "thanh bên thiếu ô ỦNG HỘ"
+    support = find_item(root_item, "openSupport")
+    assert support is not None, "thanh điều hướng thiếu lối vào ủng hộ"
+    support.metaObject().invokeMethod(support, "clicked")
+    support_dialog = root_item.findChild(QObject, "supportDialog")
+    assert support_dialog is not None and support_dialog.property("visible") is True
+    donation = support_dialog.findChild(QObject, "paymentDonation")
+    assert donation is not None
     dialog = root_item.findChild(QObject, "donateDialog")
     assert dialog is not None and dialog.property("visible") is False
-    link.metaObject().invokeMethod(link, "clicked")
-    assert dialog.property("visible") is True, "bấm ô ở thanh bên mà hộp không mở"
-    # Ô này là LIÊN KẾT, không phải điểm đến: mở hộp xong vẫn phải đứng nguyên ở trang chủ.
-    assert sidebar.property("currentIndex") == 0
+    donation.metaObject().invokeMethod(donation, "clicked")
+    wait_until(lambda: dialog.property("visible") is True)
+    # Đây là LIÊN KẾT, không phải điểm đến: mở hộp xong vẫn phải đứng nguyên ở trang chủ.
+    assert root_item.property("currentIndex") == 0
 
 
 def test_the_qr_data_uri_decodes_to_the_png_the_engine_built(tmp_path: Path) -> None:

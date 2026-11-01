@@ -95,7 +95,9 @@ Item {
                         return "Accounts.qml";
                     if (root.currentIndex === 2)
                         return "Library.qml";
-                    return "../pages/" + ["HomePage.qml", "InstancesPage.qml", "LibraryPage.qml", "AccountsPage.qml", "MultiplayerPage.qml", "LogPage.qml", "SettingsPage.qml"][root.currentIndex];
+                    if (root.currentIndex === 5)
+                        return "../pages/LogPage.qml";
+                    return "../pages/SettingsPage.qml";
                 }
                 Connections {
                     target: pages.item
@@ -211,6 +213,8 @@ Item {
                 recovery.report(message, accountBridge);
         }
     }
+    // Danh mục phiên bản tải hỏng: không báo thì hộp Tạo bản chơi chỉ hiện danh sách rỗng.
+    Connections { target: catalogBridge; function onFailed(message) { recovery.report(message, catalogBridge); } }
     SocialProfileDialog { id: socialProfileDialog }
     UpdateNotice { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 24; z: 135; visible: active && !root.loginVisible; onDetailsRequested: updateDetails.open() }
     UpdateDialog { id: updateDetails; backdrop: scene }
@@ -223,7 +227,10 @@ Item {
         anchors.fill: parent
     }
     Legacy.LoadingToast {
+        id: loadingToast
         suppressLauncherBusy: hostBridge.details.active && hostBridge.details.deferred && ["lobby", "publishing", "error"].indexOf(hostBridge.details.stage) >= 0
         z: 120
     }
+    // Game khởi động / thoát / sự cố (kèm mã thoát), cài xong, có bản mới.
+    Legacy.NotificationToast { z: 121; bottomOffset: loadingToast.active ? loadingToast.height + 32 : 24 }
 }

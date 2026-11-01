@@ -1,23 +1,21 @@
-"""Điểm vào của giao diện: `nostalgia-ui`.
+"""Dựng khung nhìn và các cầu nối dùng chung; điểm vào thật là `runtime.main`.
 
-Chỉ làm ba việc — dựng `Launcher`, dựng cầu nối, nạp QML. Mọi logic nằm ở lõi; mọi cách vẽ
-nằm ở QML. File này cố ý mỏng để không có chỗ nào cho logic lén chui vào tầng giao diện.
+Mọi logic nằm ở lõi; mọi cách vẽ nằm ở QML. File này cố ý mỏng để không có chỗ nào cho logic
+lén chui vào tầng giao diện.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import cast
 
-from PySide6.QtCore import QObject, QSize, QUrl
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication, QIcon, QSurfaceFormat
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.block_bridge import BlockIconBridge
@@ -38,7 +36,6 @@ from nostalgia.ui.storage_bridge import StorageBridge
 from nostalgia.ui.translations import phrase
 from nostalgia.ui.update_bridge import UpdateBridge
 from nostalgia.ui.view import LauncherView
-from nostalgia.ui.worker import wait_for_background
 
 # TranslationProvider.qml đọc từ điển i18n/*.json bằng XMLHttpRequest; Qt6 chặn mặc định.
 os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
@@ -103,10 +100,10 @@ def load_fonts() -> None:
 
 
 def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
-    """Dựng khung nhìn và cầu nối.
+    """Dựng khung nhìn và cầu nối dùng chung, CHƯA nạp QML.
 
-    Tách khỏi `main` để test dựng được mà không phải chạy vòng lặp sự kiện — và để bộ chụp
-    ảnh dùng lại đúng đường mà người dùng đi, chứ không dựng một bản riêng cho ảnh đẹp.
+    `window.open_window` gắn thêm các cầu nối còn lại rồi mới nạp giao diện; tách ra để test
+    dựng được mà không phải chạy vòng lặp sự kiện.
     """
     load_fonts()
     view = LauncherView()
@@ -175,18 +172,10 @@ def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
         running_application.aboutToQuit.connect(multiplayer_bridge.shutdown)
         running_application.aboutToQuit.connect(presence_bridge.shutdown)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
-    view.setTitle("Nostalgia Launcher · Preview " + __version__)
     # Cho phép cửa sổ co nhỏ đến 1024x600 để chạy được trên màn hình 1366x768 (trừ taskbar,
     # title bar). Bố cục QML tự scale xuống nhờ ScrollView / Flickable và layout linh hoạt.
     view.setMinimumSize(QSize(1024, 600))
     view.resize(1360, 860)
-    view.setSource(QUrl.fromLocalFile(str(QML_DIR / "Main.qml")))
-    # Hộp hỏi lại dùng chung nằm ở Main.qml để phủ cả thanh bên; các trang (nạp sau, qua Loader)
-    # gọi nó bằng context property thay vì phải với lên cây cha.
-    root_item = view.rootObject()
-    if root_item is not None:
-        view.bind_context_property("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
-        view.bind_context_property("donateDialog", root_item.findChild(QObject, "donateDialog"))
     build_tray(view, bridge, settings_bridge)
     return view, bridge
 
@@ -250,34 +239,3 @@ def build_tray(
     bridge.gameStarted.connect(on_game_started)
     bridge.gameStopped.connect(on_game_stopped)
     return tray
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Mở cửa sổ. Trả về mã thoát của vòng lặp sự kiện Qt."""
-    enable_multisampling()
-    qt_application = QApplication(argv if argv is not None else sys.argv)
-    qt_application.setApplicationName("Nostalgia Launcher")
-    qt_application.setApplicationVersion(__version__)
-
-    view, _bridge = build_view(Launcher.for_environment())
-    if view.status() != QQuickView.Status.Ready:
-        for error in view.errors():
-            logger.error("%s", error.toString())
-        return 1
-    view.show()
-    if os.environ.get("NOSTALGIA_SMOKE_TEST") == "1":
-        # Workflow release chạy gói đóng sẵn trên cả ba hệ với biến này: dựng xong cửa sổ
-        # (QML nạp, cầu nối, tài nguyên) là đủ bằng chứng gói chạy — không vào vòng lặp.
-        print("smoke ok")
-        wait_for_background()
-        return 0
-    code = qt_application.exec()
-    # Luồng nền là daemon: Python tắt KHÔNG đợi chúng. Một luồng đang gọi Qt lúc interpreter
-    # tắt thì Qt gỡ mutex dưới chân nó — heap hỏng, abort, và người dùng thấy launcher sập
-    # lúc thoát dù đã làm xong việc. Đợi có giới hạn: quá hạn thì thà thoát cứng còn hơn treo.
-    wait_for_background()
-    return code
-
-
-if __name__ == "__main__":
-    sys.exit(main())

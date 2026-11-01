@@ -6,7 +6,6 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QObject
 from PySide6.QtGui import QGuiApplication
 from test_bridges import wait_until
 from test_create_choices import open_create_dialog
@@ -20,7 +19,6 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 
 def test_server_pack_is_available_without_a_loader_step(tmp_path: Path) -> None:
     dialog = open_create_dialog(tmp_path)
-    assert dialog.findChild(QObject, "forgottenWorldsCard") is not None
     dialog.setProperty("loaderKind", "forgotten-worlds")
     dialog.setProperty("gameVersion", "1.21.11")
     QGuiApplication.processEvents()

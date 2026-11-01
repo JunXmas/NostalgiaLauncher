@@ -87,7 +87,6 @@ def main() -> int:
             launcher,
             payment_gateway=DemoPaymentGateway(),
             payment_demonstration=True,
-            ui_setup=True,
             room_sync_gateway=sync_gateway,
             social_gateway=social_gateway,
             session_store=session_store,
@@ -97,7 +96,6 @@ def main() -> int:
         view, bridge = open_preview(
             launcher,
             payment_gateway=gateway,
-            ui_setup=True,
             room_sync_gateway=sync_gateway,
             social_gateway=social_gateway,
             session_store=session_store,
@@ -105,7 +103,6 @@ def main() -> int:
     else:
         view, bridge = open_preview(
             launcher,
-            ui_setup=True,
             room_sync_gateway=sync_gateway,
             social_gateway=social_gateway,
             session_store=session_store,

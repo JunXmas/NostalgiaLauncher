@@ -9,14 +9,14 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
-from PySide6.QtCore import QObject
+from modern_window import open_modern
+from qml_tree import find_item
 from test_bridges import wait_until
 from test_qml import make_launcher as make_offline_launcher
 
 from fake_mojang import VERSION_ID
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import Instance
-from nostalgia.ui.app import build_view
 from nostalgia.ui.bridge import LauncherBridge
 from test_api import make_launcher
 
@@ -56,22 +56,19 @@ def test_stop_kills_the_running_game_without_reporting_a_crash(
     assert bridge.stopGame() is None, "không còn game: DỪNG là vô hại"
 
 
-def test_play_button_turns_into_a_red_stop_button_while_the_game_runs(tmp_path: Path) -> None:
+def test_play_button_turns_into_a_stop_button_while_the_game_runs(tmp_path: Path) -> None:
     launcher = make_offline_launcher(tmp_path)
     launcher.create_instance(Instance(instance_id="van", version_id="1.20.1"))
     launcher.add_offline_account("Jun")
-    view, bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    button = root_item.findChild(QObject, "playButton")
+    _view, bridge, root_item = open_modern(launcher)
+    wait_until(lambda: find_item(root_item, "minimalPlay") is not None)
+    button = find_item(root_item, "minimalPlay")
     assert button is not None
-    assert button.property("label") == "CHƠI  ▶" and button.property("danger") is False
+    assert button.property("label") == "Chơi ngay  →"
 
     bridge._set_game_running(True)
-    wait_until(lambda: button.property("label") == "DỪNG  ■")
-    assert button.property("danger") is True and button.property("clickable") is True
+    wait_until(lambda: button.property("label") == "Dừng game")
+    assert button.property("clickable") is True
 
     bridge._set_game_running(False)
-    wait_until(lambda: button.property("label") == "CHƠI  ▶")
-    assert button.property("danger") is False
+    wait_until(lambda: button.property("label") == "Chơi ngay  →")

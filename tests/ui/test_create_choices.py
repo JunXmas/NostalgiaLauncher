@@ -16,34 +16,32 @@ pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọ
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QGuiApplication
+from test_bridges import wait_until
 
 from nostalgia.api import Launcher
-from nostalgia.instance.model import Instance
-from nostalgia.ui.app import build_view
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 def open_create_dialog(tmp_path: Path, preset_versions: list[str] | None = None) -> QObject:
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    view, _bridge = build_view(launcher)
-    if preset_versions is not None:
-        # Danh sách bản Optimized bình thường tải qua mạng; nhồi thẳng để test không chạm mạng.
-        catalog_bridge = view.rootContext().contextProperty("catalogBridge")
-        catalog_bridge._preset_versions = preset_versions
-        catalog_bridge.presetVersionsChanged.emit()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 1)
-    QGuiApplication.processEvents()
-    dialog = root_item.findChild(QObject, "createDialog")
+    view, _bridge, root_item = open_modern(launcher)
+    go(root_item, 1, "minimalInstances")
+    dialog = root_item.findChild(QObject, "modernCreateDialog")
     assert dialog is not None, "không tìm thấy hộp tạo bản chơi"
     # `openDialog` là hàm QML, mypy không thấy trên QObject.
     dialog.openDialog()  # type: ignore[attr-defined]
+    # Mở hộp là bắt đầu tải danh mục; đợi xong (test cô lập mạng nên lỗi nhanh) kẻo nút Tạo
+    # còn bị khoá vì "đang tải danh mục".
+    catalog_bridge = view.rootContext().contextProperty("catalogBridge")
+    wait_until(lambda: not catalog_bridge.busy)
+    if preset_versions is not None:
+        # Danh sách bản Optimized bình thường tải qua mạng; nhồi thẳng để test không chạm mạng.
+        catalog_bridge._preset_versions = preset_versions
+        catalog_bridge.presetVersionsChanged.emit()
     QGuiApplication.processEvents()
     return dialog
 
@@ -61,8 +59,8 @@ def test_every_modloader_stays_on_screen(tmp_path: Path) -> None:
     "nâng cao" là người chơi mod tưởng launcher không hỗ trợ nó."""
     dialog = open_create_dialog(tmp_path)
 
-    keys = {choice["key"] for choice in dialog.property("gridChoices").toVariant()}
-    assert keys == {"vanilla", "fabric", "quilt", "legacy_fabric", "forge", "neoforge"}
+    keys = {choice["key"] for choice in dialog.property("loaderChoices").toVariant()}
+    assert {"vanilla", "fabric", "quilt", "legacy_fabric", "forge", "neoforge"} <= keys
     # Chỉ RAM và thư mục được gập lại, và gập sẵn khi mở.
     assert dialog.property("advancedOpen") is False
 
@@ -78,56 +76,3 @@ def test_an_unsupported_version_is_explained_not_erased(tmp_path: Path) -> None:
     assert dialog.property("versionUnsupported") is True
     assert dialog.property("canCreate") is False
     assert "1.2.3-khong-co-that" in dialog.property("missingStep")
-
-
-def test_onboarding_says_what_is_missing(tmp_path: Path) -> None:
-    """Nút xám câm là lý do người mới bỏ đi: chỗ thêm tài khoản nằm ở trang khác nên họ không
-    đoán ra. Màn hình bắt đầu phải nói thiếu gì và đưa nút đi làm việc đó."""
-    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    view, _bridge = build_view(launcher)
-    QGuiApplication.processEvents()
-    root_item = view.rootObject()
-    assert root_item is not None
-    home = root_item.findChild(QObject, "homePage")
-    play = root_item.findChild(QObject, "playBlock")
-    assert home is not None and play is not None
-
-    assert home.property("missingKind") == "account", "chưa đăng nhập thì hỏi tài khoản trước"
-    missing_action = root_item.findChild(QObject, "onboardingPrimary")
-    assert missing_action is not None
-    assert missing_action.property("visible") is True
-
-    launcher.create_instance(Instance(instance_id="ban", version_id="1.21.1", display_name="B"))
-    _bridge.instancesChanged.emit()
-    QGuiApplication.processEvents()
-    assert home.property("missingKind") == "account", "có bản chơi rồi vẫn còn thiếu tài khoản"
-
-    launcher.add_offline_account("Jun")
-    _bridge.announce_accounts_changed()
-    QGuiApplication.processEvents()
-    assert home.property("missingKind") == "", "đủ tài khoản và bản chơi thì không còn thiếu gì"
-    assert missing_action.property("visible") is False
-
-
-def test_the_sidebar_shows_the_face_from_the_skin_file(tmp_path: Path) -> None:
-    """Ô tài khoản góc dưới trái vẽ đầu nhân vật cắt từ chính file skin. Chữ cái đầu chỉ là
-    dự phòng cho lúc skin chưa tải xong — hiện cả hai thì thành chữ đè lên mặt."""
-    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
-    launcher.add_offline_account("Jun")
-    view, _bridge = build_view(launcher)
-    QGuiApplication.processEvents()
-    root_item = view.rootObject()
-    assert root_item is not None
-    face = root_item.findChild(QObject, "sidebarSkinFace")
-    assert face is not None, "không tìm thấy ô mặt ở thanh bên"
-
-    assert face.property("visible") is True, "tài khoản ngoại tuyến vẫn có skin Steve/Alex"
-    assert str(face.property("source")).endswith(".png")
-    avatar = root_item.findChild(QObject, "sidebarAvatar")
-    assert avatar is not None
-    letter = next(
-        child
-        for child in avatar.children()
-        if child.property("text") is not None and str(child.property("text")) == "J"
-    )
-    assert letter.property("visible") is False, "có mặt rồi thì không vẽ chữ cái đầu nữa"

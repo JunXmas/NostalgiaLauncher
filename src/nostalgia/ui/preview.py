@@ -20,7 +20,6 @@ from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.cosmetic_bridge import CosmeticBridge
 from nostalgia.ui.google_link_bridge import GoogleLinkBridge
 from nostalgia.ui.host_bridge import HostBridge
-from nostalgia.ui.interface_setup import InterfaceSetup
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
@@ -29,7 +28,6 @@ from nostalgia.ui.project_bridge import ProjectBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.server_room_bridge import ServerRoomBridge
-from nostalgia.ui.settings_bridge import SettingsBridge
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.view import LauncherView
 
@@ -39,7 +37,6 @@ def open_preview(
     *,
     payment_gateway: PaymentGateway | None = None,
     payment_demonstration: bool = False,
-    ui_setup: bool = False,
     room_sync_gateway: RoomSyncGateway | None = None,
     social_gateway: SocialGateway | None = None,
     session_store: ServiceSessionStore | None = None,
@@ -119,14 +116,7 @@ def open_preview(
         "paymentBridge",
         PaymentBridge(payment_gateway, demonstration=payment_demonstration, parent=view),
     )
-    if ui_setup:
-        settings_bridge = context.contextProperty("settingsBridge")
-        assert isinstance(settings_bridge, SettingsBridge)
-        interface_setup = InterfaceSetup(view, settings_bridge)
-        view.bind_context_property("interfaceSetup", interface_setup)
-        interface_setup.show_initial()
-    else:
-        view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
+    view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
     root_item = view.rootObject()
     if root_item is not None:
         view.bind_context_property("confirmDialog", root_item.findChild(QObject, "confirmDialog"))

@@ -9,28 +9,19 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
-from PySide6.QtCore import QMimeData, QObject, QPoint, Qt, QUrl
+from modern_window import go, open_modern
+from PySide6.QtCore import QMimeData, QPoint, Qt, QUrl
 from PySide6.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent, QGuiApplication
 from test_bridges import wait_until
 from test_qml import make_launcher
-
-from nostalgia.ui.app import build_view
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 def test_dropped_pack_reaches_the_import_slot(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 1)
-    wait_until(lambda: root_item.findChild(QObject, "instancesPage") is not None)
-    page = root_item.findChild(QObject, "instancesPage")
-    drop_zone = root_item.findChild(QObject, "packDropArea")
-    assert page is not None and drop_zone is not None
+    view, _bridge, root_item = open_modern(make_launcher(tmp_path))
+    page = go(root_item, 1, "minimalInstances")
+    assert go(root_item, 1, "packDropArea") is not None
 
     modpack_bridge = view.rootContext().contextProperty("contentBridge")
     failures: list[str] = []
@@ -51,16 +42,8 @@ def test_dropped_pack_reaches_the_import_slot(tmp_path: Path) -> None:
 
 
 def test_a_real_drag_lights_the_overlay_and_a_drop_imports(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 1)
-    wait_until(lambda: root_item.findChild(QObject, "packDropArea") is not None)
-    drop_zone = root_item.findChild(QObject, "packDropArea")
-    assert drop_zone is not None
+    view, _bridge, root_item = open_modern(make_launcher(tmp_path))
+    drop_zone = go(root_item, 1, "packDropArea")
     failures: list[str] = []
     view.rootContext().contextProperty("contentBridge").failed.connect(failures.append)
 

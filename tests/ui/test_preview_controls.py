@@ -8,15 +8,16 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("PySide6")
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject, Qt, qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
+from qml_tree import find_item
 from test_bridges import wait_until
 
 from nostalgia.api import Launcher
 from nostalgia.errors import InstanceError
 from nostalgia.instance.model import Instance
-from nostalgia.ui.app import build_view
 from nostalgia.ui.worker import wait_for_background
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -36,27 +37,11 @@ def make_preview(tmp_path: Path) -> Launcher:
     return launcher
 
 
-def test_keyboard_onboarding_and_saved_display_preferences(tmp_path: Path) -> None:
+def test_saved_display_preferences_and_every_page_loads_quietly(tmp_path: Path) -> None:
     launcher = make_preview(tmp_path)
-    view, _bridge = build_view(launcher)
-    view.show()
+    view, _bridge, root_item = open_modern(launcher)
+    compact = go(root_item, 6, "compactUiToggle")
     view.requestActivate()
-    QTest.qWait(100)
-    root_item = view.rootObject()
-    primary = root_item.findChild(QObject, "onboardingPrimary")
-    assert primary is not None and primary.property("visible")
-    view.requestActivate()
-    primary.forceActiveFocus()
-    wait_until(lambda: bool(primary.property("activeFocus")))
-    QTest.keyClick(view, Qt.Key.Key_Return)
-    QGuiApplication.processEvents()
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    assert sidebar.property("currentIndex") == 3
-    sidebar.setProperty("currentIndex", 6)
-    QGuiApplication.processEvents()
-    compact = root_item.findChild(QObject, "compactUiToggle")
-    assert compact is not None
     compact.forceActiveFocus()
     wait_until(lambda: bool(compact.property("activeFocus")))
     QTest.keyClick(view, Qt.Key.Key_Space)
@@ -66,14 +51,14 @@ def test_keyboard_onboarding_and_saved_display_preferences(tmp_path: Path) -> No
     QTest.qWait(100)
     assert launcher.load_settings().ui_scale == 150
     assert launcher.load_settings().language == "en"
-    heading = root_item.findChild(QObject, "appearanceHeading")
+    heading = find_item(root_item, "appearanceHeading")
     assert heading is not None and heading.property("caption") == "Appearance & language"
     warnings: list[str] = []
     qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
     try:
         view.resize(1024, 600)
-        for page_index in range(7):
-            sidebar.setProperty("currentIndex", page_index)
+        for page_index in range(8):
+            go(root_item, page_index)
             QTest.qWait(100)
         assert warnings == []
     finally:
@@ -90,19 +75,21 @@ def test_ui_backup_restore_and_trash_preserve_world(tmp_path: Path) -> None:
     source = launcher.paths.instance_dir("survival") / "saves" / "level.dat"
     source.parent.mkdir()
     source.write_bytes(b"world")
-    view, bridge = build_view(launcher)
-    view.show()
+    view, bridge, root_item = open_modern(launcher)
     view.requestActivate()
-    QTest.qWait(100)
-    root_item = view.rootObject()
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 1)
-    QGuiApplication.processEvents()
+    go(root_item, 1, "minimalInstances")
     storage = view.rootContext().contextProperty("storageBridge")
-    storage.backup("survival")
-    wait_until(lambda: not storage.busy)
-    manager = root_item.findChild(QObject, "dataManager")
+    editor = root_item.findChild(QObject, "modernInstanceManager")
+    assert editor is not None
+    editor.openFor(bridge.instances[0])
+    editor.setProperty("section", 3)
+    backup = find_item(editor.property("contentItem"), "instanceBackup")
+    assert backup is not None and backup.property("clickable")
+    backup.metaObject().invokeMethod(backup, "clicked")
+    wait_until(lambda: not storage.busy and bool(launcher.list_instance_backups()))
+    wait_until(lambda: bool(editor.property("storageNote")))
+    editor.setProperty("visible", False)
+    manager = root_item.findChild(QObject, "legacyBackupDialog")
     assert manager is not None
     manager.openDialog()
     manager.setProperty("selectedBackup", str(launcher.list_instance_backups()[0].path))
@@ -112,9 +99,8 @@ def test_ui_backup_restore_and_trash_preserve_world(tmp_path: Path) -> None:
     button = manager.findChild(QObject, "restoreBackupButton")
     assert button is not None
     wait_until(lambda: bool(button.property("clickable")))
-    button.forceActiveFocus()
-    QTest.keyClick(view, Qt.Key.Key_Return)
-    wait_until(lambda: not storage.busy)
+    button.metaObject().invokeMethod(button, "clicked")
+    wait_until(lambda: not storage.busy and len(launcher.list_instances()) == 2)
     assert (
         launcher.paths.instance_dir("restored") / "saves" / "level.dat"
     ).read_bytes() == b"world"
@@ -132,8 +118,7 @@ def test_ui_backup_restore_and_trash_preserve_world(tmp_path: Path) -> None:
 
 
 def test_persistent_failure_retries_once_after_network_recovers(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_preview(tmp_path))
-    view.show()
+    view, _bridge, _root_item = open_modern(make_preview(tmp_path))
     worker = view.rootContext().contextProperty("storageBridge")
     attempts: list[int] = []
 

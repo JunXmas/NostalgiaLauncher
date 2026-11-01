@@ -16,7 +16,8 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
-from PySide6.QtCore import QObject, qInstallMessageHandler
+from modern_window import go, open_modern
+from PySide6.QtCore import qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickItem
 from qml_tree import find_item
@@ -26,7 +27,6 @@ from nostalgia.account.model import ELY, MICROSOFT
 from nostalgia.account.offline import build_offline_account
 from nostalgia.account.store import save_accounts
 from nostalgia.api import Launcher
-from nostalgia.ui.app import build_view
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -43,13 +43,8 @@ def test_microsoft_account_row_does_not_loop_the_layout(
     warnings: list[str] = []
     qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
     try:
-        view, _bridge = build_view(launcher)
-        view.show()
-        root_item = view.rootObject()
-        assert root_item is not None
-        sidebar = root_item.findChild(QObject, "sidebar")
-        assert sidebar is not None
-        sidebar.setProperty("currentIndex", 3)
+        _view, _bridge, root_item = open_modern(launcher)
+        go(root_item, 3)
         deadline = time.monotonic() + 0.6
         while time.monotonic() < deadline:
             QGuiApplication.processEvents()
@@ -70,14 +65,8 @@ def _ely_account_detail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
         (replace(build_offline_account("JunSlayest"), account_kind=ELY),),
     )
     monkeypatch.setattr(Launcher, "refresh_skin", Launcher.describe_skin)
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 3)
-    QGuiApplication.processEvents()
+    _view, _bridge, root_item = open_modern(launcher)
+    go(root_item, 3)
     detail = find_item(root_item, "accountDetail")
     assert detail is not None
     return str(detail.property("text"))
@@ -111,15 +100,9 @@ def _accounts_page_at(width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         ),
     )
     monkeypatch.setattr(Launcher, "refresh_skin", Launcher.describe_skin)
-    view, _bridge = build_view(launcher)
+    view, _bridge, root_item = open_modern(launcher)
     view.resize(width, 768)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 3)
-    QGuiApplication.processEvents()
+    go(root_item, 3)
     return root_item
 
 
@@ -154,7 +137,7 @@ def test_every_inactive_account_offers_a_way_to_switch(
     buttons: list[QQuickItem] = []
     _collect(root_item, "useAccountButton", buttons)
 
-    assert len(buttons) == 2, "mỗi hàng tài khoản phải có một nút Dùng"
+    assert len(buttons) == 2, "mỗi hàng tài khoản phải có một nút chọn"
 
 
 def _collect(node: QQuickItem, name: str, found: list[QQuickItem]) -> None:
@@ -166,20 +149,17 @@ def _collect(node: QQuickItem, name: str, found: list[QQuickItem]) -> None:
         _collect(child, name, found)
 
 
-def test_the_use_button_never_appears_under_the_cursor(
+def test_the_use_button_is_always_on_screen(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Nút Dùng nằm đè lên vùng hover của hàng. Cho nó `visible` theo hover thì nó hiện ra
-    ngay dưới con trỏ — một item vừa xuất hiện dưới con trỏ là một lần tính lại hover, và
-    mắt thấy nút chớp. Nên nút phải LUÔN nằm trong cây, chỉ mờ đi bằng `opacity`."""
+    """Nút chọn tài khoản không được bật/tắt theo hover: hiện ra ngay dưới con trỏ là một lần
+    tính lại hover, và mắt thấy nút chớp. Nút luôn nằm trong cây và luôn thấy được."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
     buttons: list[QQuickItem] = []
     _collect(root_item, "useAccountButton", buttons)
-    assert buttons, "không tìm thấy nút Dùng nào"
-
+    assert buttons, "không tìm thấy nút chọn tài khoản nào"
     for button in buttons:
-        assert button.isVisible() is True, "nút Dùng bật/tắt bằng visible — sẽ chớp khi trỏ vào"
-        assert button.opacity() == 0.0, "chưa trỏ vào hàng nào thì nút phải trong suốt"
+        assert button.isVisible() is True and button.opacity() > 0
 
 
 def test_ely_account_changes_skin_in_the_launcher_not_on_the_website(
@@ -199,9 +179,9 @@ def test_ely_sign_in_offers_a_way_to_get_an_account(
     lấy đâu ra. Đăng ký phải mở trình duyệt — ely.by đòi xác nhận email, dựng form trong
     launcher chỉ là một chỗ nữa cho mật khẩu đi qua tay ta."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
-    dialog = find_item(root_item, "addAccountDialog")
+    dialog = root_item.findChild(QQuickItem, "addAccountDialog")
     assert dialog is not None
-    register = find_item(root_item, "elyRegisterButton")
+    register = find_item(dialog, "elyRegisterButton")
     assert register is not None
 
     dialog.setProperty("visible", True)
@@ -218,7 +198,9 @@ def test_ely_links_point_at_the_account_site_not_the_skin_catalog(
     Đoán sai một lần rồi: `ely.by/register` trả 404 ngay trước mặt jun. Không chạm mạng —
     chỉ gác cái tên miền, vì đó mới là chỗ đã sai."""
     root_item = _accounts_page_at(1366, tmp_path, monkeypatch)
-    button = find_item(root_item, "elyRegisterButton")
+    dialog = root_item.findChild(QQuickItem, "addAccountDialog")
+    assert dialog is not None
+    button = find_item(dialog, "elyRegisterButton")
     assert button is not None
     target = button.property("target").toString()
     assert target.startswith("https://account.ely.by/"), f"elyRegisterButton trỏ sai chỗ: {target}"
@@ -244,15 +226,9 @@ def test_two_accounts_with_the_same_name_still_show_the_use_button(
         ),
     )
     monkeypatch.setattr(Launcher, "refresh_skin", Launcher.describe_skin)
-    view, _bridge = build_view(launcher)
+    view, _bridge, root_item = open_modern(launcher)
     view.resize(1366, 768)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 3)
-    QGuiApplication.processEvents()
+    go(root_item, 3)
 
     rows: list[QQuickItem] = []
     _collect(root_item, "accountRow", rows)

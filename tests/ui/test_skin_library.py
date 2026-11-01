@@ -9,12 +9,12 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject, QUrl
 from test_bridges import wait_until
 from test_qml import make_launcher
 
 from nostalgia.ui.account_bridge import AccountBridge
-from nostalgia.ui.app import build_view
 from nostalgia.ui.bridge import LauncherBridge
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -79,13 +79,8 @@ def test_library_grid_renders_entries(tmp_path: Path) -> None:
         png = tmp_path / f"skin-{number}.png"
         png.write_bytes(PNG_HEADER + bytes([number]))
         launcher.import_skin(png, name=f"Skin {number}")
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 3)
+    _view, _bridge, root_item = open_modern(launcher)
+    go(root_item, 3)
     wait_until(lambda: root_item.findChild(QObject, "skinLibraryGrid") is not None)
     grid = root_item.findChild(QObject, "skinLibraryGrid")
     assert grid is not None

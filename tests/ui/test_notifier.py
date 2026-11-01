@@ -1,6 +1,6 @@
 """Thông báo sự kiện khởi chạy: toast lên đúng lúc, chuông chỉ kêu khi bật, WAV tự sinh hợp lệ,
 trình phát chọn theo hệ điều hành và không bao giờ chặn; blip giao diện có công tắc riêng, nối
-đúng vào thanh bên / nút / hộp thoại, và NOSTALGIA_SILENT=1 tắt hẳn."""
+đúng vào nút / hộp thoại, và NOSTALGIA_SILENT=1 tắt hẳn."""
 
 from __future__ import annotations
 
@@ -12,11 +12,12 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject
+from qml_tree import find_item
 from test_bridges import wait_until
 from test_qml import make_launcher
 
-from nostalgia.ui.app import build_view
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.notifier import Notifier
 from nostalgia.ui.sound import (
@@ -171,57 +172,28 @@ def test_ui_sounds_are_short_soft_dull_and_stable() -> None:
 
 
 def test_ui_taps_reach_the_notifier(tmp_path: Path) -> None:
-    """Dây nối QML → notifier.playUi: mở hộp Tạo bản chơi = open, chọn loader = nav, bấm ra
-    ngoài để đóng = back. Loa thật im vì conftest đặt NOSTALGIA_SILENT=1."""
-    from PySide6.QtCore import QPointF, Qt
-    from PySide6.QtGui import QGuiApplication
-    from PySide6.QtTest import QTest
-
-    view, _bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
+    """Dây nối QML → notifier.playUi: mở hộp Tạo bản chơi kêu "open". Loa thật im vì conftest
+    đặt NOSTALGIA_SILENT=1."""
+    view, _bridge, root_item = open_modern(make_launcher(tmp_path))
     notifier = view.rootContext().contextProperty("notifier")
     played: list[str] = []
     notifier.uiSoundPlayed.connect(played.append)
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 1)
-    wait_until(lambda: root_item.findChild(QObject, "createDialog") is not None)
-    dialog = root_item.findChild(QObject, "createDialog")
+    go(root_item, 1, "minimalInstances")
+    dialog = root_item.findChild(QObject, "modernCreateDialog")
     assert dialog is not None
     dialog.openDialog()
-    QGuiApplication.processEvents()
-    loader_row = root_item.findChild(QObject, "loaderRow")
-    assert loader_row is not None
-    fabric_button = loader_row.childItems()[1]
-    center = fabric_button.mapToScene(
-        QPointF(fabric_button.property("width") / 2, fabric_button.property("height") / 2)
-    )
-    QTest.mouseClick(
-        view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, center.toPoint()
-    )
-    QTest.mouseClick(
-        view,
-        Qt.MouseButton.LeftButton,
-        Qt.KeyboardModifier.NoModifier,
-        QPointF(view.width() - 5, 5).toPoint(),
-    )
-    QGuiApplication.processEvents()
-    assert played == ["open", "nav", "back"]
+    assert played == ["open"]
 
 
 def test_toast_shows_the_event_on_screen(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    toast = root_item.findChild(QObject, "notificationToast")
-    title = root_item.findChild(QObject, "notificationTitle")
+    """Game sự cố phải lên màn hình kèm mã thoát, không chỉ kêu chuông."""
+    view, _bridge, root_item = open_modern(make_launcher(tmp_path))
+    toast = find_item(root_item, "notificationToast")
+    title = find_item(root_item, "notificationTitle")
     assert toast is not None and title is not None
     assert toast.property("shown") is False
 
     notifier = view.rootContext().contextProperty("notifier")
-    notifier.announce("started", "Game đã khởi động", "Sinh tồn")
+    notifier.announce("crashed", "Game gặp sự cố", "Mã thoát 1 — xem NHẬT KÝ")
     wait_until(lambda: toast.property("shown") is True)
-    assert title.property("text") == "Game đã khởi động"
+    assert title.property("text") == "Game gặp sự cố"

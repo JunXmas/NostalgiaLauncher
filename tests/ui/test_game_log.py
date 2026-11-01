@@ -10,11 +10,11 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject
 from test_bridges import wait_until
 from test_qml import make_launcher
 
-from nostalgia.ui.app import build_view
 from nostalgia.ui.game_log import LEVEL_ROLE, MAX_LINES, GameLogFeed, classify_level
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -75,13 +75,8 @@ def test_the_log_never_grows_past_the_cap() -> None:
 
 
 def test_log_page_renders_lines_with_levels(tmp_path: Path) -> None:
-    view, bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 5)
+    _view, bridge, root_item = open_modern(make_launcher(tmp_path))
+    go(root_item, 5)
     wait_until(lambda: root_item.findChild(QObject, "logList") is not None)
     feed = bridge.gameLog
     feed.begin_session()

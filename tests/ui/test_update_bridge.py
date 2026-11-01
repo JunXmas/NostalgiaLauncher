@@ -9,11 +9,11 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
+from modern_window import go, open_modern
 from PySide6.QtCore import QObject
 from test_bridges import wait_until
 
 from local_https_server import LocalHttpsServer, ServerState
-from nostalgia.ui.app import build_view
 from nostalgia.ui.update_bridge import UpdateBridge
 from release_fixture import make_bundle, make_launcher, publish_release
 
@@ -78,13 +78,8 @@ def test_up_to_date_and_network_failure_are_reported(
 def test_settings_page_shows_the_update_section(tmp_path: Path) -> None:
     from test_qml import make_launcher as make_plain_launcher
 
-    view, _bridge = build_view(make_plain_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    sidebar = root_item.findChild(QObject, "sidebar")
-    assert sidebar is not None
-    sidebar.setProperty("currentIndex", 6)
+    view, _bridge, root_item = open_modern(make_plain_launcher(tmp_path))
+    go(root_item, 6)
     wait_until(lambda: root_item.findChild(QObject, "checkUpdateButton") is not None)
     toggle = root_item.findChild(QObject, "autoUpdateToggle")
     assert toggle is not None and toggle.property("checked") is True

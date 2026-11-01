@@ -11,13 +11,6 @@ Panel {
         anchors { left: parent.left; right: parent.right; top: parent.top }
         spacing: 14
         SectionTitle { objectName: "appearanceHeading"; caption: Tr.phrase("Giao diện & ngôn ngữ") }
-        Loader {
-            width: parent.width
-            active: typeof interfaceSetup !== "undefined"
-            visible: active
-            height: item ? item.implicitHeight : 0
-            source: "preview/InterfaceSettings.qml"
-        }
         Flow {
             width: parent.width; spacing: 12
             Text { text: Tr.phrase("Cỡ chữ"); font.pixelSize: Theme.fontBody; color: Theme.text; height: 36; verticalAlignment: Text.AlignVCenter }

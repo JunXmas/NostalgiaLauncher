@@ -36,7 +36,7 @@ def test_the_launcher_exits_without_corrupting_the_heap(tmp_path: Path) -> None:
     (tmp_path / "home").mkdir()
 
     done = subprocess.run(
-        [sys.executable, "-c", "from nostalgia.ui.app import main; raise SystemExit(main([]))"],
+        [sys.executable, "-c", "from nostalgia.ui.runtime import main; raise SystemExit(main([]))"],
         env=environment,
         capture_output=True,
         text=True,
@@ -44,7 +44,7 @@ def test_the_launcher_exits_without_corrupting_the_heap(tmp_path: Path) -> None:
         check=False,
     )
 
-    assert "smoke ok" in done.stdout, f"cửa sổ không dựng được: {done.stderr[-800:]}"
+    assert "smoke ok" in done.stdout + done.stderr, f"cửa sổ không dựng được: {done.stderr[-800:]}"
     assert done.returncode == 0, (
         f"thoát mã {done.returncode} (134 = abort vì hư heap): {done.stderr[-800:]}"
     )

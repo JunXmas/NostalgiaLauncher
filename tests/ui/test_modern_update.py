@@ -3,18 +3,60 @@
 from typing import Any, cast
 
 import pytest
-from PySide6.QtCore import Property, QObject, QPointF, Slot, qInstallMessageHandler
+from PySide6.QtCore import Property, QObject, QPointF, Signal, Slot, qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_minimal_preview import Preview
 from test_minimal_preview import preview as preview
-from test_update_banner import FakeUpdateBridge
 
 from nostalgia.ui.view import LauncherView
 from qt_controls import find_control, press, wheel
 
 pytestmark = pytest.mark.usefixtures("qt_app")
+
+
+class FakeUpdateBridge(QObject):
+    """Cầu nối cập nhật giả, đúng bề mặt mà UpdateNotice / UpdateDialog đụng tới."""
+
+    stateChanged = Signal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._state = "idle"
+        self.calls: list[str] = []
+
+    def set_state(self, state: str) -> None:
+        self._state = state
+        self.stateChanged.emit()
+
+    @Property(str, notify=stateChanged)
+    def state(self) -> str:
+        return self._state
+
+    @Property(str, notify=stateChanged)
+    def latestVersion(self) -> str:
+        return "9.9.9"
+
+    @Property(str, constant=True)
+    def installKind(self) -> str:
+        return "frozen"
+
+    @Property(bool, constant=True)
+    def canSelfUpdate(self) -> bool:
+        return True
+
+    @Property(float, notify=stateChanged)
+    def progressFraction(self) -> float:
+        return 0.5
+
+    @Slot()
+    def updateNow(self) -> None:
+        self.calls.append("update")
+
+    @Slot()
+    def openReleasePage(self) -> None:
+        self.calls.append("open")
 
 
 class ModernUpdateFixture(FakeUpdateBridge):

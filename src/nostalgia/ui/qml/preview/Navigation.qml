@@ -229,6 +229,7 @@ Glass {
             }
         }
         Button {
+            objectName: "communityLink"
             width: parent.width
             label: Legacy.Tr.phrase("Cộng đồng  ↗")
             quiet: true

@@ -1,5 +1,6 @@
-"""Ô CHƠI TIẾP: hàng đúng thứ tự và chỉ quét đĩa khi bản chơi đổi / game tắt; `playWorld` đưa
-thư mục thế giới xuống façade; QML vẽ đúng số nút khối (tối đa 4) và bấm nút mở đúng thế giới."""
+"""Thế giới chơi gần nhất (`recentWorlds`): hàng đúng thứ tự và chỉ quét đĩa khi bản chơi đổi /
+game tắt; `playWorld` đưa thư mục thế giới xuống façade. Ô CHƠI TIẾP đã gỡ cùng giao diện cũ;
+cầu nối giữ lại cho màn chọn world sau này."""
 
 from __future__ import annotations
 
@@ -10,17 +11,11 @@ import pytest
 
 pytest.importorskip("PySide6", reason="giao diện là phụ thuộc tuỳ chọn: uv sync --extra ui")
 
-from PySide6.QtCore import QObject, QPointF, Qt
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQuick import QQuickItem
-from PySide6.QtTest import QTest
-from qml_tree import find_item
 from test_bridges import wait_until
 from test_qml import make_launcher
 
 from nbt_fixture import write_world
 from nostalgia.api import Instance, Launcher
-from nostalgia.ui.app import build_view
 from nostalgia.ui.bridge import LauncherBridge
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -66,13 +61,6 @@ def stub_launch(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     return recorded
 
 
-def collect_items(node: QQuickItem, name: str) -> list[QQuickItem]:
-    found = [node] if node.objectName() == name else []
-    for child in node.childItems():
-        found.extend(collect_items(child, name))
-    return found
-
-
 def test_rows_are_cached_and_refreshed_only_on_the_two_signals(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -111,46 +99,3 @@ def test_play_world_hands_the_folder_to_the_facade(
     bridge.playWorld("van", "w1")
     wait_until(lambda: "world_folder" in recorded and not bridge.busy)
     assert (recorded["instance_id"], recorded["world_folder"]) == ("van", "w1")
-
-
-def test_card_shows_at_most_three_block_buttons_and_a_click_opens_that_world(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    launcher = make_launcher(tmp_path)
-    seed(launcher, worlds=6)
-    launcher.add_offline_account("Jun")
-    recorded = stub_launch(monkeypatch)
-    view, _bridge = build_view(launcher)
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    card = root_item.findChild(QObject, "continueCard")
-    assert card is not None
-    wait_until(lambda: len(collect_items(card, "continueRow")) == 3)
-    empty = find_item(card, "continueEmpty")
-    assert empty is not None and empty.property("visible") is False
-    first = collect_items(card, "continueRow")[0]
-    assert first.property("worldName") == "Thế giới 0"
-    assert first.property("height") * 3 + 10 <= card.property("height") - 60, "3 nút phải nằm gọn"
-
-    center = first.mapToScene(QPointF(first.property("width") / 2, first.property("height") / 2))
-    QTest.mouseClick(
-        view, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, center.toPoint()
-    )
-    QGuiApplication.processEvents()
-    wait_until(lambda: "world_folder" in recorded)
-    assert (recorded["instance_id"], recorded["world_folder"]) == ("van", "w0")
-
-
-def test_new_user_sees_onboarding_instead_of_empty_continue_panel(tmp_path: Path) -> None:
-    view, _bridge = build_view(make_launcher(tmp_path))
-    view.show()
-    root_item = view.rootObject()
-    assert root_item is not None
-    card = root_item.findChild(QObject, "continueCard")
-    assert card is not None
-    assert collect_items(card, "continueRow") == []
-    empty = find_item(card, "continueEmpty")
-    assert empty is not None and empty.property("visible") is False
-    onboarding = root_item.findChild(QObject, "onboardingCard")
-    assert onboarding is not None and onboarding.property("visible") is True
