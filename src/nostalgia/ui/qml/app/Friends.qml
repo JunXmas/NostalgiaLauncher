@@ -53,6 +53,17 @@ Item {
                     Button { objectName: "showInvitations"; width: parent.width; visible: root.compact; quiet: true; label: Legacy.Tr.phrase("Lời mời · ") + socialBridge.invitations.length + (root.invitesExpanded ? "  ↑" : "  ↓"); onClicked: root.invitesExpanded = !root.invitesExpanded }
                     InvitationList { width: parent.width; visible: !root.compact || root.invitesExpanded }
                 }
+                // Màn rộng: bạn bè bên trái, mã phòng bên phải. Màn hẹp: mã phòng lên trước.
+                Grid {
+                    id: panels
+                    width: parent.width
+                    columns: root.compact || root.section === 1 ? 1 : 2
+                    layoutDirection: columns === 2 ? Qt.RightToLeft : Qt.LeftToRight
+                    columnSpacing: 14; rowSpacing: 14
+                    readonly property real codeWidth: columns === 2 ? Math.min(460 * GlassTheme.scale, width * 0.45) : width
+                    RoomCodeCard { width: panels.codeWidth; visible: root.section === 0 || hosting; showRoomButton: root.section === 0; onOpenRoom: root.section = 1 }
+                    FriendsRail { width: panels.columns === 2 ? panels.width - panels.codeWidth - 14 : panels.width; visible: root.section === 0 }
+                }
                 RoomPanel { id: roomPanel; width: parent.width; visible: root.section === 1 && (multiplayerBridge.active || hostBridge.details.active) }
                 Glass {
                     width: parent.width; visible: root.section === 1 && !multiplayerBridge.active && !hostBridge.details.active; padding: 24; height: playInfo.implicitHeight + 48
@@ -64,8 +75,6 @@ Item {
                         InvitationList { width: parent.width; visible: socialBridge.invitations.length > 0 }
                     }
                 }
-                Button { objectName: "showActiveRoom"; width: parent.width; visible: root.section === 0 && (multiplayerBridge.active || hostBridge.details.active); label: multiplayerBridge.role === "joined" ? Legacy.Tr.phrase("Xem phòng chơi") : roomSyncBridge.hostReady ? Legacy.Tr.phrase("Xem phòng chơi · Mời bạn bè") : Legacy.Tr.phrase("Đang tạo phòng · Xem bước tiếp theo"); onClicked: root.section = 1 }
-                FriendsRail { width: parent.width; visible: root.section === 0 }
             }
         }
     }

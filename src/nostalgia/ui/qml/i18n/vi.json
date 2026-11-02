@@ -4232,6 +4232,15 @@
   "p:Mã kết bạn là mã của tài khoản launcher. Đăng nhập Minecraft riêng vẫn cần thiết để khởi chạy game. Bấm Làm mới để tải lại danh sách bạn bè và lời mời.": "Mã kết bạn là mã của tài khoản launcher. Đăng nhập Minecraft riêng vẫn cần thiết để khởi chạy game. Bấm Làm mới để tải lại danh sách bạn bè và lời mời.",
   "p:Host: bấm Mời vào phòng cạnh tên bạn, hoặc Chép mã phòng gửi cho bạn. Khi mọi người sẵn sàng, bấm Khởi chạy Minecraft.": "Host: bấm Mời vào phòng cạnh tên bạn, hoặc Chép mã phòng gửi cho bạn. Khi mọi người sẵn sàng, bấm Khởi chạy Minecraft.",
   "p:Người nhận: mở Bạn bè, bấm Vào phòng ở lời mời hoặc nhập mã phòng rồi bấm Vào. Nếu có modpack, xem file, chọn nội dung và xác nhận đồng bộ.": "Người nhận: mở Bạn bè, bấm Vào phòng ở lời mời hoặc nhập mã phòng rồi bấm Vào. Nếu có modpack, xem file, chọn nội dung và xác nhận đồng bộ.",
+  "p:Mã phòng của bạn": "Mã phòng của bạn",
+  "p:Bạn đang ở phòng của bạn bè": "Bạn đang ở phòng của bạn bè",
+  "p:Đang tạo phòng": "Đang tạo phòng",
+  "p:Có mã phòng?": "Có mã phòng?",
+  "p:Gửi mã này cho bạn bè, hoặc bấm Mời vào phòng cạnh tên họ trong phòng chơi.": "Gửi mã này cho bạn bè, hoặc bấm Mời vào phòng cạnh tên họ trong phòng chơi.",
+  "p:Xem phòng để đồng bộ modpack và vào world.": "Xem phòng để đồng bộ modpack và vào world.",
+  "p:Mã phòng hiện ở đây khi phòng sẵn sàng.": "Mã phòng hiện ở đây khi phòng sẵn sàng.",
+  "p:Nhập mã 18 ký tự bạn bè gửi rồi bấm Vào.": "Nhập mã 18 ký tự bạn bè gửi rồi bấm Vào.",
+  "p:Vào": "Vào",
   "p:Gặp nhau trong thế giới của bạn.": "Gặp nhau trong thế giới của bạn.",
   "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa."
 }

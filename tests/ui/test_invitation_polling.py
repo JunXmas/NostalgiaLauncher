@@ -58,6 +58,8 @@ def test_invitation_actions_work_during_poll_and_ignore_duplicate_clicks(
     monkeypatch.setattr(gateway, method, perform)
     if action == "send":
         ready_host(multiplayer)
+        # Thẻ mã phòng hiện lên đầu tab Phòng: đợi bố cục xếp lại rồi mới đọc toạ độ nút.
+        QTest.qWait(80)
     try:
         social.refresh()
         wait_until(poll_started.is_set)

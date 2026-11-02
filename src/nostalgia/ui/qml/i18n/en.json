@@ -4232,6 +4232,15 @@
   "p:Mã kết bạn là mã của tài khoản launcher. Đăng nhập Minecraft riêng vẫn cần thiết để khởi chạy game. Bấm Làm mới để tải lại danh sách bạn bè và lời mời.": "The friend code belongs to your launcher account. You still need a Minecraft account to launch the game. Choose Refresh to reload friends and invitations.",
   "p:Host: bấm Mời vào phòng cạnh tên bạn, hoặc Chép mã phòng gửi cho bạn. Khi mọi người sẵn sàng, bấm Khởi chạy Minecraft.": "Host: click Invite to room next to a friend, or Copy the room code and send it. When everyone is ready, click Launch Minecraft.",
   "p:Người nhận: mở Bạn bè, bấm Vào phòng ở lời mời hoặc nhập mã phòng rồi bấm Vào. Nếu có modpack, xem file, chọn nội dung và xác nhận đồng bộ.": "Guest: open Friends and click Join room on the invitation, or enter the room code and click Join. If a pack is shared, review the files, choose what to keep and confirm the sync.",
+  "p:Mã phòng của bạn": "Your room code",
+  "p:Bạn đang ở phòng của bạn bè": "You are in a friend's room",
+  "p:Đang tạo phòng": "Creating room",
+  "p:Có mã phòng?": "Have a room code?",
+  "p:Gửi mã này cho bạn bè, hoặc bấm Mời vào phòng cạnh tên họ trong phòng chơi.": "Send this code to friends, or click Invite to room next to their name in the room.",
+  "p:Xem phòng để đồng bộ modpack và vào world.": "Open the room to sync the modpack and join the world.",
+  "p:Mã phòng hiện ở đây khi phòng sẵn sàng.": "The room code appears here once the room is ready.",
+  "p:Nhập mã 18 ký tự bạn bè gửi rồi bấm Vào.": "Enter the 18-character code your friend sent, then click Join.",
+  "p:Vào": "Join",
   "p:Gặp nhau trong thế giới của bạn.": "Meet in your world.",
   "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "This player will no longer be able to send you invitations or friend requests."
 }

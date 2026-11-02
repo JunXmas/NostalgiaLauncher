@@ -137,7 +137,9 @@ def test_accept_invitation_joins_without_visible_room_code(
     press(view, find_control(root_item, "acceptInvite-invite"))
     wait_until(lambda: bool(codes))
     assert codes == ["ABCDEFABCDEFGHJKMN"]
-    assert root_item.findChild(type(root_item), "roomCodeInput") is None
+    # Mã trong lời mời không hiện ra và không điền sẵn vào ô nhập mã.
+    assert not find_control(root_item, "hostRoomCode").isVisible()
+    assert find_control(root_item, "roomCodeInput").property("code") == ""
 
 
 def test_revoked_session_clears_social_and_stops_room(
@@ -169,7 +171,7 @@ def test_friends_panels_fit_small_and_desktop(social_preview: tuple[Any, ...], s
             view.resize(width, height)
             QTest.qWait(60)
             page = find_control(root_item, "friendsPage")
-            for name in ("friendsRail", "socialRoomPanel"):
+            for name in ("friendsRail", "roomCodeCard", "socialRoomPanel"):
                 panel = find_control(root_item, name)
                 if not panel.isVisible():
                     continue

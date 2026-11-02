@@ -1,4 +1,4 @@
-"""Bố cục bạn bè trên cửa sổ nhỏ: danh sách bạn nằm gọn trong trang."""
+"""Bố cục bạn bè trên cửa sổ nhỏ: thẻ mã phòng và danh sách bạn nằm gọn trong trang."""
 
 from typing import Any
 
@@ -26,7 +26,7 @@ def test_small_view_stacks_room_code_and_friend_list(
     view.resize(1024, 600)
     QTest.qWait(60)
     page = find_control(root_item, "friendsPage")
-    for name in ("friendsRail",):
+    for name in ("roomCodeCard", "friendsRail", "roomCodeInput"):
         panel = find_control(root_item, name)
         QTest.qWait(20)
         assert panel.isVisible() and panel.width() > 0, name
