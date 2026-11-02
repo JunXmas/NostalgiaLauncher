@@ -35,7 +35,7 @@ Item {
         Rectangle { anchors.fill: parent; radius: 10; color: "#35100d1a" }
         SocialAvatar {
             anchors.centerIn: parent; size: 76 * GlassTheme.scale
-            playerName: root.playerName; source: root.avatarSource; decor: root.cosmetic.key; showPresence: false
+            playerName: root.playerName; source: root.avatarSource; decor: root.cosmetic.key
             scale: hover.hovered && !GlassTheme.reducedMotion ? 1.04 : 1
             Behavior on scale { NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
         }

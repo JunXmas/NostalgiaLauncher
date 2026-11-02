@@ -24,7 +24,6 @@ class ProfileDraft:
 class SocialProfile:
     account_id: str
     name: str
-    online: bool
     avatar_url: str
     details: ProfileDraft
     badge: str = ""

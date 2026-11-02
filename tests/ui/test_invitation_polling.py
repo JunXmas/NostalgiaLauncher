@@ -34,9 +34,7 @@ def test_invitation_actions_work_during_poll_and_ignore_duplicate_clicks(
     _, gateway, view, root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
     if action == "send":
-        social.selectFriend("misa")
-        wait_until(lambda: not social.busy)
-    social._timer.stop()
+        find_control(root_item, "friendsPage").setProperty("section", 1)
     poll_started, poll_release, action_started, action_release = Event(), Event(), Event(), Event()
     method = {"send": "send_invite", "accept": "accept_invite", "decline": "decline_invite"}[action]
     original = getattr(gateway, method)
@@ -64,7 +62,7 @@ def test_invitation_actions_work_during_poll_and_ignore_duplicate_clicks(
         social.refresh()
         wait_until(poll_started.is_set)
         name = {
-            "send": "inviteSelectedFriend",
+            "send": "roomInvite-misa",
             "accept": "acceptInvite-invite",
             "decline": "declineInvite-invite",
         }[action]
@@ -99,7 +97,6 @@ def test_invitation_error_never_joins_and_revoked_session_is_removed(
 ) -> None:
     _, gateway, _view, _root_item, social, _multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     joined: list[str] = []
     monkeypatch.setattr(sync_bridge, "join", joined.append)
 
@@ -121,7 +118,6 @@ def test_delayed_accept_cannot_join_after_session_or_room_changes(
 ) -> None:
     _, gateway, _view, _root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     started, release = Event(), Event()
     joined: list[str] = []
     monkeypatch.setattr(sync_bridge, "join", joined.append)

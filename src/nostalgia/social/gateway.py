@@ -13,8 +13,8 @@ from nostalgia.model.json_value import as_mapping, as_string
 from nostalgia.net.http import HttpClient
 from nostalgia.net.session_proof import forget_session, public_key, register_session
 from nostalgia.social.envelope import InvitationCipher
-from nostalgia.social.model import FriendMessage, GoogleLogin, SocialSnapshot
-from nostalgia.social.parse import identifier, parse_messages, parse_snapshot, timestamp
+from nostalgia.social.model import GoogleLogin, SocialSnapshot
+from nostalgia.social.parse import identifier, parse_snapshot, timestamp
 from nostalgia.social.profile_model import ProfileDraft, SocialProfile
 from nostalgia.social.profile_parse import parse_profile
 from nostalgia.social.transport import SocialTransport
@@ -117,11 +117,6 @@ class HttpSocialGateway(SocialTransport):
         self._account_id = snapshot.account.account_id
         return snapshot
 
-    def fetch_messages(self, account_id: str) -> tuple[FriendMessage, ...]:
-        return parse_messages(
-            self._request("GET", "/v1/friends/" + identifier(account_id) + "/messages")
-        )
-
     def friend_action(self, action: str, account_id: str) -> None:
         if action not in {"request", "accept", "remove", "block"}:
             raise SocialError("Thao tác kết bạn không hợp lệ.")
@@ -131,13 +126,6 @@ class HttpSocialGateway(SocialTransport):
             )
         else:
             self._request("POST", "/v1/friends/" + identifier(account_id) + "/" + action, {})
-
-    def send_message(self, account_id: str, text: str, message_id: str) -> None:
-        self._request(
-            "POST",
-            "/v1/friends/" + identifier(account_id) + "/messages",
-            {"text": text, "message_id": identifier(message_id)},
-        )
 
     def send_invite(
         self, account_id: str, room_code: str, host_ticket: str, world_name: str

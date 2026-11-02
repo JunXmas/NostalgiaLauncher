@@ -8,7 +8,6 @@ from dataclasses import replace
 from nostalgia.errors import SessionRevoked
 from nostalgia.social.model import (
     Friend,
-    FriendMessage,
     GoogleLogin,
     RoomInvitation,
     ServiceAccount,
@@ -22,15 +21,13 @@ class SocialFixture:
         self.access_token = ""
         self.revoked = False
         self.accepted: list[str] = []
-        self.sent: list[str] = []
         self.invited: list[str] = []
         self.snapshot = SocialSnapshot(
             ServiceAccount("jun", "Jun PREVIEW", "ABCDEF0123456789", 0),
-            (Friend("misa", "Misa", True),),
-            (Friend("minh", "Minh", True, True),),
+            (Friend("misa", "Misa"),),
+            (Friend("minh", "Minh", True),),
             (RoomInvitation("invite", "misa", "Misa", "World", int(time.time()) + 300),),
         )
-        self.messages = [FriendMessage("hello", "misa", "Xin chào", int(time.time()))]
 
     def start_login(self) -> GoogleLogin:
         return GoogleLogin(
@@ -49,19 +46,10 @@ class SocialFixture:
             raise SessionRevoked("Phiên đã đăng nhập trên máy khác.")
         return self.snapshot
 
-    def fetch_messages(self, account_id: str) -> tuple[FriendMessage, ...]:
-        assert account_id == "misa"
-        return tuple(self.messages)
-
     def friend_action(self, action: str, account_id: str) -> None:
         if action == "accept":
             self.accepted.append(account_id)
             self.snapshot = replace(self.snapshot, requests=())
-
-    def send_message(self, account_id: str, text: str, message_id: str) -> None:
-        assert account_id == "misa"
-        self.sent.append(text)
-        self.messages.append(FriendMessage(message_id, "jun", text, int(time.time())))
 
     def send_invite(
         self, account_id: str, room_code: str, host_ticket: str, world_name: str
@@ -91,7 +79,6 @@ class SocialFixture:
             return SocialProfile(
                 account_id,
                 account.name,
-                True,
                 account.avatar_url,
                 getattr(self, "profile_draft", ProfileDraft()),
             )
@@ -99,7 +86,6 @@ class SocialFixture:
         return SocialProfile(
             account_id,
             friend.name,
-            friend.online,
             friend.avatar_url,
             ProfileDraft(),
             friend.badge,

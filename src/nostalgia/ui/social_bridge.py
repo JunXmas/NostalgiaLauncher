@@ -1,4 +1,4 @@
-"""Danh sách bạn, chat và lời mời; mã phòng chỉ đi giữa gateway và dịch vụ relay."""
+"""Danh sách bạn và lời mời; mã phòng chỉ đi giữa gateway và dịch vụ relay."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
 
 from nostalgia.api import ServiceSessionStore, SocialGateway
-from nostalgia.ui.chat_sender import ChatSender
 from nostalgia.ui.friend_sender import FriendSender
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
@@ -17,7 +16,6 @@ from nostalgia.ui.social_invitations import SocialInvitations
 
 
 class SocialBridge(SocialInvitations):
-    chatBusyChanged = Signal()
     friendBusyChanged = Signal()
 
     def __init__(
@@ -30,13 +28,9 @@ class SocialBridge(SocialInvitations):
         plus_enabled: bool = True,
     ) -> None:
         super().__init__(gateway, multiplayer, sync_bridge, parent, session_store, plus_enabled)
-        self._chat = ChatSender(self)
-        self._chat.busyChanged.connect(self.chatBusyChanged)
-        self._chat.completed.connect(self._apply_delivery)
         self._friend_sender = FriendSender(self)
         self._friend_sender.busyChanged.connect(self.friendBusyChanged)
         self._friend_sender.completed.connect(self._apply_friend_action)
-        self.changed.connect(self._configure_poll_interval)
 
     @Property(bool, notify=friendBusyChanged)
     def friendBusy(self) -> bool:
@@ -56,66 +50,14 @@ class SocialBridge(SocialInvitations):
             self.refresh()
         self.changed.emit()
 
-    @Property(bool, notify=chatBusyChanged)
-    def chatBusy(self) -> bool:
-        return bool(self._chat.busy)
-
-    @Slot(str, str, str, bool)
-    def _apply_delivery(self, peer_id: str, text: str, error: str, revoked: bool) -> None:
-        self._note_pinned = bool(error) and not revoked
-        if revoked:
-            if self._session_store:
-                self._session_store.remove_access_token()
-            self._reset_session(error)
-        elif error:
-            self._note = error
-        else:
-            if peer_id == self._peer_id:
-                self.messageSent.emit(text)
-            self._note = "Đã gửi."
-            self.refresh()
-        self.changed.emit()
-
     @Slot()
     def shutdown(self) -> None:
-        self._chat.cancel()
         self._friend_sender.cancel()
         super().shutdown()
 
     def _reset_session(self, note: str) -> None:
-        self._chat.cancel()
         self._friend_sender.cancel()
         super()._reset_session(note)
-
-    @Slot(bool)
-    def setWatching(self, watching: bool) -> None:
-        changed = watching != self._watching
-        self._watching = watching
-        self._configure_poll_interval()
-        if watching and changed:
-            self.refresh()
-
-    def _configure_poll_interval(self) -> None:
-        interval = 5000 if self._watching and self._peer_id else 15000
-        if self._timer.interval() != interval:
-            self._timer.setInterval(interval)
-
-    @Slot(str)
-    def selectFriend(self, account_id: str) -> None:
-        if not account_id:
-            self._note, self._note_pinned = "", False
-            self._peer_id, self._messages = "", []
-            self._configure_poll_interval()
-            self.changed.emit()
-            return
-        if self._snapshot and any(
-            friend.account_id == account_id for friend in self._snapshot.friends
-        ):
-            self._note, self._note_pinned = "", False
-            self._peer_id, self._messages = account_id, []
-            self._configure_poll_interval()
-            self.changed.emit()
-            self.refresh()
 
     @Slot(str)
     def requestFriend(self, friend_code: str) -> None:
@@ -137,23 +79,6 @@ class SocialBridge(SocialInvitations):
         gateway = self._gateway
         if self.signedIn and gateway and account_id and not self.friendBusy:
             self._friend_sender.submit(gateway, action, account_id)
-
-    @Slot(str)
-    def sendMessage(self, text: str) -> None:
-        gateway, account_id = self._gateway, self._peer_id
-        if (
-            self.signedIn
-            and gateway
-            and account_id
-            and text.strip()
-            and len(text) <= 1000
-            and not self.chatBusy
-            and self._snapshot
-            and any(friend.account_id == account_id for friend in self._snapshot.friends)
-        ):
-            self._note, self._note_pinned = "", False
-            self._chat.submit(gateway, account_id, text.strip())
-            self.changed.emit()
 
     @Slot(str, bool)
     def setProfile(self, accent: str, show_badge: bool) -> None:

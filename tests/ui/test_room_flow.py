@@ -71,7 +71,7 @@ def test_host_steps_and_invite_fit_and_follow_lan_and_pack_readiness(
     assert not warnings, "\n".join(warnings)
 
 
-def test_invite_from_room_without_selecting_chat_and_lock_gates_it(
+def test_invite_from_room_and_lock_gates_it(
     social_preview: tuple[Any, ...],
 ) -> None:
     _, gateway, view, root_item, social, multiplayer, _, _ = social_preview
@@ -80,33 +80,31 @@ def test_invite_from_room_without_selecting_chat_and_lock_gates_it(
     ready_host(multiplayer)
     QTest.qWait(80)
     button = find_control(root_item, "roomInvite-misa")
-    assert not social.peerId and button.property("clickable")
+    assert button.property("clickable")
     multiplayer._apply_status(replace(multiplayer.room_snapshot(), locked=True))
     assert not button.property("clickable")
     multiplayer._apply_status(replace(multiplayer.room_snapshot(), locked=False))
     center = button.mapToScene(QPointF(button.width() / 2, button.height() / 2)).toPoint()
     QTest.mouseClick(view, Qt.MouseButton.LeftButton, pos=center)
     wait_until(lambda: gateway.invited == ["misa"] and not social.inviteBusy)
-    assert not social.peerId
 
 
-def test_room_friend_list_is_virtualized_and_omits_offline_friends(
+def test_room_friend_list_is_virtualized_and_lists_every_friend(
     social_preview: tuple[Any, ...],
 ) -> None:
     _, gateway, _, root_item, social, multiplayer, _, _ = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     gateway.snapshot = replace(
         gateway.snapshot,
-        friends=tuple(Friend(f"friend-{n}", f"Friend {n}", n % 2 == 0) for n in range(1000)),
+        friends=tuple(Friend(f"friend-{n}", f"Friend {n}") for n in range(1000)),
     )
     social.refresh()
     wait_until(lambda: len(social.friends) == 1000 and not social.busy)
     find_control(root_item, "friendsPage").setProperty("section", 1)
     ready_host(multiplayer)
     QTest.qWait(80)
-    friends = find_control(root_item, "roomOnlineFriends")
-    assert friends.property("count") == 500
+    friends = find_control(root_item, "roomFriends")
+    assert friends.property("count") == 1000
     assert friends.property("height") <= 240
     delegates = [
         child

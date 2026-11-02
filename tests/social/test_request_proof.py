@@ -58,10 +58,10 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
 ) -> None:
     register_session(ACCESS_TOKEN, SEED)
     try:
-        server_state.add("/v1/friends/peer/messages", b'{"sent":true}')
+        server_state.add("/v1/friends/peer/accept", b"{}")
         gateway = HttpSocialGateway(server.url(""), http_client)
         gateway.access_token = ACCESS_TOKEN
-        gateway.send_message("peer", "Xin chào", "message")
+        gateway.friend_action("accept", "peer")
         server_state.add("/v1/plus/offer", json.dumps(offer_document()).encode())
         assert (
             HttpPaymentGateway(server.url(""), ACCESS_TOKEN, http_client).fetch_offer().amount > 0
@@ -70,7 +70,7 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         server_state.add(path, b'{"authorized":true}')
         plan = RepairPlan("a" * 64, "b" * 64, 4200000000, (), ())
         HttpRepairGateway(server.url(""), ACCESS_TOKEN, http_client).authorize(plan)
-        for route in ["/v1/friends/peer/messages", "/v1/plus/offer", path]:
+        for route in ["/v1/friends/peer/accept", "/v1/plus/offer", path]:
             method = "GET" if route == "/v1/plus/offer" else "POST"
             verify(
                 server_state.received_header(route, "Nostalgia-Proof"),

@@ -1,9 +1,10 @@
-"""Hướng dẫn mời world hiện ngay từ chat, có GIF offline và đủ bước ở cả hai ngôn ngữ."""
+"""Hướng dẫn mời world hiện ngay trên trang Bạn bè, có GIF offline và đủ bước ở cả hai ngôn ngữ."""
 
 from typing import Any
 
 import pytest
 from PySide6.QtQuick import QQuickItem
+from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_social_ui import find_control, login_preview
 from test_social_ui import social_preview as social_preview
@@ -15,18 +16,17 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 @pytest.mark.parametrize("language", ["vi", "en"])
-def test_chat_opens_world_invitation_guide_with_lan_and_guest_steps(
+def test_room_tab_opens_world_invitation_guide_with_lan_and_guest_steps(
     social_preview: tuple[Any, ...], language: str
 ) -> None:
-    _, gateway, view, root_item, social, *_rest = social_preview
+    _, gateway, view, root_item, *_rest = social_preview
     login_preview(social_preview)
     view.rootContext().contextProperty("settingsBridge").setAppearance(
         100, False, False, False, language
     )
-    social.selectFriend("misa")
-    wait_until(lambda: not social.busy)
-    chat = find_control(root_item, "friendChat")
-    press(view, find_control(chat, "guideButton-invite"))
+    find_control(root_item, "friendsPage").setProperty("section", 1)
+    QTest.qWait(80)
+    press(view, find_control(root_item, "guideButton-invite"))
     dialog = find_popup(root_item, "guideDialog")
     wait_until(lambda: dialog.property("opened"))
     assert dialog.property("topicId") == "invite"
@@ -47,19 +47,16 @@ def test_chat_opens_world_invitation_guide_with_lan_and_guest_steps(
 
 
 @pytest.mark.parametrize("scale", [100, 150])
-def test_single_create_entry_stays_visible_when_a_friend_is_selected(
+def test_single_create_entry_stays_visible_on_both_tabs(
     social_preview: tuple[Any, ...],
     scale: int,
 ) -> None:
-    _, gateway, view, root_item, social, *_rest = social_preview
+    _, gateway, view, root_item, *_rest = social_preview
     login_preview(social_preview)
     view.resize(1024, 600)
     view.rootContext().contextProperty("settingsBridge").setAppearance(
         scale, False, False, True, "vi"
     )
-    social.selectFriend("misa")
-    wait_until(lambda: not social.busy)
-    assert not find_control(root_item, "inviteSelectedFriend").isVisible()
     button = find_control(root_item, "friendsOpenRoom")
     assert button.isVisible() and button.property("label") == "Tạo phòng"
     assert button.property("clickable")

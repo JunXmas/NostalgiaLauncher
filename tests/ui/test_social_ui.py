@@ -1,4 +1,4 @@
-"""Qt thật: Google trình duyệt, chat, lời mời và thu hồi phiên không khóa bản chơi."""
+"""Qt thật: Google trình duyệt, lời mời và thu hồi phiên không khóa bản chơi."""
 
 from __future__ import annotations
 
@@ -98,19 +98,9 @@ def test_google_opens_browser_and_account_is_separate_from_minecraft(
     assert not hasattr(social, "accessToken")
 
 
-def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, ...]) -> None:
+def test_host_invite_does_not_need_plus(social_preview: tuple[Any, ...]) -> None:
     _, gateway, view, root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
-    press(view, find_control(root_item, "friend-misa"))
-    wait_until(lambda: social.peerId == "misa" and not social.busy)
-    press(view, find_control(root_item, "showOptionalChat"))
-    wait_until(lambda: social.messages and not social.busy)
-    find_control(root_item, "chatComposer").setProperty("text", "Chơi thôi")
-    press(view, find_control(root_item, "sendChat"))
-    wait_until(lambda: gateway.sent and not social.busy)
-    assert gateway.sent == ["Chơi thôi"]
-    wait_until(lambda: len(social.messages) == 2 and not social.busy)
-    assert not find_control(root_item, "inviteSelectedFriend").isVisible()
     assert find_control(root_item, "friendsOpenRoom").property("label") == "Tạo phòng"
     multiplayer._apply_status(
         RoomStatus(
@@ -120,12 +110,13 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
             world_name="World",
         )
     )
-    assert find_control(root_item, "inviteSelectedFriend").isVisible()
-    assert find_control(root_item, "inviteSelectedFriend").property("label") == "Mời vào phòng"
-    press(view, find_control(root_item, "inviteSelectedFriend"))
-    wait_until(lambda: gateway.invited and not social.busy)
-    assert gateway.invited == ["misa"]
-    invite = find_control(root_item, "inviteSelectedFriend")
+    find_control(root_item, "friendsPage").setProperty("section", 1)
+    QTest.qWait(80)
+    invite = find_control(root_item, "roomInvite-misa")
+    assert invite.isVisible() and invite.property("label") == "Mời vào phòng"
+    press(view, invite)
+    wait_until(lambda: gateway.invited and not social.inviteBusy)
+    assert gateway.invited == ["misa"] and not social.account["plus"]
     status = multiplayer.room_snapshot()
     multiplayer._apply_status(replace(status, locked=True))
     assert not invite.isVisible()
@@ -134,12 +125,6 @@ def test_free_chat_and_host_invite_do_not_need_plus(social_preview: tuple[Any, .
     assert not invite.isVisible()
     sync_bridge.set_host_ready(True)
     assert invite.isVisible()
-    gateway.snapshot = replace(
-        gateway.snapshot, friends=(replace(gateway.snapshot.friends[0], online=False),)
-    )
-    social.refresh()
-    wait_until(lambda: not social.busy)
-    assert not invite.isVisible()
 
 
 def test_accept_invitation_joins_without_visible_room_code(
@@ -184,7 +169,7 @@ def test_friends_panels_fit_small_and_desktop(social_preview: tuple[Any, ...], s
             view.resize(width, height)
             QTest.qWait(60)
             page = find_control(root_item, "friendsPage")
-            for name in ("friendsRail", "friendChat", "socialRoomPanel"):
+            for name in ("friendsRail", "socialRoomPanel"):
                 panel = find_control(root_item, name)
                 if not panel.isVisible():
                     continue

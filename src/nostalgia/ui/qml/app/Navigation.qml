@@ -271,7 +271,7 @@ Glass {
                 font.pixelSize: GlassTheme.fontHeading
             }
         }
-        SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; showPresence: false; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
+        SocialAvatar { objectName: "ownProfileAvatar"; decor: cosmeticBridge.details.decor || "none"; x: 12; anchors.verticalCenter: parent.verticalCenter; size: 32; visible: socialBridge.signedIn; playerName: socialBridge.account.name || ""; source: socialBridge.account.avatarUrl || ""; clickable: true; onClicked: socialProfileDialog.showFor(socialBridge.account.accountId) }
         Button { objectName: "socialAccountToggle"; anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; chevron: true; Accessible.name: Legacy.Tr.phrase("Menu tài khoản Google và Minecraft"); onClicked: accountMenu.open() }
         Column {
             x: 55

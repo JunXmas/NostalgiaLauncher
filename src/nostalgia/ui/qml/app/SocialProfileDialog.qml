@@ -29,10 +29,9 @@ Controls.Popup {
             Column { id: profileBody; width: parent.width - 8; spacing: 18
                 Item { width: parent.width; height: 146 * GlassTheme.scale
                     CosmeticBanner { objectName: "profileBanner"; anchors.fill: parent; decor: root.editing ? editor.previewDecor : root.details.decor || "none" }
-                    SocialAvatar { objectName: "profileAvatar"; x: 18; anchors.verticalCenter: parent.verticalCenter; size: 98 * GlassTheme.scale; playerName: root.profile.name || ""; source: root.profile.avatar_url || ""; decor: root.editing ? editor.previewDecor : root.details.decor || "none"; online: root.profile.online === true }
+                    SocialAvatar { objectName: "profileAvatar"; x: 18; anchors.verticalCenter: parent.verticalCenter; size: 98 * GlassTheme.scale; playerName: root.profile.name || ""; source: root.profile.avatar_url || ""; decor: root.editing ? editor.previewDecor : root.details.decor || "none" }
                     Column { x: 132 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: parent.width - x - 24; spacing: 7
                         PaymentText { width: parent.width; text: root.profile.name || Legacy.Tr.phrase("Hồ sơ người chơi"); font.pixelSize: GlassTheme.fontDialog; font.family: GlassTheme.displayFont; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: root.profile.online ? Legacy.Tr.phrase("Trực tuyến · Sẵn sàng chơi cùng") : Legacy.Tr.phrase("Ngoại tuyến"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                         ProfileBadge { visible: !!root.profile.badge; badge: root.profile.badge || "" }
                     }
                 }
@@ -49,7 +48,7 @@ Controls.Popup {
             Button { objectName: "profileGoogleLogout"; visible: root.mine && !root.editing && socialBridge.signedIn; label: Legacy.Tr.phrase("Đăng xuất Google"); quiet: true; danger: true; clickable: !socialBridge.busy && !profileBridge.busy; onClicked: { root.close(); confirmDialog.ask(Legacy.Tr.phrase("Đăng xuất Google khỏi Nostalgia?"), Legacy.Tr.phrase("Phòng chơi chung sẽ đóng. Tài khoản Minecraft, bản chơi và thế giới trên máy vẫn được giữ lại."), function() { socialBridge.signOut(); }); } }
             Button { objectName: "saveSocialProfile"; visible: root.editing; label: Legacy.Tr.phrase("Lưu hồ sơ"); primary: true; clickable: !profileBridge.busy; onClicked: editor.save() }
             Button { objectName: "cancelSocialProfileEdit"; visible: root.editing; label: Legacy.Tr.phrase("Huỷ"); quiet: true; clickable: !profileBridge.busy; onClicked: root.editing = false }
-            Button { visible: !root.mine && !!root.profile.account_id; label: Legacy.Tr.phrase("Nhắn tin"); primary: true; onClicked: { socialBridge.selectFriend(root.profile.account_id); root.close(); } }
+            Button { objectName: "blockSocialProfile"; visible: !root.mine && !!root.profile.account_id; label: Legacy.Tr.phrase("Chặn người chơi"); quiet: true; danger: true; clickable: !socialBridge.friendBusy; onClicked: { var blocked = root.profile.account_id; root.close(); confirmDialog.ask(Legacy.Tr.phrase("Chặn người chơi?"), Legacy.Tr.phrase("Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa."), function() { socialBridge.blockFriend(blocked); }); } }
         }
     }
     Connections { target: profileBridge; function onSaved() { root.editing = false; } function onCleared() { if (root.opened) root.close(); } }

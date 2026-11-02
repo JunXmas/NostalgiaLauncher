@@ -8,8 +8,6 @@ Item {
     property string playerName: ""
     property string source: ""
     property string decor: "none"
-    property bool online: false
-    property bool showPresence: true
     property bool clickable: false
     property int size: 40
     signal clicked
@@ -35,7 +33,6 @@ Item {
     Rectangle { id: roundedMask; width: photo.width; height: photo.height; radius: width / 2; color: "white"; visible: root.shaderAvailable }
     ShaderEffectSource { id: maskCapture; anchors.fill: photo; sourceItem: roundedMask; hideSource: true; visible: false; live: root.visible && root.shaderAvailable }
     CosmeticFrame { objectName: "socialAvatarFrame"; anchors.fill: parent; decor: root.decor }
-    Rectangle { anchors.right: parent.right; anchors.bottom: parent.bottom; width: Math.max(10, root.size * 0.25); height: width; radius: width / 2; visible: root.showPresence; color: root.online ? GlassTheme.brand : GlassTheme.muted; border.width: 3; border.color: GlassTheme.surface }
     MouseArea { anchors.fill: parent; enabled: root.clickable; cursorShape: Qt.PointingHandCursor; onClicked: root.clicked() }
     activeFocusOnTab: clickable
     Accessible.role: Accessible.Button

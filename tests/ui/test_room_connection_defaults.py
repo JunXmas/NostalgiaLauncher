@@ -40,7 +40,6 @@ def test_accept_invitation_uses_p2p_without_relay_option(
 ) -> None:
     _, _, view, root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     modes: list[bool] = []
     joined: list[str] = []
     monkeypatch.setattr(multiplayer._service, "set_direct_allowed", modes.append)

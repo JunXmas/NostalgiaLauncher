@@ -28,13 +28,13 @@ không sửa credential Google hay tài khoản Minecraft.
 | Quyền từng gói | Trong Công cụ Draft chọn Plus/Pro/Max/Ultimate. Plus không host server; Pro trở lên có. Dừng server trước khi đổi gói. |
 | Sửa mod | Quét và lập phương án cho mod trùng ID, sai loader hoặc xung đột đã xác minh. Chỉ áp khi toàn bộ phương án kiểm tra được; có sao lưu/hoàn tác. Lỗi thiếu phụ thuộc, sai khoảng phiên bản hoặc metadata chưa hiểu sẽ báo chưa xử lý trong planner local này. |
 | Đồng bộ modpack local | Trong Công cụ Draft chọn bản chơi đã cài và bấm “Đồng bộ local · Tạo bản chơi mới”. Kiểm hash và cài đúng loader vào instance mới, không chép saves/log/account. Có thể cần tải Minecraft/loader. Đây không phải gửi pack giữa hai máy. |
-| Bạn bè/chat | Misa/Huy/Minh mang nhãn TEST, trả lời mô phỏng để xem bố cục, avatar và hồ sơ. Không có lời mời thật gửi đi. |
+| Bạn bè | Misa/Huy/Minh mang nhãn TEST để xem bố cục, avatar và hồ sơ. Không có lời mời thật gửi đi. |
 | Thanh toán | Xem các gói 29k/69k/109k/209k. QR chỉ mã mô phỏng, không có tài khoản ngân hàng hoặc checkout URL. “Tôi đã chuyển khoản” không tự xác nhận; Màn hình QR TEST có nút mô phỏng thành công riêng. |
 
 ## Google và chơi chung online
 
 Workspace chưa có URL HTTPS backend tài khoản/relay hoặc quyền deploy dịch vụ.
-Phiên Ultimate TEST là local, không giả vờ đăng nhập Google. Lời mời, chat thật và
+Phiên Ultimate TEST là local, không giả vờ đăng nhập Google. Lời mời thật và
 đồng bộ nhiều máy chưa thể kiểm tra trong gói này. Core đăng nhập Minecraft
 Microsoft/Ely.by, đổi skin, cài game và multiplayer hiện có vẫn dùng luồng thật;
 chưa kiểm thử game/LAN trên nhiều máy trong môi trường build.

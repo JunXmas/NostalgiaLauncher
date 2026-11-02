@@ -1,4 +1,4 @@
-# Long lists and chat
+# Long lists
 
 The modern library formerly created every card with `Repeater`. With 1,000 results,
 all 1,000 cards and roughly 47,000 visual nodes existed, including text, input handlers,
@@ -6,7 +6,7 @@ image/effect objects and bindings. Clipping and stopping offscreen artwork did n
 those objects. The scene still had to traverse them and propagate changes during scrolling.
 
 The library and instances now use a bounded `GridView`; installed content, server results,
-mod repair, imports, friends and chat use bounded `ListView` delegates. Cosmetic choices
+mod repair, imports and friends use bounded `ListView` delegates. Cosmetic choices
 and mod sharing lists use the same inertia controller. `reuseItems` and a small cache
 preserve responsive scrolling. Installed rows retain their existing keyed model so toggling
 or updating one mod does not reset the list. Confirmation state resets when a row is reused.
@@ -27,7 +27,5 @@ on another computer. Regression tests exercise 2,000 projects and installed file
 the last row, return to the top, and check delegate bounds, recycled state and scroll
 position when a mod changes.
 
-Chat previously shared the account polling worker's `busy` flag. Sending now has a separate
-worker and only waits for another send. Offline accepted friends can receive messages.
-Pending requests and blocked accounts still cannot chat. Unchanged account snapshots do
-not rebuild social models; revoked sessions discard stale delivery results.
+Unchanged account snapshots do not rebuild social models; revoked sessions discard stale
+friend and invitation results.

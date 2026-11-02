@@ -34,7 +34,6 @@ class ServiceAccount:
 class Friend:
     account_id: str
     name: str
-    online: bool
     incoming: bool = False
     badge: str = ""
     accent: str = ""
@@ -52,14 +51,6 @@ class RoomInvitation:
 
 
 @dataclass(frozen=True, slots=True)
-class FriendMessage:
-    message_id: str
-    sender: str
-    body: str
-    created_at: int
-
-
-@dataclass(frozen=True, slots=True)
 class SocialSnapshot:
     account: ServiceAccount
     friends: tuple[Friend, ...]
@@ -73,9 +64,7 @@ class SocialGateway(Protocol):
     def start_login(self) -> GoogleLogin: ...
     def poll_login(self, login: GoogleLogin) -> str: ...
     def fetch_snapshot(self) -> SocialSnapshot: ...
-    def fetch_messages(self, account_id: str) -> tuple[FriendMessage, ...]: ...
     def friend_action(self, action: str, account_id: str) -> None: ...
-    def send_message(self, account_id: str, text: str, message_id: str) -> None: ...
     def send_invite(
         self, account_id: str, room_code: str, host_ticket: str, world_name: str
     ) -> None: ...
@@ -89,13 +78,6 @@ class SocialGateway(Protocol):
     def fetch_preview_url(self, target: str) -> str: ...
 
     def logout(self) -> None: ...
-
-
-@dataclass(frozen=True, slots=True)
-class SocialUpdate:
-    snapshot: SocialSnapshot
-    messages: tuple[FriendMessage, ...]
-    peer_id: str
 
 
 class ServiceSessionStore(Protocol):

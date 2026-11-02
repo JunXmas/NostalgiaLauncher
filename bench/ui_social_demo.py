@@ -7,7 +7,6 @@ from dataclasses import replace
 
 from nostalgia.social.model import (
     Friend,
-    FriendMessage,
     GoogleLogin,
     RoomInvitation,
     ServiceAccount,
@@ -24,11 +23,11 @@ class DemoSocialGateway:
                 "preview-jun", "Jun · PREVIEW", "ABCDEF0123456789", int(time.time()) + 86400
             ),
             (
-                Friend("preview-misa", "Misa", True),
-                Friend("preview-minh", "Minh", True),
-                Friend("preview-ha", "Hà", False),
+                Friend("preview-misa", "Misa"),
+                Friend("preview-minh", "Minh"),
+                Friend("preview-ha", "Hà"),
             ),
-            (Friend("preview-an", "An", True, True),),
+            (Friend("preview-an", "An", True),),
             (
                 RoomInvitation(
                     "preview-invite",
@@ -39,17 +38,6 @@ class DemoSocialGateway:
                 ),
             ),
         )
-        self.messages = [
-            FriendMessage(
-                "preview-1", "preview-misa", "Tối nay chơi Better MC nhé?", int(time.time())
-            ),
-            FriendMessage(
-                "preview-2",
-                "preview-jun",
-                "Được! Mình chia sẻ pack rồi mời cả nhóm.",
-                int(time.time()),
-            ),
-        ]
 
     def start_login(self) -> GoogleLogin:
         raise RuntimeError("DEMO không có Google thật")
@@ -60,10 +48,6 @@ class DemoSocialGateway:
 
     def fetch_snapshot(self) -> SocialSnapshot:
         return self.snapshot
-
-    def fetch_messages(self, account_id: str) -> tuple[FriendMessage, ...]:
-        del account_id
-        return tuple(self.messages)
 
     def friend_action(self, action: str, account_id: str) -> None:
         if action == "accept":
@@ -80,10 +64,6 @@ class DemoSocialGateway:
                     friend for friend in self.snapshot.friends if friend.account_id != account_id
                 ),
             )
-
-    def send_message(self, account_id: str, text: str, message_id: str) -> None:
-        del account_id
-        self.messages.append(FriendMessage(message_id, "preview-jun", text, int(time.time())))
 
     def send_invite(
         self, account_id: str, room_code: str, host_ticket: str, world_name: str
@@ -111,7 +91,6 @@ class DemoSocialGateway:
             return SocialProfile(
                 account_id,
                 account.name,
-                True,
                 account.avatar_url,
                 getattr(self, "profile_draft", ProfileDraft()),
             )
@@ -119,7 +98,6 @@ class DemoSocialGateway:
         return SocialProfile(
             account_id,
             friend.name,
-            friend.online,
             friend.avatar_url,
             ProfileDraft(),
             friend.badge,

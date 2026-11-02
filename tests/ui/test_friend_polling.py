@@ -22,7 +22,6 @@ def test_accept_during_polling_and_double_click_sends_once(
 ) -> None:
     _launcher, gateway, view, root_item, social, *_rest = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     started, poll_release, action_started, action_release = Event(), Event(), Event(), Event()
     original_accept = gateway.friend_action
 
@@ -67,7 +66,6 @@ def test_friend_error_keeps_request_or_clears_revoked_session(
 ) -> None:
     _launcher, gateway, view, root_item, social, *_rest = social_preview
     login_preview(social_preview)
-    social._timer.stop()
 
     attempted: list[bool] = []
 
@@ -93,7 +91,6 @@ def test_old_friend_action_cannot_change_new_session(
 ) -> None:
     _launcher, gateway, _view, _root_item, social, *_rest = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     started, release = Event(), Event()
 
     def slow_accept(*_args: Any) -> None:

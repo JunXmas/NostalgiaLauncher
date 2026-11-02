@@ -100,12 +100,10 @@ from nostalgia.social.configuration import ServiceConfiguration
 from nostalgia.social.cosmetic import can_equip_cosmetic, load_cosmetic_collection
 from nostalgia.social.gateway import HttpSocialGateway
 from nostalgia.social.model import (
-    FriendMessage,
     GoogleLogin,
     ServiceSessionStore,
     SocialGateway,
     SocialSnapshot,
-    SocialUpdate,
 )
 from nostalgia.social.profile_model import FavoritePack as FavoritePack
 from nostalgia.social.profile_model import ProfileDraft as ProfileDraft
@@ -156,7 +154,6 @@ __all__ = [
     "Diagnosis",
     "FavoritePack",
     "Found",
-    "FriendMessage",
     "GameProcess",
     "GoogleLogin",
     "HttpPaymentGateway",
@@ -207,7 +204,6 @@ __all__ = [
     "SocialGateway",
     "SocialProfile",
     "SocialSnapshot",
-    "SocialUpdate",
     "StagedUpdate",
     "SyncFile",
     "SyncManifest",

@@ -51,7 +51,6 @@ class ProfileBridge(WorkerBridge):
         return {
             "account_id": p.account_id,
             "name": p.name,
-            "online": p.online,
             "avatar_url": p.avatar_url,
             "badge": p.badge,
             "accent": p.accent,

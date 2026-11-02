@@ -16,7 +16,8 @@ Glass {
         width: parent.width; spacing: 10
         Item {
             width: parent.width; height: add.height
-            PaymentText { width: parent.width - add.width - 10; anchors.verticalCenter: parent.verticalCenter; text: Legacy.Tr.phrase("Bạn bè · ") + socialBridge.friends.length; font.pixelSize: GlassTheme.fontHeading; font.weight: Font.DemiBold }
+            PaymentText { width: parent.width - add.width - reload.width - 16; anchors.verticalCenter: parent.verticalCenter; text: Legacy.Tr.phrase("Bạn bè · ") + socialBridge.friends.length; font.pixelSize: GlassTheme.fontHeading; font.weight: Font.DemiBold }
+            Button { id: reload; objectName: "refreshFriends"; anchors.right: add.left; anchors.rightMargin: 6; label: Legacy.Tr.phrase("Làm mới"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.refresh() }
             Button { id: add; objectName: "showAddFriend"; anchors.right: parent.right; width: 40; label: root.adding ? "−" : "+"; quiet: true; Accessible.name: Legacy.Tr.phrase("Thêm bạn"); onClicked: root.adding = !root.adding }
         }
         Column {
@@ -45,19 +46,13 @@ Glass {
     required property var modelData
         objectName: "friend-" + modelData.accountId
         width: friends.width
-        height: Math.max(labels.implicitHeight + 20, 62 * GlassTheme.scale)
+        height: Math.max(friendName.implicitHeight + 20, 62 * GlassTheme.scale)
         label: ""
-        selected: socialBridge.peerId === modelData.accountId
         quiet: true
-        Accessible.name: modelData.name + (modelData.online ? Legacy.Tr.phrase(", trực tuyến") : Legacy.Tr.phrase(", ngoại tuyến"))
-        onClicked: socialBridge.selectFriend(modelData.accountId)
-        SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; decor: modelData.decor || "none"; clickable: true; onClicked: socialProfileDialog.showFor(modelData.accountId) }
-        Column {
-            id: labels
-            x: 64 * GlassTheme.scale; y: 10; width: parent.width - x - 12; spacing: 4
-            PaymentText { width: parent.width; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold }
-            PaymentText { width: parent.width; text: modelData.online ? Legacy.Tr.phrase("●  Trực tuyến") : Legacy.Tr.phrase("○  Ngoại tuyến"); color: modelData.online ? GlassTheme.brand : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
-        }
+        Accessible.name: modelData.name
+        onClicked: socialProfileDialog.showFor(modelData.accountId)
+        SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; decor: modelData.decor || "none" }
+        PaymentText { id: friendName; x: 64 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: parent.width - x - 12; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold; elide: Text.ElideRight; maximumLineCount: 2 }
     }
         }
         Button { objectName: "showFriendRequests"; visible: socialBridge.requests.length > 0; width: parent.width; quiet: true; label: Legacy.Tr.phrase("Yêu cầu · ") + socialBridge.requests.length + (root.requestsExpanded ? "  ↑" : "  ↓"); onClicked: root.requestsExpanded = !root.requestsExpanded }
@@ -72,7 +67,7 @@ Glass {
                     required property var modelData
                     width: requests.width; height: implicitHeight; spacing: 8
                     Row { width: parent.width; spacing: 10
-                        SocialAvatar { playerName: modelData.name; source: modelData.avatarUrl || ""; online: modelData.online; showPresence: false; size: 32 }
+                        SocialAvatar { playerName: modelData.name; source: modelData.avatarUrl || ""; size: 32 }
                         PaymentText { width: parent.width - 42; anchors.verticalCenter: parent.verticalCenter; text: modelData.name + (modelData.incoming ? Legacy.Tr.phrase(" muốn kết bạn") : Legacy.Tr.phrase(" · Đã gửi")) }
                     }
                     Flow {

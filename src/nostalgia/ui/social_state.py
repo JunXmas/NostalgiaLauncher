@@ -11,11 +11,9 @@ from nostalgia.api import (
     EARLY_SUPPORTER_BADGE,
     EARLY_SUPPORTER_PLANS,
     PLUS_BADGE,
-    FriendMessage,
     GoogleLogin,
     SocialGateway,
     SocialSnapshot,
-    SocialUpdate,
 )
 from nostalgia.ui.worker import WorkerBridge
 
@@ -23,35 +21,14 @@ from nostalgia.ui.worker import WorkerBridge
 class SocialState(WorkerBridge):
     changed = Signal()
     sessionChanged = Signal()
-    messageSent = Signal(str)
     _gateway: SocialGateway | None
     _snapshot: SocialSnapshot | None
-    _last_update: SocialUpdate | None
-    _messages: list[dict[str, Any]]
-    _peer_id: str
     _login: GoogleLogin | None
     _note: str
     _plus_enabled: bool
 
     def access_token(self) -> str:
         return self._gateway.access_token if self._gateway is not None else ""
-
-    def resolve_cached_messages(self, peer_id: str) -> tuple[FriendMessage, ...]:
-        if self._last_update and self._last_update.peer_id == peer_id:
-            return self._last_update.messages
-        return ()
-
-    def update_messages(self, update: SocialUpdate) -> None:
-        if self._peer_id == update.peer_id:
-            self._messages = [
-                {
-                    "id": message.message_id,
-                    "sender": message.sender,
-                    "text": message.body,
-                    "mine": message.sender == update.snapshot.account.account_id,
-                }
-                for message in update.messages
-            ]
 
     @Property(bool, constant=True)
     def configured(self) -> bool:
@@ -95,7 +72,6 @@ class SocialState(WorkerBridge):
                     "accountId": friend.account_id,
                     "name": friend.name,
                     "avatarUrl": friend.avatar_url,
-                    "online": friend.online,
                     "badge": friend.badge,
                     "accent": friend.accent,
                     "decor": friend.decor,
@@ -115,7 +91,6 @@ class SocialState(WorkerBridge):
                     "name": friend.name,
                     "avatarUrl": friend.avatar_url,
                     "incoming": friend.incoming,
-                    "online": friend.online,
                 }
                 for friend in self._snapshot.requests
             ]
@@ -138,35 +113,3 @@ class SocialState(WorkerBridge):
             if self._snapshot
             else []
         )
-
-    @Property(list, notify=changed)
-    def messages(self) -> list[dict[str, Any]]:
-        return self._messages
-
-    @Property(str, notify=changed)
-    def peerId(self) -> str:
-        return self._peer_id
-
-    @Property(bool, notify=changed)
-    def peerOnline(self) -> bool:
-        return (
-            any(
-                friend.account_id == self._peer_id and friend.online
-                for friend in self._snapshot.friends
-            )
-            if self._snapshot
-            else False
-        )
-
-    @Property(str, notify=changed)
-    def peerName(self) -> str:
-        if self._snapshot:
-            return next(
-                (
-                    friend.name
-                    for friend in self._snapshot.friends
-                    if friend.account_id == self._peer_id
-                ),
-                "",
-            )
-        return ""

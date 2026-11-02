@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from time import monotonic
 
 from PySide6.QtCore import QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices
@@ -13,7 +14,6 @@ from nostalgia.api import (
     ServiceSessionStore,
     SocialGateway,
     SocialSnapshot,
-    SocialUpdate,
 )
 from nostalgia.errors import SessionRevoked, SocialError
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
@@ -40,18 +40,14 @@ class SocialSession(SocialState):
         self._multiplayer = multiplayer
         self._sync_bridge = sync_bridge
         self._snapshot: SocialSnapshot | None = None
-        self._last_update: SocialUpdate | None = None
-        self._messages = []
-        self._peer_id = ""
         self._login: GoogleLogin | None = None
         self._note, self._note_pinned = "", False
         self._refresh_pending = False
-        self._watching = False
+        # Không poll định kỳ (hạn mức Worker free): chỉ tải khi đăng nhập, mở trang Bạn bè,
+        # bấm Làm mới, sau thao tác, hoặc focus lại cửa sổ — focus tối đa một lần mỗi 60 s.
+        self._refreshed_at = float("-inf")
         self._arrived.connect(self._apply)
         self.busyChanged.connect(self._flush_refresh)
-        self._timer = QTimer(self)
-        self._timer.setInterval(15000)
-        self._timer.timeout.connect(self.refresh)
         self._login_timer = QTimer(self)
         self._login_timer.setInterval(3000)
         self._login_timer.timeout.connect(self._poll_login)
@@ -95,32 +91,27 @@ class SocialSession(SocialState):
     def shutdown(self) -> None:
         self.next_generation()
         self._refresh_pending = False
-        self._timer.stop()
         self._login_timer.stop()
         if self._gateway:
             self._gateway.access_token = ""
 
     @Slot()
     def refresh(self) -> None:
-        gateway, peer_id = self._gateway, self._peer_id
-        watching, cached_messages = self._watching, self.resolve_cached_messages(peer_id)
+        gateway = self._gateway
         if gateway is None or not gateway.access_token:
             return
         if self.busy:
             self._refresh_pending = True
             return
         self._refresh_pending = False
+        self._refreshed_at = monotonic()
+        self._request("update", gateway.fetch_snapshot)
 
-        def fetch() -> SocialUpdate:
-            snapshot = gateway.fetch_snapshot()
-            messages = (
-                (gateway.fetch_messages(peer_id) if watching else cached_messages)
-                if any(friend.account_id == peer_id for friend in snapshot.friends)
-                else ()
-            )
-            return SocialUpdate(snapshot, messages, peer_id)
-
-        self._request("update", fetch)
+    @Slot()
+    def refreshStale(self) -> None:
+        """Cửa sổ vừa được focus: chỉ tải khi lần tải gần nhất đã quá 60 s."""
+        if monotonic() - self._refreshed_at >= 60:
+            self.refresh()
 
     @Slot()
     def _flush_refresh(self) -> None:
@@ -185,21 +176,14 @@ class SocialSession(SocialState):
             self._gateway.access_token = payload
             self._login_timer.stop()
             self._login, self._note_pinned = None, False
-            self._timer.start()
             self.sessionChanged.emit()
             QTimer.singleShot(30, self.refresh)
-        elif isinstance(payload, SocialUpdate):
-            if payload == self._last_update and payload.peer_id == self._peer_id and not self._note:
+        elif isinstance(payload, SocialSnapshot):
+            if payload == self._snapshot and not self._note:
                 return
-            self._last_update = payload
-            self._snapshot = payload.snapshot
-            self.update_messages(payload)
-            if not any(friend.account_id == self._peer_id for friend in payload.snapshot.friends):
-                self._peer_id, self._messages = "", []
-            # Polling không xoá lỗi thao tác khi người dùng chưa thử lại hoặc đổi bạn.
+            self._snapshot = payload
+            # Tải lại không xoá lỗi thao tác khi người dùng chưa thử lại.
             self._note = self._note if self._note_pinned else ""
-            if payload.peer_id != self._peer_id and self._peer_id:
-                QTimer.singleShot(30, self.refresh)
         elif operation == "join" and isinstance(payload, str):
             self._sync_bridge.join(payload)
             self._note, self._note_pinned = "Đang vào phòng của bạn…", False
@@ -215,10 +199,9 @@ class SocialSession(SocialState):
     def _reset_session(self, note: str) -> None:
         self.next_generation()
         self._refresh_pending, self._note_pinned = False, False
-        self._timer.stop()
         self._login_timer.stop()
-        self._login = self._snapshot = self._last_update = None
-        self._messages, self._peer_id, self._note = [], "", note
+        self._login = self._snapshot = None
+        self._note = note
         if self._gateway:
             self._gateway.access_token = ""
         self._multiplayer.stop()

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import cast
@@ -19,7 +18,6 @@ from nostalgia.payment.catalog import (
 )
 from nostalgia.social.model import (
     Friend,
-    FriendMessage,
     GoogleLogin,
     ServiceAccount,
     SocialSnapshot,
@@ -50,21 +48,13 @@ class ReviewSocial:
                 accent="amethyst",
             ),
             (
-                Friend("draft-misa", "Misa · TEST", True, decor="amethyst"),
-                Friend("draft-huy", "Huy · TEST", True, decor="emerald"),
-                Friend("draft-minh", "Minh · TEST", False, decor="amber"),
+                Friend("draft-misa", "Misa · TEST", decor="amethyst"),
+                Friend("draft-huy", "Huy · TEST", decor="emerald"),
+                Friend("draft-minh", "Minh · TEST", decor="amber"),
             ),
-            (Friend("draft-linh", "Linh · TEST", True, True),),
+            (Friend("draft-linh", "Linh · TEST", True),),
             (),
         )
-        self.messages = [
-            FriendMessage(
-                "draft-hello",
-                "draft-misa",
-                "Đây là chat mô phỏng để thử giao diện.",
-                int(time.time()),
-            )
-        ]
 
     def select_plan(self, plan_id: str) -> None:
         if plan_id not in PLANS:
@@ -92,9 +82,6 @@ class ReviewSocial:
             raise SocialError("Phiên thử đã đóng. Khôi phục từ Công cụ Draft.")
         return self.snapshot
 
-    def fetch_messages(self, account_id: str) -> tuple[FriendMessage, ...]:
-        return tuple(m for m in self.messages if m.sender in (account_id, "draft-reviewer"))
-
     def friend_action(self, action: str, account_id: str) -> None:
         if action == "accept":
             requested = next(
@@ -113,17 +100,6 @@ class ReviewSocial:
             raise SocialError(
                 "Bạn bè trong chế độ TEST là dữ liệu mô phỏng; cần backend để kết bạn thật."
             )
-
-    def send_message(self, account_id: str, text: str, message_id: str) -> None:
-        self.messages.extend(
-            (
-                FriendMessage(message_id, "draft-reviewer", text, int(time.time())),
-                FriendMessage(
-                    message_id + "-echo", account_id, "TEST · Đã nhận: " + text, int(time.time())
-                ),
-            )
-        )
-        self.messages = self.messages[-100:]
 
     def send_invite(
         self, account_id: str, room_code: str, host_ticket: str, world_name: str
@@ -149,7 +125,6 @@ class ReviewSocial:
             return SocialProfile(
                 account_id,
                 self.snapshot.account.name,
-                True,
                 "data:image/png;base64," + self.profile_draft.avatar_png
                 if self.profile_draft.avatar_mode == "skin" and self.profile_draft.avatar_png
                 else "",
@@ -164,7 +139,6 @@ class ReviewSocial:
         return SocialProfile(
             account_id,
             friend.name,
-            friend.online,
             "",
             ProfileDraft(bio="Hồ sơ mô phỏng trong bản Draft.", decor=friend.decor),
         )

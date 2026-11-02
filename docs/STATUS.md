@@ -74,6 +74,16 @@ Cập nhật: 2026-11-02 (nhánh `feat/plus-v2`).
   còn thiếu để dùng thật". Khi relay chưa cấp vé, `RoomSyncCard.qml:39` nói thẳng điều đó.
 - Mô hình đe doạ và 10 luật bảo mật: [MULTIPLAYER_SECURITY.md](MULTIPLAYER_SECURITY.md).
 
+## Bạn bè
+
+- Không chat, không trạng thái online, không poll. Danh sách bạn tải lại khi đăng nhập, mở
+  trang Bạn bè, bấm Làm mới, sau mỗi thao tác, và khi focus lại cửa sổ (tối đa một lần mỗi
+  60 s): `src/nostalgia/ui/social_session.py` (`refresh`, `refreshStale`),
+  `src/nostalgia/ui/window.py` (`activeChanged`). Gác bởi
+  `tests/ui/test_social_refresh_budget.py` (5 phút giả lập = 6 lần tải).
+- Máy chủ cũ còn gửi trường `online` thì launcher bỏ qua (`social/parse.py`). Route chat
+  `/v1/friends/{id}/messages` và presence phía Worker chưa gỡ (mã Worker không ở kho này).
+
 ## Ghi log
 
 - Lỗi làm chết cả một bước mạng phải để lại `warning`: `peer_host.py` (`_serve`),

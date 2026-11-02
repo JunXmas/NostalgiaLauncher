@@ -23,7 +23,6 @@ def parse_profile(document: JsonValue) -> SocialProfile:
     return SocialProfile(
         identifier(text(fields.get("account_id"), 96)),
         text(fields.get("name")),
-        fields.get("online") is True,
         image_url(fields.get("avatar_url")),
         ProfileDraft(
             text(fields.get("bio"), 160) if fields.get("bio") else "",

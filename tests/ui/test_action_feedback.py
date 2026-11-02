@@ -182,10 +182,9 @@ def test_many_friend_requests_are_virtualized_and_last_request_remains_actionabl
 ) -> None:
     _launcher, gateway, view, root_item, social, *_others = social_preview
     login_preview(social_preview)
-    social._timer.stop()
     gateway.snapshot = replace(
         gateway.snapshot,
-        requests=tuple(Friend(f"request-{n}", f"Player {n}", False, True) for n in range(1000)),
+        requests=tuple(Friend(f"request-{n}", f"Player {n}", True) for n in range(1000)),
     )
     social.refresh()
     wait_until(lambda: not social.busy and len(social.requests) == 1000)

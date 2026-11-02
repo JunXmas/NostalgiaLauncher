@@ -15,7 +15,6 @@ from nostalgia.payment.catalog import (
 )
 from nostalgia.social.model import (
     Friend,
-    FriendMessage,
     RoomInvitation,
     ServiceAccount,
     SocialSnapshot,
@@ -74,13 +73,11 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
     )
 
     def parse_friend(document: JsonValue) -> Friend:
+        # Launcher không hiện trạng thái online: máy chủ cũ còn gửi "online" thì bỏ qua.
         fields = as_mapping(document)
-        if not isinstance(fields.get("online"), bool):
-            raise SocialError("Trạng thái bạn bè không hợp lệ.")
         return Friend(
             identifier(text(fields.get("account_id"), 96)),
             text(fields.get("name")),
-            fields.get("online") is True,
             fields.get("incoming") is True,
             badge(fields.get("badge")),
             accent(fields.get("accent")),
@@ -106,21 +103,6 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
         tuple(map(parse_friend, rows(fields.get("requests")))),
         tuple(invitations),
     )
-
-
-def parse_messages(document: JsonValue) -> tuple[FriendMessage, ...]:
-    messages = []
-    for message_document in rows(document, 100):
-        fields = as_mapping(message_document)
-        messages.append(
-            FriendMessage(
-                identifier(text(fields.get("message_id"), 96)),
-                identifier(text(fields.get("sender"), 96)),
-                text(fields.get("body"), 1000),
-                timestamp(fields.get("created_at")),
-            )
-        )
-    return tuple(messages)
 
 
 def accent(document: JsonValue) -> str:

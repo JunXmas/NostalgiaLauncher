@@ -99,8 +99,8 @@ verified by SHA-256 before it is ever handed to Java.
 
 ![Friends](docs/showcase/friends.jpg)
 
-Sign in with Google once and your friends follow you to any computer. See who is online,
-chat, send an invite. **Create a room**, pick the instance, open your world to LAN, and invite
+Sign in with Google once and your friends follow you to any computer. Send an invite or
+share a room code. **Create a room**, pick the instance, open your world to LAN, and invite
 friends straight from the room panel — they get a **Join room** button and their game sees your
 world as if you shared the same Wi-Fi.
 
@@ -142,7 +142,7 @@ default folder for new instances lets you keep the whole library on a second dri
 
 - 🪟 **A new interface**: glass sidebar, Minecraft block icons, slideshow home, smoother lists that only build what is on screen.
 - 🌍 **Vietnamese and English**, switchable on the login screen or in Settings.
-- 🤝 **Google sign-in, friends, chat and invites**, plus rooms that connect **peer to peer** (encrypted WebRTC) instead of through a relay.
+- 🤝 **Google sign-in, friends, invites and room codes**, plus rooms that connect **peer to peer** (encrypted WebRTC) instead of through a relay.
 - 🖥 **Server manager** for Paper / Purpur / Folia / Fabric / Vanilla / Arclight on your own PC.
 - 📦 **Export** any instance as `.mrpack` or ZIP; **permanent delete** with confirmation; old backups still restorable.
 - 🎨 Skin and cape preview with **Save**, and profile **cosmetics**.
@@ -244,7 +244,7 @@ Nostalgia Launcher là trình khởi động Minecraft viết lại từ đầu 
 (08/2026). Giao diện kính mới với icon khối Minecraft thật, trang chủ dạng băng trượt có slide gợi ý
 server/dịch vụ đọc từ `promotions.json` trong kho (vào thẳng server bằng bản chơi đang chọn). Đăng nhập Microsoft / Ely.by / ngoại tuyến; loader Tối ưu / Vanilla / Fabric / Quilt /
 Forge / NeoForge; thư viện modpack, mod, shader, gói tài nguyên từ Modrinth và CurseForge (không
-cần khoá API); xuất bản chơi ra `.mrpack`/ZIP. Đăng nhập Google để kết bạn, chat, mời chơi;
+cần khoá API); xuất bản chơi ra `.mrpack`/ZIP. Đăng nhập Google để kết bạn, mời chơi;
 phòng chơi kết nối **P2P mã hoá** giữa hai máy. Quản lý server ngay trên máy, cosmetic hồ sơ,
 giao diện Tiếng Việt / English, tự cập nhật có kiểm SHA-256. Lõi không phụ thuộc thư viện ngoài;
 hơn 2.000 test; mỗi file ≤ 200 dòng. Chi tiết từng bản ở [`CHANGELOG.md`](CHANGELOG.md).

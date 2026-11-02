@@ -66,6 +66,7 @@ def open_window(
         plus_enabled=plus_enabled,
     )
     view.bind_context_property("socialBridge", social_bridge)
+    view.activeChanged.connect(lambda: view.isActive() and social_bridge.refreshStale())
     accounts = context.contextProperty("accountBridge")
     assert isinstance(accounts, AccountBridge)
     view.bind_context_property(
