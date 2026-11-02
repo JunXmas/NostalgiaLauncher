@@ -58,6 +58,7 @@ WorkspaceDialog {
             spacing: 12
             MotionTabs {
                 width: 290 * GlassTheme.scale
+                evenWidths: true
                 objectName: "playChoiceTabs"
                 namePrefix: "playChoiceTab-"
                 labels: [Legacy.Tr.phrase("Chơi đơn") + "  " + root.worlds.length, Legacy.Tr.phrase("Chơi mạng") + "  " + root.servers.length]

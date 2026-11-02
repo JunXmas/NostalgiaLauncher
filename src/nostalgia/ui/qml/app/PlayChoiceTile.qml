@@ -34,16 +34,35 @@ Item {
             radius: card.radius - 1
             color: GlassTheme.selectedSurface
             clip: true
+            // Không có icon: key art phiên bản phủ kín khung.
             Image {
-                objectName: "playChoiceImage"
                 anchors.fill: parent
-                source: root.imageUrl || root.fallbackUrl
-                // icon.png của game chỉ 64x64: phóng to giữ nét điểm ảnh như trong game.
-                smooth: !root.imageUrl
+                visible: !root.imageUrl
+                source: root.imageUrl ? "" : root.fallbackUrl
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                opacity: root.imageUrl ? 1 : 0.55
-                scale: hover.hovered && !GlassTheme.reducedMotion ? 1.04 : 1
+                opacity: 0.55
+            }
+            // Có icon (vuông 64x64): nền là chính icon giải mã 6x6 rồi phóng to — mờ sẵn mà không
+            // cần shader, chạy cả trên GL phần mềm (cùng mẹo với CardMica).
+            Image {
+                anchors.fill: parent
+                visible: !!root.imageUrl
+                source: root.imageUrl
+                sourceSize: Qt.size(6, 6)
+                smooth: true
+                fillMode: Image.PreserveAspectCrop
+            }
+            Rectangle { anchors.fill: parent; visible: !!root.imageUrl; color: GlassTheme.alpha(GlassTheme.background, 0.35) }
+            Image {
+                objectName: "playChoiceImage"
+                anchors.centerIn: parent
+                height: parent.height - 24; width: height
+                visible: !!root.imageUrl
+                source: root.imageUrl
+                smooth: false  // icon game 64x64: giữ nét điểm ảnh như trong game
+                fillMode: Image.PreserveAspectFit
+                scale: hover.hovered && !GlassTheme.reducedMotion ? 1.05 : 1
                 Behavior on scale { NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
             }
             Row {
@@ -64,7 +83,7 @@ Item {
                 visible: hover.hovered
                 color: GlassTheme.alpha(GlassTheme.background, 0.72)
                 border.color: GlassTheme.alpha(GlassTheme.accent, 0.7)
-                Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; text: "▶"; color: GlassTheme.accent; font.pixelSize: 20 }
+                Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; text: "▶"; color: GlassTheme.accent; font.pixelSize: GlassTheme.fontSection }
             }
         }
         Column {
