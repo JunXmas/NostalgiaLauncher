@@ -4,32 +4,48 @@ import "../" as Legacy
 Column {
     id: root
     spacing: 10
-    readonly property bool lifetime: paymentBridge.details.lifetime === true
+    property var details: paymentBridge.details
+    readonly property bool lifetime: details.lifetime === true
+    function money(amount) { return Number(amount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0) + Legacy.Tr.phrase("đ"); }
     Grid {
         id: grid
         width: parent.width
         columns: width > 420 * GlassTheme.scale ? 2 : 1
         spacing: 10
         Repeater {
-            model: [{lifetime: false, duration: Legacy.Tr.phrase("1 năm"), price: Legacy.Tr.phrase("79.000đ")},
-                    {lifetime: true, duration: Legacy.Tr.phrase("Mua đứt"), price: Legacy.Tr.phrase("199.000đ")}]
+            // Giá in sẵn chỉ để hiện trước khi máy chủ trả lời; ô đang chọn luôn hiện giá máy chủ báo.
+            model: [{lifetime: false, duration: Legacy.Tr.phrase("1 năm"), amount: 79000},
+                    {lifetime: true, duration: Legacy.Tr.phrase("Mua đứt"), amount: 199000}]
             Button {
+                id: plan
+                readonly property bool chosen: root.lifetime === modelData.lifetime
                 objectName: modelData.lifetime ? "plusPlanLifetime" : "plusPlanYearly"
                 width: (grid.width - (grid.columns - 1) * grid.spacing) / grid.columns
                 height: labels.implicitHeight + 28
                 label: ""
-                selected: root.lifetime === modelData.lifetime
+                selected: chosen
                 clickable: !paymentBridge.busy
-                Accessible.name: "Nostalgia+, " + modelData.duration + ", " + modelData.price
+                Accessible.name: "Nostalgia+, " + modelData.duration + ", " + root.money(chosen ? root.details.amount : modelData.amount)
                 onClicked: paymentBridge.selectPlan(modelData.lifetime)
                 Column {
                     id: labels
                     x: 14; y: 14; width: parent.width - 28; spacing: 5
-                    PaymentText { width: parent.width; text: modelData.duration; color: root.lifetime === modelData.lifetime ? GlassTheme.accent : GlassTheme.muted; font.weight: Font.DemiBold }
-                    PaymentText { width: parent.width; text: modelData.price; font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
+                    PaymentText { width: parent.width; text: modelData.duration; color: plan.chosen ? GlassTheme.accent : GlassTheme.muted; font.weight: Font.DemiBold }
+                    PaymentText { objectName: plan.chosen ? "paymentPrice" : ""; width: parent.width; text: root.money(plan.chosen ? root.details.amount : modelData.amount); font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
                 }
             }
         }
+    }
+    PaymentText {
+        objectName: "plusTerms"
+        width: parent.width
+        text: [root.details.upgradeCredit > 0 ? Legacy.Tr.format("Đã khấu trừ %1đ từ gói đã mua còn hiệu lực. Thời hạn gói mới bắt đầu khi được kích hoạt.", [Number(root.details.upgradeCredit).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0)]) : "",
+               root.details.eligible === false ? Legacy.Tr.phrase("Tài khoản của bạn đã có Nostalgia+ dài hơn gói này.") : "",
+               root.lifetime ? Legacy.Tr.phrase("Gắn với tài khoản Google, dùng trong suốt thời gian dịch vụ hoạt động.") : Legacy.Tr.phrase("Quyền lợi gắn tài khoản Google · Không tự động gia hạn."),
+               root.details.amount === 0 && root.details.isUpgrade ? Legacy.Tr.phrase("Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm.") : root.details.available ? Legacy.Tr.phrase("Nostalgia+ được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn.") : Legacy.Tr.phrase("Đăng nhập Google để tạo đơn và nhận Nostalgia+ trên tài khoản của bạn.")]
+              .filter(function (line) { return line.length > 0; }).join("\n")
+        color: GlassTheme.muted
+        font.pixelSize: GlassTheme.fontNote
     }
     Glass {
         objectName: "plusComparison"
@@ -64,7 +80,6 @@ Column {
                     }
                 }
             }
-            PaymentText { width: parent.width; text: Legacy.Tr.phrase("Quyền lợi gắn tài khoản Google · Không tự động gia hạn."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
         }
     }
 }

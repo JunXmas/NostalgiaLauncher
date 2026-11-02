@@ -161,3 +161,25 @@ def test_receipt_has_no_upsell_and_keeps_main_action_visible(
         assert_within(done, preview.dialog.property("contentItem"))
     press(preview.view, done)
     assert not preview.dialog.property("opened")
+
+
+def test_offer_stage_shows_price_once_without_hero_and_fits_the_dialog(
+    payment_preview: PaymentPreview,
+) -> None:
+    """Chọn gói → điều khoản → bảng so sánh → nút thanh toán; không lặp giá, không bị cắt."""
+    preview = payment_preview
+    preview.view.resize(1440, 900)
+    QTest.qWait(120)
+    assert preview.payments.details["stage"] == "offer"
+    assert not preview.root_item.findChild(QObject, "paymentBenefits")
+
+    def texts(node: Any) -> list[str]:
+        own = [node.property("text")] if node.isVisible() and node.property("text") else []
+        return own + [text for child in node.childItems() for text in texts(child)]
+
+    # Giá chỉ hiện một chỗ: ô gói đang chọn (giá máy chủ), không lặp ở thẻ thứ hai.
+    assert texts(find_control(preview.root_item, "paymentScroll")).count("69.000đ") == 1
+    scroll = find_control(preview.root_item, "paymentScroll")
+    assert scroll.property("contentHeight") <= scroll.height() + 0.5
+    for name in ("plusPlanYearly", "plusTerms", "plusComparison"):
+        assert_within(find_control(preview.root_item, name), scroll)

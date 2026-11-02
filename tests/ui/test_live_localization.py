@@ -135,7 +135,7 @@ Item {
         assert probe.message("[ERROR] mod Ω failed: custom raw diagnostic") == (
             "[ERROR] mod Ω failed: custom raw diagnostic"
         )
-        assert probe.format("Tháng sử dụng: %1 · %2", [6, "Pro %1"]) == "6 months of Pro %1"
+        assert probe.format("Nâng loader (%1)", ["%1 0.16"]) == "Upgrade loader (%1 0.16)"
         assert probe.plural(" kết quả", 1) == " result"
         assert probe.plural(" kết quả", 2) == " results"
         failure = ssl.SSLCertVerificationError("raw Windows certificate error")

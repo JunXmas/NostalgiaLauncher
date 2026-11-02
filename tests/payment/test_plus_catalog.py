@@ -33,7 +33,7 @@ def test_old_offer_ids_and_prices_live_only_in_the_catalog() -> None:
 def test_sales_page_lists_only_benefits_that_run_and_no_paid_tier_names() -> None:
     page = "".join(
         (QML / "app" / name).read_text(encoding="utf-8")
-        for name in ("PaymentPlans.qml", "SupportDialog.qml", "PaymentOfferCard.qml")
+        for name in ("PaymentPlans.qml", "SupportDialog.qml")
     )
     for promise in ("sắp có", "Sắp có", "relay", "1 trong 3", "Dự kiến", "Host server ·"):
         assert promise not in page

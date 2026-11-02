@@ -13,7 +13,7 @@ Controls.Popup {
     objectName: "supportDialog"
     parent: Controls.Overlay.overlay
     width: Math.min(plusPaused ? 680 : receiptMode ? 760 : 1000, parent ? parent.width - 48 : 1000)
-    height: Math.min(plusPaused ? 430 : receiptMode ? 660 : details.stage === "pending" ? 840 : 780, parent ? parent.height - 48 : 780)
+    height: Math.min(plusPaused ? 430 : receiptMode ? 660 : details.stage === "pending" ? 840 : ["offer", "unavailable"].indexOf(details.stage) >= 0 ? 560 : 780, parent ? parent.height - 48 : 780)
     x: parent ? (parent.width - width) / 2 : 0
     y: parent ? (parent.height - height) / 2 : 0
     padding: 28
@@ -141,7 +141,7 @@ Controls.Popup {
             Loader {
                 id: cardLoader
                 anchors.fill: parent
-                source: root.details.stage === "pending" ? (root.details.qr ? "PaymentQrCard.qml" : "PaymentLinkCard.qml") : ["paid", "expired", "cancelled", "verifying", "reviewing"].indexOf(root.details.stage) >= 0 ? "PaymentResultCard.qml" : "PaymentOfferCard.qml"
+                source: root.details.stage === "pending" ? (root.details.qr ? "PaymentQrCard.qml" : "PaymentLinkCard.qml") : "PaymentResultCard.qml"
                 onLoaded: {
                     if ("compactLayout" in item)
                         item.compactLayout = Qt.binding(function () {
@@ -290,20 +290,21 @@ Controls.Popup {
                 }
                 Grid {
                     id: grid
-                    visible: !root.plusPaused
+                    visible: !root.plusPaused && ["offer", "unavailable"].indexOf(root.details.stage) < 0
                     width: parent.width
                     columns: !root.receiptMode && width >= 780 * GlassTheme.scale ? 2 : 1
                     columnSpacing: 32
                     rowSpacing: 24
                     Loader {
                         width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
+                        active: grid.visible
                         height: item ? item.implicitHeight : 0
                         sourceComponent: grid.columns === 1 ? checkoutPanel : benefitsPanel
                     }
                     Loader {
                         width: (grid.width - (grid.columns - 1) * grid.columnSpacing) / grid.columns
                         visible: !root.receiptMode
-                        active: visible
+                        active: visible && grid.visible
                         height: visible && item ? item.implicitHeight : 0
                         sourceComponent: grid.columns === 1 ? benefitsPanel : checkoutPanel
                     }
