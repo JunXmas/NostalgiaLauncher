@@ -172,7 +172,7 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         payments.checkPayment()
         wait_until(lambda: social.account["plus"] and repair._gateway is not None)
         assert payments.details["stage"] == "paid"
-        assert social.account["planName"] == "Pro"
+        assert social.account["badge"] == "Người ủng hộ sớm"
         # The account menu also waits for its own update worker before enabling logout.
         wait_until(lambda: not social.busy)
         social.signOut()

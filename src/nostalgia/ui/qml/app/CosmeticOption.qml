@@ -15,7 +15,7 @@ Item {
     height: implicitHeight
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
-    Accessible.name: Legacy.Tr.phrase(cosmetic.name) + (selected ? Legacy.Tr.phrase(", đã chọn") : canEquip ? Legacy.Tr.phrase(", chọn trang trí hồ sơ") : Legacy.Tr.phrase(", xem thử, cần Plus để sử dụng"))
+    Accessible.name: Legacy.Tr.phrase(cosmetic.name) + (selected ? Legacy.Tr.phrase(", đã chọn") : canEquip ? Legacy.Tr.phrase(", chọn trang trí hồ sơ") : Legacy.Tr.phrase(", xem thử, cần Nostalgia+ để sử dụng"))
     Accessible.onPressAction: root.clicked()
     Keys.onReturnPressed: root.clicked()
     Keys.onEnterPressed: root.clicked()
@@ -43,7 +43,7 @@ Item {
     Column {
         x: 12; y: 109 * GlassTheme.scale; width: parent.width - 24; spacing: 5
         PaymentText { width: parent.width; text: Legacy.Tr.phrase(root.cosmetic.name); font.weight: Font.DemiBold; font.pixelSize: GlassTheme.fontSubheading }
-        PaymentText { width: parent.width; text: root.selected ? Legacy.Tr.phrase("✓ Đã chọn") : root.previewed ? Legacy.Tr.phrase("Đang xem thử") : root.canEquip ? Legacy.Tr.message(root.cosmetic.description) : Legacy.Tr.phrase("Xem thử · Plus"); color: root.selected ? root.cosmetic.tint : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        PaymentText { width: parent.width; text: root.selected ? Legacy.Tr.phrase("✓ Đã chọn") : root.previewed ? Legacy.Tr.phrase("Đang xem thử") : root.canEquip ? Legacy.Tr.message(root.cosmetic.description) : Legacy.Tr.phrase("Xem thử · Nostalgia+"); color: root.selected ? root.cosmetic.tint : GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
     }
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
     TapHandler { id: tap; onTapped: { root.forceActiveFocus(); root.clicked(); } }

@@ -65,6 +65,12 @@ from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
 from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
+from nostalgia.payment.catalog import (
+    EARLY_SUPPORTER_BADGE,
+    EARLY_SUPPORTER_PLANS,
+    OFFERS,
+    PLUS_BADGE,
+)
 from nostalgia.payment.gateway import HttpPaymentGateway
 from nostalgia.payment.model import (
     ManualPaymentGateway,
@@ -132,7 +138,11 @@ class Launcher(
 
 
 __all__ = [
+    "EARLY_SUPPORTER_BADGE",
+    "EARLY_SUPPORTER_PLANS",
     "ENGINES",
+    "OFFERS",
+    "PLUS_BADGE",
     "SELF_UPDATING_KINDS",
     "Account",
     "BankAccount",

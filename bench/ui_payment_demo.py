@@ -6,7 +6,7 @@ import base64
 import time
 from dataclasses import replace
 
-from nostalgia.api import PaymentOffer, PaymentOrder
+from nostalgia.api import OFFERS, PaymentOffer, PaymentOrder
 from nostalgia.auth.qr import encode_qr, qr_png_bytes
 
 
@@ -20,15 +20,7 @@ class DemoPaymentGateway:
         self._months = 12
 
     def fetch_offer(self, offer_id: str = "") -> PaymentOffer:
-        plans = {
-            "plus-month-v1": (29_000, 1),
-            "plus-half-year-v1": (69_000, 6),
-            "plus-year-v2": (109_000, 12),
-            "plus-lifetime-v1": (209_000, 0),
-        }
-        offer_id = offer_id or "plus-year-v2"
-        amount, months = plans[offer_id]
-        return PaymentOffer(offer_id, amount, amount, months, months == 0)
+        return next((o for o in OFFERS if o.offer_id == offer_id), OFFERS[0])
 
     def create_order(self, offer: PaymentOffer, request_id: str) -> PaymentOrder:
         self.creations.append(request_id)

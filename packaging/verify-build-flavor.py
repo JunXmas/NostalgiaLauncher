@@ -16,6 +16,9 @@ def main() -> None:
         raise ValueError("Packaged entry does not match the selected flavor")
     if flavor == "release" and review_modules:
         raise ValueError("Production archive contains owner review adapters")
+    review_panels = list(Path("dist/nostalgia-ui").rglob("ReviewPanel.qml"))
+    if bool(review_panels) != (flavor == "review"):
+        raise ValueError("Draft tools QML does not match the selected flavor")
 
 
 if __name__ == "__main__":

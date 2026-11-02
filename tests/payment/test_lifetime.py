@@ -19,9 +19,9 @@ def test_lifetime_confirmation_over_https(
 ) -> None:
     document = offer_document()
     document.update(
-        offer_id="plus-lifetime-v1",
-        amount=209000,
-        regular_amount=209000,
+        offer_id="plus-lifetime-v2",
+        amount=199_000,
+        regular_amount=199_000,
         duration_months=0,
         lifetime=True,
     )

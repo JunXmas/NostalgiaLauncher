@@ -41,7 +41,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         session_store=launcher.make_service_session_store(configuration.account_url)
         if social_gateway
         else None,
-        plus_enabled=bool(configuration.account_url),
+        plus_enabled=configuration.plus_enabled,
     )
     view.bind_context_property(
         "serviceConfiguration", ServiceConfigurationBridge(launcher, parent=view)

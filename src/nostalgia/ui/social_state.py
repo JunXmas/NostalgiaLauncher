@@ -7,7 +7,16 @@ from typing import Any
 
 from PySide6.QtCore import Property, Signal
 
-from nostalgia.api import FriendMessage, GoogleLogin, SocialGateway, SocialSnapshot, SocialUpdate
+from nostalgia.api import (
+    EARLY_SUPPORTER_BADGE,
+    EARLY_SUPPORTER_PLANS,
+    PLUS_BADGE,
+    FriendMessage,
+    GoogleLogin,
+    SocialGateway,
+    SocialSnapshot,
+    SocialUpdate,
+)
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -65,40 +74,17 @@ class SocialState(WorkerBridge):
         if self._snapshot is None:
             return {}
         account = self._snapshot.account
+        plus = self._plus_enabled and (account.plus_lifetime or account.plus_until > time.time())
+        early_supporter = account.plus_plan in EARLY_SUPPORTER_PLANS
         return {
             "accountId": account.account_id,
             "name": account.name,
             "avatarUrl": account.avatar_url,
             "friendCode": account.friend_code,
-            "plus": self._plus_enabled
-            and (account.plus_lifetime or account.plus_until > time.time()),
-            "plusLifetime": self._plus_enabled and account.plus_lifetime,
-            "badge": {
-                "plus-half-year-v1": "Đồng hành",
-                "plus-year-v2": "Tiên phong",
-                "plus-lifetime-v1": "Sáng lập",
-            }.get(account.plus_plan, "")
-            if self._plus_enabled and (account.plus_lifetime or account.plus_until > time.time())
-            else "",
-            "plusUntil": account.plus_until,
-            "planName": {
-                "plus-month-v1": "Plus",
-                "plus-half-year-v1": "Pro",
-                "plus-year-v2": "Max",
-                "plus-lifetime-v1": "Ultimate",
-            }.get(account.plus_plan, "Plus"),
+            "plus": plus,
+            "badge": (EARLY_SUPPORTER_BADGE if early_supporter else PLUS_BADGE) if plus else "",
             "accent": account.accent,
             "showBadge": account.show_badge,
-            "profilePlus": self._plus_enabled
-            and account.plus_plan in ("plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
-            and (account.plus_lifetime or account.plus_until > time.time()),
-            "cosmeticPlus": self._plus_enabled
-            and account.plus_plan
-            in ("plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1")
-            and (account.plus_lifetime or account.plus_until > time.time()),
-            "earlyPreview": self._plus_enabled
-            and account.plus_plan in ("plus-year-v2", "plus-lifetime-v1")
-            and (account.plus_lifetime or account.plus_until > time.time()),
         }
 
     @Property(list, notify=changed)

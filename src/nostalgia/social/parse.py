@@ -6,6 +6,13 @@ import re
 
 from nostalgia.errors import SocialError
 from nostalgia.model.json_value import JsonValue, as_integer, as_mapping, as_string
+from nostalgia.payment.catalog import (
+    EARLY_SUPPORTER_BADGE,
+    LIFETIME_PLANS,
+    OLD_BADGES,
+    PLANS,
+    PLUS_BADGE,
+)
 from nostalgia.social.model import (
     Friend,
     FriendMessage,
@@ -50,15 +57,9 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
         raise SocialError("Mã kết bạn không hợp lệ.")
     plus_lifetime = account_fields.get("plus_lifetime", False)
     plus_plan = as_string(account_fields.get("plus_plan")) or ""
-    if not isinstance(plus_lifetime, bool) or plus_plan not in (
-        "",
-        "plus-month-v1",
-        "plus-half-year-v1",
-        "plus-year-v2",
-        "plus-lifetime-v1",
-    ):
+    if not isinstance(plus_lifetime, bool) or plus_plan not in PLANS | {""}:
         raise SocialError("Quyền lợi dịch vụ không hợp lệ.")
-    if plus_lifetime and plus_plan != "plus-lifetime-v1":
+    if plus_lifetime and plus_plan not in LIFETIME_PLANS:
         raise SocialError("Gói mua đứt không hợp lệ.")
     account = ServiceAccount(
         identifier(text(account_fields.get("account_id"), 96)),
@@ -131,7 +132,9 @@ def accent(document: JsonValue) -> str:
 
 def badge(document: JsonValue) -> str:
     value = as_string(document) or ""
-    if value not in ("", "Đồng hành", "Tiên phong", "Sáng lập"):
+    if value in OLD_BADGES:
+        return EARLY_SUPPORTER_BADGE
+    if value not in ("", PLUS_BADGE, EARLY_SUPPORTER_BADGE):
         raise SocialError("Huy hiệu không hợp lệ.")
     return value
 

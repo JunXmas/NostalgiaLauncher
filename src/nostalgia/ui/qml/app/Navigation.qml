@@ -202,7 +202,7 @@ Glass {
                 anchors.leftMargin: 36
                 width: parent.width - 36
                 height: parent.height
-                Accessible.name: Legacy.Tr.phrase("Premium · Mua gói và nâng cấp")
+                Accessible.name: "Nostalgia+ · " + Legacy.Tr.phrase("Miễn phí và Nostalgia+")
                 quiet: true
                 objectName: "openSupport"
                 HoverHandler { id: donateHover }
@@ -214,13 +214,13 @@ Glass {
                     width: parent.width - 24
                     spacing: 4
                     PaymentText {
-                        width: parent.width; text: "Premium"
+                        width: parent.width; text: "Nostalgia+"
                         horizontalAlignment: Text.AlignHCenter
                         font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
                         maximumLineCount: 1; elide: Text.ElideRight
                     }
                     PaymentText {
-                        width: parent.width; text: Legacy.Tr.phrase("Mua gói & nâng cấp")
+                        width: parent.width; text: Legacy.Tr.phrase("Miễn phí và Nostalgia+")
                         horizontalAlignment: Text.AlignHCenter
                         color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption
                         maximumLineCount: 1; elide: Text.ElideRight
@@ -289,7 +289,7 @@ Glass {
             }
             Text {
                 width: parent.width
-                text: typeof draftReviewController !== "undefined" && draftReviewController !== null && socialBridge.signedIn ? "Local TEST · " + socialBridge.account.planName : socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + socialBridge.account.planName : Legacy.Tr.phrase("Google · Miễn phí")) : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : Legacy.Tr.phrase("Ngoại tuyến")) : Legacy.Tr.phrase("Chưa đăng nhập")
+                text: typeof draftReviewController !== "undefined" && draftReviewController !== null && socialBridge.signedIn ? "Local TEST · " + Legacy.Tr.phrase(socialBridge.account.badge) : socialBridge.signedIn ? (socialBridge.account.plus ? "Google · " + Legacy.Tr.phrase(socialBridge.account.badge) : Legacy.Tr.phrase("Google · Miễn phí")) : bridge.activePlayerName ? (face.active && face.active.accountKind === "microsoft" ? "Microsoft" : face.active && face.active.accountKind === "ely" ? "Ely.by" : Legacy.Tr.phrase("Ngoại tuyến")) : Legacy.Tr.phrase("Chưa đăng nhập")
                 elide: Text.ElideRight
                 color: GlassTheme.muted
                 font.family: GlassTheme.font

@@ -34,8 +34,7 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     login_preview(social_preview)
-    assert not social.account["profilePlus"]
-    assert not social.account["cosmeticPlus"]
+    assert not social.account["plus"] and not social.account["badge"]
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-amber")
     assert choice is not None
@@ -57,11 +56,18 @@ def test_free_preview_never_equips_and_cancel_restores_saved_appearance(
 
 @pytest.mark.parametrize("decor", ["amethyst", "emerald", "amber", "pumpkin-lantern"])
 @pytest.mark.parametrize(
-    "plan_id",
-    ["plus-month-v1", "plus-half-year-v1", "plus-year-v2", "plus-lifetime-v1"],
+    ("plan_id", "badge"),
+    [
+        ("plus-month-v1", "Người ủng hộ sớm"),
+        ("plus-half-year-v1", "Người ủng hộ sớm"),
+        ("plus-year-v2", "Người ủng hộ sớm"),
+        ("plus-lifetime-v1", "Người ủng hộ sớm"),
+        ("plus-year-v3", "Nostalgia+"),
+        ("plus-lifetime-v2", "Nostalgia+"),
+    ],
 )
 def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
-    social_preview: tuple[Any, ...], decor: str, plan_id: str
+    social_preview: tuple[Any, ...], decor: str, plan_id: str, badge: str
 ) -> None:
     _launcher, gateway, view, root_item, social, *_ = social_preview
     gateway.snapshot = replace(
@@ -70,14 +76,12 @@ def test_paid_plan_saves_one_matching_banner_and_frame_and_hides_image_on_close(
             gateway.snapshot.account,
             plus_until=4_000_000_000,
             plus_plan=plan_id,
-            plus_lifetime=plan_id == "plus-lifetime-v1",
+            plus_lifetime="lifetime" in plan_id,
         ),
     )
     login_preview(social_preview)
-    assert social.account["cosmeticPlus"]
-    assert social.account["profilePlus"] == (plan_id != "plus-month-v1")
-    if plan_id == "plus-month-v1":
-        assert social.account["badge"] == "" and not social.account["earlyPreview"]
+    # Một Nostalgia+ cho mọi người mua, kể cả bốn gói cũ: cùng quyền, chỉ khác nhãn.
+    assert social.account["plus"] and social.account["badge"] == badge
     dialog, profiles = open_editor(social_preview)
     choice = find_item(dialog.property("contentItem"), "profileDecor-" + decor)
     assert choice is not None

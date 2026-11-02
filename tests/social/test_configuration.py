@@ -43,3 +43,27 @@ def test_invalid_bundled_origin_disables_service(
     monkeypatch.setattr(configuration, "__file__", str(tmp_path / "configuration.py"))
     (tmp_path / "service-defaults.json").write_text('{"account_url":"' + origin + '"}')
     assert not load_configuration(tmp_path).account_url
+
+
+def test_plus_flag_is_explicit_and_not_inferred_from_account_url(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(configuration, "__file__", str(tmp_path / "configuration.py"))
+    monkeypatch.delenv("NOSTALGIA_PLUS_ENABLED", raising=False)
+    (tmp_path / "service-defaults.json").write_text('{"account_url":"https://bundled.test"}')
+    assert (
+        read_configuration(tmp_path).account_url and not read_configuration(tmp_path).plus_enabled
+    )
+    (tmp_path / "service-defaults.json").write_text(
+        '{"account_url":"https://bundled.test","plus_enabled":true}'
+    )
+    assert read_configuration(tmp_path).plus_enabled
+    # services.json của người dùng không tự bật được bán Plus.
+    (tmp_path / "services.json").write_text('{"plus_enabled":true}')
+    (tmp_path / "service-defaults.json").write_text('{"plus_enabled":"yes"}')
+    assert not read_configuration(tmp_path).plus_enabled
+    monkeypatch.setenv("NOSTALGIA_PLUS_ENABLED", "1")
+    assert read_configuration(tmp_path).plus_enabled
+    (tmp_path / "service-defaults.json").write_text('{"plus_enabled":true}')
+    monkeypatch.setenv("NOSTALGIA_PLUS_ENABLED", "0")
+    assert not read_configuration(tmp_path).plus_enabled

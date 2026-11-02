@@ -83,9 +83,7 @@ def test_release_google_auto_poll_keeps_free_account_free(
         wait_until(lambda: social.signedIn and not social.busy)
         assert len(urls) == 1 and urls[0].startswith("https://accounts.google.com/")
         assert social.account["name"] == "GooglePlayer"
-        assert not social.account["plus"] and not social.account["profilePlus"]
-        assert not social.account["cosmeticPlus"]
-        assert not social.account["earlyPreview"]
+        assert not social.account["plus"] and not social.account["badge"]
         assert view.rootObject().findChild(QObject, "serviceAccountUrl") is None
         payment = view.rootContext().contextProperty("paymentBridge")
         payment.createOrder()

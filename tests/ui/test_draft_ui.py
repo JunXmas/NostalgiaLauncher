@@ -42,18 +42,18 @@ def test_draft_opens_ultimate_tools_and_standard_release_stays_locked(tmp_path: 
         assert view.rootContext().contextProperty("plusFeaturesEnabled") is True
         social = view.rootContext().contextProperty("socialBridge")
         wait_until(lambda: bool(social.property("signedIn")))
-        assert social.property("account")["cosmeticPlus"]
+        assert social.property("account")["plus"]
         press(view, find_control(root_item, "draftToolsOpen"))
         modal = find_control(root_item, "draftToolsDialog")
         wait_until(lambda: bool(modal.property("opened")))
-        press(view, find_item(modal.property("contentItem"), "draftPlan-plus-month-v1"))
-        wait_until(lambda: social.property("account").get("planName") == "Plus")
+        press(view, find_item(modal.property("contentItem"), "draftPlan-plus-year-v3"))
+        wait_until(lambda: social.property("account").get("badge") == "Nostalgia+")
         view.resize(1024, 600)
         QTest.qWait(100)
         assert modal.property("width") < view.width()
         modal.close()
         press(view, find_control(root_item, "draftToolsOpen"))
-        press(view, find_item(modal.property("contentItem"), "draftPlan-plus-lifetime-v1"))
+        press(view, find_item(modal.property("contentItem"), "draftPlan-plus-lifetime-v2"))
         modal.close()
         press(view, find_control(root_item, "openSupport"))
         payments = view.rootContext().contextProperty("paymentBridge")

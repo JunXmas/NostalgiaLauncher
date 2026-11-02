@@ -74,7 +74,6 @@ def parse_offer(document: JsonValue) -> PaymentOffer:
         identifier(quote_id) if quote_id else "",
         eligible is True,
         upgrade is True,
-        as_string(fields.get("current_plan")) or "",
     )
 
 

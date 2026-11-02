@@ -51,7 +51,7 @@ Rectangle {
                 }
                 PaymentText {
                     visible: root.success
-                    text: "Nostalgia Plus · " + (root.details.lifetime ? Legacy.Tr.phrase("Mua đứt") : root.details.months + Legacy.Tr.phrase(" tháng"))
+                    text: "Nostalgia+ · " + (root.details.lifetime ? Legacy.Tr.phrase("Mua đứt") : root.details.months + Legacy.Tr.phrase(" tháng"))
                     font.pixelSize: (root.compactLayout ? 10 : 13) * GlassTheme.scale
                     color: GlassTheme.muted
                 }
@@ -116,7 +116,7 @@ Rectangle {
             objectName: "paymentNewOrder"
             width: parent.width
             visible: !root.success && !root.verifying
-            label: Legacy.Tr.phrase("Xem lại gói Plus")
+            label: Legacy.Tr.phrase("Xem lại Nostalgia+")
             clickable: !paymentBridge.busy
             onClicked: paymentBridge.newOrder()
         }

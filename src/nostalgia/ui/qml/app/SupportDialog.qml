@@ -81,28 +81,28 @@ Controls.Popup {
             }
             PaymentText {
                 width: parent.width
-                text: Legacy.Tr.phrase("Ít lo lỗi mod.\nNhiều thời gian chơi.")
+                text: Legacy.Tr.phrase("Hồ sơ nổi bật.\nỦng hộ Nostalgia.")
                 font.pixelSize: GlassTheme.fontPage
                 font.weight: Font.DemiBold
             }
             PaymentText {
                 width: parent.width
-                text: Legacy.Tr.phrase("Plus giúp bạn tìm nguyên nhân và sửa các lỗi mod được hỗ trợ, đồng thời đóng góp cho Nostalgia phát triển.")
+                text: Legacy.Tr.phrase("Nostalgia+ không khoá tính năng chơi nào. Bạn nhận thứ máy chủ cấp cho tài khoản và giúp Nostalgia tiếp tục phát triển.")
                 color: GlassTheme.muted
             }
             Repeater {
                 model: [
                     {
-                        title: Legacy.Tr.phrase("Hiểu rõ nguyên nhân"),
-                        description: Legacy.Tr.phrase("Phân tích xung đột và phụ thuộc theo bộ mod của bạn.")
+                        title: Legacy.Tr.phrase("Cosmetic hồ sơ cao cấp"),
+                        description: Legacy.Tr.phrase("Dùng mọi khung và nền hồ sơ, đổi màu hồ sơ. Bạn bè thấy trên hồ sơ của bạn.")
                     },
                     {
-                        title: Legacy.Tr.phrase("Sửa với một phương án rõ ràng"),
-                        description: Legacy.Tr.phrase("Xem mod nào sẽ được thêm, đổi hoặc tắt trước khi áp dụng.")
+                        title: Legacy.Tr.phrase("Huy hiệu Nostalgia+"),
+                        description: Legacy.Tr.phrase("Hiện cạnh tên bạn trong danh sách bạn bè và hồ sơ. Ẩn được khi muốn.")
                     },
                     {
-                        title: Legacy.Tr.phrase("Có thể quay lại"),
-                        description: Legacy.Tr.phrase("Sao lưu trước sửa và hoàn tác khi cần.")
+                        title: Legacy.Tr.phrase("Dùng thử bản mới sớm"),
+                        description: Legacy.Tr.phrase("Tải bản launcher thử nghiệm trước khi phát hành chính thức.")
                     }
                 ]
                 Row {
@@ -129,12 +129,6 @@ Controls.Popup {
                         }
                     }
                 }
-            }
-            PaymentText {
-                width: parent.width
-                text: Legacy.Tr.phrase("Dự kiến: Free báo xung đột, Plus hỗ trợ sửa. Không bảo đảm sửa được mọi lỗi.")
-                color: GlassTheme.muted
-                font.pixelSize: GlassTheme.fontNote
             }
         }
     }
@@ -168,14 +162,14 @@ Controls.Popup {
                 spacing: root.compactLayout ? 4 : 6
                 PaymentText {
                     width: parent.width
-                    text: root.plusPaused ? Legacy.Tr.phrase("NOSTALGIA PREMIUM · TẠM KHÓA") : root.receiptMode ? Legacy.Tr.phrase("BIÊN NHẬN PREMIUM") : Legacy.Tr.phrase("MUA GÓI & NÂNG CẤP")
+                    text: root.plusPaused ? Legacy.Tr.phrase("NOSTALGIA+ · TẠM KHÓA") : root.receiptMode ? Legacy.Tr.phrase("BIÊN NHẬN NOSTALGIA+") : Legacy.Tr.phrase("MIỄN PHÍ VÀ NOSTALGIA+")
                     color: GlassTheme.brand
                     font.pixelSize: GlassTheme.fontCaption
                     font.letterSpacing: 1.5
                 }
                 PaymentText {
                     width: parent.width
-                    text: "Nostalgia Premium"
+                    text: "Nostalgia+"
                     font.pixelSize: (root.receiptMode ? (root.compactLayout ? 16 : 20) : (root.compactLayout ? 22 : 29)) * GlassTheme.scale
                     font.weight: Font.DemiBold
                 }
@@ -225,7 +219,7 @@ Controls.Popup {
                 anchors.bottom: parent.bottom
                 width: Math.max(0, parent.width - donation.width - 24)
                 horizontalAlignment: Text.AlignRight
-                text: Legacy.Tr.phrase("Ủng hộ tùy tâm không kích hoạt Plus.")
+                text: Legacy.Tr.phrase("Ủng hộ tùy tâm không kích hoạt Nostalgia+.")
                 visible: !root.receiptMode && ["offer", "unavailable", "pending"].indexOf(root.details.stage) < 0
                 color: GlassTheme.muted
                 font.pixelSize: GlassTheme.fontCaption
@@ -320,9 +314,9 @@ Controls.Popup {
                     visible: root.plusPaused
                     Column {
                         id: pausedText; width: parent.width; spacing: 12
-                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Plus đang tạm khóa"); font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
-                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bản thử này tập trung vào tài khoản Google, bạn bè và chat. Thanh toán và các quyền Plus sẽ mở sau."); color: GlassTheme.muted }
-                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Ủng hộ tùy tâm vẫn có thể sử dụng, nhưng không kích hoạt Plus."); color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Nostalgia+ đang tạm khóa"); font.pixelSize: GlassTheme.fontTitle; font.weight: Font.DemiBold }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bản này không bán Nostalgia+. Mọi tính năng chơi vẫn miễn phí như thường."); color: GlassTheme.muted }
+                        PaymentText { width: parent.width; text: Legacy.Tr.phrase("Ủng hộ tùy tâm vẫn dùng được, nhưng không kích hoạt Nostalgia+."); color: GlassTheme.muted }
                     }
                 }
             }

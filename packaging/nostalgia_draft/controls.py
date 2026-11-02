@@ -30,7 +30,7 @@ class ReviewControls(WorkerBridge):
         self._social_bridge: SocialBridge | None = None
         self._payments: PaymentBridge | None = None
         self._note = (
-            "Ultimate TEST · Quyền đầy đủ. Chat/thanh toán mô phỏng; Google cần backend thật."
+            "Nostalgia+ TEST · Quyền đầy đủ. Chat/thanh toán mô phỏng; Google cần backend thật."
         )
         self._syncing = False
         self._cancel = CancelToken()

@@ -52,7 +52,7 @@ def build_review_view(launcher: Launcher) -> QQuickView:
     application = QApplication.instance()
     if application is not None:
         application.aboutToQuit.connect(controls.cancel)
-    view.setTitle("Nostalgia Launcher · " + __version__ + " · Ultimate TEST")
+    view.setTitle("Nostalgia Launcher · " + __version__ + " · Nostalgia+ TEST")
     return view
 
 
@@ -76,8 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         wait_for_background()
         application.processEvents()
         context = view.rootContext()
-        assert context.contextProperty("socialBridge").property("account")["planName"] == "Ultimate"
-        assert context.contextProperty("serverBridge").property("hasAccess")
+        assert context.contextProperty("socialBridge").property("account")["plus"]
         view.close()
         logging.warning("smoke ok · unlocked draft review")
         return 0

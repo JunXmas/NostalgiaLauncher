@@ -64,6 +64,10 @@ analysis = Analysis(
     noarchive=False,
 )
 
+# Công cụ draft (ReviewPanel.qml) chỉ đi cùng bản review; bản phát hành không mang file này.
+if not REVIEW:
+    analysis.datas = [entry for entry in analysis.datas if Path(entry[0]).name != "ReviewPanel.qml"]
+
 # Loại bỏ bản trùng lặp của freetype.dll trên Windows
 if sys.platform == "win32":
     analysis.binaries = filter_binaries(analysis.binaries)

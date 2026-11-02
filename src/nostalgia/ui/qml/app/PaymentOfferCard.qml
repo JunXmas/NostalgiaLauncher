@@ -17,7 +17,7 @@ Rectangle {
         width: parent.width - 48
         spacing: 18
         PaymentText {
-            text: Legacy.Tr.phrase("GÓI ") + root.details.planName.toUpperCase()
+            text: root.details.lifetime ? Legacy.Tr.phrase("NOSTALGIA+ · MUA ĐỨT") : Legacy.Tr.phrase("NOSTALGIA+ · 1 NĂM")
             color: GlassTheme.brand
             font.pixelSize: GlassTheme.fontCaption
             font.letterSpacing: 1.3
@@ -36,7 +36,7 @@ Rectangle {
             }
             PaymentText {
                 width: parent.width
-                text: root.details.lifetime ? Legacy.Tr.phrase("Mua một lần · Ultimate không hết hạn") : root.details.amount < root.details.regularAmount ? Legacy.Tr.format("Ưu đãi cho %1 tháng", [root.details.months]) : Legacy.Tr.format("Tháng sử dụng: %1 · %2", [root.details.months, root.details.planName])
+                text: root.details.lifetime ? Legacy.Tr.phrase("Mua một lần · Không hết hạn") : root.details.amount < root.details.regularAmount ? Legacy.Tr.format("Ưu đãi cho %1 tháng", [root.details.months]) : Legacy.Tr.format("Dùng %1 tháng", [root.details.months])
                 color: GlassTheme.muted
             }
         }
@@ -55,17 +55,17 @@ Rectangle {
         PaymentText {
             width: parent.width
             visible: root.details.eligible === false
-            text: Legacy.Tr.phrase("Bạn đang có gói cao hơn hoặc Ultimate. Hãy chọn gói phù hợp; launcher không hạ quyền đang dùng.")
+            text: Legacy.Tr.phrase("Tài khoản của bạn đã có Nostalgia+ dài hơn gói này.")
             color: GlassTheme.muted
         }
         PaymentText {
             width: parent.width
-            text: root.details.lifetime ? Legacy.Tr.phrase("Gắn với tài khoản Google. Các cập nhật Plus về sau trong thời gian dịch vụ hoạt động.") : Legacy.Tr.format("Gia hạn %1đ/%2 tháng. Không tự động gia hạn.", [Number(root.details.regularAmount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0), root.details.months])
+            text: root.details.lifetime ? Legacy.Tr.phrase("Gắn với tài khoản Google, dùng trong suốt thời gian dịch vụ hoạt động.") : Legacy.Tr.format("Gia hạn %1đ/%2 tháng. Không tự động gia hạn.", [Number(root.details.regularAmount).toLocaleString(Qt.locale(Legacy.Tr.localeName), "f", 0), root.details.months])
             color: GlassTheme.muted
         }
         PaymentText {
             width: parent.width
-            text: root.details.amount === 0 && root.details.isUpgrade ? Legacy.Tr.phrase("Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm.") : root.details.available ? Legacy.Tr.phrase("Quyền Plus được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn.") : Legacy.Tr.phrase("Đăng nhập Google để tạo đơn và nhận quyền Plus trên tài khoản của bạn.")
+            text: root.details.amount === 0 && root.details.isUpgrade ? Legacy.Tr.phrase("Khoản khấu trừ đủ cho gói mới. Xác nhận để nâng cấp, không cần chuyển khoản thêm.") : root.details.available ? Legacy.Tr.phrase("Nostalgia+ được kích hoạt sau khi người quản trị đối chiếu tiền vào Vietcombank và duyệt đơn.") : Legacy.Tr.phrase("Đăng nhập Google để tạo đơn và nhận Nostalgia+ trên tài khoản của bạn.")
             color: GlassTheme.muted
             font.pixelSize: GlassTheme.fontNote
         }

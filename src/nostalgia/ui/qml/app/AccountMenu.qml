@@ -19,7 +19,7 @@ Controls.Popup {
     contentItem: Column {
         id: menu; spacing: 6
         PaymentText { width: parent.width; text: socialBridge.signedIn ? socialBridge.account.name : bridge.activePlayerName || Legacy.Tr.phrase("Khách"); font.weight: Font.DemiBold }
-        PaymentText { width: parent.width; text: socialBridge.signedIn ? "Google · " + (socialBridge.account.plus ? socialBridge.account.planName : Legacy.Tr.phrase("Miễn phí")) : Legacy.Tr.phrase("Tài khoản Minecraft"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+        PaymentText { width: parent.width; text: socialBridge.signedIn ? "Google · " + (socialBridge.account.plus ? Legacy.Tr.phrase(socialBridge.account.badge) : Legacy.Tr.phrase("Miễn phí")) : Legacy.Tr.phrase("Tài khoản Minecraft"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
         Rectangle { width: parent.width; height: 1; color: GlassTheme.stroke }
         Button { objectName: "openMyProfile"; width: parent.width; visible: socialBridge.signedIn; label: Legacy.Tr.phrase("Hồ sơ của tôi"); quiet: true; onClicked: { root.close(); socialProfileDialog.showFor(socialBridge.account.accountId); } }
         Button { objectName: "openCosmeticLibrary"; width: parent.width; label: Legacy.Tr.phrase("Thư viện cosmetic"); quiet: true; onClicked: { root.close(); root.navigate(7); } }

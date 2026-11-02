@@ -19,11 +19,6 @@ class PaymentOffer:
     quote_id: str = ""
     eligible: bool = True
     upgrade: bool = False
-    current_plan: str = ""
-
-    @property
-    def plan_name(self) -> str:
-        return {1: "Plus", 6: "Pro", 12: "Max", 0: "Ultimate"}.get(self.duration_months, "Plus")
 
 
 @dataclass(frozen=True, slots=True)

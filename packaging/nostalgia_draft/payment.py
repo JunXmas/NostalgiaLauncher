@@ -18,9 +18,9 @@ class ReviewPayment:
         self.paid = False
 
     def fetch_offer(self, offer_id: str = "") -> PaymentOffer:
-        for months in (1, 6, 12, 0):
-            offer = resolve_preview_offer(months)
-            if offer and (not offer_id or offer.offer_id == offer_id):
+        for lifetime in (False, True):
+            offer = resolve_preview_offer(lifetime)
+            if not offer_id or offer.offer_id == offer_id:
                 return offer
         raise ValueError("Gói TEST không hợp lệ.")
 
@@ -39,6 +39,8 @@ class ReviewPayment:
             holder="Nostalgia Draft",
             transfer_memo="TEST, không phải mã chuyển khoản",
             qr_image="data:image/png;base64," + base64.b64encode(output.getvalue()).decode(),
+            lifetime=offer.lifetime,
+            payment_offer=offer,
         )
         return self.order
 
@@ -50,8 +52,6 @@ class ReviewPayment:
             return replace(
                 order,
                 status="paid",
-                active_until=int(time.time())
-                + max(1, self.fetch_offer(order.offer_id).duration_months) * 31 * 86400,
-                lifetime=order.offer_id == "plus-lifetime-v1",
+                active_until=0 if order.lifetime else int(time.time()) + 365 * 86400,
             )
         return order

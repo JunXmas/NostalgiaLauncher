@@ -4,7 +4,7 @@ import "CosmeticCatalog.js" as Cosmetics
 Item {
     id: root; objectName: "cosmeticLibrary"
     property string previewDecor: "none"
-    readonly property bool canEquip: socialBridge.signedIn && socialBridge.account.cosmeticPlus === true
+    readonly property bool canEquip: socialBridge.signedIn && socialBridge.account.plus === true
     readonly property var ownedCosmetics: cosmeticBridge.details.ownedCosmetics || []
     function load() { if (socialBridge.signedIn) cosmeticBridge.refresh(); }
     Component.onCompleted: root.load()

@@ -88,7 +88,7 @@ def test_link_waits_for_verified_snapshot_and_free_stays_free(
     social._poll_login()
     wait_until(lambda: social.signedIn and not social.busy)
     assert not root_item.property("loginVisible")
-    assert not social.account["plus"] and not social.account["cosmeticPlus"]
+    assert not social.account["plus"] and not social.account["badge"]
     assert view.rootContext().contextProperty("bridge").activePlayerName == "JunOnline"
 
 

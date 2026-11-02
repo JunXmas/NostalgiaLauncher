@@ -4,8 +4,8 @@ import "../" as Legacy
 Column {
     width: parent.width
     spacing: 10
-    visible: socialBridge.signedIn && !!socialBridge.account.profilePlus
-    PaymentText { width: parent.width; text: Legacy.Tr.phrase("HỒ SƠ PLUS"); color: GlassTheme.accent; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
+    visible: socialBridge.signedIn && !!socialBridge.account.plus
+    PaymentText { width: parent.width; text: Legacy.Tr.phrase("HỒ SƠ NOSTALGIA+"); color: GlassTheme.accent; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
     Flow {
         width: parent.width; spacing: 8
         Repeater {
@@ -16,6 +16,6 @@ Column {
     Flow {
         width: parent.width; spacing: 8
         Button { objectName: "profileBadgeToggle"; label: socialBridge.account.showBadge ? Legacy.Tr.phrase("Ẩn huy hiệu") : Legacy.Tr.phrase("Hiện huy hiệu"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.setProfile(socialBridge.account.accent || "amethyst",!socialBridge.account.showBadge) }
-        Button { objectName: "earlyPreviewDownload"; visible: !!socialBridge.account.earlyPreview; label: Legacy.Tr.phrase("Tải preview sớm  ↗"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.downloadEarlyPreview() }
+        Button { objectName: "earlyPreviewDownload";  label: Legacy.Tr.phrase("Tải preview sớm  ↗"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.downloadEarlyPreview() }
     }
 }

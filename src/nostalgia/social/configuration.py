@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from nostalgia.errors import NostalgiaError, SocialError
-from nostalgia.model.json_value import as_mapping, as_string
+from nostalgia.model.json_value import as_boolean, as_mapping, as_string
 from nostalgia.storage.files import atomic_write_json, read_json
 
 
@@ -17,6 +17,9 @@ from nostalgia.storage.files import atomic_write_json, read_json
 class ServiceConfiguration:
     account_url: str = ""
     room_sync_url: str = ""
+    # Cờ bán Nostalgia+, tách khỏi account_url: có dịch vụ tài khoản (bạn bè, hồ sơ) không có
+    # nghĩa là đang bán. Chỉ nằm trong file cài sẵn hoặc biến môi trường, không ở services.json.
+    plus_enabled: bool = False
 
 
 def verify_service_url(value: str) -> str:
@@ -70,6 +73,10 @@ def read_configuration(config_dir: Path) -> ServiceConfiguration:
                 or "",
             )
         ),
+        os.environ.get(
+            "NOSTALGIA_PLUS_ENABLED", "1" if as_boolean(defaults.get("plus_enabled")) else "0"
+        )
+        == "1",
     )
 
 

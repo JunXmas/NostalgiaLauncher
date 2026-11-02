@@ -1,10 +1,12 @@
 """Giá hiển thị trước xác nhận API; không cấp quyền hoặc cho tạo đơn chưa nạp offer."""
 
+import logging
 import time
 from datetime import UTC, datetime
 from typing import Any
 
 from nostalgia.api import (
+    OFFERS,
     ManualPaymentGateway,
     PaymentCheckout,
     PaymentGateway,
@@ -13,22 +15,27 @@ from nostalgia.api import (
 )
 from nostalgia.errors import PaymentError
 
+logger = logging.getLogger(__name__)
 
-def resolve_preview_offer(months: int) -> PaymentOffer | None:
-    prices = {
-        1: ("plus-month-v1", 29000),
-        6: ("plus-half-year-v1", 69000),
-        12: ("plus-year-v2", 109000),
-        0: ("plus-lifetime-v1", 209000),
-    }
-    if months not in prices:
-        return None
-    offer_id, amount = prices[months]
-    return PaymentOffer(offer_id, amount, amount, months, months == 0)
+
+def resolve_preview_offer(lifetime: bool) -> PaymentOffer:
+    return next(offer for offer in OFFERS if offer.lifetime is lifetime)
+
+
+def fetch_offer(gateway: PaymentGateway, selected_offer_id: str) -> PaymentOffer:
+    """Máy chủ chưa biết gói đã chọn (Worker còn bảng giá cũ) thì dùng gói mặc định của nó."""
+    if selected_offer_id:
+        try:
+            return gateway.fetch_offer(selected_offer_id)
+        except PaymentError as error:
+            logger.warning(
+                "Máy chủ không nhận gói %s, dùng gói mặc định: %s", selected_offer_id, error
+            )
+    return gateway.fetch_offer()
 
 
 def fetch_checkout(gateway: PaymentGateway, selected_offer_id: str) -> PaymentCheckout:
-    offer = gateway.fetch_offer(selected_offer_id) if selected_offer_id else gateway.fetch_offer()
+    offer = fetch_offer(gateway, selected_offer_id)
     order = gateway.fetch_current_order(offer)
     if order is not None and order.offer_id != offer.offer_id:
         offer = gateway.fetch_offer(order.offer_id)
@@ -70,7 +77,6 @@ def describe_checkout(
         "isUpgrade": offer.upgrade,
         "eligible": offer.eligible,
         "months": offer.duration_months,
-        "planName": offer.plan_name,
         "lifetime": offer.lifetime,
         "error": error,
         "orderId": order.order_id if order else "",

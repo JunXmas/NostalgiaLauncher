@@ -30,6 +30,7 @@ def main() -> None:
         {
             "account_url": configuration.account_url,
             "room_sync_url": configuration.room_sync_url,
+            "plus_enabled": defaults.get("plus_enabled") is True,
         },
     )
     print(

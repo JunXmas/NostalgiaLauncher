@@ -119,12 +119,7 @@ def test_insecure_service_config_is_rejected(http_client: HttpClient, url: str) 
 
 @pytest.mark.parametrize(
     ("months", "amount", "offer_id"),
-    [
-        (1, 29000, "plus-month-v1"),
-        (6, 69000, "plus-half-year-v1"),
-        (12, 109000, "plus-year-v2"),
-        (0, 209000, "plus-lifetime-v1"),
-    ],
+    [(12, 79_000, "plus-year-v3"), (0, 199_000, "plus-lifetime-v2")],
 )
 def test_new_plans_are_confirmed_by_https_server(
     server: LocalHttpsServer,

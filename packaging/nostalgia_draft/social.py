@@ -10,6 +10,13 @@ from typing import cast
 
 from nostalgia.errors import NostalgiaError, SocialError
 from nostalgia.model.json_value import JsonValue
+from nostalgia.payment.catalog import (
+    EARLY_SUPPORTER_BADGE,
+    LIFETIME,
+    LIFETIME_PLANS,
+    PLANS,
+    PLUS_BADGE,
+)
 from nostalgia.social.model import (
     Friend,
     FriendMessage,
@@ -39,7 +46,7 @@ class ReviewSocial:
                 "DRAFT00000000000",
                 4_000_000_000,
                 plus_lifetime=True,
-                plus_plan="plus-lifetime-v1",
+                plus_plan=LIFETIME.offer_id,
                 accent="amethyst",
             ),
             (
@@ -60,19 +67,14 @@ class ReviewSocial:
         ]
 
     def select_plan(self, plan_id: str) -> None:
-        if plan_id not in (
-            "plus-month-v1",
-            "plus-half-year-v1",
-            "plus-year-v2",
-            "plus-lifetime-v1",
-        ):
+        if plan_id not in PLANS:
             raise SocialError("Gói thử không hợp lệ.")
         self.snapshot = replace(
             self.snapshot,
             account=replace(
                 self.snapshot.account,
                 plus_plan=plan_id,
-                plus_lifetime=plan_id == "plus-lifetime-v1",
+                plus_lifetime=plan_id in LIFETIME_PLANS,
             ),
         )
 
@@ -137,8 +139,6 @@ class ReviewSocial:
         del invite_id
 
     def update_profile(self, accent: str, show_badge: bool) -> None:
-        if self.snapshot.account.plus_plan == "plus-month-v1":
-            raise SocialError("Huy hiệu/màu hồ sơ cần Pro trở lên.")
         self.snapshot = replace(
             self.snapshot,
             account=replace(self.snapshot.account, accent=accent, show_badge=show_badge),
@@ -154,7 +154,9 @@ class ReviewSocial:
                 if self.profile_draft.avatar_mode == "skin" and self.profile_draft.avatar_png
                 else "",
                 self.profile_draft,
-                "Sáng lập" if self.snapshot.account.plus_plan == "plus-lifetime-v1" else "",
+                PLUS_BADGE
+                if self.snapshot.account.plus_plan in (LIFETIME.offer_id, "plus-year-v3")
+                else EARLY_SUPPORTER_BADGE,
             )
         friend = next((f for f in self.snapshot.friends if f.account_id == account_id), None)
         if not friend:
@@ -176,8 +178,6 @@ class ReviewSocial:
 
     def fetch_preview_url(self, target: str) -> str:
         del target
-        if self.snapshot.account.plus_plan not in ("plus-year-v2", "plus-lifetime-v1"):
-            raise SocialError("Preview sớm cần Max hoặc Ultimate.")
         return "https://github.com/JunXmas/NostalgiaLauncher/releases"
 
     def logout(self) -> None:

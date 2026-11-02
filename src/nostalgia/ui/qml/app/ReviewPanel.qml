@@ -7,7 +7,7 @@ Item {
     Button {
         objectName: "draftToolsOpen"
         anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
-        height: 26; label: Legacy.Tr.phrase("Ultimate TEST · Công cụ Draft")
+        height: 26; label: Legacy.Tr.phrase("Nostalgia+ TEST · Công cụ Draft")
         onClicked: tools.open()
     }
     Controls.Popup {
@@ -28,11 +28,11 @@ Item {
                 Column {
                     id: form; width: parent.width - 8; spacing: 16
                     PaymentText { width: parent.width; text: Legacy.Tr.phrase("Bản thử nội bộ"); font.pixelSize: GlassTheme.fontDialog }
-                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mặc định mở Ultimate. Server, cosmetic và sửa mod chạy trên dữ liệu local. Bạn bè/chat và thanh toán là mô phỏng. Google và đồng bộ giữa hai máy cần backend thật."); color: GlassTheme.muted }
+                    PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mặc định mở Nostalgia+ mua đứt. Cosmetic và sửa mod chạy trên dữ liệu local. Bạn bè/chat và thanh toán là mô phỏng. Google và đồng bộ giữa hai máy cần backend thật."); color: GlassTheme.muted }
                     Flow {
                         width: parent.width; spacing: 8
                         Repeater {
-                            model: [{name: "Plus", id: "plus-month-v1"}, {name: "Pro", id: "plus-half-year-v1"}, {name: "Max", id: "plus-year-v2"}, {name: "Ultimate", id: "plus-lifetime-v1"}]
+                            model: [{name: Legacy.Tr.phrase("1 năm"), id: "plus-year-v3"}, {name: Legacy.Tr.phrase("Mua đứt"), id: "plus-lifetime-v2"}]
                             Button { objectName: "draftPlan-" + modelData.id; label: modelData.name; clickable: !draftReviewController.busy; onClicked: draftReviewController.selectPlan(modelData.id) }
                         }
                     }

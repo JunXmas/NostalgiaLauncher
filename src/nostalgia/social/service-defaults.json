@@ -1,4 +1,5 @@
 {
   "account_url": "https://nostalgia-payment-admin.junbob.workers.dev",
-  "room_sync_url": "https://nostalgia-multiplayer-relay.junbob.workers.dev"
+  "room_sync_url": "https://nostalgia-multiplayer-relay.junbob.workers.dev",
+  "plus_enabled": true
 }

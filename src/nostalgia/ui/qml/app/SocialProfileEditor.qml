@@ -27,7 +27,7 @@ Column {
     CosmeticPicker {
         width: parent.width; selectedDecor: root.decor; previewDecor: root.previewDecor
         avatarSource: root.profile.avatar_url || ""; playerName: root.profile.name || ""
-        canEquip: socialBridge.account.cosmeticPlus === true
+        canEquip: socialBridge.account.plus === true
         ownedCosmetics: root.details.ownedCosmetics || []
         onChosen: function(value) {
             root.previewDecor = value;

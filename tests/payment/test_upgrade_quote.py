@@ -22,7 +22,6 @@ def quoted_offer() -> dict[str, JsonValue]:
         "upgrade_credit": 29_000,
         "quote_id": "quote_123",
         "eligible": True,
-        "current_plan": "plus-month-v1",
     }
 
 

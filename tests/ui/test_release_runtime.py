@@ -19,6 +19,8 @@ def test_release_pages_offline_and_invalid_configuration(
 ) -> None:
     monkeypatch.setenv("NOSTALGIA_ACCOUNT_URL", "")
     monkeypatch.setenv("NOSTALGIA_ROOM_SYNC_URL", "")
+    # Cờ bán Plus là cấu hình riêng, không suy từ việc có địa chỉ dịch vụ tài khoản.
+    monkeypatch.setenv("NOSTALGIA_PLUS_ENABLED", "1")
     launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
     launcher.save_settings(
         replace(launcher.load_settings(), auto_update_check=False, discord_presence=False)
@@ -40,7 +42,7 @@ def test_release_pages_offline_and_invalid_configuration(
         assert root_item.findChild(QObject, "serviceAccountUrl") is None
         assert root_item.findChild(QObject, "saveServiceSettings") is None
         assert root_item.findChild(QObject, "serviceStatus") is not None
-        assert view.rootContext().contextProperty("plusFeaturesEnabled") is False
+        assert view.rootContext().contextProperty("plusFeaturesEnabled") is True
         assert view.rootContext().contextProperty("paymentBridge").details["stage"] == "unavailable"
         configuration = view.rootContext().contextProperty("serviceConfiguration")
         configuration.save("http://bad", "")

@@ -75,7 +75,7 @@ class CosmeticBridge(WorkerBridge):
             or social_profile.account_id != account.get("accountId")
             or (
                 decor != "none"
-                and not account.get("cosmeticPlus")
+                and not account.get("plus")
                 and decor not in social_profile.owned_cosmetics
             )
             or not can_equip_cosmetic(self._collection, decor, social_profile.details.decor)

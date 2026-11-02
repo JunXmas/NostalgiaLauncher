@@ -42,13 +42,13 @@ def test_draft_profile_persists_one_cosmetic_without_touching_real_accounts(tmp_
 
 def test_payment_stays_pending_without_explicit_test_action_and_has_no_bank() -> None:
     gateway = ReviewPayment()
-    order = gateway.create_order(gateway.fetch_offer("plus-month-v1"), "request")
+    order = gateway.create_order(gateway.fetch_offer("plus-year-v3"), "request")
     assert order.qr_image.startswith("data:image/png;base64,")
     assert not order.account_number and not order.checkout_url
     assert gateway.fetch_order(order).status == "pending"
     gateway.paid = True
     assert gateway.fetch_order(order).status == "paid"
-    gateway.create_order(gateway.fetch_offer("plus-lifetime-v1"), "new-request")
+    gateway.create_order(gateway.fetch_offer("plus-lifetime-v2"), "new-request")
     assert not gateway.paid
 
 

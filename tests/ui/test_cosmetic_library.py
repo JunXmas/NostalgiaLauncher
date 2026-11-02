@@ -137,7 +137,7 @@ def test_free_player_can_use_only_the_cosmetic_gifted_by_backend(
     root_item.setProperty("currentIndex", 7)
     cosmetics = view.rootContext().contextProperty("cosmeticBridge")
     wait_until(lambda: cosmetics.property("details")["loaded"] and not cosmetics.busy)
-    assert not social.property("account")["cosmeticPlus"]
+    assert not social.property("account")["plus"]
     page = find_control(root_item, "cosmeticLibrary")
     press(view, find_item(page, "profileDecor-" + decor))
     assert find_control(root_item, "cosmeticEquip").property("clickable")

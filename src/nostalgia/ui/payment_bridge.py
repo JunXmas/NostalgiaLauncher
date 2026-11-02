@@ -10,7 +10,7 @@ from typing import Any
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
-from nostalgia.api import PaymentCheckout, PaymentGateway, PaymentOffer, PaymentOrder
+from nostalgia.api import PaymentCheckout, PaymentGateway, PaymentOrder
 from nostalgia.errors import NostalgiaError
 from nostalgia.ui.payment_plan import (
     describe_checkout,
@@ -36,7 +36,7 @@ class PaymentBridge(WorkerBridge):
         super().__init__(parent)
         self._gateway = gateway
         self._demonstration = demonstration
-        self._offer = PaymentOffer("", 109_000, 109_000)
+        self._offer = resolve_preview_offer(lifetime=False)
         self._selected_offer_id = ""
         self._offer_loaded = False
         self._order: PaymentOrder | None = None
@@ -74,10 +74,10 @@ class PaymentBridge(WorkerBridge):
         if self._watching:
             self.loadOffer()
 
-    @Slot(int)
-    def selectPlan(self, months: int) -> None:
-        offer = resolve_preview_offer(months)
-        if offer is None or self.busy or self._order is not None:
+    @Slot(bool)
+    def selectPlan(self, lifetime: bool) -> None:
+        offer = resolve_preview_offer(lifetime)
+        if self.busy or self._order is not None:
             return
         self._selected_offer_id = offer.offer_id
         self._offer = offer
