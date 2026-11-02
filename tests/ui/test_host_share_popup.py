@@ -14,7 +14,7 @@ from test_main_window import find_control, press
 
 
 @pytest.mark.usefixtures("qt_app")
-def test_paid_host_selects_mods_in_bounded_glass_popup(
+def test_free_host_selects_mods_in_bounded_glass_popup(
     host_popup: tuple[Any, ...],
     tmp_path: Path,
 ) -> None:
@@ -25,15 +25,14 @@ def test_paid_host_selects_mods_in_bounded_glass_popup(
         (game_dir / "mods" / file_name).write_bytes(b"fixture")
     social = view.rootContext().contextProperty("socialBridge")
     social._snapshot = replace(
-        social._snapshot, account=replace(social._snapshot.account, plus_lifetime=True)
+        social._snapshot, account=replace(social._snapshot.account, plus_lifetime=False)
     )
-    social._plus_enabled = True
+    social._plus_enabled = False
     social.changed.emit()
     sync_bridge = view.rootContext().contextProperty("roomSyncBridge")
     sync_bridge.set_gateway(object())
-    host._plus_enabled = True
     host.changed.emit()
-    view.rootContext().setContextProperty("plusFeaturesEnabled", True)
+    view.rootContext().setContextProperty("plusFeaturesEnabled", False)
     host.openSetup()
     popup = find_control(root_item, "hostDialog")
     wait_until(lambda: popup.property("opened") and host._mod_selection.ready)

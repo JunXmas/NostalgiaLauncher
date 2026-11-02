@@ -91,7 +91,7 @@ Controls.Popup {
                     }
                 }
                 Component { id: recommendationCard; ModRepairCard { width: repairRow.width; modelData: repairRow.modelData.recommendation; onReplaceRequested: function(groupId) { modRepairBridge.replaceMod(groupId); } } }
-                Component { id: sectionHeading; PaymentText { width: repairRow.width; text: Legacy.Tr.phrase("PHƯƠNG ÁN PLUS"); font.weight: Font.DemiBold } }
+                Component { id: sectionHeading; PaymentText { width: repairRow.width; text: Legacy.Tr.phrase("PHƯƠNG ÁN SỬA MOD"); font.weight: Font.DemiBold } }
                 Component { id: unresolvedText; PaymentText { width: repairRow.width; text: Legacy.Tr.phrase("Chưa giải được: ") + Legacy.Tr.message(repairRow.modelData.unresolved); color: GlassTheme.danger } }
             }
             footer: PaymentText { width: results.width - 8; visible: root.details.canApply; text: Legacy.Tr.phrase("Sao lưu bộ mod, tải và kiểm hash, quét lại trước khi áp dụng. Thế giới chơi được giữ nguyên."); color: GlassTheme.muted }
@@ -102,11 +102,10 @@ Controls.Popup {
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             spacing: 8
             Button { objectName: "modRescan"; label: Legacy.Tr.phrase("Đọc lại log"); clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.scan(root.instanceId) }
-            Button { objectName: "modPlan"; label: Legacy.Tr.phrase("Tìm bản phù hợp · Plus"); visible: plusFeaturesEnabled && root.details.canPlan; clickable: !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
-            // Bản cũ ẩn nút im lặng khi không có Plus: người dùng tưởng tính năng hỏng. Nói rõ.
+            Button { objectName: "modPlan"; label: Legacy.Tr.phrase("Tìm bản phù hợp"); visible: root.details.canPlan; clickable: !modRepairBridge.busy; onClicked: modRepairBridge.plan() }
             PaymentText { objectName: "modPlanUnavailable"; visible: !root.details.canPlan && root.details.scanned && !(root.details.localFixes || []).length && (root.details.findings || []).length > 0
                 width: parent.width; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote
-                text: Legacy.Tr.phrase("Chưa có cách sửa tự động cho lỗi này. Tìm bản thay thế cần đăng nhập Nostalgia+.") }
+                text: Legacy.Tr.phrase("Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.") }
             Button { objectName: "modApply"; label: Legacy.Tr.phrase("Áp dụng tất cả & sao lưu"); primary: true; visible: root.details.canApply; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: confirmDialog.ask(Legacy.Tr.phrase("Áp phương án sửa mod?"),Legacy.Tr.phrase("Các mod trong phương án sẽ được thêm/tắt. Giữ bản trước sửa để hoàn tác."),function(){modRepairBridge.apply();}) }
             Button { objectName: "modUndo"; label: Legacy.Tr.phrase("Hoàn tác"); visible: root.details.canUndo; clickable: !modRepairBridge.busy && !bridge.gameRunning; onClicked: modRepairBridge.undo() }
         }

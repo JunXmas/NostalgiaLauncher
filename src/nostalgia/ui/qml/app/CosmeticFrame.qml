@@ -5,11 +5,13 @@ Image {
     id: root
     property string decor: "none"
     readonly property bool decorated: !!Cosmetics.find(decor, cosmeticBridge.sets)
-    readonly property bool ready: status === Image.Ready
+    readonly property bool vector: Cosmetics.vector(decor, cosmeticBridge.sets)
+    readonly property bool ready: vector ? vectorArt.available : status === Image.Ready
     source: visible && decorated ? Cosmetics.asset(decor, "frame", cosmeticBridge.sets) : ""
     sourceSize: Qt.size(Math.min(384, Math.max(40, Math.ceil(width * Screen.devicePixelRatio))), Math.min(384, Math.max(40, Math.ceil(height * Screen.devicePixelRatio))))
     asynchronous: true
     cache: true
     smooth: true
     fillMode: Image.PreserveAspectFit
+    VectorCosmetic { id: vectorArt; anchors.fill: parent; visible: root.vector; decor: root.decor; kind: "frame" }
 }

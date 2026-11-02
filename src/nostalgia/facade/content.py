@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
@@ -15,32 +14,19 @@ from nostalgia.content.model import (
     ContentSource,
     InstalledContent,
     Project,
-    ProjectVersion,
     SearchPage,
     SortOrder,
 )
+from nostalgia.content.target import ContentTarget
 from nostalgia.content.updates import ContentUpdate, find_updates, identify_by_hash
-from nostalgia.facade.content_detail import ContentDetailOperations
-from nostalgia.instance.store import game_dir_of, load_instance
-from nostalgia.modloader.model import COMPATIBLE_LOADERS, LoaderKind, detect_loader_kind
-from nostalgia.net.http import HttpClient
+from nostalgia.facade.content_version import ContentVersionOperations
+from nostalgia.modloader.model import COMPATIBLE_LOADERS
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
-from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.settings.store import Settings, load_settings, save_settings
 
 
-@dataclass(frozen=True, slots=True)
-class ContentTarget:
-    """Bản chơi nhìn từ phía nội dung: cài vào đâu, và cái gì mới tương thích."""
-
-    instance_id: str
-    game_dir: Path
-    game_version: str
-    loader_kind: LoaderKind
-
-
-class ContentOperations(ContentDetailOperations):
+class ContentOperations(ContentVersionOperations):
     __slots__ = ()
 
     # ----- cấu hình -----
@@ -52,22 +38,6 @@ class ContentOperations(ContentDetailOperations):
         save_settings(self.paths.config_dir, settings)
 
     # ----- bản chơi đích -----
-
-    def describe_content_target(self, instance_id: str) -> ContentTarget:
-        """Suy phiên bản game và loader của bản chơi. Không chạm mạng.
-
-        Phiên bản game: sau khi trộn kế thừa, `jar` trỏ về bản Mojang mà loader cưỡi lên.
-        Loader: theo mã bản (quy ước tên của từng loader) — trước đây chỉ nhận ra Fabric qua
-        mainClass, nên bản Forge/NeoForge bị coi là vanilla và thư viện chặn cài mod.
-        """
-        instance = load_instance(self.paths, instance_id)
-        version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
-        return ContentTarget(
-            instance_id=instance_id,
-            game_dir=game_dir_of(self.paths, instance),
-            game_version=version_meta.jar_version_id or version_meta.version_id,
-            loader_kind=detect_loader_kind(instance.version_id),
-        )
 
     # ----- tìm -----
 
@@ -118,19 +88,6 @@ class ContentOperations(ContentDetailOperations):
                 endpoints=self.endpoints,
                 cancel_token=cancel_token,
             )
-
-    def fetch_versions(
-        self, http_client: HttpClient, source: ContentSource, project_id: str
-    ) -> tuple[ProjectVersion, ...]:
-        """Danh sách bản của một dự án, theo nguồn của nó. CHẠM MẠNG."""
-        if source == "curseforge":
-            return curseforge.fetch_project_versions(
-                http_client,
-                self.load_settings().curseforge_api_key,
-                project_id,
-                endpoints=self.endpoints,
-            )
-        return modrinth.fetch_project_versions(http_client, project_id, endpoints=self.endpoints)
 
     # ----- cài và quản lý -----
 

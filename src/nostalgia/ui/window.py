@@ -21,9 +21,11 @@ from nostalgia.ui.cosmetic_bridge import CosmeticBridge
 from nostalgia.ui.google_link_bridge import GoogleLinkBridge
 from nostalgia.ui.host_bridge import HostBridge
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
+from nostalgia.ui.mod_version_bridge import ModVersionBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.profile_bridge import ProfileBridge
+from nostalgia.ui.profile_stats_bridge import ProfileStatsBridge
 from nostalgia.ui.project_bridge import ProjectBridge
 from nostalgia.ui.promotion_bridge import PromotionBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
@@ -76,6 +78,9 @@ def open_window(
         launcher, social_bridge, social_gateway, accounts, bridge, parent=view
     )
     view.bind_context_property("profileBridge", profile_bridge)
+    view.bind_context_property(
+        "profileStatsBridge", ProfileStatsBridge(launcher, profile_bridge, bridge)
+    )
     cosmetic_bridge = CosmeticBridge(social_bridge, social_gateway, parent=view)
     profile_bridge.saved.connect(cosmetic_bridge.refresh)
     view.bind_context_property("cosmeticBridge", cosmetic_bridge)
@@ -85,7 +90,6 @@ def open_window(
         multiplayer_bridge,
         room_sync_bridge,
         social_bridge,
-        plus_enabled=plus_enabled,
         parent=view,
     )
     host_bridge.connect_workflow()
@@ -110,6 +114,9 @@ def open_window(
         running_application.aboutToQuit.connect(server_room.close)
     content_bridge = context.contextProperty("contentBridge")
     assert isinstance(content_bridge, ContentBridge)
+    view.bind_context_property(
+        "modVersionBridge", ModVersionBridge(launcher, bridge, content_bridge)
+    )
     view.bind_context_property(
         "projectBridge", ProjectBridge(launcher, bridge, content_bridge, parent=view)
     )

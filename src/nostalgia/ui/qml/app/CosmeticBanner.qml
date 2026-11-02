@@ -7,7 +7,8 @@ Item {
     property string decor: "none"
     property real radius: 18
     property bool scrim: true
-    readonly property bool ready: art.status === Image.Ready
+    readonly property bool vector: Cosmetics.vector(decor, cosmeticBridge.sets)
+    readonly property bool ready: vector ? vectorArt.available : art.status === Image.Ready
     readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
     Rectangle {
         anchors.fill: parent; radius: root.radius
@@ -16,7 +17,7 @@ Item {
     Item {
         anchors.fill: parent
         clip: true
-        layer.enabled: art.status === Image.Ready && root.shaderAvailable
+        layer.enabled: root.ready && root.shaderAvailable
         layer.effect: MultiEffect { maskEnabled: true; maskSource: maskCapture }
         Image {
             id: art; objectName: "cosmeticBannerImage"
@@ -26,8 +27,9 @@ Item {
             asynchronous: true; cache: true; smooth: true
             fillMode: Image.PreserveAspectCrop
         }
+        VectorCosmetic { id: vectorArt; anchors.fill: parent; visible: root.vector; decor: root.decor; kind: "banner"; radius: root.radius }
         Rectangle {
-            anchors.fill: parent; visible: root.scrim && art.status === Image.Ready
+            anchors.fill: parent; visible: root.scrim && root.ready
             gradient: Gradient { orientation: Gradient.Horizontal
                 GradientStop { position: 0; color: "#d910101b" }
                 GradientStop { position: 0.65; color: "#7a10101b" }

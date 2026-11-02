@@ -10,7 +10,7 @@ from typing import cast
 from PySide6.QtCore import Property, QObject, Signal, Slot
 from PySide6.QtGui import QGuiApplication
 
-from nostalgia.api import Launcher, RoomService, RoomStatus, SyncFile, SyncSnapshot
+from nostalgia.api import Launcher, RoomService, RoomStatus, SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.operations.cancellation import CancelToken
 
 
@@ -159,6 +159,17 @@ class MultiplayerBridge(QObject):
     def prepare_sync_source(self, snapshot: SyncSnapshot) -> None:
         """Gọi từ worker; vòng nhận game tiếp tục phục vụ snapshot trong đời phòng."""
         self._service.set_sync_snapshot(snapshot).result(timeout=5)
+
+    def publish_sync_source(self, room_code: str, host_ticket: str, snapshot: SyncSnapshot) -> None:
+        self._service.set_sync_snapshot(snapshot, room_code, host_ticket).result(timeout=5)
+
+    def fetch_sync_manifest(self, room_code: str) -> SyncManifest | None:
+        future = self._service.fetch_sync_manifest(room_code)
+        try:
+            return future.result(timeout=120)
+        except BaseException:
+            future.cancel()
+            raise
 
     def download_peer_file(
         self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken

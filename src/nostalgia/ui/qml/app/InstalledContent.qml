@@ -76,10 +76,12 @@ Item {
                     width: rows.width
                     installedContent: model
                     toggleable: root.kind === "mod"
+                    versionBlockedReason: bridge.gameRunning ? Legacy.Tr.phrase("Tắt game để đổi phiên bản mod.") : ""
                     enabled: root.writable
                     ListView.onReused: confirmingRemove = false
                     onToggled: function(filename, checked) { contentBridge.setEnabled(root.kind, filename, checked); }
                     onUpdateRequested: function(filename) { contentBridge.updateInstalled(root.kind, filename); }
+                    onVersionRequested: function(filename) { modVersionBridge.open(contentBridge.instanceId, filename); }
                     onRemoveRequested: function(filename) { contentBridge.remove(root.kind, filename); }
                 }
                 footer: Item {

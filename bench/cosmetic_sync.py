@@ -13,6 +13,13 @@ def verify_artwork(qml_dir: Path) -> None:
     for cosmetic in load_cosmetic_collection().sets:
         if cosmetic.state == "disabled":
             continue
+        if cosmetic.renderer == "vector":
+            if (
+                cosmetic.artwork not in ("sprout", "aurora-drift")
+                or not (qml_dir / "app" / "VectorCosmetic.qml").is_file()
+            ):
+                raise ValueError(f"Unknown vector cosmetic: {cosmetic.artwork}")
+            continue
         for art_type in ("frame", "banner"):
             path = qml_dir / "assets" / "cosmetics" / f"{cosmetic.artwork}-{art_type}.png"
             payload = path.read_bytes()

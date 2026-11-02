@@ -66,7 +66,7 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         assert (
             HttpPaymentGateway(server.url(""), ACCESS_TOKEN, http_client).fetch_offer().amount > 0
         )
-        path = "/v1/plus/repair/" + "a" * 64 + "/authorize"
+        path = "/v1/repair/" + "a" * 64 + "/authorize"
         server_state.add(path, b'{"authorized":true}')
         plan = RepairPlan("a" * 64, "b" * 64, 4200000000, (), ())
         HttpRepairGateway(server.url(""), ACCESS_TOKEN, http_client).authorize(plan)

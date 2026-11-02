@@ -16,6 +16,7 @@ Column {
             Legacy.SkinFigure { objectName: "profileSkin3D"; anchors.right: parent.right; height: skinArea.height; width: height / 2; anchors.rightMargin: parent.width * 0.10; source: profile.skinFile || ""; slim: details.slim === true; visible: !!source; renderEnabled: visible; interactive: true }
         }
     }
+    ProfileStatistics { width: parent.width; visible: profile.mine === true && profileStatsBridge.details.available; stats: profileStatsBridge.details }
     PaymentText { text: Legacy.Tr.phrase("COSMETIC HỒ SƠ"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }
     PaymentText { width: parent.width; text: Cosmetics.find(details.decor, cosmeticBridge.sets) ? Legacy.Tr.phrase(Cosmetics.name(details.decor, cosmeticBridge.sets)) + Legacy.Tr.phrase(" · Khung avatar và nền hồ sơ") : Legacy.Tr.phrase("Phong cách nguyên bản"); font.weight: Font.DemiBold }
     PaymentText { text: Legacy.Tr.phrase("MODPACK HAY CHƠI"); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption; font.letterSpacing: 1 }

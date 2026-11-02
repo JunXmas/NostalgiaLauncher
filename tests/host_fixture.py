@@ -197,7 +197,6 @@ class HostRig:
             self.multiplayer,
             self.sync,
             self.social,
-            plus_enabled=plus_enabled,
             parent=self.parent,
         )
         self.host.connect_workflow()

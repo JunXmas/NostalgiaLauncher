@@ -13,9 +13,9 @@ from nostalgia import __version__
 from nostalgia.api import (
     HttpPaymentGateway,
     HttpRepairGateway,
-    HttpRoomSyncGateway,
     HttpSocialGateway,
     Launcher,
+    PeerRoomSyncGateway,
 )
 from nostalgia.ui.app import enable_multisampling
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
@@ -62,7 +62,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
     def connect_repair() -> None:
         nonlocal repair_access_token
         access_token = social_gateway.access_token if social_gateway else ""
-        authorized_access_token = access_token if social.account.get("plus") else ""
+        authorized_access_token = access_token
         if authorized_access_token != repair_access_token:
             repair_access_token = authorized_access_token
             repair.set_gateway(
@@ -79,17 +79,14 @@ def build_release_view(launcher: Launcher) -> QQuickView:
             else None
         )
         connect_repair()
-        synchronization.set_gateway(
-            HttpRoomSyncGateway(
-                configuration.room_sync_url,
-                http_client,
-                access_token,
-                attach_source=multiplayer.prepare_sync_source,
-                download_peer=multiplayer.download_peer_file,
-            )
-            if access_token and configuration.room_sync_url
-            else None
+
+    synchronization.set_gateway(
+        PeerRoomSyncGateway(
+            multiplayer.publish_sync_source,
+            multiplayer.fetch_sync_manifest,
+            multiplayer.download_peer_file,
         )
+    )
 
     social.sessionChanged.connect(connect_services)
     social.changed.connect(connect_repair)

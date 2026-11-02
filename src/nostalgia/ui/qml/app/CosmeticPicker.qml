@@ -32,7 +32,7 @@ Column {
                 objectName: "profileDecor-" + parent.modelData.key
                 width: parent.width - 10; height: parent.height - 10
                 cosmetic: parent.modelData; selected: root.selectedDecor === cosmetic.key
-                previewed: root.previewDecor === cosmetic.key; canEquip: root.canEquip || root.ownedCosmetics.indexOf(cosmetic.key) >= 0
+                previewed: root.previewDecor === cosmetic.key; canEquip: Cosmetics.allowed(cosmetic.key, cosmeticBridge.sets, root.canEquip, root.ownedCosmetics)
                 avatarSource: root.avatarSource; playerName: root.playerName
                 onClicked: root.chosen(cosmetic.key)
             }
@@ -41,6 +41,7 @@ Column {
     PaymentText {
         width: parent.width
         text: root.canEquip ? Legacy.Tr.phrase("Chọn một bộ gồm khung avatar và nền hồ sơ. Bạn có thể đổi bộ bất cứ lúc nào.")
+            : (Cosmetics.find(root.previewDecor, cosmeticBridge.sets) || {}).access === "free" ? Legacy.Tr.phrase("Bộ cosmetic miễn phí cho mọi tài khoản Google.")
             : root.ownedCosmetics.indexOf(root.previewDecor) >= 0 ? Legacy.Tr.phrase("Bộ cosmetic này đã được tặng cho bạn. Có thể sử dụng mà không cần Nostalgia+.")
             : root.previewDecor !== root.selectedDecor ? Legacy.Tr.phrase("Đang xem thử ") + Legacy.Tr.phrase(Cosmetics.name(root.previewDecor, cosmeticBridge.sets)) + Legacy.Tr.phrase(". Hồ sơ đã lưu vẫn giữ nguyên; cần Nostalgia+ để áp dụng.")
             : Legacy.Tr.phrase("Có thể xem thử mọi bộ. Dùng cosmetic được tặng hoặc mở Nostalgia+ để chọn các bộ còn lại.")

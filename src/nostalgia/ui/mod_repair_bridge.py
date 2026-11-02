@@ -1,4 +1,4 @@
-"""Free quét chỉ đọc; Plus xem phương án, áp dụng có khóa chung và hoàn tác."""
+"""Quét và sửa mod miễn phí, áp dụng có khoá chung và bản sao để hoàn tác."""
 
 from __future__ import annotations
 

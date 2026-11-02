@@ -16,6 +16,6 @@ Column {
     Flow {
         width: parent.width; spacing: 8
         Button { objectName: "profileBadgeToggle"; label: socialBridge.account.showBadge ? Legacy.Tr.phrase("Ẩn huy hiệu") : Legacy.Tr.phrase("Hiện huy hiệu"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.setProfile(socialBridge.account.accent || "amethyst",!socialBridge.account.showBadge) }
-        Button { objectName: "earlyPreviewDownload";  label: Legacy.Tr.phrase("Tải preview sớm  ↗"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.downloadEarlyPreview() }
+        Button { objectName: "earlyPreviewDownload"; visible: socialBridge.account.previewAvailable === true; label: Legacy.Tr.phrase("Tải preview sớm  ↗"); quiet: true; clickable: !socialBridge.busy; onClicked: socialBridge.downloadEarlyPreview() }
     }
 }

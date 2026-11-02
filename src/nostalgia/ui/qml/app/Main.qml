@@ -213,6 +213,7 @@ Item {
     // Danh mục phiên bản tải hỏng: không báo thì hộp Tạo bản chơi chỉ hiện danh sách rỗng.
     Connections { target: catalogBridge; function onFailed(message) { recovery.report(message, catalogBridge); } }
     SocialProfileDialog { id: socialProfileDialog }
+    ModVersionDialog { }
     UpdateNotice { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 24; z: 135; visible: active && !root.loginVisible; onDetailsRequested: updateDetails.open() }
     UpdateDialog { id: updateDetails; backdrop: scene }
     Legacy.ConfirmDialog {

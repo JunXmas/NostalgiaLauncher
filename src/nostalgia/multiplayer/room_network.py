@@ -15,9 +15,8 @@ from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.mux import ROOM_META, pack_mux_frame
 from nostalgia.multiplayer.room_code import split_room_code
-from nostalgia.multiplayer.room_recovery import RoomRecovery
+from nostalgia.multiplayer.room_transfer import RoomTransfer
 from nostalgia.multiplayer.sync_gateway import invite_proof
-from nostalgia.multiplayer.sync_model import SyncSnapshot
 from nostalgia.net.http import HttpClient
 from nostalgia.net.websocket import TlsContext
 
@@ -27,11 +26,9 @@ if TYPE_CHECKING:
     from nostalgia.multiplayer.host import HostRelay
     from nostalgia.multiplayer.model import RoomStatus
     from nostalgia.multiplayer.peer_download import PeerDownload
-    from nostalgia.multiplayer.sync_model import SyncFile
-    from nostalgia.operations.cancellation import CancelToken
 
 
-class RoomNetwork(RoomRecovery):
+class RoomNetwork(RoomTransfer):
     _owns_http: bool
     _host: HostRelay | None
     _joiner: JoinerBridge | None
@@ -53,21 +50,6 @@ class RoomNetwork(RoomRecovery):
                 self._host.locked = locked
                 self._publish(locked=locked)
                 await self.publish_room_metadata()
-
-        return self._submit(apply())
-
-    def download_file(
-        self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
-    ) -> Future[bytes | None]:
-        return asyncio.run_coroutine_threadsafe(
-            self.download_peer_file(room_code, sync_file, cancel_token), self._loop
-        )
-
-    def set_sync_snapshot(self, snapshot: SyncSnapshot) -> Future[None]:
-        async def apply() -> None:
-            if self._host is None or self._status.role not in ("hosting", "waiting_world"):
-                raise MultiplayerError("Phòng host không còn hoạt động.")
-            self._host.sync_snapshot = snapshot
 
         return self._submit(apply())
 
@@ -130,6 +112,7 @@ class RoomNetwork(RoomRecovery):
                         "ready": host.world_port > 0,
                         "direct": host.peer is not None,
                         "sharing": self._sharing,
+                        "sync_ready": host.sync_snapshot is not None,
                         "locked": host.locked,
                     }
                 ).encode(),
@@ -156,33 +139,6 @@ class RoomNetwork(RoomRecovery):
         if self._peer_download is not None:
             await self._peer_download.close()
             self._peer_download = None
-
-    async def download_peer_file(
-        self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
-    ) -> bytes | None:
-        if not self._direct_allowed or self._joiner is None or self._room_http is None:
-            return self.unavailable_peer_file()
-        if not self._relay_url.startswith("wss://"):
-            return self.unavailable_peer_file()
-        try:
-            from nostalgia.multiplayer.peer_download import PeerDownload
-        except ImportError:
-            return self.unavailable_peer_file()
-        if self._peer_download is None:
-            base_url = "https://" + self._relay_url.removeprefix("wss://").rstrip("/")
-            self._peer_download = PeerDownload(
-                base_url, self._room_http, disable_on_failure=self._relay_enabled
-            )
-        payload = await self._peer_download.download(room_code, sync_file, cancel_token)
-        return payload if payload is not None else self.unavailable_peer_file()
-
-    def unavailable_peer_file(self) -> bytes | None:
-        if not self._relay_enabled:
-            raise MultiplayerError(
-                "Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; "
-                "hãy kiểm tra mạng và thử lại."
-            )
-        return None
 
     def close_room_http(self) -> None:
         if self._owns_http and self._room_http is not None:

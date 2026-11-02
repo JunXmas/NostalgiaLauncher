@@ -62,6 +62,7 @@ class SocialState(WorkerBridge):
             "badge": (EARLY_SUPPORTER_BADGE if early_supporter else PLUS_BADGE) if plus else "",
             "accent": account.accent,
             "showBadge": account.show_badge,
+            "previewAvailable": plus and account.preview_available,
         }
 
     @Property(list, notify=changed)

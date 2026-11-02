@@ -22,6 +22,7 @@ from nostalgia.multiplayer.peer_failure import (
     connection_failure,
     negotiation_refusal,
 )
+from nostalgia.multiplayer.peer_route import PeerRoute
 from nostalgia.multiplayer.peer_stream import PeerStream
 from nostalgia.multiplayer.peer_stun import select_peer_configuration
 from nostalgia.multiplayer.room_code import split_room_code
@@ -43,6 +44,24 @@ def build_peer_configuration(*, stun: bool = True) -> RTCConfiguration:
 async def connect_peer(
     base_url: str, room_code: str, purpose: str, http_client: HttpClient
 ) -> PeerStream:
+    try:
+        async with asyncio.timeout(90):
+            for attempt in range(2):
+                try:
+                    return await _connect_peer_once(base_url, room_code, purpose, http_client)
+                except PeerConnectionError as exc:
+                    if not exc.retryable or attempt:
+                        raise
+                    logging.getLogger(__name__).info("Retrying direct connection once: %s", purpose)
+                    await asyncio.sleep(1)
+    except TimeoutError as exc:
+        raise connection_failure("channel") from exc
+    raise AssertionError("unreachable peer attempt")
+
+
+async def _connect_peer_once(
+    base_url: str, room_code: str, purpose: str, http_client: HttpClient
+) -> PeerStream:
     from aiortc import RTCPeerConnection, RTCSessionDescription
 
     room_id, room_secret = split_room_code(room_code)
@@ -50,10 +69,14 @@ async def connect_peer(
     request_id = secrets.token_hex(16)
     configuration = await select_peer_configuration(build_peer_configuration())
     connection = RTCPeerConnection(configuration)
-    stream = PeerStream(connection, connection.createDataChannel("nostalgia-" + purpose))
+    route = PeerRoute(connection)
+    stream = PeerStream(
+        connection, connection.createDataChannel("nostalgia-" + purpose), route=route
+    )
     stage, started_at = "gathering", time.monotonic()
     try:
         async with asyncio.timeout(15):
+            await route.prepare()
             await connection.setLocalDescription(await connection.createOffer())
         description = connection.localDescription
         assert description is not None
@@ -118,7 +141,13 @@ async def connect_peer(
 
 
 async def answer_peer(
-    connection: RTCPeerConnection, room_secret: str, request_id: str, purpose: str, encoded: str
+    connection: RTCPeerConnection,
+    room_secret: str,
+    request_id: str,
+    purpose: str,
+    encoded: str,
+    *,
+    route: PeerRoute | None = None,
 ) -> str:
     from aiortc import RTCSessionDescription
 
@@ -126,6 +155,8 @@ async def answer_peer(
     if description.description_kind != "offer":
         raise ValueError("invalid peer offer")
     await connection.setRemoteDescription(RTCSessionDescription(description.sdp, "offer"))
+    if route is not None:
+        await route.prepare()
     await connection.setLocalDescription(await connection.createAnswer())
     answer = connection.localDescription
     assert answer is not None

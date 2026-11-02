@@ -8,6 +8,7 @@ from nostalgia.errors import SocialError
 from nostalgia.model.json_value import JsonValue
 from nostalgia.social.cosmetic import (
     can_equip_cosmetic,
+    has_cosmetic_access,
     load_cosmetic_collection,
     parse_cosmetic_collection,
 )
@@ -43,6 +44,8 @@ def test_lifecycle_keeps_retired_appearance_but_denies_new_selection() -> None:
         {"accent": "admin"},
         {"tint": "red"},
         {"name": ""},
+        {"access": "admin"},
+        {"renderer": "remote-code"},
     ],
 )
 def test_manifest_rejects_invalid_definitions(change: dict[str, str]) -> None:
@@ -92,3 +95,12 @@ def test_profile_parses_owned_cosmetics_without_granting_unknown_payloads() -> N
     for invalid in invalid_values:
         with pytest.raises(SocialError):
             parse_profile(document | {"owned_cosmetics": invalid})
+
+
+def test_free_and_plus_cosmetics_have_explicit_access_without_unlocking_others() -> None:
+    collection = load_cosmetic_collection()
+    assert has_cosmetic_access(collection, "sprout", False, ())
+    assert not has_cosmetic_access(collection, "aurora-drift", False, ())
+    assert has_cosmetic_access(collection, "aurora-drift", True, ())
+    assert has_cosmetic_access(collection, "aurora-drift", False, ("aurora-drift",))
+    assert not has_cosmetic_access(collection, "unknown", True, ())

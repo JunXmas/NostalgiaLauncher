@@ -9,9 +9,11 @@ Rectangle {
     property bool toggleable: true
     property bool artworkEnabled: visible
     property bool confirmingRemove: false
+    property string versionBlockedReason: ""
     signal toggled(string fileName, bool enabled)
     signal removeRequested(string fileName)
     signal updateRequested(string fileName)
+    signal versionRequested(string fileName)
     readonly property bool hasUpdate: !!(installedContent.latestVersion)
 
     height: Theme.modern ? Math.round(118 * Theme.textScale) : 118
@@ -76,6 +78,7 @@ Rectangle {
     }
     Column {
         id: controls
+        width: actions.implicitWidth
         anchors { right: parent.right; top: parent.top; margins: 14 }
         spacing: 10
         Toggle {
@@ -86,14 +89,26 @@ Rectangle {
             checked: !!installedContent.enabled
             onToggled: function (enabled) { root.toggled(installedContent.fileName, enabled); }
         }
-        Rectangle {
-            anchors.right: parent.right
+        Row {
+            id: actions
+            spacing: 8
+            App.Button {
+                objectName: "installedVersions-" + installedContent.fileName
+                visible: root.toggleable && !!installedContent.projectId
+                label: Tr.phrase("Phiên bản")
+                quiet: true
+                height: 28
+                disabledReason: root.versionBlockedReason
+                clickable: !disabledReason
+                onClicked: root.versionRequested(installedContent.fileName)
+            }
+            Rectangle {
             width: removeText.width + 16; height: 24; radius: Theme.modern ? 8 : 0
             color: root.confirmingRemove ? Theme.danger : "transparent"
             Text {
                 id: removeText
                 anchors.centerIn: parent
-                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : Theme.modern ? Tr.phrase("Gỡ") : "🗑"; font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
+                text: root.confirmingRemove ? Tr.phrase("Gỡ?") : Tr.phrase("Gỡ"); font.pixelSize: Theme.fontBody; font.bold: root.confirmingRemove
                 color: root.confirmingRemove ? "white" : (trashHover.hovered ? Theme.danger : Theme.textMuted)
             }
             HoverHandler { id: trashHover; cursorShape: Qt.PointingHandCursor }
@@ -102,6 +117,7 @@ Rectangle {
                     if (root.confirmingRemove) { root.confirmingRemove = false; root.removeRequested(installedContent.fileName); }
                     else root.confirmingRemove = true;
                 }
+            }
             }
         }
     }

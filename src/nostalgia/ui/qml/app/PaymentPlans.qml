@@ -68,8 +68,7 @@ Column {
                             Legacy.Tr.phrase("Chơi, cài mod và modpack, quản lý bản chơi"), "✓", "✓",
                             Legacy.Tr.phrase("Chơi chung, mở server trên máy bạn"), "✓", "✓",
                             Legacy.Tr.phrase("Bộ cosmetic hồ sơ cao cấp và màu hồ sơ"), "—", "✓",
-                            Legacy.Tr.phrase("Huy hiệu Nostalgia+ trên hồ sơ"), "—", "✓",
-                            Legacy.Tr.phrase("Dùng thử bản launcher mới sớm"), "—", "✓"]
+                            Legacy.Tr.phrase("Huy hiệu Nostalgia+ trên hồ sơ"), "—", "✓"]
                     PaymentText {
                         readonly property int column: index % 3
                         width: column === 0 ? rows.width - 2 * (rows.side + rows.columnSpacing) : rows.side

@@ -144,7 +144,7 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
                 f"checkout={payments.details}, watching={payments._watching}; requests={counts}; "
                 f"start_errors={login_errors}"
             ) from error
-        assert not social.account["plus"] and repair._gateway is None
+        assert not social.account["plus"] and repair._gateway is not None
         assert synchronization.configured
         payments.createOrder()
         wait_until(lambda: payments.details["stage"] == "pending" and not payments.busy)
@@ -162,7 +162,7 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         social.refresh()
         wait_until(lambda: not social.busy)
         assert payments.details["orderId"] == "order_123"
-        assert not social.account["plus"] and repair._gateway is None
+        assert not social.account["plus"] and repair._gateway is not None
         assert server_state.request_count("/v1/plus/orders") == 1
         paid_until = int(time.time()) + 180 * 86400
         purchase.update(status="paid", active_until=paid_until)
@@ -178,7 +178,7 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         social.signOut()
         wait_until(lambda: not social.signedIn and not social.busy)
         assert payments.details["stage"] == "unavailable" and repair._gateway is None
-        assert not synchronization.configured
+        assert synchronization.configured
         assert launcher.list_accounts()[0].player_name == "MinecraftLocal"
     finally:
         payments.setWatching(False)

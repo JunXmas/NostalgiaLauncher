@@ -5,7 +5,6 @@ Glass {
     id: root
     objectName: "socialRoomPanel"
     property bool detailsExpanded: false
-    property bool sharingExpanded: false
     property bool manualExpanded: false
     readonly property bool isHost: hostBridge.details.active || multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world"
     readonly property bool readyToInvite: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !!multiplayerBridge.roomCode
@@ -67,7 +66,6 @@ Glass {
             Button { objectName: "hostRetryShare"; visible: hostBridge.details.active && hostBridge.details.stage === "error"; label: Legacy.Tr.phrase("Thử đồng bộ lại"); clickable: !roomSyncBridge.busy; onClicked: hostBridge.retryShare() }
             Button { visible: root.stage === "waiting_world"; objectName: "showManualLan"; label: root.manualExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Không tìm thấy LAN?"); quiet: true; onClicked: root.manualExpanded = !root.manualExpanded }
             Button { visible: roomSyncBridge.hostReady && multiplayerBridge.role !== "waiting_world" && multiplayerBridge.active; objectName: "showRoomOptions"; label: root.detailsExpanded ? Legacy.Tr.phrase("Thu gọn  ↑") : Legacy.Tr.phrase("Tùy chọn phòng  ↓"); quiet: true; onClicked: root.detailsExpanded = !root.detailsExpanded }
-            Button { visible: !hostBridge.details.active && plusFeaturesEnabled && multiplayerBridge.role === "hosting"; label: root.sharingExpanded ? Legacy.Tr.phrase("Thu gọn modpack") : Legacy.Tr.phrase("Đồng bộ modpack · Plus"); onClicked: root.sharingExpanded = !root.sharingExpanded }
         }
         Button { visible: multiplayerBridge.role === "joined" && root.detailsExpanded; objectName: "copyGuestRoomAddress"; label: Legacy.Tr.phrase("Chép địa chỉ vào Minecraft"); quiet: true; clickable: multiplayerBridge.localPort > 0; onClicked: multiplayerBridge.copyLocalAddress() }
         Flow {
@@ -84,8 +82,8 @@ Glass {
         }
         Loader {
             width: parent.width
-            active: plusFeaturesEnabled && ((!hostBridge.details.active && multiplayerBridge.role === "hosting" && root.sharingExpanded) || (multiplayerBridge.role === "joined" && !!roomSyncBridge.offer.name))
-            sourceComponent: Component { Legacy.RoomSyncCard { width: parent.width; hostMode: multiplayerBridge.role === "hosting" } }
+            active: multiplayerBridge.role === "joined" && !!roomSyncBridge.offer.name
+            sourceComponent: Component { Legacy.RoomSyncCard { width: parent.width } }
             height: item ? item.implicitHeight : 0
         }
     }

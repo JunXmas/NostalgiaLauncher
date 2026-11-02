@@ -70,6 +70,7 @@ def parse_snapshot(document: JsonValue) -> SocialSnapshot:
         accent(account_fields.get("accent")),
         account_fields.get("show_badge", True) is True,
         image_url(account_fields.get("avatar_url")),
+        account_fields.get("preview_available") is True,
     )
 
     def parse_friend(document: JsonValue) -> Friend:

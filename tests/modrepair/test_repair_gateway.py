@@ -50,7 +50,7 @@ def test_server_plan_validation(
     if fault == "expired":
         fields["expires_at"] = 1
     server_state.add(
-        "/v1/plus/repair",
+        "/v1/repair",
         json.dumps(fields).encode(),
         status=403 if fault == "unauthorized" else 200,
     )
@@ -61,9 +61,9 @@ def test_server_plan_validation(
     else:
         plan = gateway.fetch_plan(scan)
         assert plan.changes[0].file_name == "beta.jar"
-        assert server_state.received_header("/v1/plus/repair", "Authorization") == "Bearer session"
-        assert "findings" not in json.loads(server_state.received_body("/v1/plus/repair"))
-        endpoint = "/v1/plus/repair/" + plan.plan_id + "/authorize"
+        assert server_state.received_header("/v1/repair", "Authorization") == "Bearer session"
+        assert "findings" not in json.loads(server_state.received_body("/v1/repair"))
+        endpoint = "/v1/repair/" + plan.plan_id + "/authorize"
         server_state.add(endpoint, b'{"authorized":true}')
         gateway.authorize(plan)
         server_state.add(endpoint, b'{"authorized":false}')

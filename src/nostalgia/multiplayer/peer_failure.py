@@ -43,5 +43,5 @@ def connection_failure(stage: str) -> PeerConnectionError:
         )
     return PeerConnectionError(
         "Hai máy chưa nối được P2P. Mạng có thể chặn UDP hoặc NAT không hỗ trợ đường trực tiếp. "
-        "Thử mạng khác rồi bấm Thử kết nối lại; relay dữ liệu đã tắt."
+        "Thử bật IPv6, đổi mạng hoặc đổi người làm chủ phòng rồi bấm Thử kết nối lại."
     )

@@ -19,6 +19,8 @@ class CosmeticSet:
     accent: str
     description: str
     state: Literal["active", "retired", "disabled"]
+    access: Literal["free", "plus"] = "plus"
+    renderer: Literal["image", "vector"] = "image"
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,7 +51,11 @@ def parse_cosmetic_collection(document: JsonValue) -> CosmeticCollection:
     for candidate in candidates:
         values = as_mapping(candidate)
         required = {"key", "name", "artwork", "tint", "accent", "description", "state"}
-        if set(values) != required or any(not isinstance(v, str) for v in values.values()):
+        if (
+            not required <= set(values)
+            or set(values) - required - {"access", "renderer"}
+            or any(not isinstance(v, str) for v in values.values())
+        ):
             raise SocialError("Invalid cosmetic definition")
         strings = cast(dict[str, str], values)
         if (
@@ -61,6 +67,8 @@ def parse_cosmetic_collection(document: JsonValue) -> CosmeticCollection:
             or not re.fullmatch(r"#[0-9a-fA-F]{6}", strings["tint"])
             or strings["accent"] not in ("amethyst", "emerald", "amber")
             or strings["state"] not in ("active", "retired", "disabled")
+            or strings.get("access", "plus") not in ("free", "plus")
+            or strings.get("renderer", "image") not in ("image", "vector")
         ):
             raise SocialError("Invalid cosmetic definition")
         cosmetics.append(
@@ -72,6 +80,8 @@ def parse_cosmetic_collection(document: JsonValue) -> CosmeticCollection:
                 strings["accent"],
                 strings["description"],
                 cast(Literal["active", "retired", "disabled"], strings["state"]),
+                cast(Literal["free", "plus"], strings.get("access", "plus")),
+                cast(Literal["image", "vector"], strings.get("renderer", "image")),
             )
         )
     if len({c.key for c in cosmetics}) != len(cosmetics):
@@ -92,3 +102,12 @@ def can_equip_cosmetic(collection: CosmeticCollection, decor: str, current: str)
         c.key == decor and (c.state == "active" or (c.state == "retired" and decor == current))
         for c in collection.sets
     )
+
+
+def has_cosmetic_access(
+    collection: CosmeticCollection, decor: str, plus: bool, owned: tuple[str, ...]
+) -> bool:
+    if decor == "none":
+        return True
+    definition = next((cosmetic for cosmetic in collection.sets if cosmetic.key == decor), None)
+    return bool(definition and (definition.access == "free" or decor in owned or plus))

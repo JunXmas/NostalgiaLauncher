@@ -108,7 +108,7 @@ def test_production_frames_leave_the_avatar_center_transparent() -> None:
 
     cosmetic_dir = Path(nostalgia.__file__ or "").parent / "ui/qml/assets/cosmetics"
     for cosmetic in load_cosmetic_collection().sets:
-        if cosmetic.state == "disabled":
+        if cosmetic.state == "disabled" or cosmetic.renderer != "image":
             continue
         name = cosmetic.artwork
         frame = QImage(str(cosmetic_dir / f"{name}-frame.png"))

@@ -85,7 +85,7 @@ Controls.Popup {
                 Legacy.CheckRow {
                     objectName: "hostSharePack"
                     width: parent.width
-                    label: Legacy.Tr.phrase("Đồng bộ modpack cho bạn bè · Plus")
+                    label: Legacy.Tr.phrase("Đồng bộ modpack cho bạn bè")
                     checked: root.sharePack && hostBridge.syncAvailable
                     enabled: hostBridge.syncAvailable
                     opacity: enabled ? 1 : 0.5
@@ -97,8 +97,7 @@ Controls.Popup {
                 }
                 PaymentText {
                     width: parent.width
-                    text: !plusFeaturesEnabled ? Legacy.Tr.phrase("Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.")
-                        : !hostBridge.syncAvailable ? Legacy.Tr.phrase("Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí.")
+                    text: !hostBridge.syncAvailable ? Legacy.Tr.phrase("Đăng nhập Google để mở phòng và chia sẻ modpack miễn phí.")
                         : root.sharePack ? Legacy.Tr.phrase("Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất.")
                         : Legacy.Tr.phrase("Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng.")
                     color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption

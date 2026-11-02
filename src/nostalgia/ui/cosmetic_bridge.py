@@ -6,7 +6,13 @@ from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import SocialGateway, SocialProfile, can_equip_cosmetic, load_cosmetic_collection
+from nostalgia.api import (
+    SocialGateway,
+    SocialProfile,
+    can_equip_cosmetic,
+    has_cosmetic_access,
+    load_cosmetic_collection,
+)
 from nostalgia.errors import SessionRevoked
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.worker import WorkerBridge
@@ -73,10 +79,8 @@ class CosmeticBridge(WorkerBridge):
             or not social_profile
             or not gateway
             or social_profile.account_id != account.get("accountId")
-            or (
-                decor != "none"
-                and not account.get("plus")
-                and decor not in social_profile.owned_cosmetics
+            or not has_cosmetic_access(
+                self._collection, decor, bool(account.get("plus")), social_profile.owned_cosmetics
             )
             or not can_equip_cosmetic(self._collection, decor, social_profile.details.decor)
         ):

@@ -79,23 +79,17 @@ def test_snapshot_error_and_launch_error_never_open_room(
     assert not list(rig.launcher.paths.data_dir.glob("room-host-*"))
 
 
-def test_paused_and_free_accounts_cannot_force_sync(
+def test_free_accounts_can_sync_even_when_plus_sales_are_paused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     rig = HostRig(tmp_path, monkeypatch, plus_enabled=False)
     try:
-        assert not rig.host.syncAvailable
-        assert not rig.host.start("chosen", True)
-        assert not rig.launched and not rig.room.detect_modes
-        rig.host._plus_enabled = True
-        rig.social._plus_enabled = True
         rig.social._snapshot = replace(
             rig.social_gateway.snapshot,
             account=replace(rig.social_gateway.snapshot.account, plus_lifetime=False),
         )
-        assert not rig.host.syncAvailable
-        assert not rig.host.start("chosen", True)
-        assert not rig.launched
+        assert rig.host.syncAvailable
+        assert rig.host.start("chosen", True)
     finally:
         rig.close()
 

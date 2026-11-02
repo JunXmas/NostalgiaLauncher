@@ -18,5 +18,15 @@ function name(key, sets) {
 
 function asset(key, kind, sets) {
     var set = find(key, sets);
-    return set && (kind === "frame" || kind === "banner") ? Qt.resolvedUrl("../assets/cosmetics/" + set.artwork + "-" + kind + ".png") : "";
+    return set && set.renderer !== "vector" && (kind === "frame" || kind === "banner") ? Qt.resolvedUrl("../assets/cosmetics/" + set.artwork + "-" + kind + ".png") : "";
+}
+
+function vector(key, sets) {
+    var set = find(key, sets);
+    return !!set && set.renderer === "vector";
+}
+
+function allowed(key, sets, plus, owned) {
+    var set = find(key, sets);
+    return key === "none" || !!set && (set.access === "free" || plus || owned.indexOf(key) >= 0);
 }

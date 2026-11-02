@@ -355,14 +355,10 @@
   "p:CỬA SỔ RỘNG": "CỬA SỔ RỘNG",
   "p:CỬA SỔ CAO": "CỬA SỔ CAO",
   "p:Kiểm tra mod": "Kiểm tra mod",
-  "p:Đồng bộ modpack · Plus": "Đồng bộ modpack · Plus",
   "p:Đồng bộ modpack với chủ phòng": "Đồng bộ modpack với chủ phòng",
-  "p:Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận lời mời được đồng bộ miễn phí.": "Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận lời mời được đồng bộ miễn phí.",
   "p:Pack gốc: ": "Pack gốc: ",
   "p: mod bổ sung/thay đổi\n": " mod bổ sung/thay đổi\n",
   "p:Bộ mod tùy chỉnh của host\n": "Bộ mod tùy chỉnh của host\n",
-  "p:Relay hiện chưa cấp vé Plus. Tính năng sẽ mở khi backend được cấu hình.": "Relay hiện chưa cấp vé Plus. Tính năng sẽ mở khi backend được cấu hình.",
-  "p:Bản preview chưa nối dịch vụ Plus. Chơi chung thường vẫn hoạt động.": "Bản preview chưa nối dịch vụ Plus. Chơi chung thường vẫn hoạt động.",
   "p:Chọn nội dung trước khi nhận. Pack đã đồng bộ sẽ cập nhật đúng bản chơi; pack mới tạo bản riêng.": "Chọn nội dung trước khi nhận. Pack đã đồng bộ sẽ cập nhật đúng bản chơi; pack mới tạo bản riêng.",
   "p:Đang xử lý...": "Đang xử lý...",
   "p:Chia sẻ modpack cho phòng": "Chia sẻ modpack cho phòng",
@@ -541,9 +537,6 @@
   "p:Đóng chọn bản chơi": "Đóng chọn bản chơi",
   "p:Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng.": "Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng.",
   "p:Bản chơi / modpack đã cài": "Bản chơi / modpack đã cài",
-  "p:Đồng bộ modpack cho bạn bè · Plus": "Đồng bộ modpack cho bạn bè · Plus",
-  "p:Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.": "Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.",
-  "p:Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí.": "Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí.",
   "p:Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất.": "Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất.",
   "p:Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng.": "Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng.",
   "p:Chưa có bản chơi. Cài modpack ở Thư viện hoặc tạo bản chơi trước.": "Chưa có bản chơi. Cài modpack ở Thư viện hoặc tạo bản chơi trước.",
@@ -4242,5 +4235,7 @@
   "p:Gặp nhau trong thế giới của bạn.": "Gặp nhau trong thế giới của bạn.",
   "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.",
   "p:Mời": "Mời",
-  "p:Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.": "Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn."
+  "p:Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.": "Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.",
+  "p:Đồng bộ modpack cho bạn bè": "Đồng bộ modpack cho bạn bè",
+  "p:Đăng nhập Google để mở phòng và chia sẻ modpack miễn phí.": "Đăng nhập Google để mở phòng và chia sẻ modpack miễn phí."
 }

@@ -11,6 +11,7 @@ from nostalgia.content.installed import list_installed
 from nostalgia.errors import ContentError, NostalgiaError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.model import Instance
+from nostalgia.instance.profile_stats import ProfileStats, load_profile_stats
 from nostalgia.instance.server_list import SERVERS_FILE_NAME, SavedServer, load_saved_servers
 from nostalgia.instance.stats import (
     InstanceStats,
@@ -47,6 +48,9 @@ class PlayChoices:
 
 class InstanceOperations(LauncherContext):
     __slots__ = ()
+
+    def load_profile_stats(self) -> ProfileStats:
+        return load_profile_stats(self.paths)
 
     def list_instances(self) -> tuple[Instance, ...]:
         return list_instances(self.paths)

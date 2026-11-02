@@ -357,14 +357,10 @@
   "p:CỬA SỔ RỘNG": "WINDOW WIDTH",
   "p:CỬA SỔ CAO": "WINDOW HEIGHT",
   "p:Kiểm tra mod": "Check mods",
-  "p:Đồng bộ modpack · Plus": "Modpack sync · Plus",
   "p:Đồng bộ modpack với chủ phòng": "Sync modpack with host",
-  "p:Một người có Plus, cả nhóm cùng chơi. Chọn đúng bản đang mở LAN; bạn bè nhận lời mời được đồng bộ miễn phí.": "One Plus host, the whole group plays. Choose the instance open to LAN; invited friends can sync for free.",
   "p:Pack gốc: ": "Base pack: ",
   "p: mod bổ sung/thay đổi\n": " added/changed mods\n",
   "p:Bộ mod tùy chỉnh của host\n": "Host's custom modpack\n",
-  "p:Relay hiện chưa cấp vé Plus. Tính năng sẽ mở khi backend được cấu hình.": "The relay has not issued Plus access yet. This feature becomes available when the backend is configured.",
-  "p:Bản preview chưa nối dịch vụ Plus. Chơi chung thường vẫn hoạt động.": "This preview is not connected to Plus services. Regular multiplayer still works.",
   "p:Chọn nội dung trước khi nhận. Pack đã đồng bộ sẽ cập nhật đúng bản chơi; pack mới tạo bản riêng.": "Choose content before accepting. Previously synced packs update their own instance; new packs create a separate one.",
   "p:Đang xử lý...": "Working...",
   "p:Chia sẻ modpack cho phòng": "Share modpack with room",
@@ -543,9 +539,6 @@
   "p:Đóng chọn bản chơi": "Close instance selection",
   "p:Chọn modpack bạn sẽ chơi. Launcher chuẩn bị và khởi chạy đúng bản này khi mở phòng.": "Choose the modpack you will play. The launcher prepares and starts this exact instance when you host.",
   "p:Bản chơi / modpack đã cài": "Installed instance / modpack",
-  "p:Đồng bộ modpack cho bạn bè · Plus": "Sync modpack with friends · Plus",
-  "p:Đồng bộ Plus đang tạm khóa. Bạn vẫn có thể mở phòng; mọi người cần dùng cùng modpack.": "Plus sync is temporarily disabled. You can still host a room; everyone needs the same modpack.",
-  "p:Host cần Plus để đồng bộ. Bạn bè nhận lời mời được tải bộ modpack miễn phí.": "The host needs Plus to sync. Invited friends can download the modpack for free.",
   "p:Bộ modpack được chụp trước khi game chạy. Lời mời mở sau khi đồng bộ hoàn tất.": "The modpack is captured before the game starts. Invitations become available after sync finishes.",
   "p:Mọi người cần cài cùng phiên bản game, loader và mods trước khi vào phòng.": "Everyone must install matching game versions, loaders and mods before joining.",
   "p:Chưa có bản chơi. Cài modpack ở Thư viện hoặc tạo bản chơi trước.": "No instances yet. Install a modpack from Library or create an instance first.",
@@ -4242,5 +4235,7 @@
   "p:Gặp nhau trong thế giới của bạn.": "Meet in your world.",
   "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "This player will no longer be able to send you invitations or friend requests.",
   "p:Mời": "Invite",
-  "p:Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.": "The two computers connect directly, so people in the room can see your IP address."
+  "p:Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.": "The two computers connect directly, so people in the room can see your IP address.",
+  "p:Đồng bộ modpack cho bạn bè": "Share your modpack with friends",
+  "p:Đăng nhập Google để mở phòng và chia sẻ modpack miễn phí.": "Sign in with Google to host a room and share your modpack for free."
 }

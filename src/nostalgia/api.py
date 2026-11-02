@@ -26,13 +26,14 @@ from dataclasses import dataclass
 from nostalgia.account.model import Account, PlayerProfile
 from nostalgia.auth.device_code import DeviceCode
 from nostalgia.auth.qr import QrCode
+from nostalgia.content.model import ProjectVersion
 from nostalgia.content.promotions import Promotion
+from nostalgia.content.target import ContentTarget
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.donate.vietqr import BankAccount
 from nostalgia.facade.appearance import AppearanceOperations
 from nostalgia.facade.backups import BackupOperations
-from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
 from nostalgia.facade.instances import InstanceOperations, PlayChoices
@@ -50,6 +51,7 @@ from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
+from nostalgia.instance.profile_stats import ProfileStats
 from nostalgia.instance.server_list import SavedServer
 from nostalgia.instance.world import SavedWorld
 from nostalgia.launch.game_process import GameProcess
@@ -65,6 +67,7 @@ from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
 from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
 from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncFile, SyncManifest, SyncSnapshot
+from nostalgia.multiplayer.sync_peer import PeerRoomSyncGateway
 from nostalgia.nos_client.config import NosClientConfig
 from nostalgia.operations.progress import Progress
 from nostalgia.payment.catalog import (
@@ -97,7 +100,11 @@ from nostalgia.server.properties import ServerProperties
 from nostalgia.settings.store import Settings
 from nostalgia.skin.model import PlayerSkin
 from nostalgia.social.configuration import ServiceConfiguration
-from nostalgia.social.cosmetic import can_equip_cosmetic, load_cosmetic_collection
+from nostalgia.social.cosmetic import (
+    can_equip_cosmetic,
+    has_cosmetic_access,
+    load_cosmetic_collection,
+)
 from nostalgia.social.gateway import HttpSocialGateway
 from nostalgia.social.model import (
     GoogleLogin,
@@ -175,11 +182,14 @@ __all__ = [
     "PaymentGateway",
     "PaymentOffer",
     "PaymentOrder",
+    "PeerRoomSyncGateway",
     "PlayChoices",
     "PlayerProfile",
     "PlayerSkin",
     "ProfileDraft",
+    "ProfileStats",
     "Progress",
+    "ProjectVersion",
     "Promotion",
     "QrCode",
     "RepairChange",
@@ -209,6 +219,7 @@ __all__ = [
     "SyncManifest",
     "SyncSnapshot",
     "can_equip_cosmetic",
+    "has_cosmetic_access",
     "lan_port_from_output",
     "load_cosmetic_collection",
     "suggest_local_fixes",

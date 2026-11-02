@@ -1,5 +1,6 @@
 import QtQuick
 import "../" as Legacy
+import "CosmeticCatalog.js" as Cosmetics
 
 Column {
     id: root
@@ -31,7 +32,7 @@ Column {
         ownedCosmetics: root.details.ownedCosmetics || []
         onChosen: function(value) {
             root.previewDecor = value;
-            if (value === "none" || canEquip || ownedCosmetics.indexOf(value) >= 0) root.decor = value;
+            if (Cosmetics.allowed(value, cosmeticBridge.sets, canEquip, ownedCosmetics)) root.decor = value;
         }
     }
     PaymentText { text: Legacy.Tr.phrase("Giới thiệu"); font.weight: Font.DemiBold }

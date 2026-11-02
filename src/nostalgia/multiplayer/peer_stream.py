@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from aiortc import RTCDataChannel, RTCPeerConnection
 
+    from nostalgia.multiplayer.peer_route import PeerRoute
+
 MAX_PEER_PAYLOAD = 256 * 1024 + 64
 PEER_FRAME_BYTES = 16384
 MAX_BUFFERED_BYTES = 256 * 1024
@@ -18,8 +20,15 @@ MAX_BUFFERED_BYTES = 256 * 1024
 class PeerStream:
     host_ticket = ""
 
-    def __init__(self, connection: RTCPeerConnection, channel: RTCDataChannel) -> None:
+    def __init__(
+        self,
+        connection: RTCPeerConnection,
+        channel: RTCDataChannel,
+        *,
+        route: PeerRoute | None = None,
+    ) -> None:
         self.connection, self.channel = connection, channel
+        self._route = route
         self._queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=16)
         self._buffer = bytearray()
         self._open, self._writable = asyncio.Event(), asyncio.Event()
@@ -134,4 +143,8 @@ class PeerStream:
 
     async def close(self) -> None:
         self._ended()
-        await asyncio.shield(self.connection.close())
+        try:
+            await asyncio.shield(self.connection.close())
+        finally:
+            if self._route is not None:
+                await asyncio.shield(self._route.close())

@@ -65,7 +65,7 @@ def test_failed_ice_reports_network_stage_without_waiting_for_channel_timeout(
                     "https://signal.test", "ABCDEFABCDEFGHJKMN", "game", cast(HttpClient, Http())
                 )
             assert caught.value.retryable and time.monotonic() - started_at < 3
-            assert signal.purposes == ["game"]
+            assert signal.purposes == ["game", "game"]
             notes = " ".join(
                 record.message
                 for record in caplog.records

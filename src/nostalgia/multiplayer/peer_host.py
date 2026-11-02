@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 from nostalgia.multiplayer.mux import PEER_RESPONSE, pack_mux_frame
 from nostalgia.multiplayer.peer_connection import answer_peer, build_peer_configuration
+from nostalgia.multiplayer.peer_manifest import read_manifest_chunk
+from nostalgia.multiplayer.peer_route import PeerRoute
 from nostalgia.multiplayer.peer_stream import PeerStream
 from nostalgia.multiplayer.peer_stun import select_peer_configuration
 from nostalgia.multiplayer.sync_chunk import read_sync_chunk
@@ -29,6 +31,7 @@ class PeerHost:
         self.games: set[HostRelay] = set()
         self.tasks: set[asyncio.Task[None]] = set()
         self._seen: dict[str, float] = {}
+        self.routes: dict[RTCPeerConnection, PeerRoute] = {}
 
     @property
     def joiner_count(self) -> int:
@@ -77,6 +80,7 @@ class PeerHost:
             if deadline <= time.monotonic():
                 return
             connection = RTCPeerConnection(configuration)
+            route = self.routes[connection] = PeerRoute(connection)
             self.connections.add(connection)
 
             channel_received = False
@@ -92,14 +96,19 @@ class PeerHost:
                     channel.close()
                     return
                 channel_received = True
-                stream = PeerStream(connection, channel)
+                stream = PeerStream(connection, channel, route=route)
                 task = asyncio.create_task(self._serve(stream, purpose, deadline))
                 self.tasks.add(task)
                 task.add_done_callback(self.tasks.discard)
 
             async with asyncio.timeout(12):
                 answer = await answer_peer(
-                    connection, self.host.room_secret, request_id, purpose, document["body"]
+                    connection,
+                    self.host.room_secret,
+                    request_id,
+                    purpose,
+                    document["body"],
+                    route=route,
                 )
                 if self.host._socket is None:
                     raise ConnectionError("room closed")
@@ -112,6 +121,8 @@ class PeerHost:
             await asyncio.sleep(35)
             if connection.connectionState != "connected" or not channel_received:
                 await asyncio.shield(connection.close())
+                if lease := self.routes.pop(connection, None):
+                    await lease.close()
                 self.connections.discard(connection)
         except (Exception, asyncio.CancelledError) as exc:
             if not isinstance(exc, asyncio.CancelledError):
@@ -120,6 +131,8 @@ class PeerHost:
                 )
             if connection is not None:
                 await asyncio.shield(connection.close())
+                if lease := self.routes.pop(connection, None):
+                    await lease.close()
                 self.connections.discard(connection)
 
     async def _serve(self, stream: PeerStream, purpose: str, deadline: float) -> None:
@@ -147,9 +160,12 @@ class PeerHost:
                     while payload := await stream.receive():
                         if len(payload) > 1024:
                             break
-                        reply = await asyncio.to_thread(
-                            read_sync_chunk, self.host.sync_snapshot, payload
+                        read = (
+                            read_manifest_chunk
+                            if json.loads(payload).get("kind") == "manifest"
+                            else read_sync_chunk
                         )
+                        reply = await asyncio.to_thread(read, self.host.sync_snapshot, payload)
                         if not reply:
                             break
                         await stream.send(reply)
@@ -165,6 +181,7 @@ class PeerHost:
                 self.games.discard(game)
                 self.host._notify()
             await stream.close()
+            self.routes.pop(stream.connection, None)
             self.connections.discard(stream.connection)
 
     async def close(self) -> None:
@@ -175,4 +192,6 @@ class PeerHost:
         for connection in tuple(self.connections):
             with contextlib.suppress(Exception):
                 await asyncio.shield(connection.close())
+            if route := self.routes.pop(connection, None):
+                await route.close()
         self.connections.clear()

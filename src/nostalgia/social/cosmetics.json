@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 2,
+  "revision": 3,
   "items": [
     {
       "key": "amethyst",
@@ -37,6 +37,28 @@
       "accent": "amber",
       "description": "Đêm Halloween dưới ánh đèn bí ngô",
       "state": "active"
+    },
+    {
+      "key": "sprout",
+      "name": "Sprout",
+      "artwork": "sprout",
+      "tint": "#a5d28e",
+      "accent": "emerald",
+      "description": "Mầm xanh cho khởi đầu mới",
+      "state": "active",
+      "access": "free",
+      "renderer": "vector"
+    },
+    {
+      "key": "aurora-drift",
+      "name": "Aurora Drift",
+      "artwork": "aurora-drift",
+      "tint": "#b8b6f2",
+      "accent": "amethyst",
+      "description": "Dải sáng cực quang trên nền trời đêm",
+      "state": "active",
+      "access": "plus",
+      "renderer": "vector"
     }
   ]
 }

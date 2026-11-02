@@ -28,6 +28,7 @@ class ServiceAccount:
     accent: str = ""
     show_badge: bool = True
     avatar_url: str = ""
+    preview_available: bool = False
 
 
 @dataclass(frozen=True, slots=True)

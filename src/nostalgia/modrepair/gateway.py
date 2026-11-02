@@ -41,7 +41,7 @@ class HttpRepairGateway:
             or parts.query
             or parts.fragment
         ):
-            raise ContentError("Địa chỉ dịch vụ Plus không hợp lệ.")
+            raise ContentError("Địa chỉ dịch vụ sửa mod không hợp lệ.")
         self._base_url, self._access_token, self._http_client = (
             base_url.rstrip("/"),
             access_token,
@@ -61,7 +61,7 @@ class HttpRepairGateway:
             max_bytes=262144,
         )
         if response.status in (401, 403):
-            raise ContentError("Cần phiên Google hiện hành và quyền Plus để dùng phương án sửa.")
+            raise ContentError("Đăng nhập lại Google để dùng phương án sửa mod miễn phí.")
         if response.status == 429:
             raise ContentError("Bạn đang lập quá nhiều phương án. Chờ một phút rồi thử lại.")
         if not response.is_ok:
@@ -74,7 +74,7 @@ class HttpRepairGateway:
             if not re.fullmatch(r"[a-zA-Z0-9_.-]{1,96}", selection):
                 raise ContentError("Lựa chọn sửa mod không hợp lệ.")
             document["selection"] = selection
-        fields = as_mapping(self._request("/v1/plus/repair", json.dumps(document).encode()))
+        fields = as_mapping(self._request("/v1/repair", json.dumps(document).encode()))
         plan_id = as_string(fields.get("plan_id")) or ""
         digest = as_string(fields.get("scan_hash")) or ""
         expiry = as_integer(fields.get("expires_at")) or 0
@@ -174,7 +174,7 @@ class HttpRepairGateway:
             raise ContentError("Phương án hết hạn; hãy quét lại.")
         fields = as_mapping(
             self._request(
-                "/v1/plus/repair/" + plan.plan_id + "/authorize",
+                "/v1/repair/" + plan.plan_id + "/authorize",
                 json.dumps({"scan_hash": plan.scan_hash}).encode(),
             )
         )

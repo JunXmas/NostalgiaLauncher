@@ -1,4 +1,4 @@
-"""Đồng bộ theo phòng: khách miễn phí, host được backend kiểm Plus ở từng request."""
+"""Đồng bộ theo phòng qua P2P, kiểm quyền chủ phòng bằng vé của phiên hiện tại."""
 
 from __future__ import annotations
 
@@ -117,7 +117,7 @@ class RoomSyncBridge(GuestSyncBridge):
 
     def _publish(self, source: str | SyncSnapshot, cancel_token: CancelToken | None = None) -> None:
         if self.busy or not self.canShare:
-            self.failed.emit("Cần phòng đang mở và relay hỗ trợ xác thực Plus trước khi chia sẻ.")
+            self.failed.emit("Cần phòng đang mở và vé xác thực chủ phòng trước khi chia sẻ.")
             return
         gateway = self._gateway
         if gateway is None:

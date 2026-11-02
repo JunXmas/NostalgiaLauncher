@@ -33,12 +33,11 @@ class HostSetup(QObject):
         sync_bridge: RoomSyncBridge,
         social: SocialBridge,
         *,
-        plus_enabled: bool,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._launcher, self._bridge, self._multiplayer = launcher, bridge, multiplayer
-        self._sync, self._social, self._plus_enabled = sync_bridge, social, plus_enabled
+        self._sync, self._social = sync_bridge, social
         self._instance_id, self._label, self._stage, self._note = "", "", "idle", ""
         self._share = self._room_seen = False
         self._snapshot: SyncSnapshot | None = None
@@ -70,12 +69,7 @@ class HostSetup(QObject):
 
     @Property(bool, notify=changed)
     def syncAvailable(self) -> bool:
-        return bool(
-            self._plus_enabled
-            and self._social.signedIn
-            and self._social.property("account").get("plus")
-            and self._sync.configured
-        )
+        return bool(self._social.signedIn and self._sync.configured)
 
     @Slot()
     def openSetup(self) -> None:
@@ -98,7 +92,7 @@ class HostSetup(QObject):
         if not any(i["instanceId"] == instance_id for i in self._bridge.property("instances")):
             return "Bản chơi đã chọn không còn tồn tại."
         if share and not self.syncAvailable:
-            return "Đồng bộ cần Plus đang hoạt động và dịch vụ hỗ trợ; hiện chưa khả dụng."
+            return "Đăng nhập Google và kiểm tra kết nối phòng trước khi chia sẻ."
         if share and self._mod_selection.pending_for(instance_id):
             return "Hãy đợi danh sách mod tải xong; nếu có lỗi, chọn lại bản chơi."
         if self._sync.busy:
