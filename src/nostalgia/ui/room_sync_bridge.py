@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
@@ -34,6 +35,7 @@ class RoomSyncBridge(GuestSyncBridge):
         self._gateway = gateway
         self._offer: SyncManifest | None = None
         self._joined_code = ""
+        self._joined_owner = ""
         self._observed_role = "idle"
         self._note = ""
         self._host_ready = True
@@ -102,10 +104,12 @@ class RoomSyncBridge(GuestSyncBridge):
         return self._note
 
     @Slot(str)
-    def join(self, room_code: str) -> None:
+    def join(self, room_code: str, owner_id: str = "") -> None:
+        """`owner_id`: tài khoản chủ phòng do Worker xác thực (người gửi lời mời). Vào bằng mã
+        thì không biết chủ là ai → rỗng, modpack thành bản chơi mới chứ không cập nhật bản cũ."""
         if self.busy or self._multiplayer.room_snapshot().role != "idle":
             return
-        self._joined_code = room_code
+        self._joined_code, self._joined_owner = room_code, owner_id
         self._multiplayer.join(room_code)
 
     @Slot(str)
@@ -195,11 +199,16 @@ class RoomSyncBridge(GuestSyncBridge):
             or self._multiplayer.room_snapshot().share_state == "none"
         ):
             return
-        gateway, room_code = self._gateway, self._joined_code
+        gateway, room_code, owner_id = self._gateway, self._joined_code, self._joined_owner
         generation = self.next_generation()
 
         def work() -> None:
-            self._offerArrived.emit(gateway.resolve(room_code), generation)
+            manifest = gateway.resolve(room_code)
+            # Chỉ mục đến thẳng từ máy chủ phòng: định danh chủ do peer tự khai không tin được
+            # (host gian điền trùng để ghi đè bản chơi người khác). Dùng định danh đã xác thực.
+            if manifest is not None:
+                manifest = replace(manifest, owner_id=owner_id if manifest.pack_id else "")
+            self._offerArrived.emit(manifest, generation)
 
         self.run_in_background(work, "Đang kiểm tra modpack của phòng...")
 

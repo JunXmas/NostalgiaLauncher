@@ -83,6 +83,7 @@ def room_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tu
     multiplayer = view.rootContext().contextProperty("multiplayerBridge")
     sync_bridge = view.rootContext().contextProperty("roomSyncBridge")
     sync_bridge._joined_code = "ABCDEFGHJKMNPQRSTU"
+    sync_bridge._joined_owner = "host"  # như vào qua lời mời của tài khoản "host"
     yield launcher, gateway, view, root_item, multiplayer, sync_bridge, bridge
     social_bridge.shutdown()
     sync_bridge.cancel()

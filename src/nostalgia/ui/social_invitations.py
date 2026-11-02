@@ -23,6 +23,7 @@ class SocialInvitations(SocialSession):
     ) -> None:
         super().__init__(gateway, multiplayer, sync_bridge, parent, session_store, plus_enabled)
         self._invitation_sender = InvitationSender(self)
+        self._accepting_sender = ""
         self._invitation_sender.busyChanged.connect(self.inviteBusyChanged)
         self._invitation_sender.completed.connect(self._apply_invitation)
 
@@ -40,7 +41,7 @@ class SocialInvitations(SocialSession):
             self._note = error
         elif room_code:
             if not self._multiplayer.active and self._sync_bridge.hostReady:
-                self._sync_bridge.join(room_code)
+                self._sync_bridge.join(room_code, self._accepting_sender)
                 self._note = "Đã gửi."
             else:
                 self._note = "Rời phòng hiện tại để nhận lời mời này."
@@ -86,6 +87,9 @@ class SocialInvitations(SocialSession):
             and self._snapshot
             and any(invite.invite_id == invite_id for invite in self._snapshot.invitations)
         ):
+            self._accepting_sender = next(
+                i.sender for i in self._snapshot.invitations if i.invite_id == invite_id
+            )
             self._invitation_sender.submit(gateway, lambda: gateway.accept_invite(invite_id))
 
     @Slot(str)

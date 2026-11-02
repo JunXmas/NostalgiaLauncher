@@ -143,3 +143,21 @@ def test_previous_guest_instance_is_shown_and_new_mods_require_selection(
         find_control(root_item, "guestSyncConfirm").property("label")
         == "Cập nhật bản chơi đã đồng bộ"
     )
+
+
+@pytest.mark.parametrize(("invited_by", "claimed"), [("", "host"), ("misa", "host")])
+def test_owner_claimed_by_the_room_host_is_never_trusted(
+    room_preview: tuple[Any, ...], invited_by: str, claimed: str
+) -> None:
+    """Chỉ mục đến thẳng từ peer: host gian tự khai owner_id trùng pack của người khác để ghi đè
+    bản chơi đó. Khách chỉ tin người gửi lời mời (Worker xác thực); vào bằng mã thì không ai."""
+    launcher, gateway, _view, _root_item, multiplayer, sync_bridge, _bridge = room_preview
+    gateway.manifest = replace(gateway.manifest, pack_id="a" * 32, owner_id=claimed)
+    victim = launcher.create_instance(Instance("victim", "1.20.1", "Bản chơi của nhóm khác"))
+    save_sync_receipt(launcher.paths, victim.instance_id, gateway.manifest, frozenset())
+    sync_bridge._joined_owner = invited_by
+    multiplayer._apply_status(RoomStatus(role="joined", local_port=25566))
+    wait_until(lambda: bool(sync_bridge.offer) and not sync_bridge.busy)
+    sync_bridge.sync()
+    wait_until(lambda: sync_bridge.reviewReady and not sync_bridge.busy)
+    assert sync_bridge.updateLabel == ""
