@@ -22,4 +22,7 @@ def resolve_ely_authorization_query(authorize_url: str, account_root: str) -> st
         raise AccountError("Ely.by returned an unexpected authorization client.")
     if not client_ids:
         fields.append(("client_id", "ely"))
+    # ely.by phát scope cách bằng dấu phẩy; API OAuth chỉ nhận dấu cách (RFC 6749 §3.3),
+    # còn phẩy thì trả invalid_scope → không phát mã. Frontend của họ tự đổi, ta cũng phải đổi.
+    fields = [(k, " ".join(v.replace(",", " ").split()) if k == "scope" else v) for k, v in fields]
     return urlencode(fields)

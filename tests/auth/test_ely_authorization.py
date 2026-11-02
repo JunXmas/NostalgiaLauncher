@@ -48,6 +48,15 @@ def test_existing_ely_client_id_and_empty_opaque_parameters_are_preserved(path: 
     }
 
 
+def test_comma_separated_scope_from_ely_site_is_sent_space_separated() -> None:
+    # Chuyển hướng thật của ely.by (11/2026): "account_info,account_email" → API trả invalid_scope.
+    query = resolve_ely_authorization_query(
+        "https://account.ely.by/oauth2/v1/ely?scope=account_info%2Caccount_email&state=s",
+        "https://account.ely.by",
+    )
+    assert parse_qs(query)["scope"] == ["account_info account_email"]
+
+
 @pytest.mark.parametrize(
     "redirect",
     [
