@@ -4342,5 +4342,19 @@
   "p:Tự động": "Automatic",
   "p:Không tìm thấy file Java này. Kiểm tra lại đường dẫn hoặc bấm Tự động.": "Java file not found. Check the path or press Automatic.",
   "p:Chọn file java": "Choose java file",
-  "p:Có thể khôi phục ở Xuất modpack → Khôi phục dữ liệu cũ. Dữ liệu ở thư mục riêng vẫn được giữ nguyên.": "Restore it from Export modpack → Recover old data. Files in a custom game folder are preserved."
+  "p:Có thể khôi phục ở Xuất modpack → Khôi phục dữ liệu cũ. Dữ liệu ở thư mục riêng vẫn được giữ nguyên.": "Restore it from Export modpack → Recover old data. Files in a custom game folder are preserved.",
+  "p:Bản chơi này chưa có thế giới nào. Tạo world mới trong game.": "This instance has no worlds yet. Create one in the game.",
+  "p:Cheat": "Cheats",
+  "p:Chỉ mở game": "Just open the game",
+  "p:Chọn nơi để vào thẳng, hoặc chỉ mở game.": "Pick where to jump straight in, or just open the game.",
+  "p:Chưa thêm server nào. Thêm server trong game ở mục Multiplayer.": "No servers added yet. Add one in the game's Multiplayer screen.",
+  "p:Gần đây": "Recent",
+  "p:Hardcore": "Hardcore",
+  "p:Không có kết quả phù hợp.": "No matching results.",
+  "p:Chơi đơn": "Singleplayer",
+  "p:Chơi mạng": "Multiplayer",
+  "p:+ Tạo world mới": "+ Create new world",
+  "p:Tên A–Z": "Name A–Z",
+  "p:Tìm theo tên…": "Search by name…",
+  "m:Đọc thế giới của {1}": "Reading worlds of {1}"
 }
