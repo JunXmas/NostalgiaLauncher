@@ -83,6 +83,12 @@ Cập nhật: 2026-11-02 (nhánh `feat/plus-v2`).
   `tests/ui/test_social_refresh_budget.py` (5 phút giả lập = 6 lần tải).
 - Máy chủ cũ còn gửi trường `online` thì launcher bỏ qua (`social/parse.py`). Route chat
   `/v1/friends/{id}/messages` và presence phía Worker chưa gỡ (mã Worker không ở kho này).
+- Mã phòng ngay trên trang Bạn bè (`qml/app/RoomCodeCard.qml`): chủ phòng thấy mã + Chép,
+  khách nhập mã + Vào. Vào bằng mã đi đúng đường lời mời (`roomSyncBridge.join`). Gác bởi
+  `tests/ui/test_room_code_card.py`.
+- Đang host thì mỗi hàng bạn có nút Mời (`qml/app/FriendsRail.qml`, gửi qua
+  `socialBridge.inviteFriend`); mọi bạn bè, không lọc online. Gác bởi
+  `tests/ui/test_friend_invite.py`.
 
 ## Ghi log
 
