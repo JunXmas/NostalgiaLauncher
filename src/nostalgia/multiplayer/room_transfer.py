@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from concurrent.futures import Future
 from typing import TYPE_CHECKING
 
-from nostalgia.errors import MultiplayerError
-from nostalgia.multiplayer.peer_download import PeerDownload
+from nostalgia.errors import DataFileError, MultiplayerError
 from nostalgia.multiplayer.room_recovery import RoomRecovery
 from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.multiplayer.sync_model import SyncManifest, SyncSnapshot
+from nostalgia.net.payload import decode_json
 
 if TYPE_CHECKING:
     from nostalgia.multiplayer.host import HostRelay
+    from nostalgia.multiplayer.peer_download import PeerDownload
     from nostalgia.multiplayer.sync_model import SyncFile
     from nostalgia.operations.cancellation import CancelToken
 
@@ -55,49 +55,59 @@ class RoomTransfer(RoomRecovery):
     async def _fetch_sync_manifest(self, room_code: str) -> SyncManifest | None:
         from nostalgia.operations.cancellation import CancelToken
 
-        if self._joiner is None or room_code != self._guest_room_code or self._room_http is None:
+        downloader = self._peer_downloader()
+        if downloader is None or room_code != self._guest_room_code or self._room_http is None:
             return None
         room_id, proof = invite_proof(room_code)
-        base_url = "https://" + self._relay_url.removeprefix("wss://").rstrip("/")
         response = await asyncio.to_thread(
             self._room_http.send,
             "GET",
-            base_url + f"/v1/rooms/{room_id}/lobby",
+            self._signal_base_url() + f"/v1/rooms/{room_id}/lobby",
             headers={"X-Room-Invite-Proof": proof},
             max_bytes=8192,
         )
         if not response.is_ok:
             raise MultiplayerError("Không đọc được trạng thái chia sẻ của phòng.")
-        document = json.loads(response.body)
-        if not document.get("sync_ready") or document.get("locked"):
+        try:
+            document = decode_json(response.body, what="trạng thái phòng")
+        except DataFileError:
+            document = None
+        if not isinstance(document, dict):
+            raise MultiplayerError("Trạng thái chia sẻ của phòng không hợp lệ.")
+        if document.get("sync_ready") is not True or document.get("locked") is True:
             return None
-        if self._peer_download is None:
-            self._peer_download = PeerDownload(base_url, self._room_http, disable_on_failure=False)
-        return await self._peer_download.fetch_manifest(room_code, CancelToken())
+        return await downloader.fetch_manifest(room_code, CancelToken())
 
     async def download_peer_file(
         self, room_code: str, sync_file: SyncFile, cancel_token: CancelToken
     ) -> bytes | None:
-        if not self._direct_allowed or self._joiner is None or self._room_http is None:
-            return self.unavailable_peer_file()
-        if not self._relay_url.startswith("wss://"):
-            return self.unavailable_peer_file()
-        try:
-            from nostalgia.multiplayer.peer_download import PeerDownload
-        except ImportError:
-            return self.unavailable_peer_file()
-        if self._peer_download is None:
-            base_url = "https://" + self._relay_url.removeprefix("wss://").rstrip("/")
-            self._peer_download = PeerDownload(
-                base_url, self._room_http, disable_on_failure=self._relay_enabled
-            )
-        payload = await self._peer_download.download(room_code, sync_file, cancel_token)
-        return payload if payload is not None else self.unavailable_peer_file()
+        downloader = self._peer_downloader()
+        payload = (
+            await downloader.download(room_code, sync_file, cancel_token) if downloader else None
+        )
+        if payload is None:
+            raise MultiplayerError("Không thể đồng bộ file qua P2P. Hãy kiểm tra mạng và thử lại.")
+        return payload
 
-    def unavailable_peer_file(self) -> bytes | None:
-        if not self._relay_enabled:
-            raise MultiplayerError(
-                "Không thể đồng bộ file qua P2P. Relay dữ liệu đã tắt; "
-                "hãy kiểm tra mạng và thử lại."
+    def _signal_base_url(self) -> str:
+        return "https://" + self._relay_url.removeprefix("wss://").rstrip("/")
+
+    def _peer_downloader(self) -> PeerDownload | None:
+        """Một PeerDownload cho cả chỉ mục lẫn file. Import trễ: lõi không được bắt buộc có
+        aiortc/cryptography (chúng thuộc extra `ui`)."""
+        if (
+            not self._direct_allowed
+            or self._joiner is None
+            or self._room_http is None
+            or not self._relay_url.startswith("wss://")
+        ):
+            return None
+        if self._peer_download is None:
+            try:
+                from nostalgia.multiplayer.peer_download import PeerDownload
+            except ImportError:
+                return None
+            self._peer_download = PeerDownload(
+                self._signal_base_url(), self._room_http, disable_on_failure=False
             )
-        return None
+        return self._peer_download
