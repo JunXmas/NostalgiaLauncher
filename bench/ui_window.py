@@ -105,7 +105,6 @@ def main() -> int:
     if args.accounts_url:
         social_bridge = view.rootContext().contextProperty("socialBridge")
         payment_bridge = view.rootContext().contextProperty("paymentBridge")
-        room_bridge = view.rootContext().contextProperty("roomSyncBridge")
 
         def connect_services() -> None:
             access_token = social_bridge.access_token()
