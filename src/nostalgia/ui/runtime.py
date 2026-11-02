@@ -6,7 +6,6 @@ import logging
 import os
 import sys
 
-from PySide6.QtCore import QTimer
 from PySide6.QtQuick import QQuickView
 from PySide6.QtWidgets import QApplication
 
@@ -38,7 +37,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         if configuration.account_url
         else None
     )
-    view, bridge = open_window(
+    view, _bridge = open_window(
         launcher,
         social_gateway=social_gateway,
         session_store=launcher.make_service_session_store(configuration.account_url)
@@ -123,7 +122,6 @@ def build_release_view(launcher: Launcher) -> QQuickView:
     if application is not None:
         application.aboutToQuit.connect(lambda: http_client.close())
     view.setTitle("Nostalgia Launcher · " + __version__)
-    QTimer.singleShot(3000, bridge.checkModpackOnStartup)
     return view
 
 

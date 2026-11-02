@@ -5,7 +5,6 @@ Item {
     id: root
     objectName: "minimalHome"
     signal navigate(int index)
-    signal createServerRequested
     property string chosenId: ""
     property var instances: bridge.instances
     // Refresh after the bridge invalidates its cached rows, regardless of signal order.
@@ -68,7 +67,6 @@ Item {
                 chosen: root.chosen
                 onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.play(root.chosen.instanceId) : root.navigate(1)
                 onLibraryRequested: root.navigate(2)
-                onCreateServerRequested: root.createServerRequested()
             }
             GuideCard { width: parent.width; topicId: "start" }
             Item {

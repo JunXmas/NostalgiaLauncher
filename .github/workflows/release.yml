@@ -181,9 +181,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
-          cp src/nostalgia/content/packs/forgotten-worlds-1.21.11.mrpack \
-            bundles/Forgotten-Worlds-Optimized-1.21.11.mrpack
-          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg bundles/*.zip bundles/*.tar.gz bundles/*.mrpack)
+          assets=(bundles/*-setup.exe bundles/*.deb bundles/*.AppImage bundles/*.rpm bundles/*.dmg bundles/*.zip bundles/*.tar.gz)
           test "${#assets[@]}" -gt 0
           : > bundles/SHA256SUMS
           for asset in "${assets[@]}"; do

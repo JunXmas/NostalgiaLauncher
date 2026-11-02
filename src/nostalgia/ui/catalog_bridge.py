@@ -18,7 +18,7 @@ from nostalgia.modloader.model import LoaderKind
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge, local_path
 
-PRESET_LABELS = {"optimized": "Fabulously Optimized", "forgotten-worlds": "Forgotten Worlds"}
+PRESET_LABELS = {"optimized": "Fabulously Optimized"}
 
 
 def slugify(display_name: str, taken: set[str]) -> str:
@@ -60,10 +60,6 @@ class CatalogBridge(WorkerBridge):
     def presetGameVersions(self) -> list[str]:
         """Phiên bản mà gói Optimized có bản; rỗng = chưa tải (hộp thoại không làm mờ gì)."""
         return list(self._preset_versions)
-
-    @Property(list, constant=True)
-    def forgottenWorldsGameVersions(self) -> list[str]:
-        return list(self._launcher.list_preset_game_versions("forgotten-worlds"))
 
     @Slot()
     def loadPresetVersions(self) -> None:

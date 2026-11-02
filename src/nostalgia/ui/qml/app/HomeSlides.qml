@@ -2,20 +2,18 @@ import QtQuick
 import QtQuick.Effects
 import "../" as Legacy
 
-/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, slide 1 = server Forgotten Worlds,
-   slide 2 = bản chơi của bạn. Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang
-   định bấm). */
+/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, slide 1 = bản chơi của bạn.
+   Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang định bấm). */
 Glass {
     id: root
     objectName: "homeSlides"
     property var chosen: null
     property int current: 0
-    readonly property int count: 3
+    readonly property int count: 2
     signal playRequested
     signal libraryRequested
-    signal createServerRequested
     width: parent.width
-    height: Math.max(400, heroCopy.implicitHeight + 72 * 2, showcase.contentHeight + 64, nos.contentHeight + 72)
+    height: Math.max(400, heroCopy.implicitHeight + 72 * 2, nos.contentHeight + 72)
     readonly property Item heroCopy: hero.contentItem
     radius: 26
     padding: 0
@@ -47,13 +45,6 @@ Glass {
                 active: root.current === 0
                 onCreateRequested: root.playRequested()
                 onLibraryRequested: root.libraryRequested()
-            }
-            ServerShowcase {
-                id: showcase
-                width: viewport.width; height: viewport.height
-                textInset: 72
-                active: root.current === 1
-                onCreateRequested: root.createServerRequested()
             }
             HomeHero {
                 id: hero

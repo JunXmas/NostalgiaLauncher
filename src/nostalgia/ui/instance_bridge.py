@@ -16,7 +16,6 @@ from PySide6.QtGui import QDesktopServices
 
 from nostalgia.api import Instance, Launcher, NosClientConfig
 from nostalgia.operations.progress import Progress
-from nostalgia.ui.instance_pack import builtin_pack_row
 from nostalgia.ui.worker import WorkerBridge
 
 
@@ -112,7 +111,6 @@ class InstanceBridge(WorkerBridge):
     def _describe(self, instance: Instance) -> dict[str, Any]:
         stats = self._launcher.describe_instance_stats(instance.instance_id)
         return {
-            **builtin_pack_row(self._launcher, instance),
             "instanceId": instance.instance_id,
             "label": instance.label,
             "versionId": instance.version_id,

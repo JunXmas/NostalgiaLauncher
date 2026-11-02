@@ -11,13 +11,7 @@ import zipfile
 from pathlib import Path
 
 from nostalgia.content import modrinth
-from nostalgia.content.builtin_receipt import (
-    bundle_receipt,
-    legacy_pack_version,
-    save_builtin_receipt,
-)
 from nostalgia.content.model import Project
-from nostalgia.content.mrpack import ALLOWED_HOSTS, read_index
 from nostalgia.content.pack_inventory import record_pack_inventory
 from nostalgia.content.pack_origin import save_pack_origin
 from nostalgia.content.pack_version import choose_pack_version as choose_pack_version
@@ -136,13 +130,6 @@ class ModpackOperations(PackSourceOperations, InstanceOperations):
                 on_progress=on_progress,
                 cancel_token=cancel_token,
             )
-            if "modrinth.index.json" in names and legacy_pack_version(
-                self.instance_game_dir(instance)
-            ):
-                index = read_index(pack_path, allowed_hosts=allowed_hosts or ALLOWED_HOSTS)
-                save_builtin_receipt(
-                    self.paths.instance_dir(instance_id), bundle_receipt(pack_path, index)
-                )
             return instance
 
     def _install_pack_plan(

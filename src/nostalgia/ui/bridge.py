@@ -22,10 +22,10 @@ from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.game_lan import GameLanFeed
 from nostalgia.ui.game_launch import load_game_dir, prepare_game
 from nostalgia.ui.game_log import GameLogFeed, describe_game_failure
-from nostalgia.ui.preset_instance_bridge import PresetInstanceBridge
+from nostalgia.ui.instance_bridge import InstanceBridge
 
 
-class LauncherBridge(PresetInstanceBridge):
+class LauncherBridge(InstanceBridge):
     """Bề mặt mà QML nhìn thấy: vài thuộc tính đọc được, vài lệnh gọi được, và tín hiệu."""
 
     accountsChanged = Signal()
