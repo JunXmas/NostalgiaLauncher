@@ -117,7 +117,23 @@ def commit_directory(
             shutil.rmtree(directory)
         (receipt / "before").replace(directory)
         raise
+    _prune(history, keep=KEEP_RECEIPTS)
     return receipt_id
+
+
+# Mỗi biên nhận giữ nguyên bản cũ của cả thư mục; hardlink nên rẻ khi file chung với bản
+# hiện tại, nhưng mod đã bị thay thì vẫn chiếm chỗ. Giữ vài lần gần nhất là đủ để hoàn tác.
+KEEP_RECEIPTS = 3
+
+
+def _prune(history: Path, *, keep: int) -> None:
+    receipts = sorted(
+        (r for r in history.iterdir() if r.is_dir() and not r.is_symlink() and len(r.name) == 32),
+        key=lambda r: r.stat().st_mtime,
+        reverse=True,
+    )
+    for stale in receipts[keep:]:
+        shutil.rmtree(stale, ignore_errors=True)
 
 
 def recover_directory(directory: Path, history: Path) -> bool:

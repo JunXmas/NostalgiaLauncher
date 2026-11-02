@@ -138,3 +138,20 @@ def test_missing_game_folder_fails_instead_of_creating_empty_backup(tmp_path: Pa
     with pytest.raises(InstanceError):
         launcher.backup_instance("survival")
     assert not launcher.list_instance_backups()
+
+
+def test_backup_leaves_out_the_launcher_undo_history(tmp_path: Path) -> None:
+    """`.nostalgia-mod-versions`/`.nostalgia-repairs` chứa bản sao cả mods: không vào sao lưu."""
+    launcher = prepared(tmp_path)
+    folder = launcher.instance_game_dir(launcher.list_instances()[0])
+    for history in (".nostalgia-mod-versions", ".nostalgia-repairs"):
+        (folder / history / ("a" * 32) / "before").mkdir(parents=True)
+        (folder / history / ("a" * 32) / "before" / "old.jar").write_bytes(b"old")
+    (folder / "mods").mkdir()
+    (folder / "mods" / ".nostalgia-content-metadata.json").write_text("{}")
+    backup = launcher.backup_instance("survival")
+    with zipfile.ZipFile(backup.path) as archive:
+        names = archive.namelist()
+    assert not [n for n in names if n.startswith("game/.nostalgia-")]
+    assert "game/saves/Thế giới/level.dat" in names
+    assert "game/mods/.nostalgia-content-metadata.json" in names  # chỉ bỏ ở gốc bản chơi

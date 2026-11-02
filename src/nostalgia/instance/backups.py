@@ -63,6 +63,10 @@ def create_instance_backup(paths: DataPaths, instance_id: str) -> InstanceBackup
             ):
                 if any((parent / d).is_symlink() for d in directories):
                     raise InstanceError("bản chơi chứa liên kết thư mục; sao lưu đã dừng")
+                # Lịch sử hoàn tác/vùng tạm của launcher (.nostalgia-*) chứa bản sao cả thư mục
+                # mods: đưa vào sao lưu là nhân đôi dung lượng mà khôi phục cũng không dùng tới.
+                if parent == source:
+                    directories[:] = [d for d in directories if not d.startswith(".nostalgia-")]
                 for name in names:
                     path = parent / name
                     if path.is_symlink() or not path.is_file():

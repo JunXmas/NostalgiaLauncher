@@ -125,3 +125,16 @@ def test_recovery_never_touches_a_mods_folder_with_content(tmp_path: Path) -> No
     (history / "receipt.json").write_text('{"status": "prepared"}')
     assert not directory_swap.recover_directory(mods, tmp_path / "history")
     assert sorted(p.name for p in mods.iterdir()) == ["a.jar", "b.jar"]
+
+
+def test_only_the_latest_receipts_are_kept(tmp_path: Path) -> None:
+    mods = _mods(tmp_path)
+    receipts = []
+    for number in range(directory_swap.KEEP_RECEIPTS + 2):
+        stage = tmp_path / f"stage{number}"
+        stage_directory(mods, stage)
+        (stage / f"v{number}.jar").write_bytes(b"x")
+        receipts.append(commit_directory(mods, stage, tmp_path / "history", tree_fingerprint(mods)))
+    kept = sorted(p.name for p in (tmp_path / "history").iterdir())
+    assert kept == sorted(receipts[-directory_swap.KEEP_RECEIPTS :])
+    undo_directory(mods, tmp_path / "history", receipts[-1])  # bản gần nhất vẫn hoàn tác được
