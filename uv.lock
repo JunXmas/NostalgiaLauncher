@@ -646,6 +646,7 @@ source = { editable = "." }
 
 [package.optional-dependencies]
 ui = [
+    { name = "aioice" },
     { name = "aiortc" },
     { name = "cryptography" },
     { name = "keyring" },
@@ -670,6 +671,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aioice", marker = "extra == 'ui'", specifier = ">=0.10,<0.11" },
     { name = "aiortc", marker = "extra == 'ui'", specifier = ">=1.14,<2" },
     { name = "cryptography", marker = "extra == 'ui'", specifier = ">=44,<51" },
     { name = "keyring", marker = "extra == 'ui'", specifier = ">=25.6,<26" },

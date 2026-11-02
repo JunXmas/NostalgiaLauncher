@@ -34,6 +34,7 @@ ui = [
     "cryptography>=44,<51",
     "segno>=1.6,<2",
     "aiortc>=1.14,<2",
+    "aioice>=0.10,<0.11",  # peer_route dùng _local_candidates nội bộ
 ]
 
 [project.scripts]

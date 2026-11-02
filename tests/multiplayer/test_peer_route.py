@@ -56,3 +56,53 @@ def test_upnp_candidate_uses_the_existing_ice_socket_and_cleanup(
         assert removed == mappings and route._renewal is not None and route._renewal.done()
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        asyncio.LimitOverrunError("header > 8 KiB", 8192),  # thiết bị LAN trả header quá dài
+        IndexError("status line without spaces"),
+        AttributeError("aioice renamed _local_candidates"),
+    ],
+)
+def test_upnp_failures_fall_back_to_ipv6_and_stun_instead_of_breaking_p2p(
+    monkeypatch: pytest.MonkeyPatch, failure: Exception
+) -> None:
+    monkeypatch.setattr("aioice.ice.get_host_addresses", lambda **_kwargs: ["127.0.0.1"])
+    monkeypatch.setattr("nostalgia.multiplayer.peer_route.is_router_address", lambda _address: True)
+
+    async def discover(_address: str) -> RouterService:
+        raise failure
+
+    monkeypatch.setattr("nostalgia.multiplayer.peer_route.discover_router", discover)
+
+    async def scenario() -> None:
+        connection = RTCPeerConnection(RTCConfiguration(iceServers=[]))
+        connection.createDataChannel("fixture")
+        route = PeerRoute(connection)
+        try:
+            await route.prepare()
+            assert connection.sctp is not None
+            gatherer = connection.sctp.transport.transport.iceGatherer
+            assert any(c.type == "host" for c in gatherer.getLocalCandidates())
+        finally:
+            await connection.close()
+            await route.close()
+
+    asyncio.run(scenario())
+
+
+def test_close_survives_a_renewal_task_that_died() -> None:
+    async def scenario() -> None:
+        route = PeerRoute.__new__(PeerRoute)
+        route._mappings, route._closed = [], False
+
+        async def died() -> None:
+            raise asyncio.IncompleteReadError(b"", 10)
+
+        route._renewal = asyncio.ensure_future(died())
+        await asyncio.sleep(0)
+        await route.close()  # không được ném lại lỗi của task gia hạn
+
+    asyncio.run(scenario())

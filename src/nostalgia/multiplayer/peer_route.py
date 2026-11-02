@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING
 
 from nostalgia.net.router_discovery import discover_router
@@ -72,14 +71,10 @@ class PeerRoute:
                         )
                     )
                     logger.info("UPnP ICE candidate ready")
-        except (
-            OSError,
-            ValueError,
-            TimeoutError,
-            ET.ParseError,
-            asyncio.IncompleteReadError,
-        ) as exc:
-            logger.debug("UPnP unavailable; keeping IPv6/STUN candidates: %s", type(exc).__name__)
+        except Exception as exc:
+            # UPnP là phụ: router lạ, thiết bị LAN trả rác (header quá dài, dòng trạng thái hỏng)
+            # hay aioice đổi API nội bộ đều chỉ được tắt UPnP, không được giết cả kết nối P2P.
+            logger.info("UPnP unavailable; keeping IPv6/STUN candidates: %s", type(exc).__name__)
         finally:
             if self._mappings:
                 self._renewal = asyncio.create_task(self._renew())
@@ -89,9 +84,12 @@ class PeerRoute:
             while True:
                 await asyncio.sleep(120)
                 for mapping in self._mappings:
-                    await renew_mapping(mapping)
-        except (OSError, ValueError, TimeoutError, ET.ParseError) as exc:
-            logger.warning("UPnP lease renewal failed: %s", type(exc).__name__)
+                    try:
+                        await renew_mapping(mapping)
+                    except Exception as exc:  # lỗi một lần thì vòng sau thử lại
+                        logger.warning("UPnP lease renewal failed: %s", type(exc).__name__)
+        except asyncio.CancelledError:
+            raise
 
     async def close(self) -> None:
         if self._closed:
@@ -99,11 +97,11 @@ class PeerRoute:
         self._closed = True
         if self._renewal is not None:
             self._renewal.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            with contextlib.suppress(asyncio.CancelledError, Exception):
                 await self._renewal
         mappings, self._mappings = self._mappings, []
         for mapping in mappings:
             try:
                 await remove_mapping(mapping)
-            except (OSError, ValueError, TimeoutError, ET.ParseError):
+            except Exception:
                 logger.warning("UPnP lease cleanup failed; short lease will expire")
