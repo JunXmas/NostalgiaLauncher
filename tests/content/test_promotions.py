@@ -190,4 +190,4 @@ def test_offline_or_broken_feed_uses_cache_else_hides_with_warning(
 def test_repository_feed_is_valid_and_neutral() -> None:
     feed = json.loads((Path(__file__).parents[2] / "promotions.json").read_text("utf-8"))
     assert feed["schema"] == 1 and isinstance(feed["slides"], list)
-    assert "forgotten" not in json.dumps(feed).lower()
+    assert "pikamc" not in json.dumps(feed).lower()  # không quảng cáo server cụ thể nào
