@@ -32,6 +32,9 @@ from nostalgia.operations.cancellation import CancelToken
 DEFAULT_HEADERS: Mapping[str, str] = {
     "Accept-Encoding": "identity",
     "User-Agent": f"NostalgiaLauncher/{__version__}",
+    # Worker coi request thiếu header này là launcher <= 1.2.0rc43 và trả hợp đồng cũ (tên gói,
+    # huy hiệu cũ, /v1/me chỉ đọc). Đổi số khi hợp đồng dịch vụ đổi không tương thích.
+    "Nostalgia-Contract": "2",
 }
 
 # Kích thước khối đọc từ socket. Nhỏ hơn khối băm vì mạng chậm hơn đĩa rất nhiều.

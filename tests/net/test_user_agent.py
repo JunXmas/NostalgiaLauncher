@@ -22,6 +22,8 @@ def test_send_and_stream_identify_the_launcher(
 
     assert server_state.received_header(sent, "User-Agent") == EXPECTED_AGENT
     assert server_state.received_header(streamed, "User-Agent") == EXPECTED_AGENT
+    # Thiếu header này Worker coi là launcher cũ và trả tên gói/huy hiệu cũ.
+    assert server_state.received_header(sent, "Nostalgia-Contract") == "2"
 
 
 def test_a_caller_can_still_override_the_agent(
