@@ -14,9 +14,13 @@ Cập nhật: 2026-11-02 (nhánh `feat/plus-v2`).
 - Giao diện cũ (classic) đã gỡ. File cấu hình còn `"interface_style": "classic"` vẫn đọc trơn
   và mở giao diện mới; lần lưu sau thì trường cũ biến mất
   (`tests/settings/test_settings_store.py::test_old_classic_interface_choice_is_read_silently`).
-- Ô CHƠI TIẾP và giờ chơi trên thẻ bản chơi chưa có trên giao diện mới. Cầu nối vẫn còn
-  (`bridge.recentWorlds` / `playWorld` / `recentServers`, `playtimeText` / `launchCount` ở
-  `src/nostalgia/ui/instance_bridge.py`) cho màn chọn world và hồ sơ sau này.
+- Bấm Chơi (thẻ bản chơi, nút Chơi ở trang chủ) mở cửa sổ chọn: tab Chơi đơn (lưới thế giới, ảnh
+  `icon.png`) và Chơi mạng (server trong `servers.dat`, không ping); bấm thẻ là vào thẳng qua
+  `--quickPlaySingleplayer` / `--quickPlayMultiplayer` (đời 1.6-1.19: `--server/--port`).
+  Bản chơi không có gì để chọn thì mở game luôn (`app/PlayChoiceDialog.qml`,
+  `bridge.loadPlayChoices` ở `src/nostalgia/ui/instance_bridge.py`).
+- Giờ chơi trên thẻ bản chơi chưa có trên giao diện mới; cầu nối vẫn còn (`playtimeText` /
+  `launchCount`) cho hồ sơ sau này.
 
 ### Nostalgia+ và thanh toán: ĐANG BẬT THẬT
 

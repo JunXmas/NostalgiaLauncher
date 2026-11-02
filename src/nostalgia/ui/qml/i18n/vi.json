@@ -4249,5 +4249,19 @@
   "p:GỢI Ý": "GỢI Ý",
   "p:SUGGESTED": "GỢI Ý",
   "p:SERVER GỢI Ý": "SERVER GỢI Ý",
-  "p:SUGGESTED SERVER": "SERVER GỢI Ý"
+  "p:SUGGESTED SERVER": "SERVER GỢI Ý",
+  "p:Bản chơi này chưa có thế giới nào. Tạo world mới trong game.": "Bản chơi này chưa có thế giới nào. Tạo world mới trong game.",
+  "p:Cheat": "Cheat",
+  "p:Chỉ mở game": "Chỉ mở game",
+  "p:Chọn nơi để vào thẳng, hoặc chỉ mở game.": "Chọn nơi để vào thẳng, hoặc chỉ mở game.",
+  "p:Chưa thêm server nào. Thêm server trong game ở mục Multiplayer.": "Chưa thêm server nào. Thêm server trong game ở mục Multiplayer.",
+  "p:Gần đây": "Gần đây",
+  "p:Hardcore": "Hardcore",
+  "p:Không có kết quả phù hợp.": "Không có kết quả phù hợp.",
+  "p:Chơi đơn": "Chơi đơn",
+  "p:Chơi mạng": "Chơi mạng",
+  "p:+ Tạo world mới": "+ Tạo world mới",
+  "p:Tên A–Z": "Tên A–Z",
+  "p:Tìm theo tên…": "Tìm theo tên…",
+  "m:Đọc thế giới của {1}": "Đọc thế giới của {1}"
 }

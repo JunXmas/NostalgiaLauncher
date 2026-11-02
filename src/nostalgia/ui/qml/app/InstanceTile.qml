@@ -87,7 +87,7 @@ Rectangle {
             selected: root.selected
             disabledReason: root.pickOnly ? "" : Legacy.Tr.phrase(Reasons.playing(bridge))
             clickable: !disabledReason
-            onClicked: root.pickOnly ? root.picked() : bridge.play(root.entry.instanceId)
+            onClicked: root.pickOnly ? root.picked() : bridge.loadPlayChoices(root.entry.instanceId)
         }
         Button {
             visible: !root.pickOnly

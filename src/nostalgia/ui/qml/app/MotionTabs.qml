@@ -4,6 +4,7 @@ Item {
     property var labels: []
     property int currentIndex: 0
     property string namePrefix: "tab-"
+    property bool evenWidths: false  // chia đều bề ngang cho các tab thay vì ôm theo chữ
     signal selected(int index)
     function refreshSelection() { selection.selectedButton = choices.itemAt(root.currentIndex); }
     onCurrentIndexChanged: Qt.callLater(refreshSelection)
@@ -26,7 +27,7 @@ Item {
         Repeater {
             id: choices; model: root.labels
             onItemAdded: function(index, delegateItem) { Qt.callLater(root.refreshSelection); }
-            Button { objectName: root.namePrefix + index; height: 36 * GlassTheme.scale; label: modelData; quiet: true; emphasized: root.currentIndex === index; selected: false; onClicked: root.selected(index) }
+            Button { objectName: root.namePrefix + index; width: root.evenWidths ? (tabs.width - tabs.spacing * (choices.count - 1)) / choices.count : implicitWidth; height: 36 * GlassTheme.scale; label: modelData; quiet: true; emphasized: root.currentIndex === index; selected: false; onClicked: root.selected(index) }
         }
     }
 }

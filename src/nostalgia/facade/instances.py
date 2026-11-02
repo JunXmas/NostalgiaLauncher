@@ -1,21 +1,17 @@
-"""Bản chơi: đăng ký, lưu, gỡ, thống kê chơi (giờ chơi, số lần chạy, thế giới, mod) và thế
-giới chơi gần đây cho ô CHƠI TIẾP."""
+"""Bản chơi: đăng ký, lưu, gỡ, thống kê chơi (giờ chơi, số lần chạy, thế giới, mod) và nơi
+vào thẳng được (thế giới, server) cho cửa sổ chọn khi bấm Chơi."""
 
 from __future__ import annotations
 
 import time
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from nostalgia.content.installed import list_installed
-from nostalgia.errors import ContentError
+from nostalgia.errors import ContentError, NostalgiaError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.model import Instance
-from nostalgia.instance.server_list import (
-    DEFAULT_SERVER_LIMIT,
-    RecentServer,
-    list_recent_servers,
-)
+from nostalgia.instance.server_list import SERVERS_FILE_NAME, SavedServer, load_saved_servers
 from nostalgia.instance.stats import (
     InstanceStats,
     PlayStats,
@@ -32,8 +28,21 @@ from nostalgia.instance.store import (
     load_instance,
     save_instance,
 )
-from nostalgia.instance.world import DEFAULT_RECENT_LIMIT, RecentWorld, list_recent_worlds
+from nostalgia.instance.world import SavedWorld, list_worlds
+from nostalgia.launch.command import QuickPlaySupport, describe_quick_play, split_server_address
+from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.settings.store import load_settings
+
+
+@dataclass(frozen=True, slots=True)
+class PlayChoices:
+    """Những nơi vào thẳng được khi bấm Chơi. `servers_changed_at`: mtime của servers.dat (giây
+    epoch, 0 = không có) — game ghi file khi mở màn Multiplayer, nên là mốc "chơi mạng gần nhất"."""
+
+    worlds: tuple[SavedWorld, ...]
+    servers: tuple[SavedServer, ...]
+    servers_changed_at: int
+    quick_play: QuickPlaySupport
 
 
 class InstanceOperations(LauncherContext):
@@ -92,13 +101,29 @@ class InstanceOperations(LauncherContext):
         """Game vừa thoát: cộng phiên chơi vào số liệu của bản chơi đó."""
         return record_play_session(self.paths, instance_id, started_at, ended_at)
 
-    def list_recent_worlds(
-        self, *, limit: int = DEFAULT_RECENT_LIMIT, now: float | None = None
-    ) -> tuple[RecentWorld, ...]:
-        """Chỉ đọc đĩa: thế giới chơi gần nhất trên mọi bản chơi, mới nhất trước."""
-        moment = time.time() if now is None else now
-        return list_recent_worlds(self.paths, list_instances(self.paths), limit=limit, now=moment)
-
-    def list_recent_servers(self, *, limit: int = DEFAULT_SERVER_LIMIT) -> tuple[RecentServer, ...]:
-        """Chỉ đọc đĩa: server đã thêm trong game, bản chơi vừa sửa danh sách gần nhất trước."""
-        return list_recent_servers(self.paths, list_instances(self.paths), limit=limit)
+    def describe_play_choices(self, instance_id: str, *, now: float | None = None) -> PlayChoices:
+        """Chỉ đọc đĩa, gọi ở luồng nền: thế giới + server của bản chơi và bản game vào thẳng
+        được đâu. Chưa cài phiên bản (JSON chưa có) thì coi như không vào thẳng được — bấm Chơi
+        sẽ cài rồi mở game như thường. Server sai dạng địa chỉ bị bỏ: không đưa được vào lệnh."""
+        instance = load_instance(self.paths, instance_id)
+        game_dir = game_dir_of(self.paths, instance)
+        servers_path = game_dir / SERVERS_FILE_NAME
+        try:
+            servers_changed_at = int(servers_path.stat().st_mtime)
+        except OSError:
+            servers_changed_at = 0
+        try:
+            version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
+            quick_play = describe_quick_play(version_meta)
+        except NostalgiaError:
+            quick_play = QuickPlaySupport(worlds=False, servers=False)
+        return PlayChoices(
+            worlds=list_worlds(game_dir, now=time.time() if now is None else now),
+            servers=tuple(
+                saved
+                for saved in load_saved_servers(servers_path)
+                if split_server_address(saved.address) is not None
+            ),
+            servers_changed_at=servers_changed_at,
+            quick_play=quick_play,
+        )

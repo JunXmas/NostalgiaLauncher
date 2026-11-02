@@ -1,8 +1,9 @@
-"""Dựng `level.dat` giả (NBT nén gzip) cho test bộ đọc NBT và ô CHƠI TIẾP, không cần Minecraft.
+"""Dựng `level.dat` / `servers.dat` giả cho test bộ đọc NBT và cửa sổ chọn world, không cần
+Minecraft.
 
-Cấu trúc theo đúng game: compound gốc tên rỗng → compound `Data` chứa `LevelName` (string) và
-`LastPlayed` (long) cùng các tag nhiễu đủ loại (list, mảng, compound lồng) để bộ đọc phải nhảy
-qua đúng cách.
+Cấu trúc theo đúng game: compound gốc tên rỗng → compound `Data` chứa `LevelName` (string),
+`LastPlayed` (long), `GameType` (int), `hardcore` / `allowCommands` (byte) cùng các tag nhiễu
+đủ loại (list, mảng, compound lồng) để bộ đọc phải nhảy qua đúng cách.
 """
 
 from __future__ import annotations
@@ -32,9 +33,7 @@ def _compound(children: bytes) -> bytes:
 def _noise_tags(nested_depth: int) -> bytes:
     """Các tag có thật trong level.dat mà bộ đọc phải bỏ qua."""
     player = _compound(_named(TAG_STRING, "name", _string("Jun")))
-    noise = _named(TAG_INT, "GameType", struct.pack(">i", 0))
-    noise += _named(TAG_BYTE, "hardcore", b"\x00")
-    noise += _named(TAG_DOUBLE, "BorderSize", struct.pack(">d", 6.0e7))
+    noise = _named(TAG_DOUBLE, "BorderSize", struct.pack(">d", 6.0e7))
     noise += _named(TAG_INT_ARRAY, "Ids", struct.pack(">i", 3) + struct.pack(">iii", 1, 2, 3))
     noise += _named(TAG_LONG_ARRAY, "Longs", struct.pack(">i", 2) + struct.pack(">qq", 5, 6))
     noise += _named(TAG_BYTE_ARRAY, "Bytes", struct.pack(">i", 2) + b"\x01\x02")
@@ -46,10 +45,21 @@ def _noise_tags(nested_depth: int) -> bytes:
 
 
 def build_level_dat(
-    world_name: str, last_played_ms: int, *, nested_depth: int = 2, noise: bool = True
+    world_name: str,
+    last_played_ms: int,
+    *,
+    nested_depth: int = 2,
+    noise: bool = True,
+    game_type: int = 0,
+    hardcore: bool = False,
+    cheats: bool = False,
 ) -> bytes:
     children = _named(TAG_STRING, "LevelName", _string(world_name))
     children += _named(TAG_LONG, "LastPlayed", struct.pack(">q", last_played_ms))
+    if noise:
+        children += _named(TAG_INT, "GameType", struct.pack(">i", game_type))
+        children += _named(TAG_BYTE, "hardcore", bytes([hardcore]))
+        children += _named(TAG_BYTE, "allowCommands", bytes([cheats]))
     if noise:
         children += _noise_tags(nested_depth)
     top = _named(TAG_COMPOUND, "", _compound(_named(TAG_COMPOUND, "Data", _compound(children))))
@@ -66,10 +76,23 @@ def deeply_nested_level(depth: int) -> bytes:
     )
 
 
-def write_world(game_dir: Path, folder: str, world_name: str, last_played_ms: int) -> Path:
+def write_world(
+    game_dir: Path,
+    folder: str,
+    world_name: str,
+    last_played_ms: int,
+    *,
+    game_type: int = 0,
+    hardcore: bool = False,
+    cheats: bool = False,
+) -> Path:
     level_path = game_dir / "saves" / folder / "level.dat"
     level_path.parent.mkdir(parents=True, exist_ok=True)
-    level_path.write_bytes(build_level_dat(world_name, last_played_ms))
+    level_path.write_bytes(
+        build_level_dat(
+            world_name, last_played_ms, game_type=game_type, hardcore=hardcore, cheats=cheats
+        )
+    )
     return level_path
 
 

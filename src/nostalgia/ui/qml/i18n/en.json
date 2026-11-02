@@ -4249,5 +4249,19 @@
   "p:GỢI Ý": "SUGGESTED",
   "p:SUGGESTED": "SUGGESTED",
   "p:SERVER GỢI Ý": "SUGGESTED SERVER",
-  "p:SUGGESTED SERVER": "SUGGESTED SERVER"
+  "p:SUGGESTED SERVER": "SUGGESTED SERVER",
+  "p:Bản chơi này chưa có thế giới nào. Tạo world mới trong game.": "This instance has no worlds yet. Create one in the game.",
+  "p:Cheat": "Cheats",
+  "p:Chỉ mở game": "Just open the game",
+  "p:Chọn nơi để vào thẳng, hoặc chỉ mở game.": "Pick where to jump straight in, or just open the game.",
+  "p:Chưa thêm server nào. Thêm server trong game ở mục Multiplayer.": "No servers added yet. Add one in the game's Multiplayer screen.",
+  "p:Gần đây": "Recent",
+  "p:Hardcore": "Hardcore",
+  "p:Không có kết quả phù hợp.": "No matching results.",
+  "p:Chơi đơn": "Singleplayer",
+  "p:Chơi mạng": "Multiplayer",
+  "p:+ Tạo world mới": "+ Create new world",
+  "p:Tên A–Z": "Name A–Z",
+  "p:Tìm theo tên…": "Search by name…",
+  "m:Đọc thế giới của {1}": "Reading worlds of {1}"
 }

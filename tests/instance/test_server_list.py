@@ -1,5 +1,5 @@
 """servers.dat: đọc tên / địa chỉ / icon đúng thứ tự trong game, bỏ server ẩn và server không
-địa chỉ, icon hỏng → rỗng nhưng server vẫn còn, file hỏng kiểu gì cũng trả rỗng."""
+địa chỉ, icon hỏng → rỗng nhưng server vẫn còn, file thiếu / hỏng kiểu gì cũng trả rỗng."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from nbt_fixture import build_servers_dat, tiny_png
 from nostalgia.instance.server_list import (
     MAX_SERVERS_BYTES,
     SavedServer,
-    icon_url_of,
     load_saved_servers,
 )
 
@@ -36,7 +35,8 @@ def test_reads_servers_in_game_order_and_skips_hidden_or_empty_ones(tmp_path: Pa
         SavedServer("Bạn bè", "192.168.1.5:25566", ""),
         SavedServer("chi-dia-chi.example", "chi-dia-chi.example", ""),
     )
-    assert icon_url_of(ICON).startswith("data:image/png;base64,") and icon_url_of("") == ""
+    hypixel, friends, _ = load_saved_servers(servers_path)
+    assert hypixel.icon_url.startswith("data:image/png;base64,") and friends.icon_url == ""
 
 
 def test_bad_icons_are_dropped_but_the_server_stays(tmp_path: Path) -> None:
