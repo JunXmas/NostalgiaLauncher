@@ -1,6 +1,7 @@
 """Tráo thư mục đã chuẩn bị, giữ bản trước và chỉ hoàn tác khi dữ liệu còn khớp."""
 
 import hashlib
+import logging
 import os
 import shutil
 import uuid
@@ -10,6 +11,8 @@ from pathlib import Path
 from nostalgia.errors import ContentError, NostalgiaError
 from nostalgia.model.json_value import JsonValue, as_mapping, as_string
 from nostalgia.storage.files import atomic_write_json, read_json
+
+logger = logging.getLogger(__name__)
 
 
 def tree_hash(directory: Path, *, ignored_names: frozenset[str] = frozenset()) -> str:
@@ -115,6 +118,33 @@ def commit_directory(
         (receipt / "before").replace(directory)
         raise
     return receipt_id
+
+
+def recover_directory(directory: Path, history: Path) -> bool:
+    """Máy tắt/tiến trình chết giữa hai lần đổi tên trong `commit_directory`: thư mục đã sang
+    `before` mà bản mới chưa vào chỗ. Đưa `before` về nếu thư mục vẫn trống — kể cả khi game
+    đã kịp tạo một thư mục rỗng. Trả True nếu đã khôi phục."""
+    if history.is_symlink() or not history.is_dir() or directory.is_symlink():
+        return False
+    if directory.exists() and any(directory.iterdir()):
+        return False
+    for receipt in history.iterdir():
+        before = receipt / "before"
+        if receipt.is_symlink() or before.is_symlink() or not before.is_dir():
+            continue
+        try:
+            fields = as_mapping(read_json(receipt / "receipt.json"))
+        except NostalgiaError:
+            continue
+        if fields.get("status") != "prepared":
+            continue
+        if directory.exists():
+            directory.rmdir()
+        before.replace(directory)
+        atomic_write_json(receipt / "receipt.json", {**fields, "status": "recovered"})
+        logger.warning("Khôi phục %s sau lần đổi bị gián đoạn (%s)", directory, receipt.name)
+        return True
+    return False
 
 
 def undo_directory(

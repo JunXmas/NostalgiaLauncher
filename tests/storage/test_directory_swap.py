@@ -97,3 +97,31 @@ def test_receipts_written_with_content_hashes_still_undo(tmp_path: Path) -> None
     )
     undo_directory(mods, history, "0" * 32)
     assert tree_hash(mods) == before
+
+
+@pytest.mark.parametrize("game_made_empty_mods", [False, True])
+def test_crash_between_the_two_renames_is_recovered(
+    tmp_path: Path, game_made_empty_mods: bool
+) -> None:
+    """SIGKILL/mất điện sau khi mods đã sang `before`, trước khi bản mới vào chỗ."""
+    mods = _mods(tmp_path)
+    before = tree_hash(mods)
+    receipt = tmp_path / "history" / ("2" * 32)
+    receipt.mkdir(parents=True)
+    (receipt / "receipt.json").write_text('{"status": "prepared", "format": 2}')
+    mods.replace(receipt / "before")
+    if game_made_empty_mods:
+        mods.mkdir()  # Fabric tự tạo mods rỗng khi khởi động
+    assert directory_swap.recover_directory(mods, tmp_path / "history")
+    assert tree_hash(mods) == before
+    assert not directory_swap.recover_directory(mods, tmp_path / "history")
+
+
+def test_recovery_never_touches_a_mods_folder_with_content(tmp_path: Path) -> None:
+    mods = _mods(tmp_path)
+    history = tmp_path / "history" / ("1" * 32)
+    (history / "before").mkdir(parents=True)
+    (history / "before" / "old.jar").write_bytes(b"old")
+    (history / "receipt.json").write_text('{"status": "prepared"}')
+    assert not directory_swap.recover_directory(mods, tmp_path / "history")
+    assert sorted(p.name for p in mods.iterdir()) == ["a.jar", "b.jar"]
