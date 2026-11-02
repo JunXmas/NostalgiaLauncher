@@ -133,7 +133,7 @@ def test_accept_invitation_joins_without_visible_room_code(
     _, _, view, root_item, _, _, sync_bridge, _ = social_preview
     login_preview(social_preview)
     codes: list[str] = []
-    monkeypatch.setattr(sync_bridge, "join", codes.append)
+    monkeypatch.setattr(sync_bridge, "join", lambda code, _owner="": codes.append(code))
     press(view, find_control(root_item, "acceptInvite-invite"))
     wait_until(lambda: bool(codes))
     assert codes == ["ABCDEFABCDEFGHJKMN"]

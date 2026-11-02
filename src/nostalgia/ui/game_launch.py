@@ -7,7 +7,6 @@ from pathlib import Path
 from nostalgia.api import Launcher
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn
-from nostalgia.storage.directory_swap import recover_directory
 
 
 def load_game_dir(launcher: Launcher, instance_id: str) -> Path:
@@ -23,11 +22,7 @@ def prepare_game(
 ) -> None:
     instance = next((i for i in launcher.list_instances() if i.instance_id == instance_id), None)
     if instance is not None:
-        # Lần đổi phiên bản/sửa mod trước bị cắt ngang (máy tắt) thì trả bộ mod cũ về trước khi
-        # game chạy và tự tạo một thư mục mods rỗng.
-        game_dir = launcher.instance_game_dir(instance)
-        for history in (".nostalgia-mod-versions", ".nostalgia-repairs"):
-            recover_directory(game_dir / "mods", game_dir / history)
+        launcher.recover_interrupted_mod_change(instance_id)
         launcher.install_version(
             instance.version_id, on_progress=on_progress, cancel_token=cancel_token
         )

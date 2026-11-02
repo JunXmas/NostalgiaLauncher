@@ -43,7 +43,7 @@ def test_accept_invitation_uses_p2p_without_relay_option(
     modes: list[bool] = []
     joined: list[str] = []
     monkeypatch.setattr(multiplayer._service, "set_direct_allowed", modes.append)
-    monkeypatch.setattr(sync_bridge, "join", joined.append)
+    monkeypatch.setattr(sync_bridge, "join", lambda code, _owner="": joined.append(code))
     note = social_control(root_item, "p2pPrivacyNote").property("text")
     assert "IP" in note and "relay" not in note.lower()
     press(view, social_control(root_item, "acceptInvite-invite"))

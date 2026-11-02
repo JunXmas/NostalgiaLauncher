@@ -40,7 +40,7 @@ def test_invitation_actions_work_during_poll_and_ignore_duplicate_clicks(
     original = getattr(gateway, method)
     calls: list[str] = []
     joined: list[str] = []
-    monkeypatch.setattr(sync_bridge, "join", joined.append)
+    monkeypatch.setattr(sync_bridge, "join", lambda code, _owner="": joined.append(code))
 
     def poll() -> Any:
         snapshot = gateway.snapshot
@@ -100,7 +100,7 @@ def test_invitation_error_never_joins_and_revoked_session_is_removed(
     _, gateway, _view, _root_item, social, _multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
     joined: list[str] = []
-    monkeypatch.setattr(sync_bridge, "join", joined.append)
+    monkeypatch.setattr(sync_bridge, "join", lambda code, _owner="": joined.append(code))
 
     def fail(_invite_id: str) -> str:
         raise SessionRevoked("Phiên bị thu hồi.") if revoked else SocialError("Lời mời hết hạn.")
@@ -122,7 +122,7 @@ def test_delayed_accept_cannot_join_after_session_or_room_changes(
     login_preview(social_preview)
     started, release = Event(), Event()
     joined: list[str] = []
-    monkeypatch.setattr(sync_bridge, "join", joined.append)
+    monkeypatch.setattr(sync_bridge, "join", lambda code, _owner="": joined.append(code))
 
     def delayed(_invite_id: str) -> str:
         started.set()

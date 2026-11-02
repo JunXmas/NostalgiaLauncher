@@ -128,8 +128,12 @@ KEEP_RECEIPTS = 3
 
 def _prune(history: Path, *, keep: int) -> None:
     receipts = sorted(
-        (r for r in history.iterdir() if r.is_dir() and not r.is_symlink() and len(r.name) == 32),
-        key=lambda r: r.stat().st_mtime,
+        (
+            receipt
+            for receipt in history.iterdir()
+            if receipt.is_dir() and not receipt.is_symlink() and len(receipt.name) == 32
+        ),
+        key=lambda receipt: receipt.stat().st_mtime,
         reverse=True,
     )
     for stale in receipts[keep:]:

@@ -14,7 +14,7 @@ from nostalgia.net.http import HttpClient
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.repo.version_repo import VersionRepository
 from nostalgia.settings.store import load_settings
-from nostalgia.storage.directory_swap import latest_directory_change
+from nostalgia.storage.directory_swap import latest_directory_change, recover_directory
 
 
 class ContentVersionOperations(ContentDetailOperations):
@@ -90,6 +90,13 @@ class ContentVersionOperations(ContentDetailOperations):
     ) -> None:
         instance = load_instance(self.paths, instance_id)
         undo_mod_version(game_dir_of(self.paths, instance), receipt_id, is_running)
+
+    def recover_interrupted_mod_change(self, instance_id: str) -> None:
+        """Lần đổi phiên bản/sửa mod trước bị cắt ngang (máy tắt) thì trả bộ mod cũ về trước khi
+        game chạy và tự tạo một thư mục mods rỗng."""
+        game_dir = game_dir_of(self.paths, load_instance(self.paths, instance_id))
+        for history in (".nostalgia-mod-versions", ".nostalgia-repairs"):
+            recover_directory(game_dir / "mods", game_dir / history)
 
     def latest_mod_version_change(self, instance_id: str) -> str:
         instance = load_instance(self.paths, instance_id)

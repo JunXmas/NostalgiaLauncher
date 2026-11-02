@@ -16,8 +16,8 @@ from nostalgia.storage.directory_swap import (
 )
 
 
-def _mods(root: Path) -> Path:
-    mods = root / "mods"
+def _mods(folder: Path) -> Path:
+    mods = folder / "mods"
     mods.mkdir()
     (mods / "a.jar").write_bytes(b"A" * 1000)
     (mods / "b.jar").write_bytes(b"B" * 1000)

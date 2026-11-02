@@ -47,12 +47,10 @@ class HostBridge(HostSetup):
             return False
         self._instance_id = instance_id
         self._excluded_mods = self._mod_selection.excluded_for(instance_id)
-        self._label = next(
-            i["label"] for i in self._bridge.property("instances") if i["instanceId"] == instance_id
-        )
+        rows = self._bridge.property("instances")
+        self._label = next(i["label"] for i in rows if i["instanceId"] == instance_id)
         self._share, self._room_seen, self._snapshot = share, False, None
-        self._game_seen = False
-        self._pack_published = False
+        self._game_seen = self._pack_published = False
         cancel_token = self._cancel = CancelToken()
         self._sync.set_host_ready(False)
         self._stage_note("preparing", "Đang chuẩn bị bản chơi và bộ modpack đã chọn…")

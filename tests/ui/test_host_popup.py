@@ -135,9 +135,9 @@ def test_open_room_picks_a_world_in_the_video_grid_then_hosts_into_it(
 ) -> None:
     """Mở phòng → cửa sổ chọn world (chỉ world, không tab server) → phòng vào thẳng world đó."""
     launcher, view, bridge, root_item, host, warnings = host_popup
-    version = launcher.paths.version_json("1.21.4")
-    version.parent.mkdir(parents=True, exist_ok=True)
-    version.write_text(json.dumps(load_fixture("1.21.4")), encoding="utf-8")
+    version_file = launcher.paths.version_json("1.21.4")
+    version_file.parent.mkdir(parents=True, exist_ok=True)
+    version_file.write_text(json.dumps(load_fixture("1.21.4")), encoding="utf-8")
     instance = launcher.create_instance(Instance("w", "1.21.4", "World pack"))
     game_dir = launcher.instance_game_dir(instance)
     write_world(game_dir, "base", "Căn cứ", int(time.time() * 1000))

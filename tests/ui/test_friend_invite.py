@@ -60,10 +60,18 @@ def test_incoming_invitation_shows_join_on_friends_page(
     _, _, view, root_item, social, _, sync_bridge, _ = social_preview
     login_preview(social_preview)
     joined: list[str] = []
-    monkeypatch.setattr(sync_bridge, "join", joined.append)
+    owners: list[str] = []
+
+    def join(code: str, owner: str = "") -> None:
+        joined.append(code)
+        owners.append(owner)
+
+    monkeypatch.setattr(sync_bridge, "join", join)
     accept = find_control(root_item, "acceptInvite-invite")
     assert find_control(root_item, "friendsPage").property("section") == 0
     assert accept.isVisible() and accept.property("label") == "Vào phòng"
     click(view, accept)
     wait_until(lambda: joined == ["ABCDEFABCDEFGHJKMN"] and not social.inviteBusy)
+    # Chủ phòng = người gửi lời mời do Worker xác thực (dùng để cập nhật đúng bản chơi đã đồng bộ).
+    assert owners and owners[0]
     wait_until(lambda: not social.invitations and not social.busy)
