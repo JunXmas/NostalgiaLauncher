@@ -1,6 +1,5 @@
 """Đổi bản mod trong vùng tạm, giữ cả thư mục trước đổi để hoàn tác."""
 
-import shutil
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
@@ -16,7 +15,12 @@ from nostalgia.errors import ContentError
 from nostalgia.modrepair.transaction import lock_mods
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.progress import ProgressFn
-from nostalgia.storage.directory_swap import commit_directory, tree_hash, undo_directory
+from nostalgia.storage.directory_swap import (
+    commit_directory,
+    stage_directory,
+    tree_fingerprint,
+    undo_directory,
+)
 from nostalgia.storage.files import resolve_child
 
 
@@ -49,7 +53,7 @@ def swap_mod_version(
         installed = load_installed_mod(target.game_dir, file_name)
         if installed.version_id == version_id:
             raise ContentError("Mod đang dùng phiên bản này.")
-        original = tree_hash(directory)
+        original = tree_fingerprint(directory)
         project = Project(
             installed.project_id,
             installed.project_id,
@@ -67,7 +71,7 @@ def swap_mod_version(
             prefix=".nostalgia-version-", dir=target.game_dir
         ) as temporary:
             stage = Path(temporary)
-            shutil.copytree(directory, stage / "mods")
+            stage_directory(directory, stage / "mods")
             ledger = load_ledger(stage / "mods")
 
             def checked_versions(project_id: str) -> tuple[ProjectVersion, ...]:

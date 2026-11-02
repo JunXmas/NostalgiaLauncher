@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import shutil
 import tempfile
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -23,6 +22,8 @@ from nostalgia.net.http import HttpClient
 from nostalgia.storage.directory_swap import (
     commit_directory,
     latest_directory_change,
+    stage_directory,
+    tree_fingerprint,
     undo_directory,
 )
 from nostalgia.storage.directory_swap import tree_hash as tree_hash
@@ -79,7 +80,7 @@ def apply_plan(
         directory = game_dir / "mods"
         if directory.is_symlink():
             raise ContentError("Không sửa mods là symlink.")
-        original = tree_hash(directory)
+        original = tree_fingerprint(directory)
         current = build_scan(
             scan_archives(game_dir, scan.loader_kind),
             scan.game_version,
@@ -92,10 +93,7 @@ def apply_plan(
             raise ContentError("Bộ mod đã thay đổi; hãy quét lại.")
         with tempfile.TemporaryDirectory(prefix=".nostalgia-stage-", dir=game_dir) as temporary:
             stage = Path(temporary)
-            if directory.exists():
-                shutil.copytree(directory, stage / "mods")
-            else:
-                (stage / "mods").mkdir()
+            stage_directory(directory, stage / "mods")
             for change in plan.changes:
                 destination = resolve_child(stage / "mods", change.file_name)
                 if change.operation == "disable":
@@ -125,7 +123,7 @@ def apply_plan(
             if remaining:
                 raise ContentError("Kiểm lại vẫn còn lỗi/chưa xác minh: " + remaining[0].reason)
             gateway.authorize(plan)
-            if is_running() or tree_hash(directory) != original:
+            if is_running() or tree_fingerprint(directory) != original:
                 raise ContentError("Game hoặc bộ mod thay đổi trong lúc chuẩn bị; đã hủy sửa.")
             return commit_directory(
                 directory, stage / "mods", game_dir / ".nostalgia-repairs", original

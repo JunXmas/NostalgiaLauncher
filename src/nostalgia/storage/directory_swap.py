@@ -1,8 +1,10 @@
 """Tráo thư mục đã chuẩn bị, giữ bản trước và chỉ hoàn tác khi dữ liệu còn khớp."""
 
 import hashlib
+import os
 import shutil
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 from nostalgia.errors import ContentError, NostalgiaError
@@ -28,6 +30,56 @@ def tree_hash(directory: Path, *, ignored_names: frozenset[str] = frozenset()) -
     return digest.hexdigest()
 
 
+def tree_fingerprint(directory: Path, *, ignored_names: frozenset[str] = frozenset()) -> str:
+    """Dấu thay đổi chỉ từ đường dẫn + cỡ + mtime_ns: không đọc byte nào, O(số file).
+
+    Đủ để phát hiện "có ai đụng vào thư mục trong lúc chuẩn bị/sau khi đổi". Không chống
+    giả mạo có chủ đích (đó là máy của chính người chơi).
+    """
+    if directory.is_symlink():
+        raise ContentError("Thư mục nội dung có symlink; không tự thay thế.")
+    digest = hashlib.sha256()
+    if not directory.exists():
+        return digest.hexdigest()
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise ContentError("Thư mục nội dung có symlink; không tự thay thế.")
+        if path.parent == directory and path.name in ignored_names:
+            continue
+        if path.is_file():
+            stat = path.stat()
+            digest.update(
+                f"{path.relative_to(directory).as_posix()}\0{stat.st_size}\0{stat.st_mtime_ns}\n".encode()
+            )
+    return digest.hexdigest()
+
+
+def stage_directory(directory: Path, stage: Path) -> None:
+    """Dựng vùng tạm bằng hardlink: không chép byte nào, chỉ tạo mục thư mục.
+
+    Điều kiện an toàn: thao tác trên vùng tạm chỉ được thêm file mới, đổi tên hoặc xoá —
+    KHÔNG được mở file có sẵn để ghi đè tại chỗ, vì file hardlink dùng chung dữ liệu với bản
+    gốc. Mọi đường ghi hiện có (tải về `mkstemp`+replace, `atomic_write_json`, rename khi tắt
+    mod) đều tạo inode mới nên thoả. Ổ không hỗ trợ hardlink (FAT/exFAT, vài ổ mạng) thì chép.
+    """
+    if not directory.exists():
+        stage.mkdir()
+        return
+    try:
+        shutil.copytree(directory, stage, copy_function=os.link)
+    except OSError:
+        shutil.rmtree(stage, ignore_errors=True)
+        shutil.copytree(directory, stage)
+
+
+def _measure(fields: dict[str, JsonValue]) -> Callable[..., str]:
+    # Biên nhận cũ (trước format 2) lưu hash nội dung; giữ đọc được để hoàn tác bản sửa cũ.
+    return tree_fingerprint if fields.get("format") == FINGERPRINT_FORMAT else tree_hash
+
+
+FINGERPRINT_FORMAT = 2
+
+
 def commit_directory(
     directory: Path,
     stage: Path,
@@ -36,16 +88,16 @@ def commit_directory(
     *,
     ignored_names: frozenset[str] = frozenset(),
 ) -> str:
-    if history.is_symlink() or tree_hash(directory) != original:
+    if history.is_symlink() or tree_fingerprint(directory) != original:
         raise ContentError("Nội dung đã thay đổi trong lúc chuẩn bị; không ghi đè.")
     receipt_id = uuid.uuid4().hex
     receipt = history / receipt_id
     receipt.mkdir(parents=True)
     directory.mkdir(exist_ok=True)
-    after = tree_hash(stage, ignored_names=ignored_names)
-    ignored: dict[str, JsonValue] = (
-        {"ignored_names": list(sorted(ignored_names))} if ignored_names else {}
-    )
+    after = tree_fingerprint(stage, ignored_names=ignored_names)
+    ignored: dict[str, JsonValue] = {"format": FINGERPRINT_FORMAT}
+    if ignored_names:
+        ignored["ignored_names"] = list[JsonValue](sorted(ignored_names))
     atomic_write_json(
         receipt / "receipt.json",
         {"status": "prepared", "after": after, "before": original, **ignored},
@@ -82,11 +134,12 @@ def undo_directory(
     fields = as_mapping(read_json(receipt / "receipt.json"))
     if fields.get("ignored_names", []) != sorted(ignored_names):
         raise ContentError("Biên nhận không khớp loại thao tác hoàn tác.")
-    if fields.get("status") not in ("applied", "prepared") or tree_hash(
+    measure = _measure(fields)
+    if fields.get("status") not in ("applied", "prepared") or measure(
         receipt / "before"
     ) != fields.get("before"):
         raise ContentError("Bản sao lưu không khớp; chưa hoàn tác.")
-    if directory.exists() and tree_hash(directory, ignored_names=ignored_names) != fields.get(
+    if directory.exists() and measure(directory, ignored_names=ignored_names) != fields.get(
         "after"
     ):
         raise ContentError("Nội dung đã thay đổi sau sửa; không ghi đè thay đổi của bạn.")
