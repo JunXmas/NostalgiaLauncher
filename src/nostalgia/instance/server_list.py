@@ -1,4 +1,4 @@
-"""Server đã thêm trong game (`servers.dat` của từng bản chơi) — nhóm SERVER của ô CHƠI TIẾP.
+"""Server đã thêm trong game (`servers.dat` của một bản chơi) — tab Multiplayer khi bấm Chơi.
 
 `servers.dat` là NBT KHÔNG nén: compound gốc → list `servers` gồm các compound `{name, ip,
 icon (PNG base64), hidden}`. Chỉ đọc đĩa, có trần kích thước, file hỏng → rỗng. Icon được kiểm
@@ -9,11 +9,9 @@ không chạm mạng, không ping.
 from __future__ import annotations
 
 import base64
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from nostalgia.instance.model import Instance
 from nostalgia.instance.nbt import (
     READ_ERRORS,
     TAG_BYTE,
@@ -24,8 +22,6 @@ from nostalgia.instance.nbt import (
     Reader,
     skip_payload,
 )
-from nostalgia.instance.store import game_dir_of
-from nostalgia.storage.paths import DataPaths
 
 SERVERS_FILE_NAME = "servers.dat"
 MAX_SERVERS_BYTES = 1024 * 1024
@@ -33,7 +29,6 @@ MAX_SERVERS_BYTES = 1024 * 1024
 MAX_ICON_BYTES = 32 * 1024
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 SERVERS_LIST_TAG = "servers"
-DEFAULT_SERVER_LIMIT = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,17 +39,10 @@ class SavedServer:
     address: str
     icon_base64: str
 
-
-@dataclass(frozen=True, slots=True)
-class RecentServer:
-    """Server có thể vào thẳng: `address` là `host[:port]` Minecraft nhận ở
-    `--quickPlayMultiplayer`; `icon_url` là URL `data:` cho `Image` của QML hoặc rỗng."""
-
-    instance_id: str
-    instance_label: str
-    server_name: str
-    address: str
-    icon_url: str
+    @property
+    def icon_url(self) -> str:
+        """URL `data:` cho `Image` của QML, rỗng khi không có icon."""
+        return f"data:image/png;base64,{self.icon_base64}" if self.icon_base64 else ""
 
 
 def checked_icon(icon_base64: str) -> str:
@@ -66,10 +54,6 @@ def checked_icon(icon_base64: str) -> str:
     if not decoded.startswith(PNG_SIGNATURE) or len(decoded) > MAX_ICON_BYTES:
         return ""
     return icon_base64
-
-
-def icon_url_of(icon_base64: str) -> str:
-    return f"data:image/png;base64,{icon_base64}" if icon_base64 else ""
 
 
 def _read_server(reader: Reader) -> SavedServer | None:
@@ -129,33 +113,3 @@ def load_saved_servers(servers_path: Path) -> tuple[SavedServer, ...]:
                     servers.append(saved)
     except READ_ERRORS:
         return ()
-
-
-def list_recent_servers(
-    paths: DataPaths, instances: Iterable[Instance], *, limit: int = DEFAULT_SERVER_LIMIT
-) -> tuple[RecentServer, ...]:
-    """Server của mọi bản chơi: bản chơi vừa sửa danh sách (mtime servers.dat) mới nhất trước,
-    trong một bản chơi giữ đúng thứ tự trong game; cắt còn `limit`. Chỉ stat + đọc file cần."""
-    candidates: list[tuple[float, Instance, Path]] = []
-    for instance in instances:
-        servers_path = game_dir_of(paths, instance) / SERVERS_FILE_NAME
-        try:
-            candidates.append((servers_path.stat().st_mtime, instance, servers_path))
-        except OSError:
-            continue
-    candidates.sort(key=lambda triple: triple[0], reverse=True)
-    gathered: list[RecentServer] = []
-    for _modified_at, instance, servers_path in candidates:
-        for saved in load_saved_servers(servers_path):
-            gathered.append(
-                RecentServer(
-                    instance_id=instance.instance_id,
-                    instance_label=instance.label,
-                    server_name=saved.server_name,
-                    address=saved.address,
-                    icon_url=icon_url_of(saved.icon_base64),
-                )
-            )
-            if len(gathered) >= limit:
-                return tuple(gathered)
-    return tuple(gathered)

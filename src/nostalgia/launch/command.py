@@ -17,6 +17,7 @@ tin để đoán tuổi bản game. Cờ này vô hại với log4j ≥ 2.16 (ch
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,6 +41,53 @@ LAUNCHER_NAME = "nostalgia"
 LOG4SHELL_MITIGATION = "-Dlog4j2.formatMsgNoLookups=true"
 START_ON_FIRST_THREAD = "-XstartOnFirstThread"
 MASK = "***"
+# `host[:port]` như người chơi gõ trong game; IPv6 trong ngoặc vuông. Không cho mở đầu bằng "-"
+# để địa chỉ lấy từ servers.dat không thể biến thành một cờ của game.
+SERVER_ADDRESS_PATTERN = re.compile(
+    r"(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9_][A-Za-z0-9_.-]{0,252})(?::(\d{1,5}))?"
+)
+DEFAULT_SERVER_PORT = "25565"
+MAX_PORT = 65535
+
+
+def split_server_address(text: str) -> tuple[str, str] | None:
+    """`(host, cổng)` của một địa chỉ `host[:port]`; sai dạng hay cổng ngoài 1-65535 → None."""
+    match = SERVER_ADDRESS_PATTERN.fullmatch(text)
+    if match is None or (match[2] is not None and not 0 < int(match[2]) <= MAX_PORT):
+        return None
+    return match[1].removeprefix("[").removesuffix("]"), match[2] or DEFAULT_SERVER_PORT
+
+
+@dataclass(frozen=True, slots=True)
+class QuickPlaySupport:
+    """Bản game vào thẳng được đâu. `worlds`: có khối `is_quick_play_singleplayer` (1.20+).
+    `servers`: có `is_quick_play_multiplayer`, hoặc là đời 1.6-1.19 hiểu `--server/--port`."""
+
+    worlds: bool
+    servers: bool
+
+
+def describe_quick_play(version_meta: VersionMeta) -> QuickPlaySupport:
+    features = {
+        name
+        for spec in version_meta.game_arguments
+        for rule in spec.rules
+        for name, wanted in rule.required_features.items()
+        if wanted
+    }
+    return QuickPlaySupport(
+        worlds="is_quick_play_singleplayer" in features,
+        servers="is_quick_play_multiplayer" in features or _knows_server_flag(version_meta),
+    )
+
+
+def _knows_server_flag(version_meta: VersionMeta) -> bool:
+    """Từ 1.6 game đọc tham số bằng jopt-simple (`--username …`) và hiểu `--server/--port`;
+    1.5 trở về trước nhận tên người chơi theo vị trí và không có hai cờ đó."""
+    legacy = (version_meta.minecraft_arguments or "").split()
+    return "--username" in legacy or any(
+        "--username" in spec.values for spec in version_meta.game_arguments
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +107,9 @@ class LaunchOptions:
     def __post_init__(self) -> None:
         if self.world_folder and self.server_address:
             message = "chỉ vào thẳng MỘT nơi: thế giới hoặc máy chủ, không cả hai"
+            raise ValueError(message)
+        if self.server_address and split_server_address(self.server_address) is None:
+            message = f"địa chỉ máy chủ không hợp lệ: {self.server_address!r}"
             raise ValueError(message)
 
     @property
@@ -198,9 +249,19 @@ def _collect_game_arguments(
     version_meta: VersionMeta, platform: Platform, options: LaunchOptions
 ) -> tuple[str, ...]:
     if version_meta.minecraft_arguments is not None:
-        legacy = split_legacy_arguments(version_meta.minecraft_arguments)
-        return (*legacy, "--demo") if options.is_demo else legacy
-    return resolve_argument_values(version_meta.game_arguments, platform, options.features)
+        arguments = split_legacy_arguments(version_meta.minecraft_arguments)
+        arguments = (*arguments, "--demo") if options.is_demo else arguments
+    else:
+        arguments = resolve_argument_values(version_meta.game_arguments, platform, options.features)
+    if (
+        options.server_address
+        and "--quickPlayMultiplayer" not in arguments
+        and _knows_server_flag(version_meta)
+    ):
+        # LaunchOptions đã kiểm địa chỉ nên luôn tách được; `or` chỉ để mypy yên.
+        host, port = split_server_address(options.server_address) or ("", "")
+        arguments = (*arguments, "--server", host, "--port", port)
+    return arguments
 
 
 def _refuse_unresolved(version_meta: VersionMeta, arguments: tuple[str, ...]) -> None:

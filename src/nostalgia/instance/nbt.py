@@ -1,8 +1,8 @@
-"""Đọc TỐI THIỂU file NBT nén gzip của Minecraft (`level.dat`): chỉ lấy tên thế giới và mốc
-chơi cuối trong compound `Data`, bỏ qua mọi thứ khác.
+"""Đọc TỐI THIỂU file NBT nén gzip của Minecraft (`level.dat`): tên thế giới, mốc chơi cuối,
+chế độ chơi, hardcore và cheat trong compound `Data`, bỏ qua mọi thứ khác.
 
-Không có thư viện NBT nào trong kho và cũng không cần: hai trường string/long là đủ cho ô
-CHƠI TIẾP. Bộ đọc có trần kích thước và độ sâu, mọi độ dài đều được so với phần payload còn
+Không có thư viện NBT nào trong kho và cũng không cần: vài trường byte/int/long/string là đủ
+cho màn chọn world. Bộ đọc có trần kích thước và độ sâu, mọi độ dài đều được so với phần payload còn
 lại trước khi cắt, và file hỏng kiểu gì cũng trả `None` chứ không ném — một `level.dat` lạ
 không được làm hỏng trang chủ.
 """
@@ -26,15 +26,22 @@ ARRAY_ELEMENT_SIZES = {TAG_BYTE_ARRAY: 1, TAG_INT_ARRAY: 4, TAG_LONG_ARRAY: 8}
 DATA_COMPOUND_NAME = "Data"
 WORLD_NAME_TAG = "LevelName"
 LAST_PLAYED_TAG = "LastPlayed"
+GAME_TYPE_TAG = "GameType"
+HARDCORE_TAG = "hardcore"
+CHEATS_TAG = "allowCommands"
 READ_ERRORS = (OSError, EOFError, struct.error, IndexError, UnicodeDecodeError, ValueError)
 
 
 @dataclass(frozen=True, slots=True)
 class LevelSummary:
-    """Hai trường trang chủ cần. `last_played_ms` là mili giây epoch, 0 nếu file không ghi."""
+    """Những gì thẻ world cần. `last_played_ms` là mili giây epoch, 0 nếu file không ghi;
+    `game_type` theo game: 0 sinh tồn, 1 sáng tạo, 2 phiêu lưu, 3 khán giả."""
 
     world_name: str
     last_played_ms: int
+    game_type: int = 0
+    hardcore: bool = False
+    cheats: bool = False
 
 
 class Reader:
@@ -102,7 +109,7 @@ def skip_payload(reader: Reader, tag_id: int, depth: int) -> None:
 
 
 def _read_fields(reader: Reader, depth: int) -> dict[str, int | str]:
-    """Đọc các con string / int / long của một compound; chui vào đúng compound `Data` ở gốc,
+    """Đọc các con string / byte / int / long của một compound; chui vào đúng compound `Data` ở gốc,
     còn lại nhảy qua."""
     if depth > MAX_DEPTH:
         message = "NBT lồng quá sâu"
@@ -115,6 +122,8 @@ def _read_fields(reader: Reader, depth: int) -> dict[str, int | str]:
         name = reader.text()
         if child_tag == TAG_STRING:
             fields[name] = reader.text()
+        elif child_tag == TAG_BYTE:
+            fields[name] = reader.unpack("b")
         elif child_tag == TAG_INT:
             fields[name] = reader.unpack("i")
         elif child_tag == TAG_LONG:
@@ -126,7 +135,7 @@ def _read_fields(reader: Reader, depth: int) -> dict[str, int | str]:
 
 
 def load_level_summary(level_path: Path) -> LevelSummary | None:
-    """Tên và mốc chơi cuối của một thế giới; `None` nếu file thiếu, hỏng, quá to hay quá sâu."""
+    """Tóm tắt một thế giới; `None` nếu file thiếu, hỏng, quá to hay quá sâu."""
     try:
         with gzip.open(level_path, "rb") as stream:
             payload = stream.read(MAX_LEVEL_BYTES + 1)
@@ -141,7 +150,11 @@ def load_level_summary(level_path: Path) -> LevelSummary | None:
         return None
     world_name = fields.get(WORLD_NAME_TAG)
     last_played = fields.get(LAST_PLAYED_TAG)
+    game_type = fields.get(GAME_TYPE_TAG)
     return LevelSummary(
         world_name=world_name if isinstance(world_name, str) else "",
         last_played_ms=last_played if isinstance(last_played, int) else 0,
+        game_type=game_type if isinstance(game_type, int) else 0,
+        hardcore=fields.get(HARDCORE_TAG) == 1,
+        cheats=fields.get(CHEATS_TAG) == 1,
     )

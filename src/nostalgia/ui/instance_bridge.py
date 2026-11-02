@@ -1,5 +1,5 @@
-"""Phần bản chơi và tiến độ của cầu nối chính: danh sách bản chơi, thế giới chơi gần đây,
-sửa/gỡ bản chơi.
+"""Phần bản chơi và tiến độ của cầu nối chính: danh sách bản chơi, nơi vào thẳng khi bấm Chơi
+(thế giới, server), sửa/gỡ bản chơi.
 
 Tách khỏi `bridge.py` để mỗi file dưới 200 dòng; QML vẫn thấy tất cả trên cùng một đối
 tượng `bridge` vì `LauncherBridge` kế thừa lớp này.
@@ -24,8 +24,8 @@ class InstanceBridge(WorkerBridge):
     instancesChanged = Signal()
     storageBusyChanged = Signal()
     progressChanged = Signal()
-    recentWorldsChanged = Signal()
-    recentServersChanged = Signal()
+    # Bấm Chơi: (mã bản chơi, thế giới, server, tab mở sẵn). Cả hai rỗng → QML mở game luôn.
+    playChoicesReady = Signal(str, list, list, str)
 
     def __init__(self, launcher: Launcher, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -36,11 +36,7 @@ class InstanceBridge(WorkerBridge):
         # Hàng cho QML giữ trong RAM: mỗi hàng kèm thống kê (đếm thế giới, mod trên đĩa), mà
         # trang chủ đọc `instances` ở nhiều binding — không quét đĩa lại cho từng binding.
         self._instance_rows: list[dict[str, Any]] | None = None
-        # Thế giới gần đây cũng vậy: đọc level.dat chỉ khi bản chơi đổi hoặc game vừa tắt.
-        self._recent_world_rows: list[dict[str, Any]] | None = None
-        self._recent_server_rows: list[dict[str, Any]] | None = None
         self.instancesChanged.connect(self._forget_instance_rows)
-        self.instancesChanged.connect(self._forget_recent_worlds)
 
     @Property(bool, notify=storageBusyChanged)
     def storageBusy(self) -> bool:
@@ -55,52 +51,45 @@ class InstanceBridge(WorkerBridge):
     def announce_instances_changed(self) -> None:
         """Invalidate snapshots before QML property notifications read them."""
         self._instance_rows = None
-        self._recent_world_rows = None
-        self._recent_server_rows = None
         self.instancesChanged.emit()
 
     def _forget_instance_rows(self) -> None:
         self._instance_rows = None
 
-    def _forget_recent_worlds(self) -> None:
-        """Quên cả thế giới lẫn server của ô CHƠI TIẾP; quét lại khi QML đọc."""
-        self._recent_world_rows = None
-        self._recent_server_rows = None
-        self.recentWorldsChanged.emit()
-        self.recentServersChanged.emit()
+    @Slot(str)
+    def loadPlayChoices(self, instance_id: str) -> None:
+        """Đọc thế giới + server của bản chơi ở luồng nền rồi phát `playChoicesReady`. Bản game
+        không vào thẳng được nơi nào thì danh sách đó rỗng — chọn cũng chỉ mở game như cũ."""
 
-    @Property(list, notify=recentServersChanged)
-    def recentServers(self) -> list[dict[str, Any]]:
-        """Server đã thêm trong game trên mọi bản chơi, tối đa 3 hàng, kèm icon dạng URL data:."""
-        if self._recent_server_rows is None:
-            self._recent_server_rows = [
-                {
-                    "instanceId": server.instance_id,
-                    "instanceLabel": server.instance_label,
-                    "serverName": server.server_name,
-                    "address": server.address,
-                    "iconUrl": server.icon_url,
-                }
-                for server in self._launcher.list_recent_servers()
-            ]
-        return self._recent_server_rows
+        def work() -> None:
+            choices = self._launcher.describe_play_choices(instance_id)
+            worlds = choices.worlds if choices.quick_play.worlds else ()
+            servers = choices.servers if choices.quick_play.servers else ()
+            newest_world = worlds[0].last_played_at if worlds else -1
+            server_first = bool(servers) and choices.servers_changed_at > newest_world
+            self.playChoicesReady.emit(
+                instance_id,
+                [
+                    {
+                        "worldFolder": world.world_folder,
+                        "worldName": world.world_name,
+                        "lastPlayedAt": world.last_played_at,
+                        "lastPlayedText": world.last_played_text,
+                        "gameType": world.game_type,
+                        "hardcore": world.hardcore,
+                        "cheats": world.cheats,
+                        "iconUrl": world.icon_url,
+                    }
+                    for world in worlds
+                ],
+                [
+                    {"serverName": s.server_name, "address": s.address, "iconUrl": s.icon_url}
+                    for s in servers
+                ],
+                "multiplayer" if server_first else "singleplayer",
+            )
 
-    @Property(list, notify=recentWorldsChanged)
-    def recentWorlds(self) -> list[dict[str, Any]]:
-        """Thế giới chơi gần nhất trên mọi bản chơi, mới nhất trước, tối đa 4 hàng."""
-        if self._recent_world_rows is None:
-            self._recent_world_rows = [
-                {
-                    "instanceId": world.instance_id,
-                    "instanceLabel": world.instance_label,
-                    "worldFolder": world.world_folder,
-                    "worldName": world.world_name,
-                    "lastPlayedAt": world.last_played_at,
-                    "lastPlayedText": world.last_played_text,
-                }
-                for world in self._launcher.list_recent_worlds()
-            ]
-        return self._recent_world_rows
+        self.run_in_background(work, f"Đọc thế giới của {instance_id}")
 
     @Property(list, notify=instancesChanged)
     def instances(self) -> list[dict[str, Any]]:

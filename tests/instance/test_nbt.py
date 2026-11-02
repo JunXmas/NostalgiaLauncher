@@ -1,5 +1,6 @@
-"""Bộ đọc NBT tối giản: lấy đúng tên + mốc chơi cuối, nhảy qua mọi tag khác, và file hỏng
-kiểu gì (cụt, không phải gzip, độ dài nói dối, lồng quá sâu, quá to) cũng trả None."""
+"""Bộ đọc NBT tối giản: lấy đúng tên, mốc chơi cuối, chế độ, hardcore, cheat; nhảy qua mọi
+tag khác, và file hỏng kiểu gì (cụt, không phải gzip, độ dài nói dối, lồng quá sâu, quá to)
+cũng trả None."""
 
 from __future__ import annotations
 
@@ -14,6 +15,14 @@ def test_reads_name_and_last_played_and_skips_every_noise_tag(tmp_path: Path) ->
     level_path = tmp_path / "level.dat"
     level_path.write_bytes(build_level_dat("Nhà của Jun", 1_757_400_000_000, nested_depth=5))
     assert load_level_summary(level_path) == LevelSummary("Nhà của Jun", 1_757_400_000_000)
+
+
+def test_reads_game_mode_hardcore_and_cheats(tmp_path: Path) -> None:
+    level_path = tmp_path / "level.dat"
+    level_path.write_bytes(build_level_dat("Khó", 1, game_type=2, hardcore=True, cheats=True))
+    assert load_level_summary(level_path) == LevelSummary("Khó", 1, 2, True, True)
+    level_path.write_bytes(build_level_dat("Dễ", 1, game_type=1))
+    assert load_level_summary(level_path) == LevelSummary("Dễ", 1, 1, False, False)
 
 
 def test_missing_name_gives_an_empty_name_not_none(tmp_path: Path) -> None:

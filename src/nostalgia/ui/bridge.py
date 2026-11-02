@@ -56,8 +56,6 @@ class LauncherBridge(PresetInstanceBridge):
         self.game_lan = GameLanFeed(self)
         # `play` chạy ở luồng nền; timer gom lô phải bật/tắt ở luồng giao diện → đi qua tín hiệu.
         self.gameRunningChanged.connect(self._sync_game_log_session)
-        # Game vừa tắt: thế giới vừa chơi phải lên đầu ô CHƠI TIẾP (chỉ xoá cache, quét khi đọc).
-        self.gameStopped.connect(self._forget_recent_worlds)
 
     # ----- kho tài khoản trong RAM -----
 
@@ -174,7 +172,7 @@ class LauncherBridge(PresetInstanceBridge):
 
     @Slot(str, str)
     def playWorld(self, instance_id: str, world_folder: str) -> None:
-        """Ô CHƠI TIẾP: mở bản chơi và vào thẳng thế giới (thư mục trong saves/)."""
+        """Cửa sổ chọn khi bấm Chơi: mở bản chơi và vào thẳng thế giới (thư mục trong saves/)."""
         self._launch(instance_id, world_folder)
 
     @Slot()
@@ -190,7 +188,7 @@ class LauncherBridge(PresetInstanceBridge):
 
     @Slot(str, str)
     def playServer(self, instance_id: str, server_address: str) -> None:
-        """Ô CHƠI TIẾP, nhóm SERVER: mở bản chơi và vào thẳng máy chủ (`host[:port]`)."""
+        """Tab Multiplayer của cửa sổ chọn (và khách phòng): vào thẳng máy chủ (`host[:port]`)."""
         self._launch(instance_id, server_address=server_address)
 
     def play_hosted(

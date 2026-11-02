@@ -34,7 +34,7 @@ from nostalgia.facade.backups import BackupOperations
 from nostalgia.facade.content import ContentTarget
 from nostalgia.facade.donate import DonateOperations
 from nostalgia.facade.importing import ImportOperations
-from nostalgia.facade.instances import InstanceOperations
+from nostalgia.facade.instances import InstanceOperations, PlayChoices
 from nostalgia.facade.local_mod import LocalModOperations
 from nostalgia.facade.mod_repair import ModRepairOperations
 from nostalgia.facade.multiplayer import MultiplayerOperations
@@ -48,8 +48,8 @@ from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
-from nostalgia.instance.server_list import RecentServer
-from nostalgia.instance.world import RecentWorld
+from nostalgia.instance.server_list import SavedServer
+from nostalgia.instance.world import SavedWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
 from nostalgia.modcheck.local_fix import LocalFix, suggest_local_fixes
@@ -170,13 +170,12 @@ __all__ = [
     "PaymentGateway",
     "PaymentOffer",
     "PaymentOrder",
+    "PlayChoices",
     "PlayerProfile",
     "PlayerSkin",
     "ProfileDraft",
     "Progress",
     "QrCode",
-    "RecentServer",
-    "RecentWorld",
     "RepairChange",
     "RepairGateway",
     "RepairPlan",
@@ -184,6 +183,8 @@ __all__ = [
     "RoomService",
     "RoomStatus",
     "RoomSyncGateway",
+    "SavedServer",
+    "SavedWorld",
     "ServerAccess",
     "ServerArtifact",
     "ServerConnection",
