@@ -91,7 +91,7 @@ máy làm lời mời cũ hết dùng được. Lời mời hạn 5 phút, cấp
 Dịch vụ danh tính vẫn là nơi tin để liên kết tài khoản Google và khóa người nhận;
 envelope không chống được dịch vụ danh tính chủ động thay khóa hay máy bạn bị chiếm.
 Chat thường lưu trên backend, không phải chat mã hóa đầu cuối. Xem
-[đặc tả Google/bạn bè](GOOGLE_FRIENDS_PREVIEW.md).
+[đặc tả Google/bạn bè](archive/GOOGLE_FRIENDS_PREVIEW.md).
 
 
 ## 5. Phòng chờ và WebRTC

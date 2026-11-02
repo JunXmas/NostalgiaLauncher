@@ -37,7 +37,7 @@ Nhánh local `preview/glass-review`; chưa build, push, tạo tag hoặc phát h
 
 ## Ảnh Qt thật
 
-Ảnh bốn gói mới: [chọn gói](preview/minimal/plus-four-plans.png).
+Ảnh bốn gói mới: [chọn gói](../preview/minimal/plus-four-plans.png).
 Xem [review quyền lợi/bố cục](PLUS_LIFETIME_REVIEW.md) cho trạng thái triển khai hiện tại. Các ảnh bên dưới
 là bản bố cục cũ, có giá cũ; dùng để đối chiếu việc sửa QR/biên nhận.
 
@@ -45,18 +45,18 @@ là bản bố cục cũ, có giá cũ; dùng để đối chiếu việc sửa 
 Dữ liệu ngân hàng và giao dịch là mẫu. QR chỉ chứa chữ DEMO, không chứa lệnh chuyển
 khoản và không thể kích hoạt Plus. Trạng thái thành công là phản hồi từ gateway mẫu.
 
-![Gói Plus](preview/minimal/plus-offer.png)
+![Gói Plus](../preview/minimal/plus-offer.png)
 
-![Màn QR và thông tin chuyển khoản](preview/minimal/plus-checkout.png)
+![Màn QR và thông tin chuyển khoản](../preview/minimal/plus-checkout.png)
 
-![Thanh toán thành công mẫu](preview/minimal/plus-success.png)
+![Thanh toán thành công mẫu](../preview/minimal/plus-success.png)
 
-Xem thêm [đơn hết hạn](preview/minimal/plus-expired.png) và
-[lỗi mạng giữ nguyên đơn](preview/minimal/plus-network-error.png).
+Xem thêm [đơn hết hạn](../preview/minimal/plus-expired.png) và
+[lỗi mạng giữ nguyên đơn](../preview/minimal/plus-network-error.png).
 
-![QR trọn vẹn ở cửa sổ nhỏ, chữ 150%](preview/minimal/plus-qr-small-150.png)
+![QR trọn vẹn ở cửa sổ nhỏ, chữ 150%](../preview/minimal/plus-qr-small-150.png)
 
-![Biên nhận ở cửa sổ nhỏ, chữ 150%](preview/minimal/plus-small-150.png)
+![Biên nhận ở cửa sổ nhỏ, chữ 150%](../preview/minimal/plus-small-150.png)
 
 ## Chạy thử
 

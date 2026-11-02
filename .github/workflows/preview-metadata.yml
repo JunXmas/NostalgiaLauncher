@@ -6,7 +6,7 @@ on:
     paths:
       - .github/workflows/preview-metadata.yml
       - docs/preview/SHA256SUMS
-      - docs/PREVIEW_VALIDATION.md
+      - docs/archive/PREVIEW_VALIDATION.md
 
 permissions:
   contents: write
@@ -37,5 +37,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "$PREVIEW_RELEASE_TAG" \
-            docs/preview/SHA256SUMS docs/PREVIEW_VALIDATION.md \
+            docs/preview/SHA256SUMS docs/archive/PREVIEW_VALIDATION.md \
             --repo "$GITHUB_REPOSITORY" --clobber

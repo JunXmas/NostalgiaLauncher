@@ -25,15 +25,15 @@ nhãn hỗ trợ tiếp cận. Cửa sổ thấp thu nhỏ ảnh và tiêu đề
 
 ## Ảnh Qt thật
 
-![Lần mở đầu, chưa chọn](preview/minimal/interface-first-launch.png)
+![Lần mở đầu, chưa chọn](../preview/minimal/interface-first-launch.png)
 
-![Đã chọn giao diện mới, chưa lưu](preview/minimal/interface-first-selected.png)
+![Đã chọn giao diện mới, chưa lưu](../preview/minimal/interface-first-selected.png)
 
-![Lần mở đầu ở 1024×600, chữ 150%](preview/minimal/interface-first-small-150.png)
+![Lần mở đầu ở 1024×600, chữ 150%](../preview/minimal/interface-first-small-150.png)
 
-Xem [đổi lại trong Cài đặt](preview/minimal/interface-choice.png),
-[màn đổi ở 1024×600/chữ 150%](preview/minimal/interface-choice-small-150.png) và
-[nút đổi trong Cài đặt](preview/minimal/interface-settings-modern.png).
+Xem [đổi lại trong Cài đặt](../preview/minimal/interface-choice.png),
+[màn đổi ở 1024×600/chữ 150%](../preview/minimal/interface-choice-small-150.png) và
+[nút đổi trong Cài đặt](../preview/minimal/interface-settings-modern.png).
 
 ## Chạy thử
 

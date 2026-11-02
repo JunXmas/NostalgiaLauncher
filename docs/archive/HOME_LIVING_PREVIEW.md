@@ -37,13 +37,13 @@ Hai thẻ ở dưới mở Thư viện và Chơi chung; không tự tải/cài m
 
 ## Preview Qt thật
 
-![Home với bản chơi mẫu](preview/minimal/home-living.png)
+![Home với bản chơi mẫu](../preview/minimal/home-living.png)
 
-![Home chưa có bản chơi](preview/minimal/home-living-empty.png)
+![Home chưa có bản chơi](../preview/minimal/home-living-empty.png)
 
-![1024×600, chữ 150%](preview/minimal/home-living-small-150.png)
+![1024×600, chữ 150%](../preview/minimal/home-living-small-150.png)
 
-[Video chuyển động và rê chuột](preview/minimal/home-living-motion.mp4).
+[Video chuyển động và rê chuột](../preview/minimal/home-living-motion.mp4).
 
 Ảnh/video ghi từ QQuickView trên OpenGL/llvmpipe, dữ liệu bản chơi/tài khoản là mẫu
 ngoại tuyến trong thư mục tạm. Không dùng ảnh AI hoặc giao dịch/game đang chạy để chụp.

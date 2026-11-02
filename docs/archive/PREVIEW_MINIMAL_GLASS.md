@@ -14,25 +14,25 @@ không push hoặc xuất bản release. Các file preview nằm trong `qml/prev
 
 ## Mẫu để duyệt
 
-- [Đăng nhập](preview/minimal/login.png): phủ toàn cửa sổ, mở maximized khi chạy lần đầu;
+- [Đăng nhập](../preview/minimal/login.png): phủ toàn cửa sổ, mở maximized khi chạy lần đầu;
   Microsoft là lựa chọn chính, Ely.by và ngoại tuyến là lựa chọn phụ. Có đường khám phá
   trước; tài khoản có sẵn vào launcher ngay.
-- [Trang chủ](preview/minimal/home.png): một nút Chơi chính; ưu tiên bản vừa chơi, sau đó
+- [Trang chủ](../preview/minimal/home.png): một nút Chơi chính; ưu tiên bản vừa chơi, sau đó
   bản ghim; các bản khác chỉ có nút chọn. [Home sinh động hơn](HOME_LIVING_PREVIEW.md)
   thay khối cỏ đơn bằng cảnh ghép từ model Minecraft gốc, ánh sáng và chuyển động nhẹ.
-- [Bản chơi](preview/minimal/instances.png): bỏ ảnh rỗng lớn, giảm số nút nổi; quản lý/sao
-  lưu/nhập vẫn truy cập được. [Dạng danh sách](preview/minimal/instances-compact.png).
-- [Thư viện](preview/minimal/library.png): tìm kiếm và loại nội dung là hai lớp chính;
-  bộ lọc nâng cao và Đã cài mở giao diện hiện có. [Các thẻ mod với nền mica từ avatar](preview/minimal/library-mods.png).
-- Bấm thẻ để xem popup giữa cửa sổ: [mod](preview/minimal/project-mod.png),
-  [resource pack](preview/minimal/project-resourcepack.png),
-  [shader pack](preview/minimal/project-shader.png), [modpack](preview/minimal/project-modpack.png).
-  Nút tải nhanh trên thẻ hoạt động riêng. [Danh sách bản phát hành](preview/minimal/project-mod-releases.png)
-  và [popup ở cửa sổ nhỏ/chữ 150%](preview/minimal/project-small-150.png).
-- [Video cuộn 5 giây](preview/minimal/scroll-preview.mp4): thao tác bánh xe thật trong Qt,
+- [Bản chơi](../preview/minimal/instances.png): bỏ ảnh rỗng lớn, giảm số nút nổi; quản lý/sao
+  lưu/nhập vẫn truy cập được. [Dạng danh sách](../preview/minimal/instances-compact.png).
+- [Thư viện](../preview/minimal/library.png): tìm kiếm và loại nội dung là hai lớp chính;
+  bộ lọc nâng cao và Đã cài mở giao diện hiện có. [Các thẻ mod với nền mica từ avatar](../preview/minimal/library-mods.png).
+- Bấm thẻ để xem popup giữa cửa sổ: [mod](../preview/minimal/project-mod.png),
+  [resource pack](../preview/minimal/project-resourcepack.png),
+  [shader pack](../preview/minimal/project-shader.png), [modpack](../preview/minimal/project-modpack.png).
+  Nút tải nhanh trên thẻ hoạt động riêng. [Danh sách bản phát hành](../preview/minimal/project-mod-releases.png)
+  và [popup ở cửa sổ nhỏ/chữ 150%](../preview/minimal/project-small-150.png).
+- [Video cuộn 5 giây](../preview/minimal/scroll-preview.mp4): thao tác bánh xe thật trong Qt,
   có đổi hướng, quay về đầu và dừng dần; video ghi trước khi bổ sung mica cho thẻ.
-- [Cửa sổ nhỏ, chữ 150%](preview/minimal/login-small-150.png) và
-  [thư viện ở cùng kích thước](preview/minimal/library-small-150.png).
+- [Cửa sổ nhỏ, chữ 150%](../preview/minimal/login-small-150.png) và
+  [thư viện ở cùng kích thước](../preview/minimal/library-small-150.png).
 - [Thanh toán Plus](PLUS_PAYMENT_PREVIEW.md): popup mica, gói năm, QR và trạng thái giao
   dịch; gateway mẫu để duyệt UI, adapter HTTPS để nối backend. Chưa nhận thanh toán thật.
 

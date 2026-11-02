@@ -2,7 +2,7 @@
 
 Hướng sản phẩm đã được chủ dự án duyệt. Đây là đặc tả toàn bộ hệ thống, không phải
 bằng chứng mọi tính năng đã triển khai. Phần giao diện và client thanh toán được mô tả
-tại [preview thanh toán](PLUS_PAYMENT_PREVIEW.md); backend đăng nhập Google/phiên một máy đã có trong preview; cổng thanh toán
+tại [preview thanh toán](archive/PLUS_PAYMENT_PREVIEW.md); backend đăng nhập Google/phiên một máy đã có trong preview; cổng thanh toán
 thật và bộ sửa mod vẫn cần triển khai. Chưa nhận thanh toán hoặc thay đổi bản phát hành.
 Preview cho phép chọn giao diện cũ/mới; palette và mica giữ theo mẫu đã duyệt.
 
@@ -10,7 +10,7 @@ Preview cho phép chọn giao diện cũ/mới; palette và mica giữ theo mẫ
 
 Giá chốt ngày 2026-10-06: **29.000đ/1 tháng, 69.000đ/6 tháng, 109.000đ/12 tháng, 209.000đ/mua đứt**.
 Cả bốn gói giữ cùng quyền Plus cốt lõi; gói dài hơn thêm quyền lợi hồ sơ/preview được
-đề xuất tại [review mới](PLUS_LIFETIME_REVIEW.md). Nếu gia hạn ở giá khác, phải công bố trước khi thanh toán;
+đề xuất tại [review mới](archive/PLUS_LIFETIME_REVIEW.md). Nếu gia hạn ở giá khác, phải công bố trước khi thanh toán;
 không tự trừ tiền, không mặc định gia hạn. Hết hạn vẫn dùng launcher và bản chơi bình thường.
 
 | | Free | Plus |
@@ -160,4 +160,4 @@ Cần trừ phí giao dịch, thuế, hoàn tiền, hạ tầng và thời gian 
 Điều kiện mở bán: chi phí mỗi tài khoản nằm trong ngân sách và luồng sửa/hoàn tác được
 kiểm chứng. Giá ra mắt không phải bằng chứng mô hình bền vững.
 
-Xem [Google, bạn bè và phiên một máy](GOOGLE_FRIENDS_PREVIEW.md) cho phần đã triển khai và giới hạn kiểm thử.
+Xem [Google, bạn bè và phiên một máy](archive/GOOGLE_FRIENDS_PREVIEW.md) cho phần đã triển khai và giới hạn kiểm thử.

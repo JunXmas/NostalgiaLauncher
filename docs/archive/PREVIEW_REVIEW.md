@@ -63,12 +63,12 @@ Kiểm tra UI dùng Qt thật ở chế độ offscreen, dữ liệu cục bộ 
 
 Các ảnh dùng dữ liệu bản chơi cục bộ phục vụ duyệt UI, không phải thống kê người dùng thật.
 
-![Màn hình bắt đầu](preview/onboarding.png)
+![Màn hình bắt đầu](../preview/onboarding.png)
 
-![Bản chơi dạng lưới](preview/instances.png)
+![Bản chơi dạng lưới](../preview/instances.png)
 
-![Bản chơi dạng gọn](preview/instances-compact.png)
+![Bản chơi dạng gọn](../preview/instances-compact.png)
 
-![Cài đặt](preview/settings.png)
+![Cài đặt](../preview/settings.png)
 
-![1024×600, cỡ chữ 150%](preview/settings-small-150.png)
+![1024×600, cỡ chữ 150%](../preview/settings-small-150.png)

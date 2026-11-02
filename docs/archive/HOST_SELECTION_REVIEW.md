@@ -19,11 +19,11 @@ Trong Minecraft, người chơi vẫn cần vào hoặc tạo thế giới rồi
 
 Ảnh chụp Qt/OpenGL thật, không dựng bằng công cụ tạo ảnh. Tài khoản, JVM/relay/upload trong ảnh dùng fixture kiểm thử, không kết nối dịch vụ production.
 
-- [Chọn pack — Plus đang tạm khóa](preview/host-selection/HOST_PICKER.png)
-- [Màn hình 1024×600, tỷ lệ chữ 150%](preview/host-selection/HOST_PICKER_SMALL.png)
-- [Chờ LAN từ game đã chọn](preview/host-selection/HOST_WAITING_LAN.png)
-- [Đang tự gửi modpack — trạng thái Plus mô phỏng](preview/host-selection/HOST_SYNCING.png)
-- [Sẵn sàng mời bạn — trạng thái Plus mô phỏng](preview/host-selection/HOST_READY.png)
+- [Chọn pack — Plus đang tạm khóa](../preview/host-selection/HOST_PICKER.png)
+- [Màn hình 1024×600, tỷ lệ chữ 150%](../preview/host-selection/HOST_PICKER_SMALL.png)
+- [Chờ LAN từ game đã chọn](../preview/host-selection/HOST_WAITING_LAN.png)
+- [Đang tự gửi modpack — trạng thái Plus mô phỏng](../preview/host-selection/HOST_SYNCING.png)
+- [Sẵn sàng mời bạn — trạng thái Plus mô phỏng](../preview/host-selection/HOST_READY.png)
 
 Ảnh đồng bộ/sẵn sàng minh họa nhánh Plus bằng fixture; không bật Plus trong bản phát hành.
 

@@ -1,5 +1,5 @@
 > Tài liệu review giai đoạn trước. Bản rc2 đã bổ sung runtime release, payOS, hồ sơ Plus và sửa mod.
-> Trạng thái hiện tại và hướng dẫn thử: [DRAFT_TEST_GUIDE.md](DRAFT_TEST_GUIDE.md).
+> Trạng thái hiện tại và hướng dẫn thử: [DRAFT_TEST_GUIDE.md](../DRAFT_TEST_GUIDE.md).
 
 # Gói mua đứt và trang Bạn bè thu gọn — review preview
 
@@ -65,11 +65,11 @@ nằm dưới Không tìm thấy LAN. Palette cũ, mica và model Minecraft đư
 
 Dữ liệu và giao dịch trong ảnh đều **DEMO/PREVIEW**, không chuyển tiền/cấp Plus thật.
 
-![Bạn bè desktop](preview/minimal/friends-compact-preview.png)
+![Bạn bè desktop](../preview/minimal/friends-compact-preview.png)
 
-![Bốn gói và quyền lợi riêng](preview/minimal/plus-four-plans.png)
+![Bốn gói và quyền lợi riêng](../preview/minimal/plus-four-plans.png)
 
-[Chat nhỏ 150%](preview/minimal/friends-compact-small-chat.png) ·
-[Danh sách nhỏ 150%](preview/minimal/friends-compact-small-list.png) ·
-[Chờ LAN](preview/minimal/friends-compact-lan.png) ·
-[Biên nhận mua đứt](preview/minimal/plus-lifetime-receipt.png)
+[Chat nhỏ 150%](../preview/minimal/friends-compact-small-chat.png) ·
+[Danh sách nhỏ 150%](../preview/minimal/friends-compact-small-list.png) ·
+[Chờ LAN](../preview/minimal/friends-compact-lan.png) ·
+[Biên nhận mua đứt](../preview/minimal/plus-lifetime-receipt.png)

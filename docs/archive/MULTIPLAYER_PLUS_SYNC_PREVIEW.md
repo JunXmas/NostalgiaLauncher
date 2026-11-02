@@ -74,7 +74,7 @@ Giao diện đồng bộ được gắn vào preview. Bản release không tự 
 - Relay TCP giả: một kết nối liên tục 1.020 giây, 52 lượt trao đổi; ping/pong và payload Forge.
 - Runtime workerd cục bộ qua WSS: bài kiểm tra 1.020 giây, log trong
   `/workspace/scratch/multiplayer-workerd-soak.log`, cùng một kết nối và 52 lượt trao đổi, PASS.
-  [Log hai bài soak](preview/minimal/multiplayer-soak.txt) được lưu cùng bản review.
+  [Log hai bài soak](../preview/minimal/multiplayer-soak.txt) được lưu cùng bản review.
 - Node/Miniflare: chuyển tiếp byte, chống chiếm host, dựng lại state từ attachments,
   publish/commit/download, cờ Plus giả, vé giả, mã sai, thu hồi quyền, D1 authorizer và
   relay nối authorizer D1 thật trong runtime test.
@@ -88,7 +88,7 @@ Giao diện đồng bộ được gắn vào preview. Bản release không tự 
 
 Ảnh review (dữ liệu có nhãn PREVIEW):
 
-- [Host chia sẻ](preview/minimal/multiplayer-plus-host.png)
-- [Khách miễn phí](preview/minimal/multiplayer-free-guest.png)
-- [Màn hình nhỏ 150%](preview/minimal/multiplayer-free-guest-small-150.png)
-- [Đồng bộ hoàn tất](preview/minimal/multiplayer-sync-complete.png)
+- [Host chia sẻ](../preview/minimal/multiplayer-plus-host.png)
+- [Khách miễn phí](../preview/minimal/multiplayer-free-guest.png)
+- [Màn hình nhỏ 150%](../preview/minimal/multiplayer-free-guest-small-150.png)
+- [Đồng bộ hoàn tất](../preview/minimal/multiplayer-sync-complete.png)

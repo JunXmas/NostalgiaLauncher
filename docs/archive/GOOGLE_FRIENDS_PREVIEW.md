@@ -1,5 +1,5 @@
 > Tài liệu review giai đoạn trước. Bản rc2 đã bổ sung runtime release, payOS, hồ sơ Plus và sửa mod.
-> Trạng thái hiện tại và hướng dẫn thử: [DRAFT_TEST_GUIDE.md](DRAFT_TEST_GUIDE.md).
+> Trạng thái hiện tại và hướng dẫn thử: [DRAFT_TEST_GUIDE.md](../DRAFT_TEST_GUIDE.md).
 
 # Google, bạn bè và Plus — bản preview để duyệt
 
@@ -145,9 +145,9 @@ mẫu dùng `--social-demo --payment-demo`; token và QR demo không mở đư�
 - Mypy và Ruff qua; không cảnh báo QML trong 6 capture cuối. Kho OS Windows/macOS
   kiểm qua adapter giả; chưa chạy launcher trên Windows/macOS thật ở lượt này.
 
-[Bạn bè thu gọn](preview/minimal/friends-compact-preview.png) ·
-[Chờ LAN](preview/minimal/friends-compact-lan.png) ·
-[Chat cửa sổ nhỏ 150%](preview/minimal/friends-compact-small-chat.png) ·
-[Danh sách nhỏ 150%](preview/minimal/friends-compact-small-list.png) ·
-[Bốn gói Plus](preview/minimal/plus-four-plans.png) ·
-[Biên nhận mua đứt](preview/minimal/plus-lifetime-receipt.png)
+[Bạn bè thu gọn](../preview/minimal/friends-compact-preview.png) ·
+[Chờ LAN](../preview/minimal/friends-compact-lan.png) ·
+[Chat cửa sổ nhỏ 150%](../preview/minimal/friends-compact-small-chat.png) ·
+[Danh sách nhỏ 150%](../preview/minimal/friends-compact-small-list.png) ·
+[Bốn gói Plus](../preview/minimal/plus-four-plans.png) ·
+[Biên nhận mua đứt](../preview/minimal/plus-lifetime-receipt.png)
