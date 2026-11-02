@@ -2,14 +2,16 @@ import QtQuick
 import QtQuick.Effects
 import "../" as Legacy
 
-/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, slide 1 = bản chơi của bạn.
+/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, rồi các slide quảng cáo từ feed
+   `promotions.json` (không có thì ẩn), cuối cùng là bản chơi của bạn.
    Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang định bấm). */
 Glass {
     id: root
     objectName: "homeSlides"
     property var chosen: null
     property int current: 0
-    readonly property int count: 2
+    readonly property var promotions: promotionBridge.slides
+    readonly property int count: 2 + promotions.length
     signal playRequested
     signal libraryRequested
     width: parent.width
@@ -45,6 +47,15 @@ Glass {
                 active: root.current === 0
                 onCreateRequested: root.playRequested()
                 onLibraryRequested: root.libraryRequested()
+            }
+            Repeater {
+                model: root.promotions
+                PromotionSlide {
+                    width: viewport.width; height: viewport.height
+                    textInset: 72
+                    slide: modelData
+                    chosen: root.chosen
+                }
             }
             HomeHero {
                 id: hero

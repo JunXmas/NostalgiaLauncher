@@ -25,6 +25,7 @@ from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
 from nostalgia.ui.profile_bridge import ProfileBridge
 from nostalgia.ui.project_bridge import ProjectBridge
+from nostalgia.ui.promotion_bridge import PromotionBridge
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.server_room_bridge import ServerRoomBridge
@@ -111,6 +112,7 @@ def open_window(
     view.bind_context_property(
         "projectBridge", ProjectBridge(launcher, bridge, content_bridge, parent=view)
     )
+    view.bind_context_property("promotionBridge", PromotionBridge(launcher, parent=view))
     view.bind_context_property(
         "paymentBridge",
         PaymentBridge(payment_gateway, demonstration=payment_demonstration, parent=view),

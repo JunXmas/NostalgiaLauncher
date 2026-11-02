@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "slides": [
+    {
+      "kind": "link",
+      "title": "Slide mẫu",
+      "body": "Mẫu cho người quản lý feed, đã hết hạn nên không hiện. Sao chép, sửa nội dung rồi đặt starts_at/ends_at (giây Unix, 0 là không giới hạn).",
+      "button": "Xem mã nguồn",
+      "url": "https://github.com/JunXmas/NostalgiaLauncher",
+      "image": "https://raw.githubusercontent.com/JunXmas/NostalgiaLauncher/main/packaging/icons/nostalgia.png",
+      "starts_at": 0,
+      "ends_at": 1
+    }
+  ]
+}

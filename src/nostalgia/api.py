@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from nostalgia.account.model import Account, PlayerProfile
 from nostalgia.auth.device_code import DeviceCode
 from nostalgia.auth.qr import QrCode
+from nostalgia.content.promotions import Promotion
 from nostalgia.content.updates import ContentUpdate
 from nostalgia.doctor import Diagnosis
 from nostalgia.donate.vietqr import BankAccount
@@ -42,6 +43,7 @@ from nostalgia.facade.nos_client import NosClientOperations
 from nostalgia.facade.onboarding import OnboardingOperations
 from nostalgia.facade.play import PlayOperations
 from nostalgia.facade.presets import PresetOperations
+from nostalgia.facade.promotions import PromotionOperations
 from nostalgia.facade.room_sharing import RoomSharingOperations
 from nostalgia.facade.room_sync import RoomSyncOperations
 from nostalgia.facade.servers import ServerOperations
@@ -125,6 +127,7 @@ class Launcher(
     AppearanceOperations,
     LocalModOperations,
     PresetOperations,
+    PromotionOperations,
     NosClientOperations,
     ImportOperations,
     InstanceOperations,
@@ -179,6 +182,7 @@ __all__ = [
     "PlayerSkin",
     "ProfileDraft",
     "Progress",
+    "Promotion",
     "QrCode",
     "RecentServer",
     "RecentWorld",

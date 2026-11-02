@@ -4241,5 +4241,13 @@
   "p:Ủng hộ tùy tâm vẫn dùng được, nhưng không kích hoạt Nostalgia+.": "Ủng hộ tùy tâm vẫn dùng được, nhưng không kích hoạt Nostalgia+.",
   "p:Voluntary donations still work, but do not activate Nostalgia+.": "Ủng hộ tùy tâm vẫn dùng được, nhưng không kích hoạt Nostalgia+.",
   "p:Mua Nostalgia+": "Mua Nostalgia+",
-  "p:Buy Nostalgia+": "Mua Nostalgia+"
+  "p:Buy Nostalgia+": "Mua Nostalgia+",
+  "p: · vào bằng ": " · vào bằng ",
+  "p: · joining with ": " · vào bằng ",
+  "p:Chọn một bản chơi để vào server.": "Chọn một bản chơi để vào server.",
+  "p:Choose an instance to join the server.": "Chọn một bản chơi để vào server.",
+  "p:GỢI Ý": "GỢI Ý",
+  "p:SUGGESTED": "GỢI Ý",
+  "p:SERVER GỢI Ý": "SERVER GỢI Ý",
+  "p:SUGGESTED SERVER": "SERVER GỢI Ý"
 }

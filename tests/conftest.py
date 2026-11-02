@@ -191,8 +191,12 @@ def qt_app(monkeypatch: pytest.MonkeyPatch) -> Iterator[object]:
     application = QApplication.instance() or QApplication(["test"])
     assert isinstance(application, QApplication)
     application.setQuitOnLastWindowClosed(False)
+    from nostalgia.api import Launcher
     from qt_lifetime import finish_windows, retain_windows
 
+    # Mở cửa sổ là tải feed quảng cáo từ GitHub; test UI không ra Internet. Test slide quảng
+    # cáo tự đặt lại hàm này (tests/ui/test_promotion_slides.py).
+    monkeypatch.setattr(Launcher, "load_promotions", lambda _self: ())
     windows = retain_windows(monkeypatch)
     yield application
     finish_windows(application, windows)

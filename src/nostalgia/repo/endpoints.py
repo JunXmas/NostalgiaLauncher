@@ -68,6 +68,10 @@ ELY_CAPES_URL = "https://skinsystem.ely.by/cloaks"
 ELY_TEXTURES_URL = "https://skinsystem.ely.by/textures"
 # Bản phát hành launcher (GitHub Releases). Gói tải về đi qua 302 sang CDN của GitHub.
 LAUNCHER_RELEASES_URL = "https://api.github.com/repos/JunXmas/NostalgiaLauncher/releases/latest"
+# Slide quảng cáo trang chủ: sửa `promotions.json` ở gốc kho là mọi launcher thấy, không ra bản.
+# Feed và ảnh chỉ được tải từ PROMOTION_HOSTS (host ghim).
+PROMOTIONS_URL = "https://raw.githubusercontent.com/JunXmas/NostalgiaLauncher/main/promotions.json"
+PROMOTION_HOSTS = ("raw.githubusercontent.com",)
 
 # Số tài khoản nhận ủng hộ, GHIM SẴN trong kho. Không phải bí mật: mã QR chuyển khoản dán
 # công khai ở quán cà phê cũng chính là ba trường này, và biết số tài khoản chỉ gửi tiền VÀO
@@ -137,6 +141,8 @@ class Endpoints:
     ely_capes: str = ELY_CAPES_URL
     ely_textures: str = ELY_TEXTURES_URL
     launcher_releases: str = LAUNCHER_RELEASES_URL
+    promotions: str = PROMOTIONS_URL
+    promotion_hosts: tuple[str, ...] = PROMOTION_HOSTS
     skin_upload: str = SKIN_UPLOAD_URL
     profile_with_capes: str = PROFILE_WITH_CAPES_URL
     cape_active: str = CAPE_ACTIVE_URL
