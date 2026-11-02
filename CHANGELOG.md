@@ -3,6 +3,42 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.0 — 2026-11-03
+
+Bản chính thức đầu tiên của dòng 1.2. Gộp mọi thay đổi từ rc43.
+
+**Chơi**
+- Bấm **Chơi** mở cửa sổ chọn nơi vào, dạng lưới như chọn video: tab **Chơi đơn** (world có
+  ảnh icon, chế độ, lần chơi cuối, nhãn Hardcore/Cheat) và **Chơi mạng** (server đã lưu
+  trong game). Bấm thẻ là vào thẳng. Có ô tìm và sắp xếp.
+- **Đổi phiên bản mod** ngay trong danh sách mod đã cài: chọn bản tương thích bất kỳ, có hoàn
+  tác. Chỉ đổi khi game đã tắt; máy tắt giữa chừng thì bộ mod cũ tự trả về khi chơi lần sau.
+
+**Chơi cùng bạn bè**
+- Trang Bạn bè: **mã phòng** ngay trên trang (chủ phòng chép mã, khách nhập mã rồi Vào) và
+  nút **Mời** một cú bấm cạnh tên từng bạn. Bỏ chat và trạng thái online.
+- Mở phòng: chọn bản chơi rồi **chọn world** trong cùng cửa sổ lưới; bấm Khởi chạy là
+  Minecraft vào thẳng world đó, chỉ còn bật Open to LAN.
+- Kết nối **trực tiếp**: IPv6, tự mở cổng router (UPnP), rồi STUN. Không còn relay dữ liệu.
+  Không nối được thì báo rõ lý do và gợi ý (đổi mạng, đổi người làm chủ phòng).
+- **Đồng bộ modpack miễn phí** qua chính kết nối của phòng: mod có trên Modrinth/CurseForge
+  tải từ đó, phần còn lại lấy từ máy chủ phòng. Vẫn hiện cảnh báo bảo mật trước khi nhận.
+
+**Nostalgia+**
+- Một gói duy nhất: **79.000đ/năm** hoặc **199.000đ mua đứt**. Mọi tính năng chơi đều miễn
+  phí (kể cả tự host server, sửa mod); Nostalgia+ gồm cosmetic hồ sơ cao cấp, huy hiệu và dùng
+  thử bản mới sớm. Người đã mua gói cũ giữ nguyên quyền, mang nhãn **Người ủng hộ sớm**.
+
+**Trang chủ**
+- Slide quảng cáo server/dịch vụ lấy từ xa: đổi nội dung không cần cập nhật launcher.
+- Gỡ Forgotten Worlds khỏi launcher. Bản chơi đã tạo vẫn chơi bình thường.
+
+**Sửa lỗi**
+- Đăng nhập Ely.by không nhận được mã (Ely.by đổi cách ghi quyền truy cập).
+- Bản sao lưu không còn chứa lịch sử hoàn tác (trước đây có thể nặng thêm nhiều GB).
+- Chỉ còn giao diện mới; gỡ giao diện cổ điển. File cấu hình của bạn nay được ưu tiên hơn
+  cấu hình cài sẵn.
+
 ## 1.2.0rc43 — 2026-10-28
 
 - Quản lý bản chơi → Hiệu năng → **Nâng cao**: chọn file Java riêng cho từng bản chơi. Để
