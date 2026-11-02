@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -14,8 +13,6 @@ from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.errors import ContentError
 from nostalgia.modrepair.gateway import HttpRepairGateway
 from nostalgia.modrepair.model import RepairPlan
-from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
-from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.net.http import HttpClient
 from nostalgia.net.session_proof import forget_session, proof_headers, public_key, register_session
 from nostalgia.payment.gateway import HttpPaymentGateway
@@ -81,56 +78,5 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         server_state.add(path, b"{}", status=409)
         with pytest.raises(ContentError):
             HttpRepairGateway(server.url(""), ACCESS_TOKEN, http_client).authorize(plan)
-    finally:
-        forget_session(ACCESS_TOKEN)
-
-
-@pytest.mark.parametrize("relay_enabled", [False, True])
-def test_modpack_manifest_file_and_commit_are_signed_but_free_guest_sends_no_token(
-    tmp_path: Path,
-    server: LocalHttpsServer,
-    server_state: ServerState,
-    http_client: HttpClient,
-    relay_enabled: bool,
-) -> None:
-    payload = b"raw modpack bytes"
-    (tmp_path / "mods").mkdir()
-    (tmp_path / "mods/a.jar").write_bytes(payload)
-    digest = hashlib.sha256(payload).hexdigest()
-    sync_file = SyncFile("mods/a.jar", digest, len(payload))
-    manifest = SyncManifest("Pack", "1.20.1", "forge", "47.4.23", (sync_file,))
-    path = "/v1/rooms/ABCDEF/sync"
-    for route in [path, path + "/files/" + digest, path + "/commit"]:
-        server_state.add(route, b"{}")
-    register_session(ACCESS_TOKEN, SEED)
-    try:
-        attached: list[SyncSnapshot] = []
-        HttpRoomSyncGateway(
-            server.url(""),
-            http_client,
-            ACCESS_TOKEN,
-            relay_enabled=relay_enabled,
-            attach_source=None if relay_enabled else attached.append,
-        ).publish("ABCDEFABCDEFGHJKMN", "host-ticket", SyncSnapshot(manifest, tmp_path))
-        if not relay_enabled:
-            assert attached == [SyncSnapshot(manifest, tmp_path)]
-            assert json.loads(server_state.received_body(path))["transport"] == "peer"
-            assert not server_state.received_header(path + "/files/" + digest, "Authorization")
-        routes = [path, path + "/commit"]
-        if relay_enabled:
-            routes.append(path + "/files/" + digest)
-        for route in routes:
-            verify(
-                server_state.received_header(route, "Nostalgia-Proof"),
-                "PUT" if "/files/" in route else "POST",
-                server.url(route),
-                server_state.received_body(route),
-            )
-        server_state.add(path, b"{}", status=404)
-        assert (
-            HttpRoomSyncGateway(server.url(""), http_client).resolve("ABCDEFABCDEFGHJKMN") is None
-        )
-        assert not server_state.received_header(path, "Authorization")
-        assert not server_state.received_header(path, "Nostalgia-Proof")
     finally:
         forget_session(ACCESS_TOKEN)

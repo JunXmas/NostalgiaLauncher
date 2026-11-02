@@ -158,7 +158,7 @@ def test_relay_disconnect_clears_host_status_and_reports_failure(remote: LoopThr
         remote.run(remote.relay.stop())
         wait_for(lambda: bool(failures))
         assert statuses[-1] == RoomStatus()
-        assert "Mất kết nối relay" in failures[-1]
+        assert "Mất kết nối máy chủ ghép phòng" in failures[-1]
     finally:
         service.shutdown()
 

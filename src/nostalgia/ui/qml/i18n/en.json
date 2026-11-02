@@ -4255,5 +4255,15 @@
   "p:Tìm bản phù hợp": "Find compatible versions",
   "p:Tắt game để đổi phiên bản mod.": "Close the game to change mod versions.",
   "p:Đang sử dụng": "In use",
-  "p:Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.": "Sign in with Google to find free replacements when compatibility data reports a problem."
+  "p:Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.": "Sign in with Google to find free replacements when compatibility data reports a problem.",
+  "m:Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.": "Lost connection to the room server. Reopen the room; your LAN game is still running.",
+  "p:Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.": "Lost connection to the room server. Reopen the room; your LAN game is still running.",
+  "m:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.": "The host does not support P2P yet. Ask them to update the launcher and reopen the room.",
+  "p:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.": "The host does not support P2P yet. Ask them to update the launcher and reopen the room.",
+  "m:Kết nối P2P đã mất. Bấm Thử kết nối lại.": "The P2P connection was lost. Press Reconnect.",
+  "p:Kết nối P2P đã mất. Bấm Thử kết nối lại.": "The P2P connection was lost. Press Reconnect.",
+  "m:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.": "P2P is unavailable. Update the launcher and check the room settings.",
+  "p:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.": "P2P is unavailable. Update the launcher and check the room settings.",
+  "m:Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại.": "Could not connect over P2P. Your network may block UDP. Try another network, or let the other player host, then press Reconnect.",
+  "p:Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại.": "Could not connect over P2P. Your network may block UDP. Try another network, or let the other player host, then press Reconnect."
 }

@@ -25,8 +25,7 @@ from nostalgia.multiplayer.peer_failure import (
 from nostalgia.multiplayer.peer_route import PeerRoute
 from nostalgia.multiplayer.peer_stream import PeerStream
 from nostalgia.multiplayer.peer_stun import select_peer_configuration
-from nostalgia.multiplayer.room_code import split_room_code
-from nostalgia.multiplayer.sync_gateway import invite_proof
+from nostalgia.multiplayer.room_code import invite_proof, split_room_code
 from nostalgia.net.http import HttpClient
 
 if TYPE_CHECKING:

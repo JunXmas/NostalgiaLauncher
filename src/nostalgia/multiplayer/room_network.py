@@ -14,9 +14,8 @@ from typing import TYPE_CHECKING
 from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.mux import ROOM_META, pack_mux_frame
-from nostalgia.multiplayer.room_code import split_room_code
+from nostalgia.multiplayer.room_code import invite_proof, split_room_code
 from nostalgia.multiplayer.room_transfer import RoomTransfer
-from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.net.http import HttpClient
 from nostalgia.net.websocket import TlsContext
 
@@ -64,7 +63,9 @@ class RoomNetwork(RoomTransfer):
         except Exception as exc:
             logger.warning("relay host closed with error: %s: %s", type(exc).__name__, exc)
         await self._teardown()
-        self._on_failure("Mất kết nối relay. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.")
+        self._on_failure(
+            "Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn."
+        )
 
     def initialize_network(self, http_client: HttpClient | None) -> None:
         self._room_http = http_client
@@ -84,8 +85,7 @@ class RoomNetwork(RoomTransfer):
             or not self._relay_url.startswith("wss://")
         ):
             raise MultiplayerError(
-                "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng; "
-                "relay dữ liệu đã tắt."
+                "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng."
             )
 
     def set_direct_allowed(self, allowed: bool) -> None:

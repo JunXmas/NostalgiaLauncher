@@ -4255,5 +4255,15 @@
   "p:Tìm bản phù hợp": "Tìm bản phù hợp",
   "p:Tắt game để đổi phiên bản mod.": "Tắt game để đổi phiên bản mod.",
   "p:Đang sử dụng": "Đang sử dụng",
-  "p:Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.": "Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích."
+  "p:Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.": "Đăng nhập Google để tìm bản thay thế miễn phí khi có dữ liệu lỗi tương thích.",
+  "m:Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.": "Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.",
+  "p:Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.": "Mất kết nối máy chủ ghép phòng. Hãy mở lại phòng; game LAN vẫn còn trên máy bạn.",
+  "m:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.": "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.",
+  "p:Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.": "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.",
+  "m:Kết nối P2P đã mất. Bấm Thử kết nối lại.": "Kết nối P2P đã mất. Bấm Thử kết nối lại.",
+  "p:Kết nối P2P đã mất. Bấm Thử kết nối lại.": "Kết nối P2P đã mất. Bấm Thử kết nối lại.",
+  "m:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.": "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.",
+  "p:Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.": "Không thể dùng P2P. Hãy cập nhật launcher và kiểm tra cấu hình phòng.",
+  "m:Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại.": "Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại.",
+  "p:Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại.": "Không thể kết nối P2P. Mạng có thể chặn UDP. Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại."
 }

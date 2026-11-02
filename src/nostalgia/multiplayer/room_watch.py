@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from nostalgia.errors import MultiplayerError, NetworkError
 from nostalgia.multiplayer.peer_failure import PeerConnectionError
-from nostalgia.multiplayer.sync_gateway import invite_proof
+from nostalgia.multiplayer.room_code import invite_proof
 from nostalgia.net.http import HttpClient
 
 if TYPE_CHECKING:
@@ -102,7 +102,7 @@ class RoomWatch:
                     and not self._relay_enabled
                 ):
                     self.peer_unavailable(
-                        "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher; relay dữ liệu đã tắt.",
+                        "Host chưa hỗ trợ P2P. Nhờ host cập nhật launcher rồi mở lại phòng.",
                         retryable=False,
                     )
                     return
@@ -118,9 +118,7 @@ class RoomWatch:
                         return
                 if self._joiner.peer is not None and self._joiner.peer.closed:
                     if not self._relay_enabled:
-                        self.peer_unavailable(
-                            "Kết nối P2P đã mất. Bấm Thử kết nối lại; relay dữ liệu đã tắt."
-                        )
+                        self.peer_unavailable("Kết nối P2P đã mất. Bấm Thử kết nối lại.")
                         return
                     self._publish(connection_kind="relay")
                 await asyncio.sleep(60 if document["world_ready"] and not locked else 15)
@@ -180,8 +178,8 @@ class RoomWatch:
         except (ImportError, ConnectionError, TimeoutError, NetworkError):
             if not self._relay_enabled:
                 self.peer_unavailable(
-                    "Không thể kết nối P2P. Mạng có thể chặn UDP; relay dữ liệu đã tắt. "
-                    "Thử mạng khác rồi bấm Thử kết nối lại."
+                    "Không thể kết nối P2P. Mạng có thể chặn UDP. "
+                    "Thử mạng khác, hoặc nhờ người kia làm chủ phòng, rồi bấm Thử kết nối lại."
                 )
                 return False
             self._publish(connection_kind="relay")
@@ -196,7 +194,7 @@ class RoomWatch:
         if self._relay_enabled:
             self._publish(connection_kind="relay")
         else:
-            self.peer_unavailable("Kết nối P2P đã mất. Bấm Thử kết nối lại; relay dữ liệu đã tắt.")
+            self.peer_unavailable("Kết nối P2P đã mất. Bấm Thử kết nối lại.")
             if self._network_task is not None:
                 self._network_task.cancel()
 

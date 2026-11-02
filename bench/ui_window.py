@@ -18,7 +18,6 @@ from PySide6.QtWidgets import QApplication
 
 from nostalgia.api import (
     HttpPaymentGateway,
-    HttpRoomSyncGateway,
     HttpSocialGateway,
     Launcher,
     SocialGateway,
@@ -65,11 +64,7 @@ def main() -> int:
     qt_application.setApplicationName("Nostalgia UI window")
     http_client = HttpClient(timeout_seconds=10)
     session_token = args.plus_session_file.read_text().strip() if args.plus_session_file else ""
-    sync_gateway = (
-        HttpRoomSyncGateway(args.room_sync_url, http_client, session_token)
-        if args.room_sync_url
-        else None
-    )
+    sync_gateway = None  # gateway đồng bộ P2P do runtime dựng; bench không cần
     social_gateway: SocialGateway | None = (
         HttpSocialGateway(args.accounts_url, http_client) if args.accounts_url else None
     )
@@ -119,10 +114,6 @@ def main() -> int:
                 if access_token
                 else None
             )
-            if args.room_sync_url:
-                room_bridge.set_gateway(
-                    HttpRoomSyncGateway(args.room_sync_url, http_client, access_token)
-                )
 
         social_bridge.sessionChanged.connect(connect_services)
     try:

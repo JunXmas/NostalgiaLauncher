@@ -1,22 +1,18 @@
 """Relay mặc định khóa; không mở WebSocket hoặc HTTP file khi P2P không sẵn sàng."""
 
 import asyncio
-import hashlib
 import json
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
-from nostalgia.errors import MultiplayerError
 from nostalgia.multiplayer.bridge import JoinerBridge
 from nostalgia.multiplayer.peer_download import PeerDownload
 from nostalgia.multiplayer.peer_failure import PeerConnectionError
 from nostalgia.multiplayer.room_watch import RoomWatch
 from nostalgia.multiplayer.service import RoomService
-from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
-from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
+from nostalgia.multiplayer.sync_model import SyncFile
 from nostalgia.net.http import HttpClient, HttpResponse
 from nostalgia.operations.cancellation import CancelToken
 
@@ -57,50 +53,6 @@ def test_retry_p2p_after_network_failure_is_not_permanently_disabled(
         await receiver.close()
 
     asyncio.run(scenario())
-
-
-def test_p2p_publish_only_sends_manifest_and_commit(tmp_path: Path) -> None:
-    requests: list[tuple[str, str, bytes | None]] = []
-    attached: list[SyncSnapshot] = []
-
-    class Http:
-        def send(self, method: str, url: str, **kwargs: Any) -> HttpResponse:
-            requests.append((method, url, kwargs.get("body")))
-            return HttpResponse(200, b"{}")
-
-    sync_file = SyncFile("mods/custom.jar", "a" * 64, 12)
-    snapshot = SyncSnapshot(
-        SyncManifest("P2P", "1.20.1", "fabric", "0.16.0", (sync_file,)), tmp_path
-    )
-    gateway = HttpRoomSyncGateway(
-        "https://signal.test",
-        cast(HttpClient, Http()),
-        "paid-session",
-        attach_source=attached.append,
-    )
-    gateway.publish("ABCDEFABCDEFGHJKMN", "host-ticket", snapshot)
-    assert attached == [snapshot]
-    assert [(method, url) for method, url, _ in requests] == [
-        ("POST", "https://signal.test/v1/rooms/ABCDEF/sync"),
-        ("POST", "https://signal.test/v1/rooms/ABCDEF/sync/commit"),
-    ]
-    assert json.loads(requests[0][2] or b"")["transport"] == "peer"
-
-
-@pytest.mark.parametrize("peer_available", [False, True])
-def test_custom_file_never_falls_back_to_http(peer_available: bool) -> None:
-    payload = b"custom mod"
-    sync_file = SyncFile("mods/custom.jar", hashlib.sha256(payload).hexdigest(), len(payload))
-    gateway = HttpRoomSyncGateway(
-        "https://signal.test",
-        cast(HttpClient, NoDataHttp()),
-        download_peer=lambda *_args: payload if peer_available else None,
-    )
-    if peer_available:
-        assert gateway.download("ABCDEFABCDEFGHJKMN", sync_file) == payload
-    else:
-        with pytest.raises(MultiplayerError, match="Relay dữ liệu đã tắt"):
-            gateway.download("ABCDEFABCDEFGHJKMN", sync_file)
 
 
 def test_probe_and_game_connections_cannot_open_relay_without_live_peer(
@@ -182,7 +134,7 @@ def test_service_without_p2p_configuration_never_opens_host_relay() -> None:
     )
     try:
         service.start_hosting().result(3)
-        assert failures and "relay dữ liệu đã tắt" in failures[-1]
+        assert failures and "cập nhật launcher" in failures[-1]
         assert service._host is None
     finally:
         service.shutdown()

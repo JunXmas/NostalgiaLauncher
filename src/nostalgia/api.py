@@ -65,7 +65,6 @@ from nostalgia.multiplayer.lan_log import LanLogReader
 from nostalgia.multiplayer.lan_output import lan_port_from_output
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.service import RoomService
-from nostalgia.multiplayer.sync_gateway import HttpRoomSyncGateway
 from nostalgia.multiplayer.sync_model import RoomSyncGateway, SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.multiplayer.sync_peer import PeerRoomSyncGateway
 from nostalgia.nos_client.config import NosClientConfig
@@ -165,7 +164,6 @@ __all__ = [
     "GoogleLogin",
     "HttpPaymentGateway",
     "HttpRepairGateway",
-    "HttpRoomSyncGateway",
     "HttpSocialGateway",
     "InstallReport",
     "InstalledServerContent",

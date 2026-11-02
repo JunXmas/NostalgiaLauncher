@@ -7,8 +7,8 @@ from concurrent.futures import Future
 from typing import TYPE_CHECKING
 
 from nostalgia.errors import DataFileError, MultiplayerError
+from nostalgia.multiplayer.room_code import invite_proof
 from nostalgia.multiplayer.room_recovery import RoomRecovery
-from nostalgia.multiplayer.sync_gateway import invite_proof
 from nostalgia.multiplayer.sync_model import SyncManifest, SyncSnapshot
 from nostalgia.net.payload import decode_json
 

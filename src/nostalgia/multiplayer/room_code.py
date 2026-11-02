@@ -5,6 +5,8 @@ Không có dạng mã ngắn "tương thích ngược": mã thiếu secret là m
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import secrets
 
 from nostalgia.errors import MultiplayerError
@@ -34,3 +36,12 @@ def split_room_code(room_code: str) -> tuple[str, str]:
         message = f"mã phòng phải có {ROOM_CODE_LENGTH} ký tự trong bảng {ALPHABET}"
         raise MultiplayerError(message)
     return normalised[:ROOM_ID_LENGTH], normalised[ROOM_ID_LENGTH:]
+
+
+def invite_proof(room_code: str) -> tuple[str, str]:
+    """HMAC chứng minh giữ mã phòng mà không gửi mã lên máy chủ tín hiệu."""
+    room_id, room_secret = split_room_code(room_code)
+    proof = hmac.new(
+        room_secret.encode(), b"nostalgia-sync-v1:" + room_id.encode(), hashlib.sha256
+    ).hexdigest()
+    return room_id, proof
