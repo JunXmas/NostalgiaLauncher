@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import "../" as Legacy
 
 // Một thẻ trong cửa sổ chọn khi bấm Chơi: thế giới (ảnh icon.png) hoặc server (icon servers.dat).
@@ -26,14 +27,22 @@ Item {
         border.color: root.activeFocus || hover.hovered ? GlassTheme.alpha(GlassTheme.accent, 0.55) : GlassTheme.stroke
         Behavior on color { ColorAnimation { duration: GlassTheme.quick } }
         transform: Translate { y: hover.hovered && !GlassTheme.reducedMotion ? -3 : 0; Behavior on y { NumberAnimation { duration: GlassTheme.quick } } }
+        readonly property bool shaderAvailable: GraphicsInfo.api !== GraphicsInfo.Software && GraphicsInfo.api !== GraphicsInfo.Unknown
+        // `clip` chỉ cắt hình chữ nhật: ảnh con phải đi qua mặt nạ bo hai góc trên, khớp viền thẻ.
+        Rectangle { id: thumbnailMask; width: thumbnail.width; height: thumbnail.height; topLeftRadius: thumbnail.topLeftRadius; topRightRadius: thumbnail.topRightRadius; color: "white"; visible: card.shaderAvailable }
+        ShaderEffectSource { id: thumbnailMaskCapture; anchors.fill: thumbnail; sourceItem: thumbnailMask; hideSource: true; visible: false; live: card.shaderAvailable }
         Rectangle {
             id: thumbnail
             x: 1; y: 1
             width: parent.width - 2
             height: Math.round(width * 9 / 16)
-            radius: card.radius - 1
+            topLeftRadius: card.radius - 1
+            topRightRadius: card.radius - 1
             color: GlassTheme.selectedSurface
             clip: true
+            layer.enabled: card.shaderAvailable
+            layer.smooth: true
+            layer.effect: MultiEffect { maskEnabled: true; maskSource: thumbnailMaskCapture }
             // Không có icon: key art phiên bản phủ kín khung.
             Image {
                 anchors.fill: parent
