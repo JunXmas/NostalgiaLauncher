@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import tempfile
-from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
 
@@ -55,7 +54,6 @@ def install_content(
     content_kind: str,
     content_version: ServerContentVersion,
     cancel_token: CancelToken | None = None,
-    before_commit: Callable[[], object] | None = None,
 ) -> tuple[InstalledServerContent, ...]:
     existing = installed_content(directory)
     selected: list[ServerContentVersion] = []
@@ -148,8 +146,6 @@ def install_content(
             )
         if cancel_token:
             cancel_token.raise_if_cancelled()
-        if before_commit:
-            before_commit()
         try:
             for record in added:
                 target = owned_path(target_dir, record.file_name)

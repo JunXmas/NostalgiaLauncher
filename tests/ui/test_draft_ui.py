@@ -41,24 +41,19 @@ def test_draft_opens_ultimate_tools_and_standard_release_stays_locked(tmp_path: 
         root_item.setProperty("currentIndex", 0)
         assert view.rootContext().contextProperty("plusFeaturesEnabled") is True
         social = view.rootContext().contextProperty("socialBridge")
-        servers = view.rootContext().contextProperty("serverBridge")
-        wait_until(
-            lambda: bool(social.property("signedIn")) and bool(servers.property("hasAccess"))
-        )
+        wait_until(lambda: bool(social.property("signedIn")))
         assert social.property("account")["cosmeticPlus"]
         press(view, find_control(root_item, "draftToolsOpen"))
         modal = find_control(root_item, "draftToolsDialog")
         wait_until(lambda: bool(modal.property("opened")))
         press(view, find_item(modal.property("contentItem"), "draftPlan-plus-month-v1"))
         wait_until(lambda: social.property("account").get("planName") == "Plus")
-        wait_until(lambda: not bool(servers.property("hasAccess")))
         view.resize(1024, 600)
         QTest.qWait(100)
         assert modal.property("width") < view.width()
         modal.close()
         press(view, find_control(root_item, "draftToolsOpen"))
         press(view, find_item(modal.property("contentItem"), "draftPlan-plus-lifetime-v1"))
-        wait_until(lambda: bool(servers.property("hasAccess")))
         modal.close()
         press(view, find_control(root_item, "openSupport"))
         payments = view.rootContext().contextProperty("paymentBridge")
@@ -80,7 +75,6 @@ def test_draft_opens_ultimate_tools_and_standard_release_stays_locked(tmp_path: 
         social = view.rootContext().contextProperty("socialBridge")
         assert not social.signedIn and not social.property("account").get("plus", False)
         assert not view.rootContext().contextProperty("hostBridge").syncAvailable
-        assert not view.rootContext().contextProperty("serverBridge").hasAccess
         assert not view.rootContext().contextProperty("draftReviewController")
         assert not view.rootContext().contextProperty("draftReviewPanel")
         assert (

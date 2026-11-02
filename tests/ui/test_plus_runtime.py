@@ -100,15 +100,10 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
     server_state.add("/v1/plus/orders", json.dumps(purchase).encode())
     server_state.add("/v1/plus/orders/order_123", json.dumps(purchase).encode())
     server_state.add("/v1/plus/orders/order_123/submit", b'{"status":"pending","submitted":true}')
-    server_state.add(
-        "/v1/servers/access",
-        b'{"plan_name":"Pro","server_hosting":true,"hosting_mode":"local","maximum_running":1}',
-    )
     view = build_release_view(launcher)
     social = view.rootContext().contextProperty("socialBridge")
     payments = view.rootContext().contextProperty("paymentBridge")
     repair = view.rootContext().contextProperty("modRepairBridge")
-    servers = view.rootContext().contextProperty("serverBridge")
     synchronization = view.rootContext().contextProperty("roomSyncBridge")
     gateway = social._gateway
     assert isinstance(gateway, HttpSocialGateway)
@@ -178,14 +173,12 @@ def test_release_manual_purchase_refreshes_rights_and_logout_revokes_gateways(
         wait_until(lambda: social.account["plus"] and repair._gateway is not None)
         assert payments.details["stage"] == "paid"
         assert social.account["planName"] == "Pro"
-        servers.checkAccess()
-        wait_until(lambda: servers.hasAccess and not servers.busy)
         # The account menu also waits for its own update worker before enabling logout.
         wait_until(lambda: not social.busy)
         social.signOut()
         wait_until(lambda: not social.signedIn and not social.busy)
         assert payments.details["stage"] == "unavailable" and repair._gateway is None
-        assert not servers.hasAccess and not synchronization.configured
+        assert not synchronization.configured
         assert launcher.list_accounts()[0].player_name == "MinecraftLocal"
     finally:
         payments.setWatching(False)

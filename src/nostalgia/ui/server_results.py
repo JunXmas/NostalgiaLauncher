@@ -31,10 +31,7 @@ class ServerResults(ServerState):
     def _apply(self, generation: int, result_kind: str, payload: object) -> None:
         if not self.is_current(generation):
             return
-        if result_kind == "access":
-            self._access = True
-            self._note = cast(str, payload) + " · Có thể tạo và quản lý server trên máy bạn."
-        elif result_kind == "versions":
+        if result_kind == "versions":
             self._game_versions, self._builds = list(cast(tuple[str, ...], payload)), []
         elif result_kind == "builds":
             self._builds = [a.build_id for a in cast(tuple[ServerArtifact, ...], payload)]

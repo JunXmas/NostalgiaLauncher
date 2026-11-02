@@ -4,7 +4,6 @@ import "../" as Legacy
 Item {
     id: root
     objectName: "dedicatedServers"
-    Component.onCompleted: serverBridge.checkAccess()
     function openCreate() { create.open(); }
     Glass {
         id: access
@@ -13,14 +12,10 @@ Item {
             id: accessBody
             width: parent.width; spacing: 12
             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Một nơi để cùng chơi"); font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
-            PaymentText { width: parent.width; text: "Pro · Max · Ultimate"; color: GlassTheme.accent }
+            PaymentText { width: parent.width; text: Legacy.Tr.phrase("Miễn phí"); color: GlassTheme.accent }
             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Server chạy trên máy bạn · Paper, Purpur, Folia, Fabric và hybrid."); color: GlassTheme.muted }
             GuideButton { topicId: "server" }
-            Flow { width: parent.width; spacing: 12
-                PaymentText { width: parent.width; text: serverBridge.enabled ? (!socialBridge.signedIn && !serverBridge.hasAccess ? Legacy.Tr.phrase("Đăng nhập Google để tự động kiểm tra quyền host server.") : Legacy.Tr.message(serverBridge.note)) : Legacy.Tr.phrase("Host server trả phí đang tạm khoá. Server chạy trên máy bạn; không kèm VPS. Bạn có thể xem giao diện tạo server."); color: GlassTheme.muted }
-                Button { objectName: "serverGoogleLogin"; label: Legacy.Tr.phrase("Đăng nhập Google"); provider: "google"; visible: serverBridge.enabled && !socialBridge.signedIn && !serverBridge.hasAccess; clickable: socialBridge.configured && !socialBridge.busy && !socialBridge.signingIn; onClicked: socialBridge.signIn() }
-                Button { objectName: "serverRetry"; label: Legacy.Tr.phrase("Thử lại"); visible: serverBridge.enabled && serverBridge.canRetry && socialBridge.signedIn; clickable: !serverBridge.busy; onClicked: serverBridge.retry() }
-            }
+            PaymentText { width: parent.width; text: Legacy.Tr.message(serverBridge.note); color: GlassTheme.muted }
         }
     }
     InertialScroll {
@@ -42,8 +37,8 @@ Item {
                         PaymentText { width: parent.width; text: modelData.engine_title + " · Minecraft " + modelData.game_version + " · " + modelData.heap_megabytes + " MB"; color: GlassTheme.muted }
                         Flow { width: parent.width; spacing: 10
                             Button { objectName: "serverManage-" + modelData.server_id; label: Legacy.Tr.phrase("Quản lý"); onClicked: manager.openFor(modelData.server_id) }
-                            Button { objectName: "serverRun-" + modelData.server_id; label: serverBridge.runningId === modelData.server_id ? Legacy.Tr.phrase("Dừng & lưu thế giới") : Legacy.Tr.phrase("Khởi chạy"); primary: serverBridge.runningId !== modelData.server_id; clickable: !serverBridge.busy && (serverBridge.runningId === modelData.server_id || serverBridge.hasAccess && !serverBridge.runningId); onClicked: { if (serverBridge.runningId === modelData.server_id) serverBridge.stop(); else serverBridge.start(modelData.server_id); } }
-                            Button { objectName: "serverDelete-" + modelData.server_id; label: Legacy.Tr.phrase("Xoá"); danger: true; quiet: true; clickable: !serverBridge.busy && serverBridge.hasAccess && !serverBridge.runningId; onClicked: { var serverId = modelData.server_id; confirmDialog.ask(Legacy.Tr.phrase("Chuyển server vào thùng rác?"), Legacy.Tr.phrase("Thế giới, plugin và mod được giữ trong servers/.trash."), function() { serverBridge.trash(serverId); }); } }
+                            Button { objectName: "serverRun-" + modelData.server_id; label: serverBridge.runningId === modelData.server_id ? Legacy.Tr.phrase("Dừng & lưu thế giới") : Legacy.Tr.phrase("Khởi chạy"); primary: serverBridge.runningId !== modelData.server_id; clickable: !serverBridge.busy && (serverBridge.runningId === modelData.server_id || !serverBridge.runningId); onClicked: { if (serverBridge.runningId === modelData.server_id) serverBridge.stop(); else serverBridge.start(modelData.server_id); } }
+                            Button { objectName: "serverDelete-" + modelData.server_id; label: Legacy.Tr.phrase("Xoá"); danger: true; quiet: true; clickable: !serverBridge.busy && !serverBridge.runningId; onClicked: { var serverId = modelData.server_id; confirmDialog.ask(Legacy.Tr.phrase("Chuyển server vào thùng rác?"), Legacy.Tr.phrase("Thế giới, plugin và mod được giữ trong servers/.trash."), function() { serverBridge.trash(serverId); }); } }
                             PaymentText { text: serverBridge.readyId === modelData.server_id ? Legacy.Tr.phrase("● Sẵn sàng") : serverBridge.runningId === modelData.server_id ? Legacy.Tr.phrase("◌ Đang khởi động") : Legacy.Tr.phrase("○ Đã dừng"); color: serverBridge.runningId === modelData.server_id ? GlassTheme.accent : GlassTheme.muted }
                         }
                     }

@@ -57,7 +57,7 @@ Item {
         anchors.top: header.bottom
         spacing: 8
         Button { objectName: "workspaceInstances"; label: Legacy.Tr.phrase("Bản chơi"); selected: !root.serverMode; quiet: true; onClicked: root.serverMode = false }
-        Button { objectName: "workspaceServers"; label: "Server · Pro+"; selected: root.serverMode; quiet: true; onClicked: root.serverMode = true }
+        Button { objectName: "workspaceServers"; label: Legacy.Tr.phrase("Server"); selected: root.serverMode; quiet: true; onClicked: root.serverMode = true }
     }
     GuideCard {
         id: guide; anchors.top: workspaceTabs.bottom; anchors.topMargin: 8

@@ -52,7 +52,7 @@ class ServerRoomBridge(WorkerBridge):
         def work() -> None:
             self._authorized.emit(self._servers.domain_manager.room_connection())
 
-        self.run_in_background(work, "Đang xác minh quyền và cổng server…")
+        self.run_in_background(work, "Đang kiểm tra server đã sẵn sàng…")
 
     @Slot(object)
     def _open(self, result: object) -> None:

@@ -15,7 +15,7 @@ Controls.Popup {
     property string buildId: ""
     property bool initialVersionsRequested: false
     readonly property var engine: serverBridge.engines.filter(function(e) { return e.engine_id === root.engineId; })[0] || ({})
-    readonly property string blockedReason: !serverBridge.enabled ? Legacy.Tr.phrase("Tính năng server đang tạm vô hiệu hóa.") : !socialBridge.signedIn ? Legacy.Tr.phrase("Đăng nhập Google ở mục Bạn bè để kiểm tra quyền server.") : serverBridge.busy ? Legacy.Tr.phrase("Đang xử lý server. Hãy chờ hoàn tất hoặc hủy tác vụ.") : !serverBridge.hasAccess ? (serverBridge.canRetry ? Legacy.Tr.phrase("Chưa xác minh được quyền server. Đóng cửa sổ và bấm Thử lại ở mục Server.") : Legacy.Tr.phrase("Cần gói Pro, Max hoặc Ultimate để tạo server. Xem trạng thái quyền ở mục Server.")) : !root.gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft cho server.") : !root.buildId ? Legacy.Tr.phrase("Chọn bản phát hành server.") : !labelField.text.trim() ? Legacy.Tr.phrase("Nhập tên server để tiếp tục.") : ""
+    readonly property string blockedReason: serverBridge.busy ? Legacy.Tr.phrase("Đang xử lý server. Hãy chờ hoàn tất hoặc hủy tác vụ.") : !root.gameVersion ? Legacy.Tr.phrase("Chọn phiên bản Minecraft cho server.") : !root.buildId ? Legacy.Tr.phrase("Chọn bản phát hành server.") : !labelField.text.trim() ? Legacy.Tr.phrase("Nhập tên server để tiếp tục.") : ""
     function chooseEngine(engineId) {
         root.initialVersionsRequested = true;
         root.engineId = engineId; root.gameVersion = ""; root.buildId = "";
@@ -62,7 +62,7 @@ Controls.Popup {
                 Select { objectName: "serverBuild"; width: parent.width; model: serverBridge.builds; currentIndex: -1; displayText: root.buildId || Legacy.Tr.phrase("Chọn bản phát hành…"); enabled: !serverBridge.busy && !!root.gameVersion; onActivated: function(i) { root.buildId = serverBridge.builds[i]; } }
                 PaymentText { text: Legacy.Tr.phrase("Tên server"); font.weight: Font.DemiBold }
                 Input { id: labelField; objectName: "serverLabel"; width: parent.width; text: Legacy.Tr.phrase("Thế giới cùng bạn"); placeholder: Legacy.Tr.phrase("Tên server của bạn") }
-                PaymentText { width: parent.width; text: serverBridge.enabled ? Legacy.Tr.message(serverBridge.note) : Legacy.Tr.phrase("Host server trả phí đang tạm vô hiệu hoá. Bạn có thể xem nền tảng và danh mục; tạo server sẽ chờ tính năng được bật."); color: GlassTheme.muted }
+                PaymentText { width: parent.width; text: Legacy.Tr.message(serverBridge.note); color: GlassTheme.muted }
                 PaymentText { width: parent.width; visible: serverBridge.busy; text: Legacy.Tr.message(serverBridge.activity); color: GlassTheme.accent }
             }
         }

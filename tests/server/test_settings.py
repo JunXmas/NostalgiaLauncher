@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from nostalgia.errors import NostalgiaError, ServerError
-from server_fixture import ServerAccountFixture, server_launcher
+from server_fixture import server_launcher
 
 
 def test_known_fields_update_unknown_vendor_settings_comments_survive(tmp_path: Path) -> None:
     launcher, _http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Host", "paper", "1.21.1", "132")
     directory = manager.directory(server.server_id)
     properties_file = directory / "server.properties"
@@ -48,7 +48,7 @@ def test_known_fields_update_unknown_vendor_settings_comments_survive(tmp_path: 
 
 def test_advanced_config_is_bounded_and_symlinks_traversal_rejected(tmp_path: Path) -> None:
     launcher, _http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Host", "paper", "1.21.1", "132")
     directory = manager.directory(server.server_id)
     plugin_dir = directory / "plugins" / "Example"
@@ -77,7 +77,7 @@ def test_advanced_config_is_bounded_and_symlinks_traversal_rejected(tmp_path: Pa
 
 def test_trash_preserves_whole_world_for_manual_restore(tmp_path: Path) -> None:
     launcher, _http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Host", "paper", "1.21.1", "132")
     directory = manager.directory(server.server_id)
     (directory / "world").mkdir()
@@ -90,7 +90,7 @@ def test_trash_preserves_whole_world_for_manual_restore(tmp_path: Path) -> None:
 
 def test_escaped_motd_round_trips_and_world_configs_are_not_scanned(tmp_path: Path) -> None:
     launcher, _http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Host", "paper", "1.21.1", "132")
     directory = manager.directory(server.server_id)
     properties_file = directory / "server.properties"

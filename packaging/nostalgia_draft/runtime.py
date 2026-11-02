@@ -14,7 +14,6 @@ from nostalgia.api import Launcher
 from nostalgia.ui.app import QML_DIR, enable_multisampling
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
-from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.service_configuration_bridge import ServiceConfigurationBridge
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.window import open_window
@@ -22,7 +21,6 @@ from nostalgia.ui.worker import wait_for_background
 from nostalgia_draft.controls import ReviewControls
 from nostalgia_draft.payment import ReviewPayment
 from nostalgia_draft.repair import ReviewRepair
-from nostalgia_draft.server import ReviewServer
 from nostalgia_draft.social import ReviewSocial
 
 
@@ -33,7 +31,6 @@ def build_review_view(launcher: Launcher) -> QQuickView:
     view, bridge = open_window(
         launcher,
         social_gateway=social_gateway,
-        server_gateway=ReviewServer(social_gateway),
         payment_gateway=payment_gateway,
         payment_demonstration=True,
         plus_enabled=True,
@@ -46,14 +43,12 @@ def build_review_view(launcher: Launcher) -> QQuickView:
         "serviceConfiguration", ServiceConfigurationBridge(launcher, parent=view)
     )
     social = context.contextProperty("socialBridge")
-    servers = context.contextProperty("serverBridge")
     payments = context.contextProperty("paymentBridge")
     repair = context.contextProperty("modRepairBridge")
-    assert isinstance(social, SocialBridge) and isinstance(servers, ServerController)
+    assert isinstance(social, SocialBridge)
     assert isinstance(payments, PaymentBridge) and isinstance(repair, ModRepairBridge)
-    controls.attach(bridge, social, servers, payments)
+    controls.attach(bridge, social, payments)
     repair.set_gateway(ReviewRepair(social_gateway))
-    servers.checkAccess()
     application = QApplication.instance()
     if application is not None:
         application.aboutToQuit.connect(controls.cancel)

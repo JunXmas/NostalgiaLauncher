@@ -78,16 +78,12 @@ from nostalgia.server.content_model import (
     ServerContentVersion,
     ServerProject,
 )
-from nostalgia.server.gateway import HttpServerGateway
 from nostalgia.server.manager import ServerManager, ServerSelection
 from nostalgia.server.model import (
     ENGINES,
     DedicatedServer,
-    ServerAccess,
     ServerArtifact,
     ServerConnection,
-    ServerGateway,
-    ServerLease,
 )
 from nostalgia.server.properties import ServerProperties
 from nostalgia.settings.store import Settings
@@ -153,7 +149,6 @@ __all__ = [
     "HttpPaymentGateway",
     "HttpRepairGateway",
     "HttpRoomSyncGateway",
-    "HttpServerGateway",
     "HttpSocialGateway",
     "InstallReport",
     "InstalledServerContent",
@@ -184,12 +179,9 @@ __all__ = [
     "RoomService",
     "RoomStatus",
     "RoomSyncGateway",
-    "ServerAccess",
     "ServerArtifact",
     "ServerConnection",
     "ServerContentVersion",
-    "ServerGateway",
-    "ServerLease",
     "ServerManager",
     "ServerProject",
     "ServerProperties",

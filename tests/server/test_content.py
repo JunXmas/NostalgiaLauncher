@@ -10,7 +10,7 @@ import pytest
 
 from nostalgia.errors import IntegrityError, ServerError
 from nostalgia.model.json_value import JsonValue, as_list, as_mapping
-from server_fixture import ServerAccountFixture, server_launcher
+from server_fixture import server_launcher
 from server_http_fixture import jar_bytes
 
 
@@ -18,7 +18,7 @@ def test_plugins_are_filtered_for_platform_and_folia_requires_jar_declaration(
     tmp_path: Path,
 ) -> None:
     launcher, http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Folia", "folia", "1.21.1", "132")
     manager.search_content(server.server_id, "modrinth", "plugin", "permissions")
     facets = json.loads(parse_qs(urlsplit(http_client.requests[-1]).query)["facets"][0])
@@ -35,7 +35,7 @@ def test_plugins_are_filtered_for_platform_and_folia_requires_jar_declaration(
 
 def test_wrong_game_loader_and_client_only_mods_cannot_install(tmp_path: Path) -> None:
     launcher, http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Fabric", "fabric", "1.21.1", "0.16.14")
     with pytest.raises(ServerError):
         manager.content_versions(server.server_id, "modrinth", "plugin", "luckperms")
@@ -63,7 +63,7 @@ def test_required_dependency_install_is_idempotent_and_corrupt_batch_rolls_back(
     tmp_path: Path,
 ) -> None:
     launcher, http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Paper", "paper", "1.21.1", "132")
     manager.content_versions(server.server_id, "modrinth", "plugin", "luckperms")
     query_url = http_client.requests[-1]
@@ -95,7 +95,7 @@ def test_required_dependency_install_is_idempotent_and_corrupt_batch_rolls_back(
 
 def test_modrinth_v2_plugin_classified_as_mod_still_requires_plugin_loader(tmp_path: Path) -> None:
     launcher, http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Paper", "paper", "1.21.1", "132")
     url = "https://api.modrinth.com/v2/project/luckperms"
     http_client.overrides[url] = {
@@ -115,7 +115,7 @@ def test_modrinth_v2_plugin_classified_as_mod_still_requires_plugin_loader(tmp_p
 
 def test_hangar_release_filters_external_and_required_manual_dependencies(tmp_path: Path) -> None:
     launcher, http_client = server_launcher(tmp_path)
-    manager = launcher.make_server_manager(ServerAccountFixture())
+    manager = launcher.make_server_manager()
     server = manager.install("Paper", "paper", "1.21.1", "132")
     url = "https://hangar.papermc.io/api/v1/projects/Owner/Plugin/versions?limit=100&platform=PAPER&channel=Release"
     document: dict[str, JsonValue] = {

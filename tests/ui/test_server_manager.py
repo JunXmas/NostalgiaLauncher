@@ -18,7 +18,7 @@ from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control, press
-from server_fixture import ServerAccountFixture, fake_java, server_launcher
+from server_fixture import fake_java, server_launcher
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -26,13 +26,12 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 @pytest.fixture
 def server_view(tmp_path: Path) -> Iterator[tuple[QQuickView, QObject, ServerController, str]]:
     launcher, _http_client = server_launcher(tmp_path)
-    account = ServerAccountFixture()
-    manager = launcher.make_server_manager(account)
+    manager = launcher.make_server_manager()
     server = manager.install("Thế giới cùng bạn", "paper", "1.21.1", "132")
     manager.save_settings(
         server.server_id, manager.properties(server.server_id), 2048, str(fake_java(tmp_path))
     )
-    view, _bridge = open_window(launcher, server_gateway=account)
+    view, _bridge = open_window(launcher)
     root_item = view.rootObject()
     assert root_item is not None
     root_item.setProperty("sessionSkipped", True)
@@ -43,7 +42,9 @@ def server_view(tmp_path: Path) -> Iterator[tuple[QQuickView, QObject, ServerCon
     wait_until(lambda: root_item.findChild(QObject, "dedicatedServers") is not None)
     servers = view.rootContext().contextProperty("serverBridge")
     assert isinstance(servers, ServerController)
-    wait_until(lambda: bool(servers.property("hasAccess")) and not servers.busy)
+    wait_until(lambda: not servers.busy)
+    # Host server trên máy mình là miễn phí: không tài khoản Google, không gói, vẫn quản lý được.
+    assert not view.rootContext().contextProperty("socialBridge").signedIn
     yield view, root_item, servers, server.server_id
     servers.shutdown()
     wait_for_background()
@@ -119,7 +120,10 @@ def test_server_confirm_stacks_correctly_and_small_window_scrolls(
         manager.close()
         press(view, find_control(root_item, "createModernInstance"))
         create = find_control(root_item, "serverCreateDialog")
-        wait_until(lambda: bool(create.property("opened")))
+        wait_until(lambda: bool(create.property("opened")) and not servers.busy)
+        create.setProperty("gameVersion", "1.21.1")
+        create.setProperty("buildId", "132")
+        assert create.property("blockedReason") == ""
         assert create.property("height") < view.height()
         assert find_control(root_item, "serverCreateScroll").property("maxY") > 0
     finally:

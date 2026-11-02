@@ -20,8 +20,6 @@ class ServerState(WorkerBridge):
     contentInstalled = Signal()
     _result = Signal(int, str, object)
     _manager: ServerManager
-    _enabled: bool
-    _access: bool
     _note: str
     _servers: list[dict[str, Any]]
     _selected: dict[str, Any]
@@ -44,14 +42,6 @@ class ServerState(WorkerBridge):
             }
             for engine in ENGINES
         ]
-
-    @Property(bool, notify=changed)
-    def enabled(self) -> bool:
-        return self._enabled
-
-    @Property(bool, notify=changed)
-    def hasAccess(self) -> bool:
-        return self._enabled and self._access
 
     @Property(str, notify=changed)
     def note(self) -> str:

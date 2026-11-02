@@ -9,13 +9,12 @@ from unittest.mock import patch
 import pytest
 from nostalgia_draft.payment import ReviewPayment
 from nostalgia_draft.repair import ReviewRepair
-from nostalgia_draft.server import ReviewServer
 from nostalgia_draft.social import ReviewSocial
 from nostalgia_draft.sync import ReviewSync
 
 from mod_fixture import write_fabric
 from nostalgia.api import Instance, Launcher
-from nostalgia.errors import ContentError, MultiplayerError, ServerError, SocialError
+from nostalgia.errors import ContentError, MultiplayerError, SocialError
 from nostalgia.launch.runner import InstallReport
 from nostalgia.modcheck.archive import scan_archives
 from nostalgia.modcheck.scan import build_scan
@@ -39,26 +38,6 @@ def test_draft_profile_persists_one_cosmetic_without_touching_real_accounts(tmp_
         gateway.start_login()
     with pytest.raises(SocialError):
         gateway.send_invite("friend", "room", "ticket", "world")
-
-
-def test_review_tier_gates_and_lease_renewal(tmp_path: Path) -> None:
-    social = ReviewSocial(tmp_path)
-    gateway = ReviewServer(social)
-    assert gateway.authorize().plan_name == "Ultimate"
-    lease = gateway.start("local-server")
-    renewed = gateway.renew(lease)
-    assert renewed.server_id == "local-server"
-    with pytest.raises(ServerError):
-        gateway.start("another-server")
-    gateway.release(renewed)
-    social.select_plan("plus-month-v1")
-    with pytest.raises(ServerError):
-        gateway.authorize()
-    social.select_plan("plus-half-year-v1")
-    assert gateway.authorize().plan_name == "Pro"
-    social.logout()
-    with pytest.raises(ServerError):
-        gateway.start("local-server")
 
 
 def test_payment_stays_pending_without_explicit_test_action_and_has_no_bank() -> None:

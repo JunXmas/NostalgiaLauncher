@@ -12,11 +12,9 @@ from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
-from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.worker import WorkerBridge
 from nostalgia_draft.payment import ReviewPayment
-from nostalgia_draft.server import ReviewServer
 from nostalgia_draft.social import ReviewSocial
 from nostalgia_draft.sync import ReviewSync
 
@@ -30,7 +28,6 @@ class ReviewControls(WorkerBridge):
         self._launcher, self._social, self._payment = launcher, social, payment
         self._bridge: LauncherBridge | None = None
         self._social_bridge: SocialBridge | None = None
-        self._servers: ServerController | None = None
         self._payments: PaymentBridge | None = None
         self._note = (
             "Ultimate TEST · Quyền đầy đủ. Chat/thanh toán mô phỏng; Google cần backend thật."
@@ -44,11 +41,10 @@ class ReviewControls(WorkerBridge):
         self,
         bridge: LauncherBridge,
         social: SocialBridge,
-        servers: ServerController,
         payments: PaymentBridge,
     ) -> None:
         self._bridge, self._social_bridge = bridge, social
-        self._servers, self._payments = servers, payments
+        self._payments = payments
 
     @Property(str, notify=changed)
     def note(self) -> str:
@@ -56,18 +52,12 @@ class ReviewControls(WorkerBridge):
 
     @Slot(str)
     def selectPlan(self, plan_id: str) -> None:
-        if self.busy or (self._servers and self._servers.busy):
-            return
-        if self._servers and self._servers.domain_manager.running_id:
-            self._set_note("Dừng server trước khi đổi gói TEST.")
+        if self.busy:
             return
         self._social.access_token = "draft-local-session-not-a-service-credential"
         self._social.select_plan(plan_id)
         if self._social_bridge:
             self._social_bridge.refresh()
-        if self._servers:
-            self._servers.set_gateway(ReviewServer(self._social))
-            self._servers.checkAccess()
         self._set_note("Đã chọn gói TEST. Không thay đổi quyền trên tài khoản Google thật.")
 
     @Slot()

@@ -1,14 +1,11 @@
-"""Paid local server runs: renewable service authorization and graceful world saving."""
+"""Server chạy trên máy người dùng, miễn phí: khởi chạy, console và dừng có lưu thế giới."""
 
 from __future__ import annotations
 
-import contextlib
 import re
-import threading
-import time
 from pathlib import Path
 
-from nostalgia.errors import NostalgiaError, ServerError, SessionRevoked
+from nostalgia.errors import ServerError
 from nostalgia.java.mojang_jre import ensure_java_runtime
 from nostalgia.launch.game_process import OutputFn
 from nostalgia.operations.cancellation import CancelToken
@@ -23,7 +20,6 @@ class ServerRun(ServerContext):
         self, server_id: str, on_output: OutputFn, cancel_token: CancelToken | None = None
     ) -> None:
         with self._lock:
-            self.authorize()
             if self.running_id:
                 raise ServerError("Dừng server đang chạy trước khi mở server khác.")
             self.stop()
@@ -51,70 +47,18 @@ class ServerRun(ServerContext):
                 ).java_binary
             if cancel_token:
                 cancel_token.raise_if_cancelled()
-            gateway = self._gateway
-            if gateway is None:
-                raise ServerError("Dịch vụ tài khoản đã ngắt kết nối.")
-            lease = gateway.start(server_id)
-            self._ready, self._active_run = False, lease.lease_token
+            self._ready = False
 
             def output(line: str) -> None:
-                if self._active_run == lease.lease_token:
-                    if re.search(r"Done \([0-9.]+s\)!", line):
-                        self._ready = True
-                    on_output(line)
+                if re.search(r"Done \([0-9.]+s\)!", line):
+                    self._ready = True
+                on_output(line)
 
-            try:
-                if gateway is not self._gateway:
-                    raise SessionRevoked("Phiên Google đã thay đổi trong lúc khởi chạy server.")
-                if cancel_token:
-                    cancel_token.raise_if_cancelled()
-                if not time.time() < lease.expires_at <= time.time() + 180:
-                    raise ServerError("Phiên server không hợp lệ.")
-                self._process = start_server(
-                    server, self._store.directory(server_id), java_binary, output
-                )
-                self._lease, self._running_id = lease, server_id
-                self._active_port = int(port_text)
-                self._monitor_stop = threading.Event()
-                threading.Thread(
-                    target=self._monitor, args=(self._monitor_stop, on_output), daemon=True
-                ).start()
-            except BaseException:
-                self._active_run = ""
-                with contextlib.suppress(NostalgiaError):
-                    gateway.release(lease)
-                raise
-
-    def _monitor(self, stop_event: threading.Event, on_output: OutputFn) -> None:
-        while not stop_event.wait(25):
-            with self._lock:
-                if stop_event.is_set():
-                    return
-                try:
-                    self.heartbeat()
-                except NostalgiaError as error:
-                    on_output("[Nostalgia/ERROR] " + str(error))
-
-    def heartbeat(self) -> None:
-        with self._lock:
-            if not self._lease:
-                return
-            if not self.running_id:
-                self.stop()
-                return
-            lease = self._lease
-            try:
-                if self._gateway is None or time.time() >= lease.expires_at:
-                    raise ServerError("Phiên host server đã hết hạn.")
-                self._lease = self._gateway.renew(lease)
-            except NostalgiaError as error:
-                # Definitive rejection ends the run; network faults get only the remaining lease.
-                if (
-                    isinstance(error, (ServerError, SessionRevoked))
-                    or time.time() >= lease.expires_at
-                ):
-                    self.stop()
-                raise
+            self._process = start_server(
+                server, self._store.directory(server_id), java_binary, output
+            )
+            self._running_id = server_id
+            self._active_port = int(port_text)
 
     def command(self, text: str) -> None:
         with self._lock:
@@ -124,18 +68,12 @@ class ServerRun(ServerContext):
 
     def stop(self) -> None:
         with self._lock:
-            self._monitor_stop.set()
             try:
                 if self._process:
                     self._process.stop()
             finally:
-                lease, gateway = self._lease, self._gateway
-                self._lease, self._process, self._running_id = None, None, ""
-                self._ready, self._active_run = False, ""
-                self._active_port = 0
-                if lease and gateway:
-                    with contextlib.suppress(NostalgiaError):
-                        gateway.release(lease)
+                self._process, self._running_id = None, ""
+                self._ready, self._active_port = False, 0
 
     def shutdown(self) -> None:
         self.stop()
@@ -143,8 +81,7 @@ class ServerRun(ServerContext):
 
     def room_connection(self) -> ServerConnection:
         with self._lock:
-            self.authorize()
-            if not self.ready_id or not self._lease or time.time() >= self._lease.expires_at:
-                raise ServerError("Server chưa sẵn sàng hoặc phiên host đã hết hạn.")
+            if not self.ready_id:
+                raise ServerError("Server chưa sẵn sàng.")
             server = self.server(self.running_id)
             return ServerConnection(server.server_id, server.display_name, self._active_port)

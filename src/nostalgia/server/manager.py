@@ -119,7 +119,6 @@ class ServerManager(ServerInstall, ServerRun):
                 content_kind,
                 content_version,
                 cancel_token,
-                self.authorize,
             )
 
     def installed_content(self, server_id: str) -> tuple[InstalledServerContent, ...]:

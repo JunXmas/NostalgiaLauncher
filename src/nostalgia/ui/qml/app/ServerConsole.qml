@@ -8,7 +8,7 @@ Item {
     property bool running: false
     Column { id: header; width: parent.width; spacing: 12
         Flow { width: parent.width; spacing: 10
-            Button { objectName: "serverStart"; label: root.running ? Legacy.Tr.phrase("Dừng & lưu thế giới") : Legacy.Tr.phrase("Khởi chạy server"); primary: !root.running; clickable: !serverBridge.busy && (root.running || serverBridge.hasAccess && !serverBridge.runningId); onClicked: { if (root.running) serverBridge.stop(); else serverBridge.start(serverBridge.selected.server_id); } }
+            Button { objectName: "serverStart"; label: root.running ? Legacy.Tr.phrase("Dừng & lưu thế giới") : Legacy.Tr.phrase("Khởi chạy server"); primary: !root.running; clickable: !serverBridge.busy && (root.running || !serverBridge.runningId); onClicked: { if (root.running) serverBridge.stop(); else serverBridge.start(serverBridge.selected.server_id); } }
             Button { label: Legacy.Tr.phrase("Sao chép log"); quiet: true; onClicked: serverBridge.console.copyAll() }
             Button { objectName: "serverOpenFriends"; label: serverRoomBridge.active ? Legacy.Tr.phrase("Đóng kết nối bạn bè") : Legacy.Tr.phrase("Mở cho bạn bè"); clickable: !serverRoomBridge.busy && !serverBridge.busy && (serverRoomBridge.active || root.running && serverBridge.readyId === serverBridge.selected.server_id && !multiplayerBridge.active); onClicked: { if (serverRoomBridge.active) serverRoomBridge.close(); else serverRoomBridge.open(); } }
         }

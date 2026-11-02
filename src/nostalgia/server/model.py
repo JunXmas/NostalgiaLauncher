@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Protocol
+from dataclasses import dataclass
 
 from nostalgia.errors import ServerError
 
@@ -93,27 +92,7 @@ class DedicatedServer:
 
 
 @dataclass(frozen=True, slots=True)
-class ServerAccess:
-    plan_name: str
-    maximum_running: int = 1
-
-
-@dataclass(frozen=True, slots=True)
-class ServerLease:
-    server_id: str
-    lease_token: str = field(repr=False)
-    expires_at: int = 0
-
-
-@dataclass(frozen=True, slots=True)
 class ServerConnection:
     server_id: str
     display_name: str
     port: int
-
-
-class ServerGateway(Protocol):
-    def authorize(self) -> ServerAccess: ...
-    def start(self, server_id: str) -> ServerLease: ...
-    def renew(self, lease: ServerLease) -> ServerLease: ...
-    def release(self, lease: ServerLease) -> None: ...

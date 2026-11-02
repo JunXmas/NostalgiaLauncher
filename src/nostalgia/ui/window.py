@@ -10,7 +10,6 @@ from nostalgia.api import (
     Launcher,
     PaymentGateway,
     RoomSyncGateway,
-    ServerGateway,
     ServiceSessionStore,
     SocialGateway,
 )
@@ -42,7 +41,6 @@ def open_window(
     social_gateway: SocialGateway | None = None,
     session_store: ServiceSessionStore | None = None,
     plus_enabled: bool = True,
-    server_gateway: ServerGateway | None = None,
     review_controller: QObject | None = None,
     review_panel_url: str = "",
 ) -> tuple[LauncherView, LauncherBridge]:
@@ -91,7 +89,7 @@ def open_window(
     host_bridge.connect_workflow()
     view.bind_context_property("hostBridge", host_bridge)
     view.bind_context_property("plusFeaturesEnabled", plus_enabled)
-    server_bridge = ServerController(launcher, server_gateway, enabled=plus_enabled, parent=view)
+    server_bridge = ServerController(launcher, parent=view)
     view.bind_context_property("serverBridge", server_bridge)
     server_room = ServerRoomBridge(server_bridge, multiplayer_bridge, room_sync_bridge, parent=view)
     view.bind_context_property("serverRoomBridge", server_room)

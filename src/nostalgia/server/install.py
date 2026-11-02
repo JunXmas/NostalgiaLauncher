@@ -61,7 +61,6 @@ class ServerInstall(ServerContext):
         cancel_token: CancelToken | None = None,
     ) -> DedicatedServer:
         with self._lock:
-            self.authorize()
             if self.running_id:
                 raise ServerError("Dừng server đang chạy trước khi cài server mới.")
             if (
@@ -92,7 +91,6 @@ class ServerInstall(ServerContext):
                 save_properties(stage_dir, ServerProperties(tuple(DEFAULTS.items())))
                 if cancel_token:
                     cancel_token.raise_if_cancelled()
-                self.authorize()  # Recheck after a long download before registering anything.
                 stage_dir.rename(destination)
                 server = DedicatedServer(
                     server_id, display_name.strip(), engine_id, game_version, build_id, sha256

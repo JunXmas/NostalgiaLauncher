@@ -19,7 +19,6 @@ from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapsho
 from nostalgia.net.http import HttpClient
 from nostalgia.net.session_proof import forget_session, proof_headers, public_key, register_session
 from nostalgia.payment.gateway import HttpPaymentGateway
-from nostalgia.server.gateway import HttpServerGateway
 from nostalgia.social.gateway import HttpSocialGateway
 from payment_fixture import offer_document
 
@@ -63,11 +62,6 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         gateway = HttpSocialGateway(server.url(""), http_client)
         gateway.access_token = ACCESS_TOKEN
         gateway.send_message("peer", "Xin chào", "message")
-        server_state.add(
-            "/v1/servers/access",
-            b'{"plan_name":"Pro","server_hosting":true,"hosting_mode":"local","maximum_running":1}',
-        )
-        HttpServerGateway(server.url(""), http_client, ACCESS_TOKEN).authorize()
         server_state.add("/v1/plus/offer", json.dumps(offer_document()).encode())
         assert (
             HttpPaymentGateway(server.url(""), ACCESS_TOKEN, http_client).fetch_offer().amount > 0
@@ -76,8 +70,8 @@ def test_social_server_payment_and_repair_send_bound_signature_over_real_https(
         server_state.add(path, b'{"authorized":true}')
         plan = RepairPlan("a" * 64, "b" * 64, 4200000000, (), ())
         HttpRepairGateway(server.url(""), ACCESS_TOKEN, http_client).authorize(plan)
-        for route in ["/v1/friends/peer/messages", "/v1/servers/access", "/v1/plus/offer", path]:
-            method = "GET" if route in ("/v1/servers/access", "/v1/plus/offer") else "POST"
+        for route in ["/v1/friends/peer/messages", "/v1/plus/offer", path]:
+            method = "GET" if route == "/v1/plus/offer" else "POST"
             verify(
                 server_state.received_header(route, "Nostalgia-Proof"),
                 method,
