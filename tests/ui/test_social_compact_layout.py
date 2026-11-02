@@ -32,6 +32,21 @@ def test_small_view_stacks_room_code_and_friend_list(
         assert panel.isVisible() and panel.width() > 0, name
         origin = panel.mapToItem(page, QPointF())
         assert origin.x() >= 0 and origin.x() + panel.width() <= page.width() + 0.5, name
+    # Ký tự mã phòng lớn theo cỡ chữ; ô chứa phải lớn theo, không để chữ tràn sát mép hộp.
+    code_input = find_control(root_item, "roomCodeInput")
+    code_input.setCode("WWWWWWWWWWWWWWWWWW")
+    QTest.qWait(20)
+    box = find_control(root_item, "roomCodeBox0")
+    glyphs = [
+        glyph
+        for cell in box.childItems()[0].childItems()
+        for glyph in cell.childItems()
+        if glyph.property("text") == "W"
+    ]
+    assert len(glyphs) == 6
+    for glyph in glyphs:
+        assert glyph.property("contentWidth") <= glyph.parentItem().width() + 0.5
+    assert glyphs[-1].mapToItem(box, QPointF(glyphs[-1].width(), 0)).x() <= box.width() - 4
     assert not find_control(root_item, "friendCodeInput").isVisible()
     press(view, find_control(root_item, "showAddFriend"))
     assert find_control(root_item, "friendCodeInput").isVisible()

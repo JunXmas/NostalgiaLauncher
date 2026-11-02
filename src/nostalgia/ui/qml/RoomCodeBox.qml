@@ -10,7 +10,9 @@ Rectangle {
     readonly property bool focused: input.activeFocus  // `activeFocus` của Item là FINAL, không đè được
     function focusInput() { input.forceActiveFocus(); }
 
-    width: 108; height: 46
+    // Kích thước theo cỡ chữ: ở 150% ô cứng 15 px làm chữ tràn sát mép hộp.
+    readonly property real cellWidth: Math.ceil(Theme.fontTitle * 0.75)
+    width: cellWidth * 6 + 2 * 5 + 18; height: Math.ceil(Theme.fontTitle * 2.3)
     radius: Theme.radiusSmall
     color: Theme.surfaceHigh
     border.color: input.activeFocus ? Theme.accent : Theme.border
@@ -26,7 +28,7 @@ Rectangle {
                 id: cell
                 required property int index
                 readonly property string character: input.text.charAt(index)
-                width: 15; height: 28
+                width: box.cellWidth; height: Math.ceil(Theme.fontTitle * 1.4)
                 onCharacterChanged: if (character.length > 0) flip.restart()
 
                 Text {
