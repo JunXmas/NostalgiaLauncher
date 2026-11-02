@@ -26,7 +26,7 @@ Glass {
         }
         PaymentText {
             width: parent.width
-            text: root.hosting ? Legacy.Tr.phrase("Gửi mã này cho bạn bè, hoặc bấm Mời vào phòng cạnh tên họ trong phòng chơi.")
+            text: root.hosting ? Legacy.Tr.phrase("Gửi mã này cho bạn bè, hoặc bấm Mời cạnh tên họ.")
                 : root.joined ? Legacy.Tr.phrase("Xem phòng để đồng bộ modpack và vào world.")
                 : root.preparing ? Legacy.Tr.phrase("Mã phòng hiện ở đây khi phòng sẵn sàng.")
                 : Legacy.Tr.phrase("Nhập mã 18 ký tự bạn bè gửi rồi bấm Vào.")

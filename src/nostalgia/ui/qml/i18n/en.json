@@ -3916,8 +3916,6 @@
   "p:P2P có thể chia sẻ IP với người cùng phòng. Launcher tự dùng relay nếu không kết nối trực tiếp được.": "P2P may expose your IP to room members. The launcher uses a relay automatically when a direct connection is unavailable.",
   "p:Thu gọn tùy chọn kết nối": "Hide connection options",
   "p:Tùy chọn kết nối": "Connection options",
-  "p:P2P có mã hoá · Relay dữ liệu đã tắt": "Encrypted P2P · Data relay disabled",
-  "p:Dữ liệu game và modpack đi trực tiếp giữa hai máy. Người cùng phòng có thể biết IP của bạn. Nếu mạng chặn P2P, hãy thử mạng khác.": "Game and modpack data travels directly between the two devices. Room members may see your IP. If your network blocks P2P, try another network.",
   "p:Không thể kết nối P2P · Relay dữ liệu đã tắt": "P2P connection unavailable · Data relay disabled",
   "p:Không thể kết nối P2P": "P2P connection unavailable",
   "p:Đang chờ kết nối P2P": "Waiting for a P2P connection",
@@ -4236,11 +4234,13 @@
   "p:Bạn đang ở phòng của bạn bè": "You are in a friend's room",
   "p:Đang tạo phòng": "Creating room",
   "p:Có mã phòng?": "Have a room code?",
-  "p:Gửi mã này cho bạn bè, hoặc bấm Mời vào phòng cạnh tên họ trong phòng chơi.": "Send this code to friends, or click Invite to room next to their name in the room.",
+  "p:Gửi mã này cho bạn bè, hoặc bấm Mời cạnh tên họ.": "Send this code to friends, or click Invite next to their name.",
   "p:Xem phòng để đồng bộ modpack và vào world.": "Open the room to sync the modpack and join the world.",
   "p:Mã phòng hiện ở đây khi phòng sẵn sàng.": "The room code appears here once the room is ready.",
   "p:Nhập mã 18 ký tự bạn bè gửi rồi bấm Vào.": "Enter the 18-character code your friend sent, then click Join.",
   "p:Vào": "Join",
   "p:Gặp nhau trong thế giới của bạn.": "Meet in your world.",
-  "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "This player will no longer be able to send you invitations or friend requests."
+  "p:Người này sẽ không gửi lời mời hay yêu cầu kết bạn cho bạn được nữa.": "This player will no longer be able to send you invitations or friend requests.",
+  "p:Mời": "Invite",
+  "p:Hai máy nối thẳng với nhau, người cùng phòng có thể thấy IP của bạn.": "The two computers connect directly, so people in the room can see your IP address."
 }

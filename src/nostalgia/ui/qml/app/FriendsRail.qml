@@ -8,6 +8,8 @@ Glass {
     property bool adding: false
     property bool requestsExpanded: true
     readonly property var filteredFriends: FriendFilter.filter(socialBridge.friends, search.text)
+    // Mời một cú bấm ngay trên hàng bạn: gửi mã phòng đang mở (socialBridge.inviteFriend).
+    readonly property bool canInvite: (multiplayerBridge.role === "hosting" || multiplayerBridge.role === "waiting_world") && roomSyncBridge.hostReady && !multiplayerBridge.locked && !!multiplayerBridge.roomCode
     implicitHeight: contents.implicitHeight + 32
     height: implicitHeight
     padding: 16
@@ -52,7 +54,8 @@ Glass {
         Accessible.name: modelData.name
         onClicked: socialProfileDialog.showFor(modelData.accountId)
         SocialAvatar { objectName: "friendAvatar-" + modelData.accountId; x: 10; anchors.verticalCenter: parent.verticalCenter; size: 40 * GlassTheme.scale; playerName: modelData.name; source: modelData.avatarUrl || ""; decor: modelData.decor || "none" }
-        PaymentText { id: friendName; x: 64 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: parent.width - x - 12; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold; elide: Text.ElideRight; maximumLineCount: 2 }
+        Button { id: inviteButton; objectName: "inviteFriend-" + modelData.accountId; anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter; visible: root.canInvite; label: Legacy.Tr.phrase("Mời"); primary: true; clickable: !socialBridge.inviteBusy; onClicked: socialBridge.inviteFriend(modelData.accountId) }
+        PaymentText { id: friendName; x: 64 * GlassTheme.scale; anchors.verticalCenter: parent.verticalCenter; width: (inviteButton.visible ? inviteButton.x - 10 : parent.width - 12) - x; text: modelData.name + (Legacy.Tr.phrase(modelData.badge) ? "  ✦" : ""); color: modelData.accent === "emerald" ? "#60ae7b" : modelData.accent === "amber" ? "#daa86c" : modelData.accent === "amethyst" ? "#b66ba9" : GlassTheme.text; font.weight: Font.DemiBold; elide: Text.ElideRight; maximumLineCount: 2 }
     }
         }
         Button { objectName: "showFriendRequests"; visible: socialBridge.requests.length > 0; width: parent.width; quiet: true; label: Legacy.Tr.phrase("Yêu cầu · ") + socialBridge.requests.length + (root.requestsExpanded ? "  ↑" : "  ↓"); onClicked: root.requestsExpanded = !root.requestsExpanded }

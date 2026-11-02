@@ -19,9 +19,7 @@ class DemoSocialGateway:
     def __init__(self) -> None:
         self.access_token = "preview-only-session"
         self.snapshot = SocialSnapshot(
-            ServiceAccount(
-                "preview-jun", "Jun · PREVIEW", "ABCDEF0123456789", int(time.time()) + 86400
-            ),
+            ServiceAccount("preview-jun", "Jun", "ABCDEF0123456789", int(time.time()) + 86400),
             (
                 Friend("preview-misa", "Misa"),
                 Friend("preview-minh", "Minh"),

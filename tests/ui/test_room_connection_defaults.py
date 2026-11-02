@@ -28,7 +28,7 @@ def test_create_room_uses_p2p_without_relay_option(
     host.openSetup()
     popup = find_control(root_item, "hostDialog")
     wait_until(lambda: popup.property("opened"))
-    assert "Relay dữ liệu đã tắt" in find_control(popup, "p2pOnlyStatus").property("text")
+    assert "IP" in find_control(popup, "p2pPrivacyNote").property("text")
     press(view, find_control(root_item, "hostLaunchButton"))
     wait_until(lambda: not popup.property("visible"))
     assert modes == [True] and launched == ["a"]
@@ -44,7 +44,8 @@ def test_accept_invitation_uses_p2p_without_relay_option(
     joined: list[str] = []
     monkeypatch.setattr(multiplayer._service, "set_direct_allowed", modes.append)
     monkeypatch.setattr(sync_bridge, "join", joined.append)
-    assert "Relay dữ liệu đã tắt" in social_control(root_item, "p2pOnlyStatus").property("text")
+    note = social_control(root_item, "p2pPrivacyNote").property("text")
+    assert "IP" in note and "relay" not in note.lower()
     press(view, social_control(root_item, "acceptInvite-invite"))
     wait_until(lambda: not social.inviteBusy and bool(joined))
     assert modes == [True] and joined == ["ABCDEFABCDEFGHJKMN"]
