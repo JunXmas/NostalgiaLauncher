@@ -72,7 +72,6 @@ def describe_checkout(
         "demonstration": demonstration,
         "available": offer_loaded and gateway_available and offer.eligible,
         "amount": offer.amount,
-        "regularAmount": offer.regular_amount,
         "upgradeCredit": offer.upgrade_credit,
         "isUpgrade": offer.upgrade,
         "eligible": offer.eligible,

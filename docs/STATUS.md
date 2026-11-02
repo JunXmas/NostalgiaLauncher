@@ -4,7 +4,7 @@ Ghi đúng những gì bản trên nhánh `main` đang làm, kèm chỗ trong m�
 review/preview/validation cũ đã dời vào [`archive/`](archive/); chúng chụp lại từng thời điểm,
 không phải hiện trạng.
 
-Cập nhật: 2026-11-02 (nhánh `chore/cleanup`).
+Cập nhật: 2026-11-02 (nhánh `feat/plus-v2`).
 
 ## Giao diện
 
@@ -18,20 +18,41 @@ Cập nhật: 2026-11-02 (nhánh `chore/cleanup`).
   (`bridge.recentWorlds` / `playWorld` / `recentServers`, `playtimeText` / `launchCount` ở
   `src/nostalgia/ui/instance_bridge.py`) cho màn chọn world và hồ sơ sau này.
 
-## Plus và thanh toán: ĐANG BẬT THẬT
+### Nostalgia+ và thanh toán: ĐANG BẬT THẬT
 
-- `src/nostalgia/social/service-defaults.json:2` cài sẵn
-  `account_url = https://nostalgia-payment-admin.junbob.workers.dev`.
-- `src/nostalgia/ui/runtime.py:47`: `plus_enabled=bool(configuration.account_url)`. Có URL cài
-  sẵn là Plus bật, không có cờ riêng.
-- `src/nostalgia/ui/runtime.py:94`: đăng nhập Google xong là nối `HttpPaymentGateway` thật
-  (`src/nostalgia/payment/gateway.py:41` `create_order` → `POST /v1/plus/orders`).
-  Đơn tạo ra là đơn thật, duyệt tay ở Worker `nostalgia-payment-admin`.
+- Một sản phẩm, hai giá: 79.000đ/năm (`plus-year-v3`) và 199.000đ mua đứt (`plus-lifetime-v2`).
+  Offer id và giá chỉ nằm ở `src/nostalgia/payment/catalog.py`; giá tính tiền vẫn là giá
+  máy chủ báo. Worker còn bảng giá cũ từ chối id mới thì launcher dùng offer mặc định của
+  máy chủ (`src/nostalgia/ui/payment_plan.py` `fetch_offer`, log warning).
+- Quyền lợi: cosmetic hồ sơ cao cấp + màu hồ sơ, huy hiệu, tải bản launcher thử sớm. Một cờ
+  `socialBridge.account.plus` mở cả ba. Không khoá tính năng chơi nào; host server trên máy
+  mình miễn phí (cổng quyền server đã gỡ khỏi launcher).
+- Người mua bốn gói cũ (`plus-month-v1`, `plus-half-year-v1`, `plus-year-v2`,
+  `plus-lifetime-v1`) giữ quyền và hạn, nhãn "Người ủng hộ sớm"; gói mua đứt cũ vẫn là mua
+  đứt (`tests/social/test_early_supporter.py`).
+- Bật bán theo cờ riêng `plus_enabled` trong `src/nostalgia/social/service-defaults.json`
+  (đè bằng `NOSTALGIA_PLUS_ENABLED=0|1`), không suy từ `account_url`.
+- Đăng nhập Google xong là nối `HttpPaymentGateway` thật (`POST /v1/plus/orders`). Đơn tạo
+  ra là đơn thật, duyệt tay ở Worker `nostalgia-payment-admin`.
 - Thứ tự ưu tiên địa chỉ dịch vụ (`src/nostalgia/social/configuration.py`,
   `read_configuration`): biến môi trường `NOSTALGIA_ACCOUNT_URL` / `NOSTALGIA_ROOM_SYNC_URL`
   > `services.json` của người dùng > `service-defaults.json` cài sẵn.
+- Công cụ draft `ReviewPanel.qml` bị lọc khỏi gói release (`packaging/nostalgia-ui.spec`,
+  kiểm ở `packaging/verify-build-flavor.py`).
 
-## Chơi chung
+## Slide quảng cáo trang chủ
+
+- Feed `promotions.json` ở gốc kho, tải qua `raw.githubusercontent.com` lúc mở launcher
+  (`src/nostalgia/content/promotions.py`). Sửa file trên `main` là mọi launcher thấy.
+- Loại `server` (`address: host:port`, vào bằng bản chơi đang chọn) và `link` (`url` https,
+  mở trình duyệt). Field lạ bỏ qua, `kind` lạ bỏ riêng slide đó; chỉ tăng `schema` khi đổi
+  không tương thích. `starts_at`/`ends_at` giây Unix, 0 là không giới hạn.
+- Ảnh chỉ từ `raw.githubusercontent.com`, PNG/JPEG ≤ 1 MB, ≤ 2560 px. Offline/hỏng dùng bản
+  đệm ở `<data>/updates/promotions/`; không có đệm thì ẩn slide.
+- Forgotten Worlds đã gỡ khỏi launcher. `modpacks/forgotten-worlds.json` vẫn ở kho để
+  launcher cũ không lỗi; bản chơi FW người dùng đã tạo chạy như bản chơi thường.
+
+# Chơi chung
 
 - **Relay dữ liệu bị tắt cứng.** `src/nostalgia/multiplayer/room_network.py:90`
   `self._relay_enabled = False`; không chỗ nào bật lại. Không có P2P thì

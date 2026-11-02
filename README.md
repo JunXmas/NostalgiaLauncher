@@ -18,7 +18,7 @@ skins, friends, updates — is already taken care of.
 ![Windows](https://img.shields.io/badge/Windows-x64-0078D6?logo=windows&logoColor=white)
 ![macOS](https://img.shields.io/badge/macOS-arm64%20%7C%20x64-000000?logo=apple&logoColor=white)
 
-![Home — the Forgotten Worlds slide and your instances](docs/showcase/home.jpg)
+![Home — the slideshow and your instances](docs/showcase/home.jpg)
 
 **[⬇️ Download page](https://junxmas.github.io/NostalgiaLauncher/)** — it detects your OS and
 hands you one file.
@@ -55,11 +55,10 @@ Welcome back. Nostalgia is the point. 💚
 
 ![Home](docs/showcase/home.jpg)
 
-The home page opens on a slideshow. The first slide is our community server,
-**Forgotten Worlds**, with real screenshots from the server rotating behind it: one button
-creates the matching instance, the next time it jumps you straight into
-`snow.pikamc.vn:25079`, and when the server's modpack has a new version the button turns into
-**Update modpack**. Below it: your instances, one click from playing. The sidebar icons are
+The home page opens on a slideshow: Nos Client, then any suggested servers or services from
+[`promotions.json`](promotions.json) (edited in this repository, no launcher release needed),
+then your own instance. A server slide joins straight in with the instance you have selected.
+Below it: your instances, one click from playing. The sidebar icons are
 rendered from Minecraft's own block models — grass, barrel, bookshelf, amethyst, diamond.
 
 ### ⛏ Instances, and a create dialog with a face
@@ -72,12 +71,9 @@ Every instance is a card: play, favorite, group, search, import a `.mrpack`/`.zi
 ![Create instance](docs/showcase/create-instance.jpg)
 
 Pick a Minecraft version and the dialog shows that generation's official key art. Choose a
-platform — **Optimized** (Fabric + Fabulously Optimized for the best FPS), Vanilla, **Forgotten
-Worlds**, Fabric, Quilt, Forge or NeoForge — and open *Advanced* for RAM and a game folder on
-**any disk you like**. Forgotten Worlds is industrial survival with Create, JEI and Naturalist
-on Minecraft 1.21.11, Vietnamese translation on by default; see
-[the pack documentation](docs/FORGOTTEN_WORLDS.md) for every pinned mod. Updating a pack keeps
-your worlds, settings and the mods you added yourself, and rolls back if a download fails.
+platform — **Optimized** (Fabric + Fabulously Optimized for the best FPS), Vanilla, Fabric,
+Quilt, Forge or NeoForge — and open *Advanced* for RAM and a game folder on **any disk you
+like**.
 
 ### 📚 Library — Modrinth and CurseForge, no API key
 
@@ -120,7 +116,7 @@ that enforce it are in [`docs/MULTIPLAYER_SECURITY.md`](docs/MULTIPLAYER_SECURIT
 The *Server* tab installs and runs a Minecraft server **on your own machine** — Paper,
 Purpur, Folia, Fabric, Vanilla or an Arclight hybrid — from official, pinned builds with
 checksums verified before launch. Settings, plugins/mods, a live console and the raw files
-each have their own page. (Part of the Pro, Max and Ultimate plans; no VPS is included.)
+each have their own page. Free, since it runs on your computer; no VPS is included.
 
 ### ✨ Cosmetics
 
@@ -146,12 +142,11 @@ default folder for new instances lets you keep the whole library on a second dri
 
 - 🪟 **A new interface**: glass sidebar, Minecraft block icons, slideshow home, smoother lists that only build what is on screen.
 - 🌍 **Vietnamese and English**, switchable on the login screen or in Settings.
-- 🏔 **Forgotten Worlds** — a built-in modpack for the community server, with in-place updates and a heads-up when a new version ships.
 - 🤝 **Google sign-in, friends, chat and invites**, plus rooms that connect **peer to peer** (encrypted WebRTC) instead of through a relay.
 - 🖥 **Server manager** for Paper / Purpur / Folia / Fabric / Vanilla / Arclight on your own PC.
 - 📦 **Export** any instance as `.mrpack` or ZIP; **permanent delete** with confirmation; old backups still restorable.
 - 🎨 Skin and cape preview with **Save**, and profile **cosmetics**.
-- 💎 **Premium plans** (Plus, Pro, Max, Ultimate) for extras like modpack sync in rooms and the server manager. Everything the launcher did before stays free.
+- 💎 **Nostalgia+** (79,000₫/year or 199,000₫ lifetime): premium profile cosmetics, a badge and early launcher builds. Everything that runs on your computer stays free.
 - 🍎 **macOS builds** for Apple Silicon and Intel.
 
 ---
@@ -211,7 +206,7 @@ uv run nostalgia play vui-ve --account Jun
 | File size | some files > 1,000 lines | every `.py` ≤ 200 lines of code, enforced by a test |
 | Naming | whatever came to mind | a glossary of banned/required names, enforced by a test |
 | Accounts | Microsoft, offline | Microsoft, **Ely.by**, offline (+ Google for friends) |
-| Loaders | Vanilla, Fabric, Forge, NeoForge | + Quilt, + Optimized, + Forgotten Worlds |
+| Loaders | Vanilla, Fabric, Forge, NeoForge | + Quilt, + Optimized |
 | Multiplayer | — | friends, invites, peer-to-peer rooms |
 | Skins | pixel editor, 3D model | library, preview, upload, apply; editor is coming back |
 | Languages | 10 | Vietnamese, English |
@@ -246,9 +241,8 @@ Contributing notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md); releases in
 ## Tiếng Việt
 
 Nostalgia Launcher là trình khởi động Minecraft viết lại từ đầu sau dự án đầu tay cùng tên
-(08/2026). Giao diện kính mới với icon khối Minecraft thật, trang chủ dạng băng trượt có server
-cộng đồng **Forgotten Worlds** (tạo bản chơi, vào thẳng server, cập nhật modpack giữ nguyên thế
-giới). Đăng nhập Microsoft / Ely.by / ngoại tuyến; loader Tối ưu / Vanilla / Fabric / Quilt /
+(08/2026). Giao diện kính mới với icon khối Minecraft thật, trang chủ dạng băng trượt có slide gợi ý
+server/dịch vụ đọc từ `promotions.json` trong kho (vào thẳng server bằng bản chơi đang chọn). Đăng nhập Microsoft / Ely.by / ngoại tuyến; loader Tối ưu / Vanilla / Fabric / Quilt /
 Forge / NeoForge; thư viện modpack, mod, shader, gói tài nguyên từ Modrinth và CurseForge (không
 cần khoá API); xuất bản chơi ra `.mrpack`/ZIP. Đăng nhập Google để kết bạn, chat, mời chơi;
 phòng chơi kết nối **P2P mã hoá** giữa hai máy. Quản lý server ngay trên máy, cosmetic hồ sơ,
