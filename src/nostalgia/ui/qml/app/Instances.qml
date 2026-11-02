@@ -172,11 +172,13 @@ Item {
             dropZone.holdingPack = false;
             if (root.importDropped(drop.urls) > 0) drop.accept();
         }
-        Glass {
+        Rectangle {
             objectName: "packDropOverlay"
             anchors.fill: parent
             visible: dropZone.holdingPack
-            padding: 24
+            radius: 22
+            color: GlassTheme.alpha(GlassTheme.background, 0.94)
+            border.color: GlassTheme.accent; border.width: 2
             Column {
                 anchors.centerIn: parent; spacing: 10
                 PaymentText { anchors.horizontalCenter: parent.horizontalCenter; text: Legacy.Tr.phrase("Thả để nhập modpack"); font.family: GlassTheme.displayFont; font.pixelSize: GlassTheme.fontPage; font.weight: Font.DemiBold }

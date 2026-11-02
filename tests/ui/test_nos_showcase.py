@@ -8,8 +8,8 @@ import pytest
 
 pytest.importorskip("PySide6")
 from test_bridges import wait_until
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from nostalgia.api import Instance
 from nostalgia.storage.files import atomic_write_json
@@ -17,7 +17,7 @@ from qt_controls import find_control, press
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
-QML = Path(__file__).resolve().parents[2] / "src/nostalgia/ui/qml/preview/NosShowcase.qml"
+QML = Path(__file__).resolve().parents[2] / "src/nostalgia/ui/qml/app/NosShowcase.qml"
 
 
 def _slide(root_item: Any) -> Any:

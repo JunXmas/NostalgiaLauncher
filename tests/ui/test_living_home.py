@@ -7,8 +7,8 @@ import pytest
 pytest.importorskip("PySide6")
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
-from test_minimal_preview import Preview, find_control, press
-from test_minimal_preview import preview as preview  # fixture chung của preview
+from test_main_window import Preview, find_control, press
+from test_main_window import preview as preview  # fixture chung của preview
 from test_payment_layout import assert_within
 
 pytestmark = pytest.mark.usefixtures("qt_app")

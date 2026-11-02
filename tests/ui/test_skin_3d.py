@@ -11,14 +11,14 @@ from PySide6.QtCore import QPoint, QSize, Qt, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
-from nostalgia.ui.preview import open_preview
 from nostalgia.ui.skin_frame_cache import MAX_FRAME_CACHE, SkinFrameCache
 from nostalgia.ui.skin_mesh import normalize_skin, skin_surfaces
 from nostalgia.ui.skin_renderer import render_skin
 from nostalgia.ui.skin_sprite import ensure_skin_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control
 
@@ -28,7 +28,7 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 def test_returning_account_shows_skin_on_first_page_load(preview: Preview) -> None:
     launcher, _first_view, _bridge, _root_item = preview
     launcher.add_offline_account("ReturningSkin")
-    view, _second_bridge = open_preview(launcher)
+    view, _second_bridge = open_window(launcher)
     try:
         view.show()
         view.rootObject().setProperty("currentIndex", 3)

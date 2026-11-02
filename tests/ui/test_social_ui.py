@@ -14,11 +14,11 @@ from PySide6.QtCore import QPointF, QUrl, qInstallMessageHandler
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from PySide6.QtTest import QSignalSpy, QTest
 from test_bridges import wait_until
-from test_minimal_preview import press
+from test_main_window import press
 
 from nostalgia.api import Launcher, RoomStatus
 from nostalgia.content.model import SearchPage
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from social_fixture import SocialFixture
 
@@ -41,7 +41,7 @@ def social_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[
         return True
 
     monkeypatch.setattr(QDesktopServices, "openUrl", open_browser)
-    view, bridge = open_preview(launcher, social_gateway=gateway)
+    view, bridge = open_window(launcher, social_gateway=gateway)
     root_item = view.rootObject()
     assert root_item is not None
     view.show()

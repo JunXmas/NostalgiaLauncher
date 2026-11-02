@@ -1,5 +1,5 @@
 import QtQuick
-import "preview" as Preview
+import "app" as App
 
 /* Thêm tài khoản: chọn Microsoft (mã thiết bị, hộp SignInDialog sẵn có), Ely.by (email + mật
    khẩu, hỏi thêm mã 2FA khi cần), hoặc ngoại tuyến (chỉ tên). Mật khẩu chỉ đi qua bridge. */
@@ -53,7 +53,7 @@ Item {
         border.color: Theme.border
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onWheel: function(event) { event.accepted = true; } }
 
-        Preview.InertialScroll {
+        App.InertialScroll {
             id: accountFormScroll
             objectName: "accountFormScroll"
             anchors.fill: parent; anchors.margins: 26
@@ -80,7 +80,7 @@ Item {
                         color: Qt.rgba(providerTint.r, providerTint.g, providerTint.b, Theme.modern ? (pickArea.containsMouse ? 0.78 : 0.58) : 1)
                         border.color: Theme.border
                         Behavior on color { ColorAnimation { duration: Theme.quick } }
-                        Preview.ProviderLogo { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 26; height: 26; provider: modelData.key; visible: modelData.key === "microsoft" }
+                        App.ProviderLogo { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 26; height: 26; provider: modelData.key; visible: modelData.key === "microsoft" }
                         Column {
                             id: providerText
                             width: parent.width - (modelData.key === "microsoft" ? 68 : 28)

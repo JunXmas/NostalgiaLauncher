@@ -11,8 +11,8 @@ from PySide6.QtTest import QTest
 from qml_tree import find_item
 from test_bridges import wait_until
 from test_instance_library import browse, prepare
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.model import Project, SearchPage

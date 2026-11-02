@@ -1,5 +1,5 @@
 import QtQuick
-import "preview" as Preview
+import "app" as App
 import QtQuick.Dialogs
 
 /* Hộp đặt tên bản chơi khi cài modpack. Tên trống thì lấy tên pack. */
@@ -37,7 +37,7 @@ Item {
         border.width: 1
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onWheel: function(event) { event.accepted = true; } }
 
-        Preview.InertialScroll {
+        App.InertialScroll {
             id: packFormScroll
             objectName: "packFormScroll"
             anchors.fill: parent; anchors.margins: 26

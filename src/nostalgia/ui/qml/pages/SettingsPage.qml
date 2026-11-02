@@ -1,5 +1,5 @@
 import QtQuick
-import "../preview" as Preview
+import "../app" as App
 import QtQuick.Dialogs
 import "../"
 
@@ -13,14 +13,14 @@ Item {
         id: header
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: Theme.gap }
         height: 50
-        Preview.GuideButton { topicId: "settings"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
+        App.GuideButton { topicId: "settings"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter }
         PageTitle {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter }
             caption: Tr.phrase("Cài đặt")
         }
     }
 
-    Preview.InertialScroll {
+    App.InertialScroll {
         anchors { top: header.bottom; left: parent.left; right: parent.right; bottom: parent.bottom; margins: Theme.gap; topMargin: 0 }
         clip: true
         contentHeight: settingsColumn.height
@@ -29,12 +29,12 @@ Item {
             id: settingsColumn
             width: parent.width; spacing: Theme.gap
             AppearanceSettings { width: parent.width; height: implicitHeight }
-    Preview.ServiceSettings { width: parent.width }
+    App.ServiceSettings { width: parent.width }
     Loader {
         id: updatePanel
         width: parent.width
         height: item ? item.implicitHeight : 0
-        source: Theme.modern ? "../preview/UpdateSettings.qml" : "../UpdatePanel.qml"
+        source: Theme.modern ? "../app/UpdateSettings.qml" : "../UpdatePanel.qml"
     }
 
     Panel {

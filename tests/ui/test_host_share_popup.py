@@ -10,7 +10,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_host_popup import host_popup as host_popup
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 
 
 @pytest.mark.usefixtures("qt_app")

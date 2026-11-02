@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from test_bridges import wait_until
-from test_minimal_preview import find_control
+from test_main_window import find_control
 from test_social_ui import login_preview
 from test_social_ui import social_preview as social_preview
 

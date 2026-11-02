@@ -7,13 +7,13 @@ import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import preview as preview
+from test_main_window import preview as preview
 from test_social_ui import social_preview as social_preview
 
 from nostalgia.api import Account, Launcher
 from nostalgia.errors import SocialError
 from nostalgia.ui.account_bridge import AccountBridge
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control, press
 from social_fixture import SocialFixture
@@ -59,7 +59,7 @@ def test_online_success_offers_link_and_skip_persists(
     press(view, find_control(root_item, "googleLinkLater"))
     assert not onboarding.pending and not root_item.property("loginVisible")
     assert not social.signedIn and not social.account
-    returning, returning_bridge = open_preview(launcher, social_gateway=SocialFixture())
+    returning, returning_bridge = open_window(launcher, social_gateway=SocialFixture())
     try:
         assert not returning.rootObject().property("loginVisible")
         if account_kind == "microsoft":

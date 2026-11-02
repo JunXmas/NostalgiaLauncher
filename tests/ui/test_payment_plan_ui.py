@@ -7,8 +7,8 @@ import json
 import pytest
 import test_payment_ui
 from test_bridges import wait_until
-from test_minimal_preview import find_control as find_object
-from test_minimal_preview import press
+from test_main_window import find_control as find_object
+from test_main_window import press
 from test_payment_ui import PaymentPreview
 from test_social_ui import find_control
 

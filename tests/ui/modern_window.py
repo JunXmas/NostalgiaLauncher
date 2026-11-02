@@ -11,11 +11,11 @@ from test_bridges import wait_until
 
 from nostalgia.api import Launcher
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 
 
 def open_modern(launcher: Launcher) -> tuple[QQuickView, LauncherBridge, QQuickItem]:
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     root_item = view.rootObject()
     assert root_item is not None, [error.toString() for error in view.errors()]
     root_item.setProperty("sessionSkipped", True)

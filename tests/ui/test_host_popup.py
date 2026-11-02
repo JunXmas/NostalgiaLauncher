@@ -14,11 +14,11 @@ from PySide6.QtCore import QPointF, Qt, qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.model import SearchPage
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from social_fixture import SocialFixture
 
@@ -45,7 +45,7 @@ def host_popup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tupl
     gateway.access_token = "a" * 64
     warnings: list[str] = []
     previous = qInstallMessageHandler(lambda _level, _context, message: warnings.append(message))
-    view, bridge = open_preview(launcher, social_gateway=gateway, plus_enabled=False)
+    view, bridge = open_window(launcher, social_gateway=gateway, plus_enabled=False)
     social = view.rootContext().contextProperty("socialBridge")
     multiplayer = view.rootContext().contextProperty("multiplayerBridge")
     host = view.rootContext().contextProperty("hostBridge")

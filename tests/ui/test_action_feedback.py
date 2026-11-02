@@ -10,8 +10,8 @@ from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_host_popup import host_popup as host_popup
 from test_instance_library import prepare
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 from test_social_ui import login_preview
 from test_social_ui import social_preview as social_preview
 

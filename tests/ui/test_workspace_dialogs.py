@@ -12,7 +12,7 @@ from test_select_menu import find_item
 
 from nostalgia.api import Found, Launcher
 from nostalgia.instance.model import Instance
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control, press, wheel
 
@@ -42,7 +42,7 @@ def test_backup_is_modal_and_restores_a_separate_world(tmp_path: Path, scale: in
     launcher.trash_instance("creative")
     warnings: list[str] = []
     qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
-    view, _bridge = open_preview(launcher)
+    view, _bridge = open_window(launcher)
     try:
         view.resize(1024, 600)
         view.show()
@@ -112,7 +112,7 @@ def test_import_error_stays_in_modal_and_scrolling_does_not_move_workspace(
     (external / "saves" / "level.dat").write_bytes(b"import-world")
     found = Found("PrismLauncher", "Prism world", external, "1.20.1", "vanilla")
     monkeypatch.setattr(Launcher, "scan_external_launchers", lambda _self: (found,))
-    view, _bridge = open_preview(launcher)
+    view, _bridge = open_window(launcher)
     try:
         view.resize(1024, 600)
         view.show()

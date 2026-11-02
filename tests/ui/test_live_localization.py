@@ -9,12 +9,12 @@ from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QSystemTrayIcon
 from test_bridges import wait_until
-from test_minimal_preview import Preview, find_control
-from test_minimal_preview import preview as preview
+from test_main_window import Preview, find_control
+from test_main_window import preview as preview
 
 from nostalgia.net.tls_failure import certificate_failure
 from nostalgia.ui.app import QML_DIR
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -37,7 +37,7 @@ def test_welcome_language_saved_and_native_menu_updates(preview: Preview) -> Non
     assert [
         action.text() for action in tray.contextMenu().actions() if not action.isSeparator()
     ] == ["Show Launcher", "Stop game", "Quit"]
-    returning, _ = open_preview(launcher)
+    returning, _ = open_window(launcher)
     try:
         assert find_control(returning.rootObject(), "loginMicrosoft").property("label") == (
             "Continue with Microsoft"

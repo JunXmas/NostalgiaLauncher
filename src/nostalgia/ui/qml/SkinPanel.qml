@@ -1,7 +1,7 @@
 import QtQuick
-import "preview" as Preview
+import "app" as App
 
-Preview.Glass {
+App.Glass {
     id: skinPanel
     property var shown: ({})
     property bool hasShown: false
@@ -12,14 +12,14 @@ Preview.Glass {
     onShownChanged: if (hasShown) skinEditor.showAccount(shown.accountId)
     onHasShownChanged: skinEditor.showAccount(hasShown ? shown.accountId : "")
     Component.onCompleted: if (hasShown) skinEditor.showAccount(shown.accountId)
-    Preview.MotionTabs {
+    App.MotionTabs {
         id: tabs
         width: Math.max(100, parent.width - help.width - 12); labels: [Tr.phrase("Skin"), Tr.phrase("Cape")]
         currentIndex: skinPanel.tab === "skin" ? 0 : 1; namePrefix: "skinSection-"
         onSelected: function(index) { skinPanel.tab = index === 0 ? "skin" : "cape"; }
     }
-    Preview.GuideButton { id: help; anchors.right: parent.right; topicId: "appearance" }
-    Preview.PaymentText {
+    App.GuideButton { id: help; anchors.right: parent.right; topicId: "appearance" }
+    App.PaymentText {
         id: caption
         anchors.top: tabs.bottom; anchors.topMargin: 12
         width: parent.width
@@ -40,13 +40,13 @@ Preview.Glass {
             accessibleLabel: Tr.phrase("Dáng tay Slim")
             onToggled: function(checked) { skinEditor.setSlim(checked); }
         }
-        Preview.PaymentText {
+        App.PaymentText {
             objectName: "skinModelLabel"
             anchors.verticalCenter: parent.verticalCenter
             text: skinPanel.draft.slim ? Tr.phrase("Slim · tay 3 px") : Tr.phrase("Classic · tay 4 px")
         }
     }
-    Preview.InertialScroll {
+    App.InertialScroll {
         id: skinScroll; objectName: "skinLibraryScroll"
         anchors.top: controls.visible ? controls.bottom : caption.bottom
         anchors.topMargin: 16; anchors.left: parent.left; anchors.right: parent.right
@@ -67,7 +67,7 @@ Preview.Glass {
     Column {
         id: footer
         anchors.bottom: parent.bottom; width: parent.width; spacing: 10
-        Preview.PaymentText {
+        App.PaymentText {
             objectName: "appearanceStatus"
             width: parent.width; visible: text.length > 0
             text: skinEditor.busy ? Tr.phrase("Đang lưu…") : Tr.message(skinPanel.draft.note) || ""
@@ -75,7 +75,7 @@ Preview.Glass {
         }
         Flow {
             width: parent.width; spacing: 8
-            Preview.Button {
+            App.Button {
                 objectName: "skinSaveButton"; label: Tr.phrase("Lưu thay đổi"); primary: true
                 clickable: skinPanel.hasShown && skinPanel.draft.dirty && !skinEditor.busy && !accountBridge.busy && !capeBridge.busy
                 onClicked: {
@@ -84,9 +84,9 @@ Preview.Glass {
                     else skinEditor.save();
                 }
             }
-            Preview.Button { objectName: "elySkinSignInButton"; label: Tr.phrase("Đăng nhập lại Ely.by"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind === "ely"; clickable: !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinPanel.elyReauthenticationRequested(skinPanel.shown.accountId, skinPanel.shown.playerName) }
-            Preview.Button { objectName: "skinDiscardButton"; label: Tr.phrase("Hủy thay đổi"); visible: skinPanel.draft.dirty; clickable: !skinEditor.busy; onClicked: skinEditor.discard() }
-            Preview.Button { objectName: "skinRefreshButton"; label: Tr.phrase("Làm mới"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind !== "offline"; clickable: !skinEditor.busy && !accountBridge.busy && !skinPanel.draft.dirty; onClicked: { accountBridge.refreshSkins(); if (skinPanel.tab === "cape") capeBridge.loadCapes(skinPanel.shown.accountId); } }
+            App.Button { objectName: "elySkinSignInButton"; label: Tr.phrase("Đăng nhập lại Ely.by"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind === "ely"; clickable: !skinEditor.busy && !accountBridge.busy && !capeBridge.busy; onClicked: skinPanel.elyReauthenticationRequested(skinPanel.shown.accountId, skinPanel.shown.playerName) }
+            App.Button { objectName: "skinDiscardButton"; label: Tr.phrase("Hủy thay đổi"); visible: skinPanel.draft.dirty; clickable: !skinEditor.busy; onClicked: skinEditor.discard() }
+            App.Button { objectName: "skinRefreshButton"; label: Tr.phrase("Làm mới"); quiet: true; visible: skinPanel.hasShown && skinPanel.shown.accountKind !== "offline"; clickable: !skinEditor.busy && !accountBridge.busy && !skinPanel.draft.dirty; onClicked: { accountBridge.refreshSkins(); if (skinPanel.tab === "cape") capeBridge.loadCapes(skinPanel.shown.accountId); } }
         }
     }
 }

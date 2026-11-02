@@ -13,13 +13,13 @@ from PySide6.QtCore import QPointF, Qt, qInstallMessageHandler
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 
 from nostalgia.api import ContentTarget, Launcher
 from nostalgia.content.installer import ContentInstallReport
 from nostalgia.content.model import ContentKind, Project, ProjectDetails, SearchPage
 from nostalgia.instance.model import Instance
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from project_popup_fixture import InstallChoice, assert_mica_alignment
 from project_popup_fixture import find_visual as find_visual
@@ -101,7 +101,7 @@ def test_card_popup_selects_version_and_installs(
     monkeypatch.setattr(Launcher, "install_modpack", install_pack)
     warnings: list[str] = []
     qInstallMessageHandler(lambda _kind, _context, message: warnings.append(message))
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     try:
         root_item = view.rootObject()
         view.show()

@@ -14,10 +14,10 @@ from nostalgia.api import Launcher
 from nostalgia.ui.app import QML_DIR, enable_multisampling
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
-from nostalgia.ui.preview import open_preview
 from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.service_configuration_bridge import ServiceConfigurationBridge
 from nostalgia.ui.social_bridge import SocialBridge
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from nostalgia_draft.controls import ReviewControls
 from nostalgia_draft.payment import ReviewPayment
@@ -30,7 +30,7 @@ def build_review_view(launcher: Launcher) -> QQuickView:
     social_gateway = ReviewSocial(launcher.paths.config_dir / "draft-review")
     payment_gateway = ReviewPayment()
     controls = ReviewControls(launcher, social_gateway, payment_gateway)
-    view, bridge = open_preview(
+    view, bridge = open_window(
         launcher,
         social_gateway=social_gateway,
         server_gateway=ReviewServer(social_gateway),
@@ -38,7 +38,7 @@ def build_review_view(launcher: Launcher) -> QQuickView:
         payment_demonstration=True,
         plus_enabled=True,
         review_controller=controls,
-        review_panel_url=(QML_DIR / "preview" / "ReviewPanel.qml").as_uri(),
+        review_panel_url=(QML_DIR / "app" / "ReviewPanel.qml").as_uri(),
     )
     controls.setParent(view)
     context = view.rootContext()

@@ -8,8 +8,8 @@ import pytest
 from PySide6.QtCore import QPointF, Qt, QUrl
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtTest import QTest
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from qt_controls import find_control, wheel
 

@@ -8,8 +8,8 @@ import pytest
 pytest.importorskip("PySide6")
 from PySide6.QtGui import QGuiApplication
 from test_bridges import wait_until
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.builtin_receipt import BuiltinReceipt, save_builtin_receipt

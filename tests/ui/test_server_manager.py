@@ -14,8 +14,8 @@ from PySide6.QtTest import QTest
 from qml_tree import find_item
 from test_bridges import wait_until
 
-from nostalgia.ui.preview import open_preview
 from nostalgia.ui.server_controller import ServerController
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control, press
 from server_fixture import ServerAccountFixture, fake_java, server_launcher
@@ -32,7 +32,7 @@ def server_view(tmp_path: Path) -> Iterator[tuple[QQuickView, QObject, ServerCon
     manager.save_settings(
         server.server_id, manager.properties(server.server_id), 2048, str(fake_java(tmp_path))
     )
-    view, _bridge = open_preview(launcher, server_gateway=account)
+    view, _bridge = open_window(launcher, server_gateway=account)
     root_item = view.rootObject()
     assert root_item is not None
     root_item.setProperty("sessionSkipped", True)

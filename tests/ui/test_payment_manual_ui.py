@@ -9,7 +9,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 from test_payment_ui import PaymentPreview, create_order
 from test_payment_ui import payment_preview as payment_preview
 

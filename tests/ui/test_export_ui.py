@@ -15,7 +15,7 @@ from test_bridges import wait_until
 from export_fixture import prepared_export
 from nostalgia.api import Instance
 from nostalgia.content import cfpack, mrpack
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control, press
 
@@ -50,7 +50,7 @@ def test_dialog_exports_selected_instance_and_worlds_without_small_window_overfl
     launcher.save_instance(Instance("second", "1.20.1", "Another pack"))
     warnings: list[str] = []
     previous = qInstallMessageHandler(lambda _mode, _context, message: warnings.append(message))
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     try:
         view.resize(1024, 600)
         view.show()
@@ -145,7 +145,7 @@ def test_dialog_exports_selected_instance_and_worlds_without_small_window_overfl
 @pytest.mark.usefixtures("qt_app")
 def test_export_and_delete_refuse_to_run_while_main_worker_is_busy(tmp_path: Path) -> None:
     launcher = prepared_export(tmp_path)
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     storage = view.rootContext().contextProperty("storageBridge")
     errors: list[str] = []
     storage.failed.connect(errors.append)

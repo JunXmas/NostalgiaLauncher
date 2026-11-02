@@ -1,7 +1,7 @@
-"""Run the isolated UI design preview without building or changing release UI.
+"""Mở cửa sổ launcher với dữ liệu tạm và gateway giả/thật tuỳ chọn, không đụng dữ liệu thật.
 
-    python bench/ui_minimal_preview.py
-    python bench/ui_minimal_preview.py --data-dir /path/to/preview-data
+    python bench/ui_window.py
+    python bench/ui_window.py --data-dir /path/to/test-data
 
 By default data and settings live in a temporary directory. No game data is copied.
 """
@@ -24,7 +24,7 @@ from nostalgia.api import (
     SocialGateway,
 )
 from nostalgia.net.http import HttpClient
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 
 
@@ -50,8 +50,8 @@ def main() -> int:
         parser.error("--plus-url và --plus-session-file phải đi cùng nhau")
     if args.payment_demo and args.plus_url:
         parser.error("Không dùng backend thanh toán thật cùng --payment-demo")
-    preview_dir = args.data_dir or Path(tempfile.mkdtemp(prefix="nostalgia-ui-preview-"))
-    launcher = Launcher.for_data_dir(preview_dir / "data", preview_dir / "settings")
+    work_dir = args.data_dir or Path(tempfile.mkdtemp(prefix="nostalgia-ui-window-"))
+    launcher = Launcher.for_data_dir(work_dir / "data", work_dir / "settings")
     launcher.save_settings(
         replace(
             launcher.load_settings(),
@@ -61,8 +61,8 @@ def main() -> int:
             ui_sound=False,
         )
     )
-    qt_application = QApplication(["Nostalgia UI preview"])
-    qt_application.setApplicationName("Nostalgia UI preview")
+    qt_application = QApplication(["Nostalgia UI window"])
+    qt_application.setApplicationName("Nostalgia UI window")
     http_client = HttpClient(timeout_seconds=10)
     session_token = args.plus_session_file.read_text().strip() if args.plus_session_file else ""
     sync_gateway = (
@@ -83,7 +83,7 @@ def main() -> int:
     if args.payment_demo:
         from ui_payment_demo import DemoPaymentGateway
 
-        view, bridge = open_preview(
+        view, bridge = open_window(
             launcher,
             payment_gateway=DemoPaymentGateway(),
             payment_demonstration=True,
@@ -93,7 +93,7 @@ def main() -> int:
         )
     elif args.plus_session_file:
         gateway = HttpPaymentGateway(args.plus_url, session_token, http_client)
-        view, bridge = open_preview(
+        view, bridge = open_window(
             launcher,
             payment_gateway=gateway,
             room_sync_gateway=sync_gateway,
@@ -101,7 +101,7 @@ def main() -> int:
             session_store=session_store,
         )
     else:
-        view, bridge = open_preview(
+        view, bridge = open_window(
             launcher,
             room_sync_gateway=sync_gateway,
             social_gateway=social_gateway,

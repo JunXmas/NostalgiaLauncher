@@ -7,28 +7,28 @@ from PySide6.QtCore import QObject, QPoint, QPointF, Qt, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from nostalgia.ui.app import QML_DIR
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-@pytest.mark.parametrize("button_type", ["Preview.Button", "Legacy.ActionButton"])
+@pytest.mark.parametrize("button_type", ["App.Button", "Legacy.ActionButton"])
 def test_button_claims_click_and_allows_flickable_drag(
     tmp_path: Path, button_type: str, preview: Preview
 ) -> None:
     path = tmp_path / "Pointer.qml"
     path.write_text(
         'import QtQuick\nimport "' + QML_DIR.as_uri() + '" as Legacy\n'
-        'import "' + (QML_DIR / "preview").as_uri() + '" as Preview\n'
+        'import "' + (QML_DIR / "app").as_uri() + '" as App\n'
         "Item { id:root; width:400; height:240; property int clicks:0; property int leaks:0; "
         "Item { anchors.fill:parent; TapHandler { onTapped:root.leaks++; } } "
         + button_type
         + ' { objectName:"topButton"; x:30; y:30; width:200; height:50; label:"Top"; '
         "onClicked: root.clicks++; } "
-        'Preview.InertialScroll { objectName:"scroll"; y:120; width:parent.width; height:120; '
+        'App.InertialScroll { objectName:"scroll"; y:120; width:parent.width; height:120; '
         "contentHeight:1000; "
         + button_type
         + ' { objectName:"button"; x:30; y:80; width:200; height:50; label:"Test"; '

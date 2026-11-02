@@ -4,7 +4,7 @@ import "GuideCatalog.js" as Guides
 
 Item {
     id: root
-    objectName: "minimalPreview"
+    objectName: "mainWindow"
     implicitWidth: 1440
     implicitHeight: 900
     property int currentIndex: 0
@@ -38,7 +38,7 @@ Item {
     }
     Item {
         id: scene
-        objectName: "previewScene"
+        objectName: "windowScene"
         anchors.fill: parent
         Ambient {
             id: ambient

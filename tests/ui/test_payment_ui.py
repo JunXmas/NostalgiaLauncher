@@ -16,13 +16,13 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 
 from local_https_server import LocalHttpsServer, ServerState
 from nostalgia.api import HttpPaymentGateway, Launcher
 from nostalgia.content.model import SearchPage
 from nostalgia.net.http import HttpClient
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from payment_fixture import offer_document, order_document
 
@@ -55,7 +55,7 @@ def payment_preview(
     server_state.add("/v1/plus/offer", json.dumps(offer_document()).encode())
     server_state.add("/v1/plus/orders", json.dumps(order_document()).encode())
     server_state.add("/v1/plus/orders/current", b"null")
-    view, bridge = open_preview(
+    view, bridge = open_window(
         launcher,
         payment_gateway=HttpPaymentGateway(server.url(""), "support-session", http_client),
     )

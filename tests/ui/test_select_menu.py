@@ -31,14 +31,14 @@ def test_long_menu_is_bounded_searchable_and_selects_original_index(
 ) -> None:
     path = tmp_path / "Menu.qml"
     path.write_text(
-        'import QtQuick\nimport "' + (QML_DIR / "preview").as_uri() + '" as Preview\n'
+        'import QtQuick\nimport "' + (QML_DIR / "app").as_uri() + '" as App\n'
         "Item { width:1024; height:600; property int activatedIndex:-1; "
         "QtObject { id: preferences; property bool reducedMotion:true; property int uiScale:"
         + str(scale)
         + "; } "
-        "Component.onCompleted: Preview.GlassTheme.preferences=preferences; "
+        "Component.onCompleted: App.GlassTheme.preferences=preferences; "
         "Item { id: backdrop; anchors.fill:parent; } "
-        'Preview.Select { objectName:"versions"; x:380; y:350; width:240; '
+        'App.Select { objectName:"versions"; x:380; y:350; width:240; '
         "menuBackdrop:backdrop; "
         'model: Array.from({length:60},function(_,i){return "1."+i+".1";}); '
         "onActivated:function(index){parent.activatedIndex=index;} } }"

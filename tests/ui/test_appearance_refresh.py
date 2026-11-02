@@ -3,8 +3,8 @@
 import pytest
 from PySide6.QtGui import QColor, QImage
 from test_bridges import wait_until
-from test_minimal_preview import Preview, find_control
-from test_minimal_preview import preview as preview
+from test_main_window import Preview, find_control
+from test_main_window import preview as preview
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

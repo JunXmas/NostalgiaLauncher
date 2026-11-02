@@ -8,7 +8,7 @@ duy nhất để làm điều đó trong một phiên không có màn hình.
 
 Không ghi cảnh thì chụp trang chủ vào đúng `<ảnh-ra.png>`. Có cảnh thì mỗi cảnh một file
 `<ảnh-ra>-<cảnh>.png`. Cảnh: home, instances, library, accounts, friends, log, settings,
-cosmetic, create, import, backup, restore, drop.
+cosmetic, create, import, backup, restore, manage, drop.
 """
 
 from __future__ import annotations
@@ -19,12 +19,12 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QObject, QTimer
+from PySide6.QtCore import Q_ARG, QMetaObject, QObject, QTimer
 from PySide6.QtWidgets import QApplication
 
 from nostalgia.api import Launcher
 from nostalgia.ui.app import enable_multisampling
-from nostalgia.ui.preview import open_preview as open_window
+from nostalgia.ui.window import open_window as open_window
 
 SETTLE_MILLISECONDS = 1500
 GIVE_UP_MILLISECONDS = 120_000
@@ -43,7 +43,6 @@ DIALOGS = {
     "create": (1, "modernCreateDialog", "openDialog"),
     "import": (1, "modernImportDialog", "openDialog"),
     "backup": (1, "modernBackupDialog", "openDialog"),
-    "restore": (1, "legacyBackupDialog", "openDialog"),
 }
 
 
@@ -60,7 +59,7 @@ def main(argv: list[str]) -> int:
     enable_multisampling()
     qt_application = QApplication(["ui-screenshot"])
     qt_application.setApplicationVersion("0.1.0")
-    view, _bridge = open_window(Launcher.for_data_dir(data_dir, data_dir.parent / "config"))
+    view, bridge = open_window(Launcher.for_data_dir(data_dir, data_dir.parent / "config"))
     for error in view.errors():
         print("QML:", error.toString(), file=sys.stderr)
     root_item = view.rootObject()
@@ -91,10 +90,33 @@ def main(argv: list[str]) -> int:
             if dialog is None:
                 print(f"không thấy {name}", file=sys.stderr)
             else:
-                dialog.metaObject().invokeMethod(dialog, opener)
+                # Hàm QML có tham số (vd `openDialog(selectedId)`) chỉ gọi được qua bản QVariant.
+                if scene == "backup":
+                    QMetaObject.invokeMethod(dialog, opener, Q_ARG("QVariant", ""))
+                else:
+                    QMetaObject.invokeMethod(dialog, opener)
+        elif scene == "restore":
+            # Đúng đường người dùng: Xuất modpack → "Khôi phục dữ liệu cũ" (đóng hộp xuất rồi mở).
+            root_item.setProperty("currentIndex", 1)
+            exporter = root_item.findChild(QObject, "modernBackupDialog")
+            if exporter is not None:
+                QMetaObject.invokeMethod(exporter, "openDialog", Q_ARG("QVariant", ""))
+                exporter.setProperty("legacyRequested", True)
+                QTimer.singleShot(400, lambda: QMetaObject.invokeMethod(exporter, "close"))
+        elif scene == "manage":
+            root_item.setProperty("currentIndex", 1)
+            QTimer.singleShot(300, open_manager)
         elif scene == "drop":
             root_item.setProperty("currentIndex", 1)
             QTimer.singleShot(300, light_drop_overlay)
+
+    def open_manager() -> None:
+        # Quản lý bản chơi đầu tiên, tab "Xuất & dữ liệu" (sao lưu, thùng rác, xoá).
+        manager = root_item.findChild(QObject, "modernInstanceManager")
+        rows = bridge.property("instances")
+        if manager is not None and rows:
+            QMetaObject.invokeMethod(manager, "openFor", Q_ARG("QVariant", rows[0]))
+            manager.setProperty("section", 3)
 
     def light_drop_overlay() -> None:
         # Kéo thật cần cửa sổ có màn hình; bật thẳng trạng thái "đang giữ modpack" để soi lớp phủ.

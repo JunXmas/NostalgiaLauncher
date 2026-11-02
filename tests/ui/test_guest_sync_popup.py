@@ -11,7 +11,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF
 from PySide6.QtGui import QColor, QImage
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 from test_room_sync_ui import room_preview as room_preview
 
 from nostalgia.api import Instance

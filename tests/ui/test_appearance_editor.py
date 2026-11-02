@@ -7,8 +7,8 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QColor, QImage
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import Preview, find_control, press
-from test_minimal_preview import preview as preview
+from test_main_window import Preview, find_control, press
+from test_main_window import preview as preview
 
 from nostalgia.account.model import Account
 from nostalgia.account.store import save_accounts

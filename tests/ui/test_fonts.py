@@ -108,7 +108,7 @@ def test_theme_has_one_accent_per_page() -> None:
     assert block, "không tìm thấy `property var accents` trong Theme.qml"
     accents = re.findall(r'"#[0-9a-fA-F]{6}"', block.group(1))
 
-    navigation = (QML_DIR / "preview" / "Navigation.qml").read_text(encoding="utf-8")
+    navigation = (QML_DIR / "app" / "Navigation.qml").read_text(encoding="utf-8")
     pages = {int(n) for n in re.findall(r"index:\s*(\d+)", navigation)} - {7}
     settings_page = max(pages) + 1
 

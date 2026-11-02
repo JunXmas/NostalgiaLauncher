@@ -1,5 +1,5 @@
 import QtQuick
-import "preview" as Preview
+import "app" as App
 
 /*
   Hộp ủng hộ: mã VietQR quét bằng app ngân hàng. Chỉ một đường duy nhất.
@@ -45,7 +45,7 @@ Item {
         Keys.onEscapePressed: dialog.dismiss()
         MouseArea { anchors.fill: parent; hoverEnabled: true }
 
-        Preview.InertialScroll {
+        App.InertialScroll {
             id: donateScroll
             objectName: "donateScroll"
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 26; bottom: closeButton.top; bottomMargin: 14 }

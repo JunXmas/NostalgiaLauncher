@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Dialogs
-import "preview" as Preview
+import "app" as App
 
 /*
   Nhập/chọn skin chỉ thay bản xem trước. Nút Lưu trong SkinPanel mới áp dụng tài khoản.
@@ -22,7 +22,7 @@ Item {
         id: header
         width: parent.width; spacing: 12
         Text { height: 36 * Theme.textScale; verticalAlignment: Text.AlignVCenter; text: Tr.phrase("Thư viện skin") + " · " + library.entries.length; color: Theme.text; font.family: Theme.modern ? "Inter" : Theme.sans; font.pixelSize: Theme.fontBody; font.bold: true }
-        Preview.Button { objectName: "importSkinButton"; label: Tr.phrase("Thêm skin  +"); clickable: !skinEditor.busy; onClicked: importDialog.open() }
+        App.Button { objectName: "importSkinButton"; label: Tr.phrase("Thêm skin  +"); clickable: !skinEditor.busy; onClicked: importDialog.open() }
     }
 
     Flow {
@@ -77,13 +77,13 @@ Item {
                     spacing: 8
                     opacity: Theme.modern || cardHover.hovered ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.quick } }
-                    Preview.Button {
+                    App.Button {
                         objectName: "previewSkin-" + modelData.entryId
                         visible: library.hasShown
                         height: 30 * Theme.textScale; label: Tr.phrase("Xem trước"); clickable: !skinEditor.busy
                         onClicked: skinEditor.selectSkin(modelData.entryId)
                     }
-                    Preview.Button {
+                    App.Button {
                         quiet: true; danger: true; width: 28; height: 30 * Theme.textScale; label: "×"; clickable: !skinEditor.busy
                         onClicked: accountBridge.removeLibrarySkin(modelData.entryId)
                     }

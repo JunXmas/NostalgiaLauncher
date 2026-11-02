@@ -20,11 +20,11 @@ from PySide6.QtWidgets import QApplication
 
 from nostalgia.api import Launcher
 from nostalgia.ui.app import enable_multisampling
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 
 SETTLE_MILLISECONDS = 1200
 GIVE_UP_MILLISECONDS = 20_000
-SETTINGS_PAGE_INDEX = 6  # MinimalPreview.qml: currentIndex 6 -> pages/SettingsPage.qml
+SETTINGS_PAGE_INDEX = 6  # app/Main.qml: currentIndex 6 -> pages/SettingsPage.qml
 
 
 def main(argv: list[str]) -> int:
@@ -36,7 +36,7 @@ def main(argv: list[str]) -> int:
     enable_multisampling()
     qt_application = QApplication(["ui-donate-probe"])
     launcher = Launcher.for_data_dir(data_dir, data_dir.parent / "config")
-    view, _bridge = open_preview(launcher)
+    view, _bridge = open_window(launcher)
     for error in view.errors():
         print("QML:", error.toString(), file=sys.stderr)
     view.show()

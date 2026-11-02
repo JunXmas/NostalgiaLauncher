@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import Preview, find_control, press
-from test_minimal_preview import preview as preview
+from test_main_window import Preview, find_control, press
+from test_main_window import preview as preview
 
 from mod_fixture import write_fabric
 from nostalgia.api import Launcher, ModScan, RepairPlan, RepairScan

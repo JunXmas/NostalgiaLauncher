@@ -1,10 +1,11 @@
-"""Factory cho giao diện mới; bản release nối gateway thật qua runtime.py."""
+"""Dựng cửa sổ launcher với mọi cầu nối; `runtime.py` nối gateway thật cho bản phát hành."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtGui import QGuiApplication
 
+from nostalgia import __version__
 from nostalgia.api import (
     Launcher,
     PaymentGateway,
@@ -32,7 +33,7 @@ from nostalgia.ui.social_bridge import SocialBridge
 from nostalgia.ui.view import LauncherView
 
 
-def open_preview(
+def open_window(
     launcher: Launcher,
     *,
     payment_gateway: PaymentGateway | None = None,
@@ -45,7 +46,7 @@ def open_preview(
     review_controller: QObject | None = None,
     review_panel_url: str = "",
 ) -> tuple[LauncherView, LauncherBridge]:
-    """Use existing bridges and swap only the design root_item, before showing the window."""
+    """Dựng cầu nối dùng chung, gắn cầu nối riêng của cửa sổ rồi nạp `app/Main.qml`."""
     view, bridge = build_view(launcher)
     context = view.rootContext()
     view.bind_context_property("draftReviewController", review_controller)
@@ -116,11 +117,11 @@ def open_preview(
         "paymentBridge",
         PaymentBridge(payment_gateway, demonstration=payment_demonstration, parent=view),
     )
-    view.setSource(QUrl.fromLocalFile(str(QML_DIR / "preview" / "MinimalPreview.qml")))
+    view.setSource(QUrl.fromLocalFile(str(QML_DIR / "app" / "Main.qml")))
     root_item = view.rootObject()
     if root_item is not None:
         view.bind_context_property("confirmDialog", root_item.findChild(QObject, "confirmDialog"))
         view.bind_context_property("donateDialog", root_item.findChild(QObject, "donateDialog"))
-    view.setTitle("Nostalgia · UI design preview")
+    view.setTitle("Nostalgia Launcher · " + __version__)
     view.resize(1440, 900)
     return view, bridge

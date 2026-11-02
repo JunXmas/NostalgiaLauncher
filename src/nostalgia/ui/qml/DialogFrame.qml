@@ -1,7 +1,7 @@
 import QtQuick
-import "preview" as Preview
+import "app" as App
 
-Preview.Glass {
+App.Glass {
     id: root
     padding: 0
     frosted: Theme.modern

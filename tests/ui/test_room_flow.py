@@ -11,7 +11,7 @@ from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_host_popup import host_popup as host_popup
 from test_invitation_polling import ready_host
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 from test_social_ui import login_preview
 from test_social_ui import social_preview as social_preview
 

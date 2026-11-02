@@ -34,7 +34,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from nostalgia.account.model import Account  # noqa: E402
 from nostalgia.api import Launcher  # noqa: E402
 from nostalgia.skin.model import PlayerSkin  # noqa: E402
-from nostalgia.ui.preview import open_preview  # noqa: E402
+from nostalgia.ui.window import open_window  # noqa: E402
 
 PLAYER_NAMES = ("JunSlayest", "Dinnerbone", "Notch")
 
@@ -62,7 +62,7 @@ def main() -> int:
 
     qt_application = QApplication(["ui-account-probe"])
     qt_application.setApplicationVersion("0.0.0")
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     root_item = view.rootObject()
     root_item.setProperty("sessionSkipped", True)
     page_loader = root_item.findChild(QObject, "minimalPageLoader")

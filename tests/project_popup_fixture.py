@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
-from test_minimal_preview import find_control
+from test_main_window import find_control
 
 from nostalgia.content.model import ProjectVersion
 

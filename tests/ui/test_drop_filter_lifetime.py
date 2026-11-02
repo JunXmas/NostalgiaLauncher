@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from PySide6.QtCore import QEvent, QMimeData, QPoint, Qt, QUrl
 from PySide6.QtGui import QDragEnterEvent, QGuiApplication
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

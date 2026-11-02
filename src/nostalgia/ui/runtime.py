@@ -23,10 +23,10 @@ from nostalgia.ui.app import enable_multisampling
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
 from nostalgia.ui.payment_bridge import PaymentBridge
-from nostalgia.ui.preview import open_preview
 from nostalgia.ui.room_sync_bridge import RoomSyncBridge
 from nostalgia.ui.server_controller import ServerController
 from nostalgia.ui.service_configuration_bridge import ServiceConfigurationBridge
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 
 
@@ -38,7 +38,7 @@ def build_release_view(launcher: Launcher) -> QQuickView:
         if configuration.account_url
         else None
     )
-    view, bridge = open_preview(
+    view, bridge = open_window(
         launcher,
         social_gateway=social_gateway,
         session_store=launcher.make_service_session_store(configuration.account_url)

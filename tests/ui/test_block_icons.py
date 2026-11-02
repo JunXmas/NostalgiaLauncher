@@ -199,7 +199,7 @@ def test_the_donate_entry_uses_a_block_that_the_texture_table_knows() -> None:
     """Ô ủng hộ / Premium xin khối `beacon`; mọi mục điều hướng cũng xin khối theo tên. Tên
     không có trong `BLOCK_MODELS` thì `ensure_strips` không sinh dải nào và icon lặng lẽ rơi
     về chữ dự phòng mãi mãi."""
-    navigation = (QML_DIR / "preview" / "Navigation.qml").read_text(encoding="utf-8")
+    navigation = (QML_DIR / "app" / "Navigation.qml").read_text(encoding="utf-8")
     support = navigation.split('objectName: "supportBlock"', 1)[0].rsplit("{", 1)[1]
     assert 'block: "beacon"' in support
     for block in re.findall(r'block:\s*"(\w+)"', navigation):

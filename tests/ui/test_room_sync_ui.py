@@ -15,14 +15,14 @@ from PySide6.QtCore import QPointF
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import find_control, press
+from test_main_window import find_control, press
 
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.model import SearchPage
 from nostalgia.multiplayer.model import RoomStatus
 from nostalgia.multiplayer.sync_model import SyncFile, SyncManifest, SyncSnapshot
 from nostalgia.operations.cancellation import CancelToken
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from social_fixture import SocialFixture
 
@@ -71,7 +71,7 @@ def room_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[tu
     gateway = OfferGateway()
     social_gateway = SocialFixture()
     social_gateway.access_token = "a" * 64
-    view, bridge = open_preview(launcher, room_sync_gateway=gateway, social_gateway=social_gateway)
+    view, bridge = open_window(launcher, room_sync_gateway=gateway, social_gateway=social_gateway)
     social_bridge = view.rootContext().contextProperty("socialBridge")
     wait_until(lambda: social_bridge.signedIn and not social_bridge.busy)
     view.show()

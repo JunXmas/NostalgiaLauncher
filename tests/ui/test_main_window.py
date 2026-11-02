@@ -1,4 +1,4 @@
-"""Real Qt interactions for the isolated design preview; no online credentials."""
+"""Tương tác Qt thật với cửa sổ launcher; không dùng tài khoản trực tuyến thật."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from nostalgia.errors import AuthError, TwoFactorRequired
 from nostalgia.instance.model import Instance
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.ui.bridge import LauncherBridge
-from nostalgia.ui.preview import open_preview
+from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from qt_controls import find_control as find_control
 from qt_controls import press as press
@@ -48,7 +48,7 @@ def preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Preview
         )
     )
     monkeypatch.setattr(Launcher, "search_content", lambda *_a, **_k: SearchPage((), 0, 0))
-    view, bridge = open_preview(launcher)
+    view, bridge = open_window(launcher)
     assert view.rootObject() is not None, [e.toString() for e in view.errors()]
     view.show()
     view.requestActivate()
@@ -78,7 +78,7 @@ def test_first_login_and_keyboard_offline_error_then_success(preview: Preview) -
     assert launcher.list_accounts()[0].player_name == "JunPreview"
     assert bridge.activePlayerName == "JunPreview"
     # A returning account enters the workspace on a fresh window.
-    returning, _ = open_preview(launcher)
+    returning, _ = open_window(launcher)
     assert not returning.rootObject().property("loginVisible")
     returning.close()
     returning.deleteLater()

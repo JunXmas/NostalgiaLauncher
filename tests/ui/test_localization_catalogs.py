@@ -24,7 +24,7 @@ def test_catalogs_cover_ui_and_guides_with_matching_placeholders() -> None:
             if "p:" + phrase not in english:
                 missing.append(f"{path.name}: {phrase}")
     for filename in ("GuideCatalog.js", "ActionReasons.js"):
-        script = QML_DIR / "preview" / filename
+        script = QML_DIR / "app" / filename
         for literal in re.findall(r'"(?:\\.|[^"\\])*"', script.read_text(encoding="utf-8")):
             phrase = json.loads(literal)
             if any(ord(char) > 127 and char.isalpha() for char in phrase):

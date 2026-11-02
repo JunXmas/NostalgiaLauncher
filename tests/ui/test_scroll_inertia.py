@@ -10,8 +10,8 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlProperty
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from qt_controls import find_control, press, wheel
 

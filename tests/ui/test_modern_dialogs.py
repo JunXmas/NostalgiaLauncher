@@ -6,8 +6,8 @@ import pytest
 
 pytest.importorskip("PySide6")
 from PySide6.QtTest import QTest
-from test_minimal_preview import Preview
-from test_minimal_preview import preview as preview
+from test_main_window import Preview
+from test_main_window import preview as preview
 
 from qt_controls import find_control, press, wheel
 
@@ -31,7 +31,7 @@ def test_mica_captures_page_instead_of_only_ambient(preview: Preview, surface_na
         find_control(root_item, "minimalDeviceLogin").setProperty("visible", True)
     QTest.qWait(350)
     surface = find_control(root_item, surface_name)
-    scene = find_control(root_item, "previewScene")
+    scene = find_control(root_item, "windowScene")
     assert surface.property("color").alphaF() < 0.85
     assert surface.property("backdrop") == scene
     effect = find_control(surface, "glassEffect")
