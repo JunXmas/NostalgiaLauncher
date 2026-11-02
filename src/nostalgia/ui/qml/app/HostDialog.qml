@@ -18,6 +18,7 @@ Controls.Popup {
     readonly property var selectedInstance: bridge.instances[pack.currentIndex] || ({})
     property bool sharePack: false
     property bool directAllowed: true
+    property var worldPicker: null
     onSelectedInstanceChanged: hostBridge.modSelection.selectInstance(selectedInstance.instanceId || "")
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: GlassTheme.normal } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: GlassTheme.quick } }
@@ -124,12 +125,14 @@ Controls.Popup {
                 objectName: "hostLaunchButton"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                label: Legacy.Tr.phrase("Tạo phòng"); primary: true
+                label: Legacy.Tr.phrase("Chọn world  →"); primary: true
                 disabledReason: Legacy.Tr.phrase(Reasons.hosting(bridge, socialBridge, hostBridge, multiplayerBridge, roomSyncBridge, root.selectedInstance.instanceId || "", root.sharePack && hostBridge.syncAvailable))
                 clickable: !disabledReason
                 onClicked: {
                     multiplayerBridge.setDirectAllowed(root.directAllowed);
-                    if (hostBridge.createRoom(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable)) root.close();
+                    // Chọn world ở cửa sổ kiểu lưới video; bản chơi không có world thì tạo phòng luôn.
+                    root.worldPicker.chooseHostWorld(root.selectedInstance.instanceId, root.sharePack && hostBridge.syncAvailable);
+                    root.close();
                 }
             }
         }

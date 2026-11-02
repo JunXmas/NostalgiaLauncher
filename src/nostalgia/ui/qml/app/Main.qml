@@ -158,8 +158,8 @@ Item {
             createForProject.expandedMajor = gameVersion.split(".").slice(0, 2).join(".");
         }
     }
-    PlayChoiceDialog {}
-    HostDialog { backdrop: scene }
+    PlayChoiceDialog { id: playChoice }
+    HostDialog { backdrop: scene; worldPicker: playChoice }
     GuestSyncDialog { backdrop: scene }
     SupportDialog {
         id: support

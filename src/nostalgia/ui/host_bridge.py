@@ -11,12 +11,14 @@ from nostalgia.ui.host_setup import HostSetup
 
 class HostBridge(HostSetup):
     @Slot(str, bool, result=bool)
-    def createRoom(self, instance_id: str, share: bool) -> bool:
+    @Slot(str, bool, str, result=bool)
+    def createRoom(self, instance_id: str, share: bool, world_folder: str = "") -> bool:
+        """`world_folder` (từ cửa sổ chọn world): bấm Khởi chạy là vào thẳng world đó."""
         if self._selection_error(instance_id, share):
             return self.start(instance_id, share)
         self._deferred_launch = True
         self._launch_event.clear()
-        return self.start(instance_id, share)
+        return self.start(instance_id, share, world_folder)
 
     @Slot()
     def launchRoom(self) -> None:
@@ -37,7 +39,7 @@ class HostBridge(HostSetup):
         self._social.sessionChanged.connect(self._session_changed)
 
     @Slot(str, bool, result=bool)
-    def start(self, instance_id: str, share: bool) -> bool:
+    def start(self, instance_id: str, share: bool, world_folder: str = "") -> bool:
         error = self._selection_error(instance_id, share)
         if error:
             self._note = error
@@ -55,7 +57,10 @@ class HostBridge(HostSetup):
         self._sync.set_host_ready(False)
         self._stage_note("preparing", "Đang chuẩn bị bản chơi và bộ modpack đã chọn…")
         self._bridge.play_hosted(
-            instance_id, lambda: self._launch_scope(instance_id, share, cancel_token), cancel_token
+            instance_id,
+            lambda: self._launch_scope(instance_id, share, cancel_token),
+            cancel_token,
+            world_folder,
         )
         return True
 

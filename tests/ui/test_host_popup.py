@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import time
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
@@ -16,11 +18,13 @@ from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_main_window import find_control, press
 
+from nbt_fixture import write_servers, write_world
 from nostalgia.api import Instance, Launcher
 from nostalgia.content.model import SearchPage
 from nostalgia.ui.window import open_window
 from nostalgia.ui.worker import wait_for_background
 from social_fixture import SocialFixture
+from version_fixtures import load_fixture
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -92,7 +96,9 @@ def test_open_room_selects_installed_pack_before_any_launch(
     assert "forge" in find_control(root_item, "hostSelectedVersion").property("text")
     press(view, find_control(root_item, "hostLaunchButton"))
     wait_until(lambda: not popup.property("visible"))
-    assert launched == ["b"] and host.property("details")["instanceId"] == "b"
+    # Bản chơi chưa có world: cửa sổ chọn world bị bỏ qua, phòng tạo luôn như trước.
+    wait_until(lambda: launched == ["b"])
+    assert host.property("details")["instanceId"] == "b"
     assert not host.property("details")["share"]
     assert not warnings, "\n".join(warnings)
 
@@ -122,3 +128,52 @@ def test_host_popup_mica_and_footer_fit_small_windows(
     assert 0 <= button_origin.y() <= view.height() - launch.height()
     assert launch.property("clickable")
     assert not warnings, "\n".join(warnings)
+
+
+def test_open_room_picks_a_world_in_the_video_grid_then_hosts_into_it(
+    host_popup: tuple[Any, ...], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Mở phòng → cửa sổ chọn world (chỉ world, không tab server) → phòng vào thẳng world đó."""
+    launcher, view, bridge, root_item, host, warnings = host_popup
+    version = launcher.paths.version_json("1.21.4")
+    version.parent.mkdir(parents=True, exist_ok=True)
+    version.write_text(json.dumps(load_fixture("1.21.4")), encoding="utf-8")
+    instance = launcher.create_instance(Instance("w", "1.21.4", "World pack"))
+    game_dir = launcher.instance_game_dir(instance)
+    write_world(game_dir, "base", "Căn cứ", int(time.time() * 1000))
+    write_servers(game_dir, [("Server", "s.example", None, False)])
+    bridge.announce_instances_changed()
+    hosted: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        bridge,
+        "play_hosted",
+        lambda instance_id, _scope, _token, world_folder="": hosted.append(
+            (instance_id, world_folder)
+        ),
+    )
+    press(view, find_control(root_item, "friendsOpenRoom"))
+    wait_until(lambda: find_control(root_item, "hostDialog").property("opened"))
+    picker = find_control(root_item, "hostPackPicker")
+    picker.setProperty("currentIndex", 2)
+    press(view, find_control(root_item, "hostLaunchButton"))
+    choice = find_control(root_item, "playChoiceDialog")
+    wait_until(lambda: choice.property("opened"))
+    assert choice.property("hosting") and not hosted
+    assert not find_control(root_item, "playChoiceTabs").isVisible()
+    assert [row["worldFolder"] for row in choice.property("shown").toVariant()] == ["base"]
+    wait_until(lambda: _visible(root_item, "playWorld-base") is not None)
+    press(view, _visible(root_item, "playWorld-base"))
+    wait_until(lambda: hosted == [("w", "base")])
+    assert host.property("details")["instanceId"] == "w"
+    assert not choice.property("opened") and not choice.property("hosting")
+    assert not warnings, "\n".join(warnings)
+
+
+def _visible(root_item: Any, name: str) -> Any:
+    pending = [root_item.window().contentItem()]
+    while pending:
+        node = pending.pop()
+        if node.objectName() == name and node.isVisible():
+            return node
+        pending.extend(node.childItems())
+    return None

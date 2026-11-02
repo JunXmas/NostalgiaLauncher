@@ -196,8 +196,9 @@ class LauncherBridge(InstanceBridge):
         instance_id: str,
         scope: Callable[[], AbstractContextManager[None]],
         cancel_token: CancelToken,
+        world_folder: str = "",
     ) -> None:
-        self._launch(instance_id, host_scope=scope, cancel_token=cancel_token)
+        self._launch(instance_id, world_folder, host_scope=scope, cancel_token=cancel_token)
 
     def _launch(
         self,
