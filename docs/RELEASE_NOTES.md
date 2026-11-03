@@ -1,4 +1,7 @@
-# Nostalgia 1.2.0rc43 — chọn Java nâng cao, lời nhạc YouTube
+# Nostalgia 1.2.1 — đồng bộ phiên bản và gói cập nhật
+
+- Đồng bộ phiên bản trong launcher, tag phát hành và tên gói cài thành `1.2.1`.
+- Dựng lại các gói Windows, Linux và macOS để bộ tự cập nhật chọn đúng gói.
 
 ## Chọn Java (nâng cao)
 
