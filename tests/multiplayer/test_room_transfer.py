@@ -4,7 +4,7 @@ import asyncio
 import subprocess
 import sys
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -44,7 +44,9 @@ class Downloader:
 def transfer(body: bytes, status: int = 200) -> tuple[RoomTransfer, Downloader]:
     room = RoomTransfer.__new__(RoomTransfer)
     downloader = Downloader()
-    room._direct_allowed, room._joiner, room._room_http = True, object(), Http(body, status)
+    room._direct_allowed = True
+    room._joiner = cast(Any, object())
+    room._room_http = cast(Any, Http(body, status))
     room._relay_url, room._guest_room_code = "wss://signal.test", "ABCDEFGHJKMNPQRSTU"
     room._peer_download = downloader  # type: ignore[assignment]
     return room, downloader
@@ -69,7 +71,7 @@ def test_broken_lobby_reply_is_a_clear_room_error(body: bytes, status: int) -> N
 
 def test_ready_lobby_fetches_the_manifest_from_the_host() -> None:
     room, downloader = transfer(b'{"sync_ready": true, "locked": false}')
-    assert asyncio.run(room._fetch_sync_manifest("ABCDEFGHJKMNPQRSTU")) == "manifest"
+    assert cast(object, asyncio.run(room._fetch_sync_manifest("ABCDEFGHJKMNPQRSTU"))) == "manifest"
     assert downloader.fetched == ["ABCDEFGHJKMNPQRSTU"]
 
 

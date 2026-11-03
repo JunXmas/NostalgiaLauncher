@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from nostalgia.errors import ContentError
 from nostalgia.storage import directory_swap
 from nostalgia.storage.directory_swap import (
     commit_directory,
@@ -65,7 +66,7 @@ def test_change_during_preparation_is_detected_without_reading_bytes(tmp_path: P
     stage = tmp_path / "stage"
     stage_directory(mods, stage)
     (mods / "a.jar").write_bytes(b"other")  # người chơi chép đè một mod trong lúc chuẩn bị
-    with pytest.raises(directory_swap.ContentError):
+    with pytest.raises(ContentError):
         commit_directory(mods, stage, tmp_path / "history", original)
     assert (mods / "a.jar").read_bytes() == b"other"
 
@@ -77,7 +78,7 @@ def test_undo_refuses_when_mods_changed_after_swap(tmp_path: Path) -> None:
     (stage / "c.jar").write_bytes(b"C")
     receipt = commit_directory(mods, stage, tmp_path / "history", tree_fingerprint(mods))
     (mods / "d.jar").write_bytes(b"added later")
-    with pytest.raises(directory_swap.ContentError):
+    with pytest.raises(ContentError):
         undo_directory(mods, tmp_path / "history", receipt)
     assert (mods / "d.jar").exists()
 
