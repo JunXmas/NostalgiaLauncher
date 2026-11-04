@@ -118,9 +118,7 @@ class InstanceBridge(WorkerBridge):
             "worldCount": stats.world_count,
             "modCount": stats.mod_count,
             "nosClientEnabled": instance.nos_client_enabled,
-            # Bản Nos hiện tại chỉ dành cho Fabric 1.21.11; nơi khác không hiện công tắc.
-            "nosClientSupported": instance.version_id.startswith("fabric-loader-")
-            and instance.version_id.endswith("-1.21.11"),
+            "nosClientSupported": self._launcher.nos_client_supported(instance),
         }
 
     def _find(self, instance_id: str) -> Instance | None:
@@ -191,12 +189,14 @@ class InstanceBridge(WorkerBridge):
             return
 
         def work() -> None:
-            self._launcher.toggle_nos_client(current, enabled)
-            if enabled:
-                self._launcher.prepare_nos_client(replace(current, nos_client_enabled=True))
-            else:
-                self._launcher.cleanup_nos_client(current)
-            self.announce_instances_changed()
+            try:
+                if enabled:
+                    self._launcher.prepare_nos_client(replace(current, nos_client_enabled=True))
+                else:
+                    self._launcher.cleanup_nos_client(current)
+                self._launcher.toggle_nos_client(current, enabled)
+            finally:
+                self.announce_instances_changed()
 
         self.run_in_background(work, f"{'Bật' if enabled else 'Tắt'} Nos Client cho {instance_id}")
 

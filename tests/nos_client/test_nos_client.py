@@ -12,7 +12,8 @@ from nostalgia.nos_client.config import (
     load_nos_client_config,
     save_nos_client_config,
 )
-from nostalgia.nos_client.manager import MOD_JAR_PREFIX, inject_mod, remove_mod
+from nostalgia.nos_client.installation import inject_mod, remove_mod
+from nostalgia.nos_client.release import MOD_JAR_PREFIX
 from nostalgia.storage.paths import DataPaths
 
 

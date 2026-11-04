@@ -3,6 +3,14 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+- Kiểm tra và tự cập nhật Nos Client ổn định tương thích trước khi chơi Fabric 1.21.11.
+- Xác minh SHA-256, metadata Minecraft/Fabric/Java và phiên bản thật trong jar trước khi cài.
+- Thay Nos bằng giao dịch mod có khóa, bản sao lưu và khôi phục khi bị gián đoạn; giữ các mod khác.
+- Dùng bản tương thích đã lưu khi mất mạng, tránh hạ bản đang cài và không chép lại jar không đổi.
+- Bật Nos thất bại giữ công tắc ở trạng thái tắt, có thể thử lại; hỗ trợ hủy trong bước chuẩn bị game.
+
 ## 1.2.0 — 2026-11-03
 
 Bản chính thức đầu tiên của dòng 1.2. Gộp mọi thay đổi từ rc43.

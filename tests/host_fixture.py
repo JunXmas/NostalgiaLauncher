@@ -154,7 +154,7 @@ class HostRig:
             self.prepare_entered.set()
             assert self.prepare_release.wait(15)
 
-        def inject(_launcher: Launcher, instance: Instance) -> None:
+        def inject(_launcher: Launcher, instance: Instance, **_kwargs: Any) -> None:
             assert instance.instance_id == "chosen"
             (self.source / "mods/nos.jar").write_bytes(b"injected before capture")
 

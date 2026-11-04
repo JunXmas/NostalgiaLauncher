@@ -135,7 +135,7 @@ Controls.Popup {
                                 checked: root.instance.nosClientEnabled === true
                                 enabled: !bridge.busy && !bridge.gameRunning
                                 accessibleLabel: Legacy.Tr.phrase("Bật Nos Client")
-                                onToggled: function(value) { checked = value; bridge.toggleNosClient(root.instance.instanceId, value); }
+                                onToggled: function(value) { bridge.toggleNosClient(root.instance.instanceId, value); }
                             }
                             Column {
                                 id: nosText
