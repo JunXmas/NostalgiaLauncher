@@ -74,7 +74,8 @@ def verify_mod_artifact(
             mod = as_mapping(document)
             dependencies = as_mapping(mod.get("depends"))
             dependency = dependencies.get("minecraft")
-            if mod_version and mod.get("version") != mod_version:
+            declared_version = as_string(mod.get("version")) or ""
+            if not declared_version.strip() or (mod_version and declared_version != mod_version):
                 return False
             for mod_id, installed in (("fabricloader", loader_version), ("java", "21")):
                 required = dependencies.get(mod_id)

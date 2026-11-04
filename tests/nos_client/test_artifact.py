@@ -23,7 +23,9 @@ def test_valid_zip_and_hash(tmp_path: Path) -> None:
     assert not verify_mod_artifact(path, "1.21.11", size=len(body) + 1)
 
 
-@pytest.mark.parametrize("body", [b"PK fake jar", build_nos_jar(mod_id="other"), b""])
+@pytest.mark.parametrize(
+    "body", [b"PK fake jar", build_nos_jar(mod_id="other"), build_nos_jar(mod_version=""), b""]
+)
 def test_invalid_mod_is_rejected(tmp_path: Path, body: bytes) -> None:
     path = tmp_path / "client.jar"
     path.write_bytes(body)
