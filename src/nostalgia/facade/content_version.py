@@ -10,6 +10,7 @@ from nostalgia.content.target import ContentTarget
 from nostalgia.facade.content_detail import ContentDetailOperations
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modloader.model import detect_loader_kind
+from nostalgia.modrepair.transaction import lock_mods
 from nostalgia.net.http import HttpClient
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.repo.version_repo import VersionRepository
@@ -95,8 +96,13 @@ class ContentVersionOperations(ContentDetailOperations):
         """Lần đổi phiên bản/sửa mod trước bị cắt ngang (máy tắt) thì trả bộ mod cũ về trước khi
         game chạy và tự tạo một thư mục mods rỗng."""
         game_dir = game_dir_of(self.paths, load_instance(self.paths, instance_id))
-        for history in (".nostalgia-mod-versions", ".nostalgia-repairs"):
-            recover_directory(game_dir / "mods", game_dir / history)
+        with lock_mods(game_dir):
+            for history in (
+                ".nostalgia-mod-versions",
+                ".nostalgia-repairs",
+                ".nostalgia-nos-updates",
+            ):
+                recover_directory(game_dir / "mods", game_dir / history)
 
     def latest_mod_version_change(self, instance_id: str) -> str:
         instance = load_instance(self.paths, instance_id)

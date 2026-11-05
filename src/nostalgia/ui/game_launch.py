@@ -29,4 +29,6 @@ def prepare_game(
         if cancel_token is not None:
             cancel_token.raise_if_cancelled()
         if instance.nos_client_enabled:
-            launcher.prepare_nos_client(instance)
+            launcher.prepare_nos_client(
+                instance, on_progress=on_progress, cancel_token=cancel_token
+            )
