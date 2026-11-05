@@ -56,6 +56,7 @@ LAYERS: dict[str, int] = {
     "update": 3,  # bản phát hành launcher: đọc, tải + kiểm băm, script tráo thư mục
     "multiplayer": 3,  # LAN-qua-relay: chỉ stdlib socket/asyncio, không biết gì về bản chơi
     "nos_client": 3,  # Nos Client: config HUD + manager tải/inject mod jar
+    "usage": 3,  # thống kê tự nguyện, không gắn tài khoản hoặc game
     "account": 4,
     "launch": 4,
     "server": 4,

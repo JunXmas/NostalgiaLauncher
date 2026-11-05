@@ -29,6 +29,7 @@ Item {
             id: settingsColumn
             width: parent.width; spacing: Theme.gap
             AppearanceSettings { width: parent.width; height: implicitHeight }
+            App.UsageSettings { width: parent.width }
     App.ServiceSettings { width: parent.width }
     Loader {
         id: updatePanel

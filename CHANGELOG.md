@@ -3,6 +3,16 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## Chưa phát hành
+
+- Cài mới mặc định tiếng Anh, giữ lựa chọn tiếng Việt đã lưu.
+- Đặt công tắc Nos cạnh phiên bản trong danh sách bản chơi rút gọn, tránh chồng chữ.
+- Thêm lựa chọn thống kê riêng với ba trạng thái, cài đặt và mẫu payload cục bộ VI/EN.
+- Hộp xin lựa chọn một lần chỉ hoạt động sau khi backend mới được xác nhận sẵn sàng.
+- Chỉ hỗ trợ bản cài tự nguyện hoạt động/ngày UTC, không theo dõi sự kiện chạy game.
+- Khi tắt, hủy tác vụ chưa gửi và xóa mã ngày; không gửi bù hoặc thử lại nền.
+- Công khai schema và giới hạn thực tế trong `docs/PRIVACY.md`; chưa deploy backend.
+
 ## 1.2.2 — 2026-11-05
 
 - Kiểm tra và tự cập nhật Nos Client ổn định tương thích trước khi chơi Fabric 1.21.11.

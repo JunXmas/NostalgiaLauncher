@@ -64,11 +64,11 @@ def test_play_button_turns_into_a_stop_button_while_the_game_runs(tmp_path: Path
     wait_until(lambda: find_item(root_item, "minimalPlay") is not None)
     button = find_item(root_item, "minimalPlay")
     assert button is not None
-    assert button.property("label") == "Chơi ngay  →"
+    assert button.property("label") == "Play now  →"
 
     bridge._set_game_running(True)
-    wait_until(lambda: button.property("label") == "Dừng game")
+    wait_until(lambda: button.property("label") == "Stop game")
     assert button.property("clickable") is True
 
     bridge._set_game_running(False)
-    wait_until(lambda: button.property("label") == "Chơi ngay  →")
+    wait_until(lambda: button.property("label") == "Play now  →")

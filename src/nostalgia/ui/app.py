@@ -35,6 +35,7 @@ from nostalgia.ui.sound import SoundPlayer
 from nostalgia.ui.storage_bridge import StorageBridge
 from nostalgia.ui.translations import phrase
 from nostalgia.ui.update_bridge import UpdateBridge
+from nostalgia.ui.usage_bridge import UsageBridge
 from nostalgia.ui.view import LauncherView
 
 # TranslationProvider.qml đọc từ điển i18n/*.json bằng XMLHttpRequest; Qt6 chặn mặc định.
@@ -132,6 +133,8 @@ def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
     view.bind_context_property("skinPreviews", SkinPreviewBridge(launcher.paths.data_dir, view))
     settings_bridge = SettingsBridge(launcher, parent=view)
     view.bind_context_property("settingsBridge", settings_bridge)
+    usage_bridge = UsageBridge(launcher, settings_bridge, parent=view)
+    view.bind_context_property("usageBridge", usage_bridge)
     notifier = build_notifier(launcher, bridge, settings_bridge, view)
     view.bind_context_property("notifier", notifier)
     update_bridge = UpdateBridge(
@@ -164,6 +167,7 @@ def build_view(launcher: Launcher) -> tuple[LauncherView, LauncherBridge]:
     if running_application is not None:
         running_application.aboutToQuit.connect(multiplayer_bridge.shutdown)
         running_application.aboutToQuit.connect(presence_bridge.shutdown)
+        running_application.aboutToQuit.connect(usage_bridge.shutdown)
     view.setResizeMode(QQuickView.ResizeMode.SizeRootObjectToView)
     # Cho phép cửa sổ co nhỏ đến 1024x600 để chạy được trên màn hình 1366x768 (trừ taskbar,
     # title bar). Bố cục QML tự scale xuống nhờ ScrollView / Flickable và layout linh hoạt.

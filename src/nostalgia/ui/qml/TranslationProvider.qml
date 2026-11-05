@@ -7,7 +7,7 @@ QtObject {
 
     readonly property string currentLanguage: _lang
     readonly property string localeName: _lang === "en" ? "en_US" : "vi_VN"
-    property string _lang: "vi"
+    property string _lang: "en"
     property var _dict: ({})
     property var _patterns: []
     property var _cache: ({})
@@ -68,7 +68,7 @@ QtObject {
         return patterns.sort(function(a, b) { return b.weight - a.weight; });
     }
     function setLanguage(lang) {
-        lang = lang === "en" ? "en" : "vi";
+        lang = lang === "vi" ? "vi" : "en";
         if (lang === _lang) return;
         _lang = lang;
         _load(lang);

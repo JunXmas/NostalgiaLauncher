@@ -139,10 +139,7 @@ def test_previous_guest_instance_is_shown_and_new_mods_require_selection(
         for choice in sync_bridge.guestChoices
         if choice["path"] == "mods/new.jar"
     )
-    assert (
-        find_control(root_item, "guestSyncConfirm").property("label")
-        == "Cập nhật bản chơi đã đồng bộ"
-    )
+    assert find_control(root_item, "guestSyncConfirm").property("label") == "Update synced instance"
 
 
 @pytest.mark.parametrize(("invited_by", "claimed"), [("", "host"), ("misa", "host")])

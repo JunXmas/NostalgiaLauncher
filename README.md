@@ -24,8 +24,15 @@ skins, friends, updates — is already taken care of.
 hands you one file.
 &nbsp;·&nbsp;
 [All releases](https://github.com/JunXmas/NostalgiaLauncher/releases/latest)
+&nbsp;·&nbsp;
+[Privacy and optional usage statistics](docs/PRIVACY.md)
 
 </div>
+
+New installations start in English. Vietnamese remains available in Settings; an existing
+language choice is preserved. Optional usage statistics start off and require a separate
+choice. The new collection service and one-time consent invitation remain disabled until
+the backend is ready; see the privacy document for the current server-side limitations.
 
 ---
 

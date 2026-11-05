@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QRectF, Qt
 from PySide6.QtTest import QTest
 from test_bridges import wait_until
 from test_main_window import Preview
@@ -136,3 +136,42 @@ def test_manager_toggle_keeps_binding_after_failure_and_success(
     assert launcher.list_instances()[0].nos_client_enabled
     QTest.qWait(300)
     assert view.grabWindow().save(str(tmp_path / "nos-update-enabled.png"))
+
+
+@pytest.mark.parametrize("scale", [100, 125, 150])
+@pytest.mark.parametrize("language", ["en", "vi"])
+def test_compact_nos_chip_keeps_clear_of_text_and_actions(
+    preview: Preview, scale: int, language: str, tmp_path: Path
+) -> None:
+    launcher, view, bridge, root_item = preview
+    fabric = "fabric-loader-0.19.3-1.21.11"
+    for version_id, extra in (("1.21.11", {}), (fabric, {"inheritsFrom": "1.21.11"})):
+        atomic_write_json(launcher.paths.version_json(version_id), {"id": version_id, **extra})
+    launcher.create_instance(
+        Instance("compact-nos", fabric, "Optimized with a long title", nos_client_enabled=True)
+    )
+    bridge.announce_instances_changed()
+    root_item.setProperty("sessionSkipped", True)
+    root_item.setProperty("currentIndex", 1)
+    view.resize(1024, 600)
+    view.rootContext().contextProperty("settingsBridge").setAppearance(
+        scale, True, True, False, language
+    )
+    QTest.qWait(150)
+    chip = find_control(root_item, "nosChip-compact-nos")
+    tile = chip.parentItem()
+    assert tile is not None
+    chip_rect = chip.mapRectToItem(tile, QRectF(0, 0, chip.width(), chip.height()))
+    labels = next(child for child in tile.childItems() if child.property("spacing") == 7)
+    controls = list(labels.childItems()) + [
+        find_control(tile, prefix + "compact-nos")
+        for prefix in ("instanceAction-", "manageInstance-", "instanceFavorite-")
+    ]
+    for control in controls:
+        rect = control.mapRectToItem(tile, QRectF(0, 0, control.width(), control.height()))
+        assert not rect.intersects(chip_rect)
+    assert QRectF(0, 0, tile.width(), tile.height()).contains(chip_rect)
+    capture = tile.grabToImage()
+    assert capture is not None
+    wait_until(lambda: not capture.image().isNull())
+    assert capture.saveToFile(str(tmp_path / f"compact-nos-{language}-{scale}.png"))

@@ -7,7 +7,7 @@ from pathlib import Path
 
 @lru_cache(maxsize=2)
 def load_translations(language: str) -> dict[str, str]:
-    language = "en" if language == "en" else "vi"
+    language = "vi" if language == "vi" else "en"
     path = Path(__file__).parent / "qml" / "i18n" / f"{language}.json"
     return dict(json.loads(path.read_text(encoding="utf-8")))
 

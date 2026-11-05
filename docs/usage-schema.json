@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Optional installation active v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event", "day", "launcher_version", "os_group", "daily_id"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "event": {"const": "installation_active"},
+    "day": {"type": "string", "format": "date", "description": "Current UTC date only"},
+    "launcher_version": {"type": "string", "pattern": "^\\d{1,4}\\.\\d{1,4}\\.\\d{1,4}(?:[.-]?[a-zA-Z0-9]{1,16})?$"},
+    "os_group": {"enum": ["windows", "linux", "macos", "other"]},
+    "daily_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+  }
+}
