@@ -4271,7 +4271,6 @@
   "p:Đã đồng ý": "Accepted",
   "p:Đã từ chối": "Declined",
   "p:Chưa lựa chọn": "Not chosen",
-  "p:Chỉ đếm bản cài tự nguyện tham gia hoạt động/ngày: ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên trong ngày. Bạn có thể tắt bất kỳ lúc nào.": "Count participating active installations per day using the UTC date, launcher version, operating system group and a random daily code. You can turn this off at any time.",
   "p:Nơi nhận: ": "Destination: ",
   "p:Mã chống đếm lặp có hạn 24 giờ, dọn hằng giờ. Số liệu tổng hợp giữ 90 ngày. Đăng nhập, cập nhật, tải nội dung và phòng chơi hoạt động độc lập với lựa chọn này.": "Deduplication codes expire after 24 hours and are cleared hourly. Daily totals are kept for 90 days. Sign-in, updates, downloads and multiplayer work independently of this choice.",
   "p:Xem dữ liệu được gửi": "View the data sent",
@@ -4285,5 +4284,11 @@
   "p:Thông tin quyền riêng tư": "Privacy information",
   "p:Không gửi": "Do not send",
   "p:Đồng ý chia sẻ": "Agree to share",
-  "p:Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới.": "Optional statistics are not enabled. The launcher sends no events to the new statistics endpoint."
+  "p:Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới.": "Optional statistics are not enabled. The launcher sends no events to the new statistics endpoint.",
+  "p:Số liệu tổng hợp giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.": "Aggregated statistics help the team see which launcher versions and operating systems are still in use, so we can prioritize testing, fixes and future releases.",
+  "p:Dịch vụ thống kê chưa được triển khai nên hiện chưa thể bật. Launcher không gửi sự kiện tới endpoint thống kê mới. Lựa chọn đã lưu của bạn được giữ nguyên.": "The statistics service has not been deployed, so sharing cannot be enabled yet. The launcher sends no events to the new statistics endpoint. Your saved choice is kept.",
+  "p:Số liệu này cho biết mức sử dụng trong nhóm tự nguyện tham gia, không tự xác định lỗi cụ thể. Chúng tôi đối chiếu với báo cáo lỗi và góp ý do người chơi chủ động gửi.": "These totals describe usage among voluntary participants; they do not identify specific bugs. We compare them with bug reports and feedback that players choose to send.",
+  "p:Chưa khả dụng": "Not available yet",
+  "p:Lựa chọn đã lưu: ": "Saved choice: ",
+  "p:Khi bạn đồng ý chia sẻ, dữ liệu chỉ gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "If you agree to share, the data includes only the UTC date, launcher version, operating system group and a random daily code."
 }

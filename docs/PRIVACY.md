@@ -6,6 +6,18 @@ Backend đang chạy bản cũ có thể vẫn đếm hoạt động tài khoả
 án triển khai bản backend đã bỏ lệnh ghi ngầm. Cài đặt client không thể thay đổi hành vi
 của backend cũ mà vẫn giữ nguyên chức năng bạn bè.
 
+## Thu thập để trả lời câu hỏi gì?
+
+Số tổng hợp theo phiên bản launcher và nhóm hệ điều hành giúp nhóm phát triển biết những
+bản nào còn được sử dụng trong nhóm tự nguyện tham gia. Mục đích là ưu tiên kiểm thử,
+phân bổ công sức sửa lỗi, quyết định tiếp tục hỗ trợ phiên bản/nền tảng nào và lập kế hoạch
+cho các bản tiếp theo. Không dùng dữ liệu để lập hồ sơ từng người hoặc nhắm quảng cáo.
+
+Lượng sử dụng không tự chỉ ra lỗi cụ thể hoặc chứng minh bản nào có nhiều lỗi hơn. Cần
+đối chiếu với báo cáo lỗi và góp ý do người chơi chủ động gửi; thống kê này không thu log
+hay gửi crash report thay cho người chơi. Số liệu chỉ mô tả nhóm đồng ý, không đại diện
+toàn bộ người dùng launcher.
+
 ## Những kết nối khác nhau
 
 | Luồng | Mục đích và dữ liệu | Liên quan lựa chọn thống kê |
@@ -39,6 +51,8 @@ khi cửa sổ chính đã dùng được và rảnh. Hoãn trong đăng nhập,
 chạy/chơi game, popup khác hoặc xử lý lỗi. Hai nút có cùng kiểu; không đặt sẵn đồng ý.
 “Không gửi”, X và Escape đều lưu từ chối. Đã chọn trong Cài đặt thì không hỏi nữa.
 Khi dịch vụ chưa sẵn sàng, không mở hộp mời đồng ý; xem mẫu trong Cài đặt vẫn dùng được.
+Trang Cài đặt hiển thị “Chưa khả dụng” và lý do, thay cho công tắc bị khóa. Lựa chọn đã lưu
+được giữ; vẫn có thể từ chối hoặc rút lại đồng ý khi dịch vụ chưa sẵn sàng.
 
 Cài đặt → **Giúp cải thiện Nostalgia** cho thay đổi lựa chọn, xem dữ liệu minh họa và chính
 sách. Từ chối không giảm chức năng. Mẫu dựng cục bộ từ đúng cấu trúc payload, dùng mã giả,
