@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.2 — 2026-11-05
 
 - Kiểm tra và tự cập nhật Nos Client ổn định tương thích trước khi chơi Fabric 1.21.11.
 - Xác minh SHA-256, metadata Minecraft/Fabric/Java và phiên bản thật trong jar trước khi cài.

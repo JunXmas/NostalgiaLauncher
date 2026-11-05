@@ -1,21 +1,15 @@
-# Nostalgia 1.2.1 — đồng bộ phiên bản và gói cập nhật
+# Nostalgia Launcher 1.2.2 — tự cập nhật Nos Client
 
-- Đồng bộ phiên bản trong launcher, tag phát hành và tên gói cài thành `1.2.1`.
-- Dựng lại các gói Windows, Linux và macOS để bộ tự cập nhật chọn đúng gói.
+- Khi bật Nos hoặc bấm **Chơi** trên Fabric **1.21.11**, launcher tự kiểm tra và cài bản
+  Nos Client ổn định mới nhất tương thích trước khi khởi động Minecraft.
+- Xác minh SHA-256 và thông tin phiên bản, Minecraft, Java, Fabric trước khi cài. Giữ bản
+  tương thích đang có nếu mất mạng hoặc gói mới lỗi; không hạ phiên bản.
+- Thay jar có khóa, sao lưu và phục hồi khi bị gián đoạn. Giữ nguyên các mod khác và không
+  chép lại bộ mod khi Nos chưa có bản mới.
+- Bật Nos thất bại sẽ giữ công tắc tắt để thử lại. Có thể hủy trong lúc chuẩn bị game.
 
-## Chọn Java (nâng cao)
+Chỉ cập nhật jar Nos; launcher không tự thay profile Fabric hoặc cài thêm Fabric API.
+Bản chơi ngoài Minecraft 1.21.11 chưa được hỗ trợ trong đợt này.
 
-- **Quản lý bản chơi → Hiệu năng → Nâng cao → Java**: chọn file `java` riêng cho bản chơi
-  (ví dụ thử GraalVM hay Java mới hơn).
-- Mặc định vẫn **tự động**: launcher tự tải và chọn đúng bản Java cho phiên bản Minecraft.
-  Bấm **Tự động** để quay về.
-- Đường dẫn sai thì không lưu; file Java đã chọn bị xoá thì launcher báo rõ khi bấm Chơi.
-
-## Nos Client 0.3.1 (tự cập nhật)
-
-- Lời nhạc chạy với **YouTube / YouTube Music** phát trên trình duyệt (Chrome, Edge,
-  Firefox…), không chỉ Spotify. Bật **Tự tìm lời** trong R-Shift → Lời nhạc.
-- Hiểu tiêu đề video kiểu "SƠN TÙNG M-TP | … | OFFICIAL MUSIC VIDEO", "Bài - Ca sĩ (Official
-  MV)", "… l Official Video"; chỉ nhận bản khớp tên bài, ca sĩ và thời lượng.
-- Video tổng hợp / EP dài và bản live thường không có lời đồng bộ nên sẽ không hiện lời.
-- F1 (ẩn giao diện) vẫn giữ lời nhạc và cực quang.
+Gói cài đặt có cho Windows x64, Linux x64 và macOS Apple Silicon/Intel. Launcher 1.2.1 có
+thể nhận bản này qua **Cài đặt → Cập nhật**; macOS sẽ mở trang tải để cài bản mới.
