@@ -1,6 +1,6 @@
 # Báo cáo review thống kê tự nguyện và giao diện launcher
 
-Ngày kiểm: 05/11/2026. Bản sửa chưa phát hành hoặc deploy production.
+Ngày kiểm: 05/11/2026, trước khi phát hành launcher 1.2.3. Backend chưa deploy production.
 
 ## Phát hiện ban đầu
 

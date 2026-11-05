@@ -57,7 +57,7 @@ Operator chỉ cấu hình `NOSTALGIA_USAGE_ENDPOINT` cùng `NOSTALGIA_USAGE_REA
   "schema_version": 1,
   "event": "installation_active",
   "day": "2026-11-05",
-  "launcher_version": "1.2.2",
+  "launcher_version": "1.2.3",
   "os_group": "windows",
   "daily_id": "0123456789abcdef0123456789abcdef"
 }

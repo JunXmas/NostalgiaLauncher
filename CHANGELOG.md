@@ -3,7 +3,7 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## Chưa phát hành
+## 1.2.3 — 2026-11-05
 
 - Cài mới mặc định tiếng Anh, giữ lựa chọn tiếng Việt đã lưu.
 - Đặt công tắc Nos cạnh phiên bản trong danh sách bản chơi rút gọn, tránh chồng chữ.
