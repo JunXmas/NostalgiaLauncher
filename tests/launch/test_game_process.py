@@ -44,7 +44,7 @@ def is_alive(pid: int) -> bool:
         try:
             if status.read_text().rsplit(")", 1)[1].lstrip().startswith("Z"):
                 return False
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             return False
     try:
         os.kill(pid, 0)
