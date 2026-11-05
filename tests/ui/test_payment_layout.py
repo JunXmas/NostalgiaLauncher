@@ -178,7 +178,7 @@ def test_offer_stage_shows_price_once_without_hero_and_fits_the_dialog(
         return own + [text for child in node.childItems() for text in texts(child)]
 
     # Giá chỉ hiện một chỗ: ô gói đang chọn (giá máy chủ), không lặp ở thẻ thứ hai.
-    assert texts(find_control(preview.root_item, "paymentScroll")).count("69.000đ") == 1
+    assert texts(find_control(preview.root_item, "paymentScroll")).count("69,000₫") == 1
     scroll = find_control(preview.root_item, "paymentScroll")
     assert scroll.property("contentHeight") <= scroll.height() + 0.5
     for name in ("plusPlanYearly", "plusTerms", "plusComparison"):

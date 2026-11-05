@@ -32,7 +32,7 @@ def test_tray_initialization_and_menu(tmp_path: Path) -> None:
     assert menu is not None
     actions = menu.actions()
     action_texts = [action.text() for action in actions if not action.isSeparator()]
-    assert action_texts == ["Hiện lại Launcher", "Dừng game", "Thoát"]
+    assert action_texts == ["Show Launcher", "Stop game", "Quit"]
 
 
 def test_tray_keeps_launcher_visible_when_game_starts_and_stops(tmp_path: Path) -> None:

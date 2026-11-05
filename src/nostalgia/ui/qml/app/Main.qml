@@ -13,6 +13,15 @@ Item {
     Shortcut { sequence: "F1"; onActivated: GuideCenter.show(root.loginVisible ? "start" : root.currentIndex === 1 && pages.item && pages.item.serverMode ? "server" : Guides.pageTopic(root.currentIndex)) }
     GuideDialog {}
     LocalModDialog {}
+    UsageData {}
+    UsageConsent {
+        eligible: !root.loginVisible && !googleLinkBridge.pending && !socialBridge.signingIn && !bridge.busy && !bridge.gameRunning
+            && !storageBridge.busy && !catalogBridge.busy && !contentBridge.busy && !importBridge.busy
+            && !accountBridge.busy && !socialBridge.busy && !hostBridge.busy && !serverBridge.busy
+            && !projectBridge.busy && !roomSyncBridge.busy && !paymentBridge.busy && !hostBridge.details.active
+            && ["checking", "downloading", "ready", "applying", "failed"].indexOf(updateBridge.state) < 0
+            && !bridge.canRetry && !storageBridge.canRetry && !contentBridge.canRetry && !catalogBridge.canRetry
+    }
     readonly property bool loginVisible: (!bridge.activePlayerName && !sessionSkipped) || googleLinkBridge.pending
     Component.onCompleted: {
         GlassTheme.preferences = settingsBridge;

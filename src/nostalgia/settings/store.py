@@ -40,7 +40,8 @@ class Settings:
     compact_ui: bool = False
     reduced_motion: bool = False
     decorative_background: bool = True
-    language: str = "vi"
+    language: str = "en"
+    usage_choice_v1: str = "unselected"
 
 
 def settings_path(config_dir: Path) -> Path:
@@ -76,7 +77,12 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 compact_ui=fields.get("compact_ui") is True,
                 reduced_motion=fields.get("reduced_motion") is True,
                 decorative_background=fields.get("decorative_background") is not False,
-                language="en" if fields.get("language") == "en" else "vi",
+                language="vi" if fields.get("language") == "vi" else "en",
+                usage_choice_v1="accepted"
+                if fields.get("usage_choice_v1") == "accepted"
+                else "declined"
+                if fields.get("usage_choice_v1") == "declined"
+                else "unselected",
             )
         except DataFileError:
             settings = Settings()
@@ -114,6 +120,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "reduced_motion": settings.reduced_motion,
             "decorative_background": settings.decorative_background,
             "language": settings.language,
+            "usage_choice_v1": settings.usage_choice_v1,
         },
         private=True,
     )

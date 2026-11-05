@@ -19,14 +19,14 @@ from PySide6.QtGui import QDesktopServices
 from nostalgia import __version__
 from nostalgia.api import Launcher
 from nostalgia.errors import NostalgiaError
-from nostalgia.ui.appearance_bridge import AppearanceBridge
+from nostalgia.ui.usage_settings_bridge import UsageSettingsBridge
 
 # Mỗi ô mã QR vẽ bằng 4 pixel. Lưới cỡ 6 là 41 ô + viền 4 ô mỗi bên = (41+8)*4 = 196 px,
 # và QML vẽ đúng 196 px — không co giãn thì không ô nào rơi vào ranh giới pixel lẻ.
 QR_SCALE = 4
 
 
-class SettingsBridge(AppearanceBridge):
+class SettingsBridge(UsageSettingsBridge):
     notificationSoundChanged = Signal()
     uiSoundChanged = Signal()
     discordChanged = Signal()

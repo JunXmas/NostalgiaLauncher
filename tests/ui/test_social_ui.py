@@ -101,7 +101,7 @@ def test_google_opens_browser_and_account_is_separate_from_minecraft(
 def test_host_invite_does_not_need_plus(social_preview: tuple[Any, ...]) -> None:
     _, gateway, view, root_item, social, multiplayer, sync_bridge, _ = social_preview
     login_preview(social_preview)
-    assert find_control(root_item, "friendsOpenRoom").property("label") == "Tạo phòng"
+    assert find_control(root_item, "friendsOpenRoom").property("label") == "Create room"
     multiplayer._apply_status(
         RoomStatus(
             role="hosting",
@@ -113,7 +113,7 @@ def test_host_invite_does_not_need_plus(social_preview: tuple[Any, ...]) -> None
     find_control(root_item, "friendsPage").setProperty("section", 1)
     QTest.qWait(80)
     invite = find_control(root_item, "roomInvite-misa")
-    assert invite.isVisible() and invite.property("label") == "Mời vào phòng"
+    assert invite.isVisible() and invite.property("label") == "Invite to room"
     press(view, invite)
     wait_until(lambda: gateway.invited and not social.inviteBusy)
     assert gateway.invited == ["misa"] and not social.account["plus"]

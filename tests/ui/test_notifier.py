@@ -196,4 +196,4 @@ def test_toast_shows_the_event_on_screen(tmp_path: Path) -> None:
     notifier = view.rootContext().contextProperty("notifier")
     notifier.announce("crashed", "Game gặp sự cố", "Mã thoát 1 — xem NHẬT KÝ")
     wait_until(lambda: toast.property("shown") is True)
-    assert title.property("text") == "Game gặp sự cố"
+    assert title.property("text") == "Game crashed"

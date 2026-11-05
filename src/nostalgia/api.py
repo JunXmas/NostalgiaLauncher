@@ -49,6 +49,7 @@ from nostalgia.facade.room_sharing import RoomSharingOperations
 from nostalgia.facade.room_sync import RoomSyncOperations
 from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
+from nostalgia.facade.usage import UsageOperations
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
 from nostalgia.instance.profile_stats import ProfileStats
@@ -119,6 +120,7 @@ from nostalgia.update.release import LauncherRelease
 
 @dataclass(frozen=True, slots=True)
 class Launcher(
+    UsageOperations,
     RoomSharingOperations,
     OnboardingOperations,
     ServerOperations,

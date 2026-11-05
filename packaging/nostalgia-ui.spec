@@ -29,6 +29,7 @@ datas = [
     (str(PACKAGE / "skin" / "defaults"), "nostalgia/skin/defaults"),
     (str(PACKAGE / "social" / "service-defaults.json"), "nostalgia/social"),
     (str(PACKAGE / "social" / "cosmetics.json"), "nostalgia/social"),
+    (str(PACKAGE / "usage" / "defaults.json"), "nostalgia/usage"),
     (str(ROOT / "packaging" / "licenses"), "licenses"),
 ]
 datas += collect_data_files("PySide6", subdir="Qt/qml", includes=["QtQuick/**", "QtQml/**", "QtQuick.2/**"])

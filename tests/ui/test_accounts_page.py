@@ -78,7 +78,7 @@ def test_ely_row_says_when_skins_cannot_show_in_game_yet(
     """Skin Ely cần authlib-injector — javaagent JVM, KHÔNG phải mod: launcher tự tải, tự tiêm,
     người dùng không bấm gì. Nhưng "tự động" mà im lặng thì lúc nó hỏng họ chỉ thấy skin biến
     mất và không có chỗ nào để nhìn. Chưa có jar thì hàng tài khoản phải nói ra."""
-    assert "đang tải hỗ trợ" in _ely_account_detail(tmp_path, monkeypatch)
+    assert "downloading support" in _ely_account_detail(tmp_path, monkeypatch)
 
 
 def test_ely_row_goes_back_to_the_uuid_once_support_is_there(
@@ -87,7 +87,7 @@ def test_ely_row_goes_back_to_the_uuid_once_support_is_there(
     """Có jar rồi thì không còn gì để báo — trả chỗ đó lại cho dòng UUID."""
     (tmp_path / "data" / "authlib-injector").mkdir(parents=True)
     (tmp_path / "data" / "authlib-injector" / "authlib-injector-9.9.9.jar").write_bytes(b"PK")
-    assert "đang tải hỗ trợ" not in _ely_account_detail(tmp_path, monkeypatch)
+    assert "downloading support" not in _ely_account_detail(tmp_path, monkeypatch)
 
 
 def _accounts_page_at(width: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> QQuickItem:

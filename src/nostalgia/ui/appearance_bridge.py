@@ -56,7 +56,7 @@ class AppearanceBridge(QObject):
             compact_ui=compact,
             reduced_motion=reduced,
             decorative_background=background,
-            language="en" if language == "en" else "vi",
+            language="vi" if language == "vi" else "en",
         )
         self._save(wanted)
         self.appearanceChanged.emit()

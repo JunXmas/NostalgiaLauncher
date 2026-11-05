@@ -69,7 +69,7 @@ def test_incoming_invitation_shows_join_on_friends_page(
     monkeypatch.setattr(sync_bridge, "join", join)
     accept = find_control(root_item, "acceptInvite-invite")
     assert find_control(root_item, "friendsPage").property("section") == 0
-    assert accept.isVisible() and accept.property("label") == "Vào phòng"
+    assert accept.isVisible() and accept.property("label") == "Join room"
     click(view, accept)
     wait_until(lambda: joined == ["ABCDEFABCDEFGHJKMN"] and not social.inviteBusy)
     # Chủ phòng = người gửi lời mời do Worker xác thực (dùng để cập nhật đúng bản chơi đã đồng bộ).

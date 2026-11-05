@@ -41,9 +41,10 @@ Rectangle {
         }
     }
     Column {
+        id: labels
         x: root.compact ? 84 : 20
-        y: root.compact ? 24 : 91
-        width: root.width - x - (root.compact ? 214 : 20)
+        y: root.compact ? (root.height - height) / 2 : 91
+        width: Math.max(0, root.width - x - (root.compact ? 214 : 20))
         spacing: 7
         Text {
             width: parent.width
@@ -55,7 +56,10 @@ Rectangle {
             elide: Text.ElideRight
         }
         Text {
-            width: parent.width
+            id: metadata
+            width: Math.max(0, parent.width - (root.compact && nosChip.visible ? nosChip.width + 12 : 0))
+            height: root.compact && nosChip.visible ? Math.max(implicitHeight, nosChip.height) : implicitHeight
+            verticalAlignment: Text.AlignVCenter
             text: root.version + "  ·  " + root.loader + (root.entry.groupName ? "  /  " + root.entry.groupName : "")
             color: GlassTheme.muted
             font.family: GlassTheme.font
@@ -64,13 +68,14 @@ Rectangle {
         }
     }
     NosChip {
+        id: nosChip
         entry: root.entry
         visible: !root.pickOnly && root.entry.nosClientSupported === true
         anchors.left: parent.left
-        anchors.leftMargin: root.compact ? 84 : 20
+        anchors.leftMargin: root.compact ? labels.x + metadata.width + 12 : 20
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.compact ? 8 : 19
-        maxWidth: root.compact ? Infinity : root.width - 20 - actions.width - 16 - 8
+        anchors.bottomMargin: root.compact ? labels.y : 19
+        maxWidth: root.compact ? Math.max(0, labels.width - Math.min(metadata.implicitWidth, 140 * GlassTheme.scale) - 12) : root.width - 20 - actions.width - 16 - 8
     }
     Row {
         id: actions

@@ -111,7 +111,7 @@ def test_create_button_explains_what_is_missing_and_name_is_optional(tmp_path: P
     dialog.openDialog()  # type: ignore[attr-defined]
 
     assert dialog.property("canCreate") is False
-    assert "phiên bản Minecraft" in dialog.property("missingStep")
+    assert "Minecraft version" in dialog.property("missingStep")
 
     dialog.setProperty("loaderKind", "forge")
     dialog.setProperty("gameVersion", "1.20.1")

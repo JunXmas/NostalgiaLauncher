@@ -38,7 +38,7 @@ def test_transfer_request_waits_for_review_even_after_qr_expires(
     assert preview.payments._poll.interval() == 30_000
     assert (
         find_control(preview.root_item, "paymentResultTitle").property("text")
-        == "Chờ duyệt thanh toán"
+        == "Awaiting payment approval"
     )
     monkeypatch.setattr(time, "time", lambda: document["expires_at"] + 1)
     assert preview.payments.details["stage"] == "reviewing"

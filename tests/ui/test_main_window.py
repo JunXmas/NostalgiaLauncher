@@ -45,6 +45,7 @@ def preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Preview
             discord_presence=False,
             notification_sound=False,
             ui_sound=False,
+            language="vi",
         )
     )
     monkeypatch.setattr(Launcher, "search_content", lambda *_a, **_k: SearchPage((), 0, 0))
