@@ -10,7 +10,11 @@ from pathlib import Path
 
 from nostalgia.modrepair.transaction import lock_mods
 from nostalgia.nos_client.artifact import load_nos_version, verify_mod_artifact
-from nostalgia.nos_client.release import MOD_JAR_PREFIX, resolve_mod_version_key
+from nostalgia.nos_client.release import (
+    MOD_JAR_PREFIX,
+    resolve_artifact_game_version,
+    resolve_mod_version_key,
+)
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.storage.directory_swap import (
     commit_directory,
@@ -20,15 +24,19 @@ from nostalgia.storage.directory_swap import (
 )
 
 HISTORY_DIRECTORY = ".nostalgia-nos-updates"
-INSTANCE_JAR_PREFIXES = (MOD_JAR_PREFIX, "nosclient-")
 
 
 def list_nos_jars(mods_dir: Path) -> tuple[Path, ...]:
-    return tuple(
-        path
-        for path in sorted(mods_dir.glob("*.jar"))
-        if path.name.startswith(INSTANCE_JAR_PREFIXES) or load_nos_version(path)
-    )
+    jars = []
+    for path in sorted(mods_dir.glob("*.jar")):
+        canonical_name = (
+            MOD_JAR_PREFIX + path.name.removeprefix("nosclient-")
+            if path.name.startswith("nosclient-")
+            else path.name
+        )
+        if resolve_artifact_game_version(canonical_name) is not None or load_nos_version(path):
+            jars.append(path)
+    return tuple(jars)
 
 
 def find_installed_mod(

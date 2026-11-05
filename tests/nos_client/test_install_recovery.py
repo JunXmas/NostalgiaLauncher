@@ -23,11 +23,16 @@ def test_renamed_nos_is_removed_and_unrelated_mod_is_preserved(tmp_path: Path) -
     (mods / "MyNos.jar").write_bytes(build_nos_jar(mod_version="0.4.1"))
     unrelated = mods / "sodium.jar"
     unrelated.write_bytes(b"unchanged")
+    addon = mods / "nosclient-addon.jar"
+    addon.write_bytes(build_nos_jar(mod_id="another_mod"))
     incoming = tmp_path / "nos-client-0.4.2.jar"
     incoming.write_bytes(build_nos_jar())
     inject_mod(incoming, game_dir)
-    assert sorted(path.name for path in mods.iterdir()) == [incoming.name, unrelated.name]
+    assert sorted(path.name for path in mods.iterdir()) == sorted(
+        [incoming.name, unrelated.name, addon.name]
+    )
     assert unrelated.read_bytes() == b"unchanged"
+    assert addon.read_bytes() == build_nos_jar(mod_id="another_mod")
     before = (mods / incoming.name).stat().st_mtime_ns
     receipts = list((game_dir / HISTORY_DIRECTORY).iterdir())
     inject_mod(incoming, game_dir)
