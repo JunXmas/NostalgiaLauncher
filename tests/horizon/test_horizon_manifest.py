@@ -16,7 +16,8 @@ from nostalgia.storage.paths import DataPaths
 
 @pytest.fixture
 def build_with_manifest(tmp_path: Path) -> tuple[HorizonBuild, bytes]:
-    build = HorizonBuild("a" * 64, tmp_path / "horizon" / "builds" / ("a" * 64) / "bundle", "26.3", 25)
+    build_dir = tmp_path / "horizon" / "builds" / ("a" * 64) / "bundle"
+    build = HorizonBuild("a" * 64, build_dir, "26.3", 25)
     build.build_dir.mkdir(parents=True)
     payload = b'{"id":"26.3","downloads":{"server":{"sha1":"abc"}}}'
     sha1 = hashlib.sha1(payload).hexdigest()
@@ -42,8 +43,9 @@ def test_manifest_is_pinned_and_isolated_from_java_cache(
     assert actual == build.build_dir.parent / "minecraft" / "26.3" / "manifest.json"
     assert actual.read_bytes() == payload
     assert java_version.read_bytes() == b"unknown but usable Java manifest"
+    pinned_sha1 = hashlib.sha1(payload).hexdigest()
     client.fetch_bytes.assert_called_once_with(
-        f"https://piston-meta.mojang.com/v1/packages/{hashlib.sha1(payload).hexdigest()}/26.3.json",
+        f"https://piston-meta.mojang.com/v1/packages/{pinned_sha1}/26.3.json",
         max_bytes=1024 * 1024,
         cancel_token=None,
     )
@@ -94,7 +96,8 @@ def test_invalid_horizon_research_lock_fails_closed(
 
 
 def test_prepare_passes_pinned_manifest_to_native_binary(
-    tmp_path: Path, build_with_manifest: tuple[HorizonBuild, bytes],
+    tmp_path: Path,
+    build_with_manifest: tuple[HorizonBuild, bytes],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     build, _payload = build_with_manifest
