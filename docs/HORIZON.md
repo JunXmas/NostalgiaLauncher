@@ -45,6 +45,12 @@ chung không bị ghi đè. Thư viện/JDK dùng kho chung; các object asset c
 được liên kết cứng vào kho riêng, chép thay thế nếu hệ thống không hỗ trợ. Không liên kết
 cứng manifest/index có thể bị cập nhật. Không bỏ kiểm tra hash của engine hoặc chuyển world.
 
+Từ 1.2.8, giải nén, đổi tên và dọn build Horizon dùng đường dẫn I/O mở rộng trên Windows.
+Điều này tránh lỗi `No such file or directory` ở file lồng sâu khi đường dẫn vượt MAX_PATH,
+kể cả khi máy chưa bật `LongPathsEnabled`; không yêu cầu sửa registry của người chơi.
+Giữ toàn bộ gói đã xác minh, gồm exporter và fixtures, thay vì bỏ bớt file để né giới hạn.
+Sau khi cập nhật, thử tạo bản Horizon lại; archive đã tải đúng hash được tái sử dụng.
+
 ## Giới hạn tương thích
 
 Horizon Nightly còn thử nghiệm. Mod Java, Fabric/Forge, Iris và Nos Client không chạy

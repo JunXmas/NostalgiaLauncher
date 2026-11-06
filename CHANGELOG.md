@@ -3,6 +3,13 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.8 — 2026-11-06
+
+- Sửa giải nén Horizon trên Windows khi file lồng sâu vượt giới hạn đường dẫn Win32.
+- Dùng đường dẫn mở rộng cho đọc archive, ghi staging, đổi tên và dọn lỗi; giữ nguyên gói,
+  cấu hình và world, không yêu cầu người dùng đổi registry.
+- Thêm kiểm thử Windows thật với LongPathsEnabled tắt, kiểm cả công bố và dọn build lỗi.
+
 ## 1.2.7 — 2026-11-06
 
 - Sửa lỗi Horizon từ chối hash manifest Minecraft bị viết lại hoặc khác research lock.

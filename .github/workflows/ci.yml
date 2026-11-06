@@ -65,3 +65,34 @@ jobs:
       - run: uv sync --locked
       - name: Test cập nhật launcher và Nos Client trên Windows
         run: uv run pytest tests/update tests/nos_client -q
+
+  check-windows-horizon:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Giải nén Horizon khi Windows vẫn giới hạn MAX_PATH
+        shell: pwsh
+        run: |
+          $horizonRegistryPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+          $horizonOriginalLongPaths = (Get-ItemProperty -Path $horizonRegistryPath -Name LongPathsEnabled -ErrorAction SilentlyContinue).LongPathsEnabled
+          $horizonTestExitCode = 1
+          try {
+            Set-ItemProperty -Path $horizonRegistryPath -Name LongPathsEnabled -Value 0
+            $env:NOSTALGIA_TEST_WINDOWS_MAX_PATH = '1'
+            uv run pytest tests/horizon/test_windows_horizon_archive.py tests/horizon/test_archive.py tests/storage/test_windows_path.py -q
+            $horizonTestExitCode = $LASTEXITCODE
+          } finally {
+            if ($null -eq $horizonOriginalLongPaths) {
+              Remove-ItemProperty -Path $horizonRegistryPath -Name LongPathsEnabled -ErrorAction SilentlyContinue
+            } else {
+              Set-ItemProperty -Path $horizonRegistryPath -Name LongPathsEnabled -Value $horizonOriginalLongPaths
+            }
+            Remove-Item Env:\NOSTALGIA_TEST_WINDOWS_MAX_PATH -ErrorAction SilentlyContinue
+          }
+          exit $horizonTestExitCode

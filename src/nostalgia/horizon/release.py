@@ -17,6 +17,7 @@ from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.storage.files import atomic_write_json, ensure_dir
 from nostalgia.storage.paths import DataPaths
 from nostalgia.storage.sync_lock import sync_lock
+from nostalgia.storage.windows_path import extended_windows_path
 from nostalgia.system.platform_info import Platform
 from nostalgia.update.download import download_bundle
 from nostalgia.update.release import ReleaseAsset, parse_sha256sums
@@ -64,35 +65,37 @@ def sync_horizon_build(
     verify_release_signature(checksums, signature)
     build_id = parse_sha256sums(checksums.decode("utf-8")).get(asset_name, "")
     build_dir = resolve_build_dir(paths, build_id)
-    if build_dir.is_dir():
+    if extended_windows_path(build_dir).is_dir():
         return load_build(paths, build_id, platform)
-    ensure_dir(build_dir.parent)
-    with sync_lock(build_dir.parent):
-        if build_dir.is_dir():
+    ensure_dir(extended_windows_path(build_dir.parent))
+    with sync_lock(extended_windows_path(build_dir.parent)):
+        if extended_windows_path(build_dir).is_dir():
             return load_build(paths, build_id, platform)
         archive_path = download_bundle(
             http_client,
             ReleaseAsset(asset_name, f"{RELEASE_URL}/{asset_name}", 0),
             build_id,
-            paths.data_dir / "horizon" / "downloads",
+            extended_windows_path(paths.data_dir / "horizon" / "downloads"),
             on_progress=on_progress,
             cancel_token=cancel_token,
         )
-        with tempfile.TemporaryDirectory(prefix="stage-", dir=build_dir.parent) as temporary:
+        with tempfile.TemporaryDirectory(
+            prefix="stage-", dir=extended_windows_path(build_dir.parent)
+        ) as temporary:
             staging_dir = Path(temporary)
             extracted = extract_horizon_bundle(archive_path, staging_dir, cancel_token)
             if cancel_token is not None:
                 cancel_token.raise_if_cancelled()
             # Chỉ công bố cả thư mục khi đã giải nén xong; thế giới nằm bên ngoài vùng này.
-            extracted.rename(build_dir)
+            extracted.rename(extended_windows_path(build_dir))
         try:
             build = load_build(paths, build_id, platform)
         except BaseException:
             # Chỉ dọn build vừa tạo bởi giao dịch này, không đụng cache cũ hoặc thế giới.
-            shutil.rmtree(build_dir)
+            shutil.rmtree(extended_windows_path(build_dir))
             raise
         atomic_write_json(
-            build_dir.parent / "receipt.json",
+            extended_windows_path(build_dir.parent / "receipt.json"),
             {
                 "source": RELEASE_URL,
                 "sha256": build_id,
