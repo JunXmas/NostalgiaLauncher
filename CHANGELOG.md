@@ -3,6 +3,16 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.4 — 2026-11-06
+
+- Kết nối dịch vụ thống kê tự nguyện v1 đã triển khai; khách và tài khoản đều có thể chọn
+  chia sẻ, không cần đăng nhập Google. Chỉ đếm bản cài hoạt động/ngày, không sự kiện chạy game.
+- Hỏi một lần với người chưa lựa chọn, giữ nguyên từ chối/đồng ý qua cập nhật.
+- Giải thích mục đích thống kê: ưu tiên kiểm thử/sửa lỗi theo phiên bản và hệ điều hành,
+  định hướng các bản sau; không tự chẩn đoán lỗi cụ thể.
+- Hiển thị “Chưa khả dụng” khi backend thống kê chưa vận hành, thay công tắc bị khóa;
+  giữ lựa chọn đã lưu và quyền từ chối.
+
 ## 1.2.3 — 2026-11-05
 
 - Cài mới mặc định tiếng Anh, giữ lựa chọn tiếng Việt đã lưu.

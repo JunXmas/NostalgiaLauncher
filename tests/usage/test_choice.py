@@ -48,11 +48,30 @@ def test_sample_is_local_illustrative_and_has_exact_contract(tmp_path: Path) -> 
 
 
 def test_no_endpoint_or_readiness_disables_collection(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOSTALGIA_USAGE_ENDPOINT", "")
+    monkeypatch.setenv("NOSTALGIA_USAGE_READY", "1")
     assert not load_usage_configuration().ready
     monkeypatch.setenv("NOSTALGIA_USAGE_ENDPOINT", "https://usage.test/v1/usage")
+    monkeypatch.setenv("NOSTALGIA_USAGE_READY", "0")
     assert not load_usage_configuration().ready
     monkeypatch.setenv("NOSTALGIA_USAGE_READY", "1")
     assert load_usage_configuration().ready
+
+
+def test_bundled_service_readiness_does_not_supply_consent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.delenv("NOSTALGIA_USAGE_ENDPOINT", raising=False)
+    monkeypatch.delenv("NOSTALGIA_USAGE_READY", raising=False)
+    configuration = load_usage_configuration()
+    assert configuration.ready
+    assert configuration.endpoint == "https://nostalgia-payment-admin.junbob.workers.dev/v1/usage"
+    launcher = Launcher.for_data_dir(tmp_path / "data", tmp_path / "config")
+    assert launcher.load_settings().usage_choice_v1 == "unselected"
+    collector = launcher.usage_collector()
+    collector.resume()
+    assert collector.new_attempt() is None
+    assert not (launcher.paths.config_dir / "usage-day.json").exists()
 
 
 @pytest.mark.parametrize(

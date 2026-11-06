@@ -31,8 +31,9 @@ hands you one file.
 
 New installations start in English. Vietnamese remains available in Settings; an existing
 language choice is preserved. Optional usage statistics start off and require a separate
-choice. The new collection service and one-time consent invitation remain disabled until
-the backend is ready; see the privacy document for the current server-side limitations.
+choice. The service was activated on 6 November 2026. This revision offers a one-time
+choice when the main window is idle; declining keeps every feature available. See the
+privacy document for the data, endpoint, retention and infrastructure limitations.
 
 ---
 

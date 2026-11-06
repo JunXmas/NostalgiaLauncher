@@ -17,6 +17,8 @@ WorkspaceDialog {
             id: contents
             width: parent.width
             spacing: 14
+            UsagePurpose {}
+            PaymentText { width: parent.width; text: Legacy.Tr.phrase("Số liệu này cho biết mức sử dụng trong nhóm tự nguyện tham gia, không tự xác định lỗi cụ thể. Chúng tôi đối chiếu với báo cáo lỗi và góp ý do người chơi chủ động gửi."); color: GlassTheme.muted }
             PaymentText { width: parent.width; text: usageBridge.payloadExample; font.family: "monospace"; wrapMode: Text.WrapAnywhere; font.pixelSize: GlassTheme.fontLabel }
             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mẫu theo schema hiện tại: chỉ sự kiện bản cài hoạt động trong ngày. Không thu sự kiện khởi chạy game, tên tài khoản, token, chat, world, server, log, danh sách mod hay thông tin phần cứng."); color: GlassTheme.muted }
             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Mã được sinh ngẫu nhiên, đổi mỗi ngày UTC và xóa khi tắt. Mỗi mã/ngày được đếm tối đa một lần; đây không phải số người riêng biệt. Cài lại, xóa dữ liệu hoặc bật lại sau khi tắt có thể tạo mã khác."); color: GlassTheme.muted }

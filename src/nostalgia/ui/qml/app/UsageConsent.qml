@@ -37,7 +37,8 @@ Item {
                 id: contents
                 width: parent.width
                 spacing: 14
-                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Chỉ đếm bản cài tự nguyện tham gia hoạt động/ngày: ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên trong ngày. Bạn có thể tắt bất kỳ lúc nào."); color: GlassTheme.muted }
+                UsagePurpose {}
+                PaymentText { width: parent.width; text: Legacy.Tr.phrase("Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày."); color: GlassTheme.muted }
                 PaymentText { width: parent.width; text: Legacy.Tr.phrase("Không gửi tên tài khoản, nội dung chat hay mã nhận diện phần cứng. Bạn có thể thay đổi lựa chọn trong Cài đặt."); color: GlassTheme.muted }
                 Button { objectName: "consentViewPayload"; label: Legacy.Tr.phrase("Xem dữ liệu được gửi"); quiet: true; onClicked: usageBridge.showPayload() }
                 Button { label: Legacy.Tr.phrase("Thông tin quyền riêng tư"); quiet: true; onClicked: usageBridge.showPayload() }

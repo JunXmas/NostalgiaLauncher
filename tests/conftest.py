@@ -46,6 +46,15 @@ PATH_ENV_VARS = (
 
 
 @pytest.fixture(autouse=True)
+def optional_usage_isolated(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test thông thường không mở lời mời hoặc gửi tới dịch vụ production.
+
+    Test thống kê tự bật readiness và tiêm transport/máy chủ cục bộ khi cần kiểm luồng thật.
+    """
+    monkeypatch.setenv("NOSTALGIA_USAGE_READY", "0")
+
+
+@pytest.fixture(autouse=True)
 def isolated_home(
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,

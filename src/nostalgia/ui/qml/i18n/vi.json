@@ -4271,7 +4271,6 @@
   "p:Đã đồng ý": "Đã đồng ý",
   "p:Đã từ chối": "Đã từ chối",
   "p:Chưa lựa chọn": "Chưa lựa chọn",
-  "p:Chỉ đếm bản cài tự nguyện tham gia hoạt động/ngày: ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên trong ngày. Bạn có thể tắt bất kỳ lúc nào.": "Chỉ đếm bản cài tự nguyện tham gia hoạt động/ngày: ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên trong ngày. Bạn có thể tắt bất kỳ lúc nào.",
   "p:Nơi nhận: ": "Nơi nhận: ",
   "p:Mã chống đếm lặp có hạn 24 giờ, dọn hằng giờ. Số liệu tổng hợp giữ 90 ngày. Đăng nhập, cập nhật, tải nội dung và phòng chơi hoạt động độc lập với lựa chọn này.": "Mã chống đếm lặp có hạn 24 giờ, dọn hằng giờ. Số liệu tổng hợp giữ 90 ngày. Đăng nhập, cập nhật, tải nội dung và phòng chơi hoạt động độc lập với lựa chọn này.",
   "p:Xem dữ liệu được gửi": "Xem dữ liệu được gửi",
@@ -4285,5 +4284,11 @@
   "p:Thông tin quyền riêng tư": "Thông tin quyền riêng tư",
   "p:Không gửi": "Không gửi",
   "p:Đồng ý chia sẻ": "Đồng ý chia sẻ",
-  "p:Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới.": "Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới."
+  "p:Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới.": "Luồng thống kê tùy chọn chưa được kích hoạt. Launcher không gửi sự kiện tới endpoint thống kê mới.",
+  "p:Dịch vụ thống kê chưa được triển khai nên hiện chưa thể bật. Launcher không gửi sự kiện tới endpoint thống kê mới. Lựa chọn đã lưu của bạn được giữ nguyên.": "Dịch vụ thống kê chưa được triển khai nên hiện chưa thể bật. Launcher không gửi sự kiện tới endpoint thống kê mới. Lựa chọn đã lưu của bạn được giữ nguyên.",
+  "p:Số liệu này cho biết mức sử dụng trong nhóm tự nguyện tham gia, không tự xác định lỗi cụ thể. Chúng tôi đối chiếu với báo cáo lỗi và góp ý do người chơi chủ động gửi.": "Số liệu này cho biết mức sử dụng trong nhóm tự nguyện tham gia, không tự xác định lỗi cụ thể. Chúng tôi đối chiếu với báo cáo lỗi và góp ý do người chơi chủ động gửi.",
+  "p:Chưa khả dụng": "Chưa khả dụng",
+  "p:Lựa chọn đã lưu: ": "Lựa chọn đã lưu: ",
+  "p:Số liệu tổng hợp từ các bản cài tự nguyện tham gia giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.": "Số liệu tổng hợp từ các bản cài tự nguyện tham gia giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.",
+  "p:Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày."
 }
