@@ -36,6 +36,15 @@ launcher. Người chơi cần sử dụng bản Minecraft mình sở hữu. Chu
 mất vài phút; các lần chơi dùng lại tài nguyên đã kiểm tra và hoạt động khi mất mạng.
 Tác vụ chuẩn bị có thời hạn, hỗ trợ yêu cầu hủy ở API và dừng tiến trình con riêng.
 
+Từ 1.2.7, manifest Minecraft được lấy theo `manifest_sha1` trong `research-lock.json` của
+chính build đã kiểm chữ ký, giữ nguyên byte Mojang. Manifest và asset index được lưu trong
+`data_dir/horizon/builds/<sha>/inputs/`, không dùng JSON Java đã bị viết lại hoặc một bản
+Mojang tái xuất bản chưa được build đó chấp nhận. Cache đầu vào được kiểm lại bằng SHA-1,
+kể cả khi file sai có cùng kích thước. Metadata ở `versions/26.3/26.3.json` và asset index
+chung không bị ghi đè. Thư viện/JDK dùng kho chung; các object asset có hash đúng có thể
+được liên kết cứng vào kho riêng, chép thay thế nếu hệ thống không hỗ trợ. Không liên kết
+cứng manifest/index có thể bị cập nhật. Không bỏ kiểm tra hash của engine hoặc chuyển world.
+
 ## Giới hạn tương thích
 
 Horizon Nightly còn thử nghiệm. Mod Java, Fabric/Forge, Iris và Nos Client không chạy

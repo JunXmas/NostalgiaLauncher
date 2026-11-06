@@ -8,17 +8,18 @@ from nostalgia.facade.context import LauncherContext
 from nostalgia.horizon.capability import load_build
 from nostalgia.horizon.command import build_horizon_command
 from nostalgia.horizon.model import HorizonBuild
+from nostalgia.horizon.preparation import sync_horizon_preparation
 from nostalgia.horizon.process import start_horizon
 from nostalgia.horizon.release import sync_horizon_build
-from nostalgia.horizon.resource import check_resources, prepare_resources, sync_server_jar
+from nostalgia.horizon.resource import check_resources, prepare_resources
 from nostalgia.instance.model import Instance
 from nostalgia.instance.store import game_dir_of
 from nostalgia.launch.command import LaunchOptions
 from nostalgia.launch.game_process import GameProcess, OutputFn
-from nostalgia.launch.runner import install_version
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.operations.progress import ProgressFn, ignore_progress
 from nostalgia.skin.textures import cached_skin, refresh_ely_skin, skin_cache_key
+from nostalgia.storage.sync_lock import sync_lock
 
 
 class HorizonOperations(LauncherContext):
@@ -50,27 +51,28 @@ class HorizonOperations(LauncherContext):
         build = load_build(self.paths, instance.horizon_build_id, self.platform)
         if build.version_id != instance.version_id:
             raise InstanceError("Horizon build and instance Minecraft versions differ")
-        if check_resources(build, cancel_token):
-            return
-        with self.make_http_client() as http_client:
-            report = install_version(
-                build.game_version,
-                http_client,
+        with sync_lock(build.build_dir.parent):
+            if check_resources(build, cancel_token):
+                return
+            with self.make_http_client() as http_client:
+                prepared = sync_horizon_preparation(
+                    http_client,
+                    self.paths,
+                    build,
+                    self.platform,
+                    on_progress=on_progress,
+                    cancel_token=cancel_token,
+                    endpoints=self.endpoints,
+                )
+            prepare_resources(
                 self.paths,
-                self.platform,
+                build,
+                prepared.java_binary,
+                prepared.server_jar,
+                input_paths=prepared.input_paths,
                 on_progress=on_progress,
                 cancel_token=cancel_token,
-                endpoints=self.endpoints,
             )
-            server_jar = sync_server_jar(http_client, self.paths, build, cancel_token)
-        prepare_resources(
-            self.paths,
-            build,
-            report.java_binary,
-            server_jar,
-            on_progress=on_progress,
-            cancel_token=cancel_token,
-        )
 
     def start_horizon_instance(
         self,

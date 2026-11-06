@@ -34,9 +34,10 @@ def sync_server_jar(
     http_client: HttpClient,
     paths: DataPaths,
     build: HorizonBuild,
+    input_paths: DataPaths,
     cancel_token: CancelToken | None = None,
 ) -> Path:
-    fields = as_mapping(read_json(paths.version_json(build.game_version)))
+    fields = as_mapping(read_json(input_paths.version_json(build.game_version)))
     server_fields = as_mapping(as_mapping(fields.get("downloads")).get("server"))
     url = as_string(server_fields.get("url")) or ""
     sha1 = as_string(server_fields.get("sha1")) or ""
@@ -54,6 +55,7 @@ def prepare_resources(
     java_binary: Path,
     server_jar: Path,
     *,
+    input_paths: DataPaths,
     on_progress: ProgressFn = ignore_progress,
     cancel_token: CancelToken | None = None,
 ) -> None:
@@ -68,13 +70,13 @@ def prepare_resources(
         "--root",
         str(build.build_dir),
         "--version-json",
-        str(paths.version_json(build.game_version)),
+        str(input_paths.version_json(build.game_version)),
         "--client-jar",
         str(paths.version_jar(build.game_version)),
         "--libraries-dir",
         str(paths.libraries_dir),
         "--assets-dir",
-        str(paths.assets_dir),
+        str(input_paths.assets_dir),
         "--server-jar",
         str(server_jar),
         "--java-home",

@@ -46,10 +46,10 @@ không gửi request. Heartbeat WebSocket giữ kết nối là luồng riêng p
 Lựa chọn không dựa vào Google, điều khoản, Discord hoặc tài khoản Minecraft; không đồng bộ
 sang máy khác. Cập nhật bình thường giữ lựa chọn. Xóa cấu hình/cài lại có thể mất lựa chọn.
 
-Bản vá 1.2.6 yêu cầu xác nhận lại **một lần** với trạng thái đồng ý từ các bản trước,
+Bản vá 1.2.7 yêu cầu xác nhận lại **một lần** với trạng thái đồng ý từ các bản trước,
 vì các bản đó chưa lưu dấu xác nhận của đợt mở dịch vụ. Cho đến lúc xác nhận lại, lựa chọn
 được đọc là chưa chọn, mã ngày cũ bị xóa và không gửi thống kê. Từ chối cũ vẫn được giữ,
-không hỏi lại. Lựa chọn trong hộp thoại hoặc Cài đặt của 1.2.6 được lưu cùng revision;
+không hỏi lại. Lựa chọn trong hộp thoại hoặc Cài đặt của 1.2.7 được lưu cùng revision;
 các lần mở lại/cập nhật bình thường tiếp tục giữ lựa chọn này. Không sửa số liệu lịch sử.
 Việc xóa mã ngày và xác nhận lại có thể tạo mã khác trong cùng ngày, nên ngày chuyển đổi
 có thể đếm lại một bản cài. Không diễn giải mức tăng này thành số người mới.
