@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from nostalgia.content.installed import list_installed
-from nostalgia.errors import ContentError, NostalgiaError
+from nostalgia.errors import ContentError, InstanceError, NostalgiaError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.instance.model import Instance
 from nostalgia.instance.profile_stats import ProfileStats, load_profile_stats
@@ -64,6 +64,12 @@ class InstanceOperations(LauncherContext):
             if default_root:
                 override = str(Path(default_root) / instance.instance_id)
         checked = replace(instance, game_dir_override=check_game_dir_override(self.paths, override))
+        if checked.runtime_kind == "horizon":
+            game_dir = game_dir_of(self.paths, checked)
+            if game_dir.exists() and any(game_dir.iterdir()):
+                raise InstanceError(
+                    "Choose an empty game folder for Horizon to protect existing worlds"
+                )
         return create_instance(self.paths, checked)
 
     def require_instance_id_free(self, instance_id: str) -> None:
@@ -117,8 +123,11 @@ class InstanceOperations(LauncherContext):
         except OSError:
             servers_changed_at = 0
         try:
-            version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
-            quick_play = describe_quick_play(version_meta)
+            if instance.runtime_kind == "horizon":
+                quick_play = QuickPlaySupport(worlds=True, servers=True)
+            else:
+                version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
+                quick_play = describe_quick_play(version_meta)
         except NostalgiaError:
             quick_play = QuickPlaySupport(worlds=False, servers=False)
         return PlayChoices(

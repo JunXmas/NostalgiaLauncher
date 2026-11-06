@@ -28,10 +28,11 @@ Controls.Popup {
         {key: "optimized", label: Legacy.Tr.phrase("Optimized")}, {key: "vanilla", label: "Vanilla"},
         {key: "fabric", label: "Fabric"}, {key: "quilt", label: "Quilt"},
         {key: "forge", label: "Forge"}, {key: "neoforge", label: "NeoForge"},
-        {key: "legacy_fabric", label: "Legacy Fabric"}]
+        {key: "legacy_fabric", label: "Legacy Fabric"}, {key: "horizon", label: "Horizon (Rust)"}]
     readonly property string loaderLabel: (loaderChoices.find(function(c) { return c.key === dialog.loaderKind; }) || {}).label || loaderKind
     readonly property bool isPreset: loaderKind === "optimized"
-    readonly property bool needsLoaderStep: !isPreset && loaderKind !== "vanilla"
+    readonly property bool isHorizon: loaderKind === "horizon"
+    readonly property bool needsLoaderStep: !isPreset && !isHorizon && loaderKind !== "vanilla"
     readonly property string defaultName: loaderLabel + " " + gameVersion
     readonly property bool versionUnsupported: isPreset && !!gameVersion && presetVersions.length > 0 && presetVersions.indexOf(gameVersion) < 0
     // Legacy Fabric chỉ có cho Minecraft ≤ 1.13.2 (meta.legacyfabric.net); bản mới hơn là Fabric thường.
@@ -54,7 +55,10 @@ Controls.Popup {
         if (needsLoaderStep) catalogBridge.loadLoaderVersions(loaderKind, versionId);
     }
     function pickLoader(kind) {
+        var wasHorizon = isHorizon;
         loaderKind = kind; loaderVersion = "";
+        if (isHorizon) gameVersion = catalogBridge.horizonGameVersion;
+        else if (wasHorizon) gameVersion = "";
         if (needsLoaderStep && gameVersion) catalogBridge.loadLoaderVersions(kind, gameVersion);
     }
     background: Item {
@@ -134,7 +138,7 @@ Controls.Popup {
                             y: previewArea.inlinePreview ? Math.max(0, (previewArea.height - implicitHeight) / 2) : artPanel.implicitHeight + 18 * GlassTheme.scale
                             width: previewArea.inlinePreview ? previewArea.width - x : previewArea.width; spacing: 10 * GlassTheme.scale
                             PaymentText { text: Legacy.Tr.phrase("Bản phát hành"); font.weight: Font.DemiBold }
-                            Select { objectName: "createGameVersion"; width: parent.width; model: dialog.released.map(function(v) { return v.versionId; }); currentIndex: model.indexOf(dialog.gameVersion); displayText: dialog.gameVersion || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải phiên bản…") : Legacy.Tr.phrase("Chọn phiên bản…")); searchPlaceholder: Legacy.Tr.phrase("Tìm phiên bản Minecraft…"); enabled: !bridge.busy; onActivated: function(i) { if (i >= 0 && i < dialog.released.length) dialog.pickGameVersion(dialog.released[i].versionId); } }
+                            Select { objectName: "createGameVersion"; width: parent.width; model: dialog.isHorizon ? [catalogBridge.horizonGameVersion] : dialog.released.map(function(v) { return v.versionId; }); currentIndex: model.indexOf(dialog.gameVersion); displayText: dialog.gameVersion || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải phiên bản…") : Legacy.Tr.phrase("Chọn phiên bản…")); searchPlaceholder: Legacy.Tr.phrase("Tìm phiên bản Minecraft…"); enabled: !bridge.busy && !dialog.isHorizon; onActivated: function(i) { if (i >= 0 && i < dialog.released.length) dialog.pickGameVersion(dialog.released[i].versionId); } }
                             PaymentText { width: parent.width; text: Legacy.Tr.phrase("Tìm nhanh hoặc chọn bản phát hành chính xác."); color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                         }
                     }
@@ -151,7 +155,7 @@ Controls.Popup {
                             Button { objectName: "createLoader-" + modelData.key; width: Math.max(100 * GlassTheme.scale, (setupSection.width - 16) / 3); height: 44 * GlassTheme.scale; label: modelData.label; selected: dialog.loaderKind === modelData.key; onClicked: dialog.pickLoader(modelData.key) }
                         }
                     }
-                    PaymentText { width: parent.width; text: dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : dialog.loaderKind === "legacy_fabric" ? Legacy.Tr.phrase("Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
+                    PaymentText { width: parent.width; text: dialog.isHorizon ? Legacy.Tr.phrase("Horizon Nightly chạy Minecraft bằng Rust. Hỗ trợ offline; Ely.by dùng tên offline và skin/cape cục bộ. Không chạy mod Java hoặc Nos Client. Tạo thế giới riêng và dùng bản Minecraft bạn sở hữu.") : dialog.isPreset ? Legacy.Tr.phrase("Fabric và các mod tối ưu được cài sẵn với Fabulously Optimized.") : dialog.loaderKind === "vanilla" ? Legacy.Tr.phrase("Minecraft nguyên bản, không kèm mod loader.") : dialog.loaderKind === "legacy_fabric" ? Legacy.Tr.phrase("Mod Fabric cho Minecraft 1.13.2 trở xuống (1.8.9, 1.12.2…).") : Legacy.Tr.phrase("Cài mod dành cho ") + dialog.loaderLabel + "."; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontCaption }
                     Column { width: parent.width; spacing: 8; visible: dialog.needsLoaderStep
                         PaymentText { text: Legacy.Tr.phrase("Phiên bản ") + dialog.loaderLabel; font.weight: Font.DemiBold }
                         Select { objectName: "createLoaderVersion"; width: parent.width; model: dialog.loaders.map(function(v) { return v.loaderVersion; }); currentIndex: model.indexOf(dialog.loaderVersion); displayText: dialog.loaderVersion || (catalogBridge.busy ? Legacy.Tr.phrase("Đang tải loader…") : Legacy.Tr.phrase("Chọn phiên bản loader…")); enabled: !!dialog.gameVersion && !bridge.busy && !catalogBridge.busy; onActivated: function(i) { if (i >= 0 && i < dialog.loaders.length) dialog.loaderVersion = dialog.loaders[i].loaderVersion; } }
@@ -170,7 +174,7 @@ Controls.Popup {
                         Behavior on height { enabled: dialog.visible && !GlassTheme.reducedMotion; NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
                         Behavior on opacity { enabled: dialog.visible && !GlassTheme.reducedMotion; NumberAnimation { duration: GlassTheme.normal; easing.type: Easing.OutCubic } }
                         Column { id: advancedFields; width: parent.width; spacing: 10
-                            Input { id: heapField; width: parent.width; placeholder: Legacy.Tr.phrase("RAM (MB) · để trống dùng cài đặt mặc định") }
+                            Input { id: heapField; visible: !dialog.isHorizon; width: parent.width; placeholder: Legacy.Tr.phrase("RAM (MB) · để trống dùng cài đặt mặc định") }
                             Flow { width: parent.width; spacing: 8
                                 Button { label: Legacy.Tr.phrase("Chọn thư mục chơi"); onClicked: folder.open() }
                                 PaymentText { width: Math.max(160, parent.width - 220 * GlassTheme.scale); text: dialog.gameDirUrl || Legacy.Tr.phrase("Thư mục mặc định của launcher"); color: GlassTheme.muted; wrapMode: Text.WrapAnywhere }

@@ -111,6 +111,8 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Bản cài riêng (thư mục game riêng, kho chung) | `instance` : `Instance` | dataclass | `profile`, `pack` |
 | Slug thư mục của bản cài | `instance_id` | `str` | `slug`, `dirname` |
 | Loại và phiên bản mod loader | `loader_kind`, `loader_version` | `Literal[...]`, `str` | `modloader`, `loader` trần |
+| Loại tiến trình game của bản chơi (`java` hoặc `horizon`) | `runtime_kind` | `str` | |
+| Băm gói phát hành Horizon đã ghim cho bản chơi | `horizon_build_id` | `str` | |
 | Component JRE của Mojang | `java_component` | `str` | `jre`, `runtime`, `component` trần |
 | Số major của Java | `java_major` | `int` | `java_version` |
 | File thực thi java | `java_binary` | `Path` | `java`, `java_path`, `jvm` |

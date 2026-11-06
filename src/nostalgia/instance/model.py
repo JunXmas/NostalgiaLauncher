@@ -41,6 +41,19 @@ class Instance:
     nos_client_enabled: bool = False
     group_name: str = ""
     favorite: bool = False
+    runtime_kind: str = "java"
+    horizon_build_id: str = ""
+
+    def __post_init__(self) -> None:
+        if self.runtime_kind not in {"java", "horizon"}:
+            raise InstanceError("Unsupported instance runtime kind")
+        if (
+            self.runtime_kind == "horizon"
+            and re.fullmatch(r"[0-9a-f]{64}", self.horizon_build_id) is None
+        ):
+            raise InstanceError("Invalid Horizon build ID")
+        if self.runtime_kind == "horizon" and not self.version_id.startswith("horizon-"):
+            raise InstanceError("Horizon needs its own version ID to prevent a Java fallback")
 
     @property
     def label(self) -> str:

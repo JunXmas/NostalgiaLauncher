@@ -59,6 +59,7 @@ LAYERS: dict[str, int] = {
     "usage": 3,  # thống kê tự nguyện, không gắn tài khoản hoặc game
     "account": 4,
     "launch": 4,
+    "horizon": 4,
     "server": 4,
     "doctor": 4,
     "api": 5,

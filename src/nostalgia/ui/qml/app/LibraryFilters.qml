@@ -12,6 +12,7 @@ Controls.Popup {
     y: parent ? (parent.height - height) / 2 : 0
     padding: 24; modal: true; dim: true; focus: true
     property string kind: "mod"
+    readonly property var contentInstances: bridge.instances.filter(function(instance) { return instance.runtimeKind !== "horizon"; })
     signal applied
     onOpened: if (!catalogBridge.releasedVersions.length) catalogBridge.loadReleasedVersions()
     onClosed: applied()
@@ -34,9 +35,9 @@ Controls.Popup {
                 Select {
                     visible: root.kind !== "modpack"
                     width: parent.width
-                    model: [Legacy.Tr.phrase("Chưa chọn bản chơi")].concat(bridge.instances.map(function(entry) { return entry.label; }))
-                    currentIndex: bridge.instances.findIndex(function(entry) { return entry.instanceId === contentBridge.instanceId; }) + 1
-                    onActivated: function(index) { contentBridge.selectInstance(index ? bridge.instances[index - 1].instanceId : ""); }
+                    model: [Legacy.Tr.phrase("Chưa chọn bản chơi")].concat(root.contentInstances.map(function(entry) { return entry.label; }))
+                    currentIndex: root.contentInstances.findIndex(function(entry) { return entry.instanceId === contentBridge.instanceId; }) + 1
+                    onActivated: function(index) { contentBridge.selectInstance(index ? root.contentInstances[index - 1].instanceId : ""); }
                 }
                 PaymentText { visible: root.kind === "mod"; text: Legacy.Tr.phrase("Mod loader"); font.weight: Font.DemiBold }
                 Flow {

@@ -7,6 +7,7 @@ from nostalgia.content import curseforge, modrinth
 from nostalgia.content.mod_version import load_installed_mod, swap_mod_version, undo_mod_version
 from nostalgia.content.model import ContentSource, ProjectVersion
 from nostalgia.content.target import ContentTarget
+from nostalgia.errors import ContentError
 from nostalgia.facade.content_detail import ContentDetailOperations
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.modloader.model import detect_loader_kind
@@ -23,6 +24,8 @@ class ContentVersionOperations(ContentDetailOperations):
 
     def describe_content_target(self, instance_id: str) -> ContentTarget:
         instance = load_instance(self.paths, instance_id)
+        if instance.runtime_kind == "horizon":
+            raise ContentError("Manage Horizon content inside the game; Java mods are unsupported")
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         return ContentTarget(
             instance_id,

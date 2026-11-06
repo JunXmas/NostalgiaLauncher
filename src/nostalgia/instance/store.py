@@ -119,6 +119,8 @@ def save_instance(paths: DataPaths, instance: Instance) -> None:
         "nos_client_enabled": instance.nos_client_enabled,
         "group_name": instance.group_name,
         "favorite": instance.favorite,
+        "runtime_kind": instance.runtime_kind,
+        "horizon_build_id": instance.horizon_build_id,
     }
     atomic_write_json(paths.instance_json(instance.instance_id), document)
 
@@ -206,7 +208,11 @@ def _read_if_usable(path: Path, fallback_id: str) -> Instance | None:
     except DataFileError:
         logger.warning("bỏ qua instance hỏng: %s", path)
         return None
-    instance = _parse_instance(fields, fallback_id=fallback_id)
+    try:
+        instance = _parse_instance(fields, fallback_id=fallback_id)
+    except InstanceError:
+        logger.warning("bỏ qua instance có runtime không hợp lệ: %s", path)
+        return None
     if instance is None:
         logger.warning("bỏ qua instance thiếu phiên bản game: %s", path)
     return instance
@@ -231,4 +237,6 @@ def _parse_instance(fields: dict[str, JsonValue], *, fallback_id: str) -> Instan
         nos_client_enabled=as_boolean(fields.get("nos_client_enabled"), default=False),
         group_name=as_string(fields.get("group_name")) or "",
         favorite=as_boolean(fields.get("favorite"), default=False),
+        runtime_kind=as_string(fields.get("runtime_kind")) or "java",
+        horizon_build_id=as_string(fields.get("horizon_build_id")) or "",
     )

@@ -13,7 +13,7 @@ from typing import Any, cast
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import Instance, Launcher
+from nostalgia.api import HORIZON_GAME_VERSION, Instance, Launcher
 from nostalgia.modloader.model import LoaderKind
 from nostalgia.ui.bridge import LauncherBridge
 from nostalgia.ui.worker import WorkerBridge, local_path
@@ -51,6 +51,10 @@ class CatalogBridge(WorkerBridge):
     @Property(list, notify=releasedVersionsChanged)
     def releasedVersions(self) -> list[dict[str, Any]]:
         return self._released
+
+    @Property(str, constant=True)
+    def horizonGameVersion(self) -> str:
+        return HORIZON_GAME_VERSION
 
     @Property(list, notify=loaderVersionsChanged)
     def loaderVersions(self) -> list[dict[str, Any]]:
@@ -128,6 +132,26 @@ class CatalogBridge(WorkerBridge):
         game_dir_override = local_path(game_dir_url)
 
         def work() -> None:
+            if loader_kind == "horizon":
+                build = self._launcher.install_horizon(
+                    on_progress=self._main_bridge.report_progress
+                )
+                taken = {instance.instance_id for instance in self._launcher.list_instances()}
+                instance = Instance(
+                    instance_id=slugify(display_name, taken),
+                    version_id=build.version_id,
+                    display_name=display_name.strip(),
+                    game_dir_override=game_dir_override,
+                    runtime_kind="horizon",
+                    horizon_build_id=build.build_id,
+                )
+                self._launcher.prepare_horizon_instance(
+                    instance, on_progress=self._main_bridge.report_progress
+                )
+                self._launcher.create_instance(instance)
+                self._main_bridge.announce_instances_changed()
+                self.created.emit(instance.instance_id)
+                return
             if loader_kind in PRESET_LABELS:
                 self._create_preset(
                     loader_kind, display_name, game_version, game_dir_override, max_heap_megabytes

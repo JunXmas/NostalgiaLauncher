@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from nostalgia.errors import InstanceError
 from nostalgia.facade.context import LauncherContext
 from nostalgia.facade.sync_loader import resolve_sync_loader
 from nostalgia.instance.backups import (
@@ -40,6 +41,8 @@ class BackupOperations(LauncherContext):
     ) -> ModpackExport:
         """Đóng gói dữ liệu trên đĩa, không tải mạng và không xuất tài khoản launcher."""
         instance = load_instance(self.paths, instance_id)
+        if instance.runtime_kind == "horizon":
+            raise InstanceError("Horizon cannot be exported as a Java modpack; use a world backup")
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         loader_kind = detect_loader_kind(instance.version_id)
         environment = ExportEnvironment(

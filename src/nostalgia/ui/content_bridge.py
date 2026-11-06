@@ -70,7 +70,7 @@ class ContentBridge(FilterContentBridge):
         """Đọc đĩa (nhanh) nên làm ngay; bộ lọc nhảy về loader + phiên bản của bản chơi đó."""
         if self._browse_instance_id and instance_id != self._browse_instance_id:
             return
-        self._target = self._launcher.describe_content_target(instance_id) if instance_id else None
+        self._target = self._load_target(instance_id)
         self._results_model.reset([])
         self._total_hits = 0
         self._installed_rows = []

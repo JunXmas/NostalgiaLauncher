@@ -103,6 +103,10 @@ class InstanceBridge(WorkerBridge):
             "instanceId": instance.instance_id,
             "label": instance.label,
             "versionId": instance.version_id,
+            "runtimeKind": instance.runtime_kind,
+            "gameVersion": instance.version_id.removeprefix("horizon-")
+            if instance.runtime_kind == "horizon"
+            else "",
             "iconUrl": instance.icon_url,
             "groupName": instance.group_name,
             "favorite": instance.favorite,

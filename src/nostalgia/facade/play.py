@@ -6,8 +6,10 @@ import logging
 from pathlib import Path
 
 from nostalgia.account.model import ELY, Account, to_player_profile
-from nostalgia.errors import InstanceError, NetworkError
+from nostalgia.account.store import find_account
+from nostalgia.errors import AccountError, InstanceError, NetworkError
 from nostalgia.facade.accounts import AccountOperations
+from nostalgia.facade.horizon import HorizonOperations
 from nostalgia.install.assets import load_installed_asset_index
 from nostalgia.instance.store import game_dir_of, load_instance
 from nostalgia.launch.authlib import (
@@ -26,7 +28,7 @@ from nostalgia.version.meta import VersionMeta
 logger = logging.getLogger(__name__)
 
 
-class PlayOperations(AccountOperations):
+class PlayOperations(AccountOperations, HorizonOperations):
     __slots__ = ()
 
     def launch_instance(
@@ -46,7 +48,24 @@ class PlayOperations(AccountOperations):
         (tên thư mục trong saves/) đưa game vào thẳng thế giới đó — chỉ tác dụng từ 1.20.
         """
         instance = load_instance(self.paths, instance_id)
-        account = self._require_account(account_id, client_id, cancel_token)
+        saved_account = find_account(self.list_accounts(), account_id)
+        if saved_account is None:
+            raise AccountError("Select an account before playing")
+        # Ely trong Horizon dùng tên offline và texture công khai, không xác thực phiên Ely.
+        account = (
+            saved_account
+            if instance.runtime_kind == "horizon" and saved_account.account_kind == ELY
+            else self._require_account(account_id, client_id, cancel_token)
+        )
+        if instance.runtime_kind == "horizon":
+            return self.start_horizon_instance(
+                instance,
+                account,
+                world_folder=world_folder,
+                server_address=server_address,
+                on_output=on_output,
+                cancel_token=cancel_token,
+            )
         version_meta = VersionRepository(self.paths).load_version_meta(instance.version_id)
         java_binary: Path | None
         if instance.java_binary_override:

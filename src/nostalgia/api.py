@@ -50,6 +50,7 @@ from nostalgia.facade.room_sync import RoomSyncOperations
 from nostalgia.facade.servers import ServerOperations
 from nostalgia.facade.updates import SELF_UPDATING_KINDS, StagedUpdate, UpdateOperations
 from nostalgia.facade.usage import UsageOperations
+from nostalgia.horizon.model import HORIZON_GAME_VERSION as HORIZON_GAME_VERSION
 from nostalgia.importing.launchers import Found
 from nostalgia.instance.model import Instance
 from nostalgia.instance.profile_stats import ProfileStats

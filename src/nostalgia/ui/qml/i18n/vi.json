@@ -4290,5 +4290,21 @@
   "p:Chưa khả dụng": "Chưa khả dụng",
   "p:Lựa chọn đã lưu: ": "Lựa chọn đã lưu: ",
   "p:Số liệu tổng hợp từ các bản cài tự nguyện tham gia giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.": "Số liệu tổng hợp từ các bản cài tự nguyện tham gia giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.",
-  "p:Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày."
+  "p:Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.",
+  "p:Horizon Nightly chạy Minecraft bằng Rust. Hỗ trợ offline; Ely.by dùng tên offline và skin/cape cục bộ. Không chạy mod Java hoặc Nos Client. Tạo thế giới riêng và dùng bản Minecraft bạn sở hữu.": "Horizon Nightly chạy Minecraft bằng Rust. Hỗ trợ offline; Ely.by dùng tên offline và skin/cape cục bộ. Không chạy mod Java hoặc Nos Client. Tạo thế giới riêng và dùng bản Minecraft bạn sở hữu.",
+  "p:Quản lý nội dung Horizon trong game hoặc mở thư mục bản chơi. Mod Java, shader Iris và Nos Client không tương thích với Horizon.": "Quản lý nội dung Horizon trong game hoặc mở thư mục bản chơi. Mod Java, shader Iris và Nos Client không tương thích với Horizon.",
+  "p:Preparing Horizon resources": "Đang chuẩn bị tài nguyên Horizon",
+  "p:Horizon needs a player name of 3-16 letters, digits or underscores": "Horizon cần tên người chơi dài 3–16 ký tự gồm chữ cái, chữ số hoặc gạch dưới",
+  "p:Sign in to the Microsoft account again before playing Horizon": "Đăng nhập lại tài khoản Microsoft trước khi chơi Horizon",
+  "p:This Horizon build requires a different Minecraft version": "Bản dựng Horizon này cần một phiên bản Minecraft khác",
+  "p:Unsupported Horizon preparation Java version": "Chưa hỗ trợ bản Java mà Horizon cần để chuẩn bị tài nguyên",
+  "p:Horizon Launch API does not support the required options": "Launch API của Horizon thiếu tham số mà launcher cần",
+  "p:Horizon preparation timed out; try again": "Chuẩn bị Horizon quá thời gian; hãy thử lại",
+  "p:Invalid Horizon release signature; nothing was installed": "Chữ ký bản Horizon không hợp lệ; chưa cài đặt gì",
+  "p:Horizon has no official build for this platform": "Horizon chưa có bản dựng chính thức cho nền tảng này",
+  "p:Horizon build and instance Minecraft versions differ": "Bản dựng Horizon và bản chơi dùng hai phiên bản Minecraft khác nhau",
+  "p:Prepare this Horizon instance before playing": "Cần chuẩn bị tài nguyên của bản Horizon này trước khi chơi",
+  "p:Choose an empty game folder for Horizon to protect existing worlds": "Chọn thư mục chơi trống cho Horizon để bảo vệ các thế giới hiện có",
+  "p:Manage Horizon content inside the game; Java mods are unsupported": "Quản lý nội dung Horizon trong game; không hỗ trợ mod Java",
+  "p:Horizon cannot be exported as a Java modpack; use a world backup": "Không thể xuất Horizon thành modpack Java; hãy sao lưu thế giới"
 }

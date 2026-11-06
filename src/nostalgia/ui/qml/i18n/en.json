@@ -4290,5 +4290,21 @@
   "p:Chưa khả dụng": "Not available yet",
   "p:Lựa chọn đã lưu: ": "Saved choice: ",
   "p:Số liệu tổng hợp từ các bản cài tự nguyện tham gia giúp nhóm phát triển biết phiên bản launcher và hệ điều hành nào còn được dùng, để ưu tiên kiểm thử, sửa lỗi và định hướng các bản tiếp theo.": "Aggregated statistics from participating installations help the team see which launcher versions and operating systems are still in use, so we can prioritize testing, fixes and future releases.",
-  "p:Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "If you agree to share, the launcher counts active installations per day. The data includes the UTC date, launcher version, operating system group and a random daily code."
+  "p:Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.": "If you agree to share, the launcher counts active installations per day. The data includes the UTC date, launcher version, operating system group and a random daily code.",
+  "p:Horizon Nightly chạy Minecraft bằng Rust. Hỗ trợ offline; Ely.by dùng tên offline và skin/cape cục bộ. Không chạy mod Java hoặc Nos Client. Tạo thế giới riêng và dùng bản Minecraft bạn sở hữu.": "Horizon Nightly runs Minecraft in Rust. Supports offline play; Ely.by uses an offline name and local skin/cape. Java mods and Nos Client are unsupported. Create a separate world and use your own copy of Minecraft.",
+  "p:Quản lý nội dung Horizon trong game hoặc mở thư mục bản chơi. Mod Java, shader Iris và Nos Client không tương thích với Horizon.": "Manage Horizon content in the game or open the instance folder. Java mods, Iris shaders and Nos Client are incompatible with Horizon.",
+  "p:Preparing Horizon resources": "Preparing Horizon resources",
+  "p:Horizon needs a player name of 3-16 letters, digits or underscores": "Horizon needs a player name of 3-16 letters, digits or underscores",
+  "p:Sign in to the Microsoft account again before playing Horizon": "Sign in to the Microsoft account again before playing Horizon",
+  "p:This Horizon build requires a different Minecraft version": "This Horizon build requires a different Minecraft version",
+  "p:Unsupported Horizon preparation Java version": "Unsupported Horizon preparation Java version",
+  "p:Horizon Launch API does not support the required options": "Horizon Launch API does not support the required options",
+  "p:Horizon preparation timed out; try again": "Horizon preparation timed out; try again",
+  "p:Invalid Horizon release signature; nothing was installed": "Invalid Horizon release signature; nothing was installed",
+  "p:Horizon has no official build for this platform": "Horizon has no official build for this platform",
+  "p:Horizon build and instance Minecraft versions differ": "Horizon build and instance Minecraft versions differ",
+  "p:Prepare this Horizon instance before playing": "Prepare this Horizon instance before playing",
+  "p:Choose an empty game folder for Horizon to protect existing worlds": "Choose an empty game folder for Horizon to protect existing worlds",
+  "p:Manage Horizon content inside the game; Java mods are unsupported": "Manage Horizon content inside the game; Java mods are unsupported",
+  "p:Horizon cannot be exported as a Java modpack; use a world backup": "Horizon cannot be exported as a Java modpack; use a world backup"
 }
