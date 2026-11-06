@@ -3,6 +3,7 @@
 import base64
 import io
 import stat
+import sys
 import tarfile
 import zipfile
 from pathlib import Path
@@ -47,7 +48,8 @@ def test_zip_preserves_whole_build_and_executable_permissions(tmp_path: Path) ->
     staging_dir.mkdir()
     build_dir = extract_horizon_bundle(archive_path, staging_dir)
     assert (build_dir / "horizon-client").read_bytes() == b"native binary"
-    assert (build_dir / "horizon-client").stat().st_mode & 0o111
+    if sys.platform != "win32":
+        assert (build_dir / "horizon-client").stat().st_mode & 0o111
     assert (build_dir / "exporters/manifest.json").is_file()
 
 

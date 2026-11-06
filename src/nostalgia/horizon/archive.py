@@ -11,6 +11,7 @@ from pathlib import Path
 from nostalgia.errors import IntegrityError
 from nostalgia.operations.cancellation import CancelToken
 from nostalgia.storage.files import resolve_within, set_executable
+from nostalgia.storage.windows_path import extended_windows_path
 
 MAX_FILES = 10_000
 MAX_EXPANDED_BYTES = 512 * 1024 * 1024
@@ -20,6 +21,8 @@ def extract_horizon_bundle(
     archive_path: Path, staging_dir: Path, cancel_token: CancelToken | None = None
 ) -> Path:
     """Bản dựng chính thức có đúng một thư mục gốc, giữ nguyên exporter và lock."""
+    archive_path = extended_windows_path(archive_path)
+    staging_dir = extended_windows_path(staging_dir)
     total = 0
     count = 0
     if zipfile.is_zipfile(archive_path):
