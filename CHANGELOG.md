@@ -3,6 +3,13 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
+## 1.2.6 — 2026-11-06
+
+- Hỏi xác nhận thống kê lại một lần với trạng thái đồng ý từ bản cũ chưa có dấu xác nhận
+  của đợt mở dịch vụ. Chờ người chơi chọn trước khi gửi; giữ nguyên các lựa chọn từ chối.
+- Không để lỗi kiểm tra cập nhật đã kết thúc chặn lời mời mãi khi giao diện đã rảnh.
+- Giữ lựa chọn đã xác nhận qua khởi động lại và cập nhật bình thường; không sửa số liệu cũ.
+
 ## 1.2.5 — 2026-11-06
 
 - Thêm Horizon (Rust) trong Tạo bản chơi, dùng Minecraft 26.3 và kho tài nguyên riêng.

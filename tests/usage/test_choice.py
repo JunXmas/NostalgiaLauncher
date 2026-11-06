@@ -20,6 +20,9 @@ from nostalgia.usage.configuration import load_usage_configuration
         {"discord_presence": True},
         {"usage_choice_v1": True},
         {"usage_choice_v1": "yes"},
+        {"usage_choice_v1": "accepted"},
+        {"usage_choice_v1": "accepted", "usage_consent_revision": 0},
+        {"usage_choice_v1": "accepted", "usage_consent_revision": True},
     ],
 )
 def test_install_or_upgrade_never_infers_consent(tmp_path: Path, fields: dict[str, object]) -> None:
@@ -31,6 +34,12 @@ def test_install_or_upgrade_never_infers_consent(tmp_path: Path, fields: dict[st
 def test_explicit_choice_survives_restart(tmp_path: Path, choice: str) -> None:
     save_settings(tmp_path, Settings(usage_choice_v1=choice))
     assert load_settings(tmp_path).usage_choice_v1 == choice
+    assert json.loads((tmp_path / "settings.json").read_text())["usage_consent_revision"] == 1
+
+
+def test_old_refusal_is_preserved_without_a_revision(tmp_path: Path) -> None:
+    (tmp_path / "settings.json").write_text(json.dumps({"usage_choice_v1": "declined"}))
+    assert load_settings(tmp_path).usage_choice_v1 == "declined"
 
 
 def test_sample_is_local_illustrative_and_has_exact_contract(tmp_path: Path) -> None:

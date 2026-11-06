@@ -41,13 +41,24 @@ không gửi request. Heartbeat WebSocket giữ kết nối là luồng riêng p
 ## Lựa chọn được lưu trên máy
 
 `settings.json` có `usage_choice_v1`: `unselected`, `declined` hoặc `accepted`. Chỉ giá trị
-`accepted` cho phép gửi. Cài mới và các cờ cũ không rõ nghĩa đều là `unselected`, không gửi.
+`accepted` cùng `usage_consent_revision=1` cho phép gửi. Cài mới và các cờ cũ không rõ nghĩa
+đều là `unselected`, không gửi.
 Lựa chọn không dựa vào Google, điều khoản, Discord hoặc tài khoản Minecraft; không đồng bộ
 sang máy khác. Cập nhật bình thường giữ lựa chọn. Xóa cấu hình/cài lại có thể mất lựa chọn.
 
+Bản vá 1.2.6 yêu cầu xác nhận lại **một lần** với trạng thái đồng ý từ các bản trước,
+vì các bản đó chưa lưu dấu xác nhận của đợt mở dịch vụ. Cho đến lúc xác nhận lại, lựa chọn
+được đọc là chưa chọn, mã ngày cũ bị xóa và không gửi thống kê. Từ chối cũ vẫn được giữ,
+không hỏi lại. Lựa chọn trong hộp thoại hoặc Cài đặt của 1.2.6 được lưu cùng revision;
+các lần mở lại/cập nhật bình thường tiếp tục giữ lựa chọn này. Không sửa số liệu lịch sử.
+Việc xóa mã ngày và xác nhận lại có thể tạo mã khác trong cùng ngày, nên ngày chuyển đổi
+có thể đếm lại một bản cài. Không diễn giải mức tăng này thành số người mới.
+
 Sau khi endpoint đã được operator xác nhận hoạt động, người chưa chọn được hỏi một lần
 khi cửa sổ chính đã dùng được và rảnh. Hoãn trong đăng nhập, tác vụ cài/nhập/cập nhật, khởi
-chạy/chơi game, popup khác hoặc xử lý lỗi. Hai nút có cùng kiểu; không đặt sẵn đồng ý.
+chạy/chơi game, popup khác hoặc xử lý lỗi. Lỗi kiểm tra cập nhật đã kết thúc không chặn
+lời mời mãi khi launcher đã rảnh và không còn hộp thoại khác. Hai nút có cùng kiểu;
+không đặt sẵn đồng ý.
 “Không gửi”, X và Escape đều lưu từ chối. Đã chọn trong Cài đặt thì không hỏi nữa.
 Khi dịch vụ chưa sẵn sàng, không mở hộp mời đồng ý; xem mẫu trong Cài đặt vẫn dùng được.
 Trang Cài đặt hiển thị “Chưa khả dụng” và lý do, thay cho công tắc bị khóa. Lựa chọn đã lưu
