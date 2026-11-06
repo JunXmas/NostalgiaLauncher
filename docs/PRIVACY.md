@@ -1,10 +1,9 @@
 # Quyền riêng tư và thống kê tự nguyện
 
-Tài liệu này mô tả bản sửa trong repository. Backend mới **chưa được deploy**; chưa xác minh
-toàn bộ cấu hình lưu log production. Luồng thống kê mới và lời mời đồng ý mặc định chưa kích hoạt.
-Backend đang chạy bản cũ có thể vẫn đếm hoạt động tài khoản qua `/v1/me` cho đến khi chủ dự
-án triển khai bản backend đã bỏ lệnh ghi ngầm. Cài đặt client không thể thay đổi hành vi
-của backend cũ mà vẫn giữ nguyên chức năng bạn bè.
+Backend thống kê v1 đã được triển khai ngày 06/11/2026 theo yêu cầu của chủ dự án, đồng
+thời bỏ ghi thống kê tài khoản từ `/v1/me`. Nhánh client này đã cấu hình dịch vụ sẵn sàng;
+bản launcher 1.2.3 công khai trước đó vẫn có endpoint rỗng. Thống kê luôn mặc định không
+gửi và chỉ hoạt động sau lựa chọn đồng ý riêng. Chưa xác minh toàn bộ log hạ tầng và backup.
 
 ## Thu thập để trả lời câu hỏi gì?
 
@@ -62,9 +61,10 @@ không mở endpoint thu thập và không tạo sự kiện chờ gửi.
 
 Schema: [usage-schema.json](usage-schema.json). Endpoint là origin HTTPS đã xác nhận của
 dịch vụ Nostalgia với đường dẫn chính xác `/v1/usage`. Không suy ra URL từ đăng nhập.
-File `usage/defaults.json` hiện có endpoint rỗng và `ready: false`; không có request mới.
-Operator chỉ cấu hình `NOSTALGIA_USAGE_ENDPOINT` cùng `NOSTALGIA_USAGE_READY=1`, hoặc file
-đóng gói tương ứng, sau khi migration/backend và chính sách hạ tầng được kiểm tra.
+Endpoint đã triển khai: `https://nostalgia-payment-admin.junbob.workers.dev/v1/usage`.
+File `usage/defaults.json` cấu hình endpoint này với `ready: true`; readiness không phải
+là consent. `unselected` và `declined` vẫn không tạo request hoặc sự kiện chờ gửi.
+Operator có thể ngừng luồng bằng `NOSTALGIA_USAGE_READY=0`; người chơi dùng công tắc trong Cài đặt.
 
 ```json
 {
@@ -119,8 +119,10 @@ hiện có; không đọc nội dung log người chơi, query trace hoặc bả
 
 Mã endpoint mới không log payload, IP hay tài khoản. Máy chủ/Cloudflare vẫn nhìn thấy IP
 khi nhận kết nối; không khẳng định “không lưu IP” hoặc “ẩn danh hoàn toàn”. Worker Logs,
-Tail/Logpush, reverse proxy, truy vấn D1, backup và thời hạn lưu thực tế cần được operator
-kiểm tra trước khi kích hoạt. IP hiện còn được dùng riêng để chống lạm dụng đăng nhập,
+Tail/Logpush toàn account, reverse proxy, truy vấn D1, backup và thời hạn lưu thực tế chưa
+được xác minh đầy đủ. Cấu hình triển khai ngày 06/11 đặt `observability.enabled=false`,
+`logpush=false`; API Worker trả observability null, không có tail consumer cấu hình.
+Không diễn giải null thành bằng chứng không tồn tại log hạ tầng. IP hiện được dùng riêng để chống lạm dụng đăng nhập,
 không dùng làm định danh thống kê mới.
 
 ## Phân biệt lịch sử và dashboard
@@ -137,4 +139,7 @@ không cộng với bản cài hoặc tài khoản. Không có khách riêng bi�
 
 Tham khảo cơ chế nền tảng: [D1 batch](https://developers.cloudflare.com/d1/worker-api/d1-database/)
 và [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/).
-Đây không phải bằng chứng về cấu hình đang chạy của dự án; chưa deploy hoặc sửa dữ liệu production.
+Các tài liệu nền tảng không thay cho kiểm tra cấu hình thực tế. Rollout chỉ tạo hai bảng
+thống kê mới và chỉ mục, không chuyển đổi hoặc sửa số liệu lịch sử/tài khoản. Kiểm tra HTTP
+production dùng request không hợp lệ để tránh tạo số liệu giả; đường nhận hợp lệ được
+kiểm bằng Miniflare/D1 cục bộ, không dùng dữ liệu người chơi thật.

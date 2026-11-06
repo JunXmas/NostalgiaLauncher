@@ -2,6 +2,12 @@
 
 Ngày kiểm: 05/11/2026, trước khi phát hành launcher 1.2.3. Backend chưa deploy production.
 
+Bổ sung 06/11/2026: chủ dự án yêu cầu mở dịch vụ. Worker đã triển khai bản
+`87f370e5-088f-4e5e-8b53-9d80027ad6d5`, bỏ ghi analytics từ snapshot, bật endpoint v1
+và tạo riêng hai bảng thống kê mới. Launcher 1.2.4 cấu hình readiness, vẫn mặc định
+`unselected` và không gửi trước đồng ý. Các phát hiện trước triển khai bên dưới là lịch sử
+review, không được diễn giải thành tình trạng production hiện tại. Xem PRIVACY.md cập nhật.
+
 ## Phát hiện ban đầu
 
 - Launcher hiện tại không có endpoint analytics độc lập. Snapshot bạn bè `GET /v1/me`
@@ -38,10 +44,9 @@ Ngày kiểm: 05/11/2026, trước khi phát hành launcher 1.2.3. Backend chưa
 
 ## Endpoint và payload minh họa
 
-Luồng mới dùng `POST https://<origin-da-xac-minh>/v1/usage`. Đây là contract, không phải
-origin đã cấu hình. Client hiện endpoint rỗng/ready=false; backend USAGE_ENABLED=false.
-Không hiện lời mời cho dịch vụ chưa sẵn sàng. Backend production cũ có thể vẫn ghi thống kê
-snapshot đến khi operator deploy bản đã sửa; lựa chọn client không điều khiển mã server cũ.
+Luồng mới dùng `POST https://nostalgia-payment-admin.junbob.workers.dev/v1/usage`.
+Client 1.2.4 cấu hình readiness sau khi backend đã triển khai; bản 1.2.3 trước đó vẫn có
+endpoint rỗng. Chỉ `accepted` mới gửi. Không cần tài khoản Google và không có sự kiện game.
 
 ```json
 {"schema_version":1,"event":"installation_active","day":"2026-11-05","launcher_version":"1.2.2","os_group":"windows","daily_id":"0123456789abcdef0123456789abcdef"}
