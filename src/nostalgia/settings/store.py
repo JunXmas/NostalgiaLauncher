@@ -13,6 +13,7 @@ from nostalgia.repo.endpoints import DISCORD_APPLICATION_ID
 from nostalgia.storage.files import atomic_write_json, read_json
 
 SETTINGS_FILE_NAME = "settings.json"
+USAGE_CONSENT_REVISION = 1
 # Biến môi trường đè lên file: tiện cho CI và cho người không muốn lưu khoá xuống đĩa.
 CURSEFORGE_KEY_ENV = "NOSTALGIA_CURSEFORGE_API_KEY"
 DISCORD_APP_ID_ENV = "NOSTALGIA_DISCORD_APP_ID"
@@ -80,6 +81,7 @@ def load_settings(config_dir: Path, environment: Mapping[str, str] | None = None
                 language="vi" if fields.get("language") == "vi" else "en",
                 usage_choice_v1="accepted"
                 if fields.get("usage_choice_v1") == "accepted"
+                and as_integer(fields.get("usage_consent_revision")) == USAGE_CONSENT_REVISION
                 else "declined"
                 if fields.get("usage_choice_v1") == "declined"
                 else "unselected",
@@ -121,6 +123,7 @@ def save_settings(config_dir: Path, settings: Settings) -> None:
             "decorative_background": settings.decorative_background,
             "language": settings.language,
             "usage_choice_v1": settings.usage_choice_v1,
+            "usage_consent_revision": USAGE_CONSENT_REVISION,
         },
         private=True,
     )
