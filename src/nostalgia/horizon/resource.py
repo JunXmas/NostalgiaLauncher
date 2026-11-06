@@ -22,7 +22,6 @@ from nostalgia.storage.files import read_json, sha1_of_file, sync_directory
 from nostalgia.storage.paths import DataPaths
 
 
-
 def sync_horizon_manifest(
     http_client: HttpClient,
     build: HorizonBuild,
@@ -41,11 +40,11 @@ def sync_horizon_manifest(
     if version != build.game_version or re.fullmatch(r"[0-9a-f]{40}", expected_sha1) is None:
         raise InstanceError("Horizon build has no valid pinned Minecraft version manifest")
 
-    destination = build.build_dir.parent / "minecraft" / version / "manifest.json"
+    destination = build.build_dir.parent / "minecraft" / build.game_version / "manifest.json"
     if destination.is_file() and sha1_of_file(destination) == expected_sha1:
         return destination
 
-    url = f"https://piston-meta.mojang.com/v1/packages/{expected_sha1}/{version}.json"
+    url = f"https://piston-meta.mojang.com/v1/packages/{expected_sha1}/{build.game_version}.json"
     payload = http_client.fetch_bytes(url, max_bytes=1024 * 1024, cancel_token=cancel_token)
     if hashlib.sha1(payload).hexdigest() != expected_sha1:
         raise IntegrityError("Mojang Horizon version manifest SHA-1 mismatch")
@@ -63,6 +62,7 @@ def sync_horizon_manifest(
     finally:
         staged.unlink(missing_ok=True)
     return destination
+
 
 def check_resources(build: HorizonBuild, cancel_token: CancelToken | None = None) -> bool:
     report = run_horizon_task(
