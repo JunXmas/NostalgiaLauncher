@@ -35,6 +35,10 @@ choice. The service was activated on 6 November 2026. This revision offers a one
 choice when the main window is idle; declining keeps every feature available. See the
 privacy document for the data, endpoint, retention and infrastructure limitations.
 
+**Horizon (Rust)** is available in Create instance for Minecraft 26.3. It supports offline
+profiles and local Ely.by skins; Java mods and Nos Client use separate Java instances.
+See [Horizon setup and limitations](docs/HORIZON.md).
+
 ---
 
 ## Why this exists

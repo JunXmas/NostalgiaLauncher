@@ -3,7 +3,13 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.2.4 — 2026-11-06
+## 1.2.5 — 2026-11-06
+
+- Thêm Horizon (Rust) trong Tạo bản chơi, dùng Minecraft 26.3 và kho tài nguyên riêng.
+- Hỗ trợ tên offline; Ely.by dùng tên offline cùng skin/cape cục bộ, không chuyển token Ely.
+- Xác minh chữ ký và SHA-256 build, chuẩn bị bằng Java 25, tái sử dụng cache khi chơi offline.
+- Giữ bản chơi Java/Nos riêng; không tự chuyển world, không chạy mod Java trong Horizon.
+- Tắt heartbeat, telemetry và presence riêng của Horizon trong đường chạy từ launcher.
 
 - Kết nối dịch vụ thống kê tự nguyện v1 đã triển khai; khách và tài khoản đều có thể chọn
   chia sẻ, không cần đăng nhập Google. Chỉ đếm bản cài hoạt động/ngày, không sự kiện chạy game.

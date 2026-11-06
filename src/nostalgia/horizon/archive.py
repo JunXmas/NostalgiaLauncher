@@ -29,8 +29,8 @@ def extract_horizon_bundle(
                 total += member.file_size
                 _check_limits(count, total, cancel_token)
                 mode = member.external_attr >> 16
-                if stat.S_ISLNK(mode):
-                    raise IntegrityError("Horizon archive contains a symbolic link")
+                if stat.S_IFMT(mode) not in (0, stat.S_IFREG, stat.S_IFDIR):
+                    raise IntegrityError("Horizon archive contains a link or special file")
                 destination = _destination(staging_dir, member.filename)
                 if member.is_dir():
                     destination.mkdir(parents=True, exist_ok=True)

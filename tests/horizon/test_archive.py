@@ -63,6 +63,20 @@ def test_zip_rejects_path_escape(tmp_path: Path, path_text: str) -> None:
     assert not (tmp_path / "escape").exists()
 
 
+@pytest.mark.parametrize("file_kind", [stat.S_IFLNK, stat.S_IFIFO, stat.S_IFCHR, stat.S_IFSOCK])
+def test_zip_rejects_links_and_special_files(tmp_path: Path, file_kind: int) -> None:
+    archive_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        member = zipfile.ZipInfo("horizon/unsafe")
+        member.external_attr = (file_kind | 0o755) << 16
+        archive.writestr(member, b"forbidden")
+    staging_dir = tmp_path / "staging"
+    staging_dir.mkdir()
+    with pytest.raises(IntegrityError, match="link or special file"):
+        extract_horizon_bundle(archive_path, staging_dir)
+    assert not list(staging_dir.iterdir())
+
+
 def test_tar_rejects_links_and_extraction_limit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
