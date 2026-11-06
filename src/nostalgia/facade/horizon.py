@@ -10,7 +10,12 @@ from nostalgia.horizon.command import build_horizon_command
 from nostalgia.horizon.model import HorizonBuild
 from nostalgia.horizon.process import start_horizon
 from nostalgia.horizon.release import sync_horizon_build
-from nostalgia.horizon.resource import check_resources, prepare_resources, sync_server_jar
+from nostalgia.horizon.resource import (
+    check_resources,
+    prepare_resources,
+    sync_horizon_manifest,
+    sync_server_jar,
+)
 from nostalgia.instance.model import Instance
 from nostalgia.instance.store import game_dir_of
 from nostalgia.launch.command import LaunchOptions
@@ -62,12 +67,16 @@ class HorizonOperations(LauncherContext):
                 cancel_token=cancel_token,
                 endpoints=self.endpoints,
             )
-            server_jar = sync_server_jar(http_client, self.paths, build, cancel_token)
+            version_json = sync_horizon_manifest(http_client, build, cancel_token)
+            server_jar = sync_server_jar(
+                http_client, self.paths, build, cancel_token, version_json=version_json
+            )
         prepare_resources(
             self.paths,
             build,
             report.java_binary,
             server_jar,
+            version_json=version_json,
             on_progress=on_progress,
             cancel_token=cancel_token,
         )
