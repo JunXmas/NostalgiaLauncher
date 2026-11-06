@@ -39,7 +39,10 @@ class NosClientOperations(LauncherContext):
 
     def nos_client_supported(self, instance: Instance) -> bool:
         """Dùng chung quy tắc tương thích cho công tắc UI và bước chuẩn bị trước khi chơi."""
-        return resolve_nos_game_version(instance.version_id) is not None
+        return (
+            instance.runtime_kind == "java"
+            and resolve_nos_game_version(instance.version_id) is not None
+        )
 
     def nos_client_config(self, instance: Instance) -> NosClientConfig:
         """Đọc cấu hình HUD của Nos Client cho một bản chơi."""

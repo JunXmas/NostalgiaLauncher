@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import Property, QObject, Signal, Slot
 
-from nostalgia.api import Launcher
+from nostalgia.api import ContentTarget, Launcher
 from nostalgia.content.model import ContentKind
+from nostalgia.errors import ContentError
 from nostalgia.ui.modpack_bridge import ModpackContentBridge
 
 
@@ -28,6 +29,13 @@ class FilterContentBridge(ModpackContentBridge):
         self._kind: ContentKind = "mod"
         self._filters_touched = False
         self._browse_instance_id = ""
+
+    def _load_target(self, instance_id: str) -> ContentTarget | None:
+        try:
+            return self._launcher.describe_content_target(instance_id) if instance_id else None
+        except ContentError as exc:
+            self.failed.emit(str(exc))
+            return None
 
     @Property(str, notify=filtersChanged)
     def browseInstanceId(self) -> str:

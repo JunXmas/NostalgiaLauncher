@@ -22,6 +22,11 @@ def prepare_game(
 ) -> None:
     instance = next((i for i in launcher.list_instances() if i.instance_id == instance_id), None)
     if instance is not None:
+        if instance.runtime_kind == "horizon":
+            launcher.prepare_horizon_instance(
+                instance, on_progress=on_progress, cancel_token=cancel_token
+            )
+            return
         launcher.recover_interrupted_mod_change(instance_id)
         launcher.install_version(
             instance.version_id, on_progress=on_progress, cancel_token=cancel_token

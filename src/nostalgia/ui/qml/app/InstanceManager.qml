@@ -15,6 +15,7 @@ Controls.Popup {
     padding: 24; modal: true; dim: true; focus: true
     property var instance: ({})
     property int section: 0
+    readonly property bool nativeRuntime: instance.runtimeKind === "horizon"
     readonly property string blockedReason: Legacy.Tr.phrase(Reasons.writing(bridge, false, false))
     readonly property bool writable: !blockedReason
     signal repairRequested(var instance)
@@ -51,7 +52,7 @@ Controls.Popup {
         advanced = !!entry.javaBinary;
         favorite.checked = entry.favorite === true;
         deleteExternal.checked = false;
-        contentBridge.selectInstance(entry.instanceId);
+        contentBridge.selectInstance(entry.runtimeKind === "horizon" ? "" : entry.instanceId);
         open();
     }
     property bool advanced: false
@@ -99,7 +100,7 @@ Controls.Popup {
             id: footer
             anchors.right: parent.right; anchors.bottom: parent.bottom; spacing: 8
             GuideButton { topicId: root.section === 3 ? "backup" : "library" }
-            Button { id: addContentButton; objectName: "instanceAddContent"; visible: root.section === 1; label: Legacy.Tr.phrase("Thêm nội dung  +"); primary: true; clickable: root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: addContent.openFor(root.instance, installedPanel.item ? installedPanel.item.kind : "mod") }
+            Button { id: addContentButton; objectName: "instanceAddContent"; visible: root.section === 1 && !root.nativeRuntime; label: Legacy.Tr.phrase("Thêm nội dung  +"); primary: true; clickable: root.writable && !contentBridge.busy && !projectBridge.installing; onClicked: addContent.openFor(root.instance, installedPanel.item ? installedPanel.item.kind : "mod") }
             Button { label: Legacy.Tr.phrase("Mở thư mục"); quiet: true; onClicked: bridge.openInstanceFolder(root.instance.instanceId) }
             Button { objectName: "instanceSave"; visible: root.section === 0 || root.section === 2; label: Legacy.Tr.phrase("Lưu thay đổi"); primary: true; disabledReason: root.blockedReason; clickable: root.writable; onClicked: root.save() }
         }
@@ -156,15 +157,15 @@ Controls.Popup {
                     visible: root.section === 2
                     width: parent.width; spacing: 12
                     PaymentText { width: parent.width; text: Legacy.Tr.phrase("Để trống để sử dụng thiết lập mặc định của launcher."); color: GlassTheme.muted }
-                    PaymentText { text: Legacy.Tr.phrase("Bộ nhớ tối đa · MB"); font.weight: Font.DemiBold }
-                    Input { id: heapField; objectName: "instanceHeap"; width: parent.width; placeholder: Legacy.Tr.phrase("Mặc định") }
+                    PaymentText { visible: !root.nativeRuntime; text: Legacy.Tr.phrase("Bộ nhớ tối đa · MB"); font.weight: Font.DemiBold }
+                    Input { id: heapField; objectName: "instanceHeap"; visible: !root.nativeRuntime; width: parent.width; placeholder: Legacy.Tr.phrase("Mặc định") }
                     PaymentText { text: Legacy.Tr.phrase("Kích thước cửa sổ game"); font.weight: Font.DemiBold }
                     Flow { width: parent.width; spacing: 12; Input { id: widthField; width: Math.min(240, form.width); placeholder: Legacy.Tr.phrase("Chiều rộng · px") } Input { id: heightField; width: Math.min(240, form.width); placeholder: Legacy.Tr.phrase("Chiều cao · px") } }
                     // Nâng cao: thường để launcher tự chọn bản Java Mojang khớp phiên bản; chỉ mở khi cần Java riêng.
-                    Button { objectName: "instanceAdvancedToggle"; label: (root.advanced ? "▾  " : "▸  ") + Legacy.Tr.phrase("Nâng cao"); quiet: true; onClicked: root.advanced = !root.advanced }
+                    Button { visible: !root.nativeRuntime; objectName: "instanceAdvancedToggle"; label: (root.advanced ? "▾  " : "▸  ") + Legacy.Tr.phrase("Nâng cao"); quiet: true; onClicked: root.advanced = !root.advanced }
                     Column {
                         objectName: "instanceJavaSection"
-                        visible: root.advanced
+                        visible: root.advanced && !root.nativeRuntime
                         width: parent.width; spacing: 8
                         PaymentText { text: Legacy.Tr.phrase("Java"); font.weight: Font.DemiBold }
                         PaymentText { width: parent.width; wrapMode: Text.WordWrap; color: GlassTheme.muted; font.pixelSize: GlassTheme.fontNote
@@ -183,7 +184,7 @@ Controls.Popup {
                     width: parent.width; spacing: 14
                     PaymentText { text: Legacy.Tr.phrase("Đóng gói & dữ liệu"); font.pixelSize: GlassTheme.fontSection; font.weight: Font.DemiBold; font.family: GlassTheme.displayFont }
                     PaymentText { width: parent.width; text: Legacy.Tr.phrase("Xuất MRPACK hoặc ZIP để chia sẻ và nhập lại. Bạn có thể chọn đóng gói cả thế giới đã chơi."); color: GlassTheme.muted }
-                    Flow { width: parent.width; spacing: 8; Button { objectName: "instanceExport"; label: Legacy.Tr.phrase("Xuất modpack…"); clickable: root.writable; onClicked: { root.exportingAfterClose = true; root.close(); } } Button { label: Legacy.Tr.phrase("Kiểm tra xung đột mod"); clickable: root.writable; onClicked: { root.close(); root.repairRequested(root.instance); } } }
+                    Flow { visible: !root.nativeRuntime; width: parent.width; spacing: 8; Button { objectName: "instanceExport"; label: Legacy.Tr.phrase("Xuất modpack…"); clickable: root.writable; onClicked: { root.exportingAfterClose = true; root.close(); } } Button { label: Legacy.Tr.phrase("Kiểm tra xung đột mod"); clickable: root.writable; onClicked: { root.close(); root.repairRequested(root.instance); } } }
                     // Sao lưu (saves, mods, config) và thùng rác: khôi phục được ở Xuất modpack → Khôi phục dữ liệu cũ.
                     Flow { width: parent.width; spacing: 8
                         Button { objectName: "instanceBackup"; label: Legacy.Tr.phrase("Sao lưu"); clickable: root.writable && !storageBridge.busy; onClicked: storageBridge.backup(root.instance.instanceId) }
@@ -208,9 +209,15 @@ Controls.Popup {
             id: installedPanel
             anchors.top: tabs.bottom; anchors.topMargin: 20; anchors.left: parent.left; anchors.right: parent.right
             anchors.bottom: mutationHint.top; anchors.bottomMargin: 8
-            active: root.opened && root.section === 1
+            active: root.opened && root.section === 1 && !root.nativeRuntime
             visible: active
             sourceComponent: Component { InstalledContent { chooseInstance: false } }
+        }
+        PaymentText {
+            anchors.top: tabs.bottom; anchors.topMargin: 20; width: parent.width
+            visible: root.nativeRuntime && root.section === 1
+            text: Legacy.Tr.phrase("Quản lý nội dung Horizon trong game hoặc mở thư mục bản chơi. Mod Java, shader Iris và Nos Client không tương thích với Horizon.")
+            color: GlassTheme.muted
         }
     }
 }

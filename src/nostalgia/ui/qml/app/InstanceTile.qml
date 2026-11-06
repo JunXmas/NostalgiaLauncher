@@ -21,8 +21,8 @@ Rectangle {
             duration: GlassTheme.quick
         }
     }
-    readonly property string loader: (entry.versionId || "").indexOf("neoforge") >= 0 ? "NeoForge" : (entry.versionId || "").indexOf("forge") >= 0 ? "Forge" : (entry.versionId || "").indexOf("quilt") >= 0 ? "Quilt" : (entry.versionId || "").indexOf("fabric") >= 0 ? "Fabric" : "Vanilla"
-    readonly property string version: /^(fabric-loader|quilt-loader)-/.test(entry.versionId || "") ? (entry.versionId || "").split("-").pop() : (entry.versionId || "").split("-")[0]
+    readonly property string loader: entry.runtimeKind === "horizon" ? "Horizon (Rust)" : (entry.versionId || "").indexOf("neoforge") >= 0 ? "NeoForge" : (entry.versionId || "").indexOf("forge") >= 0 ? "Forge" : (entry.versionId || "").indexOf("quilt") >= 0 ? "Quilt" : (entry.versionId || "").indexOf("fabric") >= 0 ? "Fabric" : "Vanilla"
+    readonly property string version: entry.runtimeKind === "horizon" ? entry.gameVersion : /^(fabric-loader|quilt-loader)-/.test(entry.versionId || "") ? (entry.versionId || "").split("-").pop() : (entry.versionId || "").split("-")[0]
     Rectangle {
         id: iconWell
         x: 20
