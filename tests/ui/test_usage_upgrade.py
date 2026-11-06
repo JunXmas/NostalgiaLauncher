@@ -19,7 +19,7 @@ from qt_controls import find_control
 pytestmark = pytest.mark.usefixtures("qt_app")
 
 
-@pytest.mark.parametrize("old_choice", ["accepted", "declined"])
+@pytest.mark.parametrize("old_choice", ["unselected", "accepted", "declined"])
 @pytest.mark.parametrize(("language", "scale"), [("en", 100), ("vi", 150)])
 def test_old_choice_and_finished_update_failure_do_not_lose_the_invitation(
     tmp_path: Path,
