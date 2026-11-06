@@ -36,7 +36,7 @@ Glass {
         PaymentText { width: parent.width; visible: !usageBridge.available && usageBridge.choice !== "unselected"; text: Legacy.Tr.phrase("Lựa chọn đã lưu: ") + card.choiceLabel; color: GlassTheme.muted }
         PaymentText {
             width: parent.width
-            text: Legacy.Tr.phrase("Khi bạn đồng ý chia sẻ, dữ liệu chỉ gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.")
+            text: Legacy.Tr.phrase("Khi bạn đồng ý chia sẻ, launcher đếm bản cài hoạt động/ngày. Dữ liệu gồm ngày UTC, phiên bản launcher, nhóm hệ điều hành và mã ngẫu nhiên theo ngày.")
             color: GlassTheme.muted
         }
         PaymentText {
