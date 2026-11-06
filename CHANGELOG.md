@@ -3,7 +3,12 @@
 Mốc phát hành của Nostalgia Launcher. Phiên bản theo semver; tag `vX.Y.Z` kích hoạt
 `.github/workflows/release.yml` (xem `docs/RELEASE.md`).
 
-## 1.2.6 — 2026-11-06
+## 1.2.7 — 2026-11-06
+
+- Sửa lỗi Horizon từ chối hash manifest Minecraft bị viết lại hoặc khác research lock.
+- Tải manifest nguyên byte và chỉ mục asset đúng hash từ build đã xác minh, lưu đầu vào
+  riêng; giữ metadata Java hiện có và kiểm tra lại cache đầu vào theo hash.
+- Dùng lại thư viện, Java và asset đã xác minh khi có thể; không tắt kiểm tra hash Horizon.
 
 - Hỏi xác nhận thống kê lại một lần với trạng thái đồng ý từ bản cũ chưa có dấu xác nhận
   của đợt mở dịch vụ. Chờ người chơi chọn trước khi gửi; giữ nguyên các lựa chọn từ chối.
