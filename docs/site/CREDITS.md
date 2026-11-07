@@ -55,6 +55,13 @@ nhánh thiết kế đã kiểm tra ở rc11. Chuyển sang WebP q82 để giả
 Key art bên trong launcher có nguồn ghi tại
 `src/nostalgia/ui/qml/assets/keyart/CREDITS.md`; icon dự án thuộc tác giả tương ứng.
 
+## `og-card.jpg`
+
+Ảnh chia sẻ tiếng Anh được render từ `bench/site_card.html` ở kích thước 1200×630,
+dùng lại `hero.webp`, `logo.webp` và font của trang. Mẫu HTML không tải dữ liệu ngoài.
+Xuất ảnh PNG bằng Chrome headless rồi chuyển sang JPEG RGB q88, tối ưu dung lượng.
+Nội dung không gọi giấy phép hiện tại là mã nguồn mở.
+
 ## `fonts/`
 
 Inter và Manrope được tự lưu trữ, không gọi dịch vụ font hay tracking bên ngoài.

@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Nguồn ảnh chia sẻ: render 1200×630 bằng trình duyệt, xuất JPEG vào docs/site/og-card.jpg.
+     Dùng lại ảnh, logo và font của trang tải; không gọi dịch vụ bên ngoài. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nostalgia Launcher share card</title>
+    <style>
+      @font-face {
+        font-family: Inter;
+        src: url("../docs/site/fonts/Inter-Regular.ttf");
+      }
+      @font-face {
+        font-family: Manrope;
+        src: url("../docs/site/fonts/Manrope-Bold.ttf");
+        font-weight: 700;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        color: #eef1f7;
+        background:
+          linear-gradient(180deg, #14182155, #141821cc),
+          url("../docs/site/hero.webp") center / cover;
+        font-family: Inter, sans-serif;
+      }
+      main { padding: 80px 84px; }
+      img { width: 104px; height: 104px; }
+      h1 {
+        margin: 106px 0 0;
+        font: 700 68px / 1.2 Manrope, sans-serif;
+        letter-spacing: -2px;
+      }
+      p { margin: 14px 0 0; font-size: 29px; color: #d4dbe5; }
+      .features { margin-top: 27px; font-size: 24px; color: #a6afbf; }
+      .line { height: 3px; margin-top: 26px; background: #5ac54f; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="../docs/site/logo.webp" alt="" />
+      <h1>Nostalgia Launcher</h1>
+      <p>Your Minecraft worlds, together in one place.</p>
+      <p class="features">Instances · Mods · Skins · Play with friends</p>
+      <div class="line"></div>
+    </main>
+  </body>
+</html>
