@@ -62,13 +62,13 @@ function primaryAssetName(version, os, arch) {
 }
 
 function labelFor(name) {
-  if (name.endsWith("-setup.exe")) return "Tải cho Windows (bộ cài)";
+  if (name.endsWith("-setup.exe")) return "Download for Windows (installer)";
   if (name.endsWith(".dmg") && name.includes("arm64"))
-    return "Tải cho macOS (Apple Silicon)";
+    return "Download for macOS (Apple Silicon)";
   if (name.endsWith(".dmg") && name.includes("x64"))
-    return "Tải cho macOS (Intel)";
-  if (name.endsWith(".AppImage")) return "Tải cho Linux (AppImage)";
-  return `Tải ${name}`;
+    return "Download for macOS (Intel)";
+  if (name.endsWith(".AppImage")) return "Download for Linux (AppImage)";
+  return `Download ${name}`;
 }
 
 function humanSize(bytes) {
@@ -90,11 +90,9 @@ function countDownloads(releases) {
   return total;
 }
 
-// Khoảng trắng hẹp không ngắt dòng (U+202F) làm dấu phân nhóm, đúng lối viết số tiếng Việt và
-// không bị hiểu nhầm thành dấu thập phân như dấu chấm. `toLocaleString("vi-VN")` ra dấu chấm —
-// "1.234" đọc ra một phẩy hai ba tư ở phần lớn phần còn lại của thế giới.
+// Dùng dấu phẩy phân nhóm hàng nghìn, nhất quán với ngôn ngữ tiếng Anh của trang.
 function groupDigits(number) {
-  return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // Con số này là thứ DUY NHẤT trên trang thay đổi sau mỗi lượt tải, nên nó cũng là thứ duy nhất
@@ -116,7 +114,7 @@ function showFallback(statusText) {
   primary.hidden = false;
   primary.href = RELEASES_URL;
   document.getElementById("primary-label").textContent =
-    "Xem mọi bản trên GitHub";
+    "View all releases on GitHub";
   document.getElementById("primary-meta").textContent = "";
 }
 
@@ -161,10 +159,10 @@ async function main() {
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     releases = await res.json();
-    if (!Array.isArray(releases)) throw new Error("API không trả về danh sách");
+    if (!Array.isArray(releases)) throw new Error("API did not return a list");
   } catch (err) {
     showFallback(
-      "Không dò được bản mới nhất tự động (API GitHub tạm không phản hồi).",
+      "Could not check for the latest release (GitHub API is unavailable).",
     );
     return;
   }
@@ -185,7 +183,7 @@ async function main() {
     .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
   const release = published[0];
   if (!release) {
-    showFallback("Chưa có bản phát hành nào.");
+    showFallback("No releases are available yet.");
     return;
   }
 
@@ -209,7 +207,7 @@ function renderRelease(release, os, arch) {
   const assets = release.assets || [];
   if (!os || assets.length === 0) {
     showFallback(
-      "Không nhận diện được hệ điều hành — chọn file phù hợp bên dưới.",
+      "Could not detect your operating system. Choose a file below.",
     );
     renderOtherFiles(assets, []);
     return;
@@ -223,7 +221,7 @@ function renderRelease(release, os, arch) {
 
   if (!asset) {
     showFallback(
-      `Không thấy file cho hệ điều hành này trong bản ${release.tag_name}.`,
+      `No download is available for this operating system in ${release.tag_name}.`,
     );
     renderOtherFiles(assets, []);
     return;
@@ -471,27 +469,27 @@ document.querySelectorAll("[data-platform]").forEach((button) =>
       );
     else
       showFallback(
-        "Chưa lấy được danh sách bộ cài. Bạn có thể chọn trực tiếp trên GitHub.",
+        "The download list is unavailable. You can choose a file on GitHub.",
       );
   }),
 );
 
 const shots = {
   mods: [
-    "Thư viện mods với ảnh đại diện mờ phía sau từng ô nội dung",
-    "Thư viện · Nội dung dễ tìm, phiên bản dễ chọn.",
+    "The mod library with softly blurred artwork behind each content card",
+    "Library · Find your content. Choose your version.",
   ],
   create: [
-    "Cửa sổ tạo bản chơi với ảnh Minecraft và bố cục phiên bản, nền tảng, cấu hình",
-    "Tạo bản chơi · Chọn phiên bản và cách chơi của bạn.",
+    "The instance creation window with Minecraft artwork, version, platform, and settings",
+    "Create an instance · Choose your version and how you play.",
   ],
   skins: [
-    "Thư viện skin với mô hình nhân vật 3D ngay trong launcher",
-    "Skin 3D · Một diện mạo riêng cho cuộc phiêu lưu.",
+    "The skin library with a 3D player model inside the launcher",
+    "3D skins · Your own look for the adventure.",
   ],
   cosmetics: [
-    "Thư viện cosmetic với khung avatar và nền hồ sơ Grove, Amethyst, Eclipse",
-    "Cosmetic · Một dấu ấn của riêng bạn.",
+    "Profile cosmetics with Grove, Amethyst, and Eclipse avatar frames and backgrounds",
+    "Cosmetics · Make it your own.",
   ],
 };
 const shotTabs = [...document.querySelectorAll("[data-shot]")];
