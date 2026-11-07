@@ -62,10 +62,17 @@ Item {
                     }
                 }
             }
+            HomeHero {
+                width: parent.width
+                chosen: root.chosen
+                instances: root.orderedInstances
+                onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.loadPlayChoices(root.chosen.instanceId) : root.navigate(1)
+                onChooseRequested: function (instanceId) { root.chosenId = instanceId; }
+            }
             HomeSlides {
                 width: parent.width
                 chosen: root.chosen
-                onPlayRequested: bridge.gameRunning ? bridge.stopGame() : root.chosen ? bridge.loadPlayChoices(root.chosen.instanceId) : root.navigate(1)
+                onPlayRequested: root.navigate(1)
                 onLibraryRequested: root.navigate(2)
             }
             GuideCard { width: parent.width; topicId: "start" }

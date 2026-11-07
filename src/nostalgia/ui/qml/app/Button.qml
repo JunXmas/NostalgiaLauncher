@@ -13,6 +13,7 @@ Item {
     property bool quiet: false
     property bool selected: false
     property bool emphasized: false
+    property bool big: false
     property bool clickable: true
     property string disabledReason: ""
     readonly property bool hovered: hover.hovered
@@ -64,7 +65,7 @@ Item {
                 width: Math.max(0, Math.min(implicitWidth, root.width - root.captionPadding * 2 - (root.provider ? providerLogo.width + labelRow.spacing : 0)))
                 elide: Text.ElideRight
                 color: root.danger ? GlassTheme.danger : (root.selected || root.emphasized) && !root.primary ? GlassTheme.accent : GlassTheme.text
-                font.family: GlassTheme.font; font.pixelSize: GlassTheme.fontControl; font.weight: Font.DemiBold
+                font.family: GlassTheme.font; font.pixelSize: root.big ? GlassTheme.fontSection : GlassTheme.fontControl; font.weight: Font.DemiBold
             }
         }
         ButtonSymbol {

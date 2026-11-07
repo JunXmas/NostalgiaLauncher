@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Effects
 import "../" as Legacy
 
-/* Băng trượt đầu trang chủ: slide 0 = Nos Client mới nhất, rồi các slide quảng cáo từ feed
-   `promotions.json` (không có thì ẩn), cuối cùng là bản chơi của bạn.
+/* Băng trượt dưới khối Chơi: slide 0 = Nos Client mới nhất, rồi các slide quảng cáo từ feed
+   `promotions.json` (không có thì ẩn). Nút Chơi không nằm trong băng mà ở `HomeHero`, luôn hiện.
    Nút ‹ › và chấm để chuyển; không tự chạy (tránh trượt mất khi đang định bấm). */
 Glass {
     id: root
@@ -11,12 +11,11 @@ Glass {
     property var chosen: null
     property int current: 0
     readonly property var promotions: promotionBridge.slides
-    readonly property int count: 2 + promotions.length
+    readonly property int count: 1 + promotions.length
     signal playRequested
     signal libraryRequested
     width: parent.width
-    height: Math.max(400, heroCopy.implicitHeight + 72 * 2, nos.contentHeight + 72)
-    readonly property Item heroCopy: hero.contentItem
+    height: Math.max(400, nos.contentHeight + 72)
     radius: 26
     padding: 0
     color: GlassTheme.alpha(GlassTheme.selectedSurface, 0.80)
@@ -57,22 +56,11 @@ Glass {
                     chosen: root.chosen
                 }
             }
-            HomeHero {
-                id: hero
-                width: viewport.width; height: viewport.height
-                chosen: root.chosen
-                color: "transparent"
-                frosted: false
-                border.width: 0
-                radius: 0
-                padding: 72
-                onPlayRequested: root.playRequested()
-                onLibraryRequested: root.libraryRequested()
-            }
         }
     }
     Button {
         objectName: "homeSlidesPrev"
+        visible: root.count > 1
         label: "‹"
         width: 42; height: 42
         anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
@@ -80,12 +68,14 @@ Glass {
     }
     Button {
         objectName: "homeSlidesNext"
+        visible: root.count > 1
         label: "›"
         width: 42; height: 42
         anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
         onClicked: root.go(root.current + 1)
     }
     Row {
+        visible: root.count > 1
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 14 }
         spacing: 8
         Repeater {

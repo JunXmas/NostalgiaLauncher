@@ -62,7 +62,7 @@ def test_expired_slides_hide_and_each_kind_does_its_own_action(home: tuple[Any, 
     view, root_item, slides, opened, played = home
     assert [s["title"] for s in slides.property("slides")] == ["Server cộng đồng", "Thuê server"]
     carousel = find_item(root_item, "homeSlides")
-    assert carousel is not None and carousel.property("count") == 4
+    assert carousel is not None and carousel.property("count") == 3
     actions = []
 
     def collect(node: Any) -> None:
