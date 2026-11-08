@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication
 
 from nostalgia import __version__
 from nostalgia.api import (
+    HttpMarketGateway,
     HttpPaymentGateway,
     HttpRepairGateway,
     HttpSocialGateway,
@@ -38,6 +39,14 @@ def build_release_view(launcher: Launcher) -> QQuickView:
     view, _bridge = open_window(
         launcher,
         social_gateway=social_gateway,
+        market_api_url=configuration.account_url,
+        market_gateway=HttpMarketGateway(
+            configuration.account_url,
+            http_client,
+            lambda: social_gateway.access_token if social_gateway else "",
+        )
+        if configuration.account_url
+        else None,
         session_store=launcher.make_service_session_store(configuration.account_url)
         if social_gateway
         else None,

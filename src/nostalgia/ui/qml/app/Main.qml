@@ -100,6 +100,8 @@ Item {
                         return "Friends.qml";
                     if (root.currentIndex === 7)
                         return "CosmeticLibrary.qml";
+                    if (root.currentIndex === 8)
+                        return "Marketplace.qml";
                     if (root.currentIndex === 3)
                         return "Accounts.qml";
                     if (root.currentIndex === 2)

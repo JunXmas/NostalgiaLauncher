@@ -103,6 +103,8 @@ Mọi dataclass ở bảng này đều `frozen=True, slots=True` theo §1.3.
 | Một object asset | `asset_object` : `AssetObject` | dataclass | `obj`, `asset` |
 | Tài khoản lưu trên đĩa | `account` : `Account` | dataclass | `acc`, `user` |
 | Khoá định danh tài khoản | `account_id` | `str` | `label`, `key` |
+| Loại sản phẩm marketplace | `product_kind` : `item` hoặc `bundle` | bộ chỉ cấp các item còn thiếu | |
+| Phiên cosmetic game tạm | `game_session` : `GameCosmeticSession` | không phải phiên Google | |
 | Loại tài khoản | `account_kind` : `Literal["offline", "microsoft"]` | | `type`, `kind` trần |
 | Danh tính dùng để dựng lệnh chạy (không ghi đĩa) | `player_profile` : `PlayerProfile` | dataclass | `identity`, `session` |
 | Tên hiển thị trong game | `player_name` | `str` | `username`, `name`, `nick` |
@@ -253,6 +255,10 @@ src/nostalgia/
     xbox.py                          Xbox Live + XSTS, dịch XErr sang việc phải làm
     minecraft.py                     đổi vé, đọc hồ sơ; 404 = chưa mua game
     microsoft.py                     ghép bốn chặng
+  marketplace/                   L3  danh mục coin, ví/điểm và cosmetic do backend xác nhận
+    gateway.py                       HTTP có proof; public catalog không mang token
+    game.py                          khóa game tạm, IPC loopback; không quyền mua
+    asset.py                         kiểm schema model/PNG; cache không cấp sở hữu
   repo/                          L3  kho phiên bản
     endpoints.py                     mọi địa chỉ máy chủ, gom một chỗ
     manifest.py                      danh mục 909 bản; bảng tra, không quét tuyến tính

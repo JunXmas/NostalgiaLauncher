@@ -58,6 +58,8 @@ from nostalgia.instance.server_list import SavedServer
 from nostalgia.instance.world import SavedWorld
 from nostalgia.launch.game_process import GameProcess
 from nostalgia.launch.runner import InstallReport
+from nostalgia.marketplace.gateway import HttpMarketGateway as HttpMarketGateway
+from nostalgia.marketplace.game import CosmeticGameBridge as CosmeticGameBridge
 from nostalgia.modcheck.local_fix import LocalFix, suggest_local_fixes
 from nostalgia.modcheck.model import ModScan
 from nostalgia.model.local_mod import LocalModImport

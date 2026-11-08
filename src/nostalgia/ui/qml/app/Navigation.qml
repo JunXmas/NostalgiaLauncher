@@ -25,6 +25,7 @@ Glass {
             index: 2
         },
         { label: Legacy.Tr.phrase("Cosmetic"), block: "amethyst", index: 7 },
+        { label: "Marketplace", block: "emerald", index: 8 },
         {
             label: Legacy.Tr.phrase("Tài khoản"),
             block: "diamond",
@@ -102,7 +103,7 @@ Glass {
                 Item {
                     id: navEntry
                     objectName: "navigationEntry-" + modelData.index
-                    readonly property color tint: Legacy.Theme.accents[modelData.index === 7 ? 3 : modelData.index]
+                    readonly property color tint: Legacy.Theme.accents[modelData.index === 8 ? 2 : modelData.index === 7 ? 3 : modelData.index]
                     width: links.width
                     height: 48 * GlassTheme.scale
                     activeFocusOnTab: true

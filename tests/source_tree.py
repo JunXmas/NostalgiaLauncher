@@ -48,6 +48,7 @@ LAYERS: dict[str, int] = {
     "modrepair": 3,
     "social": 3,  # tài khoản dịch vụ, bạn bè và lời mời qua HTTPS
     "payment": 3,  # đơn Plus do máy chủ xác nhận, không cấp quyền ở máy khách
+    "marketplace": 3,  # ví và quyền cosmetic có xác nhận máy chủ
     "importing": 3,  # tìm instance từ launcher khác trên máy
     "modloader": 3,  # ghi profile loader vào kho version; tải là việc của install/
     "instance": 3,  # chỉ đụng đĩa: mô hình bản chơi và kho của nó

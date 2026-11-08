@@ -13,6 +13,7 @@ from nostalgia.api import (
     ServiceSessionStore,
     SocialGateway,
 )
+from nostalgia.model.marketplace import MarketGateway
 from nostalgia.ui.account_bridge import AccountBridge
 from nostalgia.ui.app import QML_DIR, build_view
 from nostalgia.ui.bridge import LauncherBridge
@@ -20,6 +21,9 @@ from nostalgia.ui.content_bridge import ContentBridge
 from nostalgia.ui.cosmetic_bridge import CosmeticBridge
 from nostalgia.ui.google_link_bridge import GoogleLinkBridge
 from nostalgia.ui.host_bridge import HostBridge
+from nostalgia.ui.market_bridge import MarketBridge
+from nostalgia.ui.market_game_bridge import MarketGameBridge
+from nostalgia.ui.market_preview_bridge import MarketPreviewBridge
 from nostalgia.ui.mod_repair_bridge import ModRepairBridge
 from nostalgia.ui.mod_version_bridge import ModVersionBridge
 from nostalgia.ui.multiplayer_bridge import MultiplayerBridge
@@ -42,6 +46,8 @@ def open_window(
     payment_demonstration: bool = False,
     room_sync_gateway: RoomSyncGateway | None = None,
     social_gateway: SocialGateway | None = None,
+    market_gateway: MarketGateway | None = None,
+    market_api_url: str = "",
     session_store: ServiceSessionStore | None = None,
     plus_enabled: bool = True,
     review_controller: QObject | None = None,
@@ -68,6 +74,20 @@ def open_window(
         plus_enabled=plus_enabled,
     )
     view.bind_context_property("socialBridge", social_bridge)
+    market_bridge = MarketBridge(market_gateway, social_bridge, view)
+    view.bind_context_property("marketBridge", market_bridge)
+    game_cosmetics = MarketGameBridge(
+        launcher, bridge, social_bridge, market_gateway, market_api_url, view
+    )
+    view.bind_context_property("marketGameBridge", game_cosmetics)
+    market_bridge.appearanceChanged.connect(game_cosmetics.invalidate)
+    view.destroyed.connect(game_cosmetics.close)
+    view.bind_context_property(
+        "marketPreviews",
+        MarketPreviewBridge(
+            market_gateway, launcher.paths.data_dir / "cache" / "marketplace", view
+        ),
+    )
     view.activeChanged.connect(lambda: view.isActive() and social_bridge.refreshStale())
     accounts = context.contextProperty("accountBridge")
     assert isinstance(accounts, AccountBridge)
@@ -110,6 +130,7 @@ def open_window(
         running_application.aboutToQuit.connect(social_bridge.shutdown)
         running_application.aboutToQuit.connect(profile_bridge.close)
         running_application.aboutToQuit.connect(cosmetic_bridge.close)
+        running_application.aboutToQuit.connect(game_cosmetics.close)
         running_application.aboutToQuit.connect(server_bridge.shutdown)
         running_application.aboutToQuit.connect(server_room.close)
     content_bridge = context.contextProperty("contentBridge")
