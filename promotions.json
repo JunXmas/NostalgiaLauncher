@@ -3,6 +3,15 @@
   "slides": [
     {
       "kind": "link",
+      "title": "Nostalgia 2.0 đã ra mắt",
+      "body": "Launcher mới, kèm Nos Turbo: Minecraft 26.3 viết lại bằng Rust, nhanh gấp 5 lần. Bản này ngừng phát triển; launcher sẽ tự cập nhật lên bản mới.",
+      "button": "Xem trang mới",
+      "url": "https://nostalgiamc.org/",
+      "starts_at": 0,
+      "ends_at": 0
+    },
+    {
+      "kind": "link",
       "title": "Slide mẫu",
       "body": "Mẫu cho người quản lý feed, đã hết hạn nên không hiện. Sao chép, sửa nội dung rồi đặt starts_at/ends_at (giây Unix, 0 là không giới hạn).",
       "button": "Xem mã nguồn",
