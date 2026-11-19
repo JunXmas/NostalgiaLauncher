@@ -49,6 +49,14 @@
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
+    <!-- 19/11/2026: trang này ngừng cập nhật; trang chính thức giờ ở nostalgiamc.org. -->
+    <aside class="moved" role="note" lang="en" style="position:relative;z-index:1000;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:center;padding:12px 16px;background:#a3e635;color:#0a100b;font:600 15px/1.4 system-ui,sans-serif;text-align:center">
+      <span>Nostalgia has a new home. This page is no longer updated.</span>
+      <span lang="vi">Nostalgia đã chuyển sang trang mới. Trang này không còn cập nhật.</span>
+      <a href="https://nostalgiamc.org/" style="color:#0a100b;background:#fff;padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:700">nostalgiamc.org →</a>
+    </aside>
+    <style>@media (min-width:0){.moved~.nav{top:calc(22px + var(--moved-h,0px))}}</style>
+    <script>{const m=document.querySelector(".moved"),f=()=>document.documentElement.style.setProperty("--moved-h",Math.max(0,m.offsetHeight-scrollY)+"px");addEventListener("scroll",f,{passive:true});addEventListener("resize",f);f()}</script>
     <header class="nav" id="nav">
       <a class="brand" href="#top"
         ><img
